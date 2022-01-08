@@ -1,19 +1,4 @@
-@import url('https://fonts.googleapis.com/css?family=Spectral');
-
 * {
-  color: white;
-  font-family: 'Spectral';
-}
-
-body {
-  background-color: #980000;
-}
-
-h1 {
-  font-size: 36px;
-  
-}
-
-p {
-  font-size: 13px;
+  color: black;
+  background-color: white;
 }
