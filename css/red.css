@@ -1,5 +1,8 @@
+@import url('https://fonts.googleapis.com/css?family=Spectral');
+
 * {
-  font-family: verdana;
+  color: white;
+  font-family: 'Spectral';
 }
 
 body {
