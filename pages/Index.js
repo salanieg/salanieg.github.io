@@ -11,12 +11,7 @@ export default function Home() {
       </Head>
 
       <main>
-      <a href="https://sites.google.com/view/gefaengnishefte/issues">ISSUES</a>
-        <img 
-        src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-        class="cover"
-        style="width:95%; height:auto;"
-        alt="ISSUE I">
+
       </main>
 
       <Footer />
