@@ -5,9 +5,16 @@
 }
 
 h1 {
-  font-size: 36px;
+  font-size: 36pt;
+  font-weight: bold;
+}
+}
+
+h2 {
+  font-size: 15pt;
+  font-weight: bold;
 }
 
 p {
-  font-size: 13px;
+  font-size: 13pt;
 }
