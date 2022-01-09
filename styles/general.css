@@ -20,20 +20,12 @@ p {
   font-size: 13pt;
 }
 
-html, body {
-   margin:20px;
-   padding:0;
-   height:100%;
-}
 #container {
    min-height:100%;
    position:relative;
 }
-#header {
-   padding:10px;
-}
+
 #body {
-   padding:10px;
    padding-bottom:200px;   /* Height of the footer */
 }
 #footer {
