@@ -4,6 +4,8 @@
   font-family: 'Spectral';
 }
 
+.gap {width:100%; height:30px;}
+
 h1 {
   font-size: 36pt;
   font-weight: bold;
