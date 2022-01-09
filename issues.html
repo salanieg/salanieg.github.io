@@ -7,6 +7,16 @@
     <link rel="stylesheet" href="styles/red.css">
 
     <style>
+        .scrolling-wrapper {
+          overflow-x: scroll;
+          overflow-y: hidden;
+          white-space: nowrap;
+
+          .card {
+            display: inline-block;
+          }
+        }
+        
         a:hover, a:visited, a:link, a:active
         {
             text-decoration: none;
@@ -40,7 +50,17 @@
 
 <body>
     
- 
+<div class="scrolling-wrapper">
+  <div class="card"><h2>Card</h2></div>
+  <div class="card"><h2>Card</h2></div>
+  <div class="card"><h2>Card</h2></div>
+  <div class="card"><h2>Card</h2></div>
+  <div class="card"><h2>Card</h2></div>
+  <div class="card"><h2>Card</h2></div>
+  <div class="card"><h2>Card</h2></div>
+  <div class="card"><h2>Card</h2></div>
+  <div class="card"><h2>Card</h2></div>
+</div>
 <div id="issue" style="width:100%; height:auto; max-width: 600px;">
     <img 
          src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
