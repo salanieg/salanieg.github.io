@@ -24,50 +24,18 @@
           -webkit-overflow-scrolling: touch;
         }
         
-        ::-webkit-scrollbar {
-            width: 0px;
-            background: transparent;
-        }
-        
         .cover {
             display: inline-block;
             width:100%; 
             height:auto; 
             max-width: 600px;
         }
+        
         .cover:hover {
             transform: scale(1.2);
             transition: transform 1s;
             max-width: 100%;
         }
-        
-        
-        
-        a:hover, a:visited, a:link, a:active
-        {
-            text-decoration: none;
-        }
-
-        .inhalt {
-            padding-top: 10%;
-            padding-left: 10%;
-            padding-right: 15%;
-            font-size: 13pt;
-            text-decoration: none;
-            z-index: 10;
-        }
-
-        .title {
-            font-size: 15pt;
-            text-decoration: underline;
-            font-weight: bold;
-        }
-
-        #issue:hover .cover {opacity:0; transition: opacity 1s ease;}
-        #issue:hover .inhalt {opacity:1; transition: opacity 1s ease;}
-
-        #issue .cover {opacity:1; transition: opacity 1s ease;}
-        #issue .inhalt {opacity:0; transition: opacity 1s ease;}    
     </style>
 </head>
 
@@ -75,6 +43,6 @@
 
 <h1>My First Heading</h1>
 <p>My first paragraph.</p>
-
+<footer><div id="footer"></div></footer>
 </body>
 </html>
