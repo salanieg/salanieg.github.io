@@ -68,6 +68,20 @@ body {
 	margin-top:auto; 
 }
 
+.scrolling-wrapper {
+	position: relative;
+	overflow-x: scroll;
+	overflow-y: hidden;
+	white-space: nowrap;
+	width:105vw;
+	margin-left:-50px;
+	-webkit-overflow-scrolling: touch;
+  }
+
+  
+  .scrolling-wrapper::-webkit-scrollbar {
+		  display: none;
+	  }
 
   .cover {
 	  margin-right: 80px;
