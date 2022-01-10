@@ -6,31 +6,6 @@
 	<link rel="stylesheet" href="styles/general.css">
 	<link rel="stylesheet" href="styles/red.css">
 	<style>	
-
-		.menu {
-			position: fixed
-			height: 100vh
-			background: #F9D401
-			width: 10vw
-			box-shadow: 1px 0 2px rgba(0,0,0,.2)
-			transition: 1s
-			&:hover
-				width: 40vw
-			&:hover ~ .container
-				transform: perspective(80vw) rotateY(10deg) translateX(35vw) scaleY(1.2)
-			&:hover nav
-				left: 20%
-		}
-
-		.container {
-			width: 90%
-			margin-left: 10vw
-			background: #FDFDFD
-			transition: 1s
-			transform-origin: left center
-			color: #D2D2D0
-		}
-
 		.ul {
 			color: white
 			text-transform: uppercase
@@ -49,13 +24,6 @@
 			font-weight: 600
 			&:hover
 				color: #eee
-		}
-		
-		.nav {
-			position: absolute
-			margin-top: 50%
-			left: -1000px
-			transition: .5s
 		}
 		
 		hr.solid {
