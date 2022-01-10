@@ -26,13 +26,10 @@ p {
 	height: 10%;
 }
 
-#navlist {
+ul.navlist {
 	color: white
 	text-transform: uppercase
 	list-style-type: none	
-}
-
-#navitem {
 }
 
 hr.solid {
