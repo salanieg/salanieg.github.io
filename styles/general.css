@@ -28,6 +28,33 @@ p {
 #body {
    padding-bottom:200px;   /* Height of the footer */
 }
+
+#navlist {
+			color: white
+			text-transform: uppercase
+			list-style-type: none	
+		}
+		
+		#navitem {
+			line-height: 2em
+			letter-spacing: .3em
+		}
+		
+		a {
+			font-size: 30px
+			text-decoration: none
+			color: white
+			font-weight: 600
+			&:hover
+				color: #eee
+		}
+		
+		hr.solid {
+		  position: absolute
+		  width: 110%;
+		  border-top: 3px solid #bbb;
+		}
+
 #footer {
    position:absolute;
    bottom:0;
