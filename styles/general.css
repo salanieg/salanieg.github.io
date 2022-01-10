@@ -20,20 +20,10 @@ p {
 	font-size: 13pt;
 }
 
-#container {
-	min-height:100%;
-	position:relative;
-}
-
-
 #header {
 	position: sticky;
   	top: 0;
 	height: 200px;
-}
-
-#content {
-  margin-top: 100px;
 }
 
 #navlist {
@@ -46,13 +36,13 @@ p {
 }
 
 hr.solid {
-	width: 110%;
+	width: 100%;
 	border-top: 3px solid #bbb;
 }
 
-#body {
-	margin-top: 200px;
-	margin-bottom:200px;
+#content {
+	margin-top: 10px;
+	margin-bottom: 10px;
 }
 
 #footer {
