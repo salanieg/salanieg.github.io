@@ -35,9 +35,9 @@ p {
 }
 
 ul.navlist {
-	color: white
-	text-transform: uppercase
-	list-style-type: none	
+	color: white;
+	text-transform: uppercase;
+	list-style-type: none;
 }
 
 hr.solid {
