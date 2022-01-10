@@ -20,12 +20,6 @@ p {
   font-size: 13pt;
 }
 
-        
-#header {
-  border-bottom: 5px solid blue;
-  width: 110%;
-}
-
 #container {
    min-height:100%;
    position:relative;
