@@ -27,7 +27,13 @@ p {
 
 
 #header {
-  position: fixed;
+	position: fixed;
+	position: sticky;
+  	top: 0;
+}
+
+#content {
+  margin-top: 100px;
 }
 
 #navlist {
