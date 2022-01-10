@@ -54,6 +54,7 @@ hr.solid {
 }
 
 #body {
+	margin-top: 100px;
 	padding-bottom:200px;   /* Height of the footer */
 }
 
