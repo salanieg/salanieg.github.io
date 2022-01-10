@@ -25,6 +25,11 @@ p {
 	position:relative;
 }
 
+
+#header {
+  position: fixed;
+}
+
 #navlist {
 	color: white
 	text-transform: uppercase
