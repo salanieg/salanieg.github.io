@@ -20,6 +20,12 @@ p {
 	font-size: 13pt;
 }
 
+
+#container {
+	overflow-y: hidden;
+	overflow-x: hidden
+}
+
 #header {
 	position: sticky;
   	top: 0;
