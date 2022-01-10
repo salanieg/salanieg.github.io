@@ -7,7 +7,15 @@
 	<link rel="stylesheet" href="styles/red.css">
 	<style>
 
-		.logo {
+		#header-wrap {
+			display: flex;                   
+			align-items: flex-start;
+			justify-content: space-between;
+			text-align: center;
+			align-items: center;
+		}
+
+		#logo {
 			float:left;
 			clear:left;
 			border:solid;
@@ -17,12 +25,15 @@
 			color:black;
 		}
 
-		#header-wrap {
-			display: flex;                   
-			align-items: flex-start;
-			justify-content: space-between;
-			text-align: center;
-			align-items: center;
+		ul.navlist {
+			color: white;
+			list-style-type: none;
+			margin:0px;
+		}
+
+		li.navitem {
+			display:inline;
+			padding: 0px 0px 0px 30px;
 		}
 
 	</style>
@@ -31,7 +42,7 @@
 	<body>
 		<div id="header-wrap">
 
-			<div class="logo">GEFÄNGNISHEFTE</div> 
+			<div id="logo">GEFÄNGNISHEFTE</div> 
 
 			<nav>
 				<ul class="navlist">
