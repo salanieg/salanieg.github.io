@@ -39,6 +39,11 @@ ul.navlist {
 	list-style-type: none;
 }
 
+li.navitem {
+	display:inline";
+}
+
+
 #content {
 	height: 80%;
 	min-height: 80%;
