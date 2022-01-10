@@ -28,17 +28,6 @@ small {
 	padding-bottom: 100px;
 }
 
-ul.navlist {
-	color: white;
-	list-style-type: none;
-	margin:0px;
-}
-
-li.navitem {
-	display:inline;
-	padding: 0px 0px 0px 30px;
-}
-
 body {
 	display:flex; 
 	flex-direction:column; 
@@ -57,18 +46,18 @@ body {
 	width: 100%;
 	height: fit-content;	
 	background-color: #980000;
-	z-index:1;
+	z-index:2;
 }
 
 #header:before {
 	content:"";
 	position: absolute;
 	top: 0;
-	margin-top: -20px;
+	margin: -20px 0px 0px 0px;
 	width: 100%;
 	height: 20px;	
 	background-color: #980000;
-	z-index:2;
+	z-index:1;
 }
 
 #footer {
