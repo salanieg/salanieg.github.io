@@ -21,7 +21,10 @@ p {
 }
 
         
-#header {border-bottom: 5px solid blue;}
+#header {
+  border-bottom: 5px solid blue;
+  width: 100px;
+}
 
 #container {
    min-height:100%;
