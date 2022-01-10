@@ -87,6 +87,7 @@ body {
 	  margin-right: 80px;
 	  margin-left: 50px;
 	  height: 65vh;
+	  width: auto;
 	  transform: scale(1);
 	  transition: transform 0.5s;
   }
