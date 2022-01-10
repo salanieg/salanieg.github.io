@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>ISSUES</title>
     <link rel="stylesheet" href="styles/general.css">
-    <link rel="stylesheet" href="styles/red.css">
+    <link rel="stylesheet" href="styles/black.css">
     <script
         src="https://code.jquery.com/jquery-3.3.1.js"
         integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
@@ -18,31 +19,85 @@
     
     <style>
         .scrolling-wrapper {
+          position: relative;
           overflow-x: scroll;
           overflow-y: hidden;
           white-space: nowrap;
+          width:105vw;
+          margin-left:-50px;
           -webkit-overflow-scrolling: touch;
         }
+
         
+        .scrolling-wrapper::-webkit-scrollbar {
+                display: none;
+            }
+
         .cover {
-            display: inline-block;
-            width:100%; 
-            height:auto; 
-            max-width: 600px;
+            margin-right: 80px;
+            margin-left: 50px;
+            width:30%;
+            transform: scale(1);
+            transition: transform 0.5s;
+        }
+
+        .cover:hover {
+            cursor: pointer;
+            transform: scale(1.02);
+            transition: transform 0.5s;
         }
         
-        .cover:hover {
-            transform: scale(1.2);
-            transition: transform 1s;
-            max-width: 100%;
+        
+        
+        a:hover, a:visited, a:link, a:active
+        {
+            text-decoration: none;
         }
+
+        .inhalt {
+            padding-top: 10%;
+            padding-left: 10%;
+            padding-right: 15%;
+            font-size: 13pt;
+            text-decoration: none;
+            z-index: 10;
+        }
+
+        .title {
+            font-size: 15pt;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        #issue:hover .cover {opacity:0; transition: opacity 1s ease;}
+        #issue:hover .inhalt {opacity:1; transition: opacity 1s ease;}
+
+        #issue .cover {opacity:1; transition: opacity 1s ease;}
+        #issue .inhalt {opacity:0; transition: opacity 1s ease;}
     </style>
 </head>
-
+    
 <body>
-<header><div id="header"></div></header>
-<h1>My First Heading</h1>
-<p>My first paragraph.</p>
-<footer><div id="footer"></div></footer>
-</body>
+    <div id="header"></div>
+    <div id="content">
+
+        <div class="info">Eine Sammlung sehenswerter Dinge. 
+            <br>Wende dich gerne mit Vorschlägen an uns. </div>
+        
+        <div class="scrolling-wrapper">
+            <div>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/pzQZ_NDEzVo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/6O7_YswJOXY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/_g8JVK4Fppw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <div>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/H3AxGp5k-Qo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/jWJVMoe7OY0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+
+    </div>
+    <div id="footer"></div>
+    
+</body>    
 </html>
