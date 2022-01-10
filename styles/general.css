@@ -23,7 +23,7 @@ p {
 #header {
 	position: sticky;
   	top: 0;
-	height: 200px;
+	height: 10%;
 }
 
 #navlist {
