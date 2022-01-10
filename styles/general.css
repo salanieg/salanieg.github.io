@@ -25,10 +25,6 @@ p {
 	position:relative;
 }
 
-#body {
-	padding-bottom:200px;   /* Height of the footer */
-}
-
 #navlist {
 	color: white
 	text-transform: uppercase
@@ -40,19 +36,14 @@ p {
 	letter-spacing: .3em
 }
 
-a {
-	font-size: 30px
-	text-decoration: none
-	color: white
-	font-weight: 600
-	&:hover
-	color: #eee
-}
-
 hr.solid {
 	position: absolute
 	width: 110%;
 	border-top: 3px solid #bbb;
+}
+
+#body {
+	padding-bottom:200px;   /* Height of the footer */
 }
 
 #footer {
