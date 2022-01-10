@@ -42,13 +42,29 @@
 		    }
 
             #smallprint {
-		row-gap: 0px;
+                row-gap: 0px;
                 display: flex;                   
                 align-items: flex-start;
-                justify-content: flex-start;;
+                justify-content: flex-start;
                 flex-wrap: wrap;
                 gap: 45px;
 		    }
+            
+            @media screen and (max-width: 1600px) {
+                #smallprint {
+                    visibility: hidden;
+                    display:none;
+                }
+            }
+
+            @media screen and (min-width: 1600px) {
+                #smallprint_mobile {
+                    visibility: hidden;
+                    display:none;
+                }
+            }
+
+
 
         </style> 
     </head>
@@ -81,6 +97,13 @@
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues"><small>Unterstützen:    paypal.me/GEFAENGNISHEFTE</small></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues"><small>Kontakt:   BIGFLATNOW@gmail.com</small></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><small>Deabonnieren</small></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><small>Impressum</small></a>
+            </div>
+
+            <div id="smallprint_mobile"> 
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues"><small>Unterstützen:    paypal.me/GEFAENGNISHEFTE</small></a><br>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues"><small>Kontakt:   BIGFLATNOW@gmail.com</small></a><br>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><small>Deabonnieren</small></a> | 
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><small>Impressum</small></a>
             </div>
         </div>
