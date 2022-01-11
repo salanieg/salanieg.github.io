@@ -13,13 +13,13 @@ body {
 	display:flex; 
 	flex-direction:column; 
 	/* overflow-y: hidden; */
-	overflow-x: hidden;
 	margin: 0px;
 	max-height: 100vh;
 	
 }
 
 .content {
+	overflow-x: hidden;
 	padding: 100px 20px 100px 20px;
 }
 
