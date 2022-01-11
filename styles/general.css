@@ -1,9 +1,12 @@
 /* GENERAL */
 
-
+@font-face {
+	font-family: 'Spectral';
+	src: url('https://fonts.googleapis.com/css?family=Spectral');
+  }
 
 * {
-  font-family: verdana;
+  font-family: 'Spectral';
 }
 
 body {
