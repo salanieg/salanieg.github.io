@@ -1,12 +1,13 @@
 /* GENERAL */
 
 @font-face {
-	font-family: 'Spectral';
+	font-family: "Spectraltest";
 	src: url('https://fonts.googleapis.com/css?family=Spectral');
 }
 
 * {
-	font-family: 'Spectral';
+	font-family: 'Spectraltest';
+	font-family: Spectraltest;
 }
 
 body {
