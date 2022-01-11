@@ -1,7 +1,7 @@
 /* GENERAL */
 
 @font-face {
-	font-family: "Spectraltest";
+	font-family: 'Spectral';
 	src: url('https://fonts.googleapis.com/css?family=Spectral');
 }
 
@@ -20,6 +20,7 @@ body {
 }
 
 .content {
+	font-family: 'Spectral';
 	padding: 100px 20px 100px 20px;
 }
 
