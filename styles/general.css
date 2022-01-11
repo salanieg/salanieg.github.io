@@ -3,10 +3,10 @@
 @font-face {
 	font-family: 'Spectral';
 	src: url('https://fonts.googleapis.com/css?family=Spectral');
-  }
+}
 
 * {
-  font-family: 'Spectral';
+	font-family: 'Spectral';
 }
 
 body {
@@ -19,11 +19,11 @@ body {
 	
 }
 
-#content {
+.content {
 	padding: 100px 20px 100px 20px;
 }
 
-#header {
+.header {
 	font-size:15pt;
 	top: 0;
     padding: 20px;
@@ -32,18 +32,18 @@ body {
 	z-index: 10;
 }
 
-#footer {
+.footer {
   	bottom: 0;
 	padding: 20px;
 	background-color: #980000;
 	z-index: 10;
 }
 
-#header, #footer > a:hover, a:visited, a:link, a:active {
+.header, .footer > a:hover, a:visited, a:link, a:active {
 	color: white !important;
 }
 
-#header, #footer > * {
+.header, .footer > * {
 	color: white;
 	background-color: #980000;
 }
