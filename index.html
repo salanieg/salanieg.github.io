@@ -1,116 +1,64 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-    <meta charset="UTF-8">
-    <title>ISSUES</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="styles/general.css">
-    <link rel="stylesheet" href="styles/red.css">
-    <script
-        src="https://code.jquery.com/jquery-3.3.1.js"
-        integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
-        crossorigin="anonymous">
-    </script>
-    <script> 
-    $(function(){
-      $("#header").load("includes/header.html"); 
-      $("#footer").load("includes/footer.html"); 
-    });
-    </script> 
+    <head>
+        <meta charset="UTF-8">
+        <title>ISSUES</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="styles/general.css">
+        <link rel="stylesheet" href="styles/red.css">
+        <script
+            src="https://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous">
+        </script>
+        <script> 
+        $(function(){
+            $(".header").load("includes/header.html"); 
+            $(".footer").load("includes/footer.html"); 
+        });
+        </script> 
+    </head>
     
-    
-    <style>
+    <body>
+        <div class="header"></div>
+        <div class="content">
 
-    </style>
-</head>
-    
-<body>
-    <div id="header"></div>
-    <div id="content">
+            <div class="info">Reguläre Ausgaben.</div>
 
-        <div class="info">Reguläre Ausgaben.</div>
+            <div class="h-scrolling-wrapper">
+                <script> 
+                    const element = document.querySelector(".h-scrolling-wrapper");
+            
+                    element.addEventListener('wheel', (event) => {
+                    event.preventDefault();
+                    
+                    element.scrollBy({
+                        left: event.deltaY < 0 ? -100 : 100,
+                        
+                    });
+                    });
+                </script> 
 
-        <div class="h-scrolling-wrapper">
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+            </div>
 
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
+            <div class="v-scrolling-wrapper">
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
+                </a>
+            </div>
         </div>
-
-        <div class="v-scrolling-wrapper">
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-            <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/issue-i">
-                <img 
-                src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX"
-                class="h-cover"
-                alt="ISSUE I">
-            </a>
-        </div>
-    </div>
-    <div id="footer"></div>
-    
-</body>    
+        <div class="footer"></div>
+        
+    </body>    
 </html>

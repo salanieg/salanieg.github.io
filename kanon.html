@@ -1,47 +1,46 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-    <title>ISSUES</title>
-    <link rel="stylesheet" href="styles/general.css">
-    <link rel="stylesheet" href="styles/black.css">
-    <script
-        src="https://code.jquery.com/jquery-3.3.1.js"
-        integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
-        crossorigin="anonymous">
-    </script>
-    <script> 
-    $(function(){
-      $("#header").load("includes/header.html"); 
-      $("#footer").load("includes/footer.html"); 
-    });
-    </script> 
+    <head>
+        <meta charset="UTF-8">
+        <title>ISSUES</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="styles/general.css">
+        <link rel="stylesheet" href="styles/red.css">
+        <script
+            src="https://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous">
+        </script>
+        <script> 
+        $(function(){
+            $(".header").load("includes/header.html"); 
+            $(".footer").load("includes/footer.html"); 
+        });
+        </script> 
+    </head>
     
-    <style>
-    </style>
-</head>
-    
-<body>
-    <div id="header"></div>
-    <div id="content">
+    <body>
+        <div class="header"></div>
+        <div class="content">
 
-        <div class="info">Eine Sammlung sehenswerter Dinge. 
-            <br>Wende dich gerne mit Vorschlägen an uns. </div>
-        
-        <div class="scrolling-wrapper">
-            <div>
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/pzQZ_NDEzVo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/6O7_YswJOXY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/_g8JVK4Fppw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <div class="info">Eine Sammlung sehenswerter Dinge. 
+                <br>Wende dich gerne mit Vorschlägen an uns. </div>
+            
+            <div class="scrolling-wrapper">
+                <div>
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/pzQZ_NDEzVo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/6O7_YswJOXY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/_g8JVK4Fppw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                <div>
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/H3AxGp5k-Qo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/jWJVMoe7OY0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
             </div>
-            <div>
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/H3AxGp5k-Qo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/jWJVMoe7OY0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
+
         </div>
-
-    </div>
-    <div id="footer"></div>
-    
-</body>    
+        <div class="footer"></div>
+        
+    </body>    
 </html>
