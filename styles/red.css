@@ -1,4 +1,8 @@
-* {
+#content {
   color: white;
   background-color: #980000;
+}
+
+a:hover, a:visited, a:link, a:active {
+	color: white;
 }
