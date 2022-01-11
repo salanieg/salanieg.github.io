@@ -3,46 +3,58 @@
     
 	<head>
 		
-	<link rel="stylesheet" href="styles/general.css">
-	<link rel="stylesheet" href="styles/red.css">
-	<style>
+		<link rel="stylesheet" href="styles/general.css">
+		<link rel="stylesheet" href="styles/red.css">
+		<style>
 
-		#header-wrap {
-			display: flex;                   
-			align-items: flex-start;
-			justify-content: space-between;
-			text-align: center;
-			align-items: center;
-		}
-
-		#logo {
-			float:left;
-			clear:left;
-			border:solid;
-			border-width:2px;
-			padding:0px 20px;
-			background-color:white;
-			color:black;
-		}
-
-		ul.navlist {
-			color: white;
-			list-style-type: none;
-			margin:0px;
-		}
-
-		li.navitem {
-			display:inline;
-			padding: 0px 0px 0px 30px;
-		}
-
-		@media screen and (max-width: 800px) {
-			#navigation {
-			display:none;
+			#header-wrap {
+				display: flex;                   
+				align-items: flex-start;
+				justify-content: space-between;
+				text-align: center;
+				align-items: center;
 			}
-		}
 
-	</style>
+			#logo {
+				float:left;
+				clear:left;
+				border:solid;
+				border-width:2px;
+				padding:0px 20px;
+				background-color:white;
+				color:black;
+			}
+
+			ul.navlist {
+				list-style-type: none;
+				margin:0px;
+			}
+
+			li.navitem {
+				display:inline;
+				padding: 0px 0px 0px 30px;
+			}
+
+			@media screen and (max-width: 800px) {
+				#navigation {
+				display:none;
+				}
+			}
+
+			#issue-list {
+				display: none;
+				position: absolute;
+				box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+				padding: 0px 100px 0px 30px;
+			}
+
+			#issues:hover #issue-list {
+				display: block;
+				background-color: #980000;
+			}
+			
+
+		</style>
 	</head>
 
 	<body>
@@ -52,9 +64,13 @@
 
 			<nav id="navigation">
 				<ul class="navlist">
-				<li class="navitem"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues" class="h2">ISSUES</a></li>
-				<li class="navitem"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues" class="h2">SPECIAL ISSUES</a></li>
-				<li class="navitem"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon" class="h2">KANON</a></li>
+				<li class="navitem" id="issues"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues">ISSUES</a>
+					<div id="issue-list">
+						<p>ISSUE I<p>
+					</div>
+				</li>
+				<li class="navitem"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a></li>
+				<li class="navitem"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a></li>
 				</ul>
 			</nav>
 		</div>
