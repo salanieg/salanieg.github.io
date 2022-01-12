@@ -1,7 +1,7 @@
 /* GENERAL */
 
 @font-face {
-	font-family: 'Spectral';
+	font-family: "Spectraltest";
 	src: url('https://fonts.googleapis.com/css?family=Spectral');
 }
 
@@ -20,7 +20,6 @@ body {
 }
 
 .content {
-	font-family: 'Spectral';
 	padding: 100px 20px 100px 20px;
 }
 
@@ -40,9 +39,6 @@ body {
 	z-index: 10;
 }
 
-.header, .footer > a:hover, a:visited, a:link, a:active {
-	color: white !important;
-}
 
 .header, .footer > * {
 	color: white;
@@ -118,7 +114,8 @@ small {
 }
 
 .v-cover {
-	width:75%;
+	width:90%;
+	max-width: 500px;
 	padding-bottom: 100px;
 	transform: scale(1);
 	transition: transform 0.5s;
