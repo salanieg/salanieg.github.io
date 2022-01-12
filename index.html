@@ -16,10 +16,63 @@
             $(".header").load("includes/header.html"); 
             $(".footer").load("includes/footer.html"); 
         });
-        </script> 
+        </script>
+
+        <style> 
+            #intro {
+                padding: 1000px;
+                background-color: #980000;
+            }
+
+            #intrologo {
+                position:fixed;
+                top:30%;
+                left:50%;
+                transform: translate(-50%, -50%);
+                width: fit-content;
+                font-size: 36pt;
+                color:black;
+				border:solid;
+				border-width: 2px;
+				padding:0px 20px;
+				background-color:white;
+				cursor: help;
+            }
+
+            #introtext {
+                position:fixed;
+                top:40%;
+                left:50%;
+                transform: translate(-50%, -50%);
+                width: fit-content;              
+                font-size: 15pt;
+                color: white;
+            }
+            
+            body {
+                overflow-y: hidden;
+                background-color: #980000;
+            }
+            
+        </style>
     </head>
-    
+
     <body>
+        <div id="intro">
+            
+
+            <dev id="intrologo">GEFÄNGNISHEFTE</div> 
+            <div id="introtext">Gedanken einer politisch desinteressierten Jugend.</div>
+ 
+
+        </div> 
+        <script>  
+            document.getElementById("intrologo").addEventListener('click', (event) => {
+                    event.preventDefault();
+                    document.getElementById("intro").style.display = "none"
+            });
+        </script> 
+
         <div class="header"></div>
 
         <div class="content">
