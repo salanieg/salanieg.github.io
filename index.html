@@ -55,9 +55,19 @@
             }
             
         </style>
+        <script>      
+        document.addEventListener("DOMContentLoaded", (event) => {
+                if(localStorage.getItem('introshown')) {
+                    document.getElementById("intro").style.display = "none";
+                    document.getElementById("intrologo").style.display = "none";
+                    document.getElementById("introtext").style.display = "none";
+                }
+        });
+        </script> 
     </head>
 
-    <body>
+    <bod>
+
         <div id="intro">
             
 
@@ -66,12 +76,15 @@
  
 
         </div> 
-        <script>  
+        <script>
             document.getElementById("intrologo").addEventListener('click', (event) => {
-                    event.preventDefault();
-                    document.getElementById("intro").style.display = "none"
-                    document.getElementById("intrologo").style.display = "none"
-                    document.getElementById("introtext").style.display = "none"
+                if (!introshown) {
+                    document.getElementById("intro").style.display = "none";
+                    document.getElementById("intrologo").style.display = "none";
+                    document.getElementById("introtext").style.display = "none";
+                    var introshown = true;
+                    localStorage.setItem('introshown', true);
+                }
             });
         </script> 
 
