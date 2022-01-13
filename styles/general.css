@@ -1,48 +1,48 @@
 /* GENERAL */
 
-@font-face {
+/* @font-face {
 	font-family: "Spectraltest";
 	src: url('https://fonts.googleapis.com/css?family=Spectral');
-}
+} */
+
+@import url('https://fonts.googleapis.com/css?family=Spectral');
 
 * {
 	font-family: 'Spectral';
 }
 
 body {
-	display:flex; 
-	flex-direction:column; 
 	/* overflow-y: hidden; */
 	overflow-x: hidden;
-	margin: 0px;
-	max-height: 100vh;
-	
+	min-height: 100%;
+	margin:0px;
 }
 
 .content {
-	padding: 100px 20px 100px 20px;
+	min-height: 100%;
+	margin-top: 100px;
+	margin-bottom: 200px;
+}
+
+.content > * {
+	padding: 20px;
 }
 
 .header {
 	font-size:15pt;
 	top: 0;
-    padding: 20px;
 	position: sticky;
-	background-color: #980000;
 	z-index: 10;
 }
 
 .footer {
   	bottom: 0;
-	padding: 20px;
-	background-color: #980000;
 	z-index: 10;
 }
 
-
 .header, .footer > * {
 	color: white;
-	background-color: #980000;
+	background-color: darkred;
 }
 
 
@@ -73,71 +73,5 @@ small {
 
 .info  {
 	font-size: 36pt;
-	padding-bottom: 100px;
-}
-
-
-/* OBJECTS */
-
-.h-scrolling-wrapper {
-	
-	position: relative;
-	overflow-x: scroll;
-	overflow-y: hidden;
-	white-space: nowrap;
-	width:105vw;
-	margin-left:-50px;
-	-webkit-overflow-scrolling: touch;
-}
-
-.h-scrolling-wrapper::-webkit-scrollbar {
-	display: none;
-}
-
-.v-scrolling-wrapper  {
-	width:100%;
-	display: none;
-	text-align: center;
-}
-
-@media screen and (max-width: 856px) {
-	.v-scrolling-wrapper {
-		display:block;
-	}
-}
-
-@media screen and (max-width: 856px) {
-	.h-scrolling-wrapper {
-		visibility:hidden;
-		display:none;
-	}
-}
-
-.v-cover {
-	width:90%;
-	max-width: 500px;
-	padding-bottom: 100px;
-	transform: scale(1);
-	transition: transform 0.5s;
-}
-
-.v-cover:hover {
-	cursor: pointer;
-	transform: scale(1.02);
-	transition: transform 0.5s;
-}
-
-.h-cover {
-	margin-right: 80px;
-	margin-left: 50px;
-	height: 65vh;
-	width: auto;
-	transform: scale(1);
-	transition: transform 0.5s;
-}
-
-.h-cover:hover {
-	cursor: pointer;
-	transform: scale(1.02);
-	transition: transform 0.5s;
+	margin-bottom: 100px;
 }

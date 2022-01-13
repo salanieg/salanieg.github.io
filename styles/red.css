@@ -1,6 +1,10 @@
+body {
+  background-color: darkred;
+}
+
 .content {
   color: white;
-  background-color: #980000;
+  background-color: darkred;
 }
 
 a:hover, a:visited, a:link, a:active {
