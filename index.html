@@ -21,13 +21,13 @@
         <style> 
             #intro {
                 padding: 1000px;
-                background-color: #980000;
+                background-color: darkred;
             }
 
             #intrologo {
                 position:fixed;
-                top:30%;
-                left:50%;
+                top:30vh;
+                left:50vw;
                 transform: translate(-50%, -50%);
                 width: fit-content;
                 font-size: 36pt;
@@ -41,8 +41,8 @@
 
             #introtext {
                 position:fixed;
-                top:40%;
-                left:50%;
+                top:40vh;
+                left:50vw;
                 transform: translate(-50%, -50%);
                 width: fit-content;              
                 font-size: 15pt;
@@ -51,42 +51,87 @@
             
             body {
                 overflow-y: hidden;
-                background-color: #980000;
             }
+
+            .cover-wrapper {
+                position:relative;
+                left: 0;
+				display: flex;
+				justify-content: center;
+                flex-wrap: wrap;
+				align-items: center;
+                gap: 100px;
+                overflow: visible;
+                padding: 20px;
+            }
+
+            .cover-wrapper::-webkit-scrollbar {
+                display: none;
+            }
+
+            @media screen and (min-width: 1000px) {
+                .cover-wrapper {
+                    justify-content: center;
+                    flex-wrap: wrap;
+                    align-items: flex-start;
+                    gap: 100px;
+                    overflow-x: scroll;
+                    -webkit-overflow-scrolling: touch;
+                }
+                
+            }
+
+            .cover {
+                width:75vw;
+                transform: scale(1);
+                transition: transform 0.5s;
+            }
+
+            .cover:hover {
+                cursor: pointer;
+                transform: scale(1.03);
+                transition: transform 0.5s;
+            }
+
+            @media screen and (min-width: 1000px) {
+                .cover {
+                    width:30vw;
+                    max-width: 500px;
+                }
+            }
+
             
         </style>
+
         <script>      
-        document.addEventListener("DOMContentLoaded", (event) => {
+            function hideintro() {
+                document.getElementById("intro").style.display = "none";
+                document.getElementById("intrologo").style.display = "none";
+                document.getElementById("introtext").style.display = "none";
+                document.getElementsByTagName('body')[0].style.overflowY = "scroll";
+            }
+            
+            document.addEventListener("DOMContentLoaded", (event) => {
                 if(localStorage.getItem('introshown')) {
-                    document.getElementById("intro").style.display = "none";
-                    document.getElementById("intrologo").style.display = "none";
-                    document.getElementById("introtext").style.display = "none";
+                    hideintro();
                 }
-        });
+            });
+        
+            document.getElementById("intrologo").addEventListener('click', (event) => {
+                if (!introshown) {
+                    hideintro();
+                    localStorage.setItem('introshown', true);
+                }
+            });
         </script> 
     </head>
 
     <bod>
 
         <div id="intro">
-            
-
             <dev id="intrologo">GEFÄNGNISHEFTE</div> 
             <div id="introtext">Gedanken einer politisch desinteressierten Jugend.</div>
- 
-
         </div> 
-        <script>
-            document.getElementById("intrologo").addEventListener('click', (event) => {
-                if (!introshown) {
-                    document.getElementById("intro").style.display = "none";
-                    document.getElementById("intrologo").style.display = "none";
-                    document.getElementById("introtext").style.display = "none";
-                    var introshown = true;
-                    localStorage.setItem('introshown', true);
-                }
-            });
-        </script> 
 
         <div class="header"></div>
 
@@ -94,36 +139,27 @@
 
             <div class="info">Reguläre Ausgaben.</div>
 
-            <div class="h-scrolling-wrapper">
-                <script> 
-                    const element = document.querySelector(".h-scrolling-wrapper");
-            
-                    element.addEventListener('wheel', (event) => {
-                    event.preventDefault();
+            <div class="cover-wrapper">
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
+            </div>
+
+            <!-- <script> 
+                const element = document.querySelector(".h-scrolling-wrapper");
+        
+                element.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                
+                element.scrollBy({
+                    left: event.deltaY < 0 ? -100 : 100,
                     
-                    element.scrollBy({
-                        left: event.deltaY < 0 ? -100 : 100,
-                        
-                    });
-                    });
-                </script> 
-
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="h-cover" alt="ISSUE I"></a>
-            </div>
-
-            <div class="v-scrolling-wrapper">
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="v-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="v-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="v-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="v-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="v-cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="v-cover" alt="ISSUE I"></a>
-            </div>
+                });
+                });
+            </script>  -->
         </div>
 
         <div class="footer"></div>
