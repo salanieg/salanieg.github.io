@@ -22,6 +22,7 @@
                 background-color:lightgrey;
                 padding: 5px 20px;
                 overflow:auto;
+                cursor: pointer;
             }
 
             button u {
@@ -30,9 +31,8 @@
             }
 
             .footer-wrap {
-                background-color: #980000;
+                padding:20px;
                 row-gap: 20px;
-                width:100%;
                 display: flex;  
                 justify-content: space-between;
                 flex-wrap: wrap;
@@ -40,12 +40,17 @@
 		    }
 
             .smallprint {
-                row-gap: 0px;
                 display: flex;                   
-                align-items: flex-start;
+                align-items: flex-end;
                 justify-content: flex-start;
-                gap: 45px;
+                column-gap: 45px;
 		    }
+            
+            @media screen and (max-width: 1600px) {
+                .footer-wrap {
+                    align-items: center;
+                }
+            }
             
             @media screen and (max-width: 1600px) {
                 .smallprint {
@@ -91,9 +96,9 @@
                 </button>
             </form>
 
-            <div class="smallprint"> 
+            <div class="smallprint">
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues"><small>Unterstützen:    paypal.me/GEFAENGNISHEFTE</small></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues"><small>Kontakt:   BIGFLATNOW@gmail.com</small></a>
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">Kontakt:   BIGFLATNOW@gmail.com</small></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><small>Deabonnieren</small></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><small>Impressum</small></a>
             </div>

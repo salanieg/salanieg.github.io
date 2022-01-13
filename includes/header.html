@@ -1,28 +1,16 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<script>
-			let root = document.querySelector(':root');
-			let headerheight = document.querySelector('.header').clientHeight;
-			root.style.setProperty('--headerheight', headerheight+"px");
-		</script>
-
 		<style>
-			:root {
-				--headerheight: 0px;
-			}
-
+			
 			.header-wrap {
-				display: flex;                   
-				align-items: flex-start;
+				display: flex;
 				justify-content: space-between;
-				text-align: center;
 				align-items: center;
+				padding:20px;
 			}
 
 			.logo {
-				float:left;
-				clear:left;
 				border:solid;
 				border-width: 2px;
 				padding:0px 20px;
@@ -56,10 +44,10 @@
 			}
 
 			.dropdown a {
+				background-color: darkred;
 				position: relative;	
 				top: 24px;
 				right: 50px;
-				background-color: #980000;
 				font-size:13pt;
 				box-shadow: 4px 4px 10px 0px rgba(0,0,0,0.35);
 				padding: 10px 60px 10px 60px;
@@ -113,7 +101,7 @@
 						<i class="arrow"></i>
 					</div>
 					<div class="dropdown">
-						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">ISSUE I</a>
+						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE I</a>
 					</div>
 				</div>
 				<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a>
