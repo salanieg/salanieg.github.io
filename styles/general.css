@@ -16,6 +16,7 @@ body {
 	overflow-x: hidden;
 	min-height: 100%;
 	margin:0px;
+	background-color: darkred;
 }
 
 .content {
