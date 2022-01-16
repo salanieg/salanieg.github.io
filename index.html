@@ -4,9 +4,6 @@
         <meta charset="UTF-8">
         <title>ISSUES</title>
         <meta name="viewport" content="width=device-width,  minimal-ui, initial-scale=1">
-    	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/red.css">
         <script
@@ -110,8 +107,57 @@
                     max-width: 500px;
                 }
             }
+            .cover-svg {
+                padding:0px;
+                width:75vw;
+                max-width:550px;
+                transform: scale(1);
+                transition: transform 0.5s;
+                box-shadow: 4px 4px 10px 0px rgba(0,0,0,0.35);
+            }
 
+            .cover-svg:hover {
+                cursor: pointer;
+                transform: scale(1.03);
+                transition: transform 0.5s;
+            }
+
+            @media screen and (min-width: 1000px) {
+                .cover-svg {
+                    min-width: 400px;
+                    width:30vw;
+                    max-width: 500px;
+                }
+            }
+            .issue-wrapper {
+				display: flex;
+				justify-content: center;
+                flex-wrap: nowrap;
+				align-items: flex-start;
+                gap: 10px;
+                width:100%;
+            }
+
+            .issue-text-wrapper > *{
+                cursor: pointer;
+                font-size: 15;
+                white-space: pre-wrap;
+            }
             
+            .issue-cover-wrapper > * > *{
+                display: none;
+                width:70%;
+                max-width:800px;
+                transform: scale(1);
+                transition: transform 0.7s;
+            }
+
+            .issue-cover-wrapper > * > *:hover{
+                cursor: pointer;
+                transform: scale(1.10);
+                transition: transform 0.7s;
+            }
+
         </style>
 
         <script>      
@@ -139,26 +185,30 @@
 
     <body>
     <div class="body-wrapper">
-
+        
         <div id="intro">
             <dev id="intrologo">GEFÄNGNISHEFTE</div> 
             <div id="introtext"><i>Gedanken einer politisch desinteressierten Jugend.</i></div>
         </div> 
-
+        
         <div class="header"></div>
 
         <div class="content">
-
+           
+            <audio class="audioplay" controls>
+                <source src="https://docs.google.com/uc?export=download&id=1Q7Me4I7A_KT3mSQknoG8xY0Y46Es1RuH">
+            </audio>
+            
             <div class="info">Reguläre Ausgaben.</div>
-
-            <div class="cover-wrapper">
+            
+            <!-- <div class="cover-wrapper">
+                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img class="cover-svg" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE I - ALTERNATIVE UTOPIEN"/></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
                 <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
-                <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img src="https://drive.google.com/uc?export=view&id=14OQJ7ZAzti5Yepbm-C-8J8aF9fvzVcuX" class="cover" alt="ISSUE I"></a>
-            </div>
+            </div> -->
 
             <!-- <script> 
                 const element = document.querySelector(".h-scrolling-wrapper");
@@ -172,6 +222,67 @@
                 });
                 });
             </script>  -->
+
+            <div class="issue-wrapper">
+                <div class="issue-cover-wrapper">
+                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-i-cover" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE III - IST POPULISMUS GUT?"  loading="lazy"/></a>
+                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-ii-cover" src="https://docs.google.com/uc?export=download&id=1T7qr2ZhWwpXZ_wciYQXC2N3Pw8tjRjzA" alt="ISSUE II - REFORM ODER REVOLUTION"  loading="lazy"/></a>
+                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-iii-cover" src="https://docs.google.com/uc?export=download&id=1ZWlXLqJnA6KviHDTZxN51RQGIwsKGL60" alt="ISSUE II - REFORM ODER REVOLUTION"  loading="lazy"/></a>
+                </div>
+                <div class="issue-text-wrapper">
+                    <p id="issue-i-text" 
+                        onclick="selectcover(ic, it).call(this)"
+                        onmouseover="hovercover(ic, it)"
+                        onmouseout="unhovercover(ic, it)">ISSUE I    MÄRZ 2022    ALTERNATIVE UTOPIEN</p>
+                    <hr>
+                    <p id="issue-ii-text" 
+                        onclick="selectcover(iic, iit)"
+                        onmouseover="hovercover(iic, iit)"
+                        onmouseout="unhovercover(iic, iit)">ISSUE II    JUNI 2022    REFORM ODER REVOLUTION</p>
+                    <hr>
+                    <p id="issue-iii-text" 
+                        onclick="selectcover(iiic, iiit)"
+                        onmouseover="hovercover(iiic, iiit)"
+                        onmouseout="unhovercover(iiic, iiit)">ISSUE III    SEPTEMBER 2022    IST POPULISMUS GUT?</p>
+                    <hr>
+                    <script>
+                        var ic = "issue-i-cover"
+                        var iic = "issue-ii-cover"
+                        var iiic = "issue-iii-cover"
+
+                        var it = "issue-i-text"
+                        var iit = "issue-ii-text"
+                        var iiit = "issue-iii-text"
+
+                        var selectedcover = ic
+                        var selectedtext = it
+
+                        document.addEventListener("DOMContentLoaded", (event) => {
+                            document.getElementById(selectedcover).style.display = "block";
+                            document.getElementById(selectedtext).style.textDecoration = "underline";
+                        });
+
+                        function selectcover(cover, text) {
+                            document.getElementById(selectedtext).style.textDecoration = "none";
+                            document.getElementById(cover).style.display = "block";
+                            document.getElementById(text).style.textDecoration = "underline";
+                            selectedcover = cover
+                            selectedtext = text
+                        }
+
+                        function hovercover(cover, text) {
+                            document.getElementById(selectedcover).style.display = "none";
+                            document.getElementById(cover).style.display = "block";
+                        }
+
+                        function unhovercover(cover, text) {
+                            document.getElementById(cover).style.display = "none";
+                            document.getElementById(selectedcover).style.display = "block";
+                        }
+                    </script>
+                </div>
+            </div>
+
         </div>
 
         <div class="footer"></div>
