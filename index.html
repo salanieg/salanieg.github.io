@@ -132,22 +132,34 @@
             .issue-wrapper {
 				display: flex;
 				justify-content: center;
-                flex-wrap: nowrap;
+                flex-wrap: wrap;
 				align-items: flex-start;
-                gap: 10px;
+                gap: 60px;
                 width:100%;
             }
 
-            .issue-text-wrapper > *{
+            .issue-text-wrapper > * {
                 cursor: pointer;
                 font-size: 15;
                 white-space: pre-wrap;
+                width:100%;
+            }
+
+            .issue-text-wrapper {
+                width:40%;
+                max-width: fit-content;
+                margin-right:60px;
+            }
+
+            .issue-cover-wrapper {
+                width:50%
             }
             
             .issue-cover-wrapper > * > *{
                 display: none;
-                width:70%;
-                max-width:800px;
+                width:100%;
+                max-width:500px;
+                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
                 transform: scale(1);
                 transition: transform 0.7s;
             }
@@ -225,9 +237,9 @@
 
             <div class="issue-wrapper">
                 <div class="issue-cover-wrapper">
-                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-i-cover" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE III - IST POPULISMUS GUT?"  loading="lazy"/></a>
-                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-ii-cover" src="https://docs.google.com/uc?export=download&id=1T7qr2ZhWwpXZ_wciYQXC2N3Pw8tjRjzA" alt="ISSUE II - REFORM ODER REVOLUTION"  loading="lazy"/></a>
-                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-iii-cover" src="https://docs.google.com/uc?export=download&id=1ZWlXLqJnA6KviHDTZxN51RQGIwsKGL60" alt="ISSUE II - REFORM ODER REVOLUTION"  loading="lazy"/></a>
+                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-i-cover" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE III - IST POPULISMUS GUT?"/></a>
+                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-ii-cover" src="https://docs.google.com/uc?export=download&id=1T7qr2ZhWwpXZ_wciYQXC2N3Pw8tjRjzA" alt="ISSUE II - REFORM ODER REVOLUTION"/></a>
+                    <a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-iii-cover" src="https://docs.google.com/uc?export=download&id=1ZWlXLqJnA6KviHDTZxN51RQGIwsKGL60" alt="ISSUE II - REFORM ODER REVOLUTION"/></a>
                 </div>
                 <div class="issue-text-wrapper">
                     <p id="issue-i-text" 
