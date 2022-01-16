@@ -21,6 +21,9 @@
 
         <style> 
             #intro {
+                position: fixed;
+                top:50%;
+                left:50%;
                 padding: 1000px;
                 background-color: darkred;
             }
@@ -31,6 +34,7 @@
                 left:50vw;
                 transform: translate(-50%, -50%);
                 width: fit-content;
+                max-width:90vw;
                 font-size: 36pt;
                 color:black;
 				border:solid;
@@ -157,7 +161,8 @@
             
             .issue-cover-wrapper > * > *{
                 display: none;
-                width:100%;
+                width:75%;
+                min-width:400px;
                 max-width:500px;
                 box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
                 transform: scale(1);
@@ -207,9 +212,9 @@
 
         <div class="content">
            
-            <audio class="audioplay" controls>
+            <!-- <audio class="audioplay" controls>
                 <source src="https://docs.google.com/uc?export=download&id=1Q7Me4I7A_KT3mSQknoG8xY0Y46Es1RuH">
-            </audio>
+            </audio> -->
             
             <div class="info">Reguläre Ausgaben.</div>
             
