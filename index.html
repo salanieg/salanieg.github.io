@@ -149,13 +149,13 @@
             var selectedtext = it
 
             document.addEventListener("DOMContentLoaded", (event) => {
-                document.getElementById(selectedcover).style.display = "block";
+                document.getElementById(selectedcover).style.display = "inline";
                 document.getElementById(selectedtext).style.textDecoration = "underline";
             });
 
             function selectcover(cover, text) {
                 document.getElementById(selectedtext).style.textDecoration = "none";
-                document.getElementById(cover).style.display = "block";
+                document.getElementById(cover).style.display = "inline";
                 document.getElementById(text).style.textDecoration = "underline";
                 selectedcover = cover
                 selectedtext = text
@@ -163,12 +163,12 @@
 
             function hovercover(cover, text) {
                 document.getElementById(selectedcover).style.display = "none";
-                document.getElementById(cover).style.display = "block";
+                document.getElementById(cover).style.display = "inline";
             }
 
             function unhovercover(cover, text) {
                 document.getElementById(cover).style.display = "none";
-                document.getElementById(selectedcover).style.display = "block";
+                document.getElementById(selectedcover).style.display = "inline";
             }
         </script>
     </head>
