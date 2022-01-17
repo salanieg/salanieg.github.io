@@ -2,8 +2,9 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>ISSUES</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>ISSUE I</title>
+        <meta name="viewport" content="width=device-width, minimal-ui, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/white.css">
         <script
@@ -18,19 +19,62 @@
         });
         </script>
 
-        <style>  
-                
+        <style>
+                    
+            #title {
+                width: fit-content;
+                white-space: pre-wrap;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            #coverimage {
+                width: 100%;
+                max-width: 400px;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+            } 
+
+            #inhaltsverzeichnis {
+                width: 80%;
+                display: flex;
+                justify-content: center;
+                gap:40px 80px;
+                margin-left: auto;
+                margin-right: auto;
+                flex-wrap: wrap;
+            }
+
             .inhalt {
-                text-decoration: none;
                 width: 100%;
                 max-width: 400px;
             }
-
-            .coverimage {
-                width: 100%;
-                max-width: 400px;
+            .inhalt h2 {
+                text-align-last: justify;
             }
 
+            .link-arrow {
+				border: solid black;
+				border-width: 3px 3px 0 0;
+				left: 4px;
+				bottom: 4px;
+				display: inline-block;
+				padding: 3px;
+				transform: rotate(45deg);
+  				-webkit-transform: rotate(45deg);
+			}
+
+            .link-arrow:hover {
+				border: solid darkred;
+				border-width: 3px 3px 0 0;
+				transition: 0.1s;
+			}
+
+			.link-arrow:hover a.issues  {
+				color: lightgrey;
+				transition: 0.1s;
+			}
         </style>
     </head>
 
@@ -39,60 +83,48 @@
 
         <div class="content">
 
-            <img src="https://drive.google.com/uc?export=view&id=1qSUVKIyy9iKQ6_3CHmgjPkU_l3WO1DHZ" class="coverimage" alt="ISSUE I">
+            <div id="title"><h2>ISSUE I     MÄRZ 2022</h2><h2>POSTHISTORISCHE KLASSENKÄMPFE</h2></div>
+
+            <img id="coverimage" src="https://drive.google.com/uc?export=view&id=1qSUVKIyy9iKQ6_3CHmgjPkU_l3WO1DHZ" alt="ISSUE I">
             
-            <div class="inhalt">
-                <h2 dir="ltr">
-                <a
-                    href="https://sites.google.com/view/gefaengnishefte/issues/issue-i/der-neue-rahmen?authuser=0"
-                >
-                    Der neue Rahmen
-                </a>
-                </h2>
-                <br/>
-                <p dir="ltr">
-                    Wenn der Liberalismus in gewisse Rahmenbedingungen eingebettet wird, kann
-                    so soziale und ökologische Nachhaltigkeit sichergestellt werden.
-                    Gleichzeitig profitiert ein solches System von der schnellen
-                    Anpassungsfähigkeit eines freien, Anreizorientierten Marktes. Durch diese
-                    Geschwindigkeit kann die Sicherung der Bedürfnisse der Menschen am besten
-                    sichergestellt werden.
-                </p>
-                <br/>
-                <br/>
-                <h2 dir="ltr">
-                    <a
-                        href="https://sites.google.com/view/gefaengnishefte/issues/issue-i/posthistorische-klassenk%C3%A4mpfe?authuser=0"
-                    >
-                        Posthistorische Klassenkämpfe
-                    </a>
-                </h2>
-                <br/>
-                <p dir="ltr">
-                    Der Kapitalismus ist weder alternativlos, noch kann er durch einfache
-                    Reformen zu sozialer und ökologischer Nachhaltigkeit korrigiert werden. Er
-                    ist ein System von herrschenden Klassen, für eben diese herrschenden
-                    Klassen. Wohin aber, wenn der Gegenversuch des Staatskommunismus
-                    gescheitert ist?
-                </p>
-                <br/>
-                <br/>
-                <h2 dir="ltr">
-                    <a
-                        href="https://sites.google.com/view/gefaengnishefte/issues/issue-i/agieren-agitieren?authuser=0"
-                    >
-                        Agieren &amp; Agitieren
-                    </a>
-                </h2>
-                <br/>
-                <p>
-                    Wie baut man eine beständige emanzipatorische Bewegung auf, die nicht in
-                    ohnmächtigen Utopismus verfällt, während sie alltägliches Leid hinnimmt? Es
-                    ist notwendig, die erkämpften Fortschritte gegen Angriffe zu verteidigen.
-                    Dabei jedoch nicht den Weg der Sozialdemokratie zu gehen, sich dem
-                    bestehenden System zu fügen und zur Verschleierung von
-                    Herrschaftsverhältnissen beizutragen ist die Herausforderung.
-                </p>
+            <div id="inhaltsverzeichnis">
+
+                <div class="inhalt">
+                    <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/der-neue-rahmen">Der&#x2005;neue&#x2005;Rahmen    ➞</a></h2>
+                    
+                    <p>
+                        Wenn der Liberalismus in gewisse Rahmenbedingungen eingebettet wird, kann
+                        so soziale und ökologische Nachhaltigkeit sichergestellt werden.
+                        Gleichzeitig profitiert ein solches System von der schnellen
+                        Anpassungsfähigkeit eines freien, Anreizorientierten Marktes. Durch diese
+                        Geschwindigkeit kann die Sicherung der Bedürfnisse der Menschen am besten
+                        sichergestellt werden.
+                    </p>
+                </div>
+                <div class="inhalt">
+                    <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/posthistorisch-klassenkämpfe">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
+                    
+                    <p>
+                        Der Kapitalismus ist weder alternativlos, noch kann er durch einfache
+                        Reformen zu sozialer und ökologischer Nachhaltigkeit korrigiert werden. Er
+                        ist ein System von herrschenden Klassen, für eben diese herrschenden
+                        Klassen. Wohin aber, wenn der Gegenversuch des Staatskommunismus
+                        gescheitert ist?
+                    </p>
+                </div>
+                <div class="inhalt">
+                    <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/agieren-agitieren">Agieren&#x2005;&&#x2005;Agitieren ➞<br></a></h2>
+                    
+                    <p>
+                        Wie baut man eine beständige emanzipatorische Bewegung auf, die nicht in
+                        ohnmächtigen Utopismus verfällt, während sie alltägliches Leid hinnimmt? Es
+                        ist notwendig, die erkämpften Fortschritte gegen Angriffe zu verteidigen.
+                        Dabei jedoch nicht den Weg der Sozialdemokratie zu gehen, sich dem
+                        bestehenden System zu fügen und zur Verschleierung von
+                        Herrschaftsverhältnissen beizutragen ist die Herausforderung.
+                    </p>
+                </div>
+
             </div>
         </div>
 
