@@ -82,7 +82,7 @@
 
             .issue-text-wrapper {
                 max-width: fit-content;
-                margin-right:20px;
+                margin-right:60px;
             }
 
             .issue-cover-wrapper > * {
@@ -149,13 +149,13 @@
             var selectedtext = it
 
             document.addEventListener("DOMContentLoaded", (event) => {
-                document.getElementById(selectedcover).style.display = "inline";
+                document.getElementById(selectedcover).style.display = "block";
                 document.getElementById(selectedtext).style.textDecoration = "underline";
             });
 
             function selectcover(cover, text) {
                 document.getElementById(selectedtext).style.textDecoration = "none";
-                document.getElementById(cover).style.display = "inline";
+                document.getElementById(cover).style.display = "block";
                 document.getElementById(text).style.textDecoration = "underline";
                 selectedcover = cover
                 selectedtext = text
@@ -163,12 +163,12 @@
 
             function hovercover(cover, text) {
                 document.getElementById(selectedcover).style.display = "none";
-                document.getElementById(cover).style.display = "inline";
+                document.getElementById(cover).style.display = "block";
             }
 
             function unhovercover(cover, text) {
                 document.getElementById(cover).style.display = "none";
-                document.getElementById(selectedcover).style.display = "inline";
+                document.getElementById(selectedcover).style.display = "block";
             }
         </script>
     </head>
@@ -199,7 +199,7 @@
                 </div>
                 <div class="issue-text-wrapper">
                     <p id="issue-i-text" 
-                        onclick="selectcover(ic, it).call(this)"
+                        onclick="selectcover(ic, it)"
                         onmouseover="hovercover(ic, it)"
                         onmouseout="unhovercover(ic, it)">ISSUE I    MÄRZ 2022    ALTERNATIVE UTOPIEN</p>
                     <hr>
