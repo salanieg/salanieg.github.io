@@ -1,0 +1,28 @@
+body {
+  background-color: white;
+}
+
+.content {
+  color: black;
+  background-color: white;
+}
+
+.content a:active {
+  color: black;
+  transition: 0.1s;
+} 
+
+.content a:visited {
+  color: black;
+  transition: 0.1s;
+}  
+
+.content a:link {
+  color: black;
+  transition: 0.1s;
+} 
+
+.content a:hover {
+  color: darkred;
+  transition: 0.1s;
+}
