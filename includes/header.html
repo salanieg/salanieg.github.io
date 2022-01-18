@@ -24,7 +24,7 @@
 				user-select: none;
 			}
 
-			nav {
+			.navigation {
 				display: flex;
 				gap: 30px;
 			}
@@ -37,6 +37,7 @@
 
 			.dropdownmenu {
 				position:relative;
+				z-index:1;
 			}
 
 			.dropdown {
@@ -65,18 +66,19 @@
 			}
 
 			a:hover {
-				color: lightgrey;
+				color: grey;
 				transition: 0.1s;
 			}
 
+
 			.issue-arrow:hover .arrow {
-				border: solid lightgrey;
+				border: solid grey;
 				border-width: 0 3px 3px 0;
 				transition: 0.1s;
 			}
 
 			.issue-arrow:hover a.issues  {
-				color: lightgrey;
+				color: grey;
 				transition: 0.1s;
 			}
 			
@@ -91,6 +93,89 @@
 				transform: rotate(45deg);
   				-webkit-transform: rotate(45deg);
 			}
+
+			/* FORM */
+			.abonnieren {
+				position: absolute;
+				bottom: 0px;
+				width: 100%;
+				padding: 20px;
+				white-space: nowrap;
+			}
+			input {
+                width: 100%;
+                max-width: 50%;
+                color: black;
+                height: fit-content;
+                font-size:180%;
+                padding: 5px 10px;
+                background-color:white;
+            }
+
+            button {
+                width: fit-content;
+                max-width: 45%;
+                color: black;
+                height: fit-content;
+                font-size:180%;
+                background-color:lightgrey;
+                padding: 5px 20px;
+                overflow:auto;
+                cursor: pointer;
+            }
+
+            button u {
+                color: black;
+                background-color:lightgrey;
+            }
+
+			/* MENU ICON */
+
+			.bar {
+				width: 30px;
+				height: 2px;
+				background-color: white;
+				margin: 6px 0;
+			}
+
+			/* SIDEMENU */
+
+			.menu-container:hover .menu {
+				width: 600px;
+				max-width: 100vw;
+				background: darkred;
+			}
+
+			.menu {
+				position:fixed;
+				right:0;
+				top:0;
+				height: 100vh;
+				background: darkred;
+				width: 0vw;
+				box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35);
+				transition: 1s;			
+				z-index:99;	
+			}
+
+			.menu > * {
+				list-style-type: none;
+			}
+
+			.mainmenu {
+				text-transform: uppercase;
+				font-size: 30pt;
+				line-height: 1,15;
+				letter-spacing: .2em;
+				font-weight: 600;
+			}
+
+			.minimenu {
+				text-transform: uppercase;
+				font-size: 15px;
+				line-height: 2;
+			}
+
 		</style>
 	</head>
 
@@ -99,8 +184,7 @@
 
 			<div class="logo">GEFÄNGNISHEFTE</div> 
 
-			<nav class="navigation">
-				
+			<!-- <nav class="navigation">
 				<div class="dropdownmenu">
 					<div class="issue-arrow">
 						<a class= issues href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
@@ -112,7 +196,59 @@
 				</div>
 				<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a>
 				<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a>
-			</nav>
+			</nav> -->
+
+			<div class="menu-container">
+				<div class="menu-button" onclick="myFunction(this)">
+					<div class="bar"></div>
+					<div class="bar"></div>
+					<div class="bar"></div>
+				</div>
+
+				<div class="menu">
+
+					<ul class="mainmenu">
+						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a></li>
+						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a></li>
+						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a></li>
+					</ul>
+					
+					<hr>
+
+					<ul class="minimenu">
+						<li><a href="paypal.me/GEFAENGNISHEFTE">paypal.me/GEFAENGNISHEFTE</a></li>
+						<li><a href="mailto:bigflatnow@gmail.com">BIGFLATNOW@gmail.com</a></li>
+						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">Deabonnieren </a></li>
+						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum">Impressum</a></li>
+					</ul>
+				
+					<form class="abonnieren"
+						action="https://formsubmit.co/5936f3264e1b3101d767692f779ca23a" method="POST">
+		
+						<input 
+						type="email" 
+						name="email" placeholder="Email" required>
+		
+						<input 
+						type="hidden" 
+						name="_subject" 
+						value="Neue Abonennt*in!">
+		
+						<input 
+						type="hidden" 
+						name="_captcha" 
+						value="false">
+		
+						<button 
+						type="submit">
+						<u>Abonnieren</u>
+						</button>
+					</form>
+
+
+				</div>
+			</div>
+
 		</div>
 	</body>
 </html>
