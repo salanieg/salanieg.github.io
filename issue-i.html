@@ -20,9 +20,16 @@
         </script>
 
         <style>
+
+            .content {
+                display: flex;
+                justify-content: center;
+                flex-direction: column;
+            }
                     
             #title {
-                width: fit-content;
+                width: 100%;
+                max-width: 500px;
                 white-space: pre-wrap;
                 margin-left: auto;
                 margin-right: auto;
@@ -30,14 +37,13 @@
 
             #coverimage {
                 width: 100%;
-                max-width: 400px;
+                max-width: 500px;
                 display: block;
                 margin-left: auto;
                 margin-right: auto;
             } 
 
             #inhaltsverzeichnis {
-                width: 80%;
                 display: flex;
                 justify-content: center;
                 gap:40px 80px;
@@ -46,35 +52,21 @@
                 flex-wrap: wrap;
             }
 
+            @media screen and (max-width: 90vw) {
+				#inhaltsverzeichnis {
+					flex-direction: column;
+                    margin: 0 auto;
+				}
+			}
+
             .inhalt {
                 width: 100%;
-                max-width: 400px;
+                max-width: 500px;
             }
             .inhalt h2 {
                 text-align-last: justify;
             }
 
-            .link-arrow {
-				border: solid black;
-				border-width: 3px 3px 0 0;
-				left: 4px;
-				bottom: 4px;
-				display: inline-block;
-				padding: 3px;
-				transform: rotate(45deg);
-  				-webkit-transform: rotate(45deg);
-			}
-
-            .link-arrow:hover {
-				border: solid darkred;
-				border-width: 3px 3px 0 0;
-				transition: 0.1s;
-			}
-
-			.link-arrow:hover a.issues  {
-				color: lightgrey;
-				transition: 0.1s;
-			}
         </style>
     </head>
 
