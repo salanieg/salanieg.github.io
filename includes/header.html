@@ -35,22 +35,22 @@
 				}
 			}
 
-			.dropdownmenu {
+			.dropdownmenu-old {
 				position:relative;
 				z-index:1;
 			}
 
-			.dropdown {
+			.dropdown-old {
 				display: none;
 				position: absolute;	
 				white-space: nowrap
 			}
 
-			.dropdownmenu:hover .dropdown {
+			.dropdownmenu-old:hover .dropdown {
 				display: block;	
 			}
 
-			.dropdown a {
+			.dropdown-old a {
 				background-color: darkred;
 				position: relative;	
 				top: 24px;
@@ -71,9 +71,9 @@
 			}
 
 
-			.issue-arrow:hover .arrow {
+			.issue-arrow:hover .old-arrow {
 				border: solid grey;
-				border-width: 0 3px 3px 0;
+				border-width: 0 6px 6px 0;
 				transition: 0.1s;
 			}
 
@@ -82,14 +82,14 @@
 				transition: 0.1s;
 			}
 			
-			.arrow {
+			.old-arrow {
 				border: solid white;
-				border-width: 0 3px 3px 0;
+				border-width: 0 6px 6px 0;
 				position: relative;
-				left: 4px;
-				bottom: 4px;
+				left: 12px;
+				bottom: 8px;
 				display: inline-block;
-				padding: 3px;
+				padding: 7px;
 				transform: rotate(45deg);
   				-webkit-transform: rotate(45deg);
 			}
@@ -147,6 +147,7 @@
 			}
 
 			.menu {
+				white-space: nowrap;
 				position:fixed;
 				right:0;
 				top:0;
@@ -165,17 +166,61 @@
 			.mainmenu {
 				text-transform: uppercase;
 				font-size: 30pt;
-				line-height: 1,15;
+				line-height: 1.5;
 				letter-spacing: .2em;
 				font-weight: 600;
 			}
 
 			.minimenu {
+				margin-top: 20px;
 				text-transform: uppercase;
 				font-size: 15px;
 				line-height: 2;
 			}
 
+			/* DROPDOWN */
+
+			.dropmenu {
+				display:none;
+				list-style: none;
+				font-size: 24pt;
+				line-height: 1.5;
+				letter-spacing: .1em;
+				margin-top: 5px;
+				margin-bottom: 15px;
+			}
+
+			/* .dropdown:hover .dropmenu {
+				display: block;	
+			} */
+
+			.droparrow:hover + .dropmenu {
+				display: block;	
+			}
+
+
+			.droparrow:hover .arrow {
+				border: solid grey;
+				border-width: 0 6px 6px 0;
+				transition: 0.1s;
+			}
+
+			.droparrow:hover a  {
+				color: grey;
+				transition: 0.1s;
+			}
+			
+			.arrow {
+				border: solid white;
+				border-width: 0 6px 6px 0;
+				position: relative;
+				left: 12px;
+				bottom: 8px;
+				display: inline-block;
+				padding: 7px;
+				transform: rotate(45deg);
+  				-webkit-transform: rotate(45deg);
+			}
 		</style>
 	</head>
 
@@ -185,12 +230,12 @@
 			<div class="logo">GEFÄNGNISHEFTE</div> 
 
 			<!-- <nav class="navigation">
-				<div class="dropdownmenu">
+				<div class="dropdownmenu-old">
 					<div class="issue-arrow">
 						<a class= issues href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
-						<i class="arrow"></i>
+						<i class="old-arrow"></i>
 					</div>
-					<div class="dropdown">
+					<div class="dropdown-old">
 						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE I</a>
 					</div>
 				</div>
@@ -208,7 +253,15 @@
 				<div class="menu">
 
 					<ul class="mainmenu">
-						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a></li>
+						<li>
+							<span class="droparrow"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a><i class="arrow"></i></span>
+							<ul class="dropmenu">
+								<li><a href="paypal.me/GEFAENGNISHEFTE">ISSUE I</a></li>
+								<li><a href="mailto:bigflatnow@gmail.com">ISSUE II</a></li>
+								<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE III</a></li>
+								<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum">ISSUE IV</a></li>
+							</ul>
+						</li>
 						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a></li>
 						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a></li>
 					</ul>
