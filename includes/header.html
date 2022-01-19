@@ -2,9 +2,15 @@
 <html>
 	<head>
 		<script>
+			
 			function transformbutton(button) {
 				button.classList.toggle("change");
 			}
+
+			function closemenu() {
+				document.getElementById("menu").style.width = "0px";
+			}
+
 		</script>
 		<style>
 			
@@ -158,15 +164,26 @@
   				cursor: pointer;
 			}
 
+			.menu-start {
+				font-size: 17pt;
+				padding-right: 20px;
+			}
+
+			.menu-close {
+				font-size: 17pt;
+				padding: 20px;
+				text-align: right;
+			}
 			
+
 			/* SIDEMENU */
 			
-			.menu-container:hover .menu {
+			.menu-container:hover #menu {
 				width: 600px;
 			}
 			
 			@media screen and (max-width: 800px) {
-                .menu-container:hover .menu {
+                .menu-container:hover #menu {
 					width: 100vw;
 				}
             }
@@ -185,7 +202,7 @@
 				}
             }
 
-			.menu {
+			#menu {
 				white-space: nowrap;
 				position:fixed;
 				right:0;
@@ -199,7 +216,7 @@
 				z-index:99;	
 			}
 
-			.menu > * {
+			#menu > * {
 				list-style-type: none;
 			}
 
@@ -265,9 +282,10 @@
 			/* FORM */
 			
 			.abonnieren {
+				position: absolute;
+				bottom: 100px;
 				width: 98%;
 				padding: 20px;
-				margin-top: 200px;
 				white-space: nowrap;
 				text-align: center;
 			}
@@ -322,14 +340,15 @@
 			</nav> -->
 
 			<div class="menu-container">
-				<div class="menu-button" onclick="transformbutton(this)">
+				<!-- <div class="menu-button" onclick="transformbutton(this)">
 					<div class="bar1"></div>
 					<div class="bar2"></div>
 					<div class="bar3"></div>
-				</div>
+				</div> -->
+				<span class="menu-start">#</span>
 
-				<div class="menu">
-
+				<div id="menu">
+					<div class="menu-close" onclick="closemenu()">X</div>
 					<ul class="mainmenu">
 						<li>
 							<span class="droparrow"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a><i class="arrow"></i></span>
