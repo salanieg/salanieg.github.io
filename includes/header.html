@@ -113,8 +113,8 @@
             }
 
             button {
-                width: fit-content;
-                max-width: 45%;
+                width: 100%;
+                max-width: 40%;
                 color: black;
                 height: fit-content;
                 font-size:180%;
@@ -142,9 +142,27 @@
 
 			.menu-container:hover .menu {
 				width: 600px;
-				max-width: 100vw;
-				background: darkred;
 			}
+			
+			@media screen and (max-width: 800px) {
+                .menu-container:hover .menu {
+					width: 100vw;
+				}
+            }
+
+			@media screen and (max-width: 800px) {
+				input {
+					width: 100%;
+					max-width: 60%;
+				}
+            }
+
+			@media screen and (max-width: 800px) {
+				button {
+					width: fit-content;
+					max-width: 30%;
+				}
+            }
 
 			.menu {
 				white-space: nowrap;
@@ -152,6 +170,7 @@
 				right:0;
 				top:0;
 				height: 100vh;
+				max-width: 100vw;
 				background: darkred;
 				width: 0vw;
 				box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35);
@@ -190,11 +209,11 @@
 				margin-bottom: 15px;
 			}
 
-			/* .dropdown:hover .dropmenu {
-				display: block;	
-			} */
-
 			.droparrow:hover + .dropmenu {
+				display: block;	
+			}
+
+			.dropmenu:hover {
 				display: block;	
 			}
 
