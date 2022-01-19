@@ -3,27 +3,6 @@
 	<head>
 		<style>
 			
-			.header-wrap {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				padding:15px 20px 15px 20px ;
-			}
-
-			.logo {
-				border:solid;
-				border-width: 2px;
-				padding:0px 20px;
-				background-color:white;
-				color:black;
-				-webkit-touch-callout: none;
-				-webkit-user-select: none;
-				-khtml-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-			}
-
 			.navigation {
 				display: flex;
 				gap: 30px;
@@ -94,14 +73,168 @@
   				-webkit-transform: rotate(45deg);
 			}
 
+
+
+
+
+
+			/* GENERAL */
+
+			.header-wrap {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding:15px 20px 15px 20px ;
+			}
+
+			.logo {
+				border:solid;
+				border-width: 2px;
+				padding:0px 20px;
+				background-color:white;
+				color:black;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+
+
+			/* MENU ICON */
+
+			.bar {
+				width: 23px;
+				height: 1px;
+				background-color: white;
+				margin-top: 6px;
+				padding-top: 0px;
+				padding-bottom: 0px;
+			}
+
+			.menu-button {
+				width: fit-content;
+				height: fit-content;
+				margin-top: 0px;
+				margin-bottom: 0px;
+			}
+
+			
+			/* SIDEMENU */
+			
+			.menu-container:hover .menu {
+				width: 600px;
+			}
+			
+			@media screen and (max-width: 800px) {
+                .menu-container:hover .menu {
+					width: 100vw;
+				}
+            }
+
+			@media screen and (max-width: 800px) {
+				input {
+					width: 100%;
+					max-width: 50%;
+				}
+            }
+
+			@media screen and (max-width: 800px) {
+				button {
+					width: fit-content;
+					max-width: 45%;
+				}
+            }
+
+			.menu {
+				white-space: nowrap;
+				position:fixed;
+				right:0;
+				top:0;
+				height: 100vh;
+				max-width: 100vw;
+				background: darkred;
+				width: 0vw;
+				box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35);
+				transition: 1s;			
+				z-index:99;	
+			}
+
+			.menu > * {
+				list-style-type: none;
+			}
+
+			.mainmenu {
+				text-transform: uppercase;
+				font-size: 24pt;
+				line-height: 1.5;
+				font-weight: 400;
+			}
+
+			.minimenu {
+				margin-top: 20px;
+				text-transform: uppercase;
+				font-size: 15px;
+				line-height: 2;
+			}
+
+
+			/* DROPDOWN */
+
+			.dropmenu {
+				display:none;
+				list-style: none;
+				font-size: 16pt;
+				line-height: 1.5;
+				padding-bottom: 15px;
+				font-weight: 400;
+			}
+
+			.droparrow:hover + .dropmenu {
+				display: block;	
+			}
+
+			.dropmenu:hover {
+				display: block;	
+			}
+
+
+			.droparrow:hover .arrow {
+				border: solid grey;
+				border-width: 0 4px 4px 0;
+				transition: 0.1s;
+			}
+
+			.droparrow:hover a  {
+				color: grey;
+				transition: 0.1s;
+			}
+			
+			.arrow {
+				border: solid white;
+				border-width: 0 4px 4px 0;
+				position: relative;
+				left: 18px;
+				bottom: 9px;
+				display: inline-block;
+				padding: 5px;
+				transform: rotate(45deg);
+  				-webkit-transform: rotate(45deg);
+			}
+
+
 			/* FORM */
+			
 			.abonnieren {
 				position: absolute;
 				bottom: 0px;
 				width: 100%;
 				padding: 20px;
 				white-space: nowrap;
+				text-align: center;
 			}
+			
 			input {
                 width: 100%;
                 max-width: 50%;
@@ -128,118 +261,6 @@
                 color: black;
                 background-color:lightgrey;
             }
-
-			/* MENU ICON */
-
-			.bar {
-				width: 30px;
-				height: 2px;
-				background-color: white;
-				margin: 6px 0;
-			}
-
-			/* SIDEMENU */
-
-			.menu-container:hover .menu {
-				width: 600px;
-			}
-			
-			@media screen and (max-width: 800px) {
-                .menu-container:hover .menu {
-					width: 100vw;
-				}
-            }
-
-			@media screen and (max-width: 800px) {
-				input {
-					width: 100%;
-					max-width: 60%;
-				}
-            }
-
-			@media screen and (max-width: 800px) {
-				button {
-					width: fit-content;
-					max-width: 30%;
-				}
-            }
-
-			.menu {
-				white-space: nowrap;
-				position:fixed;
-				right:0;
-				top:0;
-				height: 100vh;
-				max-width: 100vw;
-				background: darkred;
-				width: 0vw;
-				box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35);
-				transition: 1s;			
-				z-index:99;	
-			}
-
-			.menu > * {
-				list-style-type: none;
-			}
-
-			.mainmenu {
-				text-transform: uppercase;
-				font-size: 30pt;
-				line-height: 1.5;
-				letter-spacing: .2em;
-				font-weight: 600;
-			}
-
-			.minimenu {
-				margin-top: 20px;
-				text-transform: uppercase;
-				font-size: 15px;
-				line-height: 2;
-			}
-
-			/* DROPDOWN */
-
-			.dropmenu {
-				display:none;
-				list-style: none;
-				font-size: 24pt;
-				line-height: 1.5;
-				letter-spacing: .1em;
-				margin-top: 5px;
-				margin-bottom: 15px;
-			}
-
-			.droparrow:hover + .dropmenu {
-				display: block;	
-			}
-
-			.dropmenu:hover {
-				display: block;	
-			}
-
-
-			.droparrow:hover .arrow {
-				border: solid grey;
-				border-width: 0 6px 6px 0;
-				transition: 0.1s;
-			}
-
-			.droparrow:hover a  {
-				color: grey;
-				transition: 0.1s;
-			}
-			
-			.arrow {
-				border: solid white;
-				border-width: 0 6px 6px 0;
-				position: relative;
-				left: 12px;
-				bottom: 8px;
-				display: inline-block;
-				padding: 7px;
-				transform: rotate(45deg);
-  				-webkit-transform: rotate(45deg);
-			}
 		</style>
 	</head>
 
