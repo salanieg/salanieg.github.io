@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<script>
+			function transformbutton(button) {
+				button.classList.toggle("change");
+			}
+		</script>
 		<style>
 			
-			.navigation {
+			/* .navigation {
 				display: flex;
 				gap: 30px;
 			}
@@ -39,16 +44,6 @@
 				padding: 10px 60px 10px 60px;
 			}
 
-			a:active, a:visited, a:link {
-				color: white ;
-				transition: 0.1s;
-			}
-
-			a:hover {
-				color: grey;
-				transition: 0.1s;
-			}
-
 
 			.issue-arrow:hover .old-arrow {
 				border: solid grey;
@@ -71,7 +66,7 @@
 				padding: 7px;
 				transform: rotate(45deg);
   				-webkit-transform: rotate(45deg);
-			}
+			} */
 
 
 
@@ -101,23 +96,66 @@
 				user-select: none;
 			}
 
+			a:active, a:visited, a:link {
+				color: white ;
+				transition: 0.1s;
+			}
+
+			a:hover {
+				color: grey;
+				transition: 0.1s;
+			}
+
 
 			/* MENU ICON */
 
-			.bar {
+			.bar1, .bar2, .bar3 {
+				position: absolute;
+  				display: block;
 				width: 23px;
 				height: 3px;
 				background-color: white;
-				margin-top: 6px;
-				padding-top: 0px;
 				padding-bottom: 0px;
+				transition: 0.4s;
+			}
+
+			.bar1 {
+				top:0px;
+			}
+			.bar2 {
+				top:5px;
+			}
+			.bar3 {
+				top:10px;
+			}
+
+			.change .bar1 {
+				transition: 0.4s;
+				-webkit-transform: rotate(-45deg) translate(5px);
+				transform: rotate(45deg) translate(5px);
+			}
+
+			.change .bar2 {
+				transition: 0.4s;
+				opacity: 0;
+			}
+
+			.change .bar3 {
+				transition: 0.4s;
+				-webkit-transform: rotate(45deg) translate(-5px);
+				transform: rotate(-45deg) translate(-5px);
 			}
 
 			.menu-button {
+				position: relative;
+				display: flex;
+				align-items: center;
 				width: fit-content;
 				height: fit-content;
-				margin-top: 0px;
-				margin-bottom: 0px;
+				margin: 0px;
+				padding: 0px;
+				display: inline-block;
+  				cursor: pointer;
 			}
 
 			
@@ -180,7 +218,7 @@
 			}
 
 
-			/* DROPDOWN */
+			/* DROPMENU */
 
 			.dropmenu {
 				display:none;
@@ -227,10 +265,9 @@
 			/* FORM */
 			
 			.abonnieren {
-				position: absolute;
-				bottom: 0px;
-				width: 100%;
+				width: 98%;
 				padding: 20px;
+				margin-top: 200px;
 				white-space: nowrap;
 				text-align: center;
 			}
@@ -261,6 +298,7 @@
                 color: black;
                 background-color:lightgrey;
             }
+
 		</style>
 	</head>
 
@@ -284,10 +322,10 @@
 			</nav> -->
 
 			<div class="menu-container">
-				<div class="menu-button" onclick="myFunction(this)">
-					<div class="bar"></div>
-					<div class="bar"></div>
-					<div class="bar"></div>
+				<div class="menu-button" onclick="transformbutton(this)">
+					<div class="bar1"></div>
+					<div class="bar2"></div>
+					<div class="bar3"></div>
 				</div>
 
 				<div class="menu">
@@ -334,7 +372,8 @@
 		
 						<button 
 						type="submit">
-						<u>Abonnieren</u>
+						Abonnieren
+						<!-- <u>Abonnieren</u> -->
 						</button>
 					</form>
 
