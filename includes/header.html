@@ -7,6 +7,10 @@
 				button.classList.toggle("change");
 			}
 
+			function openmenu() {
+				document.getElementById("menu").style.width = "600px";
+			}
+
 			function closemenu() {
 				document.getElementById("menu").style.width = "0px";
 			}
@@ -345,7 +349,7 @@
 					<div class="bar2"></div>
 					<div class="bar3"></div>
 				</div> -->
-				<span class="menu-start">#</span>
+				<span class="menu-start" onclick="openmenu()">#</span>
 
 				<div id="menu">
 					<div class="menu-close" onclick="closemenu()">X</div>
