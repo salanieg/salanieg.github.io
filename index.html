@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <title>ISSUES</title>
         <meta name="viewport" content="width=device-width">
-        <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap">
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/red.css">
         <script
@@ -13,10 +13,10 @@
             crossorigin="anonymous">
         </script>
         <script> 
-        $(function(){
-            $(".header").load("includes/header.html"); 
-            $(".footer").load("includes/footer.html"); 
-        });
+            $(function(){
+                $(".header").load("includes/header.html"); 
+                $(".footer").load("includes/footer.html"); 
+            });
         </script>
 
         <style> 
@@ -78,9 +78,6 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                width: 100vw;
-                margin-top: 100px;
-                margin-bottom: 100px;
             }
 
             .issue-wrapper {
@@ -91,6 +88,8 @@
                 flex-wrap: wrap;
 				align-items: flex-start;
                 gap: 80px 40px;
+                margin-top: 100px;
+                margin-bottom: 100px;
             }
 
             .issue-text-wrapper {
@@ -107,7 +106,7 @@
                 font-size:15;
                 white-space: pre-wrap;
                 width:100%;
-                /* text-align-last: justify; */
+                text-align-last: justify;
             }
             
             .issue-cover-wrapper > * > * > *{
@@ -209,22 +208,22 @@
                     <p id="issue-i-text" 
                         onclick="selectcover(ic, it)"
                         onmouseover="hovercover(ic, it)"
-                        onmouseout="unhovercover(ic, it)">ISSUE&#x2005;I      MÄRZ&#x2005;2022      ALTERNATIVE&#x2005;UTOPIEN</p>
+                        onmouseout="unhovercover(ic, it)">ISSUE&#x2005;I      <!--MÄRZ&#x2005;2022-->            ALTERNATIVE&#x2005;UTOPIEN</p>
                     <hr>
                     <p id="issue-ii-text" 
                         onclick="selectcover(iic, iit)"
                         onmouseover="hovercover(iic, iit)"
-                        onmouseout="unhovercover(iic, iit)">ISSUE&#x2005;II      JUNI&#x2005;2022      REFORM&#x2005;ODER REVOLUTION</p>
+                        onmouseout="unhovercover(iic, iit)">ISSUE&#x2005;II      <!--JUNI&#x2005;2022-->            REFORM&#x2005;ODER REVOLUTION</p> 
                     <hr>
                     <p id="issue-iii-text" 
                         onclick="selectcover(iiic, iiit)"
                         onmouseover="hovercover(iiic, iiit)"
-                        onmouseout="unhovercover(iiic, iiit)">ISSUE&#x2005;III      SEPTEMBER&#x2005;2022      IST&#x2005;POPULISMUS&#x2005;GUT?</p>
+                        onmouseout="unhovercover(iiic, iiit)">ISSUE&#x2005;III      <!--SEPTEMBER&#x2005;2022-->            IST&#x2005;POPULISMUS&#x2005;GUT?</p>
                     <hr>
                     <p id="issue-iv-text" 
                         onclick="selectcover(ivc, ivt)"
                         onmouseover="hovercover(ivc, ivt)"
-                        onmouseout="unhovercover(ivc, ivt)">ISSUE&#x2005;IV      MAI&#x2005;2023      IST&#x2005;POPULISMUS&#x2005;GUT?</p>
+                        onmouseout="unhovercover(ivc, ivt)">ISSUE&#x2005;IV      <!--MAI&#x2005;2023-->            IST&#x2005;POPULISMUS&#x2005;GUT?</p>
                     <hr>
                 </div>
             </div>

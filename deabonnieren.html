@@ -1,9 +1,91 @@
 <!DOCTYPE html>
 <html>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <title>DEABONNIEREN</title>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap">
+        <link rel="stylesheet" href="styles/general.css">
+        <link rel="stylesheet" href="styles/red.css">
+        <script
+            src="https://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous">
+        </script>
+        <script> 
+            $(function(){
+                $(".header").load("includes/header.html"); 
+                $(".footer").load("includes/footer.html"); 
+            });
+        </script>
 
-<h1>My First Heading</h1>
-<p>My first paragraph.</p>
+        <style>
+            .content {
+                display:flex;
+                flex-wrap: wrap;
+                flex-direction: column;
+                width:60vw;
+            }
 
-</body>
+            .content div {
+                margin-left:100px;
+                white-space: pre-wrap;
+                width:500px;
+            }
+            
+			/* FORM */
+			
+			.abonnieren {
+				position: absolute;
+				bottom: 100px;
+				width: 98%;
+				padding: 20px;
+				white-space: nowrap;
+				text-align: center;
+			}
+			
+			input {
+                width: 100%;
+                max-width: 50%;
+                color: black;
+                height: fit-content;
+                font-size:180%;
+                padding: 5px 10px;
+                background-color:white;
+            }
+
+            button {
+                width: 100%;
+                max-width: 40%;
+                color: black;
+                height: fit-content;
+                font-size:180%;
+                background-color:lightgrey;
+                padding: 5px 20px;
+                overflow:auto;
+                cursor: pointer;
+            }
+
+            button u {
+                color: black;
+                background-color:lightgrey;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <div class="header"></div>
+
+        <div class="content">
+            <form class="abonnieren"
+                action="https://formsubmit.co/5936f3264e1b3101d767692f779ca23a" method="POST">
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="hidden" name="_subject" value="Jemand hat Deabonniert.">
+                <input type="hidden" name="_captcha" value="false">
+                <button type="submit">Deabonnieren<!-- <u>Abonnieren</u> --></button>
+            </form>
+        </div>
+
+    </body>
 </html>
