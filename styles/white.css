@@ -23,6 +23,6 @@ body {
 } 
 
 .content a:hover {
-  color: darkred;
+  color: lightgrey;
   transition: 0.1s;
 }
