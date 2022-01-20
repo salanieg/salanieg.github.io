@@ -108,27 +108,12 @@
 			}
 
 			a:hover {
-				color: grey;
+				color: lightgrey;
 				transition: 0.1s;
-			}
-
-			.menu-start {
-				font-size: 17pt;
-			}
-
-			.menu-close {
-				font-size: 17pt;
-				padding:15px 20px 15px 20px ;
-				text-align: right;
-				margin: 0px;
 			}
 			
 
 			/* REACTIVE */
-			
-			.menu-container:hover #menu {
-				width: 600px;
-			}
 			
 			@media screen and (max-width: 800px) {
                 .menu-container:hover #menu {
@@ -153,6 +138,22 @@
 
 
 			/* MENUS */
+
+			.menu-container:hover #menu {
+				width: 600px;
+			}
+
+			.menu-start {
+				/* font-size: 17pt; */
+			}
+
+			.menu-close {
+				font-size: 15pt;
+				padding:15px 20px 15px 20px ;
+				text-align: right;
+				margin: 0px;
+				cursor: pointer;
+			}
 
 			#menu > * {
 				list-style-type: none;
@@ -293,7 +294,7 @@
 			</nav> -->
 
 			<div class="menu-container">
-				<div class="menu-start" onclick="openmenu()" onmouseover="openmenu()">#</div>
+				<div class="menu-start" onclick="openmenu()" onmouseover="openmenu()">MENÜ<!--#--></div>
 
 				<div id="menu">
 					<div class="menu-close" onclick="closemenu()">X</div>
