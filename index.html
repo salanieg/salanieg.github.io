@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>ISSUES</title>
-        <meta name="viewport" content="width=device-width">
+        <meta name="viewport" content="width=device-width, height=device-height">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap">
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/red.css">
@@ -81,8 +81,6 @@
             }
 
             .issue-wrapper {
-                height: fit-content;
-                width:fit-content;
 				display: flex;
 				justify-content: center;
                 flex-wrap: wrap;
@@ -90,11 +88,11 @@
                 gap: 80px 40px;
                 margin-top: 100px;
                 margin-bottom: 100px;
+                width:1200px
             }
 
             .issue-text-wrapper {
-                max-width: 100%;
-                width:fit-content;
+                width:450px;
             }
 
             .issue-cover-wrapper > * {
@@ -104,7 +102,6 @@
             .issue-text-wrapper > * {
                 cursor: pointer;
                 font-size:15;
-                white-space: pre-wrap;
                 width:100%;
                 text-align-last: justify;
             }
@@ -151,12 +148,12 @@
             var ic = "issue-i-cover"
             var iic = "issue-ii-cover"
             var iiic = "issue-iii-cover"
-            var ivc = "issue-iv-cover"
+            // var ivc = "issue-iv-cover"
 
             var it = "issue-i-text"
             var iit = "issue-ii-text"
             var iiit = "issue-iii-text"
-            var ivt = "issue-iv-text"
+            // var ivt = "issue-iv-text"
 
             var selectedcover = ic
             var selectedtext = it
@@ -204,30 +201,30 @@
                 <div class="issue-cover-wrapper">
                     <div><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-i-cover" src="https://docs.google.com/uc?export=download&id=19Ig8BxThNX1GJrxSMuzbHJwmGin16YIt" alt="ISSUE III - IST POPULISMUS GUT?"/></a></div>
                     <div><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-ii-cover" src="https://docs.google.com/uc?export=download&id=1ZWlXLqJnA6KviHDTZxN51RQGIwsKGL60" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div>
-                    <div><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-iii-cover" src="https://docs.google.com/uc?export=download&id=1T7qr2ZhWwpXZ_wciYQXC2N3Pw8tjRjzA" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div>
-                    <div><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-iv-cover" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div>
+                    <div><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-iii-cover" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div>
+                    <!-- <div><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i"><img id="issue-iv-cover" src="https://docs.google.com/uc?export=download&id=1T7qr2ZhWwpXZ_wciYQXC2N3Pw8tjRjzA" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div> -->
                 </div>
                 <div class="issue-text-wrapper">
                     <p id="issue-i-text" 
                         onclick="selectcover(ic, it)"
                         onmouseover="hovercover(ic, it)"
-                        onmouseout="unhovercover(ic, it)">ISSUE&#x2005;I      <!--MÄRZ&#x2005;2022-->            ALTERNATIVE&#x2005;UTOPIEN</p>
+                        onmouseout="unhovercover(ic, it)">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</p>
                     <hr>
                     <p id="issue-ii-text" 
                         onclick="selectcover(iic, iit)"
                         onmouseover="hovercover(iic, iit)"
-                        onmouseout="unhovercover(iic, iit)">ISSUE&#x2005;II      <!--JUNI&#x2005;2022-->            REFORM&#x2005;ODER REVOLUTION</p> 
+                        onmouseout="unhovercover(iic, iit)">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</p> 
                     <hr>
                     <p id="issue-iii-text" 
                         onclick="selectcover(iiic, iiit)"
                         onmouseover="hovercover(iiic, iiit)"
-                        onmouseout="unhovercover(iiic, iiit)">ISSUE&#x2005;III      <!--SEPTEMBER&#x2005;2022-->            IST&#x2005;POPULISMUS&#x2005;GUT?</p>
+                        onmouseout="unhovercover(iiic, iiit)">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</p>
                     <hr>
-                    <p id="issue-iv-text" 
+                    <!-- <p id="issue-iv-text" 
                         onclick="selectcover(ivc, ivt)"
                         onmouseover="hovercover(ivc, ivt)"
-                        onmouseout="unhovercover(ivc, ivt)">ISSUE&#x2005;IV      <!--MAI&#x2005;2023-->            IST&#x2005;POPULISMUS&#x2005;GUT?</p>
-                    <hr>
+                        onmouseout="unhovercover(ivc, ivt)">ISSUE&#x2005;IV MAI&#x2005;2023 IST&#x2005;POPULISMUS&#x2005;GUT?</p>
+                    <hr> -->
                 </div>
             </div>
 
