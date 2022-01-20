@@ -2,14 +2,10 @@
 <html>
 	<head>
 		<script>
-			
-			function transformbutton(button) {
-				button.classList.toggle("change");
-			}
 
-			function openmenu() {
-				document.getElementById("menu").style.width = "600px";
-			}
+			// function openmenu() {
+			// 	document.getElementById("menu").style.width = "600px";
+			// }
 
 			function closemenu() {
 				document.getElementById("menu").style.width = "0px";
@@ -116,70 +112,19 @@
 				transition: 0.1s;
 			}
 
-
-			/* MENU ICON */
-
-			.bar1, .bar2, .bar3 {
-				position: absolute;
-  				display: block;
-				width: 23px;
-				height: 3px;
-				background-color: white;
-				padding-bottom: 0px;
-				transition: 0.4s;
-			}
-
-			.bar1 {
-				top:0px;
-			}
-			.bar2 {
-				top:5px;
-			}
-			.bar3 {
-				top:10px;
-			}
-
-			.change .bar1 {
-				transition: 0.4s;
-				-webkit-transform: rotate(-45deg) translate(5px);
-				transform: rotate(45deg) translate(5px);
-			}
-
-			.change .bar2 {
-				transition: 0.4s;
-				opacity: 0;
-			}
-
-			.change .bar3 {
-				transition: 0.4s;
-				-webkit-transform: rotate(45deg) translate(-5px);
-				transform: rotate(-45deg) translate(-5px);
-			}
-
-			.menu-button {
-				position: relative;
-				display: flex;
-				align-items: center;
-				width: fit-content;
-				height: fit-content;
-				margin: 0px;
-				padding: 0px;
-				display: inline-block;
-  				cursor: pointer;
-			}
-
 			.menu-start {
 				font-size: 17pt;
 			}
 
 			.menu-close {
 				font-size: 17pt;
-				padding: 20px;
+				padding:15px 20px 15px 20px ;
 				text-align: right;
+				margin: 0px;
 			}
 			
 
-			/* SIDEMENU */
+			/* REACTIVE */
 			
 			.menu-container:hover #menu {
 				width: 600px;
@@ -188,7 +133,7 @@
 			@media screen and (max-width: 800px) {
                 .menu-container:hover #menu {
 					width: 100vw;
-					transition: 0.3s;
+					transition: 0.5s;
 				}
             }
 
@@ -206,6 +151,13 @@
 				}
             }
 
+
+			/* MENUS */
+
+			#menu > * {
+				list-style-type: none;
+			}
+
 			#menu {
 				white-space: nowrap;
 				position:fixed;
@@ -220,13 +172,9 @@
 				z-index:99;	
 			}
 
-			#menu > * {
-				list-style-type: none;
-			}
-
 			.mainmenu {
 				text-transform: uppercase;
-				font-size: 24pt;
+				font-size: 20pt;
 				line-height: 1.5;
 				font-weight: 400;
 			}
@@ -234,7 +182,7 @@
 			.minimenu {
 				margin-top: 20px;
 				text-transform: uppercase;
-				font-size: 15px;
+				font-size: 13px;
 				line-height: 2;
 			}
 
@@ -244,14 +192,15 @@
 			.dropmenu {
 				display:none;
 				list-style: none;
-				font-size: 16pt;
+				font-size: 15pt;
 				line-height: 1.5;
 				padding-bottom: 15px;
 				font-weight: 400;
 			}
 
 			.droparrow:hover + .dropmenu {
-				display: block;	
+				display: block;
+				
 			}
 
 			.dropmenu:hover {
@@ -261,7 +210,7 @@
 
 			.droparrow:hover .arrow {
 				border: solid grey;
-				border-width: 0 4px 4px 0;
+				border-width: 0 3px 3px 0;
 				transition: 0.1s;
 			}
 
@@ -272,12 +221,12 @@
 			
 			.arrow {
 				border: solid white;
-				border-width: 0 4px 4px 0;
+				border-width: 0 3px 3px 0;
 				position: relative;
-				left: 18px;
-				bottom: 9px;
+				left: 12px;
+				bottom: 6px;
 				display: inline-block;
-				padding: 5px;
+				padding: 4px;
 				transform: rotate(45deg);
   				-webkit-transform: rotate(45deg);
 			}
@@ -344,18 +293,12 @@
 			</nav> -->
 
 			<div class="menu-container">
-				<!-- <div class="menu-button" onclick="transformbutton(this)">
-					<div class="bar1"></div>
-					<div class="bar2"></div>
-					<div class="bar3"></div>
-				</div> -->
-				<span class="menu-start" onclick="openmenu()">#</span>
+				<div class="menu-start" onclick="openmenu()" onmouseover="openmenu()">#</div>
 
 				<div id="menu">
 					<div class="menu-close" onclick="closemenu()">X</div>
 					<ul class="mainmenu">
-						<li>
-							<span class="droparrow"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a><i class="arrow"></i></span>
+						<li><span class="droparrow"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a><i class="arrow"></i></span>
 							<ul class="dropmenu">
 								<li><a href="paypal.me/GEFAENGNISHEFTE">ISSUE I</a></li>
 								<li><a href="mailto:bigflatnow@gmail.com">ISSUE II</a></li>
@@ -378,28 +321,11 @@
 				
 					<form class="abonnieren"
 						action="https://formsubmit.co/5936f3264e1b3101d767692f779ca23a" method="POST">
-		
-						<input 
-						type="email" 
-						name="email" placeholder="Email" required>
-		
-						<input 
-						type="hidden" 
-						name="_subject" 
-						value="Neue Abonennt*in!">
-		
-						<input 
-						type="hidden" 
-						name="_captcha" 
-						value="false">
-		
-						<button 
-						type="submit">
-						Abonnieren
-						<!-- <u>Abonnieren</u> -->
-						</button>
+						<input type="email" name="email" placeholder="Email" required>
+						<input type="hidden" name="_subject" value="Neue Abonennt*in!">
+						<input type="hidden" name="_captcha" value="false">
+						<button type="submit">Abonnieren<!-- <u>Abonnieren</u> --></button>
 					</form>
-
 
 				</div>
 			</div>
