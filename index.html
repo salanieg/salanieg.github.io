@@ -163,13 +163,16 @@
 
             document.addEventListener("DOMContentLoaded", (event) => {
                 document.getElementById(selectedcover).style.display = "inline";
-                document.getElementById(selectedtext).style.textDecoration = "underline";
+                // document.getElementById(selectedtext).style.textDecoration = "underline";
+                document.getElementById(selectedtext).style.fontWeight = "900";
             });
 
             function selectcover(cover, text) {
                 document.getElementById(selectedtext).style.textDecoration = "none";
                 document.getElementById(cover).style.display = "inline";
-                document.getElementById(text).style.textDecoration = "underline";
+                // document.getElementById(text).style.textDecoration = "underline";
+                document.getElementById(selectedtext).style.fontWeight = "initial";
+                document.getElementById(text).style.fontWeight = "900";
                 selectedcover = cover
                 selectedtext = text
             }
