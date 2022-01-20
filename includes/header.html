@@ -3,9 +3,9 @@
 	<head>
 		<script>
 
-			// function openmenu() {
-			// 	document.getElementById("menu").style.width = "600px";
-			// }
+			function openmenu() {
+				document.getElementById("menu").style.width = "100vw";
+			}
 
 			function closemenu() {
 				document.getElementById("menu").style.width = "0px";
@@ -182,7 +182,7 @@
 
 			.minimenu {
 				margin-top: 20px;
-				text-transform: uppercase;
+				/* text-transform: uppercase; */
 				font-size: 13px;
 				line-height: 2;
 			}
@@ -210,13 +210,13 @@
 
 
 			.droparrow:hover .arrow {
-				border: solid grey;
+				border: solid lightgrey;
 				border-width: 0 3px 3px 0;
 				transition: 0.1s;
 			}
 
 			.droparrow:hover a  {
-				color: grey;
+				color: lightgrey;
 				transition: 0.1s;
 			}
 			
@@ -236,33 +236,35 @@
 			/* FORM */
 			
 			.abonnieren {
+				display:flex;
+				justify-content: flex-start;
 				position: absolute;
 				bottom: 100px;
-				width: 98%;
-				padding: 20px;
-				white-space: nowrap;
-				text-align: center;
+				width:90%;
+				padding: 40px;
+				column-gap:5px;
+				overflow:hidden;
 			}
 			
 			input {
-                width: 100%;
-                max-width: 50%;
-                color: black;
+				flex-grow: 9;
+				max-width: 400px;
                 height: fit-content;
-                font-size:180%;
+                font-size:20pt;
                 padding: 5px 10px;
+				color: black;
                 background-color:white;
             }
 
             button {
-                width: 100%;
-                max-width: 40%;
-                color: black;
+				flex-grow: 1;
+                max-width: fit-content;
+                width: fit-content;
                 height: fit-content;
-                font-size:180%;
+                font-size:20pt;
+				padding: 5px 20px;
+				color: black;
                 background-color:lightgrey;
-                padding: 5px 20px;
-                overflow:auto;
                 cursor: pointer;
             }
 
@@ -314,8 +316,8 @@
 					<hr>
 
 					<ul class="minimenu">
-						<li><a href="paypal.me/GEFAENGNISHEFTE">paypal.me/GEFAENGNISHEFTE</a></li>
-						<li><a href="mailto:bigflatnow@gmail.com">BIGFLATNOW@gmail.com</a></li>
+						<li>Unterstützen: <a href="paypal.me/GEFAENGNISHEFTE">paypal.me/GEFAENGNISHEFTE</a></li>
+						<li>Kontakt: <a href="mailto:bigflatnow@gmail.com">BIGFLATNOW@gmail.com</a></li>
 						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">Deabonnieren </a></li>
 						<li><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum">Impressum</a></li>
 					</ul>
