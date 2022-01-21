@@ -4,6 +4,7 @@
 		<script>
 
 			function openmenu() {
+				document.getElementById("menu-start").style.visibility = "hidden";
 				document.getElementById("menu").style.height = "fit-content";
 
 				if ($(window).width() > 800) {
@@ -18,8 +19,25 @@
 			function closemenu() {
 				document.getElementById("menu").style.height = "0px";
 				document.getElementById("menu").style.width = "0px";
+				document.getElementById("menu-start").style.visibility = "visible";
 			}
 
+			function opendropmenu() {
+				document.getElementById("h-dropmenu").style.height = "fit-content";
+
+				if ($(window).width() > 800) {
+					document.getElementById("h-dropmenu").style.width = document.getElementById("navigation").offsetWidth + 60 + 'px';
+				}
+				else {
+					document.getElementById("h-dropmenu").style.width = "100vw";
+				}
+				
+			}
+
+			function closedropmenu() {
+				document.getElementById("h-dropmenu").style.height = "0px";
+				document.getElementById("h-dropmenu").style.width = "0px";
+			}
 		</script>
 		<style>
 
@@ -38,18 +56,18 @@
 				gap: 30px;
 			}
 
-			#navigation > a, #issue-dropdown {
+			#navigation > a, #issue-dropdown, #menu-start {
 				z-index:200;
 			}
 
 			a:active, a:visited, a:link {
 				color: white ;
-				transition: 0.1s;
+				/* transition: 0.1s; */
 			}
 
 			a:hover {
 				color: lightgrey;
-				transition: 0.1s;
+				/* transition: 0.1s; */
 			}
 
 
@@ -71,19 +89,42 @@
 			/* MENUS */
 
 			#menu-start {
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				position: relative;
 				cursor: pointer;
+				color: white ;
+				/* transition: 0.1s; */
+			}
+
+			#menu-start:hover {
+				color: lightgrey;
+				/* transition: 0.1s; */
 			}
 
 			#menu-close {
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
 				font-size: 15pt;
-				padding:15px 20px 15px 20px ;
+				padding:17px 20px 17px 20px;
 				text-align: right;
 				margin: 0px;
 				cursor: pointer;
+				color: white ;
+				/* transition: 0.1s; */
 			}
 
-			#menu > * {
-				list-style-type: none;
+			#menu-close:hover {
+				color: lightgrey;
+				/* transition: 0.1s; */
 			}
 
 			#menu {
@@ -91,8 +132,6 @@
 				position:fixed;
 				right:0;
 				top:0;
-				height: 100vh;
-				max-width: 100vw;
 				background: darkred;
 				width: 0vw;
 				box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35);
@@ -114,10 +153,11 @@
 			/* DROPMENU */
 
 			.arrow {
+				margin-right:12px;
 				border: solid white;
 				border-width: 0 3px 3px 0;
 				position: relative;
-				left: 12px;
+				left: 8px;
 				bottom: 6px;
 				display: inline-block;
 				padding: 4px;
@@ -128,35 +168,44 @@
 			.droparrow:hover .arrow {
 				border: solid lightgrey;
 				border-width: 0 3px 3px 0;
-				transition: 0.1s;
+				/* transition: 0.1s; */
 			}
 
 			.droparrow:hover a  {
 				color: lightgrey;
-				transition: 0.1s;
-			}
-
-			/* .droparrow:hover ~ .dropmenu {
-				display: block;
-			} */
-
-			.dropmenu:hover {
-				display: block;	
+				/* transition: 0.1s; */
 			}
 
 			.dropmenu {
-				display:none;
-				position:relative;
-				top: 24px;
-				right: 50px;
+				text-align-last: justify;
+				white-space: nowrap;
+				position:fixed;
+				right:0;
+				top:0;
+				width: 0vw;
 				font-size: 15pt;
-				line-height: 1.5;
-				padding-bottom: 15px;
 				background-color: darkred;
-				box-shadow: 4px 4px 10px 0px rgba(0,0,0,0.35);
-				padding: 10px 60px 10px 60px;
-				font-size:13pt;
-				z-index: 200;;
+				box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35);
+				z-index:-1;
+			}
+
+			#issue-list {
+				margin: 40px;
+				line-height: 1.0;
+			}
+
+			#menu-spacer {
+				text-align: right;
+				visibility: hidden;
+				font-size: 15pt;
+				padding:17px 20px 17px 20px;
+				margin: 0px;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
 			}
 
 			/* FORM */
@@ -208,16 +257,20 @@
 
 			<nav id="navigation">
 
-				<div id="issue-dropdown">
+				<div id="issue-dropdown" onmouseover="opendropmenu()" >
 					<span class="droparrow" id="h-droparrow">
 						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
 						<i class="arrow"></i>
 					</span><br>
-					<div class="dropmenu" id="h-dropmenu">
-						<a href="paypal.me/GEFAENGNISHEFTE">ISSUE I</a><br>
-						<a href="mailto:bigflatnow@gmail.com">ISSUE II</a><br>
-						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE III</a><br>
-						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum">ISSUE IV</a><br>
+					<div class="dropmenu" id="h-dropmenu" onmouseleave="closedropmenu()">
+						<div id="menu-spacer">X</div>
+						<div></div>
+						<hr>
+						<div id="issue-list">							
+							<p><a href="paypal.me/GEFAENGNISHEFTE">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></p>
+							<p><a href="mailto:bigflatnow@gmail.com">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span>
+							<p><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></p>
+						</div>
 					</div>
 				</div>
 				<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a>
@@ -236,10 +289,11 @@
 								<i class="arrow"></i>
 							</span><br>
 							<div class="dropmenu">
-								<a href="paypal.me/GEFAENGNISHEFTE">ISSUE I</a><br>
-								<a href="mailto:bigflatnow@gmail.com">ISSUE II</a><br>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE III</a><br>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum">ISSUE IV</a><br>
+								<div id="issue-list">							
+									<p><a href="paypal.me/GEFAENGNISHEFTE">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></p>
+									<p><a href="mailto:bigflatnow@gmail.com">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span>
+									<p><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></p>
+								</div>
 							</div>
 							<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a><br>
 							<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a><br>
