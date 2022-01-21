@@ -67,6 +67,23 @@ small {
 	font-size: 11pt;
 }
 
+
+/* ELEMENTS */
+
+.logo {
+	border:solid;
+	border-width: 2px;
+	padding:0px 20px;
+	background-color:white;
+	color:black;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
 .info  {
 	font-size: 36pt;
 	margin-bottom: 100px;
