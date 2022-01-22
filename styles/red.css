@@ -1,28 +1,28 @@
 body {
-  background-color: darkred;
+  background-color: #980000;
 }
 
 .content {
   color: white;
-  background-color: darkred;
+  background-color: #980000;
 }
 
 .content a:active {
-  color: darkred;
+  color: #980000;
   transition: 0.1s;
 } 
 
 .content a:visited {
-  color: darkred;
+  color: #980000;
   transition: 0.1s;
 }  
 
 .content a:link {
-  color: darkred;
+  color: #980000;
   transition: 0.1s;
 } 
 
 .content a:hover {
-  color: grey;
+  color: lightgrey;
   transition: 0.1s;
 }

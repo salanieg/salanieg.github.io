@@ -5,6 +5,10 @@
 	src: url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800');
 }
 
+html {
+	overflow-y: hidden;
+}
+
 * {
 	font-family: 'Spectral';
 }
@@ -27,6 +31,8 @@ body {
 .header {
 	font-size:15pt;
 	top: 0;
+	left:0;
+	width:100vw;
 	position: sticky;
 	z-index: 10;
 }
@@ -38,7 +44,7 @@ body {
 
 .header, .footer > * {
 	color: white;
-	background-color: darkred;
+	background-color: #980000;
 }
 
 
@@ -84,7 +90,8 @@ small {
 	user-select: none;
 }
 
-.info  {
-	font-size: 36pt;
-	margin-bottom: 100px;
+hr {
+	margin:0px;
+	padding:0px;
+	background-color: lightgray;
 }
