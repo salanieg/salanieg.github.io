@@ -23,8 +23,8 @@
 
             #intro {
                 position:absolute;
-                width:200%;
-                height:200%;
+                width:100vw;
+                height:100vh;
                 top: 0; 
                 left: 0;
                 background-color: darkred;
@@ -123,7 +123,7 @@
             
             document.addEventListener("DOMContentLoaded", (event) => {
                 if(localStorage.getItem('introshown')) {
-                    hideintro();
+                    // hideintro();
                 }
             });
         </script> 
@@ -155,16 +155,6 @@
                 selectedcover = cover
                 selectedtext = text
             }
-
-            function hovercover(cover, text) {
-                document.getElementById(selectedcover).style.display = "none";
-                document.getElementById(cover).style.display = "inline";
-            }
-
-            function unhovercover(cover, text) {
-                document.getElementById(cover).style.display = "none";
-                document.getElementById(selectedcover).style.display = "inline";
-            }
         </script>
     </head>
 
@@ -187,19 +177,13 @@
                 </div>
                 <div class="issue-text-wrapper">
                     <p id="issue-i-text" 
-                        onclick="selectcover(ic, it)"
-                        onmouseover="selectcover(ic, it)"
-                        onmouseout="unhovercover(ic, it)">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</p>
+                        onmouseover="selectcover(ic, it)"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></p>
                     <hr>
                     <p id="issue-ii-text" 
-                        onclick="selectcover(iic, iit)"
-                        onmouseover="selectcover(iic, iit)"
-                        onmouseout="unhovercover(iic, iit)">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</p> 
+                        onmouseover="selectcover(iic, iit)"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></p> 
                     <hr>
-                    <p id="issue-iii-text" 
-                        onclick="selectcover(iiic, iiit)"
-                        onmouseover="selectcover(iiic, iiit)"
-                        onmouseout="unhovercover(iiic, iiit)">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</p>
+                    <p id="issue-iii-text"
+                        onmouseover="selectcover(iiic, iiit)"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></p>
                     <hr>
                 </div>
             </div>
