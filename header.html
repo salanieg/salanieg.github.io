@@ -69,7 +69,35 @@
 
 			
 		</script>
+		<script>
+			$(function(){
+				var currenturl = window.location.href
+				var baseurl = "http://BIGFLATNOW.github.io/GEFAENGNISHEFTE"
 
+				if (currenturl == baseurl) {
+					highlight("dropanchori");
+				}
+				else if (currenturl == baseurl + "/issue-i") {
+					highlight("dropanchori");
+				}
+				else if (currenturl == baseurl + "/special-issues") {
+					highlight("dropanchors");
+				}
+				else if (currenturl == baseurl + "/kanon") {
+					highlight("dropanchork");
+				}
+				else if (currenturl == baseurl + "/deabonnieren") {
+					highlight("dropanchorm");
+				}
+				else if (currenturl == baseurl + "/impressum") {
+					highlight("dropanchorm");
+				}
+			});
+
+			function highlight(element) {
+				document.getElementById(element).style.fontWeight = "700";
+			}
+		</script>
 		<style>
 
 
