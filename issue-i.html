@@ -18,14 +18,14 @@
 
 
         <script>
-            document.addEventListener("scroll", function () {
-                if (window.scrollY >= 2000) {
+            function showtotop() {
+                if (document.getElementById("content").scrollTop >= 2000) {
                     document.getElementById("return-to-top").style.display = "block";
                 } 
                 else {
                     document.getElementById("return-to-top").style.display = "none";
                 }
-            });
+            }
 
             function totop() {
                 document.body.scrollTop = 0;
@@ -121,7 +121,7 @@
     <body>
         <div class="header"></div>
 
-        <div class="content">
+        <div class="content" id="content" onscroll="showtotop()">
 
             <div id="return-to-top"  onclick="totop()">Nach Oben</div>
 
