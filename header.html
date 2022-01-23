@@ -44,6 +44,7 @@
 					document.getElementById("openmenu").style.display = "inline";
 				}
 
+				hideissues()
 				menuopen = false
 			}
 
@@ -52,6 +53,18 @@
 				document.getElementById("dropmenus").style.width = "0vw";
 				document.getElementById("dropmenuk").style.width = "0vw";
 				document.getElementById("dropmenum").style.width = "0vw";
+			}
+
+			function showissues() {
+				document.getElementById("showissues").style.display = "none";
+				document.getElementById("hideissues").style.display = "inline";
+				document.getElementById("issue-list").style.display = "block";
+			}
+
+			function hideissues() {
+				document.getElementById("showissues").style.display = "inline";
+				document.getElementById("hideissues").style.display = "none";
+				document.getElementById("issue-list").style.display = "none";
 			}
 
 			
@@ -104,8 +117,13 @@
 					display: none;
 				}
 
-				#expandedmenui, #expandedmenuhr, #expandedmenusk {
+				#expandedmenu {
 					display: none;
+				}
+
+				#menuspacer {
+					display:none;
+					background-color: lightgray;
 				}
             }
 
@@ -203,10 +221,6 @@
 				font-size: 11pt;
 			}
 
-			#issue-list {
-				padding-top: 20px;
-			}
-
 
 			/* DROPMENU */
 			
@@ -288,6 +302,19 @@
 				user-select: none;
 			}
 
+			#showissues:hover, #hideissues:hover {
+				color: lightgray;
+			}
+
+			#hideissues {
+				display: none;
+			}
+
+			#issue-list {
+				display: none;
+				margin:20px;
+			}
+
 			/* FORM */
 
 			/* #abonnieren-wrapper {
@@ -325,6 +352,11 @@
 				padding: 5px 20px;
 				color: black;
             }
+
+			#expandedmenu {
+					margin-top: 0px;
+					padding-top: 0px;
+			}
 
 		</style>
 	</head>
@@ -400,36 +432,18 @@
 
 					<div class="dropmenu" id="dropmenum">
 						<div class="menu-spacer">X</div>
-												
-						<!-- <div id="mainmenu"> -->
-							<!-- <span class="v-dropanchor" id="v-dropanchori">
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
-								<i class="arrow"></i>
-							</span>
-							<div class="dropmenu">
-								<div id="issue-list">							
-									<p><a href="paypal.me/GEFAENGNISHEFTE">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></p>
-									<p><a href="mailto:bigflatnow@gmail.com">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span>
-									<p><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></p>
-								</div>
-							</div><br> -->
 
-						<div class="info" id="expandedmenui">
-							<span>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
-								<br>
-
-								<div id="issue-list">							
-									<span class="description"><a href="paypal.me/GEFAENGNISHEFTE">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
-									<span class="description"><a href="mailto:bigflatnow@gmail.com">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
-									<span class="description"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
-								</div>
-							</span>
-						</div>
-
-						<hr id="expandedmenuhr">
-
-						<div class="info" id="expandedmenusk">
+						<div class="info" id="expandedmenu">
+							<div>
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues">ISSUES</a>
+									<span class="description" id="showissues" onclick="showissues()">Einblenden.</span>
+									<span class="description" id="hideissues" onclick="hideissues()">Ausblenden.</span>
+							</div>
+							<div id="issue-list">							
+								<span class="description"><a href="paypal.me/GEFAENGNISHEFTE">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
+								<span class="description"><a href="mailto:bigflatnow@gmail.com">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
+								<span class="description"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
+							</div>
 							<div>
 								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL&#x2005;ISSUES
 									<span class="description">Projekte&#x2005;von&#x2005;Freund*innen.</span>
