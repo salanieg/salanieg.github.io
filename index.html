@@ -56,14 +56,15 @@
 
             /* BODY */
 
-            body {
+            /* body {
                 overflow-y: hidden;
-            }
+            } */
 
-            .content {                
+            .content {           
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                overflow-y: hidden;
             }
 
             .issue-wrapper {
@@ -124,7 +125,7 @@
                 document.getElementById("intro").style.display = "none";
                 document.getElementById("intrologo").style.display = "none";
                 document.getElementById("introtext").style.display = "none";
-                document.body.style.overflowY = "scroll";
+                document.getElementById("content").style.overflowY = "auto";
                 localStorage.setItem('introshown', true);
             }
             
@@ -174,7 +175,7 @@
         
         <div class="header"></div>
 
-        <div class="content">
+        <div class="content" id="content">
 
             <div class="issue-wrapper">
                 <div class="issue-cover-wrapper">
