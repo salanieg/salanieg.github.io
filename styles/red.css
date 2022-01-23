@@ -8,17 +8,17 @@ body {
 }
 
 .content a:active {
-  color: #980000;
+  color: white;
   transition: 0.1s;
 } 
 
 .content a:visited {
-  color: #980000;
+  color: white;
   transition: 0.1s;
 }  
 
 .content a:link {
-  color: #980000;
+  color: white;
   transition: 0.1s;
 } 
 
