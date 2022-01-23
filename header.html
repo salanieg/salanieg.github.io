@@ -71,31 +71,18 @@
 		</script>
 		<script>
 			$(function(){
-				var currenturl = window.location.href
-				var baseurl = "http://BIGFLATNOW.github.io/GEFAENGNISHEFTE"
-
-				if (currenturl == baseurl) {
-					highlight("dropanchori");
-				}
-				else if (currenturl == baseurl + "/issue-i") {
-					highlight("dropanchori");
-				}
-				else if (currenturl == baseurl + "/special-issues") {
-					highlight("dropanchors");
-				}
-				else if (currenturl == baseurl + "/kanon") {
-					highlight("dropanchork");
-				}
-				else if (currenturl == baseurl + "/deabonnieren") {
-					highlight("dropanchorm");
-				}
-				else if (currenturl == baseurl + "/impressum") {
-					highlight("dropanchorm");
-				}
+				highlight("/", "dropanchori");
+				highlight("/issue-i", "dropanchori");
+				highlight("/special-issues", "dropanchors");
+				highlight("/kanon", "dropanchork");
+				highlight("/deabonnieren", "dropanchorm");
+				highlight("/impressum", "dropanchorm");
 			});
 
-			function highlight(element) {
-				document.getElementById(element).style.fontWeight = "700";
+			function highlight(url, element) {
+				if ( window.location.href == "https://bigflatnow.github.io/GEFAENGNISHEFTE" + url) {
+					document.getElementById(element).style.fontWeight = "700";
+				}
 			}
 		</script>
 		<style>
@@ -394,7 +381,7 @@
 	<body>
 		<div class="header-wrap">
 
-			<div class="logo" id="headerlogo">GEFÄNGNISfHEFTE</div> 
+			<div class="logo" id="headerlogo">GEFÄNGNISHEFTE</div> 
 
 			<nav id="navigation" onmouseleave="closemenu()">
 
