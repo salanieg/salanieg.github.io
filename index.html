@@ -15,16 +15,7 @@
         <script> 
             $(function(){$(".header").load("header.html");});
         </script>
-		<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-		<script>
-			$(function(){
-				$('a').each(function(){
-					if ($(this).prop('href') == window.location.href) {
-						$(this).addClass('active'); 
-					}
-				});
-			});
-		</script>
+
         <style> 
 
 
@@ -99,6 +90,8 @@
                 font-size:15;
                 width:100%;
                 text-align-last: justify;
+                margin-top: 15px;
+                margin-bottom: 15px;
             }
             
             .issue-cover-wrapper > * > * > *{
@@ -137,7 +130,7 @@
             
             document.addEventListener("DOMContentLoaded", (event) => {
                 if(localStorage.getItem('introshown')) {
-                    // hideintro();
+                    hideintro();
                 }
             });
         </script> 

@@ -16,6 +16,18 @@
             $(function(){$(".header").load("header.html");});
         </script>
 
+
+        <script>
+            document.addEventListener("scroll", function () {
+                if (window.scrollY >= 2000) {
+                    document.getElementById("return-to-top").style.display = "block";
+                } 
+                else {
+                    document.getElementById("return-to-top").style.display = "none";
+                }
+            });
+        </script>
+
         <style>
 
                     
@@ -56,6 +68,10 @@
                 text-align-last: justify;
             }
 
+            .abstract p {
+                line-height: 1.3;
+            }
+
             .artikel {
                 text-align: justify;
                 width: 600px;
@@ -73,6 +89,40 @@
                 }
             }
 
+            #return-to-top {
+                display: none;
+                font-size:15pt;
+                width:fit-content;
+                height:fit-content;
+                padding: 10px 25px 10px 25px;
+                position: fixed;
+                bottom:20px;
+                right:20px;
+                background-color: #980000;
+                border: ridge;
+                box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35);
+            }
+
+            #return-to-top a:active {
+                color: white;
+                transition: 0.1s;
+            } 
+
+            #return-to-top a:visited {
+                color: white;
+                transition: 0.1s;
+            }  
+
+            #return-to-top a:link {
+                color: white;
+                transition: 0.1s;
+            } 
+
+            #return-to-top a:hover {
+                color: lightgrey;
+                transition: 0.1s;
+            }
+
         </style>
     </head>
 
@@ -81,15 +131,18 @@
 
         <div class="content">
 
+            <div id="return-to-top"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i#inhaltsverzeichnis">Nach Oben</a></div>
+
             <div id="info-wrapper">
                 <img id="coverimage" src="https://drive.google.com/uc?export=view&id=1qSUVKIyy9iKQ6_3CHmgjPkU_l3WO1DHZ" alt="ISSUE I">
                 
                 <div id="inhaltsverzeichnis">
                     <div id="title"><h2>ISSUE I     MÄRZ 2022<br>ALTERNATIVE UTOPIEN</h2></div>
                     <br>
+                    <br>
                     <div class="abstract">
                         <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i#posthistorische-klassenkämpfe">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
-                        
+                        <br>
                         <p>
                             Der Kapitalismus ist weder alternativlos, noch kann er durch einfache
                             Reformen zu sozialer und ökologischer Nachhaltigkeit korrigiert werden. Er
@@ -99,9 +152,10 @@
                         </p>
                     </div>
                     <br>
+                    <br>
                     <div class="abstract">
-                        <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/posthistorisch-klassenkämpfe">Der&#x2005;neue&#x2005;Rahmen    ➞</a></h2>
-                        
+                        <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i#der-neue-rahmen">Der&#x2005;neue&#x2005;Rahmen    ➞</a></h2>
+                        <br>
                         <p>
                             Wenn der Liberalismus in gewisse Rahmenbedingungen eingebettet wird, kann
                             so soziale und ökologische Nachhaltigkeit sichergestellt werden.
@@ -112,9 +166,10 @@
                         </p>
                     </div>
                     <br>
+                    <br>
                     <div class="abstract">
-                        <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i/agieren-agitieren">Agieren&#x2005;&&#x2005;Agitieren ➞<br></a></h2>
-                        
+                        <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i#agieren-und-agitieren">Agieren&#x2005;&&#x2005;Agitieren ➞<br></a></h2>
+                        <br>
                         <p>
                             Wie baut man eine beständige emanzipatorische Bewegung auf, die nicht in
                             ohnmächtigen Utopismus verfällt, während sie alltägliches Leid hinnimmt? Es
@@ -129,8 +184,8 @@
             </div>
 
             <div id="inhalt">
-                <div class="artikel" id="posthistorische-klassenkämpfe">
-                    <h1 dir="ltr">
+                <div class="artikel">
+                    <h1 dir="ltr" id="posthistorische-klassenkämpfe">
                         POSTHISTORISCHE<br/>KLASSENKÄMPFE
                     </h1>
                     <br/>
@@ -287,8 +342,8 @@
                     </p>
                 </div>
 
-                <div class="artikel" id="der-neue-rahmen">
-                    <h1 dir="ltr">
+                <div class="artikel">
+                    <h1 dir="ltr" d="der-neue-rahmen">
                         DER NEUE<br/>RAHMEN
                     </h1>
                     <br/>
@@ -445,13 +500,13 @@
                     </p>
                 </div>
 
-                <div class="artikel" id="agieren-und-agitieren">
+                <div class="artikel">
                     <h1 dir="ltr">
                         AGIEREN UND<br/>AGITIEREN
                     </h1>
                     <br/>
                     <br/>
-                    <p dir="ltr">
+                    <p dir="ltr"  id="agieren-und-agitieren">
                         Seit dem Kollaps der Sowjetunion und der folgenden globalen neoliberalen
                         Wende, wirkt der Kapitalismus alternativlos. Das große Experiment einer
                         sozialen und solidarischen Gesellschaft war gescheitert. Vielmehr noch, der
