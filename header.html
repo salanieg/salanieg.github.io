@@ -69,6 +69,16 @@
 
 			
 		</script>
+		<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script>
+			$(function(){
+				$('a').each(function(){
+					if ($(this).prop('href') == window.location.href) {
+						$(this).addClass('active'); 
+					}
+				});
+			});
+		</script>
 		<style>
 
 
@@ -95,9 +105,14 @@
 			}
 
 			a:active, a:visited, a:link {
-				color: white ;
+				color: white;
 				/* transition: 0.1s; */
 			}
+
+			a:active {
+				color: blue;
+			}
+
 
 			a:hover {
 				color: lightgrey;
@@ -139,10 +154,6 @@
 				}
 				
             }
-			
-			.label:hover {
-				color: lightgrey;
-			}
 
 			/* MENUS */
 

@@ -15,7 +15,16 @@
         <script> 
             $(function(){$(".header").load("header.html");});
         </script>
-
+		<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script>
+			$(function(){
+				$('a').each(function(){
+					if ($(this).prop('href') == window.location.href) {
+						$(this).addClass('active'); 
+					}
+				});
+			});
+		</script>
         <style> 
 
 
@@ -102,10 +111,15 @@
                 transition: transform 0.7s;
             }
 
-            .issue-cover-wrapper > * > * > *:hover{
+            .issue-cover-wrapper > * > * > *:hover {
                 cursor: pointer;
                 transform: scale(1.10);
                 transition: transform 0.7s;
+            }
+
+            .issue-cover-wrapper > * > * > * {
+                color:white;
+                transition: 0.1;
             }
             
         </style>
