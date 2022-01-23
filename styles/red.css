@@ -8,7 +8,7 @@ body {
 }
 
 .content a:active {
-  color: blue;
+  color: white;
   transition: 0.1s;
 } 
 
