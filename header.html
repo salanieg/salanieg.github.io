@@ -2,12 +2,15 @@
 <html>
 	<head>
 		<script>
+
+			var menuopen = false;
+
             window.addEventListener("resize", (event) => {
-                if($(window).width() > 800) {
-					document.getElementById("openmenu").style.display = "none";
+                if ($(window).width() < 800 && !menuopen) {
+					document.getElementById("openmenu").style.display = "inline";
                 }
 				else {
-					document.getElementById("openmenu").style.display = "inline";
+					document.getElementById("openmenu").style.display = "none";
 				}
             });
 
@@ -27,6 +30,8 @@
 					document.getElementById("openmenu").style.display = "none";
 					document.getElementById("closemenu").style.display = "inline";
 				}
+
+				menuopen = true
 			}
 
 			function closemenu() {
@@ -38,6 +43,8 @@
 					document.getElementById("closemenu").style.display = "none";
 					document.getElementById("openmenu").style.display = "inline";
 				}
+
+				menuopen = false
 			}
 
 			function hidedropmenus() {
