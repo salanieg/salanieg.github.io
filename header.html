@@ -12,16 +12,10 @@
             });
 
 			function openmenu(menu, anchor) {
-				document.getElementById(menu).style.height = "fit-content";
-				document.getElementById("dropanchori").style.visibility = "hidden";
-				document.getElementById("dropanchors").style.visibility = "hidden";
-				document.getElementById("dropanchork").style.visibility = "hidden";
-				document.getElementById("dropanchorm").style.visibility = "hidden";
-				document.getElementById("dropmenui").style.width = "0vw";
-				document.getElementById("dropmenus").style.width = "0vw";
-				document.getElementById("dropmenuk").style.width = "0vw";
-				document.getElementById("dropmenum").style.width = "0vw";
 				
+				hidedropmenus();
+
+				document.getElementById(menu).style.height = "fit-content";				
 				document.getElementById(anchor).style.visibility = "visible";
 
 				if ($(window).width() > 800) {
@@ -36,20 +30,21 @@
 			}
 
 			function closemenu() {
-				document.getElementById("dropanchori").style.visibility = "visible";
-				document.getElementById("dropanchors").style.visibility = "visible";
-				document.getElementById("dropanchork").style.visibility = "visible";
-				document.getElementById("dropanchorm").style.visibility = "visible";
-				document.getElementById("dropmenui").style.width = "0vw";
-				document.getElementById("dropmenus").style.width = "0vw";
-				document.getElementById("dropmenuk").style.width = "0vw";
-				document.getElementById("dropmenum").style.width = "0vw";
+
+				hidedropmenus();
 
 				if ($(window).width() < 800) {
 					document.getElementById("headerlogo").style.visibility = "visible";
 					document.getElementById("closemenu").style.display = "none";
 					document.getElementById("openmenu").style.display = "inline";
 				}
+			}
+
+			function hidedropmenus() {
+				document.getElementById("dropmenui").style.width = "0vw";
+				document.getElementById("dropmenus").style.width = "0vw";
+				document.getElementById("dropmenuk").style.width = "0vw";
+				document.getElementById("dropmenum").style.width = "0vw";
 			}
 
 			
@@ -79,10 +74,6 @@
 				padding:15px 20px 15px 40px;
 			}
 
-			#navigation > #dropanchor {
-				z-index:200;
-			}
-
 			a:active, a:visited, a:link {
 				color: white ;
 				/* transition: 0.1s; */
@@ -108,7 +99,8 @@
             }
 
 			#closemenu {
-					display: none;
+				display: none;
+				width:100vw;
 			}
 
 			@media screen and (max-width: 800px) {
@@ -176,10 +168,11 @@
 			}
 
 			#mainmenu {
+				padding:0px 40px 40px 40px;
 				line-height: 1.7;
-				margin-bottom:40px;
 				text-align: left;
 				text-align-last:left;
+				/* background-color: deepskyblue; */
 			}				
 
 			#minimenu {
@@ -188,6 +181,15 @@
 				margin-bottom:40px;
 				text-align: left;
 				text-align-last:left;
+			}
+			.mainmenuitem {
+				display:flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.description {
+				font-size: 11pt;
 			}
 
 			#issue-list {
@@ -221,6 +223,7 @@
 				/* transition: 0.1s; */
 			}
 
+
 			.dropmenu {
 				overflow:hidden;
 				text-align-last: justify;
@@ -232,7 +235,12 @@
 				/* font-size: 15pt; */
 				background-color: #980000;
 				box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35);
-				z-index:-1;
+				z-index:11;
+			}
+
+			.dropanchor {
+				position: relative;
+				z-index:12;
 			}
 
 			.info {
@@ -319,10 +327,10 @@
 
 				<!-- ISSUES -->
 
-				<div class="dropdown" id="dropdowni" onmouseenter="openmenu('dropmenui', 'dropanchori')">
+				<div class="dropdown" onmouseenter="openmenu('dropmenui', 'dropanchori')">
 					<span class="dropanchor" id="dropanchori">
 						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
-						<i class="arrow"></i>
+						<!-- <i class="arrow"></i> -->
 					</span><br>
 
 					<div class="dropmenu" id="dropmenui" >
@@ -338,7 +346,7 @@
 
 				<!-- SPECIAL ISSUES -->
 				
-				<div class="dropdown" id="dropdowns" onmouseenter="openmenu('dropmenus', 'dropanchors')">
+				<div class="dropdown" onmouseenter="openmenu('dropmenus', 'dropanchors')">
 					<span class="dropanchor" id="dropanchors">
 						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a>
 					</span><br>
@@ -347,14 +355,14 @@
 						<div class="menu-spacer">X</div>
 						<hr>
 						<div class="info" id="infos">							
-							<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">Eine Ausstellung von Arbeiten von Freund*innen.</a>
+							<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">Projekte von Freund*innen.</a>
 						</div>
 					</div>
 				</div>
 
 				<!-- KANON -->
 
-				<div class="dropdown" id="dropdownk" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
+				<div class="dropdown" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
 					<span class="dropanchor" id="dropanchork">
 						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a>
 					</span><br>
@@ -370,32 +378,45 @@
 
 				<!-- MENU/ETC -->
 
-				<div class="dropdown" id="dropdownm" onmouseenter="openmenu('dropmenum', 'dropanchorm')">
+				<div class="dropdown" onmouseenter="openmenu('dropmenum', 'dropanchorm')">
 					<span class="dropanchor" id="dropanchorm">
 						<span class="label" id="etc">ETC</span>
 						<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')">MENÜ</span>
 						<span class="label" id="closemenu" onclick="closemenu()">X</span>
 					</span><br>
 
+					<!-- NAV -->
+
 					<div class="dropmenu" id="dropmenum">
 						<div class="menu-spacer">X</div>
-						<hr>
-						<div class="info" id="infom">							
-							<div id="mainmenu">
-								<span class="dropanchor">
-									<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
-									<i class="arrow"></i>
-								</span><br>
-								<div class="dropmenu">
-									<div id="issue-list">							
-										<p><a href="paypal.me/GEFAENGNISHEFTE">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></p>
-										<p><a href="mailto:bigflatnow@gmail.com">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span>
-										<p><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></p>
-									</div>
+												
+						<div id="mainmenu">
+							<span class="v-dropanchor" id="v-dropanchori">
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
+								<i class="arrow"></i>
+							</span>
+							<div class="dropmenu">
+								<div id="issue-list">							
+									<p><a href="paypal.me/GEFAENGNISHEFTE">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></p>
+									<p><a href="mailto:bigflatnow@gmail.com">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span>
+									<p><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></p>
 								</div>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a><br>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a><br>
+							</div><br>
+
+							<div class="mainmenuitem">
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a>
+								<span class="description">Projekte von Freund*innen.</span>
 							</div>
+							<div class="mainmenuitem">
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a>
+								<span class="description">Eine Sammlung sehenswerter Dinge.</span>
+							</div>
+						</div>
+						
+						<!-- INFO -->
+
+						<hr>
+						<div class="info" id="infom">
 
 							<div id="minimenu">
 								Unterstützen: <a href="paypal.me/GEFAENGNISHEFTE">paypal.me/GEFAENGNISHEFTE</a><br>
