@@ -28,7 +28,7 @@
             }
 
             function totop() {
-                document.body.scrollTop = 0;
+                document.getElementById("content").scrollTop = 0;
                 document.documentElement.scrollTop = 0;
             }
         </script>
@@ -82,8 +82,9 @@
                 width: 600px;
                 max-width: 100%;
                 line-height: 2;
-                margin-top:300px;
+                margin-top:250px;
                 margin-left:200px;
+                padding-top:150px;
 
             }
 
@@ -133,7 +134,7 @@
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i#posthistorische-klassenkämpfe">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
+                        <h2><a href="#posthistorische-klassenkämpfe">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
                         <br>
                         <p>
                             Der Kapitalismus ist weder alternativlos, noch kann er durch einfache
@@ -146,7 +147,7 @@
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i#der-neue-rahmen">Der&#x2005;neue&#x2005;Rahmen    ➞</a></h2>
+                        <h2><a href="#der-neue-rahmen">Der&#x2005;neue&#x2005;Rahmen    ➞</a></h2>
                         <br>
                         <p>
                             Wenn der Liberalismus in gewisse Rahmenbedingungen eingebettet wird, kann
@@ -160,7 +161,7 @@
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i#agieren-und-agitieren">Agieren&#x2005;&&#x2005;Agitieren ➞<br></a></h2>
+                        <h2><a href="#agieren-und-agitieren">Agieren&#x2005;&&#x2005;Agitieren ➞<br></a></h2>
                         <br>
                         <p>
                             Wie baut man eine beständige emanzipatorische Bewegung auf, die nicht in
@@ -176,8 +177,8 @@
             </div>
 
             <div id="inhalt">
-                <div class="artikel">
-                    <h1 dir="ltr" id="posthistorische-klassenkämpfe">
+                <div class="artikel" id="posthistorische-klassenkämpfe">
+                    <h1 dir="ltr">
                         POSTHISTORISCHE<br/>KLASSENKÄMPFE
                     </h1>
                     <br/>
@@ -334,8 +335,8 @@
                     </p>
                 </div>
 
-                <div class="artikel">
-                    <h1 dir="ltr" d="der-neue-rahmen">
+                <div class="artikel" id="der-neue-rahmen">
+                    <h1 dir="ltr">
                         DER NEUE<br/>RAHMEN
                     </h1>
                     <br/>
@@ -492,7 +493,7 @@
                     </p>
                 </div>
 
-                <div class="artikel">
+                <div class="artikel" id="agieren-und-agitieren">
                     <h1 dir="ltr">
                         AGIEREN UND<br/>AGITIEREN
                     </h1>
