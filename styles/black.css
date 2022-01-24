@@ -26,3 +26,11 @@ body {
   color: #980000;
   transition: 0.1s;
 }
+
+.header-wrap {
+  background-color: black;
+}
+
+.bottom-divider {
+  display:none;
+}
