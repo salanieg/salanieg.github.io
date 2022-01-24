@@ -90,6 +90,8 @@
 			});
 
 			function highlight(url, element) {
+				alert(window.location.href.toLowerCase())
+				alert(("http://BIGFLATNOW.github.io/GEFAENGNISHEFTE" + url).toLowerCase())
 				if (window.location.href.toLowerCase() == ("http://BIGFLATNOW.github.io/GEFAENGNISHEFTE" + url).toLowerCase()) {
 					document.getElementById(element).style.fontWeight = "700";
 				}
@@ -292,7 +294,7 @@
 	<body>
 		<div class="header-wrap">
 
-			<div class="logo" id="headerlogo">GEFÄNGNISHdEFTE</div> 
+			<div class="logo" id="headerlogo">GEFÄNGNISHEFTE</div> 
 
 			<nav id="navigation" onmouseleave="closemenu()">
 
