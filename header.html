@@ -73,14 +73,24 @@
 			$(function(){
 				highlight("/", "dropanchori");
 				highlight("/issue-i", "dropanchori");
+				highlight("/issue-i", "info-issue-i");
 				highlight("/special-issues", "dropanchors");
 				highlight("/kanon", "dropanchork");
-				highlight("/deabonnieren", "dropanchorm");
-				highlight("/impressum", "dropanchorm");
+
+				highlight("/", "descriptioni");
+				highlight("/issue-i", "descriptioni");
+				highlight("/issue-i", "descriptionisi");
+				highlight("/special-issues", "descriptions");
+				highlight("/kanon", "descriptionk");
+
+				highlight("/deabonnieren", "etc");
+				highlight("/impressum", "etc");
+				highlight("/deabonnieren", "descriptiond");
+				highlight("/impressum", "descriptionim");
 			});
 
 			function highlight(url, element) {
-				if ( window.location.href == "https://bigflatnow.github.io/GEFAENGNISHEFTE" + url) {
+				if (window.location.href.toLowerCase().includes(url)) {
 					document.getElementById(element).style.fontWeight = "700";
 				}
 			}
@@ -126,10 +136,6 @@
 
 			@media screen and (min-width: 800px) {
 
-				#mainmenu {
-					display: none;
-				}
-
 				#openmenu {
 					display: none;
 				}
@@ -157,65 +163,7 @@
 				
             }
 
-			/* MENUS */
-
-			#menu-start {
-				-webkit-touch-callout: none;
-				-webkit-user-select: none;
-				-khtml-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-				position: relative;
-				cursor: pointer;
-				color: white ;
-				/* transition: 0.1s; */
-			}
-
-			#menu-start:hover {
-				color: lightgrey;
-				/* transition: 0.1s; */
-			}
-
-			#menu-close {
-				-webkit-touch-callout: none;
-				-webkit-user-select: none;
-				-khtml-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-				font-size: 15pt;
-				padding:17px 20px 17px 20px;
-				text-align: right;
-				margin: 0px;
-				cursor: pointer;
-				color: white ;
-				/* transition: 0.1s; */
-			}
-
-			#menu-close:hover {
-				color: lightgrey;
-				/* transition: 0.1s; */
-			}
-
-			#menu {
-				white-space: nowrap;
-				position:fixed;
-				right:0;
-				top:0;
-				background: #980000;
-				width: 0vw;
-				/* box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35); */
-				z-index:99;	
-			}
-
-			#mainmenu {
-				padding:0px 40px 40px 40px;
-				line-height: 1.7;
-				text-align: left;
-				text-align-last:left;
-				/* background-color: deepskyblue; */
-			}				
+			/* MENUS */		
 
 			#minimenu {
 				font-size: 13px;
@@ -224,47 +172,13 @@
 				text-align: left;
 				text-align-last:left;
 			}
-			.mainmenuitem {
-				display:flex;
-				justify-content: space-between;
-				align-items: center;
-			}
 
 			.description {
 				font-size: 11pt;
 			}
 
-			hr {
-				border-width: 2px;
-			}
-
 
 			/* DROPMENU */
-			
-			.arrow {
-				margin-right:12px;
-				border: solid white;
-				border-width: 0 3px 3px 0;
-				position: relative;
-				left: 8px;
-				bottom: 6px;
-				display: inline-block;
-				padding: 4px;
-				transform: rotate(45deg);
-  				-webkit-transform: rotate(45deg);
-			}
-
-			.dropanchor:hover .arrow {
-				border: solid lightgrey;
-				border-width: 0 3px 3px 0;
-				/* transition: 0.1s; */
-			}
-
-			.dropanchor:hover a  {
-				color: lightgrey;
-				/* transition: 0.1s; */
-			}
-
 
 			.dropmenu {
 				overflow:hidden;
@@ -274,7 +188,6 @@
 				right:0;
 				top:0;
 				width: 0vw;
-				/* font-size: 15pt; */
 				background-color: #980000;
 				/* box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35); */
 				z-index:11;
@@ -334,9 +247,6 @@
 			}
 
 			/* FORM */
-
-			/* #abonnieren-wrapper {
-			} */
 			
 			.abonnieren {
 				width:100%;
@@ -391,16 +301,15 @@
 				<div class="dropdown" onmouseenter="openmenu('dropmenui', 'dropanchori')">
 					<span class="dropanchor" id="dropanchori">
 						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
-						<!-- <i class="arrow"></i> -->
 					</span><br>
 
 					<div class="dropmenu" id="dropmenui" >
 						<div class="menu-spacer">X</div>
 						<hr>
 						<div class="info" id="infoi">							
-							<span><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
-							<span><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
-							<span><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
+							<span id="info-issue-i"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
+							<span id="info-issue-ii"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
+							<span id="info-issue-iii"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
 						</div>
 						<hr class="bottom-divider">
 					</div>
@@ -454,24 +363,26 @@
 					<div class="dropmenu" id="dropmenum">
 						<div class="menu-spacer">X</div>
 
+						<!-- EXPANDEDMENU -->
+
 						<div class="info" id="expandedmenu">
 							<div>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues">ISSUES</a>
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues"><span id="descriptioni">ISSUES</span></a>
 									<span class="description" id="showissues" onclick="showissues()">Einblenden</span>
 									<span class="description" id="hideissues" onclick="hideissues()">Ausblenden</span>
 							</div>
 							<div id="issue-list">							
-								<span class="description"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
-								<span class="description"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
-								<span class="description"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
+								<span class="description" id="descriptionisi"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
+								<span class="description" id="descriptionisii"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
+								<span class="description" id="descriptionisiii"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
 							</div>
 							<div>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL&#x2005;ISSUES
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues"><span id="descriptions">SPECIAL&#x2005;ISSUES</span>
 									<span class="description">Projekte&#x2005;von&#x2005;Freund*innen</span>
 								</a>
 							</div>
 							<div>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><span id="descriptionk">KANON</span>
 									<span class="description">Eine&#x2005;Sammlung&#x2005;sehenswerter&#x2005;Dinge</span>
 								</a>
 								
@@ -486,8 +397,8 @@
 							<div id="minimenu">
 								Unterstützen: <a href="paypal.me/GEFAENGNISHEFTE">paypal.me/GEFAENGNISHEFTE</a><br>
 								Kontakt: <a href="mailto:bigflatnow@gmail.com">BIGFLATNOW@gmail.com</a><br>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren">Deabonnieren </a><br>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum">Impressum</a><br>
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren" id="descriptiond">Deabonnieren </a><br>
+								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum" id="descriptionim">Impressum</a><br>
 							</div>
 	
 							<div id="abonnieren-wrapper">
