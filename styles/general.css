@@ -105,5 +105,6 @@ small {
 hr {
 	margin:0px;
 	padding:0px;
+	border-width:1px;
 	background-color: lightgray;
 }
