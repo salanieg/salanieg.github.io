@@ -71,12 +71,14 @@
 		</script>
 		<script>
 			$(function(){
+				highlight("", "dropanchori");
 				highlight("/", "dropanchori");
 				highlight("/issue-i", "dropanchori");
 				highlight("/issue-i", "info-issue-i");
 				highlight("/special-issues", "dropanchors");
 				highlight("/kanon", "dropanchork");
 
+				highlight("", "descriptioni");
 				highlight("/", "descriptioni");
 				highlight("/issue-i", "descriptioni");
 				highlight("/issue-i", "descriptionisi");
@@ -90,9 +92,7 @@
 			});
 
 			function highlight(url, element) {
-				alert(window.location.href.toLowerCase())
-				alert(("http://BIGFLATNOW.github.io/GEFAENGNISHEFTE" + url).toLowerCase())
-				if (window.location.href.toLowerCase() == ("http://BIGFLATNOW.github.io/GEFAENGNISHEFTE" + url).toLowerCase()) {
+				if (window.location.href.toLowerCase() == ("https://BIGFLATNOW.github.io/GEFAENGNISHEFTE" + url).toLowerCase()) {
 					document.getElementById(element).style.fontWeight = "700";
 				}
 			}
@@ -302,16 +302,16 @@
 
 				<div class="dropdown" onmouseenter="openmenu('dropmenui', 'dropanchori')">
 					<span class="dropanchor" id="dropanchori">
-						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
+						<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE">ISSUES</a>
 					</span><br>
 
 					<div class="dropmenu" id="dropmenui" >
 						<div class="menu-spacer">X</div>
 						<hr>
 						<div class="info" id="infoi">							
-							<span id="info-issue-i"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
-							<span id="info-issue-ii"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
-							<span id="info-issue-iii"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
+							<span id="info-issue-i"><a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
+							<span id="info-issue-ii"><a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
+							<span id="info-issue-iii"><a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
 						</div>
 						<hr class="bottom-divider">
 					</div>
@@ -321,14 +321,14 @@
 				
 				<div class="dropdown" onmouseenter="openmenu('dropmenus', 'dropanchors')">
 					<span class="dropanchor" id="dropanchors">
-						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a>
+						<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">SPECIAL ISSUES</a>
 					</span><br>
 
 					<div class="dropmenu" id="dropmenus">
 						<div class="menu-spacer">X</div>
 						<hr>
 						<div class="info" id="infos">							
-							<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">Projekte von Freund*innen</a>
+							<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues">Projekte von Freund*innen</a>
 						</div>
 						<hr class="bottom-divider">
 					</div>
@@ -338,14 +338,14 @@
 
 				<div class="dropdown" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
 					<span class="dropanchor" id="dropanchork">
-						<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a>
+						<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">KANON</a>
 					</span><br>
 
 					<div class="dropmenu" id="dropmenuk">
 						<div class="menu-spacer">X</div>
 						<hr>
 						<div class="info" id="infok">							
-							<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">Eine Sammlung sehenswerter Dinge</a>
+							<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon">Eine Sammlung sehenswerter Dinge</a>
 						</div>
 						<hr class="bottom-divider">
 					</div>
@@ -369,22 +369,22 @@
 
 						<div class="info" id="expandedmenu">
 							<div>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues"><span id="descriptioni">ISSUES</span></a>
+								<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issues"><span id="descriptioni">ISSUES</span></a>
 									<span class="description" id="showissues" onclick="showissues()">Einblenden</span>
 									<span class="description" id="hideissues" onclick="hideissues()">Ausblenden</span>
 							</div>
 							<div id="issue-list">							
-								<span class="description" id="descriptionisi"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
-								<span class="description" id="descriptionisii"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
-								<span class="description" id="descriptionisiii"><a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
+								<span class="description" id="descriptionisi"><a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
+								<span class="description" id="descriptionisii"><a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
+								<span class="description" id="descriptionisiii"><a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/issue-i">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
 							</div>
 							<div>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues"><span id="descriptions">SPECIAL&#x2005;ISSUES</span>
+								<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/special-issues"><span id="descriptions">SPECIAL&#x2005;ISSUES</span>
 									<span class="description">Projekte&#x2005;von&#x2005;Freund*innen</span>
 								</a>
 							</div>
 							<div>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><span id="descriptionk">KANON</span>
+								<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/kanon"><span id="descriptionk">KANON</span>
 									<span class="description">Eine&#x2005;Sammlung&#x2005;sehenswerter&#x2005;Dinge</span>
 								</a>
 								
@@ -399,8 +399,8 @@
 							<div id="minimenu">
 								Unterstützen: <a href="paypal.me/GEFAENGNISHEFTE">paypal.me/GEFAENGNISHEFTE</a><br>
 								Kontakt: <a href="mailto:bigflatnow@gmail.com">BIGFLATNOW@gmail.com</a><br>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren" id="descriptiond">Deabonnieren </a><br>
-								<a href="http://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum" id="descriptionim">Impressum</a><br>
+								<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/deabonnieren" id="descriptiond">Deabonnieren </a><br>
+								<a href="https://BIGFLATNOW.github.io/GEFAENGNISHEFTE/impressum" id="descriptionim">Impressum</a><br>
 							</div>
 	
 							<div id="abonnieren-wrapper">
