@@ -26,3 +26,7 @@ body {
   color: #980000;
   transition: 0.1s;
 }
+
+.bottom-divider {
+  display:none;
+}
