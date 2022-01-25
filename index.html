@@ -57,18 +57,13 @@
 
             /* BODY */
 
-            /* body {
-                overflow-y: hidden;
-            } */
-
             .content {           
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                overflow-y: hidden;
             }
 
-            .issue-wrapper {
+            .issue-wrap {
 				display: flex;
 				justify-content: center;
                 flex-wrap: wrap;
@@ -79,16 +74,15 @@
                 width:1200px
             }
 
-            .issue-text-wrapper {
+            .text-wrap {
                 width:450px;
             }
 
-            .issue-cover-wrapper > * {
+            .cover-wrap > * {
                 text-align: center;
             }
             
-            .issue-text-wrapper > * {
-                cursor: pointer;
+            .text-wrap > * {
                 font-size:15;
                 width:100%;
                 text-align-last: justify;
@@ -96,7 +90,7 @@
                 margin-bottom: 15px;
             }
             
-            .issue-cover-wrapper > * > * > *{
+            .cover-image {
                 display: none;
                 width:80%;
                 min-width:400px;
@@ -106,17 +100,28 @@
                 transition: transform 0.7s;
             }
 
-            .issue-cover-wrapper > * > * > *:hover {
+            .cover-image:hover {
                 cursor: pointer;
                 transform: scale(1.10);
                 transition: transform 0.7s;
             }
 
-            .issue-cover-wrapper > * > * > * {
-                color:white;
-                transition: 0.1;
+            @media screen and (min-width: 800px) {
+                .non-linked {
+                    display:none;
+                }
             }
-            
+
+            @media screen and (max-width: 800px) {
+                .linked {
+                    display:none;
+                }
+            }
+
+            .linked {       
+                cursor: pointer;
+            }
+
         </style>
 
         <script>
@@ -178,28 +183,31 @@
 
         <div class="content" id="content">
 
-            <div class="issue-wrapper">
-                <div class="issue-cover-wrapper">
-                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img id="issue-i-cover" src="https://docs.google.com/uc?export=download&id=19Ig8BxThNX1GJrxSMuzbHJwmGin16YIt" alt="ISSUE I - ALTERNATIVE UTOPIEN"/></a></div>
-                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img id="issue-ii-cover" src="https://docs.google.com/uc?export=download&id=1ZWlXLqJnA6KviHDTZxN51RQGIwsKGL60" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div>
-                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img id="issue-iii-cover" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE III - IST POPULISMUS GUT?"/></a></div>
+            <div class="issue-wrap">
+                <div class="cover-wrap">
+                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="issue-i-cover" src="https://docs.google.com/uc?export=download&id=19Ig8BxThNX1GJrxSMuzbHJwmGin16YIt" alt="ISSUE I - ALTERNATIVE UTOPIEN"/></a></div>
+                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="issue-ii-cover" src="https://docs.google.com/uc?export=download&id=1ZWlXLqJnA6KviHDTZxN51RQGIwsKGL60" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div>
+                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="issue-iii-cover" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE III - IST POPULISMUS GUT?"/></a></div>
                 </div>
-                <div class="issue-text-wrapper">
-                    <p id="issue-i-text" 
-                        onmouseover="selectcover(ic, it)"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></p>
+                <div class="text-wrap">
+                    <p id="issue-i-text" onmouseover="selectcover(ic, it)">
+                        <span class="non-linked">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</span>
+                        <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a>
+                    </p>
                     <hr>
-                    <p id="issue-ii-text" 
-                        onmouseover="selectcover(iic, iit)"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></p> 
+                    <p id="issue-ii-text" onmouseover="selectcover(iic, iit)">
+                        <span class="non-linked">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</span>
+                        <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a>
+                    </p> 
                     <hr>
-                    <p id="issue-iii-text"
-                        onmouseover="selectcover(iiic, iiit)"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></p>
+                    <p id="issue-iii-text" onmouseover="selectcover(iiic, iiit)">
+                        <span class="non-linked">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</span>
+                        <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a>
+                    </p>
                     <hr>
                 </div>
             </div>
 
-        </div>
-
-        <!-- <div class="footer"></div> -->
-        
+        </div>        
     </body>    
 </html>

@@ -125,7 +125,6 @@
 				transition: 0.1s;
 			}
 
-
 			a:hover {
 				color: lightgrey;
 				transition: 0.1s;
@@ -140,7 +139,7 @@
 					display: none;
 				}
 
-				#expandedmenu {
+				#infoe {
 					display: none;
 				}
 
@@ -150,11 +149,6 @@
 				}
             }
 
-			#closemenu {
-				display: none;
-				width:100vw;
-			}
-
 			@media screen and (max-width: 800px) {
 
 				#dropanchori, #dropanchors, #dropanchork, #etc {
@@ -162,20 +156,6 @@
 				}
 				
             }
-
-			/* MENUS */		
-
-			#minimenu {
-				font-size: 13px;
-				line-height: 1.7;
-				margin-bottom:40px;
-				text-align: left;
-				text-align-last:left;
-			}
-
-			.description {
-				font-size: 11pt;
-			}
 
 
 			/* DROPMENU */
@@ -198,6 +178,65 @@
 				z-index:12;
 			}
 
+			.menu-spacer {
+				text-align: right;
+				visibility: hidden;
+				font-size: 15pt;
+				padding:15px 20px 15px 20px;
+				margin: 0px;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+
+			#showissues:hover, #hideissues:hover {
+				color: lightgray;
+			}
+
+			#showissues, #hideissues {
+				cursor: pointer;
+			}
+
+
+			/* EXPANDED */
+
+			#closemenu, #openmenu {
+				cursor: pointer;
+			}
+
+			#closemenu {
+				display: none;
+				width:100vw;
+			}
+
+			.description {
+				font-size: 11pt;
+			}
+
+			#hideissues {
+				display: none;
+			}
+
+			#issue-list {
+				display: none;
+				margin-top:5px;
+				margin-bottom:30px;
+			}
+
+			#footer-wrap {
+				font-size: 13px;
+				line-height: 1.7;
+				margin-bottom:40px;
+				text-align: left;
+				text-align-last:left;
+			}
+
+			
+			/* INFO */
+
 			.info {
 				padding: 25px 40px 25px 40px;
 				line-height: 1.7;
@@ -218,34 +257,12 @@
 				padding-bottom:40px;
 			}
 
-			.menu-spacer {
-				text-align: right;
-				visibility: hidden;
-				font-size: 15pt;
-				padding:15px 20px 15px 20px;
-				margin: 0px;
-				-webkit-touch-callout: none;
-				-webkit-user-select: none;
-				-khtml-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
+			#infoe {
+				margin-top: 0px;
+				padding-top: 0px;
 			}
 
-			#showissues:hover, #hideissues:hover {
-				color: lightgray;
-			}
-
-			#hideissues {
-				display: none;
-			}
-
-			#issue-list {
-				display: none;
-				margin-top:5px;
-				margin-bottom:30px;
-			}
-
+			
 			/* FORM */
 			
 			.abonnieren {
@@ -281,11 +298,6 @@
 				color: black;
             }
 
-			#expandedmenu {
-					margin-top: 0px;
-					padding-top: 0px;
-			}
-
 		</style>
 	</head>
 
@@ -298,7 +310,7 @@
 
 				<!-- ISSUES -->
 
-				<div class="dropdown" onmouseenter="openmenu('dropmenui', 'dropanchori')">
+				<div onmouseenter="openmenu('dropmenui', 'dropanchori')">
 					<span class="dropanchor" id="dropanchori">
 						<a href="https://www.GEFAENGNISHEFTE.org">ISSUES</a>
 					</span><br>
@@ -317,7 +329,7 @@
 
 				<!-- SPECIAL ISSUES -->
 				
-				<div class="dropdown" onmouseenter="openmenu('dropmenus', 'dropanchors')">
+				<div onmouseenter="openmenu('dropmenus', 'dropanchors')">
 					<span class="dropanchor" id="dropanchors">
 						<a href="https://www.GEFAENGNISHEFTE.org/special-issues">SPECIAL ISSUES</a>
 					</span><br>
@@ -334,7 +346,7 @@
 
 				<!-- KANON -->
 
-				<div class="dropdown" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
+				<div onmouseenter="openmenu('dropmenuk', 'dropanchork')">
 					<span class="dropanchor" id="dropanchork">
 						<a href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
 					</span><br>
@@ -351,7 +363,7 @@
 
 				<!-- MENU/ETC -->
 
-				<div class="dropdown" onmouseenter="openmenu('dropmenum', 'dropanchorm')">
+				<div onmouseenter="openmenu('dropmenum', 'dropanchorm')">
 					<span class="dropanchor" id="dropanchorm">
 						<span class="label" id="etc">ETC</span>
 						<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')">MENÜ</span>
@@ -365,7 +377,7 @@
 
 						<!-- EXPANDEDMENU -->
 
-						<div class="info" id="expandedmenu">
+						<div class="info" id="infoe">
 							<div>
 								<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a>
 									<span class="description" id="showissues" onclick="showissues()">Einblenden</span>
@@ -383,7 +395,7 @@
 							</div>
 							<div>
 								<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span id="descriptionk">KANON</span>
-									<span class="description">Eine&#x2005;Sammlung&#x2005;sehenswerter&#x2005;Dinge</span>
+									<span class="description">Sehenswertes</span>
 								</a>
 								
 							</div>
@@ -394,20 +406,21 @@
 						<hr>
 						<div class="info" id="infom">
 
-							<div id="minimenu">
+							<div id="footer-wrap">
 								Unterstützen: <a href="paypal.me/GEFAENGNISHEFTE">paypal.me/GEFAENGNISHEFTE</a><br>
 								Kontakt: <a href="mailto:bigflatnow@gmail.com">BIGFLATNOW@gmail.com</a><br>
 								<a href="https://www.GEFAENGNISHEFTE.org/deabonnieren" id="descriptiond">Deabonnieren </a><br>
 								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim">Impressum</a><br>
 							</div>
 	
-							<div id="abonnieren-wrapper">
+							<div id="abonnieren-wrap">
 								<form class="abonnieren"
 									action="https://formsubmit.co/5936f3264e1b3101d767692f779ca23a" method="POST">
 									<button type="submit">Abonnieren</button>
 									<span><input type="email" name="email" placeholder="Email" required></span>
 									<input type="hidden" name="_subject" value="Neue Abonennt*in!">
 									<input type="hidden" name="_captcha" value="false">
+									<input type="hidden" name="_next" value="https://www.GEFAENGNISHEFTE.org">
 								</form>
 							</div>
 						</div>
