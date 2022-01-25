@@ -9,6 +9,11 @@
 	font-family: 'Spectral';
 }
 
+html {
+	overflow-x: hidden;
+	overflow-y: hidden;	
+}
+
 body {
 	height:100vh;
 	overflow-x: hidden;
