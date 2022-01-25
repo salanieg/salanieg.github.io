@@ -115,13 +115,14 @@
 			}
 
 			#headerlogo {
-				margin:13px 20px 13px 20px;
+				margin:13px 0px 13px 20px;
 			}
 
 			#navigation {
 				display: flex;
 				gap: 30px;
 				padding:15px 20px 15px 40px;
+				background-color: violet;
 			}
 
 			a:active, a:visited, a:link {
@@ -155,7 +156,7 @@
 
 			@media screen and (max-width: 800px) {
 
-				#dropanchori, #dropanchors, #dropanchork, #etc {
+				.hmenu, #etc {
 					display: none;
 				}
 				
@@ -173,12 +174,12 @@
 				top:0;
 				width: 0vw;
 				background-color: #980000;
-				/* box-shadow: 4px 4px 20px 0px rgba(0,0,0,.35); */
 				z-index:11;
 			}
 
 			.dropanchor {
 				position: relative;
+				
 				z-index:12;
 			}
 
@@ -314,18 +315,18 @@
 
 				<!-- ISSUES -->
 
-				<div onmouseenter="openmenu('dropmenui', 'dropanchori')">
+				<div class="hmenu" onmouseenter="openmenu('dropmenui', 'dropanchori')">
 					<span class="dropanchor" id="dropanchori">
 						<a href="https://www.GEFAENGNISHEFTE.org">ISSUES</a>
-					</span><br>
+					</span>
 
 					<div class="dropmenu" id="dropmenui" >
 						<div class="menu-spacer">X</div>
 						<hr>
 						<div class="info" id="infoi">							
-							<span id="info-issue-i"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;I <!--MÄRZ&#x2005;2022--> ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
-							<span id="info-issue-ii"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;II <!--JUNI&#x2005;2022--> REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
-							<span id="info-issue-iii"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;III <!--SEPTEMBER&#x2005;2022--> IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
+							<span id="info-issue-i"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
+							<span id="info-issue-ii"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
+							<span id="info-issue-iii"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
 						</div>
 						<hr class="bottom-divider">
 					</div>
@@ -333,10 +334,10 @@
 
 				<!-- SPECIAL ISSUES -->
 				
-				<div onmouseenter="openmenu('dropmenus', 'dropanchors')">
+				<div class="hmenu" onmouseenter="openmenu('dropmenus', 'dropanchors')">
 					<span class="dropanchor" id="dropanchors">
 						<a href="https://www.GEFAENGNISHEFTE.org/special-issues">SPECIAL ISSUES</a>
-					</span><br>
+					</span>
 
 					<div class="dropmenu" id="dropmenus">
 						<div class="menu-spacer">X</div>
@@ -350,10 +351,10 @@
 
 				<!-- KANON -->
 
-				<div onmouseenter="openmenu('dropmenuk', 'dropanchork')">
+				<div class="hmenu" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
 					<span class="dropanchor" id="dropanchork">
 						<a href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
-					</span><br>
+					</span>
 
 					<div class="dropmenu" id="dropmenuk">
 						<div class="menu-spacer">X</div>
@@ -372,7 +373,7 @@
 						<span class="label" id="etc">ETC</span>
 						<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')">MENÜ</span>
 						<span class="label" id="closemenu" onclick="closemenu()">X</span>
-					</span><br>
+					</span>
 
 					<!-- NAV -->
 
