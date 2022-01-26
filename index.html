@@ -58,20 +58,24 @@
             /* BODY */
 
             .content {           
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                display: grid;                
+                grid-template-columns: 1fr auto 1fr;
+                grid-template-rows: 1fr auto 1fr 1fr;
+                grid-template-areas: 
+                    ". . ."
+                    ". issue-wrap ."
+                    ". . ."
+                    ". . .";
+                place-items:center;
             }
 
             .issue-wrap {
+                grid-area: issue-wrap;
 				display: flex;
 				justify-content: center;
                 flex-wrap: wrap;
 				align-items: flex-start;
                 gap: 80px 40px;
-                padding-top: 100px;
-                padding-bottom: 100px;
-                width:1200px
             }
 
             .text-wrap {
@@ -182,7 +186,6 @@
         <div class="header"></div>
 
         <div class="content" id="content">
-
             <div class="issue-wrap">
                 <div class="cover-wrap">
                     <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="issue-i-cover" src="https://docs.google.com/uc?export=download&id=19Ig8BxThNX1GJrxSMuzbHJwmGin16YIt" alt="ISSUE I - ALTERNATIVE UTOPIEN"/></a></div>
