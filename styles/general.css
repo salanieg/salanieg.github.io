@@ -17,9 +17,8 @@ body {
 }
 
 .content {
-	/* width:100vw; */
 	height:calc(100vh - 100px);
-	overflow-y:scroll;
+	overflow-y:auto;
 	overflow-x: hidden;
 	padding: 20px;
 }
