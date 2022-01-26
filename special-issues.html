@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <title>SPECIAL ISSUES</title>
         <meta name="viewport" content="width=device-width, height=device-height">
-        <link rel="icon" type="image/x-icon" href="https://docs.google.com/uc?export=download&id=1wLmQC_58oqBBNL3bYZZCjPsBqSeOrXC7">
+        <link rel="icon" type="image/x-icon" href="images/favicon.ico">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap">
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/red.css">
@@ -18,18 +18,30 @@
         </script>
 
         <style>
-            .special-issue-wrapper {
-				display: flex;
-				justify-content: center;
-                flex-wrap: wrap;
-				align-items: flex-start;
-                gap: 40px;
-                width:100%;
-            }
             
+            .special-issue-wrapper {
+                margin: 100px auto 100px auto;
+                display: flex;
+                flex-wrap:wrap;
+                justify-content: center;
+                gap:80px;
+            }
+
+            /* #WÜRZBURGER-SÜSSBOYS {grid-area: WÜRZBURGER-SÜSSBOYS;}
+            #DECAY-OF-A-RESIDENCY {grid-area: DECAY-OF-A-RESIDENCY;} */
+            /* # {grid-area: ;} */
+
+            .special-issue {
+                display:flex;
+                flex-flow:column;
+                row-gap:20px;
+                width: 400px;
+                /* background-color: darkgreen; */
+            }
+
             .special-issue-cover {
                 box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
-                max-width: 400px;
+                max-width: 100%;
                 transform: scale(1);
                 transition: transform 0.7s;
             }
@@ -38,6 +50,7 @@
                 transform: scale(1.03);
                 transition: transform 0.7s;             
             }
+
         </style>
     </head>
 
@@ -47,9 +60,16 @@
 
         <div class="content">
             <div class="special-issue-wrapper">
-                <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="special-issue-cover" src="https://docs.google.com/uc?export=download&id=1TvjgLrqSKEGWhJqdxJKPjFVShdRpFRW9" alt="ISSUE III - IST POPULISMUS GUT?"/></a></div>
-                <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="special-issue-cover" src="https://docs.google.com/uc?export=download&id=1T7qr2ZhWwpXZ_wciYQXC2N3Pw8tjRjzA" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div>
-                <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="special-issue-cover" src="https://docs.google.com/uc?export=download&id=1ZWlXLqJnA6KviHDTZxN51RQGIwsKGL60" alt="ISSUE II - REFORM ODER REVOLUTION"/></a></div>
+                
+                <div class="special-issue" id="WÜRZBURGER-SÜSSBOYS">
+                    <a href="https://open.spotify.com/album/6sQROeyBaP22sWgwn7RlDT?si=1lXGQ4mFRJe4X3RP_8CLHw"><img class="special-issue-cover" src="images/SPECIAL-ISSUE-WÜRZBURGER-SÜSSBOYS-COVER.jpg" alt="WÜRZBURGER SÜSSBOYS COVER"/></a>
+                    <iframe src="https://open.spotify.com/embed/album/6sQROeyBaP22sWgwn7RlDT?utm_source=generator" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                </div>
+
+                <div class="special-issue" id="DECAY-OF-A-RESIDENCY">
+                    <a href="https://open.spotify.com/album/444VniQ7XgaS74anQDbH83?si=zJCJ-PRbSwagSeNm7jVtnQ"><img class="special-issue-cover" src="images/SPECIAL-ISSUE-DECAY-OF-A-RESIDENCY-COVER.jpg" alt="DECAY OF A RESIDENCY COVER"/></a>
+                    <iframe src="https://open.spotify.com/embed/album/444VniQ7XgaS74anQDbH83?utm_source=generator" width="400px" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                </div>
             </div>
         </div>
     </body>    
