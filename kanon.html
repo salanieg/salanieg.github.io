@@ -8,15 +8,22 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap">
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/black.css">
-        <script
-            src="https://code.jquery.com/jquery-3.3.1.js"
-            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
-            crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script> $(function(){$(".header").load("header.html");}); </script>
+
+        <script>
+            function hidetutorial() {
+                document.getElementById("b1").style.visibility = "hidden";
+                sessionStorage.setItem('tutorialshown', true);
+            }
+            
+            document.addEventListener("DOMContentLoaded", (event) => {
+                if(sessionStorage.getItem('tutorialshown')) {
+                    document.getElementById("b1").style.display = "none";
+                }
+            });
         </script>
-        <script> 
-            $(function(){$(".header").load("header.html");});
-        </script>
-        
+
         <style>
 
             #v1 {grid-area: v1;}
@@ -79,20 +86,22 @@
 
 
             .content {
+                -webkit-overflow-scrolling: touch;
                 overflow-x: scroll;
                 display: grid;
                 /* grid-template-columns: repeat(auto-fit, fit-content); */
-                grid-template-rows: repeat(8, 1fr);
+                grid-template-rows: repeat(9, 1fr);
                 gap: 100px;
                 grid-template-areas: 
-                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
-                    ".   v4  .   .   .   .   .   .   .   .   .   .   .   .   .   .   v1  v16 .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v5  .   .   .   b1  .   .   v9  .   .   .   .   .   .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
-                    ".   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v1  v16 .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v5  .   .   .   b1  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   p4  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
-                    ".   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v1  v16 .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b1  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   p4  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
-                    ".   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b1  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   p5  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
-                    ".   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v7  .   .   .   b1  .   .   b2  .   .   .   .   v10 .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   v19 .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
-                    ".   v4  .   .   .   .   .   .   .   .   .   .   .   .   .   .   v2  v3  .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v7  .   .   .   b1  .   .   b2  .   .   .   .   .   .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
-                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ";
+                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
+                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   .   .   .   v1  v16 .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v5  .   .   .   b3  .   .   v9  .   .   .   .   .   .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
+                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v1  v16 .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v5  .   .   .   b3  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   p4  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
+                    "b1  .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v1  v16 .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b3  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   p4  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
+                    "b1  .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b3  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   p5  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
+                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v7  .   .   .   b3  .   .   b2  .   .   .   .   v10 .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   v19 .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
+                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   .   .   .   v2  v3  .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v7  .   .   .   b3  .   .   b2  .   .   .   .   .   .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
+                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
+                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ";
                 place-items:center;
             }
 
@@ -101,7 +110,6 @@
                 height:100%;
                 max-height:100vw;
                 max-width:95vw;
-                background-color: aliceblue;
             }
 
             i {
@@ -119,7 +127,35 @@
                 gap:80px;
                 text-align: center;
             }
-            
+
+            #b1 {
+                width:100vw;
+                text-align: center;
+                white-space: nowrap;
+                font-size: 20pt;
+                /* background-color: blueviolet; */
+            }
+
+            #b1 > {
+                white-space: pre;
+            }
+
+            .key {
+                border: solid white;
+                border-width:1px;
+                border-radius: 5px;
+                padding:0px 20px 0px 20px;
+            }
+
+            @media screen and (max-width: 800px) {
+                .box {
+                    min-height: auto;
+                    height:auto;
+                    width:80vw;
+                    max-height:100vw;
+                    max-width:95vw;
+                }
+            }
 
         </style>
     </head>
@@ -127,7 +163,7 @@
     <body>
         <div class="header"></div>
 
-        <div class="content">
+        <div class="content" onscroll="hidetutorial()">
             <!--Cornelius Castoriadis On The Imaginary Institution of Society-->                  <iframe class="box" id="v1" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/6O7_YswJOXY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Sartre on Intellectualism-->                                                      <iframe class="box" id="v2" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/_g8JVK4Fppw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Talkshow: Der zerstörte Tisch-->                                                  <iframe class="box" id="v3" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/H3AxGp5k-Qo?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -155,29 +191,34 @@
             <!--Faust 1960-->                                                                     <iframe class="box" id="p4" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/6zzwYQch5R4?list=PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
-                                                                                <div class="box" id="b1">
-                                                                                    <i>Websites</i>
-                                                                                    <p>
-                                                                                    <a href="https://fontsinuse.com/">Fonts In Use</a><br>
-                                                                                    <a href="https://commons.wikimedia.org/wiki/Main_Page">WIKIMEDIA COMMONS</a><br>
-                                                                                    <a href="https://dexternavy.com/">Dexter Navy</a><br>
-                                                                                    <a href="https://plato.stanford.edu/">Stanford Encyclopedia of Philosophy</a><br>
-                                                                                    </p>
-                                                                                </div>
+            <div class="box" id="b3">
+                <i>Websites</i>
+                <p>
+                <a href="https://fontsinuse.com/">Fonts In Use</a><br>
+                <a href="https://commons.wikimedia.org/wiki/Main_Page">WIKIMEDIA COMMONS</a><br>
+                <a href="https://dexternavy.com/">Dexter Navy</a><br>
+                <a href="https://plato.stanford.edu/">Stanford Encyclopedia of Philosophy</a><br>
+                </p>
+            </div>
 
-                                                                                <div class="box" id="b2">
-                                                                                    <p><small>ARTIKEL</small><br>
-                                                                                    <a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></p>
-                                                                                    
-                                                                                    <p><small>INSTALLATION</small><br>
-                                                                                    <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
-                                                                                </div>
-                                                                                <!-- <iframe class="box" id="b10"
-                                                                                        style="border:0; aspect-ratio: 4/3;"
-                                                                                        loading="lazy"
-                                                                                        allowfullscreen
-                                                                                        src="https://www.google.com/maps/d/u/0/embed?mid=1AJO2WUYnUIA-Om_vcBTun6624hzfhX1i&ehbc=2E312F">
-                                                                                </iframe> -->
+            <div class="box" id="b1">
+                <span class="key">SHIFT</span>
+                <span> + </span>
+                <span class="key">Mousewheel</span>
+                <span>    oder    </span>
+                <span class="key">❮</span>
+                <span class="key">❯</span>
+                <br><br>
+                <span>um zu scrollen</span>
+            </div>
+
+            <div class="box" id="b2">
+                <p><small>ARTIKEL</small><br>
+                <a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></p>
+                
+                <p><small>INSTALLATION</small><br>
+                <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
+            </div>
         </div>
     </body>
 </html>
