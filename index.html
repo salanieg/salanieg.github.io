@@ -11,10 +11,12 @@
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script> $(function(){$(".header").load("header.html");}); </script>
         <script>
-            document.addEventListener("touchstart", (event) => {
+            document.addEventListener("touchstart", istouchevent)
+            function istouchevent(){
                 localStorage.setItem('istouch', true);
-                alert("aha, touch")
-            });
+                document.removeEventListener("touchstart", istouchevent);
+                alert("aha, touch");
+            }
         </script>
 
         <style> 
