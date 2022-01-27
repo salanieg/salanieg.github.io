@@ -24,14 +24,14 @@
                 grid-template-rows: repeat(8, 1fr);
                 gap: 100px;
                 grid-template-areas: 
-                    ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
-                    ".  v4 .  .  .  v1 p1 .  .  .  .  v7 .  .  .  p2  .  .  v5 .  .  .  b1 .  .  .  .  "
-                    ".  v4 .  .  .  v1 p1 .  .  .  .  v7 .  .  .  p2  .  .  v5 .  .  .  b1 .  .  .  .  "
-                    ".  v4 .  .  .  v1 p1 .  .  .  .  v7 .  .  .  p2  .  .  v6 .  .  .  b1 .  .  .  .  "
-                    ".  v4 .  .  .  v2 v3 .  .  .  .  v7 .  .  .  p2  .  .  v6 .  .  .  b1 .  .  .  .  "
-                    ".  v4 .  .  .  v2 v3 .  .  .  .  v7 .  .  .  p2  .  .  .  .  .  .  b1 .  .  .  .  "
-                    ".  v4 .  .  .  v2 v3 .  .  .  .  v7 .  .  .  p2  .  .  .  .  .  .  b1 .  .  .  .  "
-                    ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  ";
+                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
+                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v5  .   .   .   b1  .   .   .   .   "
+                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v5  .   .   .   b1  .   .   v9  .   "
+                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b1  .   .   v9  .   "
+                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b1  .   .   v9  .   "
+                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v7  .   .   .   b1  .   .   v9  .   "
+                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v7  .   .   .   b1  .   .   .   .   "
+                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ";
                 place-items:center;
             }
 
@@ -43,11 +43,24 @@
             #v6 {grid-area: v6;}
             #v7 {grid-area: v7;}
             #v8 {grid-area: v8;}
+            #v9 {grid-area: v9;}
+            #v10 {grid-area: v10;}
+            #v11 {grid-area: v11;}
+            #v12 {grid-area: v12;}
 
             #p1 {grid-area: p1;}
             #p2 {grid-area: p2;}
 
             #b1 {grid-area: b1;}
+            #b1 {grid-area: b1;}
+            #b1 {grid-area: b1;}
+            #b1 {grid-area: b1;}
+            #b1 {grid-area: b1;}
+            #b1 {grid-area: b1;}
+            #b1 {grid-area: b1;}
+            #b1 {grid-area: b1;}
+            #b1 {grid-area: b1;}
+
 
             .box {
                 min-height: 100%;
@@ -78,11 +91,15 @@
             <iframe class="box" id="v4" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/xuCn8ux2gbs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <iframe class="box" id="v5" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/-jAO9bVpqV8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
             <iframe class="box" id="v6" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/oe65t5m3cAU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-            <iframe class="box" id="v7" style="aspect-ratio: 16/9" src='//players.brightcove.net/6057277737001/AgPwICX30_default/index.html?videoId=6165059245001' frameborder=0 allowfullscreen></iframe>
-            
+            <iframe class="box" id="v7" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/pm6qy_9E0rY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <iframe class="box" id="v8" style="aspect-ratio: 16/9" src='//players.brightcove.net/6057277737001/AgPwICX30_default/index.html?videoId=6165059245001' frameborder=0 allowfullscreen></iframe>
+            <iframe class="box" id="v9" style="aspect-ratio: 16/9" src="https://player.vimeo.com/video/279828346" title="vimeo-player" frameborder="0" allowfullscreen></iframe>
+
             <iframe class="box" id="p1" style="aspect-ratio: 4/3" src="https://www.youtube.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe class="box" id="p2" style="aspect-ratio: 4/3" src="https://www.youtube.com/embed/videoseries?list=PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!-- <div class="box" id="b3">
+            <iframe class="box" id="p2" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/videoseries?list=PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            
+            
+            <div class="box" id="b1">
                 <i>Websites</i>
                 <p>
                 Fonts In Use<br>
@@ -90,8 +107,10 @@
                 Dexter Navy<br>
                 Stanford Encyclopedia of Philosophy<br>
                 </p>
-            </div> -->
-            <iframe class="box" id="b1"
+            </div>
+
+
+            <iframe class="box" id="b10"
                     style="border:0; aspect-ratio: 4/3;"
                     loading="lazy"
                     allowfullscreen

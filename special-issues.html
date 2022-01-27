@@ -20,23 +20,18 @@
         <style>
             
             .special-issue-wrapper {
-                margin: 100px auto 100px auto;
+                margin: 150px auto 300px auto;
                 display: flex;
                 flex-wrap:wrap;
                 justify-content: center;
-                gap:80px;
+                gap:600px;
             }
 
-            /* #WÜRZBURGER-SÜSSBOYS {grid-area: WÜRZBURGER-SÜSSBOYS;}
-            #DECAY-OF-A-RESIDENCY {grid-area: DECAY-OF-A-RESIDENCY;} */
-            /* # {grid-area: ;} */
-
-            .special-issue {
+            .cover-audio {
                 display:flex;
                 flex-flow:column;
                 row-gap:20px;
                 width: 400px;
-                /* background-color: darkgreen; */
             }
 
             .special-issue-cover {
@@ -50,12 +45,20 @@
                 transform: scale(1.03);
                 transition: transform 0.7s;             
             }
+            .special-issue {
+                display: flex;
+                flex-wrap:wrap;
+                justify-content: center;
+                gap:80px;
+
+                height:fit-content;
+                width:80vw;
+                /* background-color: darkolivegreen; */
+            }
 
             #im-bett {
-                
-                max-height:80vh;
-                max-width:80vw;
-
+                height:80vh;
+                max-width: 100%;
                 
             }
 
@@ -73,22 +76,24 @@
 
         <div class="content">
             <div class="special-issue-wrapper">
-                
-                <div class="special-issue" id="WÜRZBURGER-SÜSSBOYS">
-                    <a href="https://open.spotify.com/album/6sQROeyBaP22sWgwn7RlDT?si=1lXGQ4mFRJe4X3RP_8CLHw"><img class="special-issue-cover" src="images/special-issues/WÜRZBURGER-SÜSSBOYS.jpg" alt="WÜRZBURGER SÜSSBOYS COVER"/></a>
-                    <iframe src="https://open.spotify.com/embed/album/6sQROeyBaP22sWgwn7RlDT?utm_source=generator" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                <div class="special-issue">
+                    <div class="cover-audio" id="WÜRZBURGER-SÜSSBOYS">
+                        <a href="https://open.spotify.com/album/6sQROeyBaP22sWgwn7RlDT?si=1lXGQ4mFRJe4X3RP_8CLHw"><img class="special-issue-cover" src="images/special-issues/WÜRZBURGER-SÜSSBOYS.jpg" alt="WÜRZBURGER SÜSSBOYS COVER"/></a>
+                        <iframe src="https://open.spotify.com/embed/album/6sQROeyBaP22sWgwn7RlDT?utm_source=generator" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                    </div>
+
+                    <div class="cover-audio" id="DECAY-OF-A-RESIDENCY">
+                        <a href="https://open.spotify.com/album/444VniQ7XgaS74anQDbH83?si=zJCJ-PRbSwagSeNm7jVtnQ"><img class="special-issue-cover" src="images/special-issues/DECAY-OF-A-RESIDENCY.jpg" alt="DECAY OF A RESIDENCY COVER"/></a>
+                        <iframe src="https://open.spotify.com/embed/album/444VniQ7XgaS74anQDbH83?utm_source=generator" width="400px" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                    </div>
                 </div>
 
-                <div class="special-issue" id="DECAY-OF-A-RESIDENCY">
-                    <a href="https://open.spotify.com/album/444VniQ7XgaS74anQDbH83?si=zJCJ-PRbSwagSeNm7jVtnQ"><img class="special-issue-cover" src="images/special-issues/DECAY-OF-A-RESIDENCY.jpg" alt="DECAY OF A RESIDENCY COVER"/></a>
-                    <iframe src="https://open.spotify.com/embed/album/444VniQ7XgaS74anQDbH83?utm_source=generator" width="400px" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                <!-- <div class="divider"></div> -->
+
+                <div class="special-issue">
+                    <img id="im-bett" src="images/special-issues/imbett.png" alt="DECAY OF A RESIDENCY COVER"/>
                 </div>
-                <div class="divider"></div>
-                <div >
-                <img id="im-bett" src="images/special-issues/imbett.png" alt="DECAY OF A RESIDENCY COVER"/>
             </div>
-            </div>
-            
         </div>
-    </body>    
+    </body>
 </html>
