@@ -81,6 +81,7 @@
             .content {
                 overflow-x: scroll;
                 display: grid;
+                grid-template-columns: repeat(auto-fit, fit-content);
                 grid-template-rows: repeat(8, 1fr);
                 gap: 100px;
                 grid-template-areas: 
@@ -96,9 +97,7 @@
             }
 
             .box {
-                /* min-height: 100%; */
                 height:100%;
-                max-height:100%;
                 max-width:95vw;
                 /* background-color: aliceblue; */
             }
@@ -127,19 +126,19 @@
         <div class="header"></div>
 
         <div class="content">
-            <iframe class="box" id="v1" loading="lazy" style="aspect-ratio: 3/2" src="https://www.youtube.com/embed/6O7_YswJOXY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe class="box" id="v2" loading="lazy"style="aspect-ratio: 3/2" src="https://www.youtube.com/embed/_g8JVK4Fppw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe class="box" id="v3" style="aspect-ratio: 4/3" src="https://www.youtube.com/embed/H3AxGp5k-Qo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe class="box" id="v4" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/xuCn8ux2gbs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe class="box" id="v5" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/-jAO9bVpqV8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-            <iframe class="box" id="v6" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/oe65t5m3cAU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-            <iframe class="box" id="v7" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/pm6qy_9E0rY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-            <iframe class="box" id="v8" style="aspect-ratio: 16/9" src='//players.brightcove.net/6057277737001/AgPwICX30_default/index.html?videoId=6165059245001' frameborder=0 allowfullscreen></iframe>
-            <iframe class="box" id="v9" style="aspect-ratio: 16/9" src="https://player.vimeo.com/video/279828346" title="vimeo-player" frameborder="0" allowfullscreen></iframe>
+            <iframe class="box" id="v1" style="aspect-ratio: 3/2" src="https://www.youtube.com/embed/6O7_YswJOXY" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe class="box" id="v2" style="aspect-ratio: 3/2" src="https://www.youtube.com/embed/_g8JVK4Fppw" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe class="box" id="v3" style="aspect-ratio: 4/3" src="https://www.youtube.com/embed/H3AxGp5k-Qo" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe class="box" id="v4" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/xuCn8ux2gbs" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe class="box" id="v5" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/-jAO9bVpqV8" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <iframe class="box" id="v6" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/oe65t5m3cAU" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <iframe class="box" id="v7" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/pm6qy_9E0rY" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <iframe class="box" id="v8" style="aspect-ratio: 16/9" src='//players.brightcove.net/6057277737001/AgPwICX30_default/index.html?videoId=6165059245001' loading="lazy" frameborder=0 allowfullscreen></iframe>
+            <iframe class="box" id="v9" style="aspect-ratio: 16/9" src="https://player.vimeo.com/video/279828346" loading="lazy" title="vimeo-player" frameborder="0" allowfullscreen></iframe>
 
-            <iframe class="box" id="p1" style="aspect-ratio: 4/3" src="https://www.youtube.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe class="box" id="p2" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/videoseries?list=PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <iframe class="box" id="p3" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/jWJVMoe7OY0?list=PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe class="box" id="p1" style="aspect-ratio: 4/3" src="https://www.youtube.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe class="box" id="p2" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/videoseries?list=PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe class="box" id="p3" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/jWJVMoe7OY0?list=PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
   
             <div class="box" id="b1">
                 <i>Websites</i>
