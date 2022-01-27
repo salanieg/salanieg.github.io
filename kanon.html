@@ -24,14 +24,14 @@
                 grid-template-rows: repeat(8, 1fr);
                 gap: 100px;
                 grid-template-areas: 
-                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
-                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v5  .   .   .   b1  .   .   .   .   "
-                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v5  .   .   .   b1  .   .   v9  .   "
-                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b1  .   .   v9  .   "
-                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b1  .   .   v9  .   "
-                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v7  .   .   .   b1  .   .   v9  .   "
-                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v7  .   .   .   b1  .   .   .   .   "
-                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ";
+                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
+                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v5  .   .   .   b1  .   .   v9  .   "
+                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v5  .   .   .   b1  .   .   v9  .   "
+                    ".   v4  .   .   .   v1  p1  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b1  .   .   v9  .   "
+                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b1  .   .   v9  .   "
+                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v7  .   .   .   b1  .   .   b2  .   "
+                    ".   v4  .   .   .   v2  v3  .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v7  .   .   .   b1  .   .   b2  .   "
+                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ";
                 place-items:center;
             }
 
@@ -50,16 +50,22 @@
 
             #p1 {grid-area: p1;}
             #p2 {grid-area: p2;}
+            #p3 {grid-area: p3;}
+            #p4 {grid-area: p4;}
+            #p5 {grid-area: p5;}
+            #p6 {grid-area: p6;}
+            #p7 {grid-area: p7;}
+
 
             #b1 {grid-area: b1;}
-            #b1 {grid-area: b1;}
-            #b1 {grid-area: b1;}
-            #b1 {grid-area: b1;}
-            #b1 {grid-area: b1;}
-            #b1 {grid-area: b1;}
-            #b1 {grid-area: b1;}
-            #b1 {grid-area: b1;}
-            #b1 {grid-area: b1;}
+            #b2 {grid-area: b2;}
+            #b3 {grid-area: b3;}
+            #b4 {grid-area: b4;}
+            #b5 {grid-area: b5;}
+            #b6 {grid-area: b6;}
+            #b7 {grid-area: b7;}
+            #b8 {grid-area: b8;}
+            #b9 {grid-area: b9;}
 
 
             .box {
@@ -67,16 +73,25 @@
                 height:100%;
                 max-height:100%;
                 max-width:95vw;
+                /* background-color: aliceblue; */
             }
 
             i {
-                font-size:50pt;
+                font-size:30pt;
                 line-height: 2;
             }
+
             p {
                 font-size: 20pt;
                 white-space: nowrap;
             }
+
+            #b2 {
+                display:flex;
+                gap:80px;
+                text-align: center;
+            }
+            
 
         </style>
     </head>
@@ -97,25 +112,31 @@
 
             <iframe class="box" id="p1" style="aspect-ratio: 4/3" src="https://www.youtube.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <iframe class="box" id="p2" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/videoseries?list=PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            
-            
+            <iframe class="box" id="p3" style="aspect-ratio: 16/9" src="https://www.youtube.com/embed/jWJVMoe7OY0?list=PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  
             <div class="box" id="b1">
                 <i>Websites</i>
                 <p>
-                Fonts In Use<br>
-                WIKIMEDIA COMMONS<br>
-                Dexter Navy<br>
-                Stanford Encyclopedia of Philosophy<br>
+                <a href="https://fontsinuse.com/">Fonts In Use</a><br>
+                <a href="https://commons.wikimedia.org/wiki/Main_Page">WIKIMEDIA COMMONS</a><br>
+                <a href="https://dexternavy.com/">Dexter Navy</a><br>
+                <a href="https://plato.stanford.edu/">Stanford Encyclopedia of Philosophy</a><br>
                 </p>
             </div>
 
-
-            <iframe class="box" id="b10"
+            <div class="box" id="b2">
+                <p><small>ARTIKEL</small><br>
+                <a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></p>
+                
+                <p><small>INSTALLATION</small><br>
+                <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
+            </div>
+            <!-- <iframe class="box" id="b10"
                     style="border:0; aspect-ratio: 4/3;"
                     loading="lazy"
                     allowfullscreen
                     src="https://www.google.com/maps/d/u/0/embed?mid=1AJO2WUYnUIA-Om_vcBTun6624hzfhX1i&ehbc=2E312F">
-            </iframe>
+            </iframe> -->
         </div>
     </body>
 </html>
