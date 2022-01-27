@@ -21,6 +21,10 @@
                 if(sessionStorage.getItem('tutorialshown')) {
                     document.getElementById("b1").style.display = "none";
                 }
+
+                if(localStorage.getItem('istouch')) {
+                    document.getElementById("b1").style.display = "none";
+                }
             });
         </script>
 
@@ -136,7 +140,7 @@
                 /* background-color: blueviolet; */
             }
 
-            #b1 > {
+            #b1 > * {
                 white-space: pre;
             }
 
@@ -204,12 +208,11 @@
             <div class="box" id="b1">
                 <span class="key">SHIFT</span>
                 <span> + </span>
-                <span class="key">Mousewheel</span>
+                <span>Mousewheel</span>
                 <span>    oder    </span>
                 <span class="key">❮</span>
                 <span class="key">❯</span>
-                <br><br>
-                <span>um zu scrollen</span>
+                <span>    um zu scrollen</span>
             </div>
 
             <div class="box" id="b2">
