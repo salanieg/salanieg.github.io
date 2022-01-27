@@ -12,9 +12,9 @@
         <script> $(function(){$(".header").load("header.html");}); </script>
 
         <script>
+
             function hidetutorial() {
-                document.getElementById("b1").style.visibility = "hidden";
-                sessionStorage.setItem('tutorialshown', true);
+                    sessionStorage.setItem('tutorialshown', true);
             }
             
             document.addEventListener("DOMContentLoaded", (event) => {
@@ -90,21 +90,20 @@
 
 
             .content {
+                scrollbar-width: none;
                 -webkit-overflow-scrolling: touch;
                 overflow-x: scroll;
                 display: grid;
-                /* grid-template-columns: repeat(auto-fit, fit-content); */
-                grid-template-rows: repeat(9, 1fr);
+                grid-template-rows: repeat(8, 1fr);
                 gap: 100px;
                 grid-template-areas: 
                     ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
-                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   .   .   .   v1  v16 .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v5  .   .   .   b3  .   .   v9  .   .   .   .   .   .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
-                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v1  v16 .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v5  .   .   .   b3  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   p4  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
+                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   .   .   .   v1  v16 .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v5  .   .   .   b3  .   .   v9  .   .   .   .   .   .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   p4   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
+                    "b1  .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v1  v16 .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v5  .   .   .   b3  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   p4  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
                     "b1  .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v1  v16 .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b3  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v11 .   .   .   v12 .   .   .   .   .   .   .   .   p4  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
-                    "b1  .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b3  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   p5  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
+                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v6  .   .   .   b3  .   .   v9  .   .   .   .   v10 .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   p5  .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
                     ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   p1  .   .   v2  v3  .   .   .   .   .   p3  .   .   .   .   p2  .   .   .   .   v8  .   .   .   .   .   v7  .   .   .   b3  .   .   b2  .   .   .   .   v10 .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   v19 .   .   .   .   .   .   v18 .   .   .   .   .   .   .   v17 .   .   .   .   .   v15 .   .   .   .   "
-                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   .   .   .   v2  v3  .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v7  .   .   .   b3  .   .   b2  .   .   .   .   .   .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
-                    ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
+                    ".   .   .   v4  .   .   .   .   .   .   .   .   .   .   .   .   .   .   v2  v3  .   .   .   .   .   .   .   .   .   .   p2  .   .   .   .   .   .   .   .   .   .   v7  .   .   .   b3  .   .   b2  .   .   .   .   .   .   .   .   .   .   .   .   .   v14 .   .   .   v13 .   .   .   .   .   .   .   .   v19   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   "
                     ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ";
                 place-items:center;
             }
@@ -133,9 +132,11 @@
             }
 
             #b1 {
+                line-height:3;
+                padding-left: 100px;
                 width:100vw;
                 text-align: center;
-                white-space: nowrap;
+                white-space: wrap;
                 font-size: 20pt;
                 /* background-color: blueviolet; */
             }
@@ -167,7 +168,7 @@
     <body>
         <div class="header"></div>
 
-        <div class="content" onscroll="hidetutorial()">
+        <div class="content" id="content" onscroll="hidetutorial()">
             <!--Cornelius Castoriadis On The Imaginary Institution of Society-->                  <iframe class="box" id="v1" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/6O7_YswJOXY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Sartre on Intellectualism-->                                                      <iframe class="box" id="v2" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/_g8JVK4Fppw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Talkshow: Der zerstörte Tisch-->                                                  <iframe class="box" id="v3" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/H3AxGp5k-Qo?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -210,8 +211,7 @@
                 <span> + </span>
                 <span>Mousewheel</span>
                 <span>    oder    </span>
-                <span class="key">❮</span>
-                <span class="key">❯</span>
+                <span><span class="key">❮</span> <span class="key">❯</span></span>
                 <span>    um zu scrollen</span>
             </div>
 
