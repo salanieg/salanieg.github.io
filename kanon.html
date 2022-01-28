@@ -35,49 +35,57 @@
                 place-items:center;
             }
 
-            .containers {
-                background-color: blueviolet;
-                height:100vh;
-                width:100vw;
-                display:grid;
-                grid-template-columns: 400px 400px;
-                grid-template-rows: 400px 400px;
-                /* flex-flow: row wrap; */
-                /* place-items:center;
-                justify-content:center;
-                align-items:center; */
-                gap:100px;
+            .containergrid {
+                display: grid;
+                grid-template-columns: auto auto;
+                place-items:center;
+                gap:150px;
+            }
+
+            .containercolumn {
+                display: flex;
+                flex-flow: column wrap;
+                place-items:center;
+                gap:150px;
+            }
+
+            .containerrow {
+                display: flex;
+                flex-flow: row nowrap;
+                place-items:center;
+                gap:150px;
             }
 
             .large {
-                height:90%;
+                height:75vh;
                 width:auto;
                 max-height:90vh;
                 max-width:90vw;
             }
 
             .medium {
-                height:70%;
+                height:50vh;
                 width:auto;
                 max-height:90vh;
                 max-width:90vw;
             }
 
             .small {
-                /* height:40%; */
-                width:80px;
+                height:25vh;
+                width:auto;
                 max-height:90vh;
                 max-width:90vw;
             }
 
-            /* .container > * {
-                height:auto;
-                width:40%;
-            } */
+            .verysmall {
+                height:10vh;
+                width:auto;
+                max-height:90vh;
+                max-width:90vw;
+            }
 
 
-
-            @media screen and (max-width: 1200px) {
+            @media screen and (max-width: 120px) {
                 .content {
                     padding-top:200px;
                     overflow-x: hidden;
@@ -87,13 +95,10 @@
                 }
 
                 .container {
-                    background-color: blueviolet;
                     width:fit-content;
                     display:flex;
                     flex-flow: column wrap;
                     place-items:center;
-                    justify-content:center;
-                    align-items:center;
                     gap:20px;
                 }
 
@@ -117,11 +122,13 @@
                     max-height:90vh;
                     max-width:90vw;
                 }
-            }
 
-            i {
-                font-size:30pt;
-                line-height: 2;
+                .verysmall {
+                    height:auto;
+                    width:40%;
+                    max-height:90vh;
+                    max-width:90vw;
+                }
             }
 
             p {
@@ -129,7 +136,7 @@
                 white-space: nowrap;
             }
 
-            #b2 {
+            #infobfn {
                 display:flex;
                 gap:80px;
                 text-align: center;
@@ -160,14 +167,13 @@
                 height:0px;
                 margin:0px;
             }
-
         </style>
     </head>
     
     <body>
         <div class="header"></div>
 
-        <div class="content" id="content" onscroll="hidetutorial()">
+        <div class="content" onscroll="hidetutorial()">
 
             <div class="medium" id="tutorial">
                 <span class="key">SHIFT</span>
@@ -180,19 +186,18 @@
 
             <!--"And I think to myself, what a wonderful world."-->                               <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/RErdSr0iAcs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Marx & Engels - Stationen ihres Lebens-->                                         <iframe class="medium" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-            <div class="container">
-            <!--Cornelius Castoriadis On The Imaginary Institution of Society-->                  <iframe class="medium" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/6O7_YswJOXY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!--Bernie Sanders interviews Punks [1988]-->                                         <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/IaD1DcWfaGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <div class="containergrid">
+            <!--Cornelius Castoriadis On The Imaginary Institution of Society-->                  <iframe class="small" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/6O7_YswJOXY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--Bernie Sanders interviews Punks [1988]-->                                         <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/IaD1DcWfaGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!-- <div class="divider"></div> -->
-            <!--Sartre on Intellectualism-->                                                      <iframe class="medium" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/_g8JVK4Fppw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!--Talkshow: Der zerstörte Tisch-->                                                  <iframe class="medium" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/H3AxGp5k-Qo?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--Sartre on Intellectualism-->                                                      <iframe class="small" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/_g8JVK4Fppw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--Talkshow: Der zerstörte Tisch-->                                                  <iframe class="small" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/H3AxGp5k-Qo?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
 
-            <div class="container">
-            <!--Friedrich Schiller „Die Bürgschaft“ (1798)-->                                     <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/-jAO9bVpqV8?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-            <!--Jalava Lied-->                                                                    <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/oe65t5m3cAU?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-            <!--Bernie Sanders 8 1/2 hour Filibuster but it's Lofi-->                             <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/pm6qy_9E0rY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <div class="containercolumn">
+            <!--Friedrich Schiller „Die Bürgschaft“ (1798)-->                                     <iframe class="verysmall" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/-jAO9bVpqV8?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <!--Jalava Lied-->                                                                    <iframe class="verysmall" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/oe65t5m3cAU?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <!--Bernie Sanders 8 1/2 hour Filibuster but it's Lofi-->                             <iframe class="verysmall" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/pm6qy_9E0rY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
             </div>
 
             <!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD-->                            <iframe class="large" style="aspect-ratio: 16/9" src='https://players.brightcove.net/6057277737001/AgPwICX30_default/index.html?videoId=6165059245001' loading="lazy" frameborder=0 allowfullscreen></iframe>
@@ -200,9 +205,9 @@
 
             <!--Akira Kurosawa - Composing Movement-->                                            <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/doaQC-S8de8?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-            <div class="container">
-            <!--The Big Flat Now – 032c issue #34 (2018)-->                                       <iframe class="large" style="aspect-ratio: 16/9" src="https://player.vimeo.com/video/279828346" loading="lazy" title="vimeo-player" frameborder="0" allowfullscreen></iframe>
-                <div class="medium">
+            <div class="containerrow">
+            <!--The Big Flat Now – 032c issue #34 (2018)-->                                       <iframe class="medium" style="aspect-ratio: 16/9" src="https://player.vimeo.com/video/279828346" loading="lazy" title="vimeo-player" frameborder="0" allowfullscreen></iframe>
+                <div class="small" id="infobfn">
                     <p><small>ARTIKEL</small><br>
                     <a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></p>
                     
@@ -210,10 +215,13 @@
                     <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
                 </div>
             </div>
-            <!--history of the entire world, i guess-->                                           <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/xuCn8ux2gbs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!--The Future Of Reasoning-->                                                        <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/_ArVh3Cj9rw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!--YouTube's Copyright System Isn't Broken. The World's Is.-->                       <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/1Jwo5qc78QU?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!--Is Success Luck or Hard Work?-->                                                  <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/3LopI4YeC4I?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+            <div class="containergrid">
+            <!--history of the entire world, i guess-->                                           <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/xuCn8ux2gbs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--The Future Of Reasoning-->                                                        <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/_ArVh3Cj9rw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--YouTube's Copyright System Isn't Broken. The World's Is.-->                       <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/1Jwo5qc78QU?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--Is Success Luck or Hard Work?-->                                                  <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/3LopI4YeC4I?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
 
             <!--Visual Investigations-->                                                          <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/jWJVMoe7OY0?list=PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
@@ -222,14 +230,13 @@
             <!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->                      <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/TDcwIZzaf-k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Hollywood Antivax Rally-->                                                        <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/B9v6q5YzbGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-            <div class="container">
+            <div class="containerrow">
             <!--Faust 1960-->                                                                     <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/6zzwYQch5R4?list=PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Goethe Faust 3sat-->                                                              <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/JlhANslhnNI?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
 
             <div class="medium">
-                <i>Websites</i>
-                <p>
+                <p><small>WEBSITES</small><br>
                 <a href="https://fontsinuse.com/">Fonts In Use</a><br>
                 <a href="https://commons.wikimedia.org/wiki/Main_Page">WIKIMEDIA COMMONS</a><br>
                 <a href="https://dexternavy.com/">Dexter Navy</a><br>
