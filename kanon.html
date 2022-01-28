@@ -18,9 +18,9 @@
             }
             
             document.addEventListener("DOMContentLoaded", (event) => {
-                if(sessionStorage.getItem('tutorialshown')) {
-                    document.getElementById("tutorial").style.display = "none";
-                }
+                // if(sessionStorage.getItem('tutorialshown')) {
+                //     document.getElementById("tutorial").style.display = "none";
+                // }
             });
         </script>
 
@@ -145,10 +145,13 @@
 
             #tutorial {
                 line-height:3;
-                width:100vw;
                 text-align: center;
-                white-space: wrap;
                 font-size: 20pt;
+                margin-left:30vw;
+            }
+
+            #tutorial > *{
+                white-space: pre;
             }
 
             .key {
@@ -159,8 +162,8 @@
             }
 
             .spacer {
-                width:100px;
-                height:100px;
+                width:0;
+                height:0;
             }
 
         </style>
@@ -171,19 +174,15 @@
 
         <div class="content" onscroll="hidetutorial()">
 
-            <div class="spacer"></div>
-
-            <div class="medium" id="tutorial">
-                <span class="key">SHIFT</span>
-                <span> + </span>
-                <span>Mousewheel</span>
-                <span>    oder    </span>
-                <span><span class="key">❮</span> <span class="key">❯</span></span>
-                <span>    um zu scrollen</span>
+            <div id="tutorial">
+                <p><span class="key">SHIFT</span><span> + Mousewheel    oder    </span><span><span class="key">❮</span> <span class="key">❯</span></span><span>    um zu scrollen</span></p>
             </div>
+
+            <div class="spacer"></div>
 
             <!--"And I think to myself, what a wonderful world."-->                               <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/RErdSr0iAcs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Marx & Engels - Stationen ihres Lebens-->                                         <iframe class="medium" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
             <div class="containergrid">
             <!--Cornelius Castoriadis On The Imaginary Institution of Society-->                  <iframe class="small" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/6O7_YswJOXY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Bernie Sanders interviews Punks [1988]-->                                         <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/IaD1DcWfaGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -199,7 +198,6 @@
 
             <!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD-->                            <iframe class="large" style="aspect-ratio: 16/9" src='https://players.brightcove.net/6057277737001/AgPwICX30_default/index.html?videoId=6165059245001' loading="lazy" frameborder=0 allowfullscreen></iframe>
             <!--KANON // MUSIK-->                                                                 <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/videoseries?list=PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
             <!--Akira Kurosawa - Composing Movement-->                                            <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/doaQC-S8de8?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
             <div class="containergrid">
@@ -209,9 +207,7 @@
             <!--Is Success Luck or Hard Work?-->                                                  <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/3LopI4YeC4I?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
 
-            <!--Visual Investigations-->                                                          <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/jWJVMoe7OY0?list=PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-
+            <!--Visual Investigations-->                                                          <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/jWJVMoe7OY0?list=PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--The Problem With Human Rights-->                                                  <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/AhRBsJYWR8Q?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->                      <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/TDcwIZzaf-k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Hollywood Antivax Rally-->                                                        <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/B9v6q5YzbGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
