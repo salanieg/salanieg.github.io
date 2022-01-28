@@ -121,6 +121,7 @@
             }
 
             #placeholder {
+                display:inline;
                 visibility:hidden;
             }
 
@@ -158,10 +159,6 @@
             var selectedcover = ic
             var selectedtext = it
 
-            document.addEventListener("DOMContentLoaded", (event) => {
-                document.getElementById(selectedcover).style.display = "inline";
-                document.getElementById(selectedtext).style.fontWeight = "900";
-            });
 
             function selectcover(cover, text) {
                 document.getElementById(selectedcover).style.display = "none";
@@ -171,6 +168,17 @@
                 selectedcover = cover
                 selectedtext = text
             }
+
+            document.addEventListener("DOMContentLoaded", (event) => {
+                document.getElementById(selectedcover).addEventListener('load', loaded)
+            });
+
+            function loaded() {
+                    document.getElementById("placeholder").style.display = "none"
+                    document.getElementById(selectedcover).style.display = "inline";
+                    document.getElementById(selectedtext).style.fontWeight = "900";
+            }
+
         </script>
     </head>
 

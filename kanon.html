@@ -59,33 +59,29 @@
             .large {
                 height:75vh;
                 width:auto;
-                max-height:90vh;
                 max-width:90vw;
             }
 
             .medium {
                 height:50vh;
                 width:auto;
-                max-height:90vh;
                 max-width:90vw;
             }
 
             .small {
                 height:25vh;
                 width:auto;
-                max-height:90vh;
                 max-width:90vw;
             }
 
             .verysmall {
                 height:10vh;
                 width:auto;
-                max-height:90vh;
                 max-width:90vw;
             }
 
 
-            @media screen and (max-width: 120px) {
+            @media screen and (max-width: 1200px) {
                 .content {
                     padding-top:200px;
                     overflow-x: hidden;
@@ -94,40 +90,39 @@
                     gap: 50vh;
                 }
 
-                .container {
-                    width:fit-content;
-                    display:flex;
+                .containergrid, .containercolumn, .containerrow {
+                    display: flex;
                     flex-flow: column wrap;
                     place-items:center;
-                    gap:20px;
+                    gap:50px;
                 }
 
                 .large {
                     height:auto;
-                    width:90%;
-                    max-height:90vh;
-                    max-width:90vw;
+                    width:100%;
+                    max-width:100vw;
                 }
 
                 .medium {
                     height:auto;
-                    width:75%;
-                    max-height:90vh;
+                    width:80%;
                     max-width:90vw;
                 }
 
                 .small {
                     height:auto;
                     width:60%;
-                    max-height:90vh;
                     max-width:90vw;
                 }
 
                 .verysmall {
                     height:auto;
                     width:40%;
-                    max-height:90vh;
                     max-width:90vw;
+                }
+
+                #tutorial {
+                    display:none;
                 }
             }
 
@@ -149,10 +144,6 @@
                 text-align: center;
                 white-space: wrap;
                 font-size: 20pt;
-            }
-
-            #b1 > * {
-                white-space: pre;
             }
 
             .key {
@@ -205,17 +196,6 @@
 
             <!--Akira Kurosawa - Composing Movement-->                                            <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/doaQC-S8de8?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-            <div class="containerrow">
-            <!--The Big Flat Now – 032c issue #34 (2018)-->                                       <iframe class="medium" style="aspect-ratio: 16/9" src="https://player.vimeo.com/video/279828346" loading="lazy" title="vimeo-player" frameborder="0" allowfullscreen></iframe>
-                <div class="small" id="infobfn">
-                    <p><small>ARTIKEL</small><br>
-                    <a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></p>
-                    
-                    <p><small>INSTALLATION</small><br>
-                    <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
-                </div>
-            </div>
-
             <div class="containergrid">
             <!--history of the entire world, i guess-->                                           <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/xuCn8ux2gbs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--The Future Of Reasoning-->                                                        <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/_ArVh3Cj9rw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -226,12 +206,12 @@
             <!--Visual Investigations-->                                                          <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/jWJVMoe7OY0?list=PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
-            <!--The Problem With Human Rights-->                                                  <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/AhRBsJYWR8Q?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->                      <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/TDcwIZzaf-k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!--Hollywood Antivax Rally-->                                                        <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/B9v6q5YzbGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--The Problem With Human Rights-->                                                  <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/AhRBsJYWR8Q?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->                      <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/TDcwIZzaf-k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--Hollywood Antivax Rally-->                                                        <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/B9v6q5YzbGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
             <div class="containerrow">
-            <!--Faust 1960-->                                                                     <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/6zzwYQch5R4?list=PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!--Faust 1960-->                                                                     <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/6zzwYQch5R4?list=PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Goethe Faust 3sat-->                                                              <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/JlhANslhnNI?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
 
@@ -244,6 +224,16 @@
                 </p>
             </div>
 
+            <div class="containerrow">
+                <!--The Big Flat Now – 032c issue #34 (2018)-->                                       <iframe class="medium" style="aspect-ratio: 16/9" src="https://player.vimeo.com/video/279828346" loading="lazy" title="vimeo-player" frameborder="0" allowfullscreen></iframe>
+                <div class="small" id="infobfn">
+                    <p><small>ARTIKEL</small><br>
+                    <a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></p>
+                    
+                    <p><small>INSTALLATION</small><br>
+                    <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
+                </div>
+            </div>
 
         </div>
     </body>
