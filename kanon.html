@@ -105,24 +105,30 @@
 
                 .medium {
                     height:auto;
-                    width:80%;
+                    width:80vw;
                     max-width:90vw;
                 }
 
                 .small {
                     height:auto;
-                    width:60%;
+                    width:60vw;
                     max-width:90vw;
                 }
 
                 .verysmall {
                     height:auto;
-                    width:40%;
+                    width:40vw;
                     max-width:90vw;
                 }
 
                 #tutorial {
                     display:none;
+                }
+            }
+
+            @media screen and (max-width: 400px) {
+                .large {
+                    width:90vw;
                 }
             }
 
@@ -139,7 +145,6 @@
 
             #tutorial {
                 line-height:3;
-                padding-left: 100px;
                 width:100vw;
                 text-align: center;
                 white-space: wrap;
@@ -153,11 +158,11 @@
                 padding:0px 20px 0px 20px;
             }
 
-            .divider {
-                width:100%;
-                height:0px;
-                margin:0px;
+            .spacer {
+                width:100px;
+                height:100px;
             }
+
         </style>
     </head>
     
@@ -165,6 +170,8 @@
         <div class="header"></div>
 
         <div class="content" onscroll="hidetutorial()">
+
+            <div class="spacer"></div>
 
             <div class="medium" id="tutorial">
                 <span class="key">SHIFT</span>
@@ -180,7 +187,6 @@
             <div class="containergrid">
             <!--Cornelius Castoriadis On The Imaginary Institution of Society-->                  <iframe class="small" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/6O7_YswJOXY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Bernie Sanders interviews Punks [1988]-->                                         <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/IaD1DcWfaGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <!-- <div class="divider"></div> -->
             <!--Sartre on Intellectualism-->                                                      <iframe class="small" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/_g8JVK4Fppw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Talkshow: Der zerstörte Tisch-->                                                  <iframe class="small" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/H3AxGp5k-Qo?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
@@ -234,6 +240,8 @@
                     <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
                 </div>
             </div>
+            
+            <div class="spacer"></div>
 
         </div>
     </body>
