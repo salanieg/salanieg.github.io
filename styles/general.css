@@ -6,7 +6,7 @@
 
 html {
 	overflow-x: hidden;
-	overflow-y: hidden;	
+	overflow-y: hidden;
 }
 
 body {
@@ -94,4 +94,13 @@ hr {
 	padding:0px;
 	border-width:1px;
 	background-color: lightgray;
+}
+
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: lightgrey;
 }
