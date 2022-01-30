@@ -56,9 +56,17 @@ h1 {
 
 @media screen and (max-width: 500px) {
 	h1 {
-		font-size: 24pt;
+		font-size: 32pt;
 		font-weight: bold;
-		line-height: 2;
+		line-height: 1.5;
+	}
+}
+
+@media screen and (max-width: 400px) {
+	h1 {
+		font-size: 28pt;
+		font-weight: bold;
+		line-height: 1.6;
 	}
 }
 
