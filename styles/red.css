@@ -26,3 +26,7 @@ body {
   color: lightgrey;
   transition: 0.1s;
 }
+
+::-webkit-scrollbar-thumb {
+	background: white;
+}

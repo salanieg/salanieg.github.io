@@ -27,7 +27,6 @@
         <style>
 
             .content {
-                scrollbar-width: none;
                 -webkit-overflow-scrolling: touch;
                 overflow-x: scroll;
                 display: flex;
@@ -35,64 +34,46 @@
                 place-items:center;
             }
 
-            ::-webkit-scrollbar {
-                width: 10px;
-                height: 10px;
+            #start-spacer {
+                display: none;
+                width:0;
+                height:0;
             }
 
- /* ::-webkit-scrollbar-track-piece:start {
-    background: transparent url('images/backgrounds/scrollbar.png') repeat-y !important;
-} */
+            #end-spacer {
+                width:0;
+                height:0;
+            }
 
+            .containergrid, .containercolumn, .containerrow {
+                    place-items:center;
+                    gap:150px;
+            }
 
-
- ::-webkit-scrollbar-thumb {
-  background: lightgrey;
-}
             .containergrid {
                 display: grid;
                 grid-template-columns: auto auto;
-                place-items:center;
-                gap:150px;
             }
 
             .containercolumn {
                 display: flex;
                 flex-flow: column wrap;
-                place-items:center;
-                gap:150px;
             }
 
             .containerrow {
                 display: flex;
                 flex-flow: row nowrap;
-                place-items:center;
-                gap:150px;
             }
 
-            .large {
-                height:75vh;
-                width:auto;
+            .large, .medium, .small, .verysmall {
                 max-width:90vw;
+                width:auto;
             }
 
-            .medium {
-                height:50vh;
-                width:auto;
-                max-width:90vw;
-            }
-
-            .small {
-                height:25vh;
-                width:auto;
-                max-width:90vw;
-            }
-
-            .verysmall {
-                height:15vh;
-                width:auto;
-                max-width:90vw;
-            }
+            .large { height:75vh;}
+            .medium { height:50vh;}
+            .small { height:25vh;}
+            .verysmall { height:15vh;}
 
 
             @media screen and (max-width: 1200px) {
@@ -100,7 +81,6 @@
                     overflow-x: hidden;
                     display: flex;
                     flex-flow: column;
-                    gap: 50vh;
                 }
 
                 .containergrid, .containercolumn, .containerrow {
@@ -110,32 +90,22 @@
                     gap:50px;
                 }
 
-                .large {
-                    height:auto;
-                    width:100%;
+                .large, .medium, .small, .verysmall {
                     max-width:100vw;
+                    height:auto;
                 }
 
-                .medium {
-                    height:auto;
-                    width:80vw;
-                    max-width:90vw;
-                }
-
-                .small {
-                    height:auto;
-                    width:60vw;
-                    max-width:90vw;
-                }
-
-                .verysmall {
-                    height:auto;
-                    width:60vw;
-                    max-width:90vw;
-                }
+                .large { width:100%;}
+                .medium { width:80vw;}
+                .small { width:60vw;}
+                .verysmall { width:60vw;}
 
                 #tutorial {
                     display:none;
+                }
+
+                #start-spacer {
+                    display:block;
                 }
             }
 
@@ -151,11 +121,11 @@
             }
 
             #tutorial {
-                background-color: red;
                 line-height:3;
                 text-align: center;
                 font-size: 20pt;
-                padding-bottom: 200px;
+                padding-bottom: 300px;
+                margin-left:30vw
             }
 
             #tutorial > * {
@@ -167,11 +137,6 @@
                 border-width:1px;
                 border-radius: 4px;
                 padding:0px 20px 0px 20px;
-            }
-
-            .spacer {
-                width:0;
-                height:0;
             }
 
         </style>
@@ -186,7 +151,7 @@
                 <p><span class="key">SHIFT</span><span> + Mousewheel    oder    </span><span><span class="key">❮</span> <span class="key">❯</span></span><span>    um zu scrollen</span></p>
             </div>
 
-            <div class="spacer"></div>
+            <div id="start-spacer"></div>
 
             <!--"And I think to myself, what a wonderful world."-->                               <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/RErdSr0iAcs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Marx & Engels - Stationen ihres Lebens-->                                         <iframe class="medium" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -244,6 +209,8 @@
                     <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
                 </div>
             </div>
+
+            <div id="end-spacer"></div>
 
         </div>
     </body>

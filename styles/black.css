@@ -34,3 +34,7 @@ body {
 .bottom-divider {
   display:none;
 }
+
+::-webkit-scrollbar-thumb {
+	background: white;
+}
