@@ -12,16 +12,6 @@
         <script> $(function(){$(".header").load("header.html");}); </script>
 
         <script>
-            let vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-
-            window.addEventListener('resize', () => {
-            let vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-            });
-        </script>
-
-        <script>
             function showtotop() {
                 if (document.getElementById("content").scrollTop >= 2000) {
                     document.getElementById("return-to-top").style.display = "block";
@@ -47,6 +37,11 @@
             //         document.getElementById("content").removeEventListener("scroll", scrollfix);
             //     }
             // }
+
+            function copyToClipboard(element) {
+                
+            }
+
         </script>
 
         <style>
@@ -81,7 +76,12 @@
             }
 
             #inhalt {
+                text-align: justify;
+                max-width: 100%;
+                line-height: 2;
+                width: 600px;
                 padding-top: 150px;
+                margin-left:200px;
             }
 
             .abstract {
@@ -98,17 +98,11 @@
             }
 
             .artikel {
-                text-align: justify;
-                width: 600px;
-                max-width: 100%;
-                line-height: 2;
-                margin-left:200px;
                 scroll-margin-top:150px;
                 padding-bottom: 300px;
-
             }
 
-            .footnotes {
+            #footnotes {
                 width: 600px;
                 max-width: 100%;
                 margin-left:200px;
@@ -117,12 +111,17 @@
             }
 
 			@media screen and (max-width: 1000px) {
-                .artikel {
+                #inhalt {
                     margin-left: auto;
                     margin-right: auto;
                 }
 
-                .footnotes {
+                #footnotes {
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+
+                .option {
                     margin-left: auto;
                     margin-right: auto;
                 }
@@ -148,11 +147,22 @@
                 transition: 0.1s;
             }
 
-            .download {
-                width: 500px;
+            .option {
+                padding: 5px 15px 5px 15px;
+                width:fit-content;
                 max-width: 100%;
                 font-weight: 700;
                 text-align: center;
+                border: solid black;
+                border-width:1px;
+                border-radius: 4px;
+                cursor:copy;
+            }
+
+            .option:hover {
+                border: solid #980000;
+                border-width:1px;
+                color:#980000
             }
 
         </style>
@@ -214,16 +224,16 @@
                             Herrschaftsverhältnissen beizutragen ist die Herausforderung.
                         </p>
                     </div>
-                    <br>
-                    <br>
-                    <br>
-                    <div class="download"><a href="files/ISSUE-I.pdf" download>Alternativ&#x2005;als&#x2005;PDF&#x2005;herunterladen<br></a></div>
-
                 </div>
             </div>
 
 
             <div id="inhalt">
+                <div class="option"><a href="files/ISSUE-I.pdf" download>Alternativ&#x2005;als&#x2005;PDF&#x2005;herunterladen<br></a></div>
+                <br>
+                <br>
+                <br>
+                <br>
                 <div class="artikel" id="posthistorische-klassenkämpfe">
                     <h1 dir="ltr">
                         POSTHISTORISCHE<br/>KLASSENKÄMPFE
@@ -380,6 +390,9 @@
                         Eine staatliche Autorität legt fest, wie viel produziert wird und wer,
                         wann, wie viel von diesen Produkten erhält. Diese Regulierung ist
                     </p>
+                    <br>
+                    <br>
+                    <div class="option" onclick="navigator.clipboard.writeText('www.gefaengnishefte.org/issue-i#posthistorische-klassenk%C3%A4mpfe')">Teilen&#x2005;(Link&#x2005;kopieren)</div>
                 </div>
 
                 <div class="artikel" id="der-neue-rahmen">
@@ -538,6 +551,9 @@
                         Eine staatliche Autorität legt fest, wie viel produziert wird und wer,
                         wann, wie viel von diesen Produkten erhält. Diese Regulierung ist
                     </p>
+                    <br>
+                    <br>
+                    <div class="option" onclick="navigator.clipboard.writeText('www.gefaengnishefte.org/issue-i#der-neue-rahmen')">Teilen&#x2005;(Link&#x2005;kopieren)</div>
                 </div>
 
                 <div class="artikel" id="agieren-und-agitieren">
@@ -696,9 +712,12 @@
                         Eine staatliche Autorität legt fest, wie viel produziert wird und wer,
                         wann, wie viel von diesen Produkten erhält. Diese Regulierung ist
                     </p>
+                    <br>
+                    <br>
+                    <div class="option" onclick="navigator.clipboard.writeText('www.gefaengnishefte.org/issue-i#agieren-agieren-und-agitieren')">Teilen&#x2005;(Link&#x2005;kopieren)</div>
                 </div>
 
-                <div class="footnotes">
+                <div id="footnotes">
                     <small id="f1">¹ Vgl. dazu auch Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small>
                     <small id="f2"> </small>
                     <small id="f3"> </small>

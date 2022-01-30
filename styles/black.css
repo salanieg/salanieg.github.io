@@ -27,7 +27,7 @@ body {
   transition: 0.1s;
 }
 
-.header-wrap {
+.header > * {
   background-color: black;
 }
 

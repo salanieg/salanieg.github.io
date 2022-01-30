@@ -14,7 +14,7 @@ body {
 }
 
 .content {
-	/* height: calc(100vh - 100px); */
+	height: calc(100vh - 100px);
 	height: calc(var(--vh, 1vh) * 100 - 100px);
 	overflow-y: auto;
 	overflow-x: hidden;
@@ -28,6 +28,11 @@ body {
 	left:0;
 	width:100vw;
 	z-index: 10;
+}
+
+.header > * {
+	color: white;
+	background-color: #980000;
 }
 
 .header a:active {
