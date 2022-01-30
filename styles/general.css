@@ -5,19 +5,19 @@
 }
 
 html {
-	overflow-x: hidden;
-	overflow-y: hidden;
+	overflow-x: auto;
+	overflow-y: auto;
 }
 
 body {
 	height:100vh;
-	overflow-x: hidden;
-	overflow-y: hidden;
+	overflow-x: auto;
+	overflow-y: auto;
 	margin:0px;
 }
 
 .content {
-	/* height:calc(100vh - 100px); */
+	height:calc(100vh - 100px);
 	overflow-y:auto;
 	overflow-x: hidden;
 	padding: 20px;
