@@ -13,6 +13,19 @@
 
 		<script>
 
+			function hidescrollbar() {
+				document.documentElement.style.setProperty('--scrollbar-color', 'transparent');
+			}
+			
+			document.getElementById("content").addEventListener("scroll", () => {
+				document.documentElement.style.setProperty('--scrollbar-color', 'white');
+				setTimeout(hidescrollbar, 10000);
+
+			});
+		</script>
+
+		<script>
+
 			var menuopen = false;
 
             window.addEventListener("resize", (event) => {

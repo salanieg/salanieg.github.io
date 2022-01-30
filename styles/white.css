@@ -27,15 +27,15 @@ body {
   transition: 0.1s;
 }
 
-.header > * {
-  background-color: #980000;
-}
-
 .bottom-divider {
   display:none;
 }
 
 
+:root {
+  --scrollbar-color: #980000;
+}
+
 .content::-webkit-scrollbar-thumb {
-	background: #980000;
+	background: var(--scrollbar-color);;
 }

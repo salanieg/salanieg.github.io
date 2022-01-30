@@ -27,10 +27,10 @@ body {
   transition: 0.1s;
 }
 
-.header-wrap {
-  background-color: #980000;
+:root {
+  --scrollbar-color: white;
 }
 
 .content::-webkit-scrollbar-thumb {
-	background: white;
+	background: var(--scrollbar-color);;
 }
