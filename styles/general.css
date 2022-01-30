@@ -5,14 +5,11 @@
 }
 
 html {
-	overflow-x: auto;
-	overflow-y: auto;
+	overflow-x: hidden;
+	overflow-y: hidden;
 }
 
 body {
-	height:100vh;
-	overflow-x: auto;
-	overflow-y: auto;
 	margin:0px;
 }
 
