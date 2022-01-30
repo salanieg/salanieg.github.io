@@ -14,12 +14,11 @@ body {
 }
 
 .content {
-	height: 100vh;
+	height: calc(100vh - 100px);
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding: 20px;
 	scrollbar-gutter: stable both-edges;
-	padding-bottom: 0;
 }
 
 #header {
