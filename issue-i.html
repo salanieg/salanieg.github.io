@@ -12,17 +12,13 @@
         <script> $(function(){$(".header").load("header.html");}); </script>
 
         <script>
-            // First we get the viewport height and we multiple it by 1% to get a value for a vh unit
-let vh = window.innerHeight * 0.01;
-// Then we set the value in the --vh custom property to the root of the document
-document.documentElement.style.setProperty('--vh', `${vh}px`);
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
 
-// We listen to the resize event
-window.addEventListener('resize', () => {
-  // We execute the same script as before
-  let vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--vh', `${vh}px`);
-});
+            window.addEventListener('resize', () => {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            });
         </script>
 
         <script>
@@ -40,17 +36,17 @@ window.addEventListener('resize', () => {
                 document.documentElement.scrollTop = 0;
             }
 
-            function activatescrollfix() {
-                document.getElementById("content").addEventListener("scroll", scrollfix);
-            }
+            // function activatescrollfix() {
+            //     document.getElementById("content").addEventListener("scroll", scrollfix);
+            // }
 
-            function scrollfix() {
-                // if (document.getElementById("content").scrollTop <= 60) {
-                //     document.getElementById("content").scrollTop = 0;
-                //     document.documentElement.scrollTop = 0;
-                //     document.getElementById("content").removeEventListener("scroll", scrollfix);
-                // }
-            }
+            // function scrollfix() {
+            //     if (document.getElementById("content").scrollTop <= 60) {
+            //         document.getElementById("content").scrollTop = 0;
+            //         document.documentElement.scrollTop = 0;
+            //         document.getElementById("content").removeEventListener("scroll", scrollfix);
+            //     }
+            // }
         </script>
 
         <style>
@@ -180,7 +176,7 @@ window.addEventListener('resize', () => {
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="#posthistorische-klassenkämpfe" onclick="activatescrollfix()">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
+                        <h2><a href="#posthistorische-klassenkämpfe">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
                         <br>
                         <p>
                             Der Kapitalismus ist weder alternativlos, noch kann er durch einfache
@@ -193,7 +189,7 @@ window.addEventListener('resize', () => {
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="#der-neue-rahmen" onclick="activatescrollfix()">Der&#x2005;neue&#x2005;Rahmen ➞</a></h2>
+                        <h2><a href="#der-neue-rahmen">Der&#x2005;neue&#x2005;Rahmen ➞</a></h2>
                         <br>
                         <p>
                             Wenn der Liberalismus in gewisse Rahmenbedingungen eingebettet wird, kann
@@ -207,7 +203,7 @@ window.addEventListener('resize', () => {
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="#agieren-und-agitieren" onclick="activatescrollfix()">Agieren&#x2005;und&#x2005;Agitieren ➞<br></a></h2>
+                        <h2><a href="#agieren-und-agitieren">Agieren&#x2005;und&#x2005;Agitieren ➞<br></a></h2>
                         <br>
                         <p>
                             Wie baut man eine beständige emanzipatorische Bewegung auf, die nicht in
