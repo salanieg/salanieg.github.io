@@ -20,16 +20,23 @@
                 else {
                     document.getElementById("return-to-top").style.display = "none";
                 }
-
-                if (document.getElementById("content").scrollTop <= 10) {
-                    document.getElementById("content").scrollTop = 0;
-                    document.documentElement.scrollTop = 0;
-                }
             }
 
             function totop() {
                 document.getElementById("content").scrollTop = 0;
                 document.documentElement.scrollTop = 0;
+            }
+
+            function activatescrollfix() {
+                document.getElementById("content").addEventListener("scroll", scrollfix);
+            }
+
+            function scrollfix() {
+                if (document.getElementById("content").scrollTop <= 60) {
+                    document.getElementById("content").scrollTop = 0;
+                    document.documentElement.scrollTop = 0;
+                    document.getElementById("content").removeEventListener("scroll", scrollfix);
+                }
             }
         </script>
 
@@ -160,7 +167,7 @@
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="#posthistorische-klassenkämpfe">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
+                        <h2><a href="#posthistorische-klassenkämpfe" onclick="activatescrollfix()">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
                         <br>
                         <p>
                             Der Kapitalismus ist weder alternativlos, noch kann er durch einfache
@@ -173,7 +180,7 @@
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="#der-neue-rahmen">Der&#x2005;neue&#x2005;Rahmen ➞</a></h2>
+                        <h2><a href="#der-neue-rahmen" onclick="activatescrollfix()">Der&#x2005;neue&#x2005;Rahmen ➞</a></h2>
                         <br>
                         <p>
                             Wenn der Liberalismus in gewisse Rahmenbedingungen eingebettet wird, kann
@@ -187,7 +194,7 @@
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="#agieren-und-agitieren">Agieren&#x2005;und&#x2005;Agitieren ➞<br></a></h2>
+                        <h2><a href="#agieren-und-agitieren" onclick="activatescrollfix()">Agieren&#x2005;und&#x2005;Agitieren ➞<br></a></h2>
                         <br>
                         <p>
                             Wie baut man eine beständige emanzipatorische Bewegung auf, die nicht in
