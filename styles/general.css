@@ -14,7 +14,7 @@ body {
 }
 
 .content {
-	height: 10000px;
+	height: calc(100vh - 100px);
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding: 20px;
