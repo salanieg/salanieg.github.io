@@ -27,6 +27,6 @@ body {
   transition: 0.1s;
 }
 
-/* ::-webkit-scrollbar-thumb {
+.content::-webkit-scrollbar-thumb {
 	background: white;
-} */
+}

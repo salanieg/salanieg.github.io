@@ -35,6 +35,6 @@ body {
   display:none;
 }
 
-::-webkit-scrollbar-thumb {
+.content::-webkit-scrollbar-thumb {
 	background: white;
 }
