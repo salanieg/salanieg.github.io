@@ -16,7 +16,7 @@ body {
 
 #header {
 	font-size:15pt;
-	position: absolute;
+	position: sticky;
 	/* top:0; */
 	/* left:0; */
 	width:100%;

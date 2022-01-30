@@ -118,10 +118,23 @@
                 text-align: center;
             }
 
+            #scrollbarspacer {
+                position: fixed;
+                top:0;
+                left:0;
+                font-size: 15;
+                padding:25px;
+                width:100vw;
+                /* background-color: violet; */
+                z-index: 9;
+            }
+
         </style>
     </head>
 
     <body>
+        
+        <div id="scrollbarspacer">X</div>
         <div class="header"></div>
 
         <div class="content" id="content" onscroll="showtotop()">
