@@ -26,6 +26,12 @@
                 document.getElementById("content").scrollTop = 0;
                 document.documentElement.scrollTop = 0;
             }
+
+            function scrollfix() {
+                alert("test")
+                document.getElementById("content").scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+            }
         </script>
 
         <style>
@@ -61,7 +67,6 @@
 
             #inhalt {
                 padding-top: 150px;
-                padding-bottom: 50px;
             }
 
             .abstract {
@@ -93,6 +98,7 @@
                 max-width: 100%;
                 margin-left:200px;
                 scroll-margin-top:50px;
+                padding-bottom: 100px;
             }
 
 			@media screen and (max-width: 1000px) {
@@ -140,7 +146,7 @@
                 left:0;
                 font-size: 15;
                 padding:24px;
-                width:100vw;
+                width:100%;
                 background-color: violet;
                 z-index: 9;
             }
@@ -180,7 +186,7 @@
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="#der-neue-rahmen">Der&#x2005;neue&#x2005;Rahmen ➞</a></h2>
+                        <h2><a href="#der-neue-rahmen" onclick="scrollfix()">Der&#x2005;neue&#x2005;Rahmen ➞</a></h2>
                         <br>
                         <p>
                             Wenn der Liberalismus in gewisse Rahmenbedingungen eingebettet wird, kann
