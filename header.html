@@ -13,6 +13,7 @@
 
 		<script>
 			var scrollbarcolor = getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color');
+			var timeoutid;
 
 			function hidescrollbar() {
 				document.documentElement.style.setProperty('--scrollbar-color', 'transparent');
@@ -20,8 +21,8 @@
 			
 			document.getElementById("content").addEventListener("scroll", () => {
 				document.documentElement.style.setProperty('--scrollbar-color', scrollbarcolor);
-				setTimeout(hidescrollbar, 10000);
-
+				clearTimeout(timeoutid)
+				timeoutid = setTimeout(hidescrollbar, 10000);
 			});
 		</script>
 
@@ -334,7 +335,7 @@
 	<body>
 		<div id="header-wrap">
 
-			<div class="logo" id="headerlogo"><a href="https://www.GEFAENGNISHEFTE.org">sGEFÄNGNISHEFTE</a></div> 
+			<div class="logo" id="headerlogo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
 
 			<nav id="navigation" onmouseleave="closemenu()">
 
