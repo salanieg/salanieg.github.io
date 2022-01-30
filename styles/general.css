@@ -13,6 +13,13 @@ body {
 	margin:0px;
 }
 
+.content {
+	height: calc(100vh - 100px);
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 20px;
+	scrollbar-gutter: stable both-edges;
+}
 
 .header {
 	position: sticky;
@@ -40,14 +47,6 @@ body {
 .header a:hover {
 	color: lightgrey;
 	transition: 0.1s;
-}
-
-.content {
-	height: calc(100vh - 100px);
-	overflow-y: auto;
-	overflow-x: hidden;
-	padding: 20px;
-	scrollbar-gutter: stable both-edges;
 }
 
 
