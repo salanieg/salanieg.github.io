@@ -47,7 +47,7 @@ body {
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding: 20px;
-	/* scrollbar-gutter: stable both-edges; */
+	scrollbar-gutter: stable both-edges;
 }
 
 
@@ -118,7 +118,7 @@ hr {
 	background-color: lightgray;
 }
 
-/* .content::-webkit-scrollbar {
+.content::-webkit-scrollbar {
 	width: 10px;
 	height: 10px;
-} */
+}
