@@ -12,13 +12,14 @@
         </script>
 
 		<script>
+			var scrollbarcolor = getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color');
 
 			function hidescrollbar() {
 				document.documentElement.style.setProperty('--scrollbar-color', 'transparent');
 			}
 			
 			document.getElementById("content").addEventListener("scroll", () => {
-				document.documentElement.style.setProperty('--scrollbar-color', '--default-scrollbar-color');
+				document.documentElement.style.setProperty('--scrollbar-color', scrollbarcolor);
 				setTimeout(hidescrollbar, 10000);
 
 			});

@@ -1,39 +1,39 @@
 body {
-  background-color: white;
+	background-color: white;
 }
 
 .content {
-  color: black;
-  background-color: white;
+	color: black;
+	background-color: white;
 }
 
 .content a:active {
-  color: black;
-  transition: 0.1s;
-} 
+	color: black;
+	transition: 0.1s;
+}
 
 .content a:visited {
-  color: black;
-  transition: 0.1s;
-}  
+	color: black;
+	transition: 0.1s;
+}
 
 .content a:link {
-  color: black;
-  transition: 0.1s;
-} 
+	color: black;
+	transition: 0.1s;
+}
 
 .content a:hover {
-  color: #980000;
-  transition: 0.1s;
+	color: #980000;
+	transition: 0.1s;
 }
 
 .bottom-divider {
-  display:none;
+	display: none;
 }
 
 
 :root {
-  --default-scrollbar-color: #980000;
+	--default-scrollbar-color: #980000;
 }
 
 .content::-webkit-scrollbar-thumb {
