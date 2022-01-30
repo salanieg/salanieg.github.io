@@ -21,7 +21,7 @@ body {
 	overflow-y:auto;
 	overflow-x: hidden;
 	padding: 20px;
-	/* scrollbar-gutter: stable both-edges; */
+	scrollbar-gutter: stable both-edges;
 }
 
 .header {
@@ -29,7 +29,7 @@ body {
 	width:100vw;
 	position: sticky;
 	position: -webkit-sticky;
-	/* z-index: 10; */
+	z-index: 10;
 }
 
 .header > * {
@@ -105,7 +105,7 @@ hr {
 	background-color: lightgray;
 }
 
-/* ::-webkit-scrollbar {
+::-webkit-scrollbar {
 	width: 10px;
 	height: 10px;
-} */
+}
