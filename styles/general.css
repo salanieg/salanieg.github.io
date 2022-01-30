@@ -14,8 +14,8 @@ body {
 }
 
 .content {
-	height:calc(100vh - 100px);
-	overflow-y:auto;
+	height: 100vh;
+	overflow-y: auto;
 	overflow-x: hidden;
 	padding: 20px;
 	scrollbar-gutter: stable both-edges;
@@ -28,11 +28,6 @@ body {
 	left:0;
 	width:100vw;
 	z-index: 10;
-}
-
-.header > * {
-	color: white;
-	/* background-color: #980000; */
 }
 
 .header a:active {
