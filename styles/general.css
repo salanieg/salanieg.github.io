@@ -10,6 +10,8 @@ html {
 }
 
 body {
+	overflow-x: hidden;
+	overflow-y: hidden;
 	margin:0px;
 }
 
@@ -22,7 +24,6 @@ body {
 }
 
 .header {
-	overflow: hidden;
 	font-size:15pt;
 	position: sticky;
 	top:0;
