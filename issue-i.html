@@ -20,6 +20,11 @@
                 else {
                     document.getElementById("return-to-top").style.display = "none";
                 }
+
+                if (document.getElementById("content").scrollTop <= 65) {
+                    document.getElementById("content").scrollTop = 0;
+                    document.documentElement.scrollTop = 0;
+                }
             }
 
             function totop() {
