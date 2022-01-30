@@ -14,7 +14,7 @@ body {
 }
 
 .content {
-	height: 100vh;
+	height: 10000px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding: 20px;
@@ -22,6 +22,7 @@ body {
 }
 
 .header {
+	overflow: hidden;
 	font-size:15pt;
 	position: sticky;
 	top:0;
