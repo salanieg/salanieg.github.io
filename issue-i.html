@@ -11,6 +11,19 @@
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script> $(function(){$(".header").load("header.html");}); </script>
 
+        <script>
+            // First we get the viewport height and we multiple it by 1% to get a value for a vh unit
+let vh = window.innerHeight * 0.01;
+// Then we set the value in the --vh custom property to the root of the document
+document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+// We listen to the resize event
+window.addEventListener('resize', () => {
+  // We execute the same script as before
+  let vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+});
+        </script>
 
         <script>
             function showtotop() {
@@ -32,11 +45,11 @@
             }
 
             function scrollfix() {
-                if (document.getElementById("content").scrollTop <= 60) {
-                    document.getElementById("content").scrollTop = 0;
-                    document.documentElement.scrollTop = 0;
-                    document.getElementById("content").removeEventListener("scroll", scrollfix);
-                }
+                // if (document.getElementById("content").scrollTop <= 60) {
+                //     document.getElementById("content").scrollTop = 0;
+                //     document.documentElement.scrollTop = 0;
+                //     document.getElementById("content").removeEventListener("scroll", scrollfix);
+                // }
             }
         </script>
 
