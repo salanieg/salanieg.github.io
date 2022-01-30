@@ -5,6 +5,7 @@ body {
 .content {
   color: black;
   background-color: white;
+  margin-top:61px;
 }
 
 .content a:active {
@@ -31,6 +32,6 @@ body {
   display:none;
 }
 
-/* ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
 	background: #980000;
-} */
+}

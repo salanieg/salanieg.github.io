@@ -26,17 +26,37 @@ body {
 
 .header {
 	font-size:15pt;
-	width:100vw;
 	position: sticky;
-	position: -webkit-sticky;
+	top:0;
+	left:0;
+	width:100vw;
 	z-index: 10;
 }
 
 .header > * {
 	color: white;
-	background-color: #980000;
+	/* background-color: #980000; */
 }
 
+.header a:active {
+	color: white;
+	transition: 0.1s;
+} 
+
+.header a:visited {
+	color: white;
+	transition: 0.1s;
+}  
+
+.header a:link {
+	color: white;
+	transition: 0.1s;
+} 
+
+.header a:hover {
+	color: lightgrey;
+	transition: 0.1s;
+}
 
 /* TEXT */
 
