@@ -15,7 +15,6 @@ body {
 
 .content {
 	height: calc(100vh - 100px);
-	clear:both;
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding: 20px;
@@ -23,7 +22,6 @@ body {
 }
 
 .header {
-	overflow: hidden;
 	font-size:15pt;
 	position: static;
 	top:0;
