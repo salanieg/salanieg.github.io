@@ -29,7 +29,7 @@ body {
 	top:0;
 	left:0;
 	width:100vw;
-	position: sticky;
+	position: sticky !important;
 	z-index: 10;
 }
 
@@ -54,21 +54,14 @@ h1 {
 	margin-bottom: 80px;
 }
 
-@media screen and (max-width: 500px) {
-	h1 {
-		font-size: 32pt;
-		font-weight: bold;
-		line-height: 1.4;
-	}
-}
-
-@media screen and (max-width: 400px) {
-	h1 {
-		font-size: 28pt;
-		font-weight: bold;
-		line-height: 1.4;
-	}
-}
+@media screen and (max-width: 550px) {h1 { font-size: 34pt;}}
+@media screen and (max-width: 525px) {h1 { font-size: 32pt;}}
+@media screen and (max-width: 500px) {h1 { font-size: 30pt;}}
+@media screen and (max-width: 475px) {h1 { font-size: 28pt;}}
+@media screen and (max-width: 425px) {h1 { font-size: 26pt;}}
+@media screen and (max-width: 400px) {h1 { font-size: 24pt;}}
+@media screen and (max-width: 375px) {h1 { font-size: 22pt;}}
+@media screen and (max-width: 350px) {h1 { font-size: 20pt;}}
 
 h2 {
 	font-size: 15pt;
