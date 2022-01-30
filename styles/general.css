@@ -54,6 +54,14 @@ h1 {
 	margin-bottom: 80px;
 }
 
+@media screen and (max-width: 500px) {
+	h1 {
+		font-size: 24pt;
+		font-weight: bold;
+		line-height: 2;
+	}
+}
+
 h2 {
 	font-size: 15pt;
 	font-weight: bold;
