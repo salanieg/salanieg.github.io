@@ -33,7 +33,7 @@ body {
 
 
 :root {
-  --scrollbar-color: #980000;
+  --default-scrollbar-color: #980000;
 }
 
 .content::-webkit-scrollbar-thumb {

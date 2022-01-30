@@ -28,7 +28,7 @@ body {
 }
 
 :root {
-  --scrollbar-color: white;
+  --default-scrollbar-color: white;
 }
 
 .content::-webkit-scrollbar-thumb {
