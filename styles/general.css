@@ -13,13 +13,6 @@ body {
 	margin:0px;
 }
 
-.content {
-	height: calc(100vh - 100px);
-	overflow-y: auto;
-	overflow-x: hidden;
-	padding: 20px;
-	scrollbar-gutter: stable both-edges;
-}
 
 #header {
 	font-size:15pt;
@@ -33,12 +26,12 @@ body {
 .header a:active {
 	color: white;
 	transition: 0.1s;
-} 
+}
 
 .header a:visited {
 	color: white;
 	transition: 0.1s;
-}  
+}
 
 .header a:link {
 	color: white;
@@ -49,6 +42,16 @@ body {
 	color: lightgrey;
 	transition: 0.1s;
 }
+
+.content {
+	position: absolute;
+	height: calc(100vh - 100px);
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 20px;
+	scrollbar-gutter: stable both-edges;
+}
+
 
 /* TEXT */
 
