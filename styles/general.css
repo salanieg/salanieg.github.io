@@ -127,3 +127,7 @@ hr {
 	width: 10px;
 	height: 10px;
 }
+
+:root {
+	--scrollbar-color: transparent;
+  }
