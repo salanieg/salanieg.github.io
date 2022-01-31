@@ -1,74 +1,74 @@
 @font-face {font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Regular.tff);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Regular.tff");
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Bold.tff);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Bold.tff");
 	font-weight: 700;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-BoldItalic.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-BoldItalic.ttf");
 	font-weight: 700;
 	font-style: italic;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraBold.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraBold.ttf");
 	font-weight: 800;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraBoldItalic.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraBoldItalic.ttf");
 	font-weight: 800;
 	font-style: italic;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraLight.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraLight.ttf");
 	font-weight: 200;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraLightItalic.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraLightItalic.ttf");
 	font-weight: 200;
 	font-style: italic;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Italic.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Italic.ttf");
 	font-style: italic;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Light.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Light.ttf");
 	font-weight: 300;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-LightItalic.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-LightItalic.ttf");
 	font-weight: 300;
 	font-style: italic;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Medium.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Medium.ttf");
 	font-weight: 500;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-MediumItalic.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-MediumItalic.ttf");
 	font-weight: 500;
 	font-style: italic;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-SemiBold.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-SemiBold.ttf");
 	font-weight: 600;
 }
 @font-face {
 	font-family: Spectral;
-	src: url(https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-SemiBoldItalic.ttf);
+	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-SemiBoldItalic.ttf");
 	font-weight: 600;
 	font-style: italic;
 }
