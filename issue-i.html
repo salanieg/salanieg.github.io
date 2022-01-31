@@ -37,11 +37,15 @@
             //         document.getElementById("content").removeEventListener("scroll", scrollfix);
             //     }
             // }
+        </script>
 
-            function copyToClipboard(element) {
-                
+        <script>
+            function copyanchor(anchor, id) {
+                navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
+                var ogtext = anchor.textContent;
+                anchor.textContent = 'Link kopiert!';
+                setTimeout(function(){anchor.innerText = ogtext}, 3000);
             }
-
         </script>
 
         <style>
@@ -147,22 +151,35 @@
                 transition: 0.1s;
             }
 
-            .option {
+            .download, .copy {
                 padding: 5px 15px 5px 15px;
-                width:fit-content;
+                min-width:240px;
                 max-width: 100%;
                 font-weight: 700;
                 text-align: center;
-                border: solid black;
-                border-width:1px;
-                border-radius: 4px;
                 cursor: pointer;
+                background-color: white;
+                transition: 0.5s;
             }
 
-            .option:hover {
-                border: solid #980000;
-                border-width:1px;
-                color:#980000
+            .download:hover, .copy:hover {
+                background-color: lightgrey;
+                transition: 0.5s;
+            }
+
+            .download:hover a {
+                color:black
+            }
+
+            /* .download:focus, .copy:focus {
+                background-color: lightgrey;
+            } */
+
+            .option-wrap {
+                display: flex;
+                flex-flow: row wrap;
+                gap: 30px 20px;
+                justify-content: center;
             }
 
         </style>
@@ -186,7 +203,7 @@
                     <br>
                     <br>
                     <div class="abstract">
-                        <h2><a href="#posthistorische-klassenkämpfe">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
+                        <h2><a href="#posthistorische-klassenkaempfe">Posthostorische&#x2005;Klassenkämpfe ➞</a></h2>
                         <br>
                         <p>
                             Der Kapitalismus ist weder alternativlos, noch kann er durch einfache
@@ -229,12 +246,15 @@
 
 
             <div id="inhalt">
-                <div class="option"><a href="files/ISSUE-I.pdf" download>Alternativ&#x2005;als&#x2005;PDF&#x2005;herunterladen<br></a></div>
+                <div class="option-wrap">
+                <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen / Link kopieren</button>
+                <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen<br></a></button>
+                </div>
                 <br>
                 <br>
                 <br>
                 <br>
-                <div class="artikel" id="posthistorische-klassenkämpfe">
+                <div class="artikel" id="posthistorische-klassenkaempfe">
                     <h1 dir="ltr">
                         POSTHISTORISCHE<br/>KLASSENKÄMPFE
                     </h1>
@@ -392,7 +412,7 @@
                     </p>
                     <br>
                     <br>
-                    <div class="option" onclick="navigator.clipboard.writeText('www.gefaengnishefte.org/issue-i#posthistorische-klassenk%C3%A4mpfe')">Teilen&#x2005;(Link&#x2005;kopieren)</div>
+                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#posthistorische-klassenkaempfe')">Artikel teilen / Link kopieren</button></div>
                 </div>
 
                 <div class="artikel" id="der-neue-rahmen">
@@ -553,7 +573,7 @@
                     </p>
                     <br>
                     <br>
-                    <div class="option" onclick="navigator.clipboard.writeText('www.gefaengnishefte.org/issue-i#der-neue-rahmen')">Teilen&#x2005;(Link&#x2005;kopieren)</div>
+                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#der-neue-rahmen')">Artikel teilen / Link kopieren</button></div>
                 </div>
 
                 <div class="artikel" id="agieren-und-agitieren">
@@ -714,7 +734,7 @@
                     </p>
                     <br>
                     <br>
-                    <div class="option" onclick="navigator.clipboard.writeText('www.gefaengnishefte.org/issue-i#agieren-agieren-und-agitieren')">Teilen&#x2005;(Link&#x2005;kopieren)</div>
+                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#agieren-und-agitieren')">Artikel teilen / Link kopieren</button></div>
                 </div>
 
                 <div id="footnotes">
