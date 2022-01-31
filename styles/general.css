@@ -1,14 +1,3 @@
-/* GENERAL */
-
-@font-face {
-	font-family: Spectral;
-	src: url(../fonts/Spectral/Spectral-Regular.tff);
-}
-
-* {
-	font-family: 'Spectral';
-}
-
 html {
 	overflow-x: hidden;
 	overflow-y: hidden;
