@@ -40,9 +40,14 @@
         </script>
 
         <script>
+            var ogtext;
+
             function copyanchor(anchor, id) {
                 navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
-                var ogtext = anchor.textContent;
+                var text = anchor.textContent
+                if (text != 'Link kopiert!'){
+                    ogtext = text;
+                }
                 anchor.textContent = 'Link kopiert!';
                 setTimeout(function(){anchor.innerText = ogtext}, 3000);
             }
