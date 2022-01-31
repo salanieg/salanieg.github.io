@@ -1,5 +1,7 @@
-@font-face {font-family: Spectral;
+@font-face {
+	font-family: Spectral;
 	src: url("https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Regular.tff");
+	font-weight: 400;
 }
 @font-face {
 	font-family: Spectral;
