@@ -39,3 +39,13 @@ body {
 .content::-webkit-scrollbar-thumb {
 	background: var(--scrollbar-color);;
 }
+
+::-moz-selection {
+	color: white;
+	background: #980000;
+}
+
+::selection {
+	color: white;
+	background: #980000;
+}

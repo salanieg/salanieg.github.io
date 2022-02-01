@@ -12,19 +12,8 @@
         <script> $(function(){$(".header").load("header.html");}); </script>
 
         <script>
-            function showtotop() {
-                if (document.getElementById("content").scrollTop >= 2000) {
-                    document.getElementById("return-to-top").style.display = "block";
-                } 
-                else {
-                    document.getElementById("return-to-top").style.display = "none";
-                }
-            }
 
-            function totop() {
-                document.getElementById("content").scrollTop = 0;
-                document.documentElement.scrollTop = 0;
-            }
+            // SCROLL FIX
 
             // function activatescrollfix() {
             //     document.getElementById("content").addEventListener("scroll", scrollfix);
@@ -40,6 +29,28 @@
         </script>
 
         <script>
+
+            // TO TOP
+
+            function showtotop() {
+                if (document.getElementById("content").scrollTop >= 2000) {
+                    document.getElementById("return-to-top").style.display = "block";
+                } 
+                else {
+                    document.getElementById("return-to-top").style.display = "none";
+                }
+            }
+
+            function totop() {
+                document.getElementById("content").scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+            }
+        </script>
+
+        <script>
+
+            // COPY LINK
+
             var ogtext;
 
             function copyanchor(anchor, id) {
@@ -55,11 +66,7 @@
 
         <style>
 
-                    
-            #title > * {
-                white-space: pre;
-                line-height: 2;
-            }
+            /* HEAD */
 
             #info-wrapper {
                 margin-top: 100px;
@@ -75,7 +82,7 @@
                 width:100%;
                 max-width:1000px;
                 height:auto;
-            } 
+            }
 
             #inhaltsverzeichnis {
                 width: 600px;
@@ -83,6 +90,26 @@
                 margin-left: auto;
                 margin-right: auto;
             }
+
+            #title > * {
+                white-space: pre;
+                line-height: 2;
+            }
+
+            .abstract {
+                width: 500px;
+                max-width: 100%;
+            }
+
+            .abstract h2 {
+                text-align-last: justify;
+            }
+
+            .abstract p {
+                line-height: 1.3;
+            }
+
+            /* MAIN */
 
             #inhalt {
                 text-align: justify;
@@ -93,28 +120,12 @@
                 margin-left:200px;
             }
 
-            .abstract {
-                width: 500px;
-                max-width: 100%;
-            }
-            
-            .abstract h2 {
-                text-align-last: justify;
-            }
-
-            .abstract p {
-                line-height: 1.3;
-            }
-
             .artikel {
                 scroll-margin-top:150px;
                 padding-bottom: 300px;
             }
 
             #footnotes {
-                width: 600px;
-                max-width: 100%;
-                margin-left:200px;
                 scroll-margin-top:50px;
                 padding-bottom: 100px;
             }
@@ -124,17 +135,10 @@
                     margin-left: auto;
                     margin-right: auto;
                 }
-
-                #footnotes {
-                    margin-left: auto;
-                    margin-right: auto;
-                }
-
-                .option {
-                    margin-left: auto;
-                    margin-right: auto;
-                }
             }
+
+            /* BUTTONS */
+
 
             #return-to-top {
                 display: none;
@@ -155,6 +159,7 @@
                 color: lightgrey;
                 transition: 0.1s;
             }
+
 
             .download, .copy {
                 padding: 5px 15px 5px 15px;
@@ -609,13 +614,15 @@
                     <br/>
                     <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#agieren-und-agitieren')">Artikel teilen / Link kopieren</button></div>
                 </div>
+
+                <div id="footnotes">
+                    <small id="f1">¹ Vgl. dazu auch Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small>
+                    <small id="f2"> </small>
+                    <small id="f3"> </small>
+                </div>
             </div>
 
-            <div id="footnotes">
-                <small id="f1">¹ Vgl. dazu auch Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small>
-                <small id="f2"> </small>
-                <small id="f3"> </small>
-            </div>
+
         </div>
 
     </body>    
