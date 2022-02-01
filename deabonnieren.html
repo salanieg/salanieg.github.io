@@ -15,7 +15,7 @@
 
 			// DEABONNIEREN
 
-			$('.abonnieren').submit(function(event){
+			$('.deabonnieren').submit(function(event){
 				event.preventDefault();
 
 				document.getElementById("deabonnierenbutton").textContent = 'Deabonnert.';
@@ -34,7 +34,7 @@
 
 			});
 
-			$('.abonnieren').on('input', function(event) {
+			$('.deabonnieren').on('input', function(event) {
 				document.getElementById("deabonnierenbutton").textContent = 'Debonnieren';
 				document.getElementById("deabonnierenbutton").disabled = false;
 			});
