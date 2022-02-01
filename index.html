@@ -11,8 +11,81 @@
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script> $(function(){$(".header").load("header.html");}); </script>
 
-        <style> 
+        <script>
+            // INTROSCRIPT
+        
+            function hideintro() {
+                document.getElementById("intro").style.display = "none";
+                document.getElementById("intrologo").style.display = "none";
+                document.getElementById("introtext").style.display = "none";
+                document.getElementById("content").style.overflowY = "auto";
+                localStorage.setItem('introshown', true);
+            }
+            
+            document.addEventListener("DOMContentLoaded", (event) => {
+                if(localStorage.getItem('introshown')) {
+                    hideintro();
+                }
+            });
+            
+        </script> 
 
+        <script>
+            // COVERSCRIPT
+
+            var ic = "issue-i-cover"
+            var iic = "issue-ii-cover"
+            var iiic = "issue-iii-cover"
+
+            var it = "issue-i-text"
+            var iit = "issue-ii-text"
+            var iiit = "issue-iii-text"
+
+            var selectedcover = ic
+            var selectedtext = it
+            var selectedcoverloaded = false;
+
+
+            function selectcover(cover, text) {
+                if(selectedcoverloaded) {
+                    document.getElementById(selectedcover).style.display = "none";
+                    document.getElementById(selectedtext).style.fontWeight = "initial";
+                    document.getElementById(cover).style.display = "inline";
+                    document.getElementById(text).style.fontWeight = "700";
+                    selectedcover = cover
+                    selectedtext = text
+                }
+            }
+        </script>
+
+        <script>
+
+            // LOADING SCRIPT
+
+            document.addEventListener("DOMContentLoaded", (event) => {
+                document.getElementById(selectedcover).addEventListener('load', loaded)
+                checkload()
+            });
+
+            function checkload() {
+                if(document.getElementById(selectedcover).complete) {
+                    loaded()
+                }
+                else {
+                    setTimeout(checkload, 100)
+                }
+            }
+
+            function loaded() {
+                    document.getElementById("laden").style.display = "none"
+                    document.getElementById(selectedcover).style.display = "inline";
+                    document.getElementById(selectedtext).style.fontWeight = "700";
+                    selectedcoverloaded = true;
+            }
+
+        </script>
+
+        <style> 
 
             /* INTRO */
 
@@ -137,75 +210,6 @@
             }
 
         </style>
-
-        <script>
-            // INTROSCRIPT
-        
-            function hideintro() {
-                document.getElementById("intro").style.display = "none";
-                document.getElementById("intrologo").style.display = "none";
-                document.getElementById("introtext").style.display = "none";
-                document.getElementById("content").style.overflowY = "auto";
-                localStorage.setItem('introshown', true);
-            }
-            
-            document.addEventListener("DOMContentLoaded", (event) => {
-                if(localStorage.getItem('introshown')) {
-                    hideintro();
-                }
-            });
-            
-        </script> 
-
-        <script>
-            // COVERSCRIPT
-
-            var ic = "issue-i-cover"
-            var iic = "issue-ii-cover"
-            var iiic = "issue-iii-cover"
-
-            var it = "issue-i-text"
-            var iit = "issue-ii-text"
-            var iiit = "issue-iii-text"
-
-            var selectedcover = ic
-            var selectedtext = it
-            var selectedcoverloaded = false;
-
-
-            function selectcover(cover, text) {
-                if(selectedcoverloaded) {
-                    document.getElementById(selectedcover).style.display = "none";
-                    document.getElementById(selectedtext).style.fontWeight = "initial";
-                    document.getElementById(cover).style.display = "inline";
-                    document.getElementById(text).style.fontWeight = "700";
-                    selectedcover = cover
-                    selectedtext = text
-                }
-            }
-
-            document.addEventListener("DOMContentLoaded", (event) => {
-                document.getElementById(selectedcover).addEventListener('load', loaded)
-                checkload()
-            });
-
-            function checkload() {
-                if(document.getElementById(selectedcover).complete) {
-                    loaded()
-                }
-                else {
-                    setTimeout(checkload, 100)
-                }
-            }
-
-            function loaded() {
-                    document.getElementById("laden").style.display = "none"
-                    document.getElementById(selectedcover).style.display = "inline";
-                    document.getElementById(selectedtext).style.fontWeight = "800";
-                    selectedcoverloaded = true;
-            }
-
-        </script>
     </head>
 
     <body>

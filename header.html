@@ -93,6 +93,7 @@
 
 			
 		</script>
+
 		<script>
 			$(function(){
 				highlight("", "dropanchori");
@@ -125,6 +126,42 @@
 				}
 			}
 		</script>
+
+		<script>
+
+			function formsubmit(e) {
+				// var frm = $('#'+ $(this).data('name') +'');
+
+
+					// type: frm.attr('method'),
+					// url: '(url)',
+					// data: frm.serialize(),
+					// success: function (data) {
+					// 	console.log('Submission was successful.');
+					// 	console.log(data);
+					// },
+
+			}
+
+			$('.abonnieren').submit(function(event){
+				document.getElementById("abonnierenbutton").textContent = 'Abonniert!';
+
+				$.ajax({
+					method: 'POST',
+					url: 'https://formsubmit.co/ajax/5936f3264e1b3101d767692f779ca23a',
+					dataType: 'json',
+					accepts: 'application/json',
+					data: $(event.target).serialize()
+					,
+					success: (data) => console.log(data),
+					error: (err) => console.log(err)
+				});
+
+				event.preventDefault();
+			});
+
+		</script>
+
 		<style>
 
 
@@ -442,13 +479,11 @@
 							</div>
 	
 							<div id="abonnieren-wrap">
-								<form class="abonnieren"
-									action="https://formsubmit.co/5936f3264e1b3101d767692f779ca23a" method="POST">
+								<form class="abonnieren">
 									<button type="submit" id="abonnierenbutton">Abonnieren</button>
 									<span><input type="email" name="email" placeholder="Email" required></span>
 									<input type="hidden" name="_subject" value="Neue Abonennt*in!">
 									<input type="hidden" name="_captcha" value="false">
-									<input type="hidden" name="_next" value="https://www.GEFAENGNISHEFTE.org/abonniert">
 								</form>
 							</div>
 						</div>
