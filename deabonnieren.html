@@ -11,6 +11,36 @@
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script> $(function(){$(".header").load("header.html");}); </script>
 
+		<script>
+
+			// DEABONNIEREN
+
+			$('.abonnieren').submit(function(event){
+				event.preventDefault();
+
+				document.getElementById("deabonnierenbutton").textContent = 'Deabonnert.';
+				document.getElementById("deabonnierenbutton").disabled = true;
+
+				$.ajax({
+					method: 'POST',
+					url: 'https://formsubmit.co/ajax/5936f3264e1b3101d767692f779ca23a',
+					dataType: 'json',
+					accepts: 'application/json',
+					data: $(event.target).serialize()
+					,
+					success: (data) => console.log(data),
+					error: (err) => console.log(err)
+				});
+
+			});
+
+			$('.abonnieren').on('input', function(event) {
+				document.getElementById("deabonnierenbutton").textContent = 'Debonnieren';
+				document.getElementById("deabonnierenbutton").disabled = false;
+			});
+
+		</script>
+
         <style>
 
             #deabonnieren-wrap-outer {
@@ -25,6 +55,41 @@
                 max-width:100%;
             }
 
+            /* FORM */
+			
+			.deabonnieren {
+				width:100%;
+				overflow:hidden;
+			}
+
+			.deabonnieren span {
+				display:block;
+				overflow:hidden;
+				padding-right:48px;
+			}
+			
+			.deabonnieren input {
+				width:100%;
+                background-color:white;
+				
+
+				height: fit-content;
+				font-size:15pt;
+				padding: 5px 20px;
+				color: black;
+            }
+
+            .deabonnieren button {
+				float:right;
+                background-color:lightgrey;
+
+                cursor: pointer;
+				height: fit-content;
+				font-size:15pt;
+				padding: 5px 20px;
+				color: black;
+            }
+
         </style>
     </head>
 
@@ -35,13 +100,11 @@
         <div class="content">
             <div id="deabonnieren-wrap-outer">
                 <div id="deabonnieren-wrap">
-                    <form class="abonnieren"
-                        action="https://formsubmit.co/5936f3264e1b3101d767692f779ca23a" method="POST">
-                        <button type="submit">Deabonnieren</button>
-                        <span><input type="email" name="email" placeholder="Email" required></span>
+                    <form class="deabonnieren">
+                        <button type="submit" id="deabonnierenbutton">Deabonnieren</button>
+                        <span><input type="email" name="Email" placeholder="Email" required></span>
                         <input type="hidden" name="_subject" value="Jemand hat Deabonniert.">
                         <input type="hidden" name="_captcha" value="false">
-                        <input type="hidden" name="_next" value="https://www.GEFAENGNISHEFTE.org/deabonniert">
                     </form>
                 </div>
             </div>
