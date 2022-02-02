@@ -209,7 +209,7 @@
 
 			.dropmenu {
 				overflow:hidden;
-				text-align-last: justify;
+				/* text-align-last: justify; */
 				white-space: nowrap;
 				position:absolute;
 				right:0;
@@ -277,7 +277,6 @@
 				line-height: 1.7;
 				margin-bottom:40px;
 				text-align: left;
-				text-align-last:left;
 			}
 
 			
@@ -291,7 +290,6 @@
 
 			#infos, #infok {
 				text-align: left;
-				text-align-last:left;
 			}
 
 			#infoi {
@@ -305,6 +303,16 @@
 			#infoe {
 				margin-top: 0px;
 				padding-top: 0px;
+			}
+
+
+			/* TEXT ALIGN LAST */
+
+			.spacedissues, .spacedtitles, #issue-list>* {
+				width:100%;
+				display:flex;
+				justify-content: space-between;
+				align-items: center;
 			}
 
 			
@@ -325,7 +333,6 @@
 				width:100%;
                 background-color:white;
 
-				text-align-last: left;
 				height: fit-content;
 				font-size:15pt;
 				padding: 5px 20px;
@@ -350,7 +357,6 @@
 				font-size: 11pt;
 				line-height: 1.7;
 				text-align: left;
-				text-align-last:left;
 				white-space: pre-wrap;
 			}
 
@@ -405,9 +411,9 @@
 						<div class="menu-spacer">X</div>
 						<hr>
 						<div class="info" id="infoi">							
-							<span id="info-issue-i"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
-							<span id="info-issue-ii"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
-							<span id="info-issue-iii"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
+							<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></a>
+							<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></a>
+							<a id="info-issue-iii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>IST POPULISMUS GUT?</span></a>
 						</div>
 						<hr class="bottom-divider">
 					</div>
@@ -464,21 +470,21 @@
 						<!-- EXPANDEDMENU -->
 
 						<div class="info" id="infoe">
-							<div>
+							<div class="spacedtitles">
 								<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a>
 									<span class="description" id="showissues" onclick="showissues()">Einblenden</span>
 									<span class="description" id="hideissues" onclick="hideissues()">Ausblenden</span>
 							</div>
 							<div id="issue-list">							
-								<span class="description" id="descriptionisi"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;I ALTERNATIVE&#x2005;UTOPIEN</a></span><br>
-								<span class="description" id="descriptionisii"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;II REFORM&#x2005;ODER&#x2005;REVOLUTION</a></span><br>
-								<span class="description" id="descriptionisiii"><a href="https://www.GEFAENGNISHEFTE.org/issue-i">ISSUE&#x2005;III IST&#x2005;POPULISMUS&#x2005;GUT?</a></span>
+								<a class="description" id="descriptionisi" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></a>
+								<a class="description" id="descriptionisii" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></a>
+								<a class="description" id="descriptionisiii" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE III</span> <span>IST POPULISMUS GUT?</span></a>
 							</div>
-							<div>
+							<div  class="spacedtitles">
 								<a href="https://www.GEFAENGNISHEFTE.org/special-issues"><span id="descriptions">SPECIAL&#x2005;ISSUES</span></a>
-								<span class="description">Projekte&#x2005;von&#x2005;Freund*innen</span>
+								<span class="description">Projekte von Freund*innen</span>
 							</div>
-							<div>
+							<div  class="spacedtitles">
 								<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span id="descriptionk">KANON</span></a>
 								<span class="description">Sehenswertes</span>
 							</div>
