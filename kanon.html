@@ -25,6 +25,7 @@
             function scrollstart(isright) {
                 if (isright) {
                     intervalid = setInterval(scrollright, 10);
+                    document.getElementById("tutorialarrow").style.display = "none"
                 }
                 else {
                     intervalid = setInterval(scrollleft, 10);
@@ -136,11 +137,15 @@
 
             #scrollleft, #scrollright {
                 position: absolute;
+                display: flex;
+                align-items: center;
                 line-height: 100%;
                 text-align: center;
+                justify-content: center;
                 top:0;
                 width:7vw;
                 height:100%;
+                font-size:30pt;
             }
 
             #scrollright {
@@ -160,7 +165,7 @@
         <div class="header"></div>
 
         <div class="content" id="content" onscroll="hidetutorial()">
-            <div id="scrollright" onmouseenter="scrollstart(true)" onmouseleave="scrollstop()"></div>
+            <div id="scrollright" onmouseenter="scrollstart(true)" onmouseleave="scrollstop()"><span id="tutorialarrow">➫</span></div>
             <div id="scrollleft" onmouseenter="scrollstart(false)" onmouseleave="scrollstop()"></div>
 
             <!--"And I think to myself, what a wonderful world."-->                               <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/RErdSr0iAcs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
