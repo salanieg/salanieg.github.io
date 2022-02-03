@@ -58,27 +58,18 @@ a:hover, a:visited, a:link, a:active
 }
 
 h1 {
-	font-size: 36pt;
-	font-weight: bold;
+	font-size: 5vw;
+	font-weight: 900;
 	line-height: 1.4;
 	margin:0px;
 	margin-bottom: 80px;
+	font-family: "Syne";
 }
-
-@media screen and (max-width: 550px) {h1 { font-size: 34pt;}}
-@media screen and (max-width: 525px) {h1 { font-size: 32pt;}}
-@media screen and (max-width: 500px) {h1 { font-size: 30pt;}}
-@media screen and (max-width: 475px) {h1 { font-size: 28pt;}}
-@media screen and (max-width: 425px) {h1 { font-size: 26pt;}}
-@media screen and (max-width: 400px) {h1 { font-size: 24pt;}}
-@media screen and (max-width: 375px) {h1 { font-size: 22pt;}}
-@media screen and (max-width: 350px) {h1 { font-size: 20pt;}}
 
 h2 {
 	font-size: 15pt;
-	font-weight: bold;
+	font-weight: 800;
 	line-height: 31px;
-	margin:0px;
 	font-family: "Syne";
 }
 
