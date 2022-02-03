@@ -46,8 +46,6 @@
                 display: flex;
                 gap: 50vw;
                 place-items:center;
-                padding-left:150px;
-                padding-right:150px;
             }
 
             .containergrid, .containercolumn, .containerrow {
@@ -88,7 +86,7 @@
                 text-align: center;
                 justify-content: center;
                 top:0;
-                width:7vw;
+                width:5vw;
                 height:100%;
                 font-size:30pt;
             }
@@ -108,9 +106,6 @@
                     overflow-x: hidden;
                     display: flex;
                     flex-flow: column;
-                    padding:20px;
-                    padding-top: 150px;
-                    padding-bottom: 150px;
                 }
 
                 .containergrid, .containercolumn, .containerrow {
@@ -156,6 +151,9 @@
         <div class="content" id="content" onscroll="hidetutorial()">
             <div id="scrollright" onmouseenter="scrollstart(true)" onmouseleave="scrollstop()"><span id="tutorialarrow">➫</span></div>
             <div id="scrollleft" onmouseenter="scrollstart(false)" onmouseleave="scrollstop()"></div>
+
+            <div class="spacer"></div>
+            <div class="spacer"></div>
 
             <!--"And I think to myself, what a wonderful world."-->                               <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/RErdSr0iAcs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <!--Marx & Engels - Stationen ihres Lebens-->                                         <iframe class="medium" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -214,7 +212,8 @@
                 </div>
             </div>
 
-            <div id="end-spacer"></div>
+            <div class="spacer"></div>
+            <div class="spacer"></div>
 
         </div>
     </body>
