@@ -12,7 +12,7 @@
         <script> $(function(){$(".header").load("header.html");}); </script>
 
         <script>
-            var si_list = ["nummer1", "nummer2"];
+            var si_list = ["nummer1", "nummer2", "nummer3"];
             var selected_si = 0;
 
             function resetcontrols() {
@@ -60,6 +60,7 @@
             }
             document.addEventListener("DOMContentLoaded", (event) => {
                 resetcontrols()
+                hideall()
                 displaycurrent()
             });
         </script>
@@ -114,12 +115,16 @@
             }
 
             .special-issue {
-                display: flex;
+                display: none;
                 flex-wrap:wrap;
                 justify-content: center;
                 align-items:center;
                 text-align: center;
                 gap:40px 80px;
+            }
+
+            #nummer1 {
+                display:flex;
             }
 
 
@@ -153,9 +158,10 @@
                 max-width:100%;
             }
 
-            #nummer2 {
-                display:none;
+            .special-issue-text {
+                font-size: 15pt;
             }
+
         </style>
     </head>
 
@@ -180,6 +186,12 @@
                 <div id="nummer2" class="special-issue">
                     <img id="im-bett" src="images/special-issues/imbett.png" alt="DECAY OF A RESIDENCY COVER"/>
                 </div>
+
+                <div id="nummer3" class="special-issue">
+                    <!-- <a href="https://open.spotify.com/album/444VniQ7XgaS74anQDbH83?si=zJCJ-PRbSwagSeNm7jVtnQ"><img class="special-issue-cover" src="images/special-issues/DECAY-OF-A-RESIDENCY.jpg" alt="DECAY OF A RESIDENCY COVER"/></a> -->
+                    <a class="special-issue-text" href="https://www.depop.com/vidcy/">depop.com/vidcy/</a>
+                </div>
+                
             </div>
             <div id="controls">
                 <button id="letztes" onclick="letztesissue()">
