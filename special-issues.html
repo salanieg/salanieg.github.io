@@ -47,6 +47,7 @@
                 }
                 resetcontrols()
                 displaycurrent()
+                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
 
             function nächstesissue() {
@@ -57,7 +58,9 @@
                 }
                 resetcontrols()
                 displaycurrent()
+                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
+
             document.addEventListener("DOMContentLoaded", (event) => {
                 resetcontrols()
                 hideall()
@@ -158,8 +161,67 @@
                 max-width:100%;
             }
 
-            .special-issue-text {
-                font-size: 15pt;
+            #nummer3 {
+                place-content: flex-start;
+                flex-flow: column wrap;
+                place-items: center;
+            }
+
+            .profiltext {
+                font-size: 18pt;
+            }
+
+            .profilbild {
+                border-radius: 50%;
+                height:150px;
+                width:150px;
+            }
+
+            .profil {
+                display: flex;
+                flex-flow: flex nowrap;
+                place-content: flex-start;
+                align-items: center;
+                gap:20px;
+            }
+
+            .profilbild {
+                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
+                transform: scale(1);
+                width:100%;
+                max-width: 100%;
+                transition: transform 0.7s;
+            }
+
+            .profilbild:hover {
+                transform: scale(1.03);
+                transition: transform 0.7s;
+            }
+
+            #depopbilder {
+                display:flex;
+                flex-flow: column wrap;
+                place-items: center;
+                align-items: flex-start;
+            }
+
+            .depopbild {
+                width:100%;
+                max-width: 500px;
+                transition: 0.7s;
+            }
+
+            .depopbild:hover {
+                max-width:900px;
+                transition: 0.7s;
+            }
+
+            #profiles {
+                display: flex;
+                gap:80px;
+                flex-flow: wrap;
+                margin-top: 150px;
+                margin-bottom: 150px;
             }
 
         </style>
@@ -169,7 +231,7 @@
                 
         <div class="header"></div>
 
-        <div class="content">
+        <div class="content" id="content">
             <div id="special-issue-wrap">
                 <div id="nummer1" class="special-issue">
                     <div class="cover-audio" id="WÜRZBURGER-SÜSSBOYS">
@@ -188,8 +250,29 @@
                 </div>
 
                 <div id="nummer3" class="special-issue">
-                    <!-- <a href="https://open.spotify.com/album/444VniQ7XgaS74anQDbH83?si=zJCJ-PRbSwagSeNm7jVtnQ"><img class="special-issue-cover" src="images/special-issues/DECAY-OF-A-RESIDENCY.jpg" alt="DECAY OF A RESIDENCY COVER"/></a> -->
-                    <a class="special-issue-text" href="https://www.depop.com/vidcy/">depop.com/vidcy/</a>
+                    <div id="depopbilder">
+                        <img class="depopbild" src="images/special-issues/depop (1).jpg"/>
+                        <img class="depopbild" src="images/special-issues/depop (2).jpg"/>
+                        <img class="depopbild" src="images/special-issues/depop (3).jpg"/>
+                        <img class="depopbild" src="images/special-issues/depop (4).jpg"/>
+                        <img class="depopbild" src="images/special-issues/depop (5).jpg"/>
+                        <img class="depopbild" src="images/special-issues/depop (6).jpg"/>
+                        <img class="depopbild" src="images/special-issues/depop (7).jpg"/>
+                        <img class="depopbild" src="images/special-issues/depop (8).jpg"/>
+                        <img class="depopbild" src="images/special-issues/depop (9).jpg"/>
+
+                    </div>
+                    <div id="profiles">
+                        <div class="profil">
+                            <a href="https://www.depop.com/vidcy/"><img class="profilbild" id="depoppb" src="images/special-issues/vidcy.jpg" alt="DEPOP PB"/></a>
+                            <a class="profiltext" href="https://www.depop.com/vidcy/">depop.com/vidcy</a>
+                        </div>
+
+                        <div class="profil">
+                            <a href="https://www.instagram.com/y2k.hole"><img class="profilbild" id="instpb" src="images/special-issues/y2khole.jpg" alt="DEPOP PB"/></a>
+                            <a class="profiltext" href="https://www.instagram.com/y2k.hole">instagram.com/y2k.hole</a>
+                        </div>
+                    </div>
                 </div>
                 
             </div>
