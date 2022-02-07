@@ -68,23 +68,19 @@
 
             /* HEAD */
 
-            #title {
-                width:fit-content;
-                display:block;
-                margin: 30vh auto 5vh auto;
-                white-space: pre-wrap;
-                font-weight: 700;
-                line-height: 2;
-                font-size: 15pt;
-            }
-
 
             #info-wrapper {
                 display:flex;
                 flex-wrap: wrap;
-                align-items: center;
+                align-items: flex-end;
                 justify-content: space-around;
                 gap:100px;
+                margin: 20px auto 300px auto;
+            }
+
+            #coverwrap {
+                display:flex;
+                flex-direction: column;
             }
 
             #coverimage {
@@ -94,10 +90,26 @@
                 height:auto;
             }
 
+            #title {
+                width: 500px;
+                max-width: 100%;
+                display:block;
+                margin-top: 100px;
+                white-space: pre-wrap;
+                font-weight: 700;
+                line-height: 1.5;
+                font-size: 15pt;
+            }
+
+			@media screen and (max-width: 1659px) {
+                #title {
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+            }
+
             #inhaltsverzeichnis {
                 max-width: 100%;
-                margin: 20vh auto 20vh auto;
-                /* position: sticky; */
                 top:20px;
                 right: 50px;
             }
@@ -192,7 +204,7 @@
             }
 
             #top-option-wrap {
-                margin-bottom:20vh;
+                margin-bottom:50px;
             }
 
         </style>
@@ -206,11 +218,14 @@
 
             <div id="return-to-top"  onclick="totop()">Nach Oben</div>
 
-            <div id="title">ISSUE&#x2005;I    MÄRZ&#x2005;2022<br>ALTERNATIVE UTOPIEN</div>
 
             <div id="info-wrapper">
-                <img id="coverimage" src="images/issues/ISSUE-I-COVER-IMAGE.jpg" alt="ISSUE I COVER">
-            
+
+                <div id="coverwrap">
+                    <img id="coverimage" src="images/issues/ISSUE-I-COVER-IMAGE.jpg" alt="ISSUE I COVER">
+                    <div id="title">ISSUE&#x2005;I    MÄRZ&#x2005;2022<br>ALTERNATIVE UTOPIEN</div>
+                </div>
+
                 <div id="inhaltsverzeichnis">
                     <div class="abstract">
                         <h2><a class="abstracttitle" href="#posthistorische-klassenkaempfe"><h2>Posthistorische Klassenkämpfe</h2> <h2>➞</h2></a></h2>
@@ -257,12 +272,11 @@
     
             </div>
 
-            <div class="option-wrap" id="top-option-wrap">
-                <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen / Link kopieren</button>
-                <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen<br></a></button>
-            </div>
-
             <div id="inhalt">
+                <div class="option-wrap" id="top-option-wrap">
+                    <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen / Link kopieren</button>
+                    <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen<br></a></button>
+                </div>
                 <br>
                 <br>
                 <br>
