@@ -27,14 +27,6 @@ body {
   transition: 0.1s;
 }
 
-.header > * {
-  background-color: black;
-}
-
-.bottom-divider {
-  display:none;
-}
-
 :root {
   --default-scrollbar-color: white;
   --header-color: black;
