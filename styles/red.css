@@ -29,10 +29,12 @@ body {
 
 :root {
   --default-scrollbar-color: white;
+  --header-color: #980000;
+  --header-color-contrast: white;
 }
 
 .content::-webkit-scrollbar-thumb {
-	background: var(--scrollbar-color);;
+	background: var(--scrollbar-color);
 }
 
 .content>*::-moz-selection {
@@ -45,17 +47,21 @@ body {
 	background: white;
 }
 
-.header>* ::selection {
-  color: #980000;
-  background: white;
-}
 
+.header > * {
+	color: var(--header-color-contrast);
+	background-color: var(--header-color);
+}
+.header>* ::selection {
+  color: var(--header-color);
+  background: var(--header-color-contrast);
+}
 .header>* ::-moz-selection {
-  color: #980000;
-  background: white;
+  color: var(--header-color);
+  background: var(--header-color-contrast);
 }
 
 .abonnieren button::selection {
-	color: #980000;
+	color: var(--header-color);
 	background: transparent;
 }
