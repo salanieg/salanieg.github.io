@@ -1,53 +1,17 @@
-body {
-	background-color: white;
-}
-
-.content {
-	color: black;
-	background-color: white;
-}
-
-.content a:active {
-	color: black;
-	transition: 0.1s;
-}
-
-.content a:visited {
-	color: black;
-	transition: 0.1s;
-}
-
-.content a:link {
-	color: black;
-	transition: 0.1s;
-}
-
-.content a:hover {
-	color: #980000;
-	transition: 0.1s;
-}
-
-.bottom-divider {
-	display: none;
-}
-
-
 :root {
 	--default-scrollbar-color: #980000;
 	--header-color: #980000;
 	--header-color-contrast: white;
+	--content-color: white;
+	--content-color-contrast: #980000;
+	--content-color-text: black;
+	--content-color-link-hover: lightgrey;
 }
 
 .content::-webkit-scrollbar-thumb {
 	background: var(--scrollbar-color);
 }
 
-.content>* ::-moz-selection {
-	color: white;
-	background: #980000;
-}
-
-.content>* ::selection {
-	color: white;
-	background: #980000;
+.bottom-divider {
+	display: none;
 }

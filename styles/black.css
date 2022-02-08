@@ -1,48 +1,13 @@
-body {
-  background-color: black;
-}
-
-.content {
-  color: white;
-  background-color: black;
-}
-
-.content a:active {
-  color: white;
-  transition: 0.1s;
-} 
-
-.content a:visited {
-  color: white;
-  transition: 0.1s;
-}  
-
-.content a:link {
-  color: white;
-  transition: 0.1s;
-} 
-
-.content a:hover {
-  color: #980000;
-  transition: 0.1s;
-}
-
 :root {
   --default-scrollbar-color: white;
   --header-color: black;
   --header-color-contrast: white;
+  --content-color: black;
+  --content-color-contrast: white;
+  --content-color-text: white;
+  --content-color-link-hover: lightgrey;
 }
 
 .content::-webkit-scrollbar-thumb {
 	background: var(--scrollbar-color);
-}
-
-.content>* ::-moz-selection {
-  color: black;
-  background: white;
-}
-
-.content>* ::selection {
-  color: black;
-  background: white;
 }

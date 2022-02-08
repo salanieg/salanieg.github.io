@@ -1,48 +1,13 @@
-body {
-  background-color: #980000;
-}
-
-.content {
-  color: white;
-  background-color: #980000;
-}
-
-.content a:active {
-  color: white;
-  transition: 0.1s;
-} 
-
-.content a:visited {
-  color: white;
-  transition: 0.1s;
-}  
-
-.content a:link {
-  color: white;
-  transition: 0.1s;
-} 
-
-.content a:hover {
-  color: lightgrey;
-  transition: 0.1s;
-}
-
 :root {
   --default-scrollbar-color: white;
   --header-color: #980000;
   --header-color-contrast: white;
+  --content-color: #980000;
+	--content-color-contrast: white;
+  --content-color-text: white;
+  --content-color-link-hover: lightgrey;
 }
 
 .content::-webkit-scrollbar-thumb {
 	background: var(--scrollbar-color);
-}
-
-.content>*::-moz-selection {
-	color: #980000;
-	background: white;
-}
-
-.content>* ::selection {
-	color: #980000;
-	background: white;
 }

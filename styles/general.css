@@ -5,9 +5,13 @@ html {
 
 body {
 	margin:0px;
+	background-color: var(--content-color);
 }
 
+
 .content {
+	color: var(--content-color-text);
+	background-color: var(--content-color);
 	height: calc(100vh - 100px);
 	height: calc(var(--vh, 1vh) * 100 - 100px);
 	overflow-y: auto;
@@ -15,6 +19,10 @@ body {
 	padding: 20px;
 	scrollbar-gutter: stable both-edges;
 }
+
+
+
+
 
 .header {
 	position: sticky;
@@ -28,47 +36,87 @@ body {
 	color: var(--header-color-contrast);
 	background-color: var(--header-color);
 }
-.header>* ::selection {
-  color: var(--header-color);
-  background: var(--header-color-contrast);
-}
-.header>* ::-moz-selection {
-  color: var(--header-color);
-  background: var(--header-color-contrast);
-}
+
 
 .abonnieren button::selection {
 	color: var(--header-color);
 	background: transparent;
 }
 
+
+
+
+/* SELECTION */
+
+
+.header>* ::selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
+.header>* ::-moz-selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
+
+.content>* ::-moz-selection {
+	color: var(--content-color);
+	background: var(--content-color-contrast);
+}
+.content>* ::selection {
+	color: var(--content-color);
+	background: var(--content-color-contrast);
+}
+
+
+
+
+/* LINK */
+
+a:hover, a:visited, a:link, a:active
+{
+	text-decoration: none;
+}
+
+
 .header a:active {
 	color: white;
 	transition: 0.1s;
 }
-
 .header a:visited {
 	color: white;
 	transition: 0.1s;
 }
-
 .header a:link {
 	color: white;
 	transition: 0.1s;
-} 
-
+}
 .header a:hover {
 	color: lightgrey;
 	transition: 0.1s;
 }
 
 
-/* TEXT */
-
-a:hover, a:visited, a:link, a:active
-{
-	text-decoration: none;
+.content a:active {
+	color: var(--content-color-text);
+	transition: 0.1s;
 }
+.content a:visited {
+	color: var(--content-color-text);
+	transition: 0.1s;
+}
+.content a:link {
+	color: var(--content-color-text);
+	transition: 0.1s;
+}
+.content a:hover {
+	color: var(--content-color-link-active);
+	transition: 0.1s;
+}
+
+
+
+
+/* TEXT */
 
 h1 {
 	white-space:nowrap;
