@@ -51,23 +51,3 @@ body {
 	color: white;
 	background: #980000;
 }
-
-
-
-.header > * {
-	color: var(--header-color-contrast);
-	background-color: var(--header-color);
-}
-.header>* ::selection {
-  color: var(--header-color);
-  background: var(--header-color-contrast);
-}
-.header>* ::-moz-selection {
-  color: var(--header-color);
-  background: var(--header-color-contrast);
-}
-
-.abonnieren button::selection {
-	color: var(--header-color);
-	background: transparent;
-}
