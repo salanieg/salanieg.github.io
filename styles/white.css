@@ -5,7 +5,7 @@
 	--content-color: white;
 	--content-color-contrast: #980000;
 	--content-color-text: black;
-	--content-color-link-hover: lightgrey;
+	--content-color-link-hover: #980000;
 }
 
 .content::-webkit-scrollbar-thumb {
