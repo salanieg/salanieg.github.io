@@ -37,7 +37,6 @@ body {
 	background-color: var(--header-color);
 }
 
-
 .abonnieren button::selection {
 	color: var(--header-color);
 	background: transparent;
@@ -109,7 +108,7 @@ a:hover, a:visited, a:link, a:active
 	transition: 0.1s;
 }
 .content a:hover {
-	color: var(--content-color-link-active);
+	color: var(--content-color-link-hover);
 	transition: 0.1s;
 }
 
@@ -156,6 +155,18 @@ small {
 }
 
 
+/* SCROLLBAR */
+
+.content::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+:root {
+	--scrollbar-color: transparent;
+}
+
+
 /* ELEMENTS */
 
 .logo {
@@ -177,13 +188,4 @@ hr {
 	padding:0px;
 	border-width:1px;
 	background-color: lightgray;
-}
-
-.content::-webkit-scrollbar {
-	width: 10px;
-	height: 10px;
-}
-
-:root {
-	--scrollbar-color: transparent;
 }
