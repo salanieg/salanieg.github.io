@@ -87,7 +87,7 @@
             #coverimage {
                 display: block;
                 width:100%;
-                max-width:1000px;
+                max-width:900px;
                 height:auto;
             }
 
@@ -168,9 +168,9 @@
                 position: fixed;
                 bottom:20px;
                 right:20px;
-                background-color: #980000;
+                background-color: var(--header-color);
                 border: outset;
-                color: white;
+                color: var(--header-color-text);
                 transition: 0.1s;
             }
 
@@ -187,12 +187,13 @@
                 font-weight: 700;
                 text-align: center;
                 cursor: pointer;
-                background-color: white;
+                background-color: var(--content-color);
+                color:var(--content-color-text);
                 font-size: 11pt;
             }
 
             .download:hover a {
-                color:black
+                color:var(--content-color-text)
             }
 
             .option-wrap {
@@ -221,7 +222,7 @@
             <div id="info-wrapper">
 
                 <div id="coverwrap">
-                    <img id="coverimage" src="images/issues/ISSUE-I-COVER-IMAGE.jpg" alt="ISSUE I COVER">
+                    <img id="coverimage" src="images/issues/issue-i-image.png" alt="ISSUE I COVER">
                     <div id="title">ISSUE&#x2005;I    MÄRZ&#x2005;2022<br>ALTERNATIVE UTOPIEN</div>
                 </div>
 

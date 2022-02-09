@@ -18,8 +18,7 @@
 		<script>
 
 			// CUSTOM SCROLLBAR
-
-			var scrollbarcolor = getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color');
+			
 			var timeoutid;
 
 			function hidescrollbar() {
@@ -27,12 +26,86 @@
 			}
 			
 			document.getElementById("content").addEventListener("scroll", () => {
-				document.documentElement.style.setProperty('--scrollbar-color', scrollbarcolor);
+				document.documentElement.style.setProperty('--scrollbar-color', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color'));
 				clearTimeout(timeoutid)
 				timeoutid = setTimeout(hidescrollbar, 3000);
 			});
 		</script>
+		<script>
 
+			// THEMES
+			// CSS Themes variablen dürfen keine Leerzeichen haben
+
+			var theme = getComputedStyle(document.documentElement).getPropertyValue('--theme');
+			
+			function togglenachtmodus() {
+
+				var nachtmodus = localStorage.getItem('nachtmodus')
+				if (nachtmodus == "true") {nachtmodus = true;}
+				else {nachtmodus = false;}
+
+				if(!nachtmodus) {
+					document.documentElement.style.setProperty('--default-scrollbar-color', 'white');
+					document.documentElement.style.setProperty('--header-color', 'black');
+					document.documentElement.style.setProperty('--header-color-contrast', '#980000');
+					document.documentElement.style.setProperty('--header-color-text', 'white');
+					document.documentElement.style.setProperty('--header-divider', 'block');
+					document.documentElement.style.setProperty('--content-color', 'black');
+					document.documentElement.style.setProperty('--content-color-contrast', '#980000');
+					document.documentElement.style.setProperty('--content-color-text', 'white');
+					document.documentElement.style.setProperty('--content-color-link-hover', '#980000');
+					// document.getElementById("check").style.visibility = 'visible';
+					localStorage.setItem('nachtmodus', "true");
+				}
+				else if (theme == "red") {
+					document.documentElement.style.setProperty('--default-scrollbar-color', '#980000');
+					document.documentElement.style.setProperty('--header-color', '#980000');
+					document.documentElement.style.setProperty('--header-color-contrast', 'white');
+					document.documentElement.style.setProperty('--header-color-text', 'white');
+					document.documentElement.style.setProperty('--header-divider', 'block');
+					document.documentElement.style.setProperty('--content-color', '#980000');
+					document.documentElement.style.setProperty('--content-color-contrast', 'white');
+					document.documentElement.style.setProperty('--content-color-text', 'white');
+					document.documentElement.style.setProperty('--content-color-link-hover', 'lightgray');
+					// document.getElementById("check").style.visibility = 'hidden';
+					localStorage.setItem('nachtmodus', "false");
+					alert("resert")
+				}
+				else if (theme == "white") {
+					document.documentElement.style.setProperty('--default-scrollbar-color', '#980000');
+					document.documentElement.style.setProperty('--header-color', '#980000');
+					document.documentElement.style.setProperty('--header-color-contrast', 'white');
+					document.documentElement.style.setProperty('--header-color-text', 'white');
+					document.documentElement.style.setProperty('--header-divider', 'none');
+					document.documentElement.style.setProperty('--content-color', 'white');
+					document.documentElement.style.setProperty('--content-color-contrast', '#980000');
+					document.documentElement.style.setProperty('--content-color-text', 'black');
+					document.documentElement.style.setProperty('--content-color-link-hover', '#980000');
+					// document.getElementById("check").style.visibility = 'hidden';
+					localStorage.setItem('nachtmodus', "false");
+				}
+				else if (theme == "black") {
+					document.documentElement.style.setProperty('--default-scrollbar-color', 'white');
+					document.documentElement.style.setProperty('--header-color', 'black');
+					document.documentElement.style.setProperty('--header-color-contrast', '#980000');
+					document.documentElement.style.setProperty('--header-color-text', 'white');
+					document.documentElement.style.setProperty('--header-divider', 'none');
+					document.documentElement.style.setProperty('--content-color', 'black');
+					document.documentElement.style.setProperty('--content-color-contrast', '#980000');
+					document.documentElement.style.setProperty('--content-color-text', 'white');
+					document.documentElement.style.setProperty('--content-color-link-hover', '#980000');
+					// document.getElementById("check").style.visibility = 'hidden';
+					localStorage.setItem('nachtmodus', "false");
+				}
+				else {
+					alert("FEHLENDES THEME; Bitte schreibe eine Nachricht an GEFAENGNISHEFTE@riseup.net")
+				}
+			}
+
+			document.addEventListener("DOMContentLoaded", (event) => {
+				togglenachtmodus();
+            });
+		</script>
 		<script>
 
 			// DROPMENU
@@ -167,6 +240,8 @@
 			});
 
 		</script>
+
+
 
 		<style>
 
@@ -390,6 +465,19 @@
 				}
 			}
 
+			#checkbox {
+				border: solid white;
+				border-width:1px;
+				cursor: pointer;
+			}
+
+			#check {
+				min-height:30px;
+				min-width:30px;
+				padding:1px;
+				visibility: hidden;
+			}
+
 		</style>
 	</head>
 
@@ -500,7 +588,13 @@
 								Kontaktieren: <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a><br>
 								<a href="https://www.GEFAENGNISHEFTE.org/deabonnieren" id="descriptiond">Deabonnieren</a><br>
 								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim">Impressum</a><br>
+								
+								<div id="nachmodus">
+									<span onclick="togglenachtmodus()" style="cursor: pointer;">Nachtmodus </span>
+									<!-- <span id="checkbox" onclick="togglenachtmodus()"><span id="check">x</span></span> -->
+								</div>
 							</div>
+
 	
 							<div id="abonnieren-wrap">
 								<form class="abonnieren">
