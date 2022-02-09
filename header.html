@@ -36,13 +36,13 @@
 			// THEMES
 			// CSS Themes variablen dürfen keine Leerzeichen haben
 
-			var theme = getComputedStyle(document.documentElement).getPropertyValue('--theme');
+			var defaulttheme = getComputedStyle(document.documentElement).getPropertyValue('--theme');
 			
 			function togglenachtmodus() {
 
 				var head  = document.getElementsByTagName('head')[0];
 				var link  = document.createElement('link');
-				link.id   = 'id';
+				link.id   = 'theme';
 				link.rel  = 'stylesheet';
 				link.type = 'text/css';
 				link.media = 'all';
@@ -66,26 +66,26 @@
 					// document.getElementById("check").style.visibility = 'visible';
 					localStorage.setItem('nachtmodus', "true");
 				}
-				else if (theme == "red") {
+				else if (defaulttheme == "red") {
 					link.href = 'styles/red.css';
 					favicon.href = 'images/internal/faviconred.ico';
 					// document.getElementById("check").style.visibility = 'hidden';
 					localStorage.setItem('nachtmodus', "false");
 				}
-				else if (theme == "white") {
+				else if (defaulttheme == "white") {
 					link.href = 'styles/white.css';
 					favicon.href = 'images/internal/faviconwhite.ico';
 					// document.getElementById("check").style.visibility = 'hidden';
 					localStorage.setItem('nachtmodus', "false");
 				}
-				else if (theme == "black") {
+				else if (defaulttheme == "black") {
 					link.href = 'styles/black.css';
 					favicon.href = 'images/internal/faviconblack.ico';
 					// document.getElementById("check").style.visibility = 'hidden';
 					localStorage.setItem('nachtmodus', "false");
 				}
 				else {
-					alert("FEHLENDES THEME; Bitte schreibe eine Nachricht an GEFAENGNISHEFTE@riseup.net");
+					alert("FEHLENDES THEME; Bitte benachrichtige GEFAENGNISHEFTE@riseup.net");
 					return;
 				}
 
@@ -93,11 +93,35 @@
 				head.appendChild(favicon);
 			}
 
-			document.addEventListener("DOMContentLoaded", (event) => {
-				alert("tes")
-				togglenachtmodus();
-				
-            });
+			function initnachtmodus() {
+				var nachtmodus = localStorage.getItem('nachtmodus')
+				if (nachtmodus == "true") {nachtmodus = true;}
+				else {nachtmodus = false;}
+
+				if(nachtmodus) {
+					var head  = document.getElementsByTagName('head')[0];
+					var link  = document.createElement('link');
+					link.id   = 'theme';
+					link.rel  = 'stylesheet';
+					link.type = 'text/css';
+					link.media = 'all';
+
+					var favicon = document.querySelector("link[rel~='icon']");
+					if (!favicon) {
+						favicon = document.createElement('favicon');
+						favicon.rel = 'icon';
+					}
+
+					link.href = 'styles/black.css';
+					favicon.href = 'images/internal/faviconblack.ico';
+
+					head.appendChild(link);
+					head.appendChild(favicon);
+				}
+
+			}
+			
+			initnachtmodus();
 		</script>
 		<script>
 
