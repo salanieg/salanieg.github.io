@@ -76,7 +76,7 @@
 
             #content {
                 padding-left: 60px;
-                padding-right:60px;
+                padding-right: 60px;
             }
 
             @media screen and (max-width: 800px) {
@@ -96,7 +96,6 @@
             }
 
             #coverwrap {
-                max-width: 100%;
                 display:flex;
                 flex-direction: column;
             }
@@ -110,7 +109,7 @@
 
             #title {
                 width: 500px;
-                display:block;
+                display: block;
                 margin-top: 100px;
                 white-space: pre-wrap;
                 font-weight: 700;
@@ -137,17 +136,17 @@
             #inhalt {
                 text-align: justify;
                 line-height: 2;
-                margin-bottom: 150px;
             }
 
             .artikel {
                 scroll-margin-top:150px;
-                padding-bottom: 300px;
+                padding-bottom: 100px;
                 width:700px;
             }
 
             #footnotes {
                 scroll-margin-top:50px;
+                margin-bottom: 150px;
             }
 
             /* BUTTONS */
@@ -192,8 +191,7 @@
 
             .option-wrap {
                 text-align: center;
-                max-width: 100%;
-                margin-bottom: 130px;
+                margin-bottom: 200px;
                 display: flex;
                 flex-direction: column;
             }
@@ -204,7 +202,8 @@
                 gap:100px;
                 justify-content: space-between;
                 align-items: baseline;
-                flex-wrap: wrap-reverse;
+                flex-direction: row;
+                flex-wrap: wrap;
             }
 
         </style>
@@ -385,36 +384,49 @@
                             Nur müssen diese eben nicht in der Form eines Staates oder dergleichen
                             realisiert sein.
                         </p>
-                        </div>
                     </div>
 
                     <div class="option-wrap">
-                        <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen<br></a></button>
+                        <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a></button>
                         <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen</button>
                         <button class="copy" onclick="copyanchor(this, '#posthistorische-klassenkaempfe')">Artikel teilen</button>
                     </div>
                 </div>
 
-                <div class="artikel" id="der-neue-rahmen">
-                    <h1 dir="ltr">
-                        DER NEUE<br/>RAHMEN
-                    </h1>
-                    <br/>
-                    <br/>
-                    <br/>
-                    <br/>
-                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#der-neue-rahmen')">Artikel teilen</button></div>
+                <div class="artikelWrap">
+                    <div class="artikel" id="der-neue-rahmen">
+                        <h1 dir="ltr">
+                            DER NEUE<br/>RAHMEN
+                        </h1>
+                        <br/>
+                        <br/>
+                        <br/>
+                        <br/>
+                    </div>
+
+                    <div class="option-wrap">
+                        <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a></button>
+                        <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen</button>
+                        <button class="copy" onclick="copyanchor(this, '#der-neue-rahmen')">Artikel teilen</button>
+                    </div>
                 </div>
 
-                <div class="artikel" id="agieren-und-agitieren">
-                    <h1 dir="ltr">
-                        AGIEREN UND<br/>AGITIEREN
-                    </h1>
-                    <br/>
-                    <br/>
-                    <br/>
-                    <br/>
-                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#agieren-und-agitieren')">Artikel teilen</button></div>
+                <div class="artikelWrap">
+                    <div class="artikel" id="agieren-und-agitieren">
+                        <h1 dir="ltr">
+                            AGIEREN UND<br/>AGITIEREN
+                        </h1>
+                        <br/>
+                        <br/>
+                        <br/>
+                        <br/>
+                    </div>
+
+                    <div class="option-wrap">
+                        <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a></button>
+                        <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen</button>
+                        <button class="copy" onclick="copyanchor(this, '#agieren-und-agitieren')">Artikel teilen</button>
+                    </div>
                 </div>
 
                 <div id="footnotes">
