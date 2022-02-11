@@ -75,13 +75,13 @@
 
             function displayindex() {
                 document.getElementById(k_list[selected_k]).style.display = "none";
-                document.getElementById("name").style.display = "none";
+                // document.getElementById("name").style.display = "none";
                 document.getElementById("index").style.display = "block";
             }
 
             function hideindex() {
                 document.getElementById("index").style.display = "none";
-                document.getElementById("name").style.display = "block";
+                // document.getElementById("name").style.display = "block";
                 document.getElementById(k_list[selected_k]).style.display = "flex";
                 document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
@@ -191,8 +191,8 @@
                 flex-wrap:wrap;
                 justify-content: center;
                 align-items: center;
-                gap:20px 80px;
-                grid-area: controls;
+                gap:20px 70px;
+                
             }
 
             #letztes, #nächstes {
@@ -205,12 +205,13 @@
             }
 
             #currentspecialissue {
+                width:70px;
                 font-size: 20pt;
             }
 
             @media screen and (max-width: 800px) {
                 #controls {
-                    gap:20px;
+                    gap:0px;
                 }
             }
 
@@ -224,6 +225,7 @@
             }
 
             #name-wrap {
+                visibility: hidden;
                 text-align: center;
                 position:relative;
                 grid-area: name;
@@ -234,15 +236,25 @@
             }
 
             #index {
+                text-align: center;
                 font-size: 20pt;
                 display:none;
                 position: relative;
-                bottom:0;
+                bottom:-2px;
+                padding-bottom: 22px;
+                width:fit-content;
             }
             
             .indexelement:hover {
                 color:var(--content-color-link-hover);
                 cursor: pointer;
+            }
+
+            #controls-wrap {
+                display:flex;
+                align-items: center;
+                flex-direction: column;
+                grid-area: controls;
             }
 
         </style>
@@ -348,39 +360,42 @@
                 </div>
             </div>
 
-            <div id="name-wrap" onmouseover="displayindex()" onmouseleave="hideindex()">
+            <div id="name-wrap" >
                 <span id="name">
 
                 </span>
-                <div id="index">
-                    <span id="index1" class="indexelement" onclick="showbyindex(1)">1 HK Protest Footoage</span><br>
-                    <span id="index2" class="indexelement" onclick="showbyindex(2)">2 Doku Marx und Engels</span><br>
-                    <span id="index3" class="indexelement" onclick="showbyindex(3)">3 Historische Interviews</span><br>
-                    <span id="index4" class="indexelement" onclick="showbyindex(4)">4 Musik oder so</span><br>
-                    <span id="index5" class="indexelement" onclick="showbyindex(5)">5 Kendrick Lamar Live Mashup</span><br>
-                    <span id="index6" class="indexelement" onclick="showbyindex(6)">6 Musik Video Playlist</span><br>
-                    <span id="index7" class="indexelement" onclick="showbyindex(7)">7 Every Frame a Painting</span><br>
-                    <span id="index8" class="indexelement" onclick="showbyindex(8)">8 Famous Youtube</span><br>
-                    <span id="index9" class="indexelement" onclick="showbyindex(9)">9 Visual Investigations</span><br>
-                    <span id="index10" class="indexelement" onclick="showbyindex(10)">10 Cuck Philosophy</span><br>
-                    <span id="index11" class="indexelement" onclick="showbyindex(11)">11 Capital Punishment</span><br>
-                    <span id="index12" class="indexelement" onclick="showbyindex(12)">12 Channel 5 News</span><br>
-                    <span id="index13" class="indexelement" onclick="showbyindex(13)">13 Faust</span><br>
-                    <span id="index14" class="indexelement" onclick="showbyindex(14)">14 Websites</span><br>
-                    <span id="index15" class="indexelement" onclick="showbyindex(15)">15 THE BIG FLAT NOW</span><br>
 
-                </div>
             </div>
 
-            <div id="controls">
-                <button id="letztes" onclick="letztesissue()">
-                    VORHERIGES
-                </button>
-                <div id="currentspecialissue">
+            <div id="controls-wrap">
+                <div id="index" onmouseenter="displayindex()" onmouseleave="hideindex()">
+                    <span id="index1" class="indexelement" onclick="showbyindex(1)">HK Protest Footoage</span><br>
+                    <span id="index2" class="indexelement" onclick="showbyindex(2)">Doku Marx und Engels</span><br>
+                    <span id="index3" class="indexelement" onclick="showbyindex(3)">Historische Interviews</span><br>
+                    <span id="index4" class="indexelement" onclick="showbyindex(4)">Musik oder so</span><br>
+                    <span id="index5" class="indexelement" onclick="showbyindex(5)">Kendrick Lamar Live Mashup</span><br>
+                    <span id="index6" class="indexelement" onclick="showbyindex(6)">Musik Video Playlist</span><br>
+                    <span id="index7" class="indexelement" onclick="showbyindex(7)">Every Frame a Painting</span><br>
+                    <span id="index8" class="indexelement" onclick="showbyindex(8)">Famous Youtube</span><br>
+                    <span id="index9" class="indexelement" onclick="showbyindex(9)">Visual Investigations</span><br>
+                    <span id="index10" class="indexelement" onclick="showbyindex(10)">Cuck Philosophy</span><br>
+                    <span id="index11" class="indexelement" onclick="showbyindex(11)">Capital Punishment</span><br>
+                    <span id="index12" class="indexelement" onclick="showbyindex(12)">Channel 5 News</span><br>
+                    <span id="index13" class="indexelement" onclick="showbyindex(13)">Faust</span><br>
+                    <span id="index14" class="indexelement" onclick="showbyindex(14)">Websites</span><br>
+                    <span id="index15" class="indexelement" onclick="showbyindex(15)">THE BIG FLAT NOW</span><br>
                 </div>
-                <button id="nächstes" onclick="nächstesissue()">
-                    NÄCHSTES
-                </button>
+                <div id="controls">
+                    <button id="letztes" onclick="letztesissue()">
+                        VORHERIGES
+                    </button>
+                    <div id="currentspecialissue" onmouseenter="displayindex()" onmouseleave="hideindex()">
+                    </div>
+                    <button id="nächstes" onclick="nächstesissue()">
+                        NÄCHSTES
+                    </button>
+                </div>
+                
             </div>
         </div>
     </body>
