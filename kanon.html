@@ -157,7 +157,7 @@
                     height:auto;
                 }
 
-                .large { width:100%;}
+                .large { width:90vw;}
                 .medium { width:80vw;}
                 .small { width:60vw;}
                 .verysmall { width:60vw;}
@@ -195,7 +195,6 @@
             }
 
             #kanon-wrap {
-                background-color: green;
                 grid-area: kanon-wrap;
             }
 
@@ -230,10 +229,10 @@
                 }
             }
 
-            @media screen and (max-width: 380px) {
-                #controls > * {
+            @media screen and (max-width: 515px) {
+                #currentspecialissue {
+                    order:-10;
                     width:100%;
-                    background-color: bisque;
                 }
             }
 
@@ -273,7 +272,6 @@
             }
 
             #controls-wrap {
-                background-color: aqua;
                 display:flex;
                 align-items: center;
                 flex-direction: column;
