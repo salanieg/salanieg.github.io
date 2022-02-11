@@ -73,6 +73,8 @@
                 displaycurrent()
             });
 
+            var indextoggled = false;
+
             function displayindex() {
                 document.getElementById(k_list[selected_k]).style.display = "none";
                 // document.getElementById("name").style.display = "none";
@@ -86,17 +88,16 @@
                 document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
 
-            var indextoggled = false;
-
-            function toggleindex() {
-                if (!indextoggled) {
-                    displayindex();
-                    indextoggled = true;
-                }
-                else {
-                    hideindex();
-                }
-            }
+            // function toggleindex() {
+            //     if (!indextoggled) {
+            //         hideindex();
+            //         indextoggled = true;
+            //     }
+            //     else {
+            //         displayindex();
+            //         indextoggled = false;
+            //     }
+            // }
 
             function showbyindex(index) {
                 document.getElementById(k_list[selected_k]).style.display = "none";
@@ -219,12 +220,12 @@
             #currentspecialissue {
                 width:70px;
                 font-size: 20pt;
-                cursor: pointer;
+                cursor: default;
             }
 
             @media screen and (max-width: 800px) {
                 #controls {
-                    gap:0px;
+                    gap:20px;
                 }
             }
 
@@ -402,7 +403,7 @@
                     <button id="letztes" onclick="letztesissue()">
                         VORHERIGES
                     </button>
-                    <div id="currentspecialissue" onclick="toggleindex()" onmouseenter="displayindex()" onmouseleave="hideindex()">
+                    <div id="currentspecialissue"  onmousover="displayindex()" onmouseleave="hideindex()">
                     </div>
                     <button id="nächstes" onclick="nächstesissue()">
                         NÄCHSTES
