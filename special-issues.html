@@ -12,11 +12,11 @@
         <script> $(function(){$(".header").load("header.html");}); </script>
 
         <script>
-            var si_list = ["nummer1", "nummer2", "nummer3"];
-            var selected_si = 0;
+            var slideList = ["n1", "n2", "n3"];
+            var slideSelected = 0;
 
             function resetcontrols() {
-                if (selected_si==0) {
+                if (slideSelected==0) {
                     document.getElementById("letztes").disabled = true;
                     document.getElementById("letztes").style.color = "lightgrey";
                 }
@@ -25,7 +25,7 @@
                     document.getElementById("letztes").style.color = "white";
                 }
                 
-                if (selected_si==si_list.length-1) {
+                if (slideSelected==slideList.length-1) {
                     document.getElementById("nächstes").disabled = true;
                     document.getElementById("nächstes").style.color = "lightgrey";
                 }
@@ -36,14 +36,14 @@
             }
 
             function displaycurrent() {
-                document.getElementById("currentspecialissue").textContent = (selected_si + 1) + "/" + si_list.length
+                document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
             }
 
             function letztesissue() {
-                if(selected_si>=0) {
-                    document.getElementById(si_list[selected_si]).style.display = "none";
-                    selected_si = selected_si - 1;
-                    document.getElementById(si_list[selected_si]).style.display = "flex";
+                if(slideSelected>=0) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected - 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
                 }
                 resetcontrols()
                 displaycurrent()
@@ -51,10 +51,10 @@
             }
 
             function nächstesissue() {
-                if(selected_si<=si_list.length-1) {
-                    document.getElementById(si_list[selected_si]).style.display = "none";
-                    selected_si = selected_si + 1;
-                    document.getElementById(si_list[selected_si]).style.display = "flex";
+                if(slideSelected<=slideList.length-1) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected + 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
                 }
                 resetcontrols()
                 displaycurrent()
@@ -62,10 +62,46 @@
             }
 
             document.addEventListener("DOMContentLoaded", (event) => {
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+
                 resetcontrols()
-                hideall()
                 displaycurrent()
             });
+
+            function displaySlideIndex() {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                document.getElementById("slideIndex").style.display = "block";
+                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
+            }
+
+            function hideSlideIndex() {
+                document.getElementById("slideIndex").style.display = "none";
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
+            }
+
+            var slideIndexToggled = false;
+
+            function toggleSlideIndex() {
+                if (!slideIndexToggled) {
+                    hideSlideIndex();
+                    slideIndexToggled = true;
+                }
+                else {
+                    displaySlideIndex();
+                    slideIndexToggled = false;
+                }
+            }
+
+            function displayBySlideIndex(slideIndex) {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                slideSelected = slideIndex -1;
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+                resetcontrols();
+                displaycurrent();
+                hideSlideIndex();
+                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
+            }
         </script>
 
         <style>
@@ -76,7 +112,7 @@
                 grid-template-areas: 
                     ". . ."
                     ". . ."
-                    ". special-issue-wrap ."
+                    ". slides ."
                     ". . ."
                     ". . ."
                     ". controls ."
@@ -84,8 +120,8 @@
                 place-items:center;
             }
 
-            #special-issue-wrap {
-                grid-area: special-issue-wrap;
+            #slideWrap {
+                grid-area: slides;
             }
 
             #controls {
@@ -94,8 +130,8 @@
                 flex-wrap:wrap;
                 justify-content: center;
                 align-items: center;
-                gap:20px 80px;
-                grid-area: controls;
+                gap:20px 70px;
+                
             }
 
             #letztes, #nächstes {
@@ -107,8 +143,10 @@
                 cursor: pointer;
             }
 
-            #currentspecialissue {
+            #slideCurrent {
+                width:70px;
                 font-size: 20pt;
+                cursor: default;
             }
 
             @media screen and (max-width: 800px) {
@@ -117,7 +155,14 @@
                 }
             }
 
-            .special-issue {
+            @media screen and (max-width: 520px) {
+                #slideCurrent {
+                    order:-10;
+                    width:100%;
+                }
+            }
+
+            .slide {
                 display: none;
                 flex-wrap:wrap;
                 justify-content: center;
@@ -126,12 +171,33 @@
                 gap:40px 80px;
             }
 
-            #nummer1 {
+            #slideIndex {
+                text-align: center;
+                font-size: 20pt;
+                display:none;
+                position: relative;
+                bottom:-2px;
+                padding-bottom: 22px;
+                width:fit-content;
+            }
+
+            #slideIndex>span:hover {
+                color:var(--content-color-link-hover);
+                cursor: pointer;
+            }
+
+            #controlsWrap {
                 display:flex;
+                align-items: center;
+                flex-direction: column;
+                grid-area: controls;
             }
 
 
 
+            #nummer1 {
+                display:flex;
+            }
 
             .special-issue-cover {
                 box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
@@ -232,8 +298,9 @@
         <div class="header"></div>
 
         <div class="content" id="content">
-            <div id="special-issue-wrap">
-                <div id="nummer1" class="special-issue">
+
+            <div id="slideWrap">
+                <div id="n1" class="slide">
                     <div class="cover-audio" id="WÜRZBURGER-SÜSSBOYS">
                         <a href="https://open.spotify.com/album/6sQROeyBaP22sWgwn7RlDT?si=1lXGQ4mFRJe4X3RP_8CLHw" target="_blank"><img class="special-issue-cover" src="images/special-issues/WÜRZBURGER-SÜSSBOYS.jpg" alt="WÜRZBURGER SÜSSBOYS COVER"/></a>
                         <iframe src="https://open.spotify.com/embed/album/6sQROeyBaP22sWgwn7RlDT?utm_source=generator" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
@@ -245,7 +312,7 @@
                     </div>
                 </div>
 
-                <div id="nummer2" class="special-issue">
+                <div id="n2" class="slide">
                     <div id="depopbilder">
                         <img class="depopbild" src="images/special-issues/depop (1).jpg"/>
                         <img class="depopbild" src="images/special-issues/depop (2).jpg"/>
@@ -271,20 +338,28 @@
                     </div>
                 </div>
 
-                <div id="nummer3" class="special-issue">
+                <div id="n3" class="slide">
                     <img id="im-bett" src="images/special-issues/imbett.png" alt="DECAY OF A RESIDENCY COVER"/>
                 </div>
-                
             </div>
-            <div id="controls">
-                <button id="letztes" onclick="letztesissue()">
-                    VORHERIGES
-                </button>
-                <div id="currentspecialissue">
+
+            <div id="controlsWrap">
+                <div id="slideIndex" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
+                    <span onclick="displayBySlideIndex(1)">TREMEL3000</span><br>
+                    <span onclick="displayBySlideIndex(2)">vidcy</span><br>
+                    <span onclick="displayBySlideIndex(3)">anonym</span><br>
                 </div>
-                <button id="nächstes" onclick="nächstesissue()">
-                    NÄCHSTES
-                </button>
+
+                <div id="controls">
+                    <button id="letztes" onclick="letztesissue()">
+                        VORHERIGES
+                    </button>
+                    <div id="slideCurrent" onclick="toggleSlideIndex()" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
+                    </div>
+                    <button id="nächstes" onclick="nächstesissue()">
+                        NÄCHSTES
+                    </button>
+                </div>
             </div>
         </div>
     </body>

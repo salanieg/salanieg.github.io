@@ -13,12 +13,11 @@
 
 
         <script>
-            var k_list = ["nummer1", "nummer2", "nummer3", "nummer4", "nummer5", "nummer6", "nummer7", "nummer8", "nummer9", "nummer10", "nummer11", "nummer12", "nummer13", "nummer14", "nummer15"];
-            var name_list = ["HK Protest Footoage", "Doku Marx und Engels", "Historische Interviews", "Musik oder so", "Kendrick Lamar Live Mashup", "Musik Video Playlist", "Every Frame a Painting", "Famous Youtube", "Visual Investigations", "Cuck Philosophy", "Capital Punishment", "Channel 5 News", "Faust", "Websites", "THE BIG FLAT NOW"];
-            var selected_k = 0;
+            var slideList = ["n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8", "n9", "n10", "n11", "n12", "n13", "n14", "n15"];
+            var slideSelected = 0;
 
             function resetcontrols() {
-                if (selected_k==0) {
+                if (slideSelected==0) {
                     document.getElementById("letztes").disabled = true;
                     document.getElementById("letztes").style.color = "lightgrey";
                 }
@@ -27,7 +26,7 @@
                     document.getElementById("letztes").style.color = "white";
                 }
                 
-                if (selected_k==k_list.length-1) {
+                if (slideSelected==slideList.length-1) {
                     document.getElementById("nächstes").disabled = true;
                     document.getElementById("nächstes").style.color = "lightgrey";
                 }
@@ -38,15 +37,14 @@
             }
 
             function displaycurrent() {
-                document.getElementById("currentspecialissue").textContent = (selected_k + 1) + "/" + k_list.length
+                document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
             }
 
             function letztesissue() {
-                if(selected_k>=0) {
-                    document.getElementById(k_list[selected_k]).style.display = "none";
-                    selected_k = selected_k - 1;
-                    document.getElementById(k_list[selected_k]).style.display = "flex";
-                    document.getElementById("name").innerText = name_list[selected_k];
+                if(slideSelected>=0) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected - 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
                 }
                 resetcontrols()
                 displaycurrent()
@@ -54,11 +52,10 @@
             }
 
             function nächstesissue() {
-                if(selected_k<=k_list.length-1) {
-                    document.getElementById(k_list[selected_k]).style.display = "none";
-                    selected_k = selected_k + 1;
-                    document.getElementById(k_list[selected_k]).style.display = "flex";
-                    document.getElementById("name").innerText = name_list[selected_k];
+                if(slideSelected<=slideList.length-1) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected + 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
                 }
                 resetcontrols()
                 displaycurrent()
@@ -66,70 +63,66 @@
             }
 
             document.addEventListener("DOMContentLoaded", (event) => {
-                document.getElementById(k_list[selected_k]).style.display = "flex";
-                document.getElementById("name").innerText = name_list[selected_k];
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
 
                 resetcontrols()
                 displaycurrent()
             });
 
-            var indextoggled = false;
-
-            function displayindex() {
-                document.getElementById(k_list[selected_k]).style.display = "none";
-                // document.getElementById("name").style.display = "none";
-                document.getElementById("index").style.display = "block";
+            function displaySlideIndex() {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                document.getElementById("slideIndex").style.display = "block";
                 document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
 
-            function hideindex() {
-                document.getElementById("index").style.display = "none";
-                // document.getElementById("name").style.display = "block";
-                document.getElementById(k_list[selected_k]).style.display = "flex";
+            function hideSlideIndex() {
+                document.getElementById("slideIndex").style.display = "none";
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
                 document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
 
-            function toggleindex() {
-                if (!indextoggled) {
-                    hideindex();
-                    indextoggled = true;
+            var slideIndexToggled = false;
+
+            function toggleSlideIndex() {
+                if (!slideIndexToggled) {
+                    hideSlideIndex();
+                    slideIndexToggled = true;
                 }
                 else {
-                    displayindex();
-                    indextoggled = false;
+                    displaySlideIndex();
+                    slideIndexToggled = false;
                 }
             }
 
-            function showbyindex(index) {
-                document.getElementById(k_list[selected_k]).style.display = "none";
-                selected_k = index -1;
-                document.getElementById(k_list[selected_k]).style.display = "flex";
-                document.getElementById("name").innerText = name_list[selected_k];
+            function displayBySlideIndex(slideIndex) {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                slideSelected = slideIndex -1;
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
                 resetcontrols();
                 displaycurrent();
-                hideindex();
+                hideSlideIndex();
                 document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
         </script>
 
         <style>
 
-            .containergrid, .containercolumn, .containerrow {
+            .slideGrid, .slideColumn, .slideRow {
                     place-items:center;
                     gap:150px;
             }
 
-            .containergrid {
+            .slideGrid {
                 display: grid;
                 grid-template-columns: auto auto;
             }
 
-            .containercolumn {
+            .slideColumn {
                 display: flex;
                 flex-flow: column wrap;
             }
 
-            .containerrow {
+            .slideRow {
                 display: flex;
                 flex-flow: row nowrap;
             }
@@ -146,7 +139,7 @@
 
             @media screen and (max-width: 1200px) {
 
-                .containergrid, .containercolumn, .containerrow {
+                .slideGrid, .slideColumn, .slideRow {
                     display: flex;
                     flex-flow: column wrap;
                     place-items:center;
@@ -161,7 +154,7 @@
                 .large { width:80vw;}
                 .medium { width:80vw;}
                 .small { width:60vw;}
-                .verysmall { width:60vw;}
+                .verysmall { width:40vw;}
             }
 
             @media screen and (max-width: 400px) {
@@ -181,22 +174,20 @@
             .content {
                 display: grid;
                 grid-template-columns: 1fr auto 1fr;
-                grid-template-rows: 20px 1fr auto 60px 1fr auto 20px auto 60px;
+                grid-template-rows: 20px 1fr auto 60px 1fr auto 60px;
                 grid-template-areas: 
                     ". . ."
                     ". . ."
-                    ". kanon-wrap ."
+                    ". slides ."
                     ". . ."
-                    ". . ."
-                    ". name ."
                     ". . ."
                     ". controls ."
                     ". . .";
                 place-items:center;
             }
 
-            #kanon-wrap {
-                grid-area: kanon-wrap;
+            #slideWrap {
+                grid-area: slides;
             }
 
             #controls {
@@ -218,7 +209,7 @@
                 cursor: pointer;
             }
 
-            #currentspecialissue {
+            #slideCurrent {
                 width:70px;
                 font-size: 20pt;
                 cursor: default;
@@ -231,13 +222,13 @@
             }
 
             @media screen and (max-width: 520px) {
-                #currentspecialissue {
+                #slideCurrent {
                     order:-10;
                     width:100%;
                 }
             }
 
-            .kanon-item {
+            .slide {
                 display: none;
                 flex-wrap:wrap;
                 justify-content: center;
@@ -246,18 +237,7 @@
                 gap:40px 80px;
             }
 
-            #name-wrap {
-                visibility: hidden;
-                text-align: center;
-                position:relative;
-                grid-area: name;
-            }
-
-            #name {
-                font-size: 20pt;
-            }
-
-            #index {
+            #slideIndex {
                 text-align: center;
                 font-size: 20pt;
                 display:none;
@@ -266,13 +246,13 @@
                 padding-bottom: 22px;
                 width:fit-content;
             }
-            
-            .indexelement:hover {
+
+            #slideIndex>span:hover {
                 color:var(--content-color-link-hover);
                 cursor: pointer;
             }
 
-            #controls-wrap {
+            #controlsWrap {
                 display:flex;
                 align-items: center;
                 flex-direction: column;
@@ -287,17 +267,17 @@
 
         <div class="content" id="content" onscroll="hidetutorial()">
 
-            <div id="kanon-wrap">
-                <div id="nummer1" class="kanon-item">
+            <div id="slideWrap">
+                <div id="n1" class="slide">
                     <!--"And I think to myself, what a wonderful world."-->                               <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/RErdSr0iAcs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer2" class="kanon-item">
+                <div id="n2" class="slide">
                     <!--Marx & Engels - Stationen ihres Lebens-->                                         <iframe class="medium" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/apE7j0vcCQM?list=PLH9Z4RefyyY4wXmFcFl8VgwjNiOQ6qgnS" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer3" class="kanon-item">
-                    <div class="containergrid">
+                <div id="n3" class="slide">
+                    <div class="slideGrid">
                         <!--Cornelius Castoriadis On The Imaginary Institution of Society-->                  <iframe class="small" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/6O7_YswJOXY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                         <!--Bernie Sanders interviews Punks [1988]-->                                         <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/IaD1DcWfaGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                         <!--Sartre on Intellectualism-->                                                      <iframe class="small" style="aspect-ratio: 3/2" src="https://www.youtube-nocookie.com/embed/_g8JVK4Fppw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -305,28 +285,28 @@
                     </div>
                 </div>
 
-                <div id="nummer4" class="kanon-item">
-                    <div class="containerrow">
+                <div id="n4" class="slide">
+                    <div class="slideRow">
                         <!--Friedrich Schiller „Die Bürgschaft“ (1798)-->                                     <iframe class="verysmall" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/-jAO9bVpqV8?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                         <!--Jalava Lied-->                                                                    <iframe class="verysmall" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/oe65t5m3cAU?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                         <!--Bernie Sanders 8 1/2 hour Filibuster but it's Lofi-->                             <iframe class="verysmall" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/pm6qy_9E0rY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                     </div>
                 </div>
 
-                <div id="nummer5" class="kanon-item">
-                    <!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD-->                            <iframe class="medium" style="aspect-ratio: 16/9" src='https://players.brightcove.net/6057277737001/AgPwICX30_default/index.html?videoId=6165059245001' loading="lazy" frameborder=0 allowfullscreen></iframe>
+                <div id="n5" class="slide">
+                    <!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD-->                            <iframe class="medium" style="aspect-ratio: 16/9" src='https://players.brightcove.net/6057277737001/AgPwICX30_default/slideIndex.html?videoId=6165059245001' loading="lazy" frameborder=0 allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer6" class="kanon-item">
+                <div id="n6" class="slide">
                     <!--KANON // MUSIK-->                                                                 <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/videoseries?list=PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer7" class="kanon-item">
+                <div id="n7" class="slide">
                     <!--Akira Kurosawa - Composing Movement-->                                            <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/doaQC-S8de8?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer8" class="kanon-item">
-                    <div class="containergrid">
+                <div id="n8" class="slide">
+                    <div class="slideGrid">
                         <!--history of the entire world, i guess-->                                           <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/xuCn8ux2gbs?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                         <!--The Future Of Reasoning-->                                                        <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/_ArVh3Cj9rw?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                         <!--YouTube's Copyright System Isn't Broken. The World's Is.-->                       <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/1Jwo5qc78QU?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -334,30 +314,30 @@
                     </div>
                 </div>
 
-                <div id="nummer9" class="kanon-item">
+                <div id="n9" class="slide">
                     <!--Visual Investigations-->                                                          <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/jWJVMoe7OY0?list=PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer10" class="kanon-item">
+                <div id="n10" class="slide">
                     <!--The Problem With Human Rights-->                                                  <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/AhRBsJYWR8Q?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer11" class="kanon-item">
+                <div id="n11" class="slide">
                     <!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->                      <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/TDcwIZzaf-k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer12" class="kanon-item">
+                <div id="n12" class="slide">
                     <!--Hollywood Antivax Rally-->                                                        <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/B9v6q5YzbGA?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
 
-                <div id="nummer13" class="kanon-item">
-                    <div class="containerrow">
+                <div id="n13" class="slide">
+                    <div class="slideRow">
                         <!--Faust 1960-->                                                                     <iframe class="medium" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/6zzwYQch5R4?list=PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                         <!--Goethe Faust 3sat-->                                                              <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/JlhANslhnNI?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                     </div>
                 </div>
 
-                <div id="nummer14" class="kanon-item">
+                <div id="n14" class="slide">
                     <div class="medium">
                         <p><small>WEBSITES</small><br>
                         <a href="https://fontsinuse.com/">Fonts In Use</a><br>
@@ -368,56 +348,49 @@
                     </div>
                 </div>
 
-                <div id="nummer15" class="kanon-item">
-                    <div class="containerrow">
+                <div id="n15" class="slide">
+                    <div class="slideRow">
                         <!--The Big Flat Now – 032c issue #34 (2018)-->                                    <iframe class="medium" style="aspect-ratio: 16/9" src="https://player.vimeo.com/video/279828346" loading="lazy" title="vimeo-player" frameborder="0" allowfullscreen></iframe>
                         <div class="medium">
                             <p><small>ARTIKEL</small><br>
                             <a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></p>
                             <br>
                             <p><small>INSTALLATION</small><br>
-                            <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&index=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
+                            <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&slideIndex=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="name-wrap" >
-                <span id="name">
-
-                </span>
-
-            </div>
-
-            <div id="controls-wrap">
-                <div id="index" onmouseenter="displayindex()" onmouseleave="hideindex()">
-                    <span id="index1" class="indexelement" onclick="showbyindex(1)">HK Protest Footoage</span><br>
-                    <span id="index2" class="indexelement" onclick="showbyindex(2)">Doku Marx und Engels</span><br>
-                    <span id="index3" class="indexelement" onclick="showbyindex(3)">Historische Interviews</span><br>
-                    <span id="index4" class="indexelement" onclick="showbyindex(4)">Musik oder so</span><br>
-                    <span id="index5" class="indexelement" onclick="showbyindex(5)">Kendrick Lamar Live Mashup</span><br>
-                    <span id="index6" class="indexelement" onclick="showbyindex(6)">Musik Video Playlist</span><br>
-                    <span id="index7" class="indexelement" onclick="showbyindex(7)">Every Frame a Painting</span><br>
-                    <span id="index8" class="indexelement" onclick="showbyindex(8)">Famous Youtube</span><br>
-                    <span id="index9" class="indexelement" onclick="showbyindex(9)">Visual Investigations</span><br>
-                    <span id="index10" class="indexelement" onclick="showbyindex(10)">Cuck Philosophy</span><br>
-                    <span id="index11" class="indexelement" onclick="showbyindex(11)">Capital Punishment</span><br>
-                    <span id="index12" class="indexelement" onclick="showbyindex(12)">Channel 5 News</span><br>
-                    <span id="index13" class="indexelement" onclick="showbyindex(13)">Faust</span><br>
-                    <span id="index14" class="indexelement" onclick="showbyindex(14)">Websites</span><br>
-                    <span id="index15" class="indexelement" onclick="showbyindex(15)">THE BIG FLAT NOW</span><br>
+            <div id="controlsWrap">
+                <div id="slideIndex" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
+                    <span onclick="displayBySlideIndex(1)">HK Protest Footoage</span><br>
+                    <span onclick="displayBySlideIndex(2)">Doku Marx und Engels</span><br>
+                    <span onclick="displayBySlideIndex(3)">Historische Interviews</span><br>
+                    <span onclick="displayBySlideIndex(4)">Musik oder so</span><br>
+                    <span onclick="displayBySlideIndex(5)">Kendrick Lamar Live Mashup</span><br>
+                    <span onclick="displayBySlideIndex(6)">Musik Video Playlist</span><br>
+                    <span onclick="displayBySlideIndex(7)">Every Frame a Painting</span><br>
+                    <span onclick="displayBySlideIndex(8)">Famous Youtube</span><br>
+                    <span onclick="displayBySlideIndex(9)">Visual Investigations</span><br>
+                    <span onclick="displayBySlideIndex(10)">Cuck Philosophy</span><br>
+                    <span onclick="displayBySlideIndex(11)">Capital Punishment</span><br>
+                    <span onclick="displayBySlideIndex(12)">Channel 5 News</span><br>
+                    <span onclick="displayBySlideIndex(13)">Faust</span><br>
+                    <span onclick="displayBySlideIndex(14)">Websites</span><br>
+                    <span onclick="displayBySlideIndex(15)">THE BIG FLAT NOW</span><br>
                 </div>
+
                 <div id="controls">
                     <button id="letztes" onclick="letztesissue()">
                         VORHERIGES
                     </button>
-                    <div id="currentspecialissue" onclick="toggleindex()" onmouseenter="displayindex()" onmouseleave="hideindex()">
+                    <div id="slideCurrent" onclick="toggleSlideIndex()" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
                     </div>
                     <button id="nächstes" onclick="nächstesissue()">
                         NÄCHSTES
                     </button>
                 </div>
-                
             </div>
         </div>
     </body>
