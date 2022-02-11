@@ -88,16 +88,16 @@
                 document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
 
-            // function toggleindex() {
-            //     if (!indextoggled) {
-            //         hideindex();
-            //         indextoggled = true;
-            //     }
-            //     else {
-            //         displayindex();
-            //         indextoggled = false;
-            //     }
-            // }
+            function toggleindex() {
+                if (!indextoggled) {
+                    hideindex();
+                    indextoggled = true;
+                }
+                else {
+                    displayindex();
+                    indextoggled = false;
+                }
+            }
 
             function showbyindex(index) {
                 document.getElementById(k_list[selected_k]).style.display = "none";
@@ -403,7 +403,7 @@
                     <button id="letztes" onclick="letztesissue()">
                         VORHERIGES
                     </button>
-                    <div id="currentspecialissue"  onmousover="displayindex()" onmouseleave="hideindex()">
+                    <div id="currentspecialissue" onclick="toggleindex()" onmouseenter="displayindex()" onmouseleave="hideindex()">
                     </div>
                     <button id="nächstes" onclick="nächstesissue()">
                         NÄCHSTES
