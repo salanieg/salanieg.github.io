@@ -83,6 +83,10 @@
                 #content {
                     padding:20px;
                 }
+                /* #content > * {
+                    margin-left:auto;
+                    margin-right: auto;
+                } */
             }
 
             #info-wrapper {
@@ -140,7 +144,7 @@
 
             .artikel {
                 scroll-margin-top:150px;
-                padding-bottom: 100px;
+                padding-bottom: 200px;
                 width:700px;
             }
 
@@ -190,10 +194,34 @@
             }
 
             .option-wrap {
-                text-align: center;
-                margin-bottom: 200px;
                 display: flex;
                 flex-direction: column;
+                margin-bottom: 100px;
+
+            }
+
+            #topOptionWrap {
+                float: right;
+                margin-bottom: 0;
+            }
+
+            @media screen and (max-width: 1200px) {
+                .option-wrap {
+                    width:700px;
+                    margin-bottom: 100px;
+                    justify-content: center;
+                }
+
+                #topOptionWrap {
+                    float:left;
+                    clear:both;
+                    margin-bottom: 100px;
+                }
+
+                .option-wrap > * {
+                    margin-left: auto;
+                    margin-right: auto;
+                }
             }
 
             .artikelWrap{
@@ -201,7 +229,7 @@
                 display:flex;
                 gap:100px;
                 justify-content: space-between;
-                align-items: baseline;
+                align-items: flex-start;
                 flex-direction: row;
                 flex-wrap: wrap;
             }
@@ -271,6 +299,12 @@
             </div>
 
             <div id="inhalt">
+                <div class="option-wrap" id="topOptionWrap">
+                    <div>.</div>
+                    <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a></button>
+                    <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen</button>
+                </div>
+
                 <div class="artikelWrap">
                     <div class="artikel" id="posthistorische-klassenkaempfe">
                         <h1 dir="ltr">
@@ -387,8 +421,6 @@
                     </div>
 
                     <div class="option-wrap">
-                        <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a></button>
-                        <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen</button>
                         <button class="copy" onclick="copyanchor(this, '#posthistorische-klassenkaempfe')">Artikel teilen</button>
                     </div>
                 </div>
@@ -405,8 +437,6 @@
                     </div>
 
                     <div class="option-wrap">
-                        <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a></button>
-                        <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen</button>
                         <button class="copy" onclick="copyanchor(this, '#der-neue-rahmen')">Artikel teilen</button>
                     </div>
                 </div>
@@ -423,8 +453,6 @@
                     </div>
 
                     <div class="option-wrap">
-                        <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a></button>
-                        <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen</button>
                         <button class="copy" onclick="copyanchor(this, '#agieren-und-agitieren')">Artikel teilen</button>
                     </div>
                 </div>
