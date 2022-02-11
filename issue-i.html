@@ -63,10 +63,9 @@
                 }
 
                 textList.push(textOriginal)
-                alert(textIndex)
                 
                 anchor.textContent = 'Link kopiert!';
-                setTimeout(function(){anchor.innerText = textList[0]}, 3000);
+                setTimeout(function(){anchor.innerText = textList[textIndex]}, 3000);
                 textIndex = textIndex + 1;
             }
         </script>
@@ -75,14 +74,25 @@
 
             /* HEAD */
 
+            #content {
+                padding-left: 60px;
+                padding-right:60px;
+            }
+
+            @media screen and (max-width: 800px) {
+                #content {
+                    padding:20px;
+                }
+            }
 
             #info-wrapper {
+                width:100%;
                 display:flex;
                 flex-wrap: wrap;
                 align-items: flex-end;
-                justify-content: space-around;
+                justify-content: space-between;
                 gap:100px;
-                margin: 20px auto 300px auto;
+                margin-bottom: 300px;
             }
 
             #coverwrap {
@@ -100,7 +110,6 @@
 
             #title {
                 width: 500px;
-                max-width: 100%;
                 display:block;
                 margin-top: 100px;
                 white-space: pre-wrap;
@@ -109,25 +118,12 @@
                 font-size: 15pt;
             }
 
-			@media screen and (max-width: 1659px) {
-                #title {
-                    margin-left: auto;
-                    margin-right: auto;
-                }
-            }
-
-            #inhaltsverzeichnis {
-                max-width: 100%;
-            }
-
             .abstract {
                 width: 500px;
-                max-width: 100%;
             }
 
             .abstracttitle {
                 width:500px;
-                max-width: 100%;
                 display:flex;
                 justify-content: space-between;
             }
@@ -140,27 +136,18 @@
 
             #inhalt {
                 text-align: justify;
-                max-width: 100%;
                 line-height: 2;
+                margin-bottom: 150px;
             }
 
             .artikel {
                 scroll-margin-top:150px;
                 padding-bottom: 300px;
                 width:700px;
-                max-width: 100%;
             }
 
             #footnotes {
                 scroll-margin-top:50px;
-                padding-bottom: 100px;
-            }
-
-			@media screen and (max-width: 1000px) {
-                #inhalt {
-                    margin-left: auto;
-                    margin-right: auto;
-                }
             }
 
             /* BUTTONS */
@@ -205,11 +192,10 @@
 
             .option-wrap {
                 text-align: center;
-                width:400px;
                 max-width: 100%;
                 margin-bottom: 130px;
-                /* margin-left: auto;
-                margin-right: auto; */
+                display: flex;
+                flex-direction: column;
             }
 
             .artikelWrap{
@@ -286,7 +272,6 @@
             </div>
 
             <div id="inhalt">
-
                 <div class="artikelWrap">
                     <div class="artikel" id="posthistorische-klassenkaempfe">
                         <h1 dir="ltr">
@@ -400,7 +385,7 @@
                             Nur müssen diese eben nicht in der Form eines Staates oder dergleichen
                             realisiert sein.
                         </p>
-                        <div class="option-wrap"></div>
+                        </div>
                     </div>
 
                     <div class="option-wrap">
@@ -418,7 +403,7 @@
                     <br/>
                     <br/>
                     <br/>
-                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#der-neue-rahmen')">Artikel teilen / Link kopieren</button></div>
+                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#der-neue-rahmen')">Artikel teilen</button></div>
                 </div>
 
                 <div class="artikel" id="agieren-und-agitieren">
@@ -429,11 +414,11 @@
                     <br/>
                     <br/>
                     <br/>
-                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#agieren-und-agitieren')">Artikel teilen / Link kopieren</button></div>
+                    <div class="option-wrap"><button class="copy" onclick="copyanchor(this, '#agieren-und-agitieren')">Artikel teilen</button></div>
                 </div>
 
                 <div id="footnotes">
-                    <small id="f1">¹ Vgl. dazu auch Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small>
+                    <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small>
                     <small id="f2"> </small>
                     <small id="f3"> </small>
                 </div>
