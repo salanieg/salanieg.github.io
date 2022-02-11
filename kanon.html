@@ -79,6 +79,7 @@
                 document.getElementById(k_list[selected_k]).style.display = "none";
                 // document.getElementById("name").style.display = "none";
                 document.getElementById("index").style.display = "block";
+                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
 
             function hideindex() {
@@ -157,7 +158,7 @@
                     height:auto;
                 }
 
-                .large { width:90vw;}
+                .large { width:80vw;}
                 .medium { width:80vw;}
                 .small { width:60vw;}
                 .verysmall { width:60vw;}
