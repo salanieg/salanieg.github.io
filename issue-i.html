@@ -18,9 +18,12 @@
             function showtotop() {
                 if (document.getElementById("content").scrollTop >= 2000) {
                     document.getElementById("return-to-top").style.display = "block";
+                    document.getElementById("return-to-top-footer").style.visibility = "visible";
                 } 
                 else {
                     document.getElementById("return-to-top").style.display = "none";
+                    document.getElementById("return-to-top-footer").style.visibility = "hidden";
+
                 }
             }
 
@@ -76,6 +79,26 @@
                 document.getElementById("teilenLabel").innerText = "Teilen";
                 document.getElementById("linkList").style.display = "none";
             }
+
+            function displayFootnotes() {
+                document.getElementById("footerFootnotes").style.display = "flex";
+            }
+
+            function hideFootnotes() {
+                document.getElementById("footerFootnotes").style.display = "none";
+            }
+
+            function showfooter() {
+                // alert("tets")
+                document.getElementById("showfooter").style.display = "none";
+                document.getElementById("footercontent").style.display = "flex";
+                // alert("tets")
+            }
+
+            function hidefooter() {
+                document.getElementById("showfooter").style.display = "block";
+                document.getElementById("footercontent").style.display = "none";
+            }
         </script>
 
         <style>
@@ -85,7 +108,7 @@
             #content {
                 padding-left: 60px;
                 padding-right: 60px;
-                height: calc(var(--vh, 1vh) * 100 - 125px);
+                height: calc(var(--vh, 1vh) * 100 - 120px);
             }
 
             @media screen and (max-width: 800px) {
@@ -172,6 +195,12 @@
                 background-color: var(--header-color);
                 color: var(--header-color-text);
                 transition: 0.1s;
+            }
+
+            #return-to-top-footer {
+                visibility: hidden;
+                background-color: var(--header-color);
+                color: var(--header-color-text);
             }
 
             #return-to-top:hover {
@@ -269,28 +298,13 @@
                 height:fit-content;
                 bottom:0;
                 left:0;
-                width:100vw;
+                width:100%;
                 z-index: 10;
                 background-color: #980000;
             }
-            #teilen {
-                text-align: center;
-                display: flex;
-                flex-flow: row wrap;
-                justify-content: center;
-            }
 
-            #linkList {
-                display:none;
-                position: absolute;
-                color:white;
-                background-color: #980000;
-                bottom:0;
-                left:0;
-                width:100vw;
-                margin-top:20px;
-                flex-direction: column;
-                padding-bottom: 80px;
+            #teilen {
+                cursor: pointer;
             }
 
             .copylink {
@@ -298,7 +312,7 @@
                 /* height: 35px; */
                 /* width:240px; */
                 font-weight: 700;
-                font-size: 15pt;
+                font-size: 11pt;
                 text-align: center;
                 cursor: pointer;
                 /* background-color: var(--content-color); */
@@ -308,11 +322,104 @@
                 line-height: 1.3;
             }
 
-            @media screen and (max-width: 800px) {
-                #footer {
-                    justify-content: space-around;
+            #footercontent {
+                /* background-color: yellowgreen; */
+                display: flex;
+                flex-flow: row wrap;
+                justify-content: flex-end;
+                align-items: flex-start;
+                color:white;
+                gap:30px;
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+            .footerspacer {
+                display: none;
+            }
+
+            @media screen and (max-width: 680px) {
+                #footercontent {
+                    width:100%;
+                    justify-content: space-between;
+                    gap:15px;
                 }
             }
+
+            .label-s {
+                    display: none;
+            }
+
+            @media screen and (max-width: 480px) {
+                .footerspacer {
+                    display:block;
+                }
+
+                #footercontent {
+                    gap:0px;
+                }
+
+                #return-to-top {
+                    display:none;
+                }
+                .label-l {
+                    display: none;
+                }
+
+                .label-s {
+                    display: inline;
+                }
+
+                /* #footer {
+                    display: none;
+                } */
+
+                /* #content {
+                    height: calc(var(--vh, 1vh) * 100 - 96px);
+                } */
+            }
+
+            @media screen and (max-width: 300px) {
+                .footerspacer {
+                    display:none;
+                }
+
+                #footercontent {
+                    flex-direction: column;
+                }
+            }
+
+            #footerFootnotes {
+                max-height:50vh;
+                overflow:auto;
+                text-align: center;
+                display:none;
+                position: absolute;
+                color:white;
+                background-color: #980000;
+                bottom:0;
+                left:0;
+                width:100vw;
+                margin-top:20px;
+                flex-direction: column;
+                padding: 20px;
+                padding-bottom: 80px;
+                text-align: left;
+            }
+
+            .footerElement {
+                text-align: center;
+            }
+
+            .footerElement:hover {
+                color:white;
+            }
+
+            .copylink {
+                color:grey;
+            }
+            /* .copylink:hover {
+                color:black;
+            } */
 
         </style>
     </head>
@@ -384,6 +491,7 @@
                     <div class="artikel" id="posthistorische-klassenkaempfe">
                         <h1 dir="ltr">
                             POSTHISTORISCHE<br/>KLASSENKÄMPFE
+                            <br/><small class="copylink" onclick="copyanchor('#posthistorische-klassenkaempfe')">[Link kopieren]</small>
                         </h1>
                         <br/>
                         <br/>
@@ -528,19 +636,39 @@
             </div>
         </div>
 
+        <div id="footerFootnotes" onmouseenter="displayFootnotes()" onmouseleave="hideFootnotes()" onmouseover="showfooter()" onmouseleave="hidefooter()">
+            <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small>
+            <small id="f2"> </small>
+            <small id="f3"> </small>
+        </div>
+<!-- 
         <div id="linkList" onmouseenter="displayLinks()" onmouseleave="hideLinks()">
             <span class="copylink" onclick="copyanchor('')">ISSUE I – ALTERNATIVE UTOPIEN</span>
             <span class="copylink" onclick="copyanchor('#posthistorische-klassenkaempfe')">POSTHISTORISCHE KLASSENKÄMPFE</span>
             <span class="copylink" onclick="copyanchor('#der-neue-rahmen')">DER NEUE RAHMEN</span>
             <span class="copylink" onclick="copyanchor('#agieren-und-agitieren')">AGIEREN UND AGITIEREN</span>
-        </div>
+        </div> -->
 
         <div id="footer">
-            <div id="teilen" class="copy" onmouseenter="displayLinks()" onmouseleave="hideLinks()">
-                <span id="teilenLabel">Teilen</span>
+            <div id="footercontent">
+                <span class="footerElement" id="return-to-top-footer"  onclick="totop()">Nach Oben</span>
+
+                <div id="footnoteAnchor" class="footerElement" onmouseenter="displayFootnotes()" >
+                    <span>Fußnoten</span>
+                </div>
+                <span class="footerspacer"> | </span>
+
+                <div id="teilen" class="footerElement">
+                    <span id="teilenLabel" class="footerElement"><span class="label-l">ISSUE teilen</span><span class="label-s">Teilen</span></span>
+                </div>
+
+                <span class="footerspacer"> | </span>
+
+                <a class="footerElement" href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download><span class="label-l">PDF herunterladen</span><span class="label-s">Herunterladen</span></a>
             </div>
-            <a class="download" href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a>
         </div>
+
+        <!-- <span id="return-to-top"  onclick="totop()">Nach Oben</span> -->
 
     </body>
 </html>
