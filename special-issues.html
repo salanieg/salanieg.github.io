@@ -155,10 +155,26 @@
                 }
             }
 
+            .controlLabelSmall {
+                position:relative;
+                bottom:17px;
+                display: none;
+           } 
+
             @media screen and (max-width: 520px) {
-                #slideCurrent {
-                    order:-10;
-                    width:100%;
+                .controlLabelLarge {
+                    display: none;
+                }
+
+                .controlLabelSmall {
+                    display: inline;
+                }
+
+                #letztes, #nächstes {
+                    padding:0px;
+                    width: 45px;
+                    height: 45px;
+                    font-size: 35pt;
                 }
             }
 
@@ -349,12 +365,12 @@
 
                 <div id="controls">
                     <button id="letztes" onclick="letztesissue()">
-                        VORHERIGES
+                        <span class="controlLabelLarge">VORHERIGES</span><span class="controlLabelSmall">‹</span>
                     </button>
                     <div id="slideCurrent" onclick="toggleSlideIndex()" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
                     </div>
                     <button id="nächstes" onclick="nächstesissue()">
-                        NÄCHSTES
+                        <span class="controlLabelLarge">NÄCHSTES</span><span class="controlLabelSmall">›</span>
                     </button>
                 </div>
             </div>
