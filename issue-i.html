@@ -13,23 +13,6 @@
 
         <script>
 
-            // SCROLL FIX
-
-            // function activatescrollfix() {
-            //     document.getElementById("content").addEventListener("scroll", scrollfix);
-            // }
-
-            // function scrollfix() {
-            //     if (document.getElementById("content").scrollTop <= 60) {
-            //         document.getElementById("content").scrollTop = 0;
-            //         document.documentElement.scrollTop = 0;
-            //         document.getElementById("content").removeEventListener("scroll", scrollfix);
-            //     }
-            // }
-        </script>
-
-        <script>
-
             // TO TOP
 
             function showtotop() {
@@ -51,22 +34,47 @@
 
             // COPY LINK
 
-            var textOriginal;
-            var textList = [];
-            var textIndex = 0;
+            // var textOriginal;
+            // var textList = [];
+            // var textIndex = 0;
 
-            function copyanchor(anchor, id) {
-                navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
-                var text = anchor.textContent
-                if (text != 'Link kopiert!'){
-                    textOriginal = text;
-                }
+            // function copyanchor(anchor, id) {
+            //     navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
+            //     var text = anchor.textContent
+            //     if (text != 'Link kopiert!'){
+            //         textOriginal = text;
+            //     }
 
-                textList.push(textOriginal)
+            //     textList.push(textOriginal)
                 
+            //     anchor.textContent = 'Link kopiert!';
+            //     setTimeout(function(){anchor.innerText = textList[textIndex]}, 3000);
+            //     textIndex = textIndex + 1;
+            //     hideLinks()
+            // }
+        </script>
+
+        <script>
+
+            
+            var textOriginal;
+
+            function copyanchor(id) {
+                var anchor = document.getElementById("teilenLabel")
+                navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
                 anchor.textContent = 'Link kopiert!';
-                setTimeout(function(){anchor.innerText = textList[textIndex]}, 3000);
-                textIndex = textIndex + 1;
+                setTimeout(function(){anchor.innerText = "Teilen"}, 3000);
+                hideLinks()
+            }
+
+            function displayLinks() {
+                document.getElementById("teilenLabel").innerText = "Link wählen:";
+                document.getElementById("linkList").style.display = "flex";
+            }
+
+            function hideLinks() {
+                // document.getElementById("teilenLabel").innerText = "Teilen";
+                document.getElementById("linkList").style.display = "none";
             }
         </script>
 
@@ -77,16 +85,14 @@
             #content {
                 padding-left: 60px;
                 padding-right: 60px;
+                height: calc(var(--vh, 1vh) * 100 - 125px);
             }
 
             @media screen and (max-width: 800px) {
                 #content {
-                    padding:20px;
+                    padding-left:20px;
+                    padding-right:20px;
                 }
-            }
-
-            #inhaltsverzeichnis {
-                border-left: solid black
             }
 
             #info-wrapper {
@@ -148,7 +154,7 @@
 
             #footnotes {
                 scroll-margin-top:50px;
-                margin-bottom: 150px;
+                /* margin-bottom: 150px; */
             }
 
             /* BUTTONS */
@@ -161,7 +167,7 @@
                 height:fit-content;
                 padding: 10px 25px 10px 25px;
                 position: fixed;
-                bottom:20px;
+                bottom:40px;
                 right:20px;
                 background-color: var(--header-color);
                 color: var(--header-color-text);
@@ -176,19 +182,23 @@
 
             .download, .copy {
                 padding: 5px 15px 5px 15px;
-                height: 35px;
-                width:240px;
-                font-weight: 700;
+                /* height: 35px; */
+                /* width:240px; */
+                width:160px;
+                /* font-weight: 700; */
                 font-size: 11pt;
                 text-align: center;
                 cursor: pointer;
-                background-color: var(--content-color);
-                color:var(--content-color-text);
-                margin-bottom: 22px;
+                /* background-color: var(--content-color); */
+                /* color:var(--content-color-text); */
+                margin-bottom: 0px;
+                padding: 7px;
+                line-height: 1;
             }
 
             .download:hover a {
-                color:var(--content-color-text)
+                /* color:var(--content-color-text) */
+                color:white;
             }
 
             .option-wrap {
@@ -249,12 +259,62 @@
                 padding-bottom: 200px;
             }
 
+            #footer {
+                display: flex;
+                flex-flow: row wrap;
+                justify-content: flex-end;
+                align-items: flex-start;
+                color:white;
+                position: absolute;
+                height:fit-content;
+                bottom:0;
+                left:0;
+                width:100vw;
+                z-index: 10;
+                background-color: #980000;
+            }
+            #teilen {
+                text-align: center;
+                display: flex;
+                flex-flow: row wrap;
+                justify-content: center;
+            }
+
+            #linkList {
+                display:none;
+                margin-top:20px;
+                flex-direction: column;
+            }
+
+            .copylink {
+                padding: 5px 15px 5px 15px;
+                /* height: 35px; */
+                /* width:240px; */
+                width:160px;
+                /* font-weight: 700; */
+                font-size: 11pt;
+                text-align: center;
+                cursor: pointer;
+                /* background-color: var(--content-color); */
+                /* color:var(--content-color-text); */
+                margin-bottom: 0px;
+                padding: 7px;
+                line-height: 1;
+            }
+
+            @media screen and (max-width: 800px) {
+                #footer {
+                    justify-content: space-around;
+                }
+            }
+
         </style>
     </head>
 
     <body>
 
         <div class="header"></div>
+
 
         <div class="content" id="content" onscroll="showtotop()">
 
@@ -314,12 +374,6 @@
             </div>
 
             <div id="inhalt">
-                <div class="option-wrap" id="topOptionWrap">
-                    <div>.</div>
-                    <button class="download"><a href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a></button>
-                    <button class="copy" onclick="copyanchor(this, '')">ISSUE teilen</button>
-                </div>
-
                 <div class="artikelWrap">
                     <div class="artikel" id="posthistorische-klassenkaempfe">
                         <h1 dir="ltr">
@@ -434,10 +488,6 @@
                             realisiert sein.
                         </p>
                     </div>
-
-                    <div class="option-wrap">
-                        <button class="copy" onclick="copyanchor(this, '#posthistorische-klassenkaempfe')">Artikel teilen</button>
-                    </div>
                 </div>
 
                 <div class="artikelWrap">
@@ -449,10 +499,6 @@
                         <br/>
                         <br/>
                         <br/>
-                    </div>
-
-                    <div class="option-wrap">
-                        <button class="copy" onclick="copyanchor(this, '#der-neue-rahmen')">Artikel teilen</button>
                     </div>
                 </div>
 
@@ -466,10 +512,6 @@
                         <br/>
                         <br/>
                     </div>
-
-                    <div class="option-wrap">
-                        <button class="copy" onclick="copyanchor(this, '#agieren-und-agitieren')">Artikel teilen</button>
-                    </div>
                 </div>
 
                 <div id="footnotes">
@@ -478,9 +520,21 @@
                     <small id="f3"> </small>
                 </div>
             </div>
+        </div>
 
+        <div id="footer">
+            <a class="download" href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a>
+            <div id="teilen" class="copy" onmouseenter="displayLinks()" onmouseleave="hideLinks()">
+                <span id="teilenLabel">Teilen</span>
+                <div id="linkList">
+                    <span class="copylink" onclick="copyanchor('')">ISSUE I – ALTERNATIVE UTOPIEN</span>
+                    <span class="copylink" onclick="copyanchor('#posthistorische-klassenkaempfe')">POSTHISTORISCHE KLASSENKÄMPFE</span>
+                    <span class="copylink" onclick="copyanchor('#der-neue-rahmen')">DER NEUE RAHMEN</span>
+                    <span class="copylink" onclick="copyanchor('#agieren-und-agitieren')">AGIEREN UND AGITIEREN</span>
+                </div>
+            </div>
 
         </div>
 
-    </body>    
+    </body>
 </html>
