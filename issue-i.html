@@ -85,6 +85,10 @@
                 }
             }
 
+            #inhaltsverzeichnis {
+                border-left: solid black
+            }
+
             #info-wrapper {
                 display:flex;
                 flex-wrap: wrap;
@@ -218,6 +222,17 @@
                 }
                 
                 #title, #inhaltsverzeichnis, #inhalt {
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+
+                #inhalt {
+                    display:flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+
+                .artikel, .option-wrap {
                     margin-left: auto;
                     margin-right: auto;
                 }
