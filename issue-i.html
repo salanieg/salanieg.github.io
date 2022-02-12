@@ -64,16 +64,16 @@
                 navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
                 anchor.textContent = 'Link kopiert!';
                 setTimeout(function(){anchor.innerText = "Teilen"}, 3000);
-                hideLinks()
+                document.getElementById("linkList").style.display = "none";
             }
 
             function displayLinks() {
-                document.getElementById("teilenLabel").innerText = "Link wählen:";
+                document.getElementById("teilenLabel").innerText = "Link wählen";
                 document.getElementById("linkList").style.display = "flex";
             }
 
             function hideLinks() {
-                // document.getElementById("teilenLabel").innerText = "Teilen";
+                document.getElementById("teilenLabel").innerText = "Teilen";
                 document.getElementById("linkList").style.display = "none";
             }
         </script>
@@ -282,24 +282,30 @@
 
             #linkList {
                 display:none;
+                position: absolute;
+                color:white;
+                background-color: #980000;
+                bottom:0;
+                left:0;
+                width:100vw;
                 margin-top:20px;
                 flex-direction: column;
+                padding-bottom: 100px;
             }
 
             .copylink {
                 padding: 5px 15px 5px 15px;
                 /* height: 35px; */
                 /* width:240px; */
-                width:160px;
-                /* font-weight: 700; */
-                font-size: 11pt;
-                text-align: center;
+                font-weight: 700;
+                font-size: 15pt;
+                text-align: right;
                 cursor: pointer;
                 /* background-color: var(--content-color); */
                 /* color:var(--content-color-text); */
                 margin-bottom: 0px;
                 padding: 7px;
-                line-height: 1;
+                line-height: 1.3;
             }
 
             @media screen and (max-width: 800px) {
@@ -522,16 +528,17 @@
             </div>
         </div>
 
+        <div id="linkList" onmouseenter="displayLinks()" onmouseleave="hideLinks()">
+            <span class="copylink" onclick="copyanchor('')">ISSUE I – ALTERNATIVE UTOPIEN</span>
+            <span class="copylink" onclick="copyanchor('#posthistorische-klassenkaempfe')">POSTHISTORISCHE KLASSENKÄMPFE</span>
+            <span class="copylink" onclick="copyanchor('#der-neue-rahmen')">DER NEUE RAHMEN</span>
+            <span class="copylink" onclick="copyanchor('#agieren-und-agitieren')">AGIEREN UND AGITIEREN</span>
+        </div>
+
         <div id="footer">
             <a class="download" href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download>PDF herunterladen</a>
             <div id="teilen" class="copy" onmouseenter="displayLinks()" onmouseleave="hideLinks()">
                 <span id="teilenLabel">Teilen</span>
-                <div id="linkList">
-                    <span class="copylink" onclick="copyanchor('')">ISSUE I – ALTERNATIVE UTOPIEN</span>
-                    <span class="copylink" onclick="copyanchor('#posthistorische-klassenkaempfe')">POSTHISTORISCHE KLASSENKÄMPFE</span>
-                    <span class="copylink" onclick="copyanchor('#der-neue-rahmen')">DER NEUE RAHMEN</span>
-                    <span class="copylink" onclick="copyanchor('#agieren-und-agitieren')">AGIEREN UND AGITIEREN</span>
-                </div>
             </div>
 
         </div>
