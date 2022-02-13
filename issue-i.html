@@ -18,11 +18,11 @@
             function showtotop() {
                 if (document.getElementById("content").scrollTop >= 2000) {
                     document.getElementById("return-to-top").style.display = "block";
-                    document.getElementById("return-to-top-footer").style.display = "inline";
+                    // document.getElementById("return-to-top-footer").style.display = "inline";
                 } 
                 else {
                     document.getElementById("return-to-top").style.display = "none";
-                    document.getElementById("return-to-top-footer").style.display = "none";
+                    // document.getElementById("return-to-top-footer").style.display = "none";
 
                 }
             }
@@ -323,7 +323,7 @@
                 } */
 
                 #footercontent {
-                    gap:20px;
+                    gap:0px 20px;
                 }
 
                 #return-to-top {
@@ -355,6 +355,7 @@
                     flex-direction: column;
                 }
             }
+
 
             #footerFootnotes {
                 max-height:30vh;
@@ -683,7 +684,7 @@
                 <span class="footerspacer">|</span>
 
                 <div id="teilen" class="footerElement">
-                    <small class="footerElement" onclick="copyanchor(this, '#', 'Link kopiert!')">ISSUE teilen</small>
+                    <small class="footerElement"><span class="label-l" onclick="copyanchor(this, '#', 'Link kopiert!')">ISSUE teilen</span><span class="label-s" onclick="copyanchor(this, '#', 'Link kopiert!')">Teilen</span></small>
                 </div>
 
                 <span class="footerspacer">|</span>
