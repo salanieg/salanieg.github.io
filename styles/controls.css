@@ -97,7 +97,7 @@
 	position:relative;
 	bottom:17px;
 	display: none;
-} 
+}
 
 @media screen and (max-width: 520px) {
 	.controlLabelLarge {
