@@ -18,11 +18,11 @@
             function showtotop() {
                 if (document.getElementById("content").scrollTop >= 2000) {
                     document.getElementById("return-to-top").style.display = "block";
-                    document.getElementById("return-to-top-footer").style.visibility = "visible";
+                    document.getElementById("return-to-top-footer").style.display = "inline";
                 } 
                 else {
                     document.getElementById("return-to-top").style.display = "none";
-                    document.getElementById("return-to-top-footer").style.visibility = "hidden";
+                    document.getElementById("return-to-top-footer").style.display = "none";
 
                 }
             }
@@ -58,46 +58,12 @@
         </script>
 
         <script>
-
-            
-            // var textOriginal;
-
-            // function copyanchor(id) {
-            //     var anchor = document.getElementById("teilenLabel")
-            //     navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
-            //     anchor.textContent = 'Link kopiert!';
-            //     setTimeout(function(){anchor.innerText = "Teilen"}, 3000);
-            //     document.getElementById("linkList").style.display = "none";
-            // }
-
-            // function displayLinks() {
-            //     document.getElementById("teilenLabel").innerText = "Link wählen";
-            //     document.getElementById("linkList").style.display = "flex";
-            // }
-
-            // function hideLinks() {
-            //     document.getElementById("teilenLabel").innerText = "Teilen";
-            //     document.getElementById("linkList").style.display = "none";
-            // }
-
             function displayFootnotes() {
                 document.getElementById("footerFootnotes").style.display = "flex";
             }
 
             function hideFootnotes() {
                 document.getElementById("footerFootnotes").style.display = "none";
-            }
-
-            function showfooter() {
-                // alert("tets")
-                document.getElementById("showfooter").style.display = "none";
-                document.getElementById("footercontent").style.display = "flex";
-                // alert("tets")
-            }
-
-            function hidefooter() {
-                document.getElementById("showfooter").style.display = "block";
-                document.getElementById("footercontent").style.display = "none";
             }
         </script>
 
@@ -198,7 +164,7 @@
             }
 
             #return-to-top-footer {
-                visibility: hidden;
+                display:none;
                 background-color: var(--header-color);
                 color: var(--header-color-text);
             }
@@ -647,7 +613,7 @@
                     <small id="f3"> </small>
                 </div>
 
-                <span class="footerElement" id="return-to-top-footer"  onclick="totop()">Nach Oben</span>
+                <span class="footerElement" id="return-to-top-footer" onclick="totop()">Nach Oben</span>
                 <span class="footerspacer">|</span>
 
                 <div id="footnoteAnchor" class="footerElement" onmouseenter="displayFootnotes()" >
