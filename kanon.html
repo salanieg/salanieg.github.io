@@ -8,6 +8,7 @@
         <link rel="stylesheet" href="styles/fonts.css">
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/black.css">
+        <link rel="stylesheet" href="styles/controls.css">
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script> $(function(){$(".header").load("header.html");}); </script>
 
@@ -48,7 +49,6 @@
                 }
                 resetcontrols()
                 displaycurrent()
-                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
 
             function nächstesissue() {
@@ -59,7 +59,6 @@
                 }
                 resetcontrols()
                 displaycurrent()
-                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
 
             document.addEventListener("DOMContentLoaded", (event) => {
@@ -71,27 +70,12 @@
 
             function displaySlideIndex() {
                 document.getElementById(slideList[slideSelected]).style.display = "none";
-                document.getElementById("slideIndex").style.display = "block";
-                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
+                document.getElementById("slideIndex").style.display = "inline";
             }
 
             function hideSlideIndex() {
                 document.getElementById("slideIndex").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
-                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
-            }
-
-            var slideIndexToggled = false;
-
-            function toggleSlideIndex() {
-                if (!slideIndexToggled) {
-                    hideSlideIndex();
-                    slideIndexToggled = true;
-                }
-                else {
-                    displaySlideIndex();
-                    slideIndexToggled = false;
-                }
             }
 
             function displayBySlideIndex(slideIndex) {
@@ -101,7 +85,6 @@
                 resetcontrols();
                 displaycurrent();
                 hideSlideIndex();
-                document.getElementById("content").scrollTo(0,document.getElementById("content").scrollHeight);
             }
         </script>
 
@@ -166,113 +149,6 @@
             p {
                 font-size: 20pt;
                 white-space: nowrap;
-            }
-
-
-
-
-            .content {
-                display: grid;
-                grid-template-columns: 1fr auto 1fr;
-                grid-template-rows: 20px 1fr auto 60px 1fr auto 60px;
-                grid-template-areas: 
-                    ". . ."
-                    ". . ."
-                    ". slides ."
-                    ". . ."
-                    ". . ."
-                    ". controls ."
-                    ". . .";
-                place-items:center;
-            }
-
-            #slideWrap {
-                grid-area: slides;
-            }
-
-            #controls {
-                text-align: center;
-                display: flex;
-                flex-wrap:wrap;
-                justify-content: center;
-                align-items: center;
-                gap:20px 70px;
-                
-            }
-
-            #letztes, #nächstes {
-                background-color: transparent;
-                color:white;
-                padding: 5px 15px 5px 15px;
-                width:175px;
-                font-size: 15pt;
-                cursor: pointer;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            #slideCurrent {
-                width:70px;
-                font-size: 20pt;
-                cursor: default;
-            }
-
-            @media screen and (max-width: 800px) {
-                #controls {
-                    gap:20px;
-                }
-            }
-
-            .controlLabelSmall {
-                position:relative;
-                bottom:17px;
-                display: none;
-           } 
-
-            @media screen and (max-width: 520px) {
-                .controlLabelLarge {
-                    display: none;
-                }
-
-                .controlLabelSmall {
-                    display: inline;
-                }
-
-                #letztes, #nächstes {
-                    padding:0px;
-                    width: 45px;
-                    height: 45px;
-                    font-size: 35pt;
-                }
-            }
-
-            .slide {
-                display: none;
-                flex-wrap:wrap;
-                place-content: center;
-                text-align: center;
-                gap:40px 80px;
-            }
-
-            #slideIndex {
-                text-align: center;
-                font-size: 20pt;
-                display:none;
-                position: relative;
-                bottom:-2px;
-                padding-bottom: 22px;
-                width:fit-content;
-            }
-
-            #slideIndex>span:hover {
-                color:var(--content-color-link-hover);
-                cursor: pointer;
-            }
-
-            #controlsWrap {
-                display:flex;
-                align-items: center;
-                flex-direction: column;
-                grid-area: controls;
             }
 
         </style>
@@ -409,7 +285,7 @@
                     <button id="letztes" onclick="letztesissue()">
                         <span class="controlLabelLarge">VORHERIGES</span><span class="controlLabelSmall">‹</span>
                     </button>
-                    <div id="slideCurrent" onclick="toggleSlideIndex()" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
+                    <div id="slideCurrent" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
                     </div>
                     <button id="nächstes" onclick="nächstesissue()">
                         <span class="controlLabelLarge">NÄCHSTES</span><span class="controlLabelSmall">›</span>
