@@ -13,7 +13,7 @@
 
 
         <script>
-            var slideList = ["n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8", "n9", "n10", "n11", "n12", "n13", "n14", "n15"];
+            var slideList = ["n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8", "n9", "n10", "n11", "n12", "n13", "n14", "n15", "n16"];
             var slideSelected = 0;
 
             function resetcontrols() {
@@ -248,8 +248,7 @@
             .slide {
                 display: none;
                 flex-wrap:wrap;
-                justify-content: center;
-                align-items:center;
+                place-content: center;
                 text-align: center;
                 gap:40px 80px;
             }
@@ -377,6 +376,13 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="n16" class="slide">
+                    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/episode/6BGLCHADDW7AmhJOWLLcRN?utm_source=generator&theme=0" width="700" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/episode/0a4wAoteCuEqSeyXznc0PN?utm_source=generator&theme=0" width="700" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/episode/06fcDbL4KFfILiOYoKJg9z?utm_source=generator&theme=0" width="700" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/episode/7yAUquucv8u2KAs0i6E5hu?utm_source=generator&theme=0" width="700" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                </div>
             </div>
 
             <div id="controlsWrap">
@@ -396,6 +402,7 @@
                     <span onclick="displayBySlideIndex(13)">Faust</span><br>
                     <span onclick="displayBySlideIndex(14)">Websites</span><br>
                     <span onclick="displayBySlideIndex(15)">THE BIG FLAT NOW</span><br>
+                    <span onclick="displayBySlideIndex(16)">Podcasts</span><br>
                 </div>
 
                 <div id="controls">

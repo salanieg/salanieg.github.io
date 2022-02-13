@@ -229,6 +229,7 @@
             }
 
             .cover-audio {
+                max-height:70vh;
                 display:flex;
                 flex-flow:column;
                 row-gap:30px;
@@ -236,6 +237,12 @@
 
             .cover-audio > * {
                 width: 100%;
+            }
+
+            @media screen and (max-width: 700px) {
+                .special-issue-cover {
+                    max-width:300px;
+                }
             }
 
             #im-bett {
