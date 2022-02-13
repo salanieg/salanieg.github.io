@@ -37,48 +37,48 @@
 
             // COPY LINK
 
-            // var textOriginal;
-            // var textList = [];
-            // var textIndex = 0;
+            var textOriginal;
+            const textList = [];
+            var textIndex = 0;
 
-            // function copyanchor(anchor, id) {
-            //     navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
-            //     var text = anchor.textContent
-            //     if (text != 'Link kopiert!'){
-            //         textOriginal = text;
-            //     }
-
-            //     textList.push(textOriginal)
+            function copyanchor(anchor, id, textReplace) {
+                navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
+                var text = anchor.innerText
+                if (text != textReplace){
+                    textOriginal = text;
+                    textList.push(textOriginal)
                 
-            //     anchor.textContent = 'Link kopiert!';
-            //     setTimeout(function(){anchor.innerText = textList[textIndex]}, 3000);
-            //     textIndex = textIndex + 1;
-            //     hideLinks()
-            // }
+                    anchor.innerText = textReplace;
+                    setTimeout(function(){
+                        anchor.innerText = textList[textIndex];
+                        textIndex = textIndex + 1;
+                    }, 3000);
+                }
+            }
         </script>
 
         <script>
 
             
-            var textOriginal;
+            // var textOriginal;
 
-            function copyanchor(id) {
-                var anchor = document.getElementById("teilenLabel")
-                navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
-                anchor.textContent = 'Link kopiert!';
-                setTimeout(function(){anchor.innerText = "Teilen"}, 3000);
-                document.getElementById("linkList").style.display = "none";
-            }
+            // function copyanchor(id) {
+            //     var anchor = document.getElementById("teilenLabel")
+            //     navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
+            //     anchor.textContent = 'Link kopiert!';
+            //     setTimeout(function(){anchor.innerText = "Teilen"}, 3000);
+            //     document.getElementById("linkList").style.display = "none";
+            // }
 
-            function displayLinks() {
-                document.getElementById("teilenLabel").innerText = "Link wählen";
-                document.getElementById("linkList").style.display = "flex";
-            }
+            // function displayLinks() {
+            //     document.getElementById("teilenLabel").innerText = "Link wählen";
+            //     document.getElementById("linkList").style.display = "flex";
+            // }
 
-            function hideLinks() {
-                document.getElementById("teilenLabel").innerText = "Teilen";
-                document.getElementById("linkList").style.display = "none";
-            }
+            // function hideLinks() {
+            //     document.getElementById("teilenLabel").innerText = "Teilen";
+            //     document.getElementById("linkList").style.display = "none";
+            // }
 
             function displayFootnotes() {
                 document.getElementById("footerFootnotes").style.display = "flex";
@@ -351,11 +351,11 @@
 
             @media screen and (max-width: 480px) {
                 .footerspacer {
-                    display:block;
+                    /* display:block; */
                 }
 
                 #footercontent {
-                    gap:0px;
+                    gap:20px;
                 }
 
                 #return-to-top {
@@ -431,9 +431,6 @@
 
         <div class="content" id="content" onscroll="showtotop()">
 
-            <button id="return-to-top"  onclick="totop()">Nach Oben</button>
-
-
             <div id="info-wrapper">
 
                 <div id="coverwrap">
@@ -491,7 +488,7 @@
                     <div class="artikel" id="posthistorische-klassenkaempfe">
                         <h1 dir="ltr">
                             POSTHISTORISCHE<br/>KLASSENKÄMPFE
-                            <br/><small class="copylink" onclick="copyanchor('#posthistorische-klassenkaempfe')">[Link kopieren]</small>
+                            <br/><small class="copylink" onclick="copyanchor(this, '#posthistorische-klassenkaempfe', '[Link kopiert!]')">[Link kopieren]</small>
                         </h1>
                         <br/>
                         <br/>
@@ -608,6 +605,7 @@
                     <div class="artikel" id="der-neue-rahmen">
                         <h1 dir="ltr">
                             DER NEUE<br/>RAHMEN
+                            <br/><small class="copylink" onclick="copyanchor(this, '#der-neue-rahmen', '[Link kopiert!]')">[Link kopieren]</small>
                         </h1>
                         <br/>
                         <br/>
@@ -620,6 +618,7 @@
                     <div class="artikel" id="agieren-und-agitieren">
                         <h1 dir="ltr">
                             AGIEREN UND<br/>AGITIEREN
+                            <br/><small class="copylink" onclick="copyanchor(this, '#agieren-und-agitieren', '[Link kopiert!]')">[Link kopieren]</small>
                         </h1>
                         <br/>
                         <br/>
@@ -636,39 +635,35 @@
             </div>
         </div>
 
-        <div id="footerFootnotes" onmouseenter="displayFootnotes()" onmouseleave="hideFootnotes()" onmouseover="showfooter()" onmouseleave="hidefooter()">
-            <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small>
-            <small id="f2"> </small>
-            <small id="f3"> </small>
-        </div>
-<!-- 
-        <div id="linkList" onmouseenter="displayLinks()" onmouseleave="hideLinks()">
-            <span class="copylink" onclick="copyanchor('')">ISSUE I – ALTERNATIVE UTOPIEN</span>
-            <span class="copylink" onclick="copyanchor('#posthistorische-klassenkaempfe')">POSTHISTORISCHE KLASSENKÄMPFE</span>
-            <span class="copylink" onclick="copyanchor('#der-neue-rahmen')">DER NEUE RAHMEN</span>
-            <span class="copylink" onclick="copyanchor('#agieren-und-agitieren')">AGIEREN UND AGITIEREN</span>
-        </div> -->
 
         <div id="footer">
+            <button id="return-to-top"  onclick="totop()">Nach Oben</button>
+
+            
             <div id="footercontent">
+                <div id="footerFootnotes" onmouseenter="displayFootnotes()" onmouseleave="hideFootnotes()" onmouseover="showfooter()" onmouseleave="hidefooter()">
+                    <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small>
+                    <small id="f2"> </small>
+                    <small id="f3"> </small>
+                </div>
+
                 <span class="footerElement" id="return-to-top-footer"  onclick="totop()">Nach Oben</span>
+                <span class="footerspacer">|</span>
 
                 <div id="footnoteAnchor" class="footerElement" onmouseenter="displayFootnotes()" >
                     <span>Fußnoten</span>
                 </div>
-                <span class="footerspacer"> | </span>
+                <span class="footerspacer">|</span>
 
                 <div id="teilen" class="footerElement">
-                    <span id="teilenLabel" class="footerElement"><span class="label-l">ISSUE teilen</span><span class="label-s">Teilen</span></span>
+                    <small class="footerElement" onclick="copyanchor(this, '#', 'Link kopiert!')">ISSUE teilen</small>
                 </div>
 
-                <span class="footerspacer"> | </span>
+                <span class="footerspacer">|</span>
 
                 <a class="footerElement" href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download><span class="label-l">PDF herunterladen</span><span class="label-s">Herunterladen</span></a>
             </div>
         </div>
-
-        <!-- <span id="return-to-top"  onclick="totop()">Nach Oben</span> -->
-
+        
     </body>
 </html>
