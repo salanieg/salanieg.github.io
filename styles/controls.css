@@ -1,13 +1,14 @@
 .content {
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;
-	grid-template-rows: 1fr auto 1fr;
+	grid-template-rows: 1fr auto 60px 1fr;
 	grid-template-areas: 
 		". . ."
 		". slides ."
+		". . ."
 		". . .";
 	place-items:center;
-	height: calc(var(--vh, 1vh) * 100 - 260px);
+	height: calc(var(--vh, 1vh) * 100 - 200px);
 }
 
 #slideWrap {
