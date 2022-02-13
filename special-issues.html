@@ -16,6 +16,11 @@
             var slideList = ["n1", "n2", "n3"];
             var slideSelected = 0;
 
+            function totop() {
+                document.getElementById("content").scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+            }
+
             function resetcontrols() {
                 if (slideSelected==0) {
                     document.getElementById("letztes").disabled = true;
@@ -48,6 +53,7 @@
                 }
                 resetcontrols()
                 displaycurrent()
+                totop()
             }
 
             function nächstesissue() {
@@ -58,6 +64,7 @@
                 }
                 resetcontrols()
                 displaycurrent()
+                totop()
             }
 
             document.addEventListener("DOMContentLoaded", (event) => {
@@ -65,6 +72,7 @@
 
                 resetcontrols()
                 displaycurrent()
+                totop()
             });
 
             function displaySlideIndex() {
@@ -84,6 +92,7 @@
                 resetcontrols();
                 displaycurrent();
                 hideSlideIndex();
+                totop()
             }
         </script>
 
