@@ -17,9 +17,10 @@
             var slideList = ["n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8", "n9", "n10", "n11", "n12", "n13", "n14", "n15", "n16"];
             var slideSelected = 0;
 
-            function totop() {
+            function totopcontrols() {
                 document.getElementById("content").scrollTop = 0;
                 document.documentElement.scrollTop = 0;
+                hidescrollbar()
             }
 
             function resetcontrols() {
@@ -54,7 +55,7 @@
                 }
                 resetcontrols()
                 displaycurrent()
-                totop()
+                totopcontrols()
             }
 
             function nächstesissue() {
@@ -65,7 +66,7 @@
                 }
                 resetcontrols()
                 displaycurrent()
-                totop()
+                totopcontrols()
             }
 
             document.addEventListener("DOMContentLoaded", (event) => {
@@ -73,7 +74,7 @@
 
                 resetcontrols()
                 displaycurrent()
-                totop()
+                totopcontrols()
             });
 
             function displaySlideIndex() {
@@ -93,7 +94,7 @@
                 resetcontrols();
                 displaycurrent();
                 hideSlideIndex();
-                totop()
+                totopcontrols()
             }
         </script>
 
