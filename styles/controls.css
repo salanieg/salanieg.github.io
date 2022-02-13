@@ -7,7 +7,7 @@
 		". slides ."
 		". . .";
 	place-items:center;
-	height: calc(var(--vh, 1vh) * 100 - 220px);
+	height: calc(var(--vh, 1vh) * 100 - 260px);
 }
 
 #slideWrap {
