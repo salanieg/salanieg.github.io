@@ -63,10 +63,10 @@
                 max-height:70vh;
             }
 
-            #s2 {
-                place-content: flex-start;
-                flex-flow: column wrap;
-                place-items: center;
+            #depop {
+                display:flex;
+                flex-direction: column;
+                place-content: center;
             }
 
             .profiltext {
@@ -82,7 +82,7 @@
             .profil {
                 display: flex;
                 flex-flow: flex nowrap;
-                place-content: flex-start;
+                place-content: center;
                 align-items: center;
                 gap:20px;
             }
@@ -100,27 +100,26 @@
             }
 
             #depopbilder {
+                position:relative;
                 display:flex;
-                flex-flow: column wrap;
+                flex-wrap: wrap;
                 place-items: center;
-                align-items: flex-start;
+                margin-left:auto;
+                margin-right:auto;
             }
 
             .depopbild {
+                flex-grow:3;
                 width:100%;
-                max-width: 500px;
-                transition: 0.7s;
-            }
-
-            .depopbild:hover {
-                max-width:900px;
-                transition: 0.7s;
+                width: 500px;
             }
 
             #profiles {
                 display: flex;
                 gap:80px;
                 flex-flow: wrap;
+                margin-left: auto;
+                margin-right: auto;
                 margin-top: 150px;
                 margin-bottom: 150px;
             }
@@ -148,27 +147,28 @@
                 </div>
 
                 <div id="s2" class="slide">
-                    <div id="depopbilder">
-                        <img class="depopbild" src="images/special-issues/depop (1).jpg"/>
-                        <img class="depopbild" src="images/special-issues/depop (2).jpg"/>
-                        <img class="depopbild" src="images/special-issues/depop (3).jpg"/>
-                        <img class="depopbild" src="images/special-issues/depop (4).jpg"/>
-                        <img class="depopbild" src="images/special-issues/depop (5).jpg"/>
-                        <img class="depopbild" src="images/special-issues/depop (6).jpg"/>
-                        <img class="depopbild" src="images/special-issues/depop (7).jpg"/>
-                        <img class="depopbild" src="images/special-issues/depop (8).jpg"/>
-                        <img class="depopbild" src="images/special-issues/depop (9).jpg"/>
+                    <div id="depop">
+                        <div id="profiles">
+                            <div class="profil">
+                                <a href="https://www.depop.com/vidcy/" target="_blank"><img class="profilbild" id="depoppb" src="images/special-issues/vidcy.jpg" alt="DEPOP PB"/></a>
+                                <a class="profiltext" href="https://www.depop.com/vidcy/" target="_blank">depop.com/vidcy</a>
+                            </div>
 
-                    </div>
-                    <div id="profiles">
-                        <div class="profil">
-                            <a href="https://www.depop.com/vidcy/" target="_blank"><img class="profilbild" id="depoppb" src="images/special-issues/vidcy.jpg" alt="DEPOP PB"/></a>
-                            <a class="profiltext" href="https://www.depop.com/vidcy/" target="_blank">depop.com/vidcy</a>
+                            <div class="profil">
+                                <a href="https://www.instagram.com/y2k.hole" target="_blank"><img class="profilbild" id="instpb" src="images/special-issues/y2khole.jpg" alt="DEPOP PB"/></a>
+                                <a class="profiltext" href="https://www.instagram.com/y2k.hole" target="_blank">instagram.com/y2k.hole</a>
+                            </div>
                         </div>
-
-                        <div class="profil">
-                            <a href="https://www.instagram.com/y2k.hole" target="_blank"><img class="profilbild" id="instpb" src="images/special-issues/y2khole.jpg" alt="DEPOP PB"/></a>
-                            <a class="profiltext" href="https://www.instagram.com/y2k.hole" target="_blank">instagram.com/y2k.hole</a>
+                        <div id="depopbilder">
+                            <img class="depopbild" src="images/special-issues/depop (1).jpg"/>
+                            <img class="depopbild" src="images/special-issues/depop (6).jpg"/>
+                            <img class="depopbild" src="images/special-issues/depop (9).jpg"/>
+                            <img class="depopbild" src="images/special-issues/depop (2).jpg"/>
+                            <img class="depopbild" src="images/special-issues/depop (3).jpg"/>
+                            <img class="depopbild" src="images/special-issues/depop (4).jpg"/>
+                            <img class="depopbild" src="images/special-issues/depop (7).jpg"/>
+                            <img class="depopbild" src="images/special-issues/depop (5).jpg"/>
+                            <img class="depopbild" src="images/special-issues/depop (8).jpg"/>
                         </div>
                     </div>
                 </div>
