@@ -4,6 +4,16 @@
 
         <script>
 
+            // INIT
+
+            function initfooter() {
+                document.getElementById('download-issue').setAttribute('href', downloadlocation);
+                document.getElementById('footerFootnotes').innerHTML = '<small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>';
+            }
+        </script>
+
+        <script>
+
             // TO TOP
 
             function showtotop() {
@@ -74,7 +84,6 @@
 			});
 
         </script>
-
 
         <style>
 
@@ -239,26 +248,7 @@
 
             <div id="footercontent">
                 <div id="footerFootnotes-wrap" onmouseenter="displayFootnotes()" onmouseleave="hideFootnotes()" onmouseover="showfooter()" onmouseleave="hidefooter()">
-                    <div id="footerFootnotes">
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f2"> </small>
-                        <small id="f3"> </small>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
-                    </div>
+                    <div id="footerFootnotes"></div>
                 </div>
 
                 <div class="footerElement" id="footnoteAnchor" onmouseenter="displayFootnotes()" >
@@ -266,10 +256,10 @@
                 </div>
 
                 <div class="footerElement" id="teilen" >
-                    <small class="footerElement"><span class="label-l" onclick="copyanchor(this, '#', 'Link kopiert!')">ISSUE teilen</span><span class="label-s" onclick="copyanchor(this, '#', 'Link kopiert!')">Teilen</span></small>
+                    <small class="footerElement"><span class="label-l" onclick="copyanchor(this, '', 'Link kopiert!')">ISSUE teilen</span><span class="label-s" onclick="copyanchor(this, '', 'Link kopiert!')">Teilen</span></small>
                 </div>
 
-                <a class="footerElement" href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download><span class="label-l">PDF herunterladen</span><span class="label-s">Herunterladen</span></a>
+                <a class="footerElement" id="download-issue" download><span class="label-l">PDF herunterladen</span><span class="label-s">Herunterladen</span></a>
             </div>
         </div>
 
