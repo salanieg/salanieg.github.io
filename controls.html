@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <script>
+
+            function initcontrols() {
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+
+                for (let i = 0; i < slideList.length; i++) {
+                    $('#slideIndex').append('<span onclick="displayBySlideIndex(' + i + ')">' + indexList[i] + '</span><br>');
+                }
+
+                resetcontrols()
+                displaycurrent()
+                totopcontrols()
+            }
+
+            function totopcontrols() {
+                document.getElementById("content").scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+                setTimeout(hidescrollbar, 1);
+            }
+
+            function resetcontrols() {
+                if (slideSelected==0) {
+                    document.getElementById("letztes").disabled = true;
+                    document.getElementById("letztes").style.color = "lightgrey";
+                }
+                else {
+                    document.getElementById("letztes").disabled = false;
+                    document.getElementById("letztes").style.color = "white";
+                }
+                
+                if (slideSelected==slideList.length-1) {
+                    document.getElementById("nächstes").disabled = true;
+                    document.getElementById("nächstes").style.color = "lightgrey";
+                }
+                else {
+                    document.getElementById("nächstes").disabled = false;
+                    document.getElementById("nächstes").style.color = "white";
+                }
+            }
+
+            function displaycurrent() {
+                document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
+            }
+
+            function letztesissue() {
+                if(slideSelected>=0) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected - 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
+                }
+                resetcontrols()
+                displaycurrent()
+                totopcontrols()
+            }
+
+            function nächstesissue() {
+                if(slideSelected<=slideList.length-1) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected + 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
+                }
+                resetcontrols()
+                displaycurrent()
+                totopcontrols()
+            }
+
+            function displaySlideIndex() {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                document.getElementById("slideIndex").style.display = "block";
+            }
+
+            function hideSlideIndex() {
+                document.getElementById("slideIndex").style.display = "none";
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+            }
+
+            function displayBySlideIndex(slideIndex) {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                slideSelected = slideIndex;
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+                resetcontrols();
+                displaycurrent();
+                hideSlideIndex();
+                totopcontrols()
+            }
+        </script>
+
+
+        <style>
+
+            /* SLIDES */
+
+            .content {
+                display: grid;
+                grid-template-columns: 1fr auto 1fr;
+                grid-template-rows: 1fr auto 1fr;
+                grid-template-areas: 
+                    ". . ."
+                    ". slides ."
+                    ". . .";
+                place-items:center;
+                height: calc(var(--vh, 1vh) * 100 - 220px);
+            }
+
+            #slideWrap {
+                grid-area: slides;
+            }
+
+            .slide {
+                display: none;
+                flex-wrap:wrap;
+                place-content: center;
+                text-align: center;
+                gap:40px 80px;
+                margin-bottom: 40px;
+            }
+
+
+            /* CONTROLS */
+
+            #controls {
+                position: absolute;
+                bottom:0;
+                display:flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                width:100vw;
+            }
+
+            #controlsWrap {
+                display:flex;
+                place-items: center;
+                flex-direction: column;
+            }
+
+            #controls-inner {
+                text-align: center;
+                display: flex;
+                flex-wrap:wrap;
+                justify-content: center;
+                align-items: center;
+                gap:20px 70px;
+                width:100%;
+                bottom:0;
+                left:0;
+                padding-bottom: 60px;
+            }
+
+            #letztes, #nächstes {
+                background-color: transparent;
+                color:white;
+                padding: 5px 15px 5px 15px;
+                width:175px;
+                font-size: 15pt;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            #slideCurrent {
+                color:white;
+                width:70px;
+                font-size: 20pt;
+                cursor: default;
+                border: solid transparent;
+                border-width: 2px;
+            }
+
+            #slideIndex {
+                color:white;
+                text-align: center;
+                font-size: 20pt;
+                display:none;
+                width:fit-content;
+                padding-bottom: 40px;
+            }
+
+            #slideIndex>span:hover {
+                color:var(--content-color-link-hover);
+                cursor: pointer;
+            }
+
+
+            /* SIZING */
+
+            @media screen and (max-width: 800px) {
+                #controls-inner {
+                    gap:20px;
+                }
+            }
+
+            .controlLabelSmall {
+                position:relative;
+                bottom:17px;
+                display: none;
+            }
+
+            @media screen and (max-width: 520px) {
+                .controlLabelLarge {
+                    display: none;
+                }
+
+                .controlLabelSmall {
+                    display: inline;
+                }
+
+                #letztes, #nächstes {
+                    padding:0px;
+                    width: 45px;
+                    height: 45px;
+                    font-size: 35pt;
+                }
+            }
+
+        </style>
+    </head>
+
+    <body>
+
+        <div id="controlsWrap">
+            <div id="slideIndex" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()"></div>
+
+            <div id="controls-inner">
+                <button id="letztes" onclick="letztesissue()">
+                    <span class="controlLabelLarge">VORHERIGES</span><span class="controlLabelSmall">‹</span>
+                </button>
+                <div id="slideCurrent" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
+                </div>
+                <button id="nächstes" onclick="nächstesissue()">
+                    <span class="controlLabelLarge">NÄCHSTES</span><span class="controlLabelSmall">›</span>
+                </button>
+            </div>
+        </div>
+
+    </body>
+</html>
