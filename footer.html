@@ -17,11 +17,13 @@
             // TO TOP
 
             function showtotop() {
-                if (document.getElementById("content").scrollTop >= 2000) {
+                if (document.getElementById("content").scrollTop >= 500) {
                     document.getElementById("return-to-top").style.display = "block";
+                    document.getElementById("footnotebutton").style.display = "block";
                 } 
                 else {
                     document.getElementById("return-to-top").style.display = "none";
+                    document.getElementById("footnotebutton").style.display = "none";
 
                 }
             }
@@ -158,6 +160,7 @@
 
             #footerFootnotes {
                 padding: 28px 60px 40px 60px;
+                width:700px;
             }
 
 
@@ -175,17 +178,16 @@
                 right:20px;
                 background-color: var(--header-color);
                 color: var(--header-color-text);
-                display: none;
                 padding:0px;
                 width: 45px;
                 height: 45px;
                 font-size: 35pt;
-                rotate: 90deg;
+                -webkit-tap-highlight-color: transparent;
             }
 
             #to-top-label {
                 position:relative;
-                bottom:15px;
+                bottom:16px;
                 right:3px;
                 transform: rotate(-90deg);
                 -webkit-transform: rotate(-90deg);
@@ -200,6 +202,14 @@
 
             .label-s {
                     display: none;
+            }
+
+            @media screen and (max-width: 1200px) {
+	
+                #footerFootnotes {
+                    margin-left: auto;
+                    margin-right: auto;
+                }
             }
 
             @media screen and (max-width: 800px) {
@@ -238,13 +248,47 @@
                 }
             }
 
+            #footnotebutton {
+                display: none;
+                cursor: pointer;
+                font-size:13pt;
+                width:fit-content;
+                height:fit-content;
+                padding: 10px 25px 10px 25px;
+                position: fixed;
+                bottom:40px;
+                right:70px;
+                background-color: var(--header-color);
+                color: var(--header-color-text);
+                padding: 0px 10px 0px 10px;
+                width: fit-content;
+                height: 45px;
+                font-size: 15pt;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            /* WIP */
+            #content {
+                height: calc(var(--vh, 1vh) * 100 - 98px);
+            }
+
+            #footercontent {
+                display:none;
+            }
+
+            #footnotebutton,  #return-to-top {
+                bottom:20px;
+            }
+
         </style>
     </head>
 
     <body>
 
         <div id="footer">
-            <button id="return-to-top"  onclick="totop()"><div id="to-top-label">›</div></button>
+            <button id="return-to-top" onclick="totop()"><div id="to-top-label">›</div></button>
+
+            <button id="footnotebutton" onclick="displayFootnotes()">Fußnoten</button>
 
             <div id="footercontent">
                 <div id="footerFootnotes-wrap" onmouseenter="displayFootnotes()" onmouseleave="hideFootnotes()" onmouseover="showfooter()" onmouseleave="hidefooter()">

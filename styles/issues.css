@@ -22,7 +22,7 @@
 	align-items: flex-end;
 	justify-content: space-between;
 	gap:100px;
-	margin-bottom: 300px;
+	margin-bottom: 150px;
 }
 
 #coverwrap {
@@ -96,6 +96,7 @@
 }
 
 #footnotes {
+	width:700px;
 	scroll-margin-top:50px;
 	margin-bottom: 120px;
 }
@@ -105,7 +106,7 @@
 
 @media screen and (max-width: 1200px) {
 	
-	#title, #inhaltsverzeichnis, #inhalt {
+	#coverwrap, #title, #inhaltsverzeichnis, #inhalt, .artikel, #footnotes, #mainoptions {
 		margin-left: auto;
 		margin-right: auto;
 	}
@@ -115,9 +116,16 @@
 		flex-direction: column;
 		justify-content: center;
 	}
+}
 
-	.artikel {
-		margin-left: auto;
-		margin-right: auto;
-	}
+
+/* WIP */
+
+#mainoptions {
+	width:700px;
+	margin-bottom: 70px;
+}
+
+#download-issue:hover {
+	color:grey;
 }
