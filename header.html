@@ -32,18 +32,6 @@
 				timeoutid = setTimeout(hidescrollbar, 3000);
 			});
 
-
-			// CUSTOM SCROLLBAR FOOTNOTES
-
-			function hidescrollbarfooter() {
-				document.documentElement.style.setProperty('--scrollbar-color-footnotes', 'transparent');
-			}
-
-			document.getElementById("footerFootnotes").addEventListener("scroll", () => {
-				document.documentElement.style.setProperty('--scrollbar-color-footnotes', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-footnotes'));
-				clearTimeout(timeoutidfootnotes)
-				timeoutidfootnotes = setTimeout(hidescrollbarfooter, 3000);
-			});
 		</script>
 		<script>
 

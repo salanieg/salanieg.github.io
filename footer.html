@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <script>
+
+            // TO TOP
+
+            function showtotop() {
+                if (document.getElementById("content").scrollTop >= 2000) {
+                    document.getElementById("return-to-top").style.display = "block";
+                } 
+                else {
+                    document.getElementById("return-to-top").style.display = "none";
+
+                }
+            }
+
+            function totop() {
+                document.getElementById("content").scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+            }
+        </script>
+
+        <script>
+
+            // COPY LINK
+
+            var textOriginal;
+            const textList = [];
+            var textIndex = 0;
+
+            function copyanchor(anchor, id, textReplace) {
+                navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
+                var text = anchor.innerText
+                if (text != textReplace){
+                    textOriginal = text;
+                    textList.push(textOriginal)
+                
+                    anchor.innerText = textReplace;
+                    setTimeout(function(){
+                        anchor.innerText = textList[textIndex];
+                        textIndex = textIndex + 1;
+                    }, 3000);
+                }
+            }
+        </script>
+
+        <script>
+
+            // FOOTENOTES
+
+            function displayFootnotes() {
+                document.getElementById("footerFootnotes-wrap").style.display = "flex";
+            }
+
+            function hideFootnotes() {
+                document.getElementById("footerFootnotes-wrap").style.display = "none";
+            }
+        </script>
+
+        <script>
+
+            // CUSTOM SCROLLBAR FOOTNOTES
+
+			function hidescrollbarfooter() {
+				document.documentElement.style.setProperty('--scrollbar-color-footnotes', 'transparent');
+			}
+
+			document.getElementById("footerFootnotes-wrap").addEventListener("scroll", () => {
+				document.documentElement.style.setProperty('--scrollbar-color-footnotes', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-footnotes'));
+				clearTimeout(timeoutidfootnotes)
+				timeoutidfootnotes = setTimeout(hidescrollbarfooter, 3000);
+			});
+
+        </script>
+
+
+        <style>
+
+            #footer {
+                display: flex;
+                flex-flow: row wrap;
+                justify-content: flex-end;
+                align-items: flex-start;
+                color:white;
+                position: absolute;
+                height:fit-content;
+                bottom:0;
+                left:0;
+                width:100%;
+                z-index: 10;
+                background-color: #980000;
+            }
+
+            #footercontent {
+                display: flex;
+                flex-flow: row wrap;
+                justify-content: flex-end;
+                align-items: flex-start;
+                color:white;
+                gap:30px;
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .footerElement {
+                text-align: center;
+            }
+
+            .footerElement:hover {
+                color:white !important;
+            }
+
+            #teilen {
+                cursor: pointer;
+            }
+
+
+            /* FOOTNOTES */
+
+            #footerFootnotes-wrap {
+                max-height:30vh;
+                overflow:auto;
+                display:none;
+                flex-direction: column;
+                position: absolute;
+                background-color: #980000;
+                bottom:0;
+                left:0;
+                width:100vw;
+                text-align: left;
+                scrollbar-gutter: stable both-edges;
+            }
+
+            #footerFootnotes-wrap::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+
+            :root {
+                --scrollbar-color-footnotes: transparent;
+                --default-scrollbar-color-footnotes: white;
+            }
+
+            #footerFootnotes-wrap::-webkit-scrollbar-thumb {
+                background: var(--scrollbar-color-footnotes);
+            }
+
+            #footerFootnotes {
+                padding: 28px 60px 40px 60px;
+            }
+
+
+            /* RETURN TO TOP */
+
+            #return-to-top {
+                cursor: pointer;
+                display: none;
+                font-size:13pt;
+                width:fit-content;
+                height:fit-content;
+                padding: 10px 25px 10px 25px;
+                position: fixed;
+                bottom:40px;
+                right:20px;
+                background-color: var(--header-color);
+                color: var(--header-color-text);
+                display: none;
+                padding:0px;
+                width: 45px;
+                height: 45px;
+                font-size: 35pt;
+                rotate: 90deg;
+            }
+
+            #to-top-label {
+                position:relative;
+                bottom:15px;
+                right:3px;
+                transform: rotate(-90deg);
+                -webkit-transform: rotate(-90deg);
+                -moz-transform: rotate(-90deg);
+                -ms-transform: rotate(-90deg);
+                -o-transform: rotate(-90deg);
+                -o-transform: rotate(-90deg);
+            }
+
+
+            /* REACTIVE */
+
+            .label-s {
+                    display: none;
+            }
+
+            @media screen and (max-width: 800px) {
+                #footerFootnotes {
+                    padding: 28px 20px 40px 20px;
+                }
+            }
+
+            @media screen and (max-width: 550px) {
+                #footercontent {
+                    width:100%;
+                    justify-content: space-between;
+                    justify-content: space-evenly;
+                    gap:15px;
+                }
+            }
+
+            @media screen and (max-width: 480px) {
+
+                #footercontent {
+                    gap:0px 20px;
+                }
+
+                .label-l {
+                    display: none;
+                }
+
+                .label-s {
+                    display: inline;
+                }
+            }
+
+            @media screen and (max-width: 300px) {
+                #footercontent {
+                    flex-direction: column;
+                }
+            }
+
+        </style>
+    </head>
+
+    <body>
+
+        <div id="footer">
+            <button id="return-to-top"  onclick="totop()"><div id="to-top-label">›</div></button>
+
+            <div id="footercontent">
+                <div id="footerFootnotes-wrap" onmouseenter="displayFootnotes()" onmouseleave="hideFootnotes()" onmouseover="showfooter()" onmouseleave="hidefooter()">
+                    <div id="footerFootnotes">
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f2"> </small>
+                        <small id="f3"> </small>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                        <small id="f1">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>
+                    </div>
+                </div>
+
+                <div class="footerElement" id="footnoteAnchor" onmouseenter="displayFootnotes()" >
+                    <span>Fußnoten</span>
+                </div>
+
+                <div class="footerElement" id="teilen" >
+                    <small class="footerElement"><span class="label-l" onclick="copyanchor(this, '#', 'Link kopiert!')">ISSUE teilen</span><span class="label-s" onclick="copyanchor(this, '#', 'Link kopiert!')">Teilen</span></small>
+                </div>
+
+                <a class="footerElement" href="files/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download><span class="label-l">PDF herunterladen</span><span class="label-s">Herunterladen</span></a>
+            </div>
+        </div>
+
+    </body>
+</html>
