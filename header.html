@@ -143,11 +143,11 @@
 			function openmenu(menu, anchor) {
 				hidedropmenus();
 
-				document.getElementById(menu).style.height = "fit-content";				
+				document.getElementById(menu).style.height = "fit-content";
 				document.getElementById(anchor).style.visibility = "visible";
 
 				if ($(window).width() > 800) {
-					document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 'px';
+					document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 30 + 'px';
 				}
 				else {
 					document.getElementById(menu).style.width = "100vw";
