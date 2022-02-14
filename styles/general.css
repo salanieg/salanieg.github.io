@@ -11,7 +11,7 @@ body {
 }
 
 
-.content {
+#content {
 	color: var(--content-color-text);
 	background-color: var(--content-color);
 	height: calc(100vh - 100px);
@@ -26,7 +26,7 @@ body {
 
 
 
-.header {
+#header {
 	position: sticky;
 	top:0;
 	left:0;
@@ -34,7 +34,7 @@ body {
 	z-index: 10;
 }
 
-.header > * {
+#header > * {
 	color: var(--header-color-text);
 	background-color: var(--header-color);
 }
@@ -54,20 +54,20 @@ body {
 /* SELECTION */
 
 
-.header>* ::selection {
+#header>* ::selection {
 	color: var(--header-color);
 	background: var(--header-color-contrast);
 }
-.header>* ::-moz-selection {
+#header>* ::-moz-selection {
 	color: var(--header-color);
 	background: var(--header-color-contrast);
 }
 
-.content>* ::-moz-selection {
+#content>* ::-moz-selection {
 	color: var(--content-color);
 	background: var(--content-color-contrast);
 }
-.content>* ::selection {
+#content>* ::selection {
 	color: var(--content-color);
 	background: var(--content-color-contrast);
 }
@@ -83,37 +83,37 @@ a:hover, a:visited, a:link, a:active
 }
 
 
-.header a:active {
+#header a:active {
 	color: white;
 	transition: 0.1s;
 }
-.header a:visited {
+#header a:visited {
 	color: white;
 	transition: 0.1s;
 }
-.header a:link {
+#header a:link {
 	color: white;
 	transition: 0.1s;
 }
-.header a:hover {
+#header a:hover {
 	color: lightgrey;
 	transition: 0.1s;
 }
 
 
-.content a:active {
+#content a:active {
 	color: var(--content-color-text);
 	transition: 0.1s;
 }
-.content a:visited {
+#content a:visited {
 	color: var(--content-color-text);
 	transition: 0.1s;
 }
-.content a:link {
+#content a:link {
 	color: var(--content-color-text);
 	transition: 0.1s;
 }
-.content a:hover {
+#content a:hover {
 	color: var(--content-color-link-hover);
 	transition: 0.1s;
 }
@@ -163,7 +163,7 @@ small {
 
 /* SCROLLBAR */
 
-.content::-webkit-scrollbar {
+#content::-webkit-scrollbar {
 	width: 8px;
 	height: 8px;
 }

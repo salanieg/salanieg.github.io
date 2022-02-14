@@ -10,7 +10,7 @@
         <link rel="stylesheet" href="styles/red.css">
         <link rel="stylesheet" href="styles/controls.css">
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-        <script> $(function(){$(".header").load("header.html");}); </script>
+        <script> $(function(){$("#header").load("header.html");}); </script>
         <script> $(function(){$("#controls").load("controls.html");}); </script>
 
         <script>
@@ -63,7 +63,7 @@
                 max-height:70vh;
             }
 
-            #n2 {
+            #s2 {
                 place-content: flex-start;
                 flex-flow: column wrap;
                 place-items: center;
@@ -130,9 +130,9 @@
 
     <body>
 
-        <div class="header"></div>
+        <div id="header"></div>
 
-        <div class="content" id="content">
+        <div id="content">
 
             <div id="slideWrap">
                 <div id="s1" class="slide">

@@ -11,6 +11,6 @@
 	--header-divider:none;
 }
 
-.content::-webkit-scrollbar-thumb {
+#content::-webkit-scrollbar-thumb {
 	background: var(--scrollbar-color);
 }
