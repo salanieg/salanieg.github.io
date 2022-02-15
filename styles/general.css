@@ -80,7 +80,18 @@ body {
 	background: var(--content-color-contrast);
 }
 
-
+#footer>* ::selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
+#footer>* ::-webkit-selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
+#footer>* ::-moz-selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
 
 
 /* LINK */

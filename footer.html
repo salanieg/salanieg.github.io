@@ -17,7 +17,7 @@
 
             // VERTICAL NAVIGATION
 
-            var layoutList = ["coverwrap", "inhaltsverzeichnis", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren", "footnotes"]
+            var layoutList = ["info-wrapper", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren"]
             var layoutCurrent = 0
 
             function resetverticalbuttons() {
@@ -41,18 +41,25 @@
             }
 
             function verticalup() {
+                var lastlay = layoutCurrent
+
                 if(layoutCurrent > 0) {
                     layoutCurrent = layoutCurrent - 1
                     document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
                     resetverticalbuttons()
+                    console.log("UP from " + lastlay + " to " + layoutCurrent)
                 }
             }
 
             function verticaldown() {
+                var lastlay = layoutCurrent
+
                 if(layoutCurrent < layoutList.length - 1) {
-                    document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
                     layoutCurrent = layoutCurrent + 1
+                    document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
+                    
                     resetverticalbuttons()
+                    console.log("DOWN from " + lastlay + " to " + layoutCurrent)
                 }
             }
             
@@ -60,15 +67,30 @@
             document.getElementById("content").addEventListener("scroll", function() {
                 
                 var scrollheight = document.getElementById("content").scrollTop
-                console.log("SCROLLING")
+                var contentheight = window.innerHeight
+                var lasti, last, offsetlast
+                var istop = true;
                 for (let i = 0; i < layoutList.length; i++) {
 
-                    if(scrollheight>=document.getElementById(layoutList[i]).offsetTop -100 ){
+                    if(scrollheight >=document.getElementById(layoutList[i]).offsetTop - 150){
                         
                         layoutCurrent = i;
-                        console.log(i+": "+"scrollheight: "+scrollheight+"   elementheight: "+document.getElementById(layoutList[i]).offsetTop+"   layoutcurrent: "+layoutCurrent)
+                        offsetlast = document.getElementById(layoutList[i]).offsetTop
+                        last = layoutList[i]
+                        lasti = i
+                        istop = false;
                     }
+
                 }
+
+                if(istop) {
+                    layoutCurrent = 0;
+                    offsetlast = document.getElementById(layoutList[0]).offsetTop
+                    last = layoutList[0]
+                    lasti = 0
+                }
+                console.log("SCROLLING: "+ Math.round(scrollheight) +"   \n element:"+last+" ("+offsetlast+" | "+layoutCurrent+")")
+
 
                 resetverticalbuttons()
                 
@@ -118,7 +140,6 @@
 
             #footercontent {
                 display: flex;
-                flex-flow: row wrap;
                 justify-content: flex-end;
                 align-items: flex-start;
                 color:white;
@@ -155,6 +176,12 @@
                 height: 45px;
                 font-size: 35pt;
                 -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
             }
 
             #to-top {bottom:90px;}
