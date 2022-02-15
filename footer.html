@@ -8,6 +8,7 @@
 
             function initfooter() {
                 document.getElementById('download-issue').setAttribute('href', downloadlocation);
+                document.getElementById('download-issue-footer').setAttribute('href', downloadlocation);
                 resetverticalbuttons()
             }
         </script>
@@ -144,9 +145,6 @@
             #to-top, #to-bottom {
                 cursor: pointer;
                 font-size:13pt;
-                width:fit-content;
-                height:fit-content;
-                padding: 10px 25px 10px 25px;
                 position: fixed;
                 bottom:40px;
                 right:20px;
@@ -221,7 +219,7 @@
                     <small class="footerElement"><span class="label-l" onclick="copyanchor(this, '', 'Link kopiert!')">ISSUE teilen</span><span class="label-s" onclick="copyanchor(this, '', 'Link kopiert!')">Teilen</span></small>
                 </div>
 
-                <a class="footerElement" id="download-issue" download><span class="label-l">PDF herunterladen</span><span class="label-s">Herunterladen</span></a>
+                <a class="footerElement" id="download-issue-footer" download><span class="label-l">PDF herunterladen</span><span class="label-s">Herunterladen</span></a>
             </div>
         </div>
 

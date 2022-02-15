@@ -54,6 +54,7 @@
 .abstracttitle {
 	width:500px;
 	display:flex;
+	align-items: center;
 	justify-content: space-between;
 }
 
@@ -127,7 +128,7 @@
 	background: #980000;
 	color: white;
 	position: absolute;
-	bottom: 20px;
+	bottom: 30px;
 	left: 20px;
 	border-color:grey;
 	border-style: outset;
