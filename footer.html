@@ -41,25 +41,24 @@
             }
 
             function verticalup() {
-                var lastlay = layoutCurrent
+                // var lastlay = layoutCurrent
 
                 if(layoutCurrent > 0) {
                     layoutCurrent = layoutCurrent - 1
                     document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
                     resetverticalbuttons()
-                    console.log("UP from " + lastlay + " to " + layoutCurrent)
+                    // console.log("UP from " + lastlay + " to " + layoutCurrent)
                 }
             }
 
             function verticaldown() {
-                var lastlay = layoutCurrent
+                // var lastlay = layoutCurrent
 
                 if(layoutCurrent < layoutList.length - 1) {
                     layoutCurrent = layoutCurrent + 1
                     document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
-                    
                     resetverticalbuttons()
-                    console.log("DOWN from " + lastlay + " to " + layoutCurrent)
+                    // console.log("DOWN from " + lastlay + " to " + layoutCurrent)
                 }
             }
             
@@ -67,33 +66,30 @@
             document.getElementById("content").addEventListener("scroll", function() {
                 
                 var scrollheight = document.getElementById("content").scrollTop
-                var contentheight = window.innerHeight
-                var lasti, last, offsetlast
-                var istop = true;
+                layoutCurrent = 0;
+                // var contentheight = window.innerHeight
+                // var lasti, last, offsetlast
+                // var istop = true;
                 for (let i = 0; i < layoutList.length; i++) {
-
+                    // offsetlast = document.getElementById(layoutList[0]).offsetTop
                     if(scrollheight >=document.getElementById(layoutList[i]).offsetTop - 150){
-                        
                         layoutCurrent = i;
-                        offsetlast = document.getElementById(layoutList[i]).offsetTop
-                        last = layoutList[i]
-                        lasti = i
-                        istop = false;
+                        // offsetlast = document.getElementById(layoutList[i]).offsetTop
+                        // last = layoutList[i]
+                        // lasti = i
+                        // istop = false;
                     }
-
                 }
-
-                if(istop) {
-                    layoutCurrent = 0;
-                    offsetlast = document.getElementById(layoutList[0]).offsetTop
-                    last = layoutList[0]
-                    lasti = 0
-                }
-                console.log("SCROLLING: "+ Math.round(scrollheight) +"   \n element:"+last+" ("+offsetlast+" | "+layoutCurrent+")")
-
 
                 resetverticalbuttons()
-                
+
+                // if(istop) {
+                //     layoutCurrent = 0;
+                //     offsetlast = document.getElementById(layoutList[0]).offsetTop
+                    // last = layoutList[0]
+                    // lasti = 0
+                // }
+                // console.log("SCROLLING: "+ Math.round(scrollheight) +"   \n element:"+last+" ("+offsetlast+" | "+layoutCurrent+")")
             })
         </script>
 
