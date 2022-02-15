@@ -25,29 +25,29 @@
             document.getElementById("slideIndex").addEventListener("scroll", () => {
                 document.documentElement.style.setProperty('--scrollbar-color-index', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-index'));
                 clearTimeout(timeoutidindex)
-                timeoutidindex = setTimeout(hidescrollbarindex, 1000);
+                timeoutidindex = setTimeout(hidescrollbarindex, 10000);
             });
 
             var timeoutidcontrols;
-            var indexopen = false;
+            var oncontrols = false;
 
             function hidecontrols() {
                 document.getElementById("controls-inner").style.visibility = "hidden";
             }
 
-            document.getElementById("controls").addEventListener("mousemove", timecontrols)
+            document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
 
-            function timecontrols() {
-                alert("test")
-                if(autohidecontrols == true && indexopen == false) {
-                    document.getElementById("controls-inner").style.visibility = "visible";
-                    clearTimeout(timeoutidcontrols)
-                    timeoutidcontrols = setTimeout(hidecontrols, 3000);
-                }
+            function initautohidecontrols() {
+                document.addEventListener("mousemove", timecontrols);
+                document.getElementById("controls").removeEventListener("mousemove", initautohidecontrols);
             }
 
-            function timscontrols() {
-                
+            function timecontrols() {
+                if(autohidecontrols == true && oncontrols == false) {
+                    document.getElementById("controls-inner").style.visibility = "visible";
+                    clearTimeout(timeoutidcontrols)
+                    timeoutidcontrols = setTimeout(hidecontrols, 1000);
+                }
             }
 
             function totopcontrols() {
@@ -89,6 +89,7 @@
                 resetcontrols();
                 displaycurrent();
                 totopcontrols();
+                timecontrols();
             }
 
             function nächstesissue() {
@@ -100,20 +101,17 @@
                 resetcontrols();
                 displaycurrent();
                 totopcontrols();
+                timecontrols();
             }
 
             function displaySlideIndex() {
                 document.getElementById(slideList[slideSelected]).style.display = "none";
                 document.getElementById("slideIndex").style.display = "block";
-                clearTimeout(timeoutidcontrols)
-                indexopen = true;
             }
 
             function hideSlideIndex() {
                 document.getElementById("slideIndex").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
-                timecontrols();
-                indexopen = false;
             }
 
             function displayBySlideIndex(slideIndex) {
@@ -124,6 +122,26 @@
                 displaycurrent();
                 hideSlideIndex();
                 totopcontrols()
+            }
+
+            document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
+            document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
+            document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
+            document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
+
+            document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
+
+            function entercontrols() {
+                clearTimeout(timeoutidcontrols)
+                oncontrols = true;
+            }
+
+            function leavecontrols() {
+                timecontrols();
+                oncontrols = false;
             }
         </script>
 
@@ -141,7 +159,7 @@
                     ". slides ."
                     ". . .";
                 place-items:center;
-                height: calc(var(--vh, 1vh) * 100 - 220px);
+                height: calc(var(--vh, 1vh) * 100 - 260px);
             }
 
             #slideWrap {
@@ -168,7 +186,6 @@
                 justify-content: center;
                 flex-direction: column;
                 width:100vw;
-                padding-top:40px;
                 padding-bottom: 60px;
             }
 
