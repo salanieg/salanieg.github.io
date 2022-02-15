@@ -9,6 +9,7 @@
             function initfooter() {
                 document.getElementById('download-issue').setAttribute('href', downloadlocation);
                 document.getElementById('footerFootnotes').innerHTML = '<small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>';
+                resetverticalbuttons()
             }
         </script>
 
@@ -78,10 +79,12 @@
 
                     if(scrollheight>=document.getElementById(layoutList[i]).offsetTop -100 ){
                         
-                        layoutCurrent = i + 1;
+                        layoutCurrent = i;
                         console.log(i+": "+"scrollheight: "+scrollheight+"   elementheight: "+document.getElementById(layoutList[i]).offsetTop+"   layoutcurrent: "+layoutCurrent)
                     }
                 }
+
+                resetverticalbuttons()
                 
             })
         </script>

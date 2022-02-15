@@ -58,12 +58,20 @@ body {
 	color: var(--header-color);
 	background: var(--header-color-contrast);
 }
+#header>* ::-webkit-selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
 #header>* ::-moz-selection {
 	color: var(--header-color);
 	background: var(--header-color-contrast);
 }
 
 #content>* ::-moz-selection {
+	color: var(--content-color);
+	background: var(--content-color-contrast);
+}
+#content>* ::-webkit-selection {
 	color: var(--content-color);
 	background: var(--content-color-contrast);
 }

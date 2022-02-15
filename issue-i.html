@@ -29,22 +29,23 @@
         // function hidefootnote() {
         //     document.getElementById("f1").style.display = "none"
         // }
+
+        function showfootnote(anchor){
+            anchor
+        }
     
     </script>
 
     <style>
-        a[data-footnote]:after {
-            content: attr(data-footnote);
-        }
 
-        a[data-footnote] {
+        .footnote {
             text-decoration: none;
             position: relative;
+            cursor: pointer;
         }
 
-        a[data-footnote]:hover:before {
-            content: attr(data-title);
-            display: inline;
+        .footnote > .note {
+            display: none;
             padding: 10px;
             background: #980000;
             color: white;
@@ -59,8 +60,39 @@
             line-height: 1.7;
         }
 
+        .footnote:hover .note {
+            display: inline;
+            cursor: auto;
+        }
+
+        .footnote:focus .note {
+            display: inline;
+            cursor: auto;
+        }
+
+        .note::selection {
+            color: #980000 !important;
+            background: white !important;
+        }
+
+        .note::-webkit-selection {
+            color: #980000 !important;
+            background: white !important;
+        }
+
+        .note::-moz-selection {
+            color: #980000 !important;
+            background: white !important;
+        }
+
         @media screen and (max-width: 1200px) {
-            a[data-footnote]:hover:before {
+            .footnote:hover .note {
+                position: fixed;
+                bottom: 40px;
+                left: 20px;
+            }
+
+            .footnote:focus .note {
                 position: fixed;
                 bottom: 40px;
                 left: 20px;
@@ -145,7 +177,7 @@
                         <br/>
                         <br/>
                         <p dir="ltr">
-                            Seit dem Kollaps der Sowjetunion und der<a href="#f1" data-title="¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984" data-footnote="¹"></a> folgenden globalen neoliberalen
+                            Seit dem Kollaps der Sowjetunion und der<span  tabindex="0" class="footnote">¹<span class="note">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</span></span> folgenden globalen neoliberalen
                             Wende, wirkt der Kapitalismus alternativlos. Das große Experiment einer
                             sozialen und solidarischen Gesellschaft war gescheitert. Vielmehr noch, der
                             Realsozialismus stellte sich als ebenso produktivistisch und ausbeuterisch
