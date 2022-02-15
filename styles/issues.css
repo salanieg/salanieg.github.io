@@ -95,18 +95,12 @@
 	color:grey;
 }
 
-#footnotes {
-	width:700px;
-	scroll-margin-top:50px;
-	margin-bottom: 120px;
-}
-
 
 /* REACTIVE */
 
 @media screen and (max-width: 1200px) {
 	
-	#coverwrap, #title, #inhaltsverzeichnis, #inhalt, .artikel, #footnotes, #mainoptions {
+	#coverwrap, #title, #inhaltsverzeichnis, #inhalt, .artikel, #mainoptions {
 		margin-left: auto;
 		margin-right: auto;
 	}
@@ -115,6 +109,78 @@
 		display:flex;
 		flex-direction: column;
 		justify-content: center;
+	}
+}
+
+
+/* FOOTNOTES */
+
+.footnote {
+	text-decoration: none;
+	position: relative;
+	cursor: pointer;
+}
+
+.footnote > .note {
+	display: none;
+	padding: 10px;
+	background: #980000;
+	color: white;
+	position: absolute;
+	bottom: 20px;
+	left: 20px;
+	border-color:grey;
+	border-style: outset;
+	width: 400px;
+	max-width: calc(100vw - 115px);
+	font-size: 11pt;
+	line-height: 1.7;
+}
+
+.footnote:hover {
+	color: #980000;
+}
+
+.footnote:focus {
+	color: #980000;
+}
+
+.footnote:hover .note {
+	display: inline;
+	cursor: auto;
+}
+
+.footnote:focus .note {
+	display: inline;
+	cursor: auto;
+}
+
+.note::selection {
+	color: #980000 !important;
+	background: white !important;
+}
+
+.note::-webkit-selection {
+	color: #980000 !important;
+	background: white !important;
+}
+
+.note::-moz-selection {
+	color: #980000 !important;
+	background: white !important;
+}
+
+@media screen and (max-width: 1200px) {
+	.footnote:hover .note {
+		position: fixed;
+		bottom: 40px;
+		left: 20px;
+	}
+
+	.footnote:focus .note {
+		position: fixed;
+		bottom: 40px;
+		left: 20px;
 	}
 }
 

@@ -8,12 +8,13 @@
 
             function initfooter() {
                 document.getElementById('download-issue').setAttribute('href', downloadlocation);
-                document.getElementById('footerFootnotes').innerHTML = '<small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>';
                 resetverticalbuttons()
             }
         </script>
 
         <script>
+
+            // VERTICAL NAVIGATION
 
             var layoutList = ["coverwrap", "inhaltsverzeichnis", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren", "footnotes"]
             var layoutCurrent = 0
@@ -97,35 +98,6 @@
             }
         </script>
 
-        <script>
-
-            // FOOTNOTES
-
-            function displayFootnotes() {
-                document.getElementById("footerFootnotes-wrap").style.display = "flex";
-            }
-
-            function hideFootnotes() {
-                document.getElementById("footerFootnotes-wrap").style.display = "none";
-            }
-        </script>
-
-        <script>
-
-            // CUSTOM SCROLLBAR FOOTNOTES
-
-			function hidescrollbarfooter() {
-				document.documentElement.style.setProperty('--scrollbar-color-footnotes', 'transparent');
-			}
-
-			document.getElementById("footerFootnotes-wrap").addEventListener("scroll", () => {
-				document.documentElement.style.setProperty('--scrollbar-color-footnotes', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-footnotes'));
-				clearTimeout(timeoutidfootnotes)
-				timeoutidfootnotes = setTimeout(hidescrollbarfooter, 3000);
-			});
-
-        </script>
-
         <style>
 
             #footer {
@@ -164,42 +136,6 @@
 
             #teilen {
                 cursor: pointer;
-            }
-
-
-            /* FOOTNOTES */
-
-            #footerFootnotes-wrap {
-                max-height:30vh;
-                overflow:auto;
-                display:none;
-                flex-direction: column;
-                position: absolute;
-                background-color: #980000;
-                bottom:0;
-                left:0;
-                width:100vw;
-                text-align: left;
-                scrollbar-gutter: stable both-edges;
-            }
-
-            #footerFootnotes-wrap::-webkit-scrollbar {
-                width: 8px;
-                height: 8px;
-            }
-
-            :root {
-                --scrollbar-color-footnotes: transparent;
-                --default-scrollbar-color-footnotes: white;
-            }
-
-            #footerFootnotes-wrap::-webkit-scrollbar-thumb {
-                background: var(--scrollbar-color-footnotes);
-            }
-
-            #footerFootnotes {
-                padding: 28px 60px 40px 60px;
-                width:700px;
             }
 
 
@@ -246,20 +182,6 @@
                     display: none;
             }
 
-            @media screen and (max-width: 1200px) {
-	
-                #footerFootnotes {
-                    margin-left: auto;
-                    margin-right: auto;
-                }
-            }
-
-            @media screen and (max-width: 800px) {
-                #footerFootnotes {
-                    padding: 28px 20px 40px 20px;
-                }
-            }
-
             @media screen and (max-width: 550px) {
                 #footercontent {
                     width:100%;
@@ -289,39 +211,7 @@
                     flex-direction: column;
                 }
             }
-
-            #footnotebutton {
-                display: none;
-                cursor: pointer;
-                font-size:13pt;
-                width:fit-content;
-                height:fit-content;
-                padding: 10px 25px 10px 25px;
-                position: fixed;
-                bottom:40px;
-                right:70px;
-                background-color: var(--header-color);
-                color: var(--header-color-text);
-                padding: 0px 10px 0px 10px;
-                width: fit-content;
-                height: 45px;
-                font-size: 15pt;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            /* WIP */
-            /* #content {
-                height: calc(var(--vh, 1vh) * 100 - 98px);
-            }
-
-            #footercontent {
-                display:none;
-            }
-
-            #footnotebutton,  #to-top {
-                bottom:20px;
-            } */
-
+ 
         </style>
     </head>
 
@@ -331,12 +221,7 @@
             <button id="to-top" onclick="verticalup()"><div id="to-top-label">‹</div></button>
             <button id="to-bottom" onclick="verticaldown()"><div id="to-top-label">›</div></button>
 
-            <button id="footnotebutton" onclick="displayFootnotes()">Fußnoten</button>
-
             <div id="footercontent">
-                <div id="footerFootnotes-wrap" onmouseenter="displayFootnotes()" onmouseleave="hideFootnotes()" onmouseover="showfooter()" onmouseleave="hidefooter()">
-                    <div id="footerFootnotes"></div>
-                </div>
 
                 <div class="footerElement" id="teilen" >
                     <small class="footerElement"><span class="label-l" onclick="copyanchor(this, '', 'Link kopiert!')">ISSUE teilen</span><span class="label-s" onclick="copyanchor(this, '', 'Link kopiert!')">Teilen</span></small>
