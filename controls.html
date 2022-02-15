@@ -16,6 +16,39 @@
                 totopcontrols()
             }
 
+            var timeoutidindex;
+
+            function hidescrollbarindex() {
+                document.documentElement.style.setProperty('--scrollbar-color-index', 'transparent');
+            }
+
+            document.getElementById("slideIndex").addEventListener("scroll", () => {
+                document.documentElement.style.setProperty('--scrollbar-color-index', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-index'));
+                clearTimeout(timeoutidindex)
+                timeoutidindex = setTimeout(hidescrollbarindex, 1000);
+            });
+
+            var timeoutidcontrols;
+            var indexopen;
+
+            function hidecontrols() {
+                document.getElementById("controls-inner").style.visibility = "hidden";
+            }
+
+            document.getElementById("controls").addEventListener("mousemove", timecontrols)
+
+            function timecontrols() {
+                if(autohidecontrols == true && indexopen == false) {
+                    document.getElementById("controls-inner").style.visibility = "visible";
+                    clearTimeout(timeoutidcontrols)
+                    timeoutidcontrols = setTimeout(hidecontrols, 8000);
+                }
+            }
+
+            function timscontrols() {
+                
+            }
+
             function totopcontrols() {
                 document.getElementById("content").scrollTop = 0;
                 document.documentElement.scrollTop = 0;
@@ -71,11 +104,15 @@
             function displaySlideIndex() {
                 document.getElementById(slideList[slideSelected]).style.display = "none";
                 document.getElementById("slideIndex").style.display = "block";
+                clearTimeout(timeoutidcontrols)
+                indexopen = true;
             }
 
             function hideSlideIndex() {
                 document.getElementById("slideIndex").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
+                timecontrols();
+                indexopen = false;
             }
 
             function displayBySlideIndex(slideIndex) {
@@ -130,6 +167,8 @@
                 justify-content: center;
                 flex-direction: column;
                 width:100vw;
+                padding-top:40px;
+                padding-bottom: 60px;
             }
 
             #controlsWrap {
@@ -148,7 +187,6 @@
                 width:100%;
                 bottom:0;
                 left:0;
-                padding-bottom: 60px;
             }
 
             #letztes, #nächstes {
@@ -171,12 +209,30 @@
             }
 
             #slideIndex {
+                max-height:70vh;
+                overflow:auto;
                 color:white;
                 text-align: center;
                 font-size: 20pt;
                 display:none;
                 width:fit-content;
+                padding-top: 40px;
                 padding-bottom: 40px;
+                scrollbar-gutter: stable both-edges;
+            }
+
+            #slideIndex::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+
+            :root {
+                --scrollbar-color-index: transparent;
+                --default-scrollbar-color-index: white;
+            }
+
+            #slideIndex::-webkit-scrollbar-thumb {
+                background: var(--scrollbar-color-index);
             }
 
             #slideIndex>span:hover {
@@ -222,7 +278,9 @@
     <body>
 
         <div id="controlsWrap">
-            <div id="slideIndex" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()"></div>
+            <div id="slideIndex-wrap">
+                <div id="slideIndex" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()"></div>
+            </div>
 
             <div id="controls-inner">
                 <button id="letztes" onclick="letztesissue()">
