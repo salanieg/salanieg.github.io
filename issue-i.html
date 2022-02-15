@@ -16,23 +16,10 @@
 
     <script>
         var downloadlocation = 'files/ISSUE I – ALTERNATIVE UTOPIEN.pdf'
-        var footnotes = "<small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br> <small>¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</small><br>"
     
         document.addEventListener("DOMContentLoaded", (event) => {
             setTimeout(function(){initfooter()}, 500);
         });
-
-        // function displayfootnote() {
-        //     document.getElementById("f1").style.display = "inline"
-        // }
-
-        // function hidefootnote() {
-        //     document.getElementById("f1").style.display = "none"
-        // }
-
-        function showfootnote(anchor){
-            anchor
-        }
     
     </script>
 
@@ -58,6 +45,14 @@
             max-width: calc(100vw - 115px);
             font-size: 11pt;
             line-height: 1.7;
+        }
+
+        .footnote:hover {
+            color: #980000;
+        }
+
+        .footnote:focus {
+            color: #980000;
         }
 
         .footnote:hover .note {
