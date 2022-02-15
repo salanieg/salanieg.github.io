@@ -16,22 +16,74 @@
 
             // TO TOP
 
-            function showtotop() {
-                if (document.getElementById("content").scrollTop >= 500) {
-                    document.getElementById("return-to-top").style.display = "block";
-                    document.getElementById("footnotebutton").style.display = "block";
-                } 
-                else {
-                    document.getElementById("return-to-top").style.display = "none";
-                    document.getElementById("footnotebutton").style.display = "none";
+            // function showtotop() {
+            //     if (document.getElementById("content").scrollTop >= 500) {
+            //         document.getElementById("to-top").style.display = "block";
+            //         document.getElementById("to-bottom").style.display = "block";
+            //         document.getElementById("footnotebutton").style.display = "block";
+            //     } 
+            //     else {
+            //         document.getElementById("to-top").style.display = "none";
+            //         document.getElementById("to-bottom").style.display = "none";
+            //         document.getElementById("footnotebutton").style.display = "none";
 
+            //     }
+            // }
+
+            var layoutList = ["coverwrap", "inhaltsverzeichnis", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren", "footnotes"]
+            var layoutCurrent = 0
+
+            function resetverticalbuttons() {
+                if (layoutCurrent==0) {
+                    document.getElementById("to-top").disabled = true;
+                    document.getElementById("to-top").style.color = "lightgrey";
+                }
+                else {
+                    document.getElementById("to-top").disabled = false;
+                    document.getElementById("to-top").style.color = "white";
+                }
+                
+                if (layoutCurrent==layoutList.length-1) {
+                    document.getElementById("to-bottom").disabled = true;
+                    document.getElementById("to-bottom").style.color = "lightgrey";
+                }
+                else {
+                    document.getElementById("to-bottom").disabled = false;
+                    document.getElementById("to-bottom").style.color = "white";
                 }
             }
 
-            function totop() {
-                document.getElementById("content").scrollTop = 0;
-                document.documentElement.scrollTop = 0;
+            function verticalup() {
+                if(layoutCurrent > 0) {
+                    layoutCurrent = layoutCurrent - 1
+                    document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
+                    resetverticalbuttons()
+                }
             }
+
+            function verticaldown() {
+                if(layoutCurrent < layoutList.length - 1) {
+                    document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
+                    layoutCurrent = layoutCurrent + 1
+                    resetverticalbuttons()
+                }
+            }
+            
+
+            document.getElementById("content").addEventListener("scroll", function() {
+                
+                var scrollheight = document.getElementById("content").scrollTop
+                console.log("SCROLLING")
+                for (let i = 0; i < layoutList.length; i++) {
+
+                    if(scrollheight>=document.getElementById(layoutList[i]).offsetTop -100 ){
+                        
+                        layoutCurrent = i + 1;
+                        console.log(i+": "+"scrollheight: "+scrollheight+"   elementheight: "+document.getElementById(layoutList[i]).offsetTop+"   layoutcurrent: "+layoutCurrent)
+                    }
+                }
+                
+            })
         </script>
 
         <script>
@@ -166,9 +218,8 @@
 
             /* RETURN TO TOP */
 
-            #return-to-top {
+            #to-top, #to-bottom {
                 cursor: pointer;
-                display: none;
                 font-size:13pt;
                 width:fit-content;
                 height:fit-content;
@@ -185,16 +236,20 @@
                 -webkit-tap-highlight-color: transparent;
             }
 
+            #to-top {bottom:90px;}
+            #to-bottom {bottom:40px;}
+
+
             #to-top-label {
                 position:relative;
                 bottom:16px;
-                right:3px;
-                transform: rotate(-90deg);
-                -webkit-transform: rotate(-90deg);
-                -moz-transform: rotate(-90deg);
-                -ms-transform: rotate(-90deg);
-                -o-transform: rotate(-90deg);
-                -o-transform: rotate(-90deg);
+                left:2px;
+                transform: rotate(90deg);
+                -webkit-transform: rotate(90deg);
+                -moz-transform: rotate(90deg);
+                -ms-transform: rotate(90deg);
+                -o-transform: rotate(90deg);
+                -o-transform: rotate(90deg);
             }
 
 
@@ -276,7 +331,7 @@
                 display:none;
             }
 
-            #footnotebutton,  #return-to-top {
+            #footnotebutton,  #to-top {
                 bottom:20px;
             } */
 
@@ -286,17 +341,14 @@
     <body>
 
         <div id="footer">
-            <button id="return-to-top" onclick="totop()"><div id="to-top-label">›</div></button>
+            <button id="to-top" onclick="verticalup()"><div id="to-top-label">‹</div></button>
+            <button id="to-bottom" onclick="verticaldown()"><div id="to-top-label">›</div></button>
 
             <button id="footnotebutton" onclick="displayFootnotes()">Fußnoten</button>
 
             <div id="footercontent">
                 <div id="footerFootnotes-wrap" onmouseenter="displayFootnotes()" onmouseleave="hideFootnotes()" onmouseover="showfooter()" onmouseleave="hidefooter()">
                     <div id="footerFootnotes"></div>
-                </div>
-
-                <div class="footerElement" id="footnoteAnchor" onmouseenter="displayFootnotes()" >
-                    <span>Fußnoten</span>
                 </div>
 
                 <div class="footerElement" id="teilen" >

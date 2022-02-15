@@ -22,29 +22,17 @@
             setTimeout(function(){initfooter()}, 500);
         });
 
-        function displayfootnote() {
-            document.getElementById("f1").style.display = "inline"
-        }
+        // function displayfootnote() {
+        //     document.getElementById("f1").style.display = "inline"
+        // }
 
-        function hidefootnote() {
-            document.getElementById("f1").style.display = "none"
-        }
+        // function hidefootnote() {
+        //     document.getElementById("f1").style.display = "none"
+        // }
     
     </script>
 
     <style>
-        .footnote {
-            position: relative;
-        }
-        #f1 {
-            position: relative;
-            background-color: #980000;
-            width:100px;
-            height:50px;
-            display:none;
-            z-index: 100;
-        }
-
         a[data-footnote]:after {
             content: attr(data-footnote);
         }
@@ -65,27 +53,17 @@
             left: 20px;
             border-color:grey;
             border-style: outset;
-            border-radius: 2px;
             width: 400px;
+            max-width: calc(100vw - 115px);
             font-size: 11pt;
+            line-height: 1.7;
         }
 
         @media screen and (max-width: 1200px) {
-            a[data-footnote] {
-                text-decoration: none;
-                position: relative;
-            }
-
             a[data-footnote]:hover:before {
-                content: attr(data-title);
-                display: inline;
-                padding: 10px;
-                background: #980000;
-                color: white;
-                position: absolute;
-                bottom: 20px;
+                position: fixed;
+                bottom: 40px;
                 left: 20px;
-                width: 400px;
             }
         }
 
@@ -95,7 +73,7 @@
 
         <div id="header"></div>
 
-        <div id="content" onscroll="showtotop()">
+        <div id="content">
 
             <div id="info-wrapper">
 
@@ -167,7 +145,7 @@
                         <br/>
                         <br/>
                         <p dir="ltr">
-                            Seit dem Kollaps der Sowjetunion und der<a href="#footnote-1" data-title="¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984" data-footnote="¹"></a> folgenden globalen neoliberalen
+                            Seit dem Kollaps der Sowjetunion und der<a href="#f1" data-title="¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984" data-footnote="¹"></a> folgenden globalen neoliberalen
                             Wende, wirkt der Kapitalismus alternativlos. Das große Experiment einer
                             sozialen und solidarischen Gesellschaft war gescheitert. Vielmehr noch, der
                             Realsozialismus stellte sich als ebenso produktivistisch und ausbeuterisch
