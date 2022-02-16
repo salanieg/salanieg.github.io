@@ -126,7 +126,7 @@
 	display: none;
 	padding: 10px;
 	background: #980000;
-	color: white;
+
 	position: absolute;
 	bottom: 30px;
 	left: 20px;
@@ -137,6 +137,18 @@
 	font-size: 11pt;
 	line-height: 1.7;
 }
+
+.footnote * {
+	color: white !important;
+	font-size: 11pt;
+}
+
+.footnote a:hover {
+	color: lightgrey !important;
+	transition: 0.1;
+}
+
+
 
 .footnote:hover {
 	color: #980000;
@@ -156,17 +168,17 @@
 	cursor: auto;
 }
 
-.note::selection {
+.footnote *::selection {
 	color: #980000 !important;
 	background: white !important;
 }
 
-.note::-webkit-selection {
+.footnote *::-webkit-selection {
 	color: #980000 !important;
 	background: white !important;
 }
 
-.note::-moz-selection {
+.footnote *::-moz-selection {
 	color: #980000 !important;
 	background: white !important;
 }
