@@ -41,16 +41,17 @@
             var selectedcoverloaded = false;
 
 
-            function selectcover(issuenumber) {
-                issuenumber = issuenumber - 1
-                
+            function selectcover(i) {
+
+                i = i - 1
+
                 if(selectedcoverloaded) {
                     document.getElementById(selectedcover).style.display = "none";
                     document.getElementById(selectedtext).style.fontWeight = "initial";
-                    document.getElementById(issuecovers[issuenumber]).style.display = "inline";
-                    document.getElementById(issuetitles[issuenumber]).style.fontWeight = "700";
-                    selectedcover = issuecovers[issuenumber]
-                    selectedtext = issuetitles[issuenumber]
+                    document.getElementById(issuecovers[i]).style.display = "inline";
+                    document.getElementById(issuetitles[i]).style.fontWeight = "700";
+                    selectedcover = issuecovers[i]
+                    selectedtext = issuetitles[i]
                 }
             }
         </script>
