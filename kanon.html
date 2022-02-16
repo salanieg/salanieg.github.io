@@ -31,6 +31,7 @@
                             "Faust", 
                             "Websites", 
                             "THE BIG FLAT NOW", 
+                            "Videokarte", 
                             "Podcasts", 
                             "Günter Gaus"
             ];
@@ -58,6 +59,14 @@
                 flex-flow: row nowrap;
             }
 
+            .slideFlex {
+                display: flex;
+                flex-flow: row wrap;
+                place-content: center;
+                gap:50px;
+                margin-top: 150px;
+            }
+
             .large, .medium, .small, .verysmall {
                 max-width:90vw;
                 width:auto;
@@ -77,6 +86,10 @@
                     gap:50px;
                 }
 
+                .slideFlex {
+                    place-items:center;
+                }
+
                 .large, .medium, .small, .verysmall {
                     max-width:100vw;
                     height:auto;
@@ -85,7 +98,7 @@
                 .large { width:80vw;}
                 .medium { width:80vw;}
                 .small { width:60vw;}
-                .verysmall { width:40vw;}
+                .verysmall { width:50vw;}
             }
 
             @media screen and (max-width: 400px) {
@@ -105,7 +118,7 @@
     <body>
         <div id="header"></div>
 
-        <div id="content" id="content" onscroll="hidetutorial()">
+        <div id="content">
 
             <div id="slides">
                 <div>
@@ -139,6 +152,15 @@
 
                 <div>
                     <!--KANON // MUSIK-->                                                                 <iframe class="large" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/videoseries?list=PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+                    <div class="slideFlex">
+                        <!---->                                      <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/RM7lw0Ovzq0?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        <!---->                                      <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/FUQI-o02JYU?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        <!---->                                      <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/VYOjWnS4cMY?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        <!---->                                      <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/FJt7gNi3Nr4?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        <!---->                                      <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/tvTRZJ-4EyI?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        <!---->                                      <iframe class="small" style="aspect-ratio: 16/9" src="https://www.youtube-nocookie.com/embed/NLZRYQMLDW4?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
                 </div>
 
                 <div>
@@ -199,6 +221,10 @@
                             <a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&slideIndex=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></p>
                         </div>
                     </div>
+                </div>
+
+                <div>
+                    <iframe class="large" style="aspect-ratio: 4/3" src="https://www.google.com/maps/d/u/0/embed?mid=1AJO2WUYnUIA-Om_vcBTun6624hzfhX1i&ehbc=2E312F"></iframe>
                 </div>
 
                 <div>
