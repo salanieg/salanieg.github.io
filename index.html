@@ -33,27 +33,24 @@
         <script>
             // COVERSCRIPT
 
-            var ic = "issue-i-cover"
-            var iic = "issue-ii-cover"
-            var iiic = "issue-iii-cover"
+            var issuecovers = ["issue-i-cover", "issue-ii-cover", "issue-iii-cover"]
+            var issuetitles = ["issue-i-title", "issue-ii-title", "issue-iii-title"]
 
-            var it = "issue-i-text"
-            var iit = "issue-ii-text"
-            var iiit = "issue-iii-text"
-
-            var selectedcover = ic
-            var selectedtext = it
+            var selectedcover = "issue-i-cover"
+            var selectedtext = "issue-i-title"
             var selectedcoverloaded = false;
 
 
-            function selectcover(cover, text) {
+            function selectcover(issuenumber) {
+                issuenumber = issuenumber - 1
+                
                 if(selectedcoverloaded) {
                     document.getElementById(selectedcover).style.display = "none";
                     document.getElementById(selectedtext).style.fontWeight = "initial";
-                    document.getElementById(cover).style.display = "inline";
-                    document.getElementById(text).style.fontWeight = "700";
-                    selectedcover = cover
-                    selectedtext = text
+                    document.getElementById(issuecovers[issuenumber]).style.display = "inline";
+                    document.getElementById(issuetitles[issuenumber]).style.fontWeight = "700";
+                    selectedcover = issuecovers[issuenumber]
+                    selectedtext = issuetitles[issuenumber]
                 }
             }
         </script>
@@ -248,17 +245,17 @@
                     <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="issue-iii-cover" src="images/issues/ISSUE-III-COVER.svg" alt="ISSUE III – IST POPULISMUS GUT?"/></a></div>
                 </div>
                 <div class="text-wrap">
-                    <p id="issue-i-text" onmouseover="selectcover(ic, it)">
+                    <p id="issue-i-title" onmouseover="selectcover(1)">
                         <span class="non-linked"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></span>
                         <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></a>
                     </p>
                     <hr>
-                    <p id="issue-ii-text" onmouseover="selectcover(iic, iit)">
+                    <p id="issue-ii-title" onmouseover="selectcover(2)">
                         <span class="non-linked"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></span>
                         <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></a>
                     </p> 
                     <hr>
-                    <p id="issue-iii-text" onmouseover="selectcover(iiic, iiit)">
+                    <p id="issue-iii-title" onmouseover="selectcover(3)">
                         <span class="non-linked"><span>ISSUE III</span> <span>IST POPULISMUS GUT?</span></span>
                         <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE III</span> <span>IST POPULISMUS GUT?</span></a>
                     </p>

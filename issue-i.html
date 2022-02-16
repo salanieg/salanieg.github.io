@@ -11,16 +11,11 @@
         <link rel="stylesheet" href="styles/issues.css">
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script> $(function(){$("#header").load("header.html");}); </script>
-        <script> $(function(){$("#footer").load("footer.html");}); </script>
+        <script> $(function(){$("#footer").load("footer.html", function() {initfooter()});});</script>
     </head>
 
     <script>
         var downloadlocation = 'files/ISSUE I – ALTERNATIVE UTOPIEN.pdf'
-    
-        document.addEventListener("DOMContentLoaded", (event) => {
-            setTimeout(function(){initfooter()}, 500);
-        });
-    
     </script>
 
     <style>
