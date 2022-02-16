@@ -4,7 +4,26 @@
 
         <script>
 
+            // INIT
+
+            var slideList = []
+
             function initcontrols() {
+
+                slideWrapList = document.getElementById("slideWrap").children
+                for (let i = 0; i < slideWrapList.length; i++) {
+                    let slideID = 'slide'+ (i+1)
+                    slideWrapList.item(i).setAttribute('id', slideID);
+                    slideList.push(slideID);
+
+                }
+
+                // console.log(slideList.length)
+                // for (let k = 0; k < slideList.length; k++) {
+                //     console.log(slideList[k])
+                // }
+
+
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
 
                 for (let i = 0; i < slideList.length; i++) {
@@ -13,10 +32,23 @@
 
                 resetcontrols()
                 displaycurrent()
-                totopcontrols()
+                keeptop()
             }
 
+            document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
+
+            function initautohidecontrols() {
+                document.addEventListener("mousemove", timecontrols);
+                document.getElementById("controls").removeEventListener("mousemove", initautohidecontrols);
+            }
+
+
+
+            // AUTO HIDE INDEX SCROLLBAR
+
             var timeoutidindex;
+            var timeoutidcontrols;
+            var oncontrols = false;
 
             function hidescrollbarindex() {
                 document.documentElement.style.setProperty('--scrollbar-color-index', 'transparent');
@@ -28,19 +60,11 @@
                 timeoutidindex = setTimeout(hidescrollbarindex, 10000);
             });
 
-            var timeoutidcontrols;
-            var oncontrols = false;
-
             function hidecontrols() {
                 document.getElementById("controls-inner").style.visibility = "hidden";
             }
 
-            document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
-
-            function initautohidecontrols() {
-                document.addEventListener("mousemove", timecontrols);
-                document.getElementById("controls").removeEventListener("mousemove", initautohidecontrols);
-            }
+            // timer start
 
             function timecontrols() {
                 if(autohidecontrols == true && oncontrols == false) {
@@ -50,7 +74,85 @@
                 }
             }
 
-            function totopcontrols() {
+            document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
+            document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
+            document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
+            document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
+
+            document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
+
+            function entercontrols() {
+                clearTimeout(timeoutidcontrols)
+                oncontrols = true;
+            }
+
+            function leavecontrols() {
+                timecontrols();
+                oncontrols = false;
+            }
+
+
+            // SLIDE SELECTION
+
+            function displaycurrent() {
+                document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
+            }
+
+            function letztesissue() {
+                if(slideSelected>=0) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected - 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
+                }
+                resetcontrols();
+                displaycurrent();
+                keeptop();
+                timecontrols();
+            }
+
+            function nächstesissue() {
+                if(slideSelected<=slideList.length-1) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected + 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
+                }
+                resetcontrols();
+                displaycurrent();
+                keeptop();
+                timecontrols();
+            }
+
+            function displayBySlideIndex(slideIndex) {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                slideSelected = slideIndex;
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+                resetcontrols();
+                displaycurrent();
+                hideSlideIndex();
+                keeptop()
+            }
+
+
+            // SLIDE INDEX
+
+            function displaySlideIndex() {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                document.getElementById("slideIndex").style.display = "block";
+            }
+
+            function hideSlideIndex() {
+                document.getElementById("slideIndex").style.display = "none";
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+            }
+
+
+
+            // VISUAL TWEAKS
+
+            function keeptop() {
                 document.getElementById("content").scrollTop = 0;
                 document.documentElement.scrollTop = 0;
                 setTimeout(hidescrollbar, 1);
@@ -74,74 +176,6 @@
                     document.getElementById("nächstes").disabled = false;
                     document.getElementById("nächstes").style.color = "white";
                 }
-            }
-
-            function displaycurrent() {
-                document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
-            }
-
-            function letztesissue() {
-                if(slideSelected>=0) {
-                    document.getElementById(slideList[slideSelected]).style.display = "none";
-                    slideSelected = slideSelected - 1;
-                    document.getElementById(slideList[slideSelected]).style.display = "flex";
-                }
-                resetcontrols();
-                displaycurrent();
-                totopcontrols();
-                timecontrols();
-            }
-
-            function nächstesissue() {
-                if(slideSelected<=slideList.length-1) {
-                    document.getElementById(slideList[slideSelected]).style.display = "none";
-                    slideSelected = slideSelected + 1;
-                    document.getElementById(slideList[slideSelected]).style.display = "flex";
-                }
-                resetcontrols();
-                displaycurrent();
-                totopcontrols();
-                timecontrols();
-            }
-
-            function displaySlideIndex() {
-                document.getElementById(slideList[slideSelected]).style.display = "none";
-                document.getElementById("slideIndex").style.display = "block";
-            }
-
-            function hideSlideIndex() {
-                document.getElementById("slideIndex").style.display = "none";
-                document.getElementById(slideList[slideSelected]).style.display = "flex";
-            }
-
-            function displayBySlideIndex(slideIndex) {
-                document.getElementById(slideList[slideSelected]).style.display = "none";
-                slideSelected = slideIndex;
-                document.getElementById(slideList[slideSelected]).style.display = "flex";
-                resetcontrols();
-                displaycurrent();
-                hideSlideIndex();
-                totopcontrols()
-            }
-
-            document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
-            document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
-            document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
-            document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
-
-            document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
-            document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
-            document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
-            document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
-
-            function entercontrols() {
-                clearTimeout(timeoutidcontrols)
-                oncontrols = true;
-            }
-
-            function leavecontrols() {
-                timecontrols();
-                oncontrols = false;
             }
         </script>
 
