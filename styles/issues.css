@@ -21,8 +21,8 @@
 	flex-wrap: wrap;
 	align-items: flex-end;
 	justify-content: space-between;
-	gap:100px;
-	margin-bottom: 150px;
+	gap:300px 100px;
+	margin-bottom: 200px;
 }
 
 #coverwrap {
