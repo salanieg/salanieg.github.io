@@ -10,12 +10,11 @@
 
             function initcontrols() {
 
-                slideWrapList = document.getElementById("slideWrap").children
-                for (let i = 0; i < slideWrapList.length; i++) {
+                slidesList = document.getElementById("slides").children
+                for (let i = 0; i < slidesList.length; i++) {
                     let slideID = 'slide'+ (i+1)
-                    slideWrapList.item(i).setAttribute('id', slideID);
+                    slidesList.item(i).setAttribute('id', slideID);
                     slideList.push(slideID);
-
                 }
 
                 // console.log(slideList.length)
@@ -196,11 +195,11 @@
                 height: calc(var(--vh, 1vh) * 100 - 260px);
             }
 
-            #slideWrap {
+            #slides {
                 grid-area: slides;
             }
 
-            .slide {
+            #slides > div {
                 display: none;
                 flex-wrap:wrap;
                 place-content: center;
