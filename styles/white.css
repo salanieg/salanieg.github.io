@@ -10,7 +10,3 @@
 	--content-color-link-hover: #980000;
 	--header-divider:none;
 }
-
-#content::-webkit-scrollbar-thumb {
-	background: var(--scrollbar-color);
-}

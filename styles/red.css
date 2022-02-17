@@ -5,12 +5,8 @@
   --header-color-contrast: white;
   --header-color-text: white;
   --content-color: #980000;
-	--content-color-contrast: white;
+  --content-color-contrast: white;
   --content-color-text: white;
   --content-color-link-hover: lightgray;
   --header-divider:block;
-}
-
-#content::-webkit-scrollbar-thumb {
-	background: var(--scrollbar-color);
 }
