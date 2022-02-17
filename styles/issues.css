@@ -1,9 +1,10 @@
 /* MAIN */
 
 #content {
+	height: calc(var(--vh, 1vh) * 100 - 102px);
 	padding-left: 60px;
 	padding-right: 60px;
-	height: calc(var(--vh, 1vh) * 100 - 120px);
+	padding-top: 0px;
 }
 
 @media screen and (max-width: 800px) {
@@ -23,6 +24,7 @@
 	justify-content: space-between;
 	gap:300px 100px;
 	margin-bottom: 200px;
+	padding-top: 20px;
 }
 
 #coverwrap {
