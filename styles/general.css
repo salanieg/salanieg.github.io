@@ -39,11 +39,6 @@ body {
 	background-color: var(--header-color);
 }
 
-.abonnieren button::selection {
-	color: var(--header-color);
-	background: transparent;
-}
-
 .bottom-divider {
 	display: var(--header-divider);
 }
@@ -246,6 +241,7 @@ hr {
 	float:right;
 	background-color:lightgrey;
 	cursor: pointer;
+	max-width: 40vw;
 }
 
 .abo input, button {
@@ -257,3 +253,15 @@ hr {
 
 @media screen and (max-width: 450px) {.abo input, button { font-size: 13pt;}}
 @media screen and (max-width: 350px) {.abo input, button { font-size: 11pt;}}
+
+.abo *::selection {
+	background: transparent !important;
+}
+
+.abo *::-webkit-selection {
+	background: transparent !important;
+}
+
+.abo *::-moz-selection {
+	background: transparent !important;
+}
