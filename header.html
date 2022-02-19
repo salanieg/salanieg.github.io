@@ -230,13 +230,10 @@
 		<script>
 
 			// ABONNIEREN
+	
+			document.getElementById("abonnieren").addEventListener('submit', function(eeventv){
 
-			$('.abonnieren').submit(function(event){
-				event.preventDefault();
-
-				document.getElementById("abonnierenbutton").textContent = 'Abonniert!';
-				document.getElementById("abonnierenbutton").disabled = true;
-				document.getElementById("abonniertinfo").style.display = "block";
+				event.preventDefault()
 
 				$.ajax({
 					method: 'POST',
@@ -249,12 +246,14 @@
 					error: (err) => console.log(err)
 				});
 
-			});
+				document.getElementById("abonnierenbutton").textContent = 'Abonniert!';
+				document.getElementById("abonnierenbutton").disabled = true;
+				document.getElementById("abonniertinfo").style.display = "block";
+			})
 
-			$('.abonnieren').on('input', function(event) {
+			document.getElementById("abonnieren").addEventListener('input', function(event){
 				document.getElementById("abonnierenbutton").textContent = 'Abonnieren';
 				document.getElementById("abonnierenbutton").disabled = false;
-				document.getElementById("abonniertinfo").style.display = "none";
 			});
 
 		</script>
@@ -410,38 +409,6 @@
 
 			
 			/* FORM */
-			
-			.abonnieren {
-				width:100%;
-				overflow:hidden;
-			}
-
-			.abonnieren span {
-				display:block;
-				overflow:hidden;
-				padding-right:48px;
-			}
-			
-			.abonnieren input {
-				width:100%;
-                background-color:white;
-
-				height: fit-content;
-				font-size:15pt;
-				padding: 5px 20px;
-				color: black;
-            }
-
-            .abonnieren button {
-				float:right;
-                background-color:lightgrey;
-
-                cursor: pointer;
-				height: fit-content;
-				font-size:15pt;
-				padding: 5px 20px;
-				color: black;
-            }
 
 			#abonniertinfo {
 				display: none;
@@ -622,11 +589,11 @@
 
 	
 							<div id="abonnieren-wrap">
-								<form class="abonnieren">
+								<form id="abonnieren" class="abo">
 									<button type="submit" id="abonnierenbutton">Abonnieren</button>
 									<span><input type="email" name="Email" placeholder="Email" required></span>
 									<input type="hidden" name="_subject" value="Neue Abonennt*in!">
-									<input type="hidden" name="_captcha" value="false">
+									<input type="hidden" name="_captcha" value="true">
 								</form>
 
 								<div id="abonniertinfo">Ein Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> in jeder Mail.</div>

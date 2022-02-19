@@ -45,8 +45,8 @@
 
             // AUTO HIDE INDEX SCROLLBAR
 
-            var timeoutidindex;
-            var timeoutidcontrols;
+            var timeoutIDindex;
+            var timeoutIDcontrols;
             var oncontrols = false;
 
             function hidescrollbarindex() {
@@ -55,8 +55,8 @@
 
             document.getElementById("slideIndex").addEventListener("scroll", () => {
                 document.documentElement.style.setProperty('--scrollbar-color-index', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-index'));
-                clearTimeout(timeoutidindex)
-                timeoutidindex = setTimeout(hidescrollbarindex, 10000);
+                clearTimeout(timeoutIDindex)
+                timeoutIDindex = setTimeout(hidescrollbarindex, 10000);
             });
 
             function hidecontrols() {
@@ -68,8 +68,8 @@
             function timecontrols() {
                 if(autohidecontrols == true && oncontrols == false) {
                     document.getElementById("controls-inner").style.visibility = "visible";
-                    clearTimeout(timeoutidcontrols)
-                    timeoutidcontrols = setTimeout(hidecontrols, 8000);
+                    clearTimeout(timeoutIDcontrols)
+                    timeoutIDcontrols = setTimeout(hidecontrols, 8000);
                 }
             }
 
@@ -84,7 +84,7 @@
             document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
 
             function entercontrols() {
-                clearTimeout(timeoutidcontrols)
+                clearTimeout(timeoutIDcontrols)
                 oncontrols = true;
             }
 

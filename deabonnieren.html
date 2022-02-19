@@ -12,80 +12,47 @@
         <script> $(function(){$("#header").load("header.html");}); </script>
 
 		<script>
-
 			// DEABONNIEREN
 
-			$('.deabonnieren').submit(function(event){
-				event.preventDefault();
+            document.addEventListener("DOMContentLoaded", () => {
+                document.getElementById("deabonnieren").addEventListener('submit', function(eeventv){
 
-				document.getElementById("deabonnierenbutton").textContent = 'Deabonnert.';
-				document.getElementById("deabonnierenbutton").disabled = true;
+                    event.preventDefault()
 
-				$.ajax({
-					method: 'POST',
-					url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
-					dataType: 'json',
-					accepts: 'application/json',
-					data: $(event.target).serialize()
-					,
-					success: (data) => console.log(data),
-					error: (err) => console.log(err)
-				});
+                    $.ajax({
+                        method: 'POST',
+                        url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
+                        dataType: 'json',
+                        accepts: 'application/json',
+                        data: $(event.target).serialize()
+                        ,
+                        success: (data) => console.log(data),
+                        error: (err) => console.log(err)
+                    });
 
-			});
+                    document.getElementById("deabonnierenbutton").textContent = 'Deabonniert.';
+                    document.getElementById("deabonnierenbutton").disabled = true;
+                })
 
-			$('.deabonnieren').on('input', function(event) {
-				document.getElementById("deabonnierenbutton").textContent = 'Debonnieren';
-				document.getElementById("deabonnierenbutton").disabled = false;
-			});
+                document.getElementById("deabonnieren").addEventListener('input', function(event){
+                    document.getElementById("deabonnierenbutton").textContent = 'Debonnieren';
+                    document.getElementById("deabonnierenbutton").disabled = false;
+                });
+            });
 
 		</script>
 
         <style>
 
-            #deabonnieren-wrap-outer {
+            #deabonnieren-outer {
                 padding:20px;
             }
 
-            #deabonnieren-wrap {
+            #deabonnieren-inner {
                 margin-top:20vh;
                 margin-left:auto;
                 margin-right:auto;
                 width:500px;
-            }
-
-            /* FORM */
-			
-			.deabonnieren {
-				width:100%;
-				overflow:hidden;
-			}
-
-			.deabonnieren span {
-				display:block;
-				overflow:hidden;
-				padding-right:48px;
-			}
-			
-			.deabonnieren input {
-				width:100%;
-                background-color:white;
-
-				height: fit-content;
-				font-size:15pt;
-				padding: 5px 20px;
-				color: black;
-            }
-
-            .deabonnieren button {
-				float:right;
-                background-color:lightgrey;
-
-                cursor: pointer;
-				height: fit-content;
-				font-size:15pt;
-				padding: 5px 20px;
-				color: black;
             }
 
         </style>
@@ -96,13 +63,13 @@
         <div id="header"></div>
 
         <div id="content">
-            <div id="deabonnieren-wrap-outer">
-                <div id="deabonnieren-wrap">
-                    <form class="deabonnieren">
+            <div id="deabonnieren-outer">
+                <div id="deabonnieren-inner">
+                    <form id="deabonnieren" class="abo">
                         <button type="submit" id="deabonnierenbutton">Deabonnieren</button>
                         <span><input type="email" name="Email" placeholder="Email" required></span>
                         <input type="hidden" name="_subject" value="Jemand hat Deabonniert.">
-                        <input type="hidden" name="_captcha" value="false">
+                        <input type="hidden" name="_captcha" value="true">
                     </form>
                 </div>
             </div>

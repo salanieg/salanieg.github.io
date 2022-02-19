@@ -222,3 +222,38 @@ hr {
 	border-width:1px;
 	background-color: lightgray;
 }
+
+
+/* FORM */
+
+.abo {
+	width:100%;
+	overflow:hidden;
+}
+
+.abo span {
+	display:block;
+	overflow:hidden;
+	padding-right:48px;
+}
+
+.abo input {
+	width:100%;
+	background-color:white;
+}
+
+.abo button {
+	float:right;
+	background-color:lightgrey;
+	cursor: pointer;
+}
+
+.abo input, button {
+	height: fit-content;
+	font-size:15pt;
+	padding: 5px 20px;
+	color: black;
+}
+
+@media screen and (max-width: 450px) {.abo input, button { font-size: 13pt;}}
+@media screen and (max-width: 350px) {.abo input, button { font-size: 11pt;}}
