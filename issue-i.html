@@ -16,6 +16,62 @@
 
     <script>
         var downloadlocation = 'files/ISSUE I – ALTERNATIVE UTOPIEN.pdf'
+
+        // ⁰¹²³⁴⁵⁶⁷⁸⁹⁽⁾
+        var superscriptList = {
+            '0': '⁰',
+            '1': '¹',
+            '2': '²',
+            '3': '³',
+            '4': '⁴',
+            '5': '⁵',
+            '6': '⁶',
+            '7': '⁷',
+            '8': '⁸',
+            '9': '⁹',
+            '(': '⁽',
+            ')': '⁾'
+        }
+
+        footnoteList = ['¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984<br><br><iframe width="100%" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/hs9ZsKj-o1k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>', 
+                        '² ',
+                        '³ '
+        ]
+
+        function tosuperscript(num) {
+            num = num.split()
+            num.forEach(superscript())
+
+            let superscripted = superscriptList[num]
+            
+
+            if(superscripted) {
+                return superscripted;
+            }
+            else {
+                return num;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+        
+            for (let i = 1; i < footnoteList.length; i++) {
+                let number = ""
+                number = tosuperscript(number)
+
+                let footnote = document.getElementById("f"+i)
+                footnote.className = 'footnote';
+                footnote.tabIndex = '0'
+                footnote.innerHTML = number;
+
+
+                let note = document.createElement('span');
+                note.className = 'note';
+                note.innerHTML = footnoteList[(i-1)];
+
+                footnote.appendChild(note)
+            }
+        })
     </script>
 
     <style>
@@ -102,12 +158,12 @@
                         <br/>
                         <br/>
                         <p dir="ltr">
-                            Seit dem Kollaps der Sowjetunion und der<span  tabindex="0" class="footnote">¹<span class="note">¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984<br><br><iframe width="100%" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/hs9ZsKj-o1k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></span></span> folgenden globalen neoliberalen
+                            Seit dem Kollaps der Sowjetunion und der<span id="f1"></span> folgenden globalen neoliberalen
                             Wende, wirkt der Kapitalismus alternativlos. Das große Experiment einer
                             sozialen und solidarischen Gesellschaft war gescheitert. Vielmehr noch, der
                             Realsozialismus stellte sich als ebenso produktivistisch und ausbeuterisch
                             heraus wie der Westen, dem er darin nacheiferte. So wurde die Utopie zum
-                            Schimpfwort, die Realpolitik zur Parole. Zwar sei der Kapitalismus brutal,
+                            Schimpfwort, die Realpolitik zur Parole. Zwar sei der Kapitalismus<span tabindex="0" id="f2" class="footnote">¹</span> brutal,
                             aber er sei das beste gesellschaftliche und wirtschaftliche Ordnungssystem,
                             das wir bisher gefunden haben. Einige gehen noch weiter. Der Kapitalismus
                             sei nicht nur das beste System, das wir bisher gefunden haben, sondern auch
