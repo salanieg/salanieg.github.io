@@ -10,7 +10,7 @@
             function initcookies() {
 
                 if(localStorage.getItem("gefaengnishefte_cookies") != null){
-                    // document.getElementById("databanner").style.display = "none";
+                    document.getElementById("databanner").style.display = "none";
                 }
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
@@ -78,10 +78,9 @@
                 color: white;
                 font-size: 13pt;
                 position: absolute;
-                left:0;
+                left: 0;
                 bottom: 0;
                 width:100%;
-                /* padding:20px; */
                 z-index: 9;
             }
 
