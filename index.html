@@ -10,20 +10,10 @@
         <link rel="stylesheet" href="styles/red.css">
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script> $(function(){$("#header").load("header.html");}); </script>
+        <script> $(function(){$("#databanner").load("databanner.html", function() {initcookies()});}); </script>
 
         <script>
-            // INTROSCRIPT
-        
-            function hideintro() {
-                document.getElementById("intro").style.display = "none";
-                document.getElementById("intrologo").style.display = "none";
-                document.getElementById("introtext").style.display = "none";
-                document.getElementById("content").style.overflowY = "auto";
-            }
-            
-        </script> 
 
-        <script>
             // COVERSCRIPT
 
             var issuecovers = ["cover-i", "cover-ii", "cover-iii"]
@@ -223,20 +213,16 @@
 
     <body>
         
-        <!-- <div id="intro">
-            <div class="logo" id="intrologo" onclick="hideintro()">GEFÄNGNISHEFTE</div> 
-            <div id="introtext">Gedanken einer politisch desinteressierten Jugend.</div>
-        </div>  -->
-        
         <div id="header"></div>
+        <div id="databanner"></div>
 
         <div id="content">
             <div class="issue-wrap">
                 <div class="cover-wrap">
                     <div><img id="laden" src="images/internal/din4laden.gif"/></div>
                     <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-i" src="images/issues/ISSUE-I-COVER.svg" alt="ISSUE I – ALTERNATIVE UTOPIEN"/></a></div>
-                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-ii" src="images/issues/ISSUE-I-COVER.svg" alt="ISSUE II – REFORM ODER REVOLUTION"/></a></div>
-                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-iii" src="images/issues/ISSUE-I-COVER.svg" alt="ISSUE III – IST POPULISMUS GUT?"/></a></div>
+                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-ii" src="images/issues/ISSUE-II-COVER.svg" alt="ISSUE II – REFORM ODER REVOLUTION"/></a></div>
+                    <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-iii" src="images/issues/ISSUE-III-COVER.svg" alt="ISSUE III – IST POPULISMUS GUT?"/></a></div>
                 </div>
                 <div class="text-wrap">
                     <p id="title-i" onmouseover="selectcover(1)">
@@ -255,7 +241,6 @@
                     </p>
                     <hr>
                 </div>
-                <a href="https://www.GEFAENGNISHEFTE.org/impressum">Impressum</a>
             </div>
 
         </div>

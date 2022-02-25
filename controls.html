@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <script>
+
+            // INIT
+
+            var slideList = []
+
+            function initcontrols() {
+
+                slidesList = document.getElementById("slides").children
+                for (let i = 0; i < slidesList.length; i++) {
+                    let slideID = 'slide'+ (i+1)
+                    slidesList.item(i).setAttribute('id', slideID);
+                    slideList.push(slideID);
+                }
+
+                // console.log(slideList.length)
+                // for (let k = 0; k < slideList.length; k++) {
+                //     console.log(slideList[k])
+                // }
+
+
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+
+                for (let i = 0; i < slideList.length; i++) {
+                    $('#slideIndex').append('<span onclick="displayBySlideIndex(' + i + ')">' + indexList[i] + '</span><br>');
+                }
+
+                resetcontrols()
+                displaycurrent()
+                keeptop()
+            }
+
+            document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
+
+            function initautohidecontrols() {
+                document.addEventListener("mousemove", timecontrols);
+                document.getElementById("controls").removeEventListener("mousemove", initautohidecontrols);
+            }
+
+
+
+            // AUTO HIDE INDEX SCROLLBAR
+
+            var timeoutIDindex;
+            var timeoutIDcontrols;
+            var oncontrols = false;
+
+            function hidescrollbarindex() {
+                document.documentElement.style.setProperty('--scrollbar-color-index', 'transparent');
+            }
+
+            document.getElementById("slideIndex").addEventListener("scroll", () => {
+                document.documentElement.style.setProperty('--scrollbar-color-index', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-index'));
+                clearTimeout(timeoutIDindex)
+                timeoutIDindex = setTimeout(hidescrollbarindex, 10000);
+            });
+
+            function hidecontrols() {
+                document.getElementById("controls-inner").style.visibility = "hidden";
+            }
+
+            // timer start
+
+            function timecontrols() {
+                if(autohidecontrols == true && oncontrols == false) {
+                    document.getElementById("controls-inner").style.visibility = "visible";
+                    clearTimeout(timeoutIDcontrols)
+                    timeoutIDcontrols = setTimeout(hidecontrols, 8000);
+                }
+            }
+
+            document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
+            document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
+            document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
+            document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
+
+            document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
+
+            function entercontrols() {
+                clearTimeout(timeoutIDcontrols)
+                oncontrols = true;
+            }
+
+            function leavecontrols() {
+                timecontrols();
+                oncontrols = false;
+            }
+
+
+            // SLIDE SELECTION
+
+            function displaycurrent() {
+                document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
+            }
+
+            function letztesissue() {
+                if(slideSelected>=0) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected - 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
+                }
+                resetcontrols();
+                displaycurrent();
+                keeptop();
+                timecontrols();
+            }
+
+            function nächstesissue() {
+                if(slideSelected<=slideList.length-1) {
+                    document.getElementById(slideList[slideSelected]).style.display = "none";
+                    slideSelected = slideSelected + 1;
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
+                }
+                resetcontrols();
+                displaycurrent();
+                keeptop();
+                timecontrols();
+            }
+
+            function displayBySlideIndex(slideIndex) {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                slideSelected = slideIndex;
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+                resetcontrols();
+                displaycurrent();
+                hideSlideIndex();
+                keeptop()
+            }
+
+
+            // SLIDE INDEX
+
+            function displaySlideIndex() {
+                document.getElementById(slideList[slideSelected]).style.display = "none";
+                document.getElementById("slideIndex").style.display = "block";
+            }
+
+            function hideSlideIndex() {
+                document.getElementById("slideIndex").style.display = "none";
+                document.getElementById(slideList[slideSelected]).style.display = "flex";
+            }
+
+
+
+            // VISUAL TWEAKS
+
+            function keeptop() {
+                document.getElementById("content").scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+                setTimeout(hidescrollbar, 1);
+            }
+
+            function resetcontrols() {
+                if (slideSelected==0) {
+                    document.getElementById("letztes").disabled = true;
+                    document.getElementById("letztes").style.color = "lightgrey";
+                }
+                else {
+                    document.getElementById("letztes").disabled = false;
+                    document.getElementById("letztes").style.color = "white";
+                }
+                
+                if (slideSelected==slideList.length-1) {
+                    document.getElementById("nächstes").disabled = true;
+                    document.getElementById("nächstes").style.color = "lightgrey";
+                }
+                else {
+                    document.getElementById("nächstes").disabled = false;
+                    document.getElementById("nächstes").style.color = "white";
+                }
+            }
+        </script>
+
+
+        <style>
+
+            /* SLIDES */
+
+            #content {
+                display: grid;
+                grid-template-columns: 1fr auto 1fr;
+                grid-template-rows: 1fr auto 1fr;
+                grid-template-areas: 
+                    ". . ."
+                    ". slides ."
+                    ". . .";
+                place-items:center;
+                height: calc(var(--vh, 1vh) * 100 - 260px);
+            }
+
+            #slides {
+                grid-area: slides;
+            }
+
+            #slides > div {
+                display: none;
+                flex-wrap:wrap;
+                place-content: center;
+                text-align: center;
+                gap:40px 80px;
+                margin-bottom: 40px;
+            }
+
+
+            /* CONTROLS */
+
+            #controls {
+                position: absolute;
+                bottom:0;
+                display:flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                width:100vw;
+                padding-bottom: 60px;
+            }
+
+            #controlsWrap {
+                display:flex;
+                place-items: center;
+                flex-direction: column;
+            }
+
+            #controls-inner {
+                text-align: center;
+                display: flex;
+                flex-wrap:wrap;
+                justify-content: center;
+                align-items: center;
+                gap:20px 70px;
+                width:100%;
+                bottom:0;
+                left:0;
+            }
+
+            #letztes, #nächstes {
+                background-color: transparent;
+                color:white;
+                padding: 5px 15px 5px 15px;
+                width:175px;
+                font-size: 15pt;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            #slideCurrent {
+                color:white;
+                width:70px;
+                font-size: 20pt;
+                cursor: default;
+                border: solid transparent;
+                border-width: 2px;
+            }
+
+            #slideIndex {
+                max-height:70vh;
+                overflow:auto;
+                color:white;
+                text-align: center;
+                font-size: 20pt;
+                display:none;
+                width:fit-content;
+                padding: 40px 20px 40px 20px;
+                scrollbar-gutter: stable both-edges;
+            }
+
+            #slideIndex>span:hover {
+                color:var(--content-color-link-hover);
+                cursor: pointer;
+            }
+
+            /* SCROLLBAR */
+
+            :root {
+                --scrollbar-color-index: transparent;
+                --default-scrollbar-color-index: white;
+            }
+
+            #slideIndex::-webkit-scrollbar-thumb {
+                background: var(--scrollbar-color-index) !important;
+            }
+
+            #slideIndex {
+                scrollbar-color: var(--scrollbar-color-index) transparent !important;
+            }
+
+
+            /* SIZING */
+
+            @media screen and (max-width: 800px) {
+                #controls-inner {
+                    gap:20px;
+                }
+            }
+
+            .controlLabelSmall {
+                position:relative;
+                bottom:17px;
+                display: none;
+            }
+
+            @media screen and (max-width: 520px) {
+                .controlLabelLarge {
+                    display: none;
+                }
+
+                .controlLabelSmall {
+                    display: inline;
+                }
+
+                #letztes, #nächstes {
+                    padding:0px;
+                    width: 45px;
+                    height: 45px;
+                    font-size: 35pt;
+                }
+            }
+
+        </style>
+    </head>
+
+    <body>
+
+        <div id="controlsWrap">
+            <div id="slideIndex-wrap">
+                <div id="slideIndex" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()"></div>
+            </div>
+
+            <div id="controls-inner">
+                <button id="letztes" onclick="letztesissue()">
+                    <span class="controlLabelLarge">VORHERIGES</span><span class="controlLabelSmall">‹</span>
+                </button>
+                <div id="slideCurrent" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
+                </div>
+                <button id="nächstes" onclick="nächstesissue()">
+                    <span class="controlLabelLarge">NÄCHSTES</span><span class="controlLabelSmall">›</span>
+                </button>
+            </div>
+        </div>
+
+    </body>
+</html>

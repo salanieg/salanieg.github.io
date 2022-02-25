@@ -24,8 +24,6 @@ body {
 
 
 
-
-
 #header {
 	position: sticky;
 	top:0;
@@ -154,7 +152,7 @@ h1 {
 @media screen and (max-width: 375px) {h1 { font-size: 22pt;}}
 @media screen and (max-width: 350px) {h1 { font-size: 20pt;}}
 
-h2 {
+h2, h3 {
 	font-size: 13pt;
 	font-weight: 700;
 	line-height: 31px;

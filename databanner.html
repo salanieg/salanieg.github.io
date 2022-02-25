@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <script>
+
+            var gefaengnishefte_cookies = false;
+            var datainfoshown = false;
+
+            function initcookies() {
+
+                if(localStorage.getItem("gefaengnishefte_cookies") != null){
+                    // document.getElementById("databanner").style.display = "none";
+                }
+                if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
+                    showcookiecontent();
+                }
+                else {
+                    hidecookiecontent();
+                }
+            }
+
+            function cookies(choice) {
+                gefaengnishefte_cookies = choice;
+                document.getElementById("databanner").style.display = "none";
+
+                localStorage.setItem("gefaengnishefte_cookies", choice);
+
+                initcookies();
+            }
+
+            function showcookiecontent() {
+                var frames = document.getElementsByTagName("iframe")
+
+                for (let i = 0; i < frames.length; i++)
+                {
+                    frames[i].style.display = "block"
+                }
+
+                var cookiedisclaimers = document.getElementsByClassName("cookiedisclaimer")
+
+                for (let i = 0; i < cookiedisclaimers.length; i)
+                {
+                    cookiedisclaimers[i].remove();
+                }
+
+                datainfoshown = false;
+            }
+
+            function hidecookiecontent() {
+                var frames = document.getElementsByTagName("iframe")
+
+                if(!datainfoshown) {
+                    
+                    for (let i = 0; i < frames.length; i++)
+                    {
+                        var cookiedisclaimer = document.createElement("span");
+                        cookiedisclaimer.innerHTML = "Dieser Inhalt erfordert die <span style='text-decoration: underline;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.";
+                        cookiedisclaimer.className = "cookiedisclaimer";
+                        frames[i].style.display = "none"
+                        frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
+                    }
+
+                    datainfoshown = true;
+                }
+            }
+
+            function showdatabanner() {
+                document.getElementById("databanner").style.display = "block";
+            }
+
+        </script>
+
+        <style>
+
+            #datenschutz {
+                background-color: var(--header-color);
+                color: white;
+                font-size: 13pt;
+                position: absolute;
+                left:0;
+                bottom: 0;
+                width:100%;
+                /* padding:20px; */
+                z-index: 9;
+            }
+
+            #datainfo {
+                width: 600px;
+                margin-bottom: 40px;
+            }
+
+            #dataoptionen {
+                display:flex;
+                flex-flow: row wrap;
+                align-items: center;
+                gap:20px;
+            }
+
+            .dataoption {
+                width:140px;
+                cursor: pointer;
+                font-size: 13pt;
+                background-color: transparent;
+                color:white;
+            }
+
+            #datenschutz-inner {
+                padding:20px;
+            }
+
+            @media screen and (max-width: 450px) {#dataoptionen { justify-content: space-around;}}
+
+
+        </style>
+    </head>
+
+    <body>
+
+        <div id="datenschutz">
+            <div id="datenschutz-inner">
+                <div id="datainfo">
+                    Diese Internetseite verwendet Cookies, um das vollständige Anzeigen aller Inhalte zu ermöglichen. Durch das klicken des Akzeptieren-Buttons, stimmst du deren Verwendung zu. Weitere Informationen hierzu findest du in unserer <a style="text-decoration: underline;" href="https://www.GEFAENGNISHEFTE.org/datenschutz" target="_blank">Datenschutzerklärung</a>.
+                </div>
+                <div id="dataoptionen">
+                    <button class="dataoption" onclick="cookies(true)">Akzeptieren</button>
+                    <button class="dataoption" onclick="cookies(false)">Ablehnen</button>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

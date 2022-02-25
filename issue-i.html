@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>ISSUE I</title>
+        <meta name="viewport" content="width=device-width, height=device-height, user-scalable=no">
+        <link rel="icon" type="image/x-icon" href="images/internal/faviconwhite.ico">
+        <link rel="stylesheet" href="styles/fonts.css">
+        <link rel="stylesheet" href="styles/general.css">
+        <link rel="stylesheet" href="styles/white.css">
+        <link rel="stylesheet" href="styles/issues.css">
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script> $(function(){$("#header").load("header.html");}); </script>
+        <script> $(function(){$("#footer").load("footer.html", function() {initfooter()});});</script>
+        <script> $(function(){$("#databanner").load("databanner.html", function() {initcookies()});}); </script>
+
+    </head>
+
+    <script>
+        var downloadlocation = 'files/ISSUE I – ALTERNATIVE UTOPIEN.pdf'
+
+        // ⁰¹²³⁴⁵⁶⁷⁸⁹⁽⁾
+        var superscriptList = {
+            '0': '⁰',
+            '1': '¹',
+            '2': '²',
+            '3': '³',
+            '4': '⁴',
+            '5': '⁵',
+            '6': '⁶',
+            '7': '⁷',
+            '8': '⁸',
+            '9': '⁹',
+            '(': '⁽',
+            ')': '⁾'
+        }
+
+        footnoteList = ['¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984<br><br><iframe width="100%" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/hs9ZsKj-o1k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>', 
+                        '² ',
+                        '³ '
+        ]
+
+        function tosuperscript(num) {
+            num = num.split()
+            num.forEach(superscript())
+
+            let superscripted = superscriptList[num]
+            
+
+            if(superscripted) {
+                return superscripted;
+            }
+            else {
+                return num;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+        
+            for (let i = 1; i < footnoteList.length; i++) {
+                let number = ""
+                number = tosuperscript(number)
+
+                let footnote = document.getElementById("f"+i)
+                footnote.className = 'footnote';
+                footnote.tabIndex = '0'
+                footnote.innerHTML = number;
+
+
+                let note = document.createElement('span');
+                note.className = 'note';
+                note.innerHTML = footnoteList[(i-1)];
+
+                footnote.appendChild(note)
+            }
+        })
+    </script>
+
+    <style>
+        .artikelarrow {
+            font-size:26pt;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+
+    <body>
+
+        <div id="header"></div>
+        <div id="footer"></div>
+        <div id="databanner"></div>
+
+        <div id="content">
+
+            <div id="info-wrapper">
+
+                <div id="coverwrap">
+                    <img id="coverimage" src="images/issues/issue-i-image.png" alt="ISSUE I COVER">
+                    <div id="title">ISSUE&#x2005;I    MÄRZ&#x2005;2022<br>ALTERNATIVE UTOPIEN</div>
+                </div>
+
+                <div id="inhaltsverzeichnis">
+                    <div class="abstract">
+                        <a class="abstracttitle" href="#posthistorische-klassenkaempfe"><h2>POSTHISTORISCHE KLASSENKÄMPFE</h2><h2 class="artikelarrow">›</h2></a>
+                        <br>
+                        <p class="abstracttext">
+                            Der Kapitalismus ist weder alternativlos, noch kann er
+                            durch einfache Reformen zu sozialer und ökologischer
+                            Nachhaltigkeit korrigiert werden. Er ist ein System von herrschenden
+                            Klassen, für eben diese herrschenden Klassen.
+                            Aber was für ein Gegenentwurf ist noch möglich, nachdem der Versuch
+                            einer solidarischen Gesellschaft zum totalitären Staatskapitalismus
+                            verkommen ist?
+                        </p>
+                    </div>
+                    <br>
+                    <br>
+                    <div class="abstract">
+                        <a class="abstracttitle" href="#der-neue-rahmen"><h2>DER NEUE RAHMEN</h2><h2 class="artikelarrow">›</h2></a>
+                        <br>
+                        <p class="abstracttext">
+                            Wenn der Liberalismus in gewisse Rahmenbedingungen eingebettet wird, kann
+                            so soziale und ökologische Nachhaltigkeit sichergestellt werden.
+                            Gleichzeitig profitiert ein solches System von der schnellen
+                            Anpassungsfähigkeit eines freien, Anreizorientierten Marktes. Durch diese
+                            Geschwindigkeit kann die Sicherung der Bedürfnisse der Menschen am besten
+                            sichergestellt werden.
+                        </p>
+                    </div>
+                    <br>
+                    <br>
+                    <div class="abstract">
+                        <a class="abstracttitle" href="#agieren-und-agitieren"><h2>AGIEREN UND AGITIEREN</h2><h2 class="artikelarrow">›</h2></a>
+                        <br>
+                        <p class="abstracttext">
+                            Wie baut man eine beständige emanzipatorische Bewegung auf, die nicht in
+                            ohnmächtigen Utopismus verfällt, während sie alltägliches Leid hinnimmt? Es
+                            ist notwendig, die erkämpften Fortschritte gegen Angriffe zu verteidigen.
+                            Dabei jedoch nicht den Weg der Sozialdemokratie zu gehen, sich dem
+                            bestehenden System zu fügen und zur Verschleierung von
+                            Herrschaftsverhältnissen beizutragen ist die Herausforderung.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="inhalt">
+
+                <!-- <div id="mainoptions">
+                    <br><small class="copylink" onclick="copyanchor(this, '#', '[Link kopiert!]')">[ISSUE teilen]</small>
+                    <br><a class="copylink" download><span id="download-issue">[PDF herunterladen]</span></a>
+                </div> -->
+
+                <div class="artikelWrap">
+
+                    <div class="artikel" id="posthistorische-klassenkaempfe">
+                        <h1 dir="ltr">
+                            POSTHISTORISCHE<br/>KLASSENKÄMPFE
+                            <br/><small class="copylink" onclick="copyanchor(this, '#posthistorische-klassenkaempfe', '[Link kopiert!]')">[Artikel teilen]</small>
+                        </h1>
+                        <br/>
+                        <br/>
+                        <p dir="ltr">
+                            Seit dem Kollaps der Sowjetunion und der<span id="f1"></span> folgenden globalen neoliberalen
+                            Wende, wirkt der Kapitalismus alternativlos. Das große Experiment einer
+                            sozialen und solidarischen Gesellschaft war gescheitert. Vielmehr noch, der
+                            Realsozialismus stellte sich als ebenso produktivistisch und ausbeuterisch
+                            heraus wie der Westen, dem er darin nacheiferte. So wurde die Utopie zum
+                            Schimpfwort, die Realpolitik zur Parole. Zwar sei der Kapitalismus<span tabindex="0" id="f2" class="footnote">¹</span> brutal,
+                            aber er sei das beste gesellschaftliche und wirtschaftliche Ordnungssystem,
+                            das wir bisher gefunden haben. Einige gehen noch weiter. Der Kapitalismus
+                            sei nicht nur das beste System, das wir bisher gefunden haben, sondern auch
+                            das beste, das wir je finden könnten. Mit dem Scheitern des Sozialismus,
+                            sei somit eine Epoche eingeläutet, in der es keine großen sozialen Umbrüche
+                            oder gar Revolutionen mehr geben werde. Die sozialen Krisen der letzten
+                            Jahrzehnte und Jahrhunderte beweisen aber die Naivität dieser Position.
+                        </p>
+                        <br/>
+                        <br/>
+                        <h2 dir="ltr">
+                            Probleme der Ideologie
+                        </h2>
+                        <br/>
+                        <p dir="ltr">
+                            Die perspektivlose Unmündigkeit gegenüber der Übermacht der
+                            kapitalistischen Ideologie, ist dabei keineswegs schlicht eine logische
+                            Folge aus den Geschehnissen der letzten Jahrzehnte. Die Art wie diese
+                            Geschichte erzählt wird, durch Institutionen wie Schule, Parteien,
+                            religiösen Organisationen, aber auch Familien und Freund*innen, prägt unser
+                            politisches Verständnis und die sozialen Verhältnisse, die wir uns
+                            vorstellen können. Bereits im frühen 20. Jahrhundert beschäftigte sich der
+                            italienische Kommunist Antonio Gramsci, in seinen Quaderni del carcere, mit
+                            der Ideenlehre, der Ideologie, die durch die herrschenden Klassen bestimmt
+                            wurde. Diese Verschleierungen nennt er die kulturelle Hegemonie. Durch sie,
+                            erscheinen die ungleichen, ausbeuterischen Verhältnisse wie eine natürliche
+                            Ordnung. Dabei sind diese Verhältnisse menschengemacht. Um genau zu sein,
+                            sind sie für bestimmte Menschen gemacht: die herrschenden Klassen.
+                        </p>
+                        <p dir="ltr">
+                            Der französische soziale Anarchist Louis Althusser entwickelt das Konzept
+                            der hegemonialen Ideologie, in seinem Aufsatz Ideologie und ideologische
+                            Staatsapparate weiter. Demnach ist die Ideologie darauf ausgerichtet, die
+                            Produktionsverhältnisse der jeweiligen Gesellschaft zu reproduzieren.
+                            Konkret funktioniert die Ideologie dabei durch die ideologischen
+                            Staatsapparate. Zu diesen zählen unter anderem Schulen, Parteien,
+                            Religionen, Juristik, aber auch scheinbar private Institutionen wie
+                            Familien, etc. Durch diese Institutionen werden beispielsweise
+                            Auszubildende derart an die Arbeitswelt – und die soziale und ökonomische
+                            Welt als solche – herangeführt, dass sie sich freiwillig in die jeweiligen
+                            gesellschaftlichen Verhältnisse einfügen, beispielsweise als
+                            Lohnarbeiter*innen. Durch die Ideologie müssen sie nicht unbedingt durch
+                            Repressalien zur Arbeit gezwungen werden, sondern unterwerfen sich den
+                            ungleichen Arbeitsverhältnissen freiwillig. Sie sehen keine Alternative zu
+                            diesen Arbeitsverhältnissen und nehmen gleichgültig ihren sozioökonomischen
+                            Status als Ausgebeutete ein. Die Maschinerie der Ideologie hat sich selbst
+                            ernährt. Die Produktionsbedingungen sind reproduziert. Bildung hat in
+                            diesem Sinn eine doppelte Bedeutung. Sie ist die Konfrontation mit einer
+                            Ideenlehre, aber nicht nur die Lernenden ermächtigen sich der Ideen,
+                            sondern die Ideen auch der Lernenden.
+                        </p>
+                        <br/>
+                        <p dir="ltr">
+                            Von innerhalb eines ideologisch geprägten Bezugssystem, ist es äußerst
+                            schwer sehen, wie immens dessen Einfluss auf unsere Überzeugungen ist. Der
+                            griechische Radikale Cornelius Castoriadis beschäftigt sich in seinem Buch
+                            Gesellschaft als imaginäre Institution mit den daraus folgenden Konsequenz.
+                            Er bemerkt, dass die weitreichende Regelung der Gesellschaft durch die
+                            Gesetzmäßigkeiten der Ökonomie deshalb vielmehr wirkt wie die Unterordnung
+                            der Menschheit unter eine außergesellschaftliche Macht, als die
+                            Unterwerfung des Menschen unter den Menschen. Wenn die Gesetzgebung nicht
+                            Menschenwerk ist, dann können wir uns den Gesetzen auch nicht verweigern.
+                            Nichts anderes ist diese Vorstellung als die selbstauferlegte
+                            Gefangenschaft, die unsere Gesellschaften die letzten Jahrtausende plagte.
+                            Die Gesellschaftsordnungen wurden und werden legitimiert durch religiöse,
+                            natürliche und nun marktwirtschaftliche Prinzipien. Gottesgnadentum und
+                            Trickle-Down regieren die Welt. Dabei hat weder Gott Konstantin I. den
+                            Regierungsauftrag erteilt, noch die unsichtbare Hand der Bourgeoisie.
+                            Konstantin hat Konstantin zu Gottes irdischer Hand ernannt und die
+                            Bourgeoisie hat sich ihre eigenen Rechte gegen das Gottesgnadentum
+                            erkämpft. Damit soll nicht gesagt sein, dass nicht jede Gesellschaft darauf
+                            angewiesen ist, gewisse materielle Praktiken einzuführen, um sich zu
+                            reproduzieren. Wir brauchen Felder und Feuer. Doch Privateigentum und
+                            Staat, Geschlecht und Ethnie, Sklave und König sind keine Notwendigkeit,
+                            sondern von der radikalen menschlichen Einbildungskraft geschaffene
+                            Vorstellungen und Institutionen. Als Gesellschaft stellen und beantworten
+                            wir essentielle Fragen, die unser Leben mehr bestimmen, als es die
+                            materiellen Gegebenheiten je könnten. Was ist wichtig, was gerecht, was
+                            wertvoll, was ist ein Problem? Welche Institutionen wir brauchen und wie
+                            diese gestaltet sind, hängt davon ab, welche Antworten wir auf diese Fragen
+                            geben. Ob Homosexualität ein Problem ist, hängt nicht von der
+                            Reproduktionsproblematik ab – diese ist vollkommen nebensächlich. Sie hängt
+                            von gesellschaftlichen Vorstellungen ab, einem ausgedehnten Bezugssystem,
+                            das Geschlechter schafft, trennt und von vergeschlechtlichten Individuen
+                            eine erbitterte Verteidigung dieser Identität fordert. Es sind diese
+                            Vorstellungen und Bedeutungen die unser Leben, unsere Praktiken und
+                            Aktivitäten bestimmen. Nichts davon ist göttliches Gesetz. Es ist durch und
+                            durch Menschenwerk.
+                        </p>
+                        <p dir="ltr">
+                            Die gesellschaftlichen Institutionen müssen also nicht notwendigerweise so
+                            sein, wie sie es gegenwärtig sind. Das bedeutet nicht, dass wir als
+                            Gesellschaft nicht versuchen können – oder sollten – andere,
+                            selbstbestimmte Institutionen zu bilden. Selbst die anarchistische höhere
+                            Phase des Kommunismus kann nicht ohne Mechanismen und Praktiken der
+                            Ressourcenverteilung, Konfliktlösung oder Entscheidungsfindung auskommen.
+                            Nur müssen diese eben nicht in der Form eines Staates oder dergleichen
+                            realisiert sein.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="artikelWrap">
+                    <div class="artikel" id="der-neue-rahmen">
+                        <h1 dir="ltr">
+                            DER NEUE<br/>RAHMEN
+                            <br/><small class="copylink" onclick="copyanchor(this, '#der-neue-rahmen', '[Link kopiert!]')">[Artikel teilen]</small>
+                        </h1>
+                        <br/>
+                        <br/>
+                        <p dir="ltr">
+                            Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+                        </p>
+                        <br/>
+                        <p dir="ltr">
+                            Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+                        </p>
+                        <br/>
+                        <p dir="ltr">
+                            Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+                        </p>
+                        <br/>
+                        <p dir="ltr">
+                            Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="artikelWrap">
+                    <div class="artikel" id="agieren-und-agitieren">
+                        <h1 dir="ltr">
+                            AGIEREN UND<br/>AGITIEREN
+                            <br/><small class="copylink" onclick="copyanchor(this, '#agieren-und-agitieren', '[Link kopiert!]')">[Artikel teilen]</small>
+                        </h1>
+                        <br/>
+                        <br/>
+                        <p dir="ltr">
+                            Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+                        </p>
+                        <br/>
+                        <p dir="ltr">
+                            Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+                        </p>
+                        <br/>
+                        <p dir="ltr">
+                            Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+                        </p>
+                        <br/>
+                        <p dir="ltr">
+                            Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
