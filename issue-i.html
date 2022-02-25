@@ -20,46 +20,39 @@
         var downloadlocation = 'files/ISSUE I – ALTERNATIVE UTOPIEN.pdf'
 
         // ⁰¹²³⁴⁵⁶⁷⁸⁹⁽⁾
-        var superscriptList = {
-            '0': '⁰',
-            '1': '¹',
-            '2': '²',
-            '3': '³',
-            '4': '⁴',
-            '5': '⁵',
-            '6': '⁶',
-            '7': '⁷',
-            '8': '⁸',
-            '9': '⁹',
-            '(': '⁽',
-            ')': '⁾'
-        }
+        var superscriptList = [
+            '⁰',
+            '¹',
+            '²',
+            '³',
+            '⁴',
+            '⁵',
+            '⁶',
+            '⁷',
+            '⁸',
+            '⁹'
+        ]
 
-        footnoteList = ['¹ Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984<br><br><iframe width="100%" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/hs9ZsKj-o1k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>', 
-                        '² ',
-                        '³ '
+        footnoteList = ['Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984<br><br><iframe width="100%" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/hs9ZsKj-o1k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>', 
+                        '',
+                        ''
         ]
 
         function tosuperscript(num) {
-            num = num.split()
-            num.forEach(superscript())
+            num = num.toString()
+            nums = num.split('')
 
-            let superscripted = superscriptList[num]
-            
+            for (let i = 0; i < nums.length; i++){
+                nums[i] = superscriptList[nums[i]]
+            }
 
-            if(superscripted) {
-                return superscripted;
-            }
-            else {
-                return num;
-            }
+            return nums.join()
         }
 
         document.addEventListener("DOMContentLoaded", () => {
         
             for (let i = 1; i < footnoteList.length; i++) {
-                let number = ""
-                number = tosuperscript(number)
+                let number = tosuperscript(i)
 
                 let footnote = document.getElementById("f"+i)
                 footnote.className = 'footnote';
@@ -69,7 +62,7 @@
 
                 let note = document.createElement('span');
                 note.className = 'note';
-                note.innerHTML = footnoteList[(i-1)];
+                note.innerHTML = number + " " + footnoteList[(i-1)];
 
                 footnote.appendChild(note)
             }
@@ -166,7 +159,7 @@
                             sozialen und solidarischen Gesellschaft war gescheitert. Vielmehr noch, der
                             Realsozialismus stellte sich als ebenso produktivistisch und ausbeuterisch
                             heraus wie der Westen, dem er darin nacheiferte. So wurde die Utopie zum
-                            Schimpfwort, die Realpolitik zur Parole. Zwar sei der Kapitalismus<span tabindex="0" id="f2" class="footnote">¹</span> brutal,
+                            Schimpfwort, die Realpolitik zur Parole. Zwar sei der Kapitalismus<span id="f2"></span> brutal,
                             aber er sei das beste gesellschaftliche und wirtschaftliche Ordnungssystem,
                             das wir bisher gefunden haben. Einige gehen noch weiter. Der Kapitalismus
                             sei nicht nur das beste System, das wir bisher gefunden haben, sondern auch
