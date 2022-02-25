@@ -25,14 +25,13 @@
                 gefaengnishefte_cookies = choice;
                 document.getElementById("databanner").style.display = "none";
 
-                if(choice) {
-                    localStorage.setItem("gefaengnishefte_cookies", choice);
-                }
-                else {
-                    localStorage.removeItem("gefaengnishefte_cookies");
-                }
+                localStorage.setItem("gefaengnishefte_cookies", choice);
 
                 initcookies();
+            }
+
+            function clearcookies() {
+                localStorage.removeItem("gefaengnishefte_cookies");
             }
 
             function showcookiecontent() {
