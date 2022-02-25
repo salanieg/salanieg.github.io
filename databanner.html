@@ -12,6 +12,7 @@
                 if(localStorage.getItem("gefaengnishefte_cookies") != null){
                     document.getElementById("databanner").style.display = "none";
                 }
+
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
                 }
@@ -24,7 +25,12 @@
                 gefaengnishefte_cookies = choice;
                 document.getElementById("databanner").style.display = "none";
 
-                localStorage.setItem("gefaengnishefte_cookies", choice);
+                if(choice) {
+                    localStorage.setItem("gefaengnishefte_cookies", choice);
+                }
+                else {
+                    localStorage.removeItem("gefaengnishefte_cookies");
+                }
 
                 initcookies();
             }
