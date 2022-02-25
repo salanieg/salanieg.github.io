@@ -251,6 +251,7 @@
 
 				document.getElementById("abonnierenbutton").textContent = 'Abonniert!';
 				document.getElementById("abonnierenbutton").disabled = true;
+				document.getElementById("abonniereninfo").style.display = "none";
 				document.getElementById("abonniertinfo").style.display = "block";
 			})
 
@@ -413,14 +414,18 @@
 			
 			/* FORM */
 
-			#abonniertinfo {
+			#abonniertinfo, #abonniereninfo {
 				display: none;
 				width:400px;
 				padding-top:20px;
-				font-size: 11pt;
-				line-height: 1.7;
+				font-size: 9pt;
+				line-height: 1.3;
 				text-align: left;
 				white-space: pre-wrap;
+			}
+
+			#abonniereninfo {
+				display:block;
 			}
 
 			#etc {
@@ -584,7 +589,7 @@
 								<a href="mailto:GEFAENGNISHEFTE@riseup.net">Kontaktieren: GEFAENGNISHEFTE@riseup.net</a><br>
 								<a href="https://www.GEFAENGNISHEFTE.org/deabonnieren" id="descriptiond">Deabonnieren</a><br>
 								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim">Impressum</a><br>
-								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda">Datenschutz</a><br>
+								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda">Datenschutzerklärung</a><br>
 								
 								<!-- <div id="nachmodus">
 									<span onclick="togglenachtmodus()" style="cursor: pointer;">Nachtmodus </span>
@@ -592,7 +597,7 @@
 							</div>
 
 	
-							<div id="abonnieren-wrap">
+							<div>
 								<form id="abonnieren" class="abo">
 									<button type="submit" id="abonnierenbutton">Abonnieren</button>
 									<span><input type="email" name="Email" placeholder="Email" required></span>
@@ -600,7 +605,8 @@
 									<input type="hidden" name="_captcha" value="true">
 								</form>
 
-								<div id="abonniertinfo">Ein Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> in jeder Mail.</div>
+								<div id="abonniereninfo">Abonniere, um über neue Ausgaben benachrichtigt zu werden. Hinweise zum Widerruf und der Verarbeitung der Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>.</div>
+								<div id="abonniertinfo">Ein Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</div>
 							</div>
 						</div>
 						
