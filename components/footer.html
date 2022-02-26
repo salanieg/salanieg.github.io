@@ -50,7 +50,7 @@
                     footnote.className = 'footnote';
                     footnote.tabIndex = '0'
                     footnote.innerHTML = number;
-                    footnote.addEventListener("focusout", pausevideos)
+                    footnote.addEventListener("blur", focusfootnote)
 
 
                     let note = document.createElement('span');
@@ -58,6 +58,25 @@
                     note.innerHTML = number + " " + footnoteList[(i-1)];
 
                     footnote.appendChild(note)
+                }
+            }
+
+            function focusfootnote(event) {
+                var footnotehover = false;
+                var hoverList = document.querySelectorAll(":hover");
+
+                for (let i = 0; i < hoverList.length; i++)
+                {
+                    if(event.currentTarget == hoverList.item(i)) {
+                        footnotehover = true;
+                    }
+                }
+
+                if(footnotehover) {
+                    event.currentTarget.focus()
+                }
+                else {
+                    pausevideos();
                 }
             }
 
