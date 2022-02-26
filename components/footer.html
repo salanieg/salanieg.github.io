@@ -9,6 +9,55 @@
                 // document.getElementById('download-issue').setAttribute('href', downloadlocation);
                 document.getElementById('download-issue-footer').setAttribute('href', downloadlocation);
                 resetverticalbuttons()
+                initfootnotes()
+            }
+        </script>
+
+        <script>
+
+            // FOOTNOTES
+
+            // ⁰¹²³⁴⁵⁶⁷⁸⁹⁽⁾
+            var superscriptList = [
+                '⁰',
+                '¹',
+                '²',
+                '³',
+                '⁴',
+                '⁵',
+                '⁶',
+                '⁷',
+                '⁸',
+                '⁹'
+            ]
+
+            function tosuperscript(num) {
+                num = num.toString()
+                nums = num.split('')
+
+                for (let i = 0; i < nums.length; i++){
+                    nums[i] = superscriptList[nums[i]]
+                }
+
+                return nums.join()
+            }
+
+            function initfootnotes() {
+                for (let i = 1; i < footnoteList.length; i++) {
+                    let number = tosuperscript(i)
+
+                    let footnote = document.getElementById("f"+i)
+                    footnote.className = 'footnote';
+                    footnote.tabIndex = '0'
+                    footnote.innerHTML = number;
+
+
+                    let note = document.createElement('span');
+                    note.className = 'note';
+                    note.innerHTML = number + " " + footnoteList[(i-1)];
+
+                    footnote.appendChild(note)
+                }
             }
         </script>
 

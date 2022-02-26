@@ -10,63 +10,19 @@
         <link rel="stylesheet" href="styles/white.css">
         <link rel="stylesheet" href="styles/issues.css">
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-        <script> $(function(){$("#header").load("header.html");}); </script>
-        <script> $(function(){$("#footer").load("footer.html", function() {initfooter()});});</script>
-        <script> $(function(){$("#databanner").load("databanner.html", function() {initcookies()});}); </script>
+        <script> $(function(){$("#header").load("components/header.html");}); </script>
+        <script> $(function(){$("#footer").load("components/footer.html", function() {initfooter()});});</script>
+        <script> $(function(){$("#databanner").load("components/databanner.html", function() {initcookies()});}); </script>
 
     </head>
 
     <script>
         var downloadlocation = 'files/ISSUE I – ALTERNATIVE UTOPIEN.pdf'
 
-        // ⁰¹²³⁴⁵⁶⁷⁸⁹⁽⁾
-        var superscriptList = [
-            '⁰',
-            '¹',
-            '²',
-            '³',
-            '⁴',
-            '⁵',
-            '⁶',
-            '⁷',
-            '⁸',
-            '⁹'
-        ]
-
         footnoteList = ['Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984<br><br><iframe width="100%" style="aspect-ratio: 4/3" src="https://www.youtube-nocookie.com/embed/hs9ZsKj-o1k?modestbranding=1" loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>', 
-                        '',
                         ''
         ]
 
-        function tosuperscript(num) {
-            num = num.toString()
-            nums = num.split('')
-
-            for (let i = 0; i < nums.length; i++){
-                nums[i] = superscriptList[nums[i]]
-            }
-
-            return nums.join()
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-        
-            for (let i = 1; i < footnoteList.length; i++) {
-                let number = tosuperscript(i)
-
-                let footnote = document.getElementById("f"+i)
-                footnote.className = 'footnote';
-                footnote.tabIndex = '0'
-                footnote.innerHTML = number;
-
-
-                let note = document.createElement('span');
-                note.className = 'note';
-                note.innerHTML = number + " " + footnoteList[(i-1)];
-
-                footnote.appendChild(note)
-            }
-        })
     </script>
 
     <style>
