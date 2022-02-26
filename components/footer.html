@@ -43,15 +43,14 @@
             }
 
             function initfootnotes() {
-                for (let i = 1; i < footnoteList.length; i++) {
+                for (let i = 1; i < footnoteList.length + 1; i++) {
                     let number = tosuperscript(i)
 
                     let footnote = document.getElementById("f"+i)
                     footnote.className = 'footnote';
                     footnote.tabIndex = '0'
                     footnote.innerHTML = number;
-                    footnote.addEventListener("mouseenter", hoverfootnote)
-                    // footnote.addEventListener("mouseleave", unhoverfootnote)
+                    footnote.addEventListener("mouseenter", selectfootnote)
 
                     let note = document.createElement('span');
                     note.className = 'note';
@@ -65,23 +64,31 @@
             var footnotefocused = "none";
 
             function focusfootnote(event) {
-
                 if(event.target.className == "footnote") {
-                    footnotefocused.childNodes[1].style.display = "none";
-                    event.target.childNodes[1].style.display = "inline";
-                    footnotefocused = event.target;
-                    
+                    selectfootnote(event)
                 }
                 else if(!footnotefocused.contains(event.target)) {
-                    footnotefocused.childNodes[1].style.display = "none";
-                    footnotefocused = "none";
+                    resetfootnote()
                     pausevideos();
                 }
             }
 
-            function hoverfootnote(event) {
-                event.target.childNodes[1].style.display = "inline";
+            function selectfootnote(event) {
+
+                if(footnotefocused != "none") {
+                    resetfootnote()
+                }
+
                 footnotefocused = event.target;
+
+                footnotefocused.style.color = "#980000";
+                footnotefocused.childNodes[1].style.display = "inline";
+            }
+
+            function resetfootnote() {
+                footnotefocused.style.color = "black";
+                footnotefocused.childNodes[1].style.display = "none";
+                footnotefocused = "none";
             }
 
         </script>
