@@ -46,7 +46,7 @@
                 {
                     frames[i].style.display = "block"
                     if(framesHTML[i]){
-                        frames[i].innerHTML = framesHTML[i]
+                        frames[i].outerHTML = framesHTML[i]
                     }
                 }
 
@@ -65,17 +65,17 @@
                 var frames = document.getElementsByTagName("iframe")
                 if(!datainfoshown) {
                     
-                    for (let i = 0; i < frames.length; i++)
+                    for (let i = 0; i < frames.length; i)
                     {
                         var cookiedisclaimer = document.createElement("span");
                         cookiedisclaimer.innerHTML = "Dieser Inhalt erfordert die <span style='text-decoration: underline;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.";
                         cookiedisclaimer.className = "cookiedisclaimer";
 
-                        framesHTML[i] = frames[i].innerHTML
+                        framesHTML[i] = frames[i].outerHTML
                         console.log("11111")
-                        frames[i].innerHTML = ""
-                        frames[i].style.display = "none"
-                        frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
+                        frames[i].outerHTML = "Dieser Inhalt erfordert die <span style='text-decoration: underline;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.";
+                        // frames[i].style.display = "none"
+                        // frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
                     }
 
                     datainfoshown = true;
