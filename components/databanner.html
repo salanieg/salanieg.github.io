@@ -13,7 +13,7 @@
                     document.getElementById("databanner").style.display = "none";
                 }
 
-                if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
+                if(sessionStorage.getItem("gefaengnishefte_cookies") == "true" || localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
                 }
                 else {
@@ -25,13 +25,18 @@
                 gefaengnishefte_cookies = choice;
                 document.getElementById("databanner").style.display = "none";
 
-                localStorage.setItem("gefaengnishefte_cookies", choice);
+                sessionStorage.setItem("gefaengnishefte_cookies", choice);
+
+                if(choice) {
+                    localStorage.setItem("gefaengnishefte_cookies", choice);
+                }
 
                 initcookies();
             }
 
             function clearcookies() {
                 localStorage.removeItem("gefaengnishefte_cookies");
+                sessionStorage.removeItem("gefaengnishefte_cookies");
             }
 
             function showcookiecontent() {
