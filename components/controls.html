@@ -110,6 +110,7 @@
                 displaycurrent();
                 keeptop();
                 timecontrols();
+                pausevideos();
             }
 
             function nächstesissue() {
@@ -122,6 +123,7 @@
                 displaycurrent();
                 keeptop();
                 timecontrols();
+                pausevideos();
             }
 
             function displayBySlideIndex(slideIndex) {
@@ -131,7 +133,8 @@
                 resetcontrols();
                 displaycurrent();
                 hideSlideIndex();
-                keeptop()
+                keeptop();
+                pausevideos();
             }
 
 
@@ -176,6 +179,8 @@
                     document.getElementById("nächstes").style.color = "white";
                 }
             }
+
+
         </script>
 
 

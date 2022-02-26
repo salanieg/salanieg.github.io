@@ -16,6 +16,17 @@
         </script>
 
 		<script>
+			function pausevideos() {
+				var frames = document.getElementsByTagName("iframe")
+
+				for (let i = 0; i < frames.length; i++)
+				{
+					frames[i].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
+				}
+			}
+		</script>
+
+		<script>
 
 			// CUSTOM SCROLLBAR
 			
@@ -601,7 +612,7 @@
 								<form id="abonnieren" class="abo">
 									<button type="submit" id="abonnierenbutton">Abonnieren</button>
 									<span><input type="email" name="Email" placeholder="Email" required></span>
-									<input type="hidden" name="_subject" value="Neue Abonennt*in!">
+									<input type="hidden" name="_subject" value="Abonnement">
 									<input type="hidden" name="_captcha" value="true">
 								</form>
 

@@ -64,6 +64,11 @@
 	line-height: 1.5;
 }
 
+.artikelarrow {
+	font-size:26pt;
+	-webkit-tap-highlight-color: transparent;
+}
+
 
 /* INHALT */
 
