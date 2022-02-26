@@ -50,8 +50,8 @@
                     footnote.className = 'footnote';
                     footnote.tabIndex = '0'
                     footnote.innerHTML = number;
-                    footnote.addEventListener("blur", focusfootnote)
-
+                    footnote.addEventListener("mouseenter", hoverfootnote)
+                    // footnote.addEventListener("mouseleave", unhoverfootnote)
 
                     let note = document.createElement('span');
                     note.className = 'note';
@@ -61,23 +61,27 @@
                 }
             }
 
+            document.addEventListener("click", focusfootnote)
+            var footnotefocused = "none";
+
             function focusfootnote(event) {
-                var footnotehover = false;
-                var hoverList = document.querySelectorAll(":hover");
 
-                for (let i = 0; i < hoverList.length; i++)
-                {
-                    if(event.currentTarget == hoverList.item(i)) {
-                        footnotehover = true;
-                    }
+                if(event.target.className == "footnote") {
+                    footnotefocused.childNodes[1].style.display = "none";
+                    event.target.childNodes[1].style.display = "inline";
+                    footnotefocused = event.target;
+                    
                 }
-
-                if(footnotehover) {
-                    event.currentTarget.focus()
-                }
-                else {
+                else if(!footnotefocused.contains(event.target)) {
+                    footnotefocused.childNodes[1].style.display = "none";
+                    footnotefocused = "none";
                     pausevideos();
                 }
+            }
+
+            function hoverfootnote(event) {
+                event.target.childNodes[1].style.display = "inline";
+                footnotefocused = event.target;
             }
 
         </script>

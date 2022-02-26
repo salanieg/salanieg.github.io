@@ -165,13 +165,7 @@
 	color: #980000;
 }
 
-.footnote:hover .note {
-	display: inline;
-	cursor: auto;
-}
-
-.footnote:focus .note {
-	display: inline;
+.footnote .note {
 	cursor: auto;
 }
 
@@ -191,17 +185,17 @@
 }
 
 @media screen and (max-width: 1200px) {
-	.footnote:hover .note {
+	.footnote .note {
 		position: fixed;
 		bottom: 40px;
 		left: 20px;
 	}
 
-	.footnote:focus .note {
+	/* .footnote:focus .note {
 		position: fixed;
 		bottom: 40px;
 		left: 20px;
-	}
+	} */
 }
 
 
