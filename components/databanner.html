@@ -44,10 +44,11 @@
 
                 for (let i = 0; i < frames.length; i++)
                 {
-                    frames[i].style.display = "block"
+                    
                     frames[i].removeAttribute("sandbox")
                     frames[i].src += ''
                     console.log(frames[i].src)
+                    frames[i].style.display = "block"
 
                     // if(framesHTML[i]){
                     //     frames[i].outerHTML = framesHTML[i]
@@ -143,8 +144,8 @@
                     Diese Internetseite verwendet Cookies, um das vollständige Anzeigen aller Inhalte zu ermöglichen. Durch das klicken des Akzeptieren-Buttons, stimmst du deren Verwendung zu. Weitere Informationen hierzu findest du in unserer <a style="text-decoration: underline;" href="https://www.GEFAENGNISHEFTE.org/datenschutz" target="_blank">Datenschutzerklärung</a>.
                 </div>
                 <div id="dataoptionen">
-                    <button class="dataoption" onclick="cookies(true)">Akzeptieren</button>
-                    <button class="dataoption" onclick="cookies(false)">Ablehnen</button>
+                    <button id="cookies-eu-reject" class="dataoption" onclick="cookies(true)">Akzeptieren</button>
+                    <button id="cookies-eu-accept" class="dataoption" onclick="cookies(false)">Ablehnen</button>
                 </div>
             </div>
         </div>
