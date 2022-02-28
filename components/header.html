@@ -171,6 +171,10 @@
 
 			function closemenu() {
 
+				if(document.getElementById("abonniereninput") === document.activeElement) {
+					return
+				}
+
 				hidedropmenus();
 
 				if ($(window).width() < 800) {
@@ -611,7 +615,7 @@
 							<div>
 								<form id="abonnieren" class="abo">
 									<button type="submit" id="abonnierenbutton">Abonnieren</button>
-									<span><input type="email" name="Email" placeholder="Email" required></span>
+									<span><input type="email" name="Email" id="abonniereninput" placeholder="Email" required></span>
 									<input type="hidden" name="_subject" value="Abonnement">
 									<input type="hidden" name="_captcha" value="true">
 								</form>
