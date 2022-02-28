@@ -247,6 +247,17 @@
 
 		<script>
 
+			function makeid(length) {
+                var result           = '';
+                var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                var charactersLength = characters.length;
+                for ( var i = 0; i < length; i++ ) {
+                    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                }
+
+                return result;
+            }
+
 			// ABONNIEREN
 	
 			document.getElementById("abonnieren").addEventListener('submit', function(event){
@@ -258,7 +269,7 @@
 					url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
 					dataType: 'json',
 					accepts: 'application/json',
-					data: $(event.target).serialize()
+					data: $(event.target).serialize() + "&Code=" + makeid(40)
 					,
 					success: (data) => console.log(data),
 					error: (err) => console.log(err)
