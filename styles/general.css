@@ -216,6 +216,25 @@ hr {
 	background-color: lightgray;
 }
 
+input {
+	border-radius: 0;
+	border-style:inset;
+}
+
+input:focus {
+	outline-width: 0;
+}
+
+button {
+	border-radius: 0;
+	border-style:outset;	
+
+}
+
+button:focus {
+	border-style:inset;	
+}
+
 
 /* FORM */
 
