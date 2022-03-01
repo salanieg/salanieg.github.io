@@ -14,19 +14,21 @@
 
             #content {
                 display: grid;
-                grid-template-columns: 1fr auto 1fr;
-                grid-template-rows: 20px 1fr auto 1fr 20px;
+                grid-template-columns: 1fr auto 1fr 1fr;
+                grid-template-rows: 20px auto 20px;
                 grid-template-areas: 
-                    ". . ."
-                    ". . ."
-                    ". message404 ."
-                    ". . ."
-                    ". . .";
-                place-items:center;
+                    ". . . ."
+                    ". message404 . ."
+                    ". . . .";
             }
 
             #message404 {
                 grid-area: message404;
+                margin-top: 80px;
+            }
+
+            #title404 {
+                margin-bottom: 60px;
             }
 
         </style>
@@ -35,11 +37,8 @@
     <body>
         <div id="content">
             <div id="message404">
-                <div class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
-                <h1>404</h1>
-                <br>
-                <br>
-                <p>Unter dieser URL existiert keine Seite. Bitte prüfe, ob in der URL ein Fehler ist.<br><a href="https://www.gefaengnishefte.org" target="_self" style="text-decoration: underline;" >Zurück zur Startseite</a></p>
+                <h1 id="title404">404</h1>
+                <p>Unter dieser URL existiert keine Seite.<br>Bitte prüfe, ob in der URL ein Fehler ist.<br><a href="https://www.gefaengnishefte.org" target="_self" style="text-decoration: underline;" >Zurück zur Startseite</a></p>
             </div>
         </div>
     </body>

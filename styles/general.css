@@ -196,8 +196,10 @@ small {
 /* ELEMENTS */
 
 .logo {
+	width:fit-content;
 	border:solid;
 	border-width: 2px;
+	margin:13px 0px 13px 20px;
 	padding:0px 20px;
 	background-color:white;
 	color:black;
@@ -207,6 +209,10 @@ small {
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+}
+
+.logo > a {
+	color:black !important;
 }
 
 hr {
