@@ -8,7 +8,7 @@ Deny from all
 </Files>
 
 # Protect log.txt
-<Files ./images/ISSUE-I-COVER.svg>
+<Files ./images/issues/ISSUE-I-COVER.svg>
 Order Allow,Deny
 Deny from all
 </Files>
