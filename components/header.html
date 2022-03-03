@@ -375,6 +375,20 @@
 				font-size: 11pt;
 			}
 
+			.descsmall {
+				display:none;
+			}
+
+			@media screen and (max-width: 410px) {
+				.desclarge {
+					display:none;
+				}
+
+				.descsmall {
+					display:inline;
+				}
+			}
+
 			#hideissues {
 				display: none;
 			}
@@ -390,6 +404,7 @@
 				line-height: 1.7;
 				margin-bottom:40px;
 				text-align: left;
+				white-space: normal;
 			}
 
 			
@@ -588,7 +603,7 @@
 							</div>
 							<div>
 								<a href="https://www.GEFAENGNISHEFTE.org/special-issues" class="spacedtitles"><span id="descriptions">SPECIAL&#x2005;ISSUES</span>
-								<span class="description">Projekte von Freund*innen</span></a>
+								<span class="description desclarge">Projekte von Freund*innen</span><span class="description descsmall">Projekte</span></a>
 							</div>
 							<div  class="spacedtitles">
 								<a href="https://www.GEFAENGNISHEFTE.org/kanon" class="spacedtitles"><span id="descriptionk">KANON</span>
@@ -602,11 +617,13 @@
 						<div class="info" id="infom">
 
 							<div id="footer-wrap">
-								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE">Unterstützen: paypal.me/GEFAENGNISHEFTE</a><br>
-								<a href="mailto:GEFAENGNISHEFTE@riseup.net">Kontaktieren: GEFAENGNISHEFTE@riseup.net</a><br>
-								<a href="https://www.GEFAENGNISHEFTE.org/deabonnieren" id="descriptiond">Deabonnieren</a><br>
-								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim">Impressum</a><br>
-								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda">Datenschutzerklärung</a><br>
+								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="desclarge">Unterstützen: paypal.me/GEFAENGNISHEFTE<br></a>
+								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="descsmall">Unterstützen<br></a>
+								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="desclarge">Kontaktieren: GEFAENGNISHEFTE@riseup.net<br></a>
+								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="descsmall">Kontaktieren<br></a>
+								<a href="https://www.GEFAENGNISHEFTE.org/deabonnieren" id="descriptiond">Deabonnieren<br></a>
+								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim">Impressum<br></a>
+								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda">Datenschutzerklärung<br></a>
 								
 								<!-- <div id="nachmodus">
 									<span onclick="togglenachtmodus()" style="cursor: pointer;">Nachtmodus </span>
