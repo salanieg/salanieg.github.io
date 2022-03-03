@@ -31,7 +31,7 @@
                     data: "Code=" + code + "&_subject=Bestätigungsmail&_captcha=true"
                     ,
                     success: (data) => console.log(data),
-                    error: (err) => console.log(err)
+                    error: (err) => alert(err)
                 });
 
                 document.getElementById("bestätigungsinfo").textContent = 'Deine E-mail wurde erfolgreich bestätigt!';

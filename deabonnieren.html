@@ -29,7 +29,7 @@
                         data: $(event.target).serialize()
                         ,
                         success: (data) => console.log(data),
-                        error: (err) => console.log(err)
+                        error: (err) => alert(err)
                     });
 
                     document.getElementById("deabonnierenbutton").textContent = 'Deabonniert.';

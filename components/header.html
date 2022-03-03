@@ -152,7 +152,6 @@
 
 			function openmenu(menu, anchor) {
 				hidedropmenus();
-
 				document.getElementById(menu).style.height = "fit-content";
 				document.getElementById(anchor).style.visibility = "visible";
 
@@ -272,7 +271,7 @@
 					data: $(event.target).serialize() + "&Code=" + makeid(40)
 					,
 					success: (data) => console.log(data),
-					error: (err) => console.log(err)
+					error: (err) => alert(err)
 				});
 
 				document.getElementById("abonnierenbutton").textContent = 'Abonniert!';
@@ -503,7 +502,7 @@
 	<body>
 		<div id="header-wrap">
 
-			<div class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
+			<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
 
 			<nav id="navigation" onmouseleave="closemenu()">
 

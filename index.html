@@ -71,22 +71,26 @@
             #content {
                 display: grid;
                 grid-template-columns: 1fr auto 1fr;
-                grid-template-rows: 20px 1fr auto 1fr 1fr 1fr 1fr;
+                grid-template-rows: 20px 1fr auto 1fr 1fr 1fr 20px;
                 grid-template-areas: 
                     ". . ."
                     ". . ."
                     ". issue-wrap ."
                     ". . ."
                     ". . ."
+                    ". . ."
                     ". . .";
                 place-items:center;
             }
 
+
+            /* WRAPS */
+
             .issue-wrap {
                 grid-area: issue-wrap;
 				display: flex;
-				justify-content: center;
                 flex-wrap: wrap;
+				justify-content: center;
 				align-items: flex-start;
                 gap: 80px 40px;
             }
@@ -97,78 +101,81 @@
                 flex-grow: 2;
             }
 
+            @media screen and (max-width: 800px) {
+                .text-wrap {
+                    max-width:400px;
+                }
+            }
 
             .cover-wrap > * {
                 text-align: center;
             }
             
             .text-wrap > * {
-                min-width:400px;
-                max-width:450px;
-                flex-grow: 2;
                 margin-top: 15px;
                 margin-bottom: 15px;
             }
 
-            .linked, .non-linked {
-                width:500px;
-                max-width: 100%;
-                display:flex;
-                justify-content: space-between;
-            }
+            /* COVERS */
             
             .cover-image {
                 display: none;
+                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
+                cursor: pointer;
+                transition: 0.7s;
+            }
+
+            .cover-image:hover {
+                transform: scale(1.10);
+            }
+
+            #laden {
+                display:inline;
+                cursor:wait;
+                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
+            }
+
+            .cover-image, #laden {
                 max-height: 90vh;
                 width:80%;
                 min-width:400px;
                 max-width:600px;
-                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
-                transform: scale(1);
-                transition: transform 0.7s;
             }
 
-            .cover-image:hover {
-                cursor: pointer;
-                transform: scale(1.10);
-                transition: transform 0.7s;
-            }
 
-            @media screen and (min-width: 800px) {
-                .non-linked {
-                    display:none;
+            /* SMALL SCALE */
+
+            @media screen and (max-width: 460px) {
+                .text-wrap, .cover-image, #laden {
+                    min-width:100% !important;
                 }
             }
 
-            @media screen and (max-width: 800px) {
-                .linked {
-                    display:none;
-                }
 
-                .text-wrap {
-                    max-width:400px;
-                    flex-grow: 1;
-                }
-            }
+            /* (NON)LINKED */
 
-            @media screen and (width: 800px) {
-                .non-linked {
-                    display:block;
-                }
+            .linked, .non-linked {
+                display:flex;
+                justify-content: space-between;
+                white-space:nowrap;
+                flex-wrap: wrap;
             }
 
             .linked {       
                 cursor: pointer;
             }
 
-            #laden {
-                display:inline;
-                max-height: 90vh;
-                width:80%;
-                min-width:400px;
-                max-width:600px;
-                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
+            @media screen and (max-width: 400px) {
+                .linked, .non-linked {
+                    flex-direction: column;
+                }
             }
+            
+            @media screen and (max-width: 800px) {.linked {display:none;}}
+            @media screen and (min-width: 800px) {.non-linked {display:none;}}
+            @media screen and (width: 800px) {.non-linked {display:flex;}}
+
+
 
         </style>
     </head>
