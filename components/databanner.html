@@ -9,7 +9,7 @@
 
             function initcookies() {
 
-                if(localStorage.getItem("gefaengnishefte_cookies") != null){
+                if(sessionStorage.getItem("gefaengnishefte_cookies") != null  || localStorage.getItem("gefaengnishefte_cookies") != null  ){
                     document.getElementById("databanner").style.display = "none";
                 }
 
