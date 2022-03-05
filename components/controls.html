@@ -106,7 +106,7 @@
                 document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
                 if(showcurrenttitle) {
                     document.getElementById("slideCurrent").textContent = (romannumerals[slideSelected]) + "/" + romannumerals[slideList.length - 1]
-                    document.getElementById("slideCurrentTitle").textContent = indexList[slideSelected]
+                    document.getElementById("slideCurrentTitle").textContent = titleList[slideSelected]
                 }
             }
 
@@ -151,12 +151,20 @@
             // SLIDE INDEX
 
             function displaySlideIndex() {
+                if(placeholder != null) {
+                    document.getElementById("laden").style.display = "none";
+                }
+
                 document.getElementById("slideCurrentTitle").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "none";
                 document.getElementById("slideIndex").style.display = "block";
             }
 
             function hideSlideIndex() {
+                if(placeholder != null) {
+                    document.getElementById("laden").style.display = "inline";
+                }
+
                 document.getElementById("slideCurrentTitle").style.display = "block";
                 document.getElementById("slideIndex").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
@@ -347,7 +355,8 @@
             }
 
             #slideCurrentTitle {
-                padding: 20px 0px;
+                font-size: 15pt;
+                padding: 20px 20px;
                 color:white;
                 text-align:center;
             }

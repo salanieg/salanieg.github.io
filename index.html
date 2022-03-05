@@ -20,9 +20,15 @@
             var autohidecontrols = false;
             var slideSelected = 0;
             var indexList = [
-                            "ISSUE I – ALTERNATIVE UTOPIEN", 
-                            "ISSUE II – REFORM ODER REVOLUTION", 
-                            "ISSUE III – IST POPULISMUS GUT?"
+                            "I – ALTERNATIVE UTOPIEN", 
+                            "II – REFORM ODER REVOLUTION", 
+                            "III – IST POPULISMUS GUT?"
+            ];
+
+            var titleList = [
+                            "ALTERNATIVE UTOPIEN", 
+                            "REFORM ODER REVOLUTION", 
+                            "IST POPULISMUS GUT?"
             ];
         </script>
 
@@ -67,7 +73,7 @@
             }
 
             function loaded() {
-                document.getElementById("laden").style.display = "none"
+                document.getElementById("laden-wrap").style.display = "none"
                 console.log("test")
                 displayBySlideIndex(slideSelected)
                 document.getElementById(issuetitles[textSelected]).style.fontWeight = "700";
@@ -190,6 +196,13 @@
                 display:none !important;
             }
 
+
+            @media screen and (min-height: 1000px), (height: 1000px), (min-width: 470px), (width: 470px)  {
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 98px) !important;
+                }
+            }
+
             @media screen and (max-width: 470px), (max-height: 1000px) {
                 #controls {
                     display:block !important;
@@ -197,11 +210,6 @@
 
                 #text-wrap {
                     display:none;
-                }
-
-                #content {
-                    display: flex !important;
-                    overflow: hidden;
                 }
 
                 #text-wrap, .cover-image, #laden {
@@ -214,11 +222,10 @@
                 #issue-wrap {
                     width: 100%;
                 }
-            }
 
-            @media screen and (min-height: 1000px), (height: 1000px), (min-width: 470px), (width: 470px)  {
                 #content {
-                    height: calc(var(--vh, 1vh) * 100 - 98px) !important;
+                    display: flex !important;
+                    height: calc(var(--vh, 1vh) * 100 - 260px) !important;
                 }
             }
 
