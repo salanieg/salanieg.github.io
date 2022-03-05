@@ -4,6 +4,10 @@
 
         <script>
 
+            var romannumerals = [
+                "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"
+            ]
+
             // INIT
 
             var slideList = []
@@ -22,8 +26,9 @@
                 //     console.log(slideList[k])
                 // }
 
-
-                document.getElementById(slideList[slideSelected]).style.display = "flex";
+                if(placeholder == null) {
+                    document.getElementById(slideList[slideSelected]).style.display = "flex";
+                }
 
                 for (let i = 0; i < slideList.length; i++) {
                     $('#slideIndex').append('<span onclick="displayBySlideIndex(' + i + ')">' + indexList[i] + '</span><br>');
@@ -99,6 +104,10 @@
 
             function displaycurrent() {
                 document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
+                if(showcurrenttitle) {
+                    document.getElementById("slideCurrent").textContent = (romannumerals[slideSelected]) + "/" + romannumerals[slideList.length - 1]
+                    document.getElementById("slideCurrentTitle").textContent = indexList[slideSelected]
+                }
             }
 
             function letztesissue() {
@@ -142,11 +151,13 @@
             // SLIDE INDEX
 
             function displaySlideIndex() {
+                document.getElementById("slideCurrentTitle").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "none";
                 document.getElementById("slideIndex").style.display = "block";
             }
 
             function hideSlideIndex() {
+                document.getElementById("slideCurrentTitle").style.display = "block";
                 document.getElementById("slideIndex").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
             }
@@ -335,12 +346,21 @@
                 }
             }
 
+            #slideCurrentTitle {
+                padding: 20px 0px;
+                color:white;
+                text-align:center;
+            }
+
         </style>
     </head>
 
     <body>
 
         <div id="controlsWrap">
+            <div id="slideCurrentTitle" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()"></div>
+
+
             <div id="slideIndex-wrap">
                 <div id="slideIndex" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()"></div>
             </div>
