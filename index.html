@@ -65,10 +65,12 @@
 
             function checkload() {
                 if(document.getElementById(coverSelected).complete && controlsloaded) {
+                    console.log("loaded")
                     loaded()
                 }
                 else {
                     setTimeout(checkload, 100)
+                    console.log("time")
                 }
             }
 
@@ -108,7 +110,7 @@
                 flex-wrap: wrap;
 				justify-content: center;
 				align-items: flex-start;
-                gap: 80px 40px;
+                gap: 20px 40px;
             }
 
             .cover-wrap {
@@ -197,13 +199,13 @@
             }
 
 
-            @media screen and (min-height: 1000px), (height: 1000px), (min-width: 470px), (width: 470px)  {
+            @media screen and (min-height: 1000px) and (min-width: 1150px), (height: 1000px) and (min-width: 1150px), (min-width: 470px), (width: 470px)  {
                 #content {
                     height: calc(var(--vh, 1vh) * 100 - 98px) !important;
                 }
             }
 
-            @media screen and (max-width: 470px), (max-height: 1000px) {
+            @media screen and (max-width: 470px), (max-height: 1000px) and (max-width: 1150px) {
                 #controls {
                     display:block !important;
                 }
