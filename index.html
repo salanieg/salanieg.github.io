@@ -60,23 +60,21 @@
             // LOADING SCRIPT
 
             document.addEventListener("DOMContentLoaded", (event) => {
+                checkload()
                 document.getElementById(coverSelected).addEventListener('load', checkload)
             });
 
             function checkload() {
                 if(document.getElementById(coverSelected).complete && controlsloaded) {
-                    console.log("loaded")
                     loaded()
                 }
                 else {
                     setTimeout(checkload, 100)
-                    console.log("time")
                 }
             }
 
             function loaded() {
                 document.getElementById("laden-wrap").style.display = "none"
-                console.log("test")
                 displayBySlideIndex(slideSelected)
                 document.getElementById(issuetitles[textSelected]).style.fontWeight = "700";
                 coverSelectedLoaded = true;
@@ -110,7 +108,7 @@
                 flex-wrap: wrap;
 				justify-content: center;
 				align-items: flex-start;
-                gap: 20px 40px;
+                gap: 30px 40px;
             }
 
             .cover-wrap {
@@ -172,7 +170,15 @@
 
             /* (NON)LINKED */
 
-            .linked, .non-linked {
+            .linked {
+                display:flex;
+                justify-content: space-between;
+                white-space:nowrap;
+                flex-wrap: wrap;
+                cursor: pointer;
+            }
+
+            /* .linked, .non-linked {
                 display:flex;
                 justify-content: space-between;
                 white-space:nowrap;
@@ -181,17 +187,17 @@
 
             .linked {       
                 cursor: pointer;
-            }
+            } */
 
-            @media screen and (max-width: 400px) {
+            /* @media screen and (max-width: 400px) {
                 .linked, .non-linked {
                     flex-direction: column;
                 }
-            }
+            } */
             
-            @media screen and (max-width: 800px) {.linked {display:none;}}
+            /* @media screen and (max-width: 800px) {.linked {display:none;}}
             @media screen and (min-width: 800px) {.non-linked {display:none;}}
-            @media screen and (width: 800px) {.non-linked {display:flex;}}
+            @media screen and (width: 800px) {.non-linked {display:flex;}} */
 
             
             #controls {
@@ -255,17 +261,17 @@
                 </div>
                 <div id="text-wrap">
                     <p id="title-i" onmouseover="selectcover(1)">
-                        <span class="non-linked"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></span>
+                        <!-- <span class="non-linked"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></span> -->
                         <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></a>
                     </p>
                     <hr>
                     <p id="title-ii" onmouseover="selectcover(2)">
-                        <span class="non-linked"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></span>
+                        <!-- <span class="non-linked"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></span> -->
                         <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></a>
                     </p> 
                     <hr>
                     <p id="title-iii" onmouseover="selectcover(3)">
-                        <span class="non-linked"><span>ISSUE III</span> <span>IST POPULISMUS GUT?</span></span>
+                        <!-- <span class="non-linked"><span>ISSUE III</span> <span>IST POPULISMUS GUT?</span></span> -->
                         <a class="linked" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE III</span> <span>IST POPULISMUS GUT?</span></a>
                     </p>
                     <hr>
