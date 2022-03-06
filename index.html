@@ -70,23 +70,22 @@
             // });
             document.addEventListener("DOMContentLoaded", (event) => {
                 if ('ontouchstart' in window) {
-                    // alert("trying")
-                    var links = document.getElementsByClassName("linked")
-        
-                    // alert(links.length)
-                    for (let i = 0; i < links.length; i++)
-                    {
-                        // alert(i)
-                        links[i].click(function (e) {
-                            e.preventDefault();
-                            alert("success1")
-                        });
-                    }
+                    
+                    // var links = document.getElementsByClassName("linked")
 
-                    // $("a").click(function (e) {
-                    //     e.preventDefault();
-                    //     alert("success2")
-                    // });
+                    // for (let i = 0; i < links.length; i++)
+                    // {
+                    //     // alert(i)
+                    //     links[i].click(function (e) {
+                    //         e.preventDefault();
+                    //         alert("success1")
+                    //     });
+                    // }
+
+                    $("linked").click(function (e) {
+                        e.preventDefault();
+                        alert("success2")
+                    });
                 }
             });
 
