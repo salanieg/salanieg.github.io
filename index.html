@@ -53,14 +53,29 @@
                     textSelected = i
                 }
             }
+
+
             document.addEventListener("DOMContentLoaded", (event) => {
                 var links = document.getElementsByClassName("linked")
             
-                console.log(links.length)
+                alert(links.length)
                 for (let i = 0; i < links.length; i++)
                 {
-                    console.log(i)
-                    links[i].addEventListener("touchstart", (event) => {event.preventDefault});
+                    alert(i)
+                    links[i].addEventListener("touchstart", (event) => {
+                        event.preventDefault;
+                        alert("success")
+                    });
+                }
+            });
+
+            document.addEventListener("DOMContentLoaded", (event) => {
+                if ('ontouchstart' in window) {
+                    alert("trying")
+                    $("linked").click(function (e) {
+                        e.preventDefault();
+                        alert("success")
+                    });
                 }
             });
 
