@@ -68,11 +68,18 @@
             //         });
             //     }
             // });
+            if ('ontouchstart' in window) {
+                    // alert("trying")
+                    $("a").click(function (e) {
+                        e.preventDefault();
+                        alert("success1")
+                    });
+                }
 
             document.addEventListener("DOMContentLoaded", (event) => {
                 if ('ontouchstart' in window) {
                     // alert("trying")
-                    $("linked").click(function (e) {
+                    $("a").click(function (e) {
                         e.preventDefault();
                         alert("success2")
                     });
