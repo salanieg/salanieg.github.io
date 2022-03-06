@@ -232,13 +232,17 @@ input:focus {
 	outline-width: 0;
 }
 
+input:active {
+	outline-width: 0;
+}
+
 button {
 	border-radius: 0;
 	border-style:outset;	
 
 }
 
-button:focus {
+button:active {
 	border-style:inset;	
 }
 

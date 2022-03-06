@@ -4,14 +4,9 @@
 
         <script>
 
-            var gefaengnishefte_cookies = false;
             var datainfoshown = false;
 
             function initcookies() {
-
-                // if(sessionStorage.getItem("gefaengnishefte_cookies") != null  || localStorage.getItem("gefaengnishefte_cookies") != null  ){
-                //     document.getElementById("databanner").style.display = "none";
-                // }
 
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
@@ -22,7 +17,6 @@
             }
 
             function cookies(choice) {
-                gefaengnishefte_cookies = choice;
                 document.getElementById("databanner").style.display = "none";
 
                 if(choice) {
@@ -32,9 +26,13 @@
                 initcookies();
             }
 
+            window.addEventListener("beforeunload", function(e){
+                clearcookies()
+            }, false);
+
             function clearcookies() {
+                sessionStorage.clear();
                 localStorage.clear();
-                localStorage.removeItem("gefaengnishefte_cookies");
 
                 var cookies = document.cookie.split(";");
 
@@ -44,6 +42,7 @@
                     var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
                     document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
                 }
+                alert("done!")
             }
 
             function showcookiecontent() {
@@ -149,8 +148,8 @@
                     Diese Internetseite verwendet Cookies, um das vollständige Anzeigen aller Inhalte zu ermöglichen. Durch das klicken des Akzeptieren-Buttons, stimmst du deren Verwendung zu. Weitere Informationen hierzu findest du in unserer <a style="text-decoration: underline;" href="https://www.GEFAENGNISHEFTE.org/datenschutz" target="_blank">Datenschutzerklärung</a>.
                 </div>
                 <div id="dataoptionen">
-                    <button id="cookies-eu-reject" class="dataoption" onclick="cookies(true)">Akzeptieren</button>
-                    <button id="cookies-eu-accept" class="dataoption" onclick="cookies(false)">Ablehnen</button>
+                    <button class="dataoption" onclick="cookies(true)">Akzeptieren</button>
+                    <button class="dataoption" onclick="cookies(false)">Ablehnen</button>
                 </div>
             </div>
         </div>

@@ -64,12 +64,6 @@
             #verantwortlich {
                 white-space: pre-wrap;
             }
-            
-
-            #datainfo {
-                width: 600px;
-                margin-bottom: 40px;
-            }
 
             #dataoptionen {
                 display:flex;
@@ -93,13 +87,7 @@
             }
 
             #clearcookies {
-                cursor: pointer;
-                transition: 0.1;
-            }
-
-            #clearcookies:hover {
-                color:lightgray;
-                transition: 0.1;
+                width:fit-content
             }
         </style>
     </head>
@@ -111,15 +99,19 @@
         <div id="content">
             <div id="datenschutz-wrap">
                 <h2>Datenschutzerklärung</h2><br><br><br>
-                <div id="datainfo">
+                <div>
                     Diese Internetseite verwendet Cookies, um das vollständige Anzeigen aller Inhalte zu ermöglichen. Durch das klicken des Akzeptieren-Buttons, stimmst du deren Verwendung zu. Weitere Informationen hierzu findest du auf dieser Seite.
                 </div>
+                <br>
+                <br>
                 <div id="dataoptionen">
                     <button class="dataoption" onclick="cookies(true)">Akzeptieren</button>
-                    <button class="dataoption" onclick="cookies(false)">Ablehnen</button>
+                    <button id="clearcookies" class="dataoption" onclick="clearcookies()">Ablehnen und Cookies löschen*</button>
                 </div>
                 <br>
-                <span id="clearcookies" onclick="clearcookies()">Klick hier, um von uns gespeicherte Cookies zu löschen.</span>
+                <small>* Nicht immer können alle Third-Party-Cookies von uns gelöscht werden.</small>
+
+                <br>
                 <h2>Inhaltsübersicht</h2> <ul class="index"><li><a class="index-link" href="#m14">Einleitung</a></li><li>
                 <a class="index-link" href="#m3">Verantwortlicher</a></li><li><a class="index-link" href="#mOverview">Übersicht der Verarbeitungen</a></li><li><a class="index-link" href="#m13">Maßgebliche Rechtsgrundlagen</a></li><li><a class="index-link" href="#m27">Sicherheitsmaßnahmen</a></li><li><a class="index-link" href="#m25">Übermittlung von personenbezogenen Daten</a></li><li><a class="index-link" href="#m24">Datenverarbeitung in Drittländern</a></li><li><a class="index-link" href="#m12">Löschung von Daten</a></li><li><a class="index-link" href="#m134">Einsatz von Cookies</a></li><li><a class="index-link" href="#m225">Bereitstellung des Onlineangebotes und Webhosting</a></li><li><a class="index-link" href="#m182">Kontakt- und Anfragenverwaltung</a></li><li><a class="index-link" href="#m17">Newsletter und elektronische Benachrichtigungen</a></li><li><a class="index-link" href="#m328">Plugins und eingebettete Funktionen sowie Inhalte</a></li><li><a class="index-link" href="#m15">Änderung und Aktualisierung der Datenschutzerklärung</a></li><li><a class="index-link" href="#m10">Rechte der betroffenen Personen</a></li><li><a class="index-link" href="#m42">Begriffsdefinitionen</a></li></ul>
                 <h2 id="m14">Einleitung</h2>
