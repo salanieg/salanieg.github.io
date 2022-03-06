@@ -19,7 +19,6 @@
                 document.getElementById("deabonnieren").addEventListener('submit', function(event){
 
                     event.preventDefault()
-                    alert($(event.target).serialize())
 
                     $.ajax({
                         method: 'POST',
@@ -70,7 +69,7 @@
                     <form id="deabonnieren" class="abo">
                         <button type="submit" id="deabonnierenbutton">Deabonnieren</button>
                         <span><input type="email" name="Email" placeholder="Email" required></span>
-                        <input type="hidden" name="_subject" value="Désabonnements">
+                        <input type="hidden" name="_subject" value="Désabonnement">
                         <input type="hidden" name="_captcha" value="true">
                     </form>
                 </div>
