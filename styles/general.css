@@ -269,18 +269,31 @@ button:active {
 	float:right;
 	background-color:lightgrey;
 	cursor: pointer;
-	max-width: 40vw;
 }
 
-.abo input, button {
+.abo input, .abo button {
 	height: fit-content;
 	font-size:15pt;
 	padding: 5px 20px;
 	color: black;
 }
 
-@media screen and (max-width: 450px) {.abo input, button { font-size: 13pt;}}
-@media screen and (max-width: 350px) {.abo input, button { font-size: 11pt;}}
+@media screen and (max-width: 470px) {
+	.abo {
+		display:flex;
+		flex-direction: column-reverse;
+		gap:5px;
+	}
+
+	.abo button, .abo input  {
+		font-size: 13pt;
+		text-align:left;
+	}
+
+	.abo span {
+		padding-right:44px;
+	}
+}
 
 .abo *::selection {
 	background: transparent !important;
