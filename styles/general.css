@@ -203,6 +203,7 @@ small {
 	padding:0px 20px;
 	background-color:white;
 	color:black;
+	-webkit-tap-highlight-color: transparent;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
