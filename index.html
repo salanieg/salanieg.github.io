@@ -60,7 +60,7 @@
                 for (let i = 0; i < links.length; i++)
                 {
                     console.log(i)
-                    links[i].addEventListener("touchstart", event.preventDefault);
+                    links[i].addEventListener("touchstart", (event) => {event.preventDefault});
                 }
             });
 
