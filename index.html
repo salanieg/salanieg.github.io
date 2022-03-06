@@ -58,23 +58,23 @@
             document.addEventListener("DOMContentLoaded", (event) => {
                 var links = document.getElementsByClassName("linked")
             
-                alert(links.length)
+                // alert(links.length)
                 for (let i = 0; i < links.length; i++)
                 {
-                    alert(i)
+                    // alert(i)
                     links[i].addEventListener("touchstart", (event) => {
                         event.preventDefault;
-                        alert("success")
+                        alert("success1")
                     });
                 }
             });
 
             document.addEventListener("DOMContentLoaded", (event) => {
                 if ('ontouchstart' in window) {
-                    alert("trying")
+                    // alert("trying")
                     $("linked").click(function (e) {
                         e.preventDefault();
-                        alert("success")
+                        alert("success2")
                     });
                 }
             });
