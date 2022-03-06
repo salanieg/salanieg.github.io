@@ -53,38 +53,13 @@
                     textSelected = i
                 }
             }
-
-
-            // document.addEventListener("DOMContentLoaded", (event) => {
-            //     var links = document.getElementsByClassName("title")
             
-            //     // alert(links.length)
-            //     for (let i = 0; i < links.length; i++)
-            //     {
-            //         // alert(i)
-            //         links[i].addEventListener("touchstart", (event) => {
-            //             event.preventDefault;
-            //             alert("success1")
-            //         });
-            //     }
-            // });
             document.addEventListener("DOMContentLoaded", (event) => {
                 if ('ontouchstart' in window) {
-                    
-                    // var links = document.getElementsByClassName("title")
-
-                    // for (let i = 0; i < links.length; i++)
-                    // {
-                    //     // alert(i)
-                    //     links[i].click(function (e) {
-                    //         e.preventDefault();
-                    //         alert("success1")
-                    //     });
-                    // }
 
                     $(".title").click(function (e) {
                         e.preventDefault();
-                        alert("success2")
+                        e.target.style.color = "white"
                     });
                 }
             });
