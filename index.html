@@ -68,21 +68,25 @@
             //         });
             //     }
             // });
-            if ('ontouchstart' in window) {
-                    // alert("trying")
-                    $("a").click(function (e) {
-                        e.preventDefault();
-                        alert("success1")
-                    });
-                }
-
             document.addEventListener("DOMContentLoaded", (event) => {
                 if ('ontouchstart' in window) {
                     // alert("trying")
-                    $("a").click(function (e) {
-                        e.preventDefault();
-                        alert("success2")
-                    });
+                    var links = document.getElementsByClassName("linked")
+        
+                    // alert(links.length)
+                    for (let i = 0; i < links.length; i++)
+                    {
+                        // alert(i)
+                        links[i].click(function (e) {
+                            e.preventDefault();
+                            alert("success1")
+                        });
+                    }
+
+                    // $("a").click(function (e) {
+                    //     e.preventDefault();
+                    //     alert("success2")
+                    // });
                 }
             });
 
