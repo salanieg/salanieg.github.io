@@ -9,11 +9,11 @@
 
             function initcookies() {
 
-                if(sessionStorage.getItem("gefaengnishefte_cookies") != null  || localStorage.getItem("gefaengnishefte_cookies") != null  ){
-                    document.getElementById("databanner").style.display = "none";
-                }
+                // if(sessionStorage.getItem("gefaengnishefte_cookies") != null  || localStorage.getItem("gefaengnishefte_cookies") != null  ){
+                //     document.getElementById("databanner").style.display = "none";
+                // }
 
-                if(sessionStorage.getItem("gefaengnishefte_cookies") == "true" || localStorage.getItem("gefaengnishefte_cookies") == "true"){
+                if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
                 }
                 else {
@@ -35,8 +35,17 @@
             }
 
             function clearcookies() {
+                localStorage.clear();
                 localStorage.removeItem("gefaengnishefte_cookies");
-                sessionStorage.removeItem("gefaengnishefte_cookies");
+
+                var cookies = document.cookie.split(";");
+
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i];
+                    var eqPos = cookie.indexOf("=");
+                    var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                }
             }
 
             function showcookiecontent() {
@@ -88,6 +97,10 @@
         </script>
 
         <style>
+
+            #databanner {
+                display:none;
+            }
 
             #datenschutz {
                 background-color: var(--header-color);
