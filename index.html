@@ -53,6 +53,18 @@
                     textSelected = i
                 }
             }
+            document.addEventListener("DOMContentLoaded", (event) => {
+                var links = document.getElementsByClassName("linked")
+            
+                console.log(links.length)
+                for (let i = 0; i < links.length; i++)
+                {
+                    console.log(i)
+                    links[i].addEventListener("touchstart", event.preventDefault);
+                }
+            });
+
+
         </script>
 
         <script>
