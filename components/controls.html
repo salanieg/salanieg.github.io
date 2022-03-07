@@ -31,7 +31,7 @@
                 }
 
                 for (let i = 0; i < slideList.length; i++) {
-                    $('#slideIndex').append('<span onclick="displayBySlideIndex(' + i + ')">' + indexList[i] + '</span><br>');
+                    $('#slideIndex').append('<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')">' + indexList[i] + '</span><br>');
                 }
 
                 resetcontrols()
@@ -151,17 +151,24 @@
             // SLIDE INDEX
 
             function displaySlideIndex() {
-                if(placeholder != null) {
+                if(placeholder) {
                     document.getElementById("laden").style.display = "none";
                 }
 
+                var indexitems = document.getElementsByClassName("indexitem")
+
+                for (let i = 0; i < indexitems.length; i++) {
+                    indexitems[i].style.fontWeight = "300"
+                }
+
+                document.getElementById("index"+slideSelected).style.fontWeight = "700"
                 document.getElementById("slideCurrentTitle").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "none";
                 document.getElementById("slideIndex").style.display = "block";
             }
 
             function hideSlideIndex() {
-                if(placeholder != null) {
+                if(placeholder) {
                     document.getElementById("laden").style.display = "inline";
                 }
 
