@@ -81,9 +81,10 @@
                 var frames = document.getElementsByTagName("iframe")
                 console.log(datainfoshown)
                 if(!datainfoshown) {
-                    
+                    console.log(frames.length)
                     for (let i = 0; i < frames.length; i++)
                     {
+                        console.log("cookiedisclaimer")
                         var cookiedisclaimer = document.createElement("span");
                         console.log(cookiedisclaimer)
                         cookiedisclaimer.innerHTML = "Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.";
