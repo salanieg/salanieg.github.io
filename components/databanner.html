@@ -7,13 +7,14 @@
             var datainfoshown = false;
 
             function initcookies() {
-
+                console.log("init1")
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
                 }
                 else {
                     hidecookiecontent();
                 }
+                console.log("init2")
             }
 
             function cookies(choice) {
@@ -71,11 +72,12 @@
                 {
                     cookiedisclaimers[i].remove();
                 }
-
+                console.log("show")
                 datainfoshown = false;
             }
 
             function hidecookiecontent() {
+                console.log("hide")
                 var frames = document.getElementsByTagName("iframe")
                 if(!datainfoshown) {
                     
