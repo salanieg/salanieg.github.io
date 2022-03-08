@@ -59,8 +59,8 @@
                     footnote.appendChild(note)
                 }
 
+                // catch footnotes loading after databanner
                 if(localStorage.getItem("gefaengnishefte_cookies") != "true" && typeof hidecookiecontent === "function"){
-                    console.log("test")
                     hidecookiecontent();
                 }
             }
@@ -87,7 +87,7 @@
                 footnotefocused = event.target;
 
                 footnotefocused.style.color = "#980000";
-                footnotefocused.childNodes[1].style.zIndex = "1000";
+                footnotefocused.childNodes[1].style.zIndex = "19";
                 footnotefocused.childNodes[1].style.display = "inline";
             }
 

@@ -5,14 +5,13 @@
         <script>
 
             function initcookies() {
-                console.log("init1")
+
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
                 }
                 else {
                     hidecookiecontent();
                 }
-                console.log("init2")
             }
 
             function cookies(choice) {
@@ -25,15 +24,15 @@
                 initcookies();
             }
 
-            // window.addEventListener("beforeunload", function(e){
-            //     alert("start!")
-            //     clearcookies()
-            // });
+            window.addEventListener("beforeunload", function(e){
+                alert("start!")
+                clearcookies()
+            });
 
-            // window.onbeforeunload = function(event) {
-            //     alert("start!")
-            //     clearcookies()
-            // };
+            window.onbeforeunload = function(event) {
+                alert("start!")
+                clearcookies()
+            };
 
             function clearcookies() {
                 sessionStorage.clear();
@@ -47,6 +46,19 @@
                     var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
                     document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
                 }
+
+                
+                $.ajax({
+                    method: 'POST',
+                    url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
+                    dataType: 'json',
+                    accepts: 'application/json',
+                    data: "Code=test&_subject=Bestätigungsmail&_captcha=true"
+                    ,
+                    success: (data) => console.log(data),
+                    error: (err) => alert(err)
+                });
+
                 // alert("done!")
             }
 
@@ -70,32 +82,22 @@
                 {
                     cookiedisclaimers[i].remove();
                 }
-                console.log("show")
-                // datainfoshown = false;
             }
 
             function hidecookiecontent() {
-                console.log("hide")
-                var frames = document.getElementsByTagName("iframe")
-                // console.log(datainfoshown)
-                // if(!datainfoshown) {
-                    console.log(frames.length)
+
+                    var frames = document.getElementsByTagName("iframe")
+
                     for (let i = 0; i < frames.length; i++)
                     {
-                        console.log("cookiedisclaimer")
                         var cookiedisclaimer = document.createElement("span");
-                        console.log(cookiedisclaimer)
+
                         cookiedisclaimer.innerHTML = "Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.";
                         cookiedisclaimer.className = "cookiedisclaimer";
-                        console.log(cookiedisclaimer)
-                        frames[i].style.display = "none"
-                        console.log(cookiedisclaimer)
-                        frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
-                        console.log(cookiedisclaimer)
-                    }
 
-                    // datainfoshown = true;
-                // }
+                        frames[i].style.display = "none"
+                        frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
+                    }
             }
 
             function showdatabanner() {
