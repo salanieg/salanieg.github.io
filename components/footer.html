@@ -82,11 +82,13 @@
                 footnotefocused = event.target;
 
                 footnotefocused.style.color = "#980000";
+                footnotefocused.childNodes[1].style.zIndex = "1000";
                 footnotefocused.childNodes[1].style.display = "inline";
             }
 
             function resetfootnote() {
                 footnotefocused.style.color = "black";
+                footnotefocused.childNodes[1].style.zIndex = "0";
                 footnotefocused.childNodes[1].style.display = "none";
                 footnotefocused = "none";
             }
