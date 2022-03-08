@@ -4,8 +4,6 @@
 
         <script>
 
-            var datainfoshown = false;
-
             function initcookies() {
                 console.log("init1")
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
@@ -73,14 +71,14 @@
                     cookiedisclaimers[i].remove();
                 }
                 console.log("show")
-                datainfoshown = false;
+                // datainfoshown = false;
             }
 
             function hidecookiecontent() {
                 console.log("hide")
                 var frames = document.getElementsByTagName("iframe")
-                console.log(datainfoshown)
-                if(!datainfoshown) {
+                // console.log(datainfoshown)
+                // if(!datainfoshown) {
                     console.log(frames.length)
                     for (let i = 0; i < frames.length; i++)
                     {
@@ -96,8 +94,8 @@
                         console.log(cookiedisclaimer)
                     }
 
-                    datainfoshown = true;
-                }
+                    // datainfoshown = true;
+                // }
             }
 
             function showdatabanner() {

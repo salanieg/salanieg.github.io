@@ -59,7 +59,7 @@
                     footnote.appendChild(note)
                 }
 
-                if(localStorage.getItem("gefaengnishefte_cookies") != "true"){
+                if(localStorage.getItem("gefaengnishefte_cookies") != "true" && typeof hidecookiecontent === "function"){
                     console.log("test")
                     hidecookiecontent();
                 }
