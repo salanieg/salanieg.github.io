@@ -25,8 +25,14 @@
             }
 
             window.addEventListener("beforeunload", function(e){
-                clearcookies()
+                cleartpcookies()
             });
+
+            function cleartpcookies() {
+                currentchoice = localStorage.getItem("gefaengnishefte_cookies")
+                clearcookies()
+                localStorage.setItem("gefaengnishefte_cookies", currentchoice);
+            }
 
             function clearcookies() {
                 sessionStorage.clear();
@@ -62,6 +68,8 @@
                 {
                     cookiedisclaimers[i].remove();
                 }
+
+                cleartpcookies()
             }
 
             function hidecookiecontent() {
