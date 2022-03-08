@@ -25,14 +25,8 @@
             }
 
             window.addEventListener("beforeunload", function(e){
-                alert("start!")
                 clearcookies()
             });
-
-            window.onbeforeunload = function(event) {
-                alert("start!")
-                clearcookies()
-            };
 
             function clearcookies() {
                 sessionStorage.clear();
@@ -46,20 +40,6 @@
                     var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
                     document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
                 }
-
-                
-                $.ajax({
-                    method: 'POST',
-                    url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
-                    dataType: 'json',
-                    accepts: 'application/json',
-                    data: "Code=test&_subject=Bestätigungsmail&_captcha=true"
-                    ,
-                    success: (data) => console.log(data),
-                    error: (err) => alert(err)
-                });
-
-                // alert("done!")
             }
 
             function showcookiecontent() {
