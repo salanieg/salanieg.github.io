@@ -12,7 +12,7 @@
                     showcookiecontent();
                 }
                 else {
-                    hidecookiecontent();
+                    hidecookiecontent(false);
                 }
                 console.log("init2")
             }
@@ -79,9 +79,9 @@
                 console.log("showcookiecontent9")
             }
 
-            function hidecookiecontent() {
+            function hidecookiecontent(forcehide) {
                 console.log("hidecookiecontent1")
-                if(!datainfoshown) {
+                if(!datainfoshown || forcehide) {
                     console.log("hidecookiecontent2")
                     console.log("hidecookiecontent3")
                     var frames = document.getElementsByTagName("iframe")

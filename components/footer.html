@@ -65,7 +65,7 @@
                 // catch footnotes loading after databanner
                 if(localStorage.getItem("gefaengnishefte_cookies") != "true" && typeof hidecookiecontent === "function"){
                     console.log("initfootnotes hidecookiecontent")
-                    hidecookiecontent();
+                    hidecookiecontent(true);
                 }
             }
 
