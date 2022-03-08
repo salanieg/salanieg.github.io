@@ -5,13 +5,14 @@
         <script>
 
             function initcookies() {
-
+                console.log("init1")
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
                 }
                 else {
                     hidecookiecontent();
                 }
+                console.log("init2")
             }
 
             function cookies(choice) {
@@ -50,9 +51,10 @@
 
             function showcookiecontent() {
                 var frames = document.getElementsByTagName("iframe")
-
+                console.log("showcookiecontent1")
                 for (let i = 0; i < frames.length; i++)
                 {
+                    console.log(frames.length)
 
                     let frameURL = frames[i].innerHTML
 
@@ -61,15 +63,16 @@
                     frames[i].src = frameURL
                     frames[i].style.display = "block"
                 }
-
+                console.log("showcookiecontent7")
                 var cookiedisclaimers = document.getElementsByClassName("cookiedisclaimer")
 
                 for (let i = 0; i < cookiedisclaimers.length; i)
                 {
                     cookiedisclaimers[i].remove();
                 }
-
+                console.log("showcookiecontent8")
                 cleartpcookies()
+                console.log("showcookiecontent9")
             }
 
             function hidecookiecontent() {

@@ -43,6 +43,7 @@
             }
 
             function initfootnotes() {
+                console.log("initfootnotes")
                 for (let i = 1; i < footnoteList.length + 1; i++) {
                     let number = tosuperscript(i)
 
@@ -59,8 +60,10 @@
                     footnote.appendChild(note)
                 }
 
+                console.log("initfootnotes catch")
                 // catch footnotes loading after databanner
                 if(localStorage.getItem("gefaengnishefte_cookies") != "true" && typeof hidecookiecontent === "function"){
+                    console.log("initfootnotes hidecookiecontent")
                     hidecookiecontent();
                 }
             }
