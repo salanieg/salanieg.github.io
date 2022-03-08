@@ -43,7 +43,6 @@
             }
 
             function initfootnotes() {
-                console.log("initfootnotes1")
                 for (let i = 1; i < footnoteList.length + 1; i++) {
                     let number = tosuperscript(i)
 
@@ -59,7 +58,11 @@
 
                     footnote.appendChild(note)
                 }
-                console.log("initfootnotes2")
+
+                if(localStorage.getItem("gefaengnishefte_cookies") != "true"){
+                    console.log("test")
+                    hidecookiecontent();
+                }
             }
 
             document.addEventListener("click", focusfootnote)
