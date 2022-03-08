@@ -80,22 +80,27 @@
             }
 
             function hidecookiecontent() {
+                console.log("hidecookiecontent1")
                 if(!datainfoshown) {
+                    console.log("hidecookiecontent2")
+                    console.log("hidecookiecontent3")
                     var frames = document.getElementsByTagName("iframe")
-
+                    console.log("hidecookiecontent4")
                     for (let i = 0; i < frames.length; i++)
                     {
                         var cookiedisclaimer = document.createElement("span");
-
+                        console.log("hidecookiecontent5")
                         cookiedisclaimer.innerHTML = "Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.";
                         cookiedisclaimer.className = "cookiedisclaimer";
-
+                        console.log("hidecookiecontent6")
                         frames[i].style.display = "none"
                         frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
+                        console.log("hidecookiecontent7")
                     }
-
+                    console.log("hidecookiecontent8")
                     datainfoshown = true;
                 }
+                console.log("hidecookiecontent9")
             }
 
             function showdatabanner() {
