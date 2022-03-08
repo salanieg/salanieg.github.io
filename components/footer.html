@@ -76,9 +76,11 @@
                 if(event.target.className == "footnote") {
                     selectfootnote(event)
                 }
-                else if(!footnotefocused.contains(event.target)) {
-                    resetfootnote()
-                    pausevideos();
+                else if(footnotefocused != "none") {
+                    if(!footnotefocused.contains(event.target)) {
+                        resetfootnote()
+                        pausevideos();
+                    }
                 }
             }
 
