@@ -43,6 +43,7 @@
             }
 
             function initfootnotes() {
+                console.log("initfootnotes1")
                 for (let i = 1; i < footnoteList.length + 1; i++) {
                     let number = tosuperscript(i)
 
@@ -58,6 +59,7 @@
 
                     footnote.appendChild(note)
                 }
+                console.log("initfootnotes2")
             }
 
             document.addEventListener("click", focusfootnote)
