@@ -12,7 +12,7 @@
                     showcookiecontent();
                 }
                 else {
-                    hidecookiecontent(false);
+                    hidecookiecontent();
                 }
                 console.log("init2")
             }
@@ -79,9 +79,9 @@
                 console.log("showcookiecontent9")
             }
 
-            function hidecookiecontent(forcehide) {
+            function hidecookiecontent() {
                 console.log("hidecookiecontent1")
-                if(!datainfoshown || forcehide) {
+                if(!datainfoshown) {
                     console.log("hidecookiecontent2")
                     console.log("hidecookiecontent3")
                     var frames = document.getElementsByTagName("iframe")
@@ -96,9 +96,10 @@
                         frames[i].style.display = "none"
                         frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
                         console.log("hidecookiecontent7")
+                        
+                        datainfoshown = true;
                     }
                     console.log("hidecookiecontent8")
-                    datainfoshown = true;
                 }
                 console.log("hidecookiecontent9")
             }
