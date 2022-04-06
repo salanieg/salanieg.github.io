@@ -10,7 +10,6 @@
             document.documentElement.style.setProperty('--vh', `${vh}px`);
 
             window.addEventListener('resize', () => {
-				alert(window.innerHeight * 0.01)
                 let vh = window.innerHeight * 0.01;
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
             });
@@ -50,15 +49,22 @@
 			// DROPMENU
 
 			var menuopen = false;
+			var windowwidth = $(window).width();
 
             window.addEventListener("resize", (event) => {
-				closemenu()
+				
+				if ($(window).width()!=windowwidth) {
 
-                if ($(window).width() < 800 && !menuopen) {
-					document.getElementById("openmenu").style.display = "inline";
-                }
-				else {
-					document.getElementById("openmenu").style.display = "none";
+					windowwidth = $(window).width();
+
+					closemenu()
+
+					if ($(window).width() < 800 && !menuopen) {
+						document.getElementById("openmenu").style.display = "inline";
+					}
+					else {
+						document.getElementById("openmenu").style.display = "none";
+					}
 				}
             });
 
