@@ -80,9 +80,9 @@
 				menuopen = true
 			}
 
-			// document.getElementById("aboinput").addEventListener('focus', (event) => {
-			// 	document.getElementById("aboinfo").style.display = "block"
-			// });
+			document.getElementById("aboinput").addEventListener('focus', (event) => {
+				document.getElementById("aboinfo").style.display = "block"
+			});
 
 
 			function safeclosemenu() {
@@ -180,31 +180,31 @@
 
 			// ABONNIEREN
 	
-			// document.getElementById("abonnieren").addEventListener('submit', function(event){
+			document.getElementById("abonnieren").addEventListener('submit', function(event){
 
-			// 	event.preventDefault()
+				event.preventDefault()
 
-			// 	$.ajax({
-			// 		method: 'POST',
-			// 		url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
-			// 		dataType: 'json',
-			// 		accepts: 'application/json',
-			// 		data: $(event.target).serialize() + "&Code=" + makeid(40)
-			// 		,
-			// 		success: (data) => console.log(data),
-			// 		error: (err) => alert(err)
-			// 	});
+				$.ajax({
+					method: 'POST',
+					url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
+					dataType: 'json',
+					accepts: 'application/json',
+					data: $(event.target).serialize() + "&Code=" + makeid(40)
+					,
+					success: (data) => console.log(data),
+					error: (err) => alert(err)
+				});
 
-			// 	document.getElementById("abonnierenbutton").textContent = 'Abonniert!';
-			// 	document.getElementById("abonnierenbutton").disabled = true;
-			// 	document.getElementById("aboinfo").style.display = "none";
-			// 	document.getElementById("abonniertinfo").style.display = "block";
-			// })
+				document.getElementById("abonnierenbutton").textContent = 'Abonniert!';
+				document.getElementById("abonnierenbutton").disabled = true;
+				document.getElementById("aboinfo").style.display = "none";
+				document.getElementById("abonniertinfo").style.display = "block";
+			})
 
-			// document.getElementById("abonnieren").addEventListener('input', function(event){
-			// 	document.getElementById("abonnierenbutton").textContent = 'Abonnieren';
-			// 	document.getElementById("abonnierenbutton").disabled = false;
-			// });
+			document.getElementById("abonnieren").addEventListener('input', function(event){
+				document.getElementById("abonnierenbutton").textContent = 'Abonnieren';
+				document.getElementById("abonnierenbutton").disabled = false;
+			});
 
 		</script>
 
@@ -449,7 +449,7 @@
 	<body>
 		<div id="header-wrap">
 
-			<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
+			<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">sGEFÄNGNISHEFTE</a></div> 
 
 			<nav id="navigation" onmouseleave="safeclosemenu()">
 
