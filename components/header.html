@@ -52,7 +52,7 @@
 			var menuopen = false;
 
             window.addEventListener("resize", (event) => {
-				closemenu()
+				safeclosemenu()
 
                 if ($(window).width() < 800 && !menuopen) {
 					document.getElementById("openmenu").style.display = "inline";
@@ -80,9 +80,9 @@
 				menuopen = true
 			}
 
-			document.getElementById("aboinput").addEventListener('focus', (event) => {
-				document.getElementById("aboinfo").style.display = "block"
-			});
+			// document.getElementById("aboinput").addEventListener('focus', (event) => {
+			// 	document.getElementById("aboinfo").style.display = "block"
+			// });
 
 
 			function safeclosemenu() {
