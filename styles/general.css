@@ -295,14 +295,26 @@ button:active {
 	}
 }
 
-.abo *::selection {
+.abo > input::selection {
 	background: transparent !important;
 }
 
-.abo *::-webkit-selection {
+.abo > input::-webkit-selection {
 	background: transparent !important;
 }
 
-.abo *::-moz-selection {
+.abo > input::-moz-selection {
+	background: transparent !important;
+}
+
+.abo > button::selection {
+	background: transparent !important;
+}
+
+.abo > button::-webkit-selection {
+	background: transparent !important;
+}
+
+.abo > button::-moz-selection {
 	background: transparent !important;
 }
