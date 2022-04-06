@@ -92,7 +92,7 @@
 
 
 			function safeclosemenu() {
-				if(document.getElementById("aboinput") !== document.activeElement) {
+				if(document.getElementById("aboinput") !== document.activeElement && document.getElementById("abocheckbox") !== document.activeElement && document.getElementById("abobutton") !== document.activeElement) {
 					closemenu()
 					document.getElementById("aboinfo").style.display = "none"
 				}
@@ -204,7 +204,6 @@
 				document.getElementById("abonnierenbutton").textContent = 'Abonniert!';
 				document.getElementById("abonnierenbutton").disabled = true;
 				document.getElementById("aboinfo").style.display = "none";
-				document.getElementById("abonniertinfo").style.display = "block";
 			})
 
 			document.getElementById("abonnieren").addEventListener('input', function(event){
@@ -373,16 +372,6 @@
 			
 			/* FORM */
 
-			#abonniertinfo {
-				display: none;
-				width:400px;
-				padding-top:20px;
-				font-size: 9pt;
-				line-height: 1.3;
-				text-align: left;
-				white-space: pre-wrap;
-			}
-
 			#etc {
 				cursor: default;
 			}
@@ -421,15 +410,12 @@
 				}
 			}
 
-			#aboinfo {
-				display:none;
-			}
-
 			#abocheckbox {
 				display:inline;
 			}
 
 			#aboinfo {
+				display:none;
 				width:400px;
 				font-size: 9pt;
 				line-height: 1.3 !important;
@@ -440,9 +426,6 @@
 
 			#abocheckbox {
 				position:relative;
-				border: outset;
-				border-width:5px;
-				border-radius: 0;
 				width: 15px;
 				height:15px;
 				margin:0;
@@ -455,7 +438,7 @@
 	<body>
 		<div id="header-wrap">
 
-			<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">sGEFÄNGNISHEFTE</a></div> 
+			<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
 
 			<nav id="navigation" onmouseleave="safeclosemenu()">
 
@@ -578,10 +561,8 @@
 									<input type="hidden" name="_subject" value="Abonnement">
 									<input type="hidden" name="_captcha" value="true">
 									
-									<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>.</label>
+									<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</label>
 								</form>
-
-								<div id="abonniertinfo">Ein Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</div>
 							</div>
 						</div>
 						
