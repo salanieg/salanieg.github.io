@@ -40,10 +40,12 @@
 }
 
 #title {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	column-gap:50px;
 	width: 500px;
-	display: block;
 	margin-top: 100px;
-	white-space: pre-wrap;
 	font-weight: 700;
 	line-height: 2;
 	font-size: 15pt;

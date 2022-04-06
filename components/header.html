@@ -170,10 +170,15 @@
 				menuopen = true
 			}
 
+			document.getElementById("abonniereninput").addEventListener('focus', (event) => {
+				document.getElementById("abonniereninfo").style.display = "block"
+			});
+
 
 			function safeclosemenu() {
 				if(document.getElementById("abonniereninput") !== document.activeElement) {
 					closemenu()
+					document.getElementById("abonniereninfo").style.display = "none"
 				}
 			}
 
@@ -187,7 +192,7 @@
 					document.getElementById("openmenu").style.display = "inline";
 				}
 
-				hideissues()
+				// hideissues()
 				menuopen = false
 			}
 
@@ -199,17 +204,17 @@
 				document.getElementById("dropmenum").style.width = "0vw";
 			}
 
-			function showissues() {
-				document.getElementById("showissues").style.display = "none";
-				document.getElementById("hideissues").style.display = "inline";
-				document.getElementById("issue-list").style.display = "block";
-			}
+			// function showissues() {
+			// 	document.getElementById("showissues").style.display = "none";
+			// 	document.getElementById("hideissues").style.display = "inline";
+			// 	document.getElementById("issue-list").style.display = "block";
+			// }
 
-			function hideissues() {
-				document.getElementById("showissues").style.display = "inline";
-				document.getElementById("hideissues").style.display = "none";
-				document.getElementById("issue-list").style.display = "none";
-			}
+			// function hideissues() {
+			// 	document.getElementById("showissues").style.display = "inline";
+			// 	document.getElementById("hideissues").style.display = "none";
+			// 	document.getElementById("issue-list").style.display = "none";
+			// }
 
 			
 		</script>
@@ -385,7 +390,7 @@
 				display:none;
 			}
 
-			@media screen and (max-width: 410px) {
+			@media screen and (max-width: 400px) {
 				.desclarge {
 					display:none;
 				}
@@ -460,10 +465,6 @@
 				line-height: 1.3;
 				text-align: left;
 				white-space: pre-wrap;
-			}
-
-			#abonniereninfo {
-				display:block;
 			}
 
 			#etc {
@@ -599,8 +600,8 @@
 						<div class="info" id="infoe">
 							<div class="spacedtitles">
 								<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a>
-									<span class="description" id="showissues" onclick="showissues()">Einblenden</span>
-									<span class="description" id="hideissues" onclick="hideissues()">Ausblenden</span>
+									<!-- <span class="description" id="showissues" onclick="showissues()">Einblenden</span>
+									<span class="description" id="hideissues" onclick="hideissues()">Ausblenden</span> -->
 							</div>
 							<div id="issue-list">
 								<a class="description" id="descriptionisi" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span class="desclarge">ISSUE I</span><span class="descsmall">I</span><span>ALTERNATIVE UTOPIEN</span></a>
@@ -609,11 +610,13 @@
 							</div>
 							<div>
 								<a href="https://www.GEFAENGNISHEFTE.org/special-issues" class="spacedtitles"><span id="descriptions">SPECIAL&#x2005;ISSUES</span>
-								<span class="description desclarge">Projekte von Freund*innen</span></a>
+								<!-- <span class="description desclarge">Projekte von Freund*innen</span> -->
+								</a>
 							</div>
 							<div  class="spacedtitles">
 								<a href="https://www.GEFAENGNISHEFTE.org/kanon" class="spacedtitles"><span id="descriptionk">KANON</span>
-								<span class="description desclarge">Sehenswertes</span></a>
+								<!-- <span class="description desclarge">Sehenswertes</span> -->
+								</a>
 							</div>
 						</div>
 						
