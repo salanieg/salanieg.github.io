@@ -184,7 +184,9 @@
             function keeptop() {
                 document.getElementById("content").scrollTop = 0;
                 document.documentElement.scrollTop = 0;
-                setTimeout(hidescrollbar, 1);
+                if(typeof hidescrollbar === "function"){
+                    setTimeout(hidescrollbar, 1);
+                }
             }
 
             function resetcontrols() {
