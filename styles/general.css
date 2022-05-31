@@ -237,15 +237,22 @@ input:active {
 }
 
 button {
+	appearance: none;
 	border-radius: 0;
-	border-style:outset;	
-
+	border-style:outset;
+	border-color: grey; 
 }
 
 button:active {
 	border-style:inset;	
 }
 
+button:disabled,
+button[disabled]{
+  border: outset rgba(128, 128, 128, 0.3);
+  color: rgba(211, 211, 211, 0.5);
+  color:rgba(128, 128, 128, 0.5)
+}
 
 /* FORM */
 
