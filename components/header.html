@@ -75,12 +75,14 @@
 
 				if ($(window).width() > 800) {
 					document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 200 + 'px'; // og value 30
+					document.getElementById(menu).style.border = "outset lightgrey";
 				}
 				else {
 					document.getElementById(menu).style.width = "100vw";
 					document.getElementById("headerlogo").style.visibility = "hidden";
 					document.getElementById("openmenu").style.display = "none";
 					document.getElementById("closemenu").style.display = "inline";
+					document.documentElement.style.setProperty('--header-divider', `block`);
 				}
 
 				menuopen = true
@@ -114,10 +116,15 @@
 
 
 			function hidedropmenus() {
-				document.getElementById("dropmenui").style.width = "0vw";
-				// document.getElementById("dropmenus").style.width = "0vw";
-				document.getElementById("dropmenuk").style.width = "0vw";
-				document.getElementById("dropmenum").style.width = "0vw";
+				var dropmenus = document.getElementsByClassName("dropmenu")
+
+				for (let i = 0; i < dropmenus.length; i++)
+				{
+					dropmenus[i].style.width = "0vw";
+					dropmenus[i].style.border = "none transparent";
+				}
+
+				document.documentElement.style.setProperty('--header-divider', `none`);
 			}
 
 			// function showissues() {
@@ -489,7 +496,7 @@
 						<div class="menu-spacer">X</div>
 						<hr>
 						<div class="info" id="infok">
-							<a href="https://www.GEFAENGNISHEFTE.org/kanon">Eine Zusammenstellung sehenswerter Dinge</a>
+							<a href="https://www.GEFAENGNISHEFTE.org/kanon">Eine Zusammenstellung sehenswerter Videos</a>
 						</div>
 						<hr class="bottom-divider">
 					</div>

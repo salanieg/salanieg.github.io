@@ -8,5 +8,5 @@
   --content-color-contrast: #980000;
   --content-color-text: white;
   --content-color-link-hover: #980000;
-  --header-divider:block;
+  --header-divider:none;
 }
