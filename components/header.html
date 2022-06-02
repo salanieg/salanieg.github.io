@@ -74,8 +74,8 @@
 				document.getElementById(anchor).style.visibility = "visible";
 
 				if ($(window).width() > 800) {
-					document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 200 + 'px'; // og value 30
-					document.getElementById(menu).style.border = "outset lightgrey";
+					document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
+					document.getElementById(menu).style.border = "2px solid lightgrey";
 				}
 				else {
 					document.getElementById(menu).style.width = "100vw";
@@ -124,7 +124,7 @@
 					dropmenus[i].style.border = "none transparent";
 				}
 
-				document.documentElement.style.setProperty('--header-divider', `none`);
+				document.documentElement.style.setProperty('--header-divider', `none`); /*still necessary?*/
 			}
 
 			// function showissues() {
@@ -274,7 +274,7 @@
 				text-align: right;
 				visibility: hidden;
 				font-size: 13pt;
-				padding:15px 20px 15px 20px;
+				padding:14px 20px 14px 20px; /* reduced by 1 top and bottom for border */
 				margin: 0px;
 				-webkit-touch-callout: none;
 				-webkit-user-select: none;
@@ -439,6 +439,16 @@
 				margin-top:20px;
 			}
 
+			.menu-inside {
+				border-top: 3px solid lightgrey;
+			}
+
+			@media screen and (max-width: 800px) {
+				.menu-inside {
+					border-bottom: 3px solid lightgrey;
+				}
+			}
+
 		</style>
 	</head>
 
@@ -458,13 +468,14 @@
 
 					<div class="dropmenu" id="dropmenui" >
 						<div class="menu-spacer">X</div>
-						<hr>
+						<!-- <hr class="mid-divider"> -->
+						<div class="menu-inside">
 						<div class="info" id="infoi">
 							<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></a>
 							<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></a>
 							<a id="info-issue-iii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>IST POPULISMUS GUT?</span></a>
-						</div>
-						<hr class="bottom-divider">
+						</div></div>
+						<!-- <hr class="bottom-divider"> -->
 					</div>
 				</div>
 
@@ -477,10 +488,11 @@
 
 					<div class="dropmenu" id="dropmenus">
 						<div class="menu-spacer">X</div>
-						<hr>
+						<hr class="mid-divider">
+						<div class="menu-inside">
 						<div class="info" id="infos">
 							<a href="https://www.GEFAENGNISHEFTE.org/special-issues">Projekte von Freund*innen</a>
-						</div>
+						</div></div>
 						<hr class="bottom-divider">
 					</div>
 				</div> -->
@@ -494,11 +506,12 @@
 
 					<div class="dropmenu" id="dropmenuk">
 						<div class="menu-spacer">X</div>
-						<hr>
+						<!-- <hr class="mid-divider"> -->
+						<div class="menu-inside">
 						<div class="info" id="infok">
 							<a href="https://www.GEFAENGNISHEFTE.org/kanon">Eine Zusammenstellung sehenswerter Videos</a>
-						</div>
-						<hr class="bottom-divider">
+						</div></div>
+						<!-- <hr class="bottom-divider"> -->
 					</div>
 				</div>
 
@@ -542,11 +555,12 @@
 						</div>
 						
 						<!-- INFO -->
-
-						<hr>
+						<div class="menu-inside">
+						<!-- <hr class="mid-divider"> -->
 						<div class="info" id="infom">
-
+							
 							<div id="footer-wrap">
+								
 								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="desclarge">Unterstützen: paypal.me/GEFAENGNISHEFTE<br></a>
 								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="descsmall">Unterstützen<br></a>
 								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="desclarge">Kontaktieren: GEFAENGNISHEFTE@riseup.net<br></a>
@@ -572,8 +586,9 @@
 								</form>
 							</div>
 						</div>
+						</div>
 						
-						<hr class="bottom-divider">
+						<!-- <hr class="bottom-divider"> -->
 					</div>
 				</div>
 			</nav>
