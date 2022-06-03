@@ -145,37 +145,43 @@
 		<script>
 
 			// NAVIGATION HIGHLIGHT
+			
+			var highlights = [
+                            ["", "dropanchori"],
+							["/", "dropanchori"],
+							["/issue-i", "dropanchori"],
+							["/issue-i", "info-issue-i"],
+							["/special-issues", "dropanchors"],
+							["/kanon", "dropanchork"],
 
+							["", "descriptioni"],
+							["/", "descriptioni"],
+							["/issue-i", "descriptioni"],
+							["/issue-i", "descriptionisi"],
+							["/special-issues", "descriptions"],
+							["/kanon", "descriptionk"],
+
+							["/deabonnieren", "etc"],
+							["/deabonnieren", "descriptiond"],
+
+							["/impressum", "etc"],
+							["/impressum", "descriptionim"],
+
+							["/datenschutz", "etc"],
+							["/datenschutz", "descriptionda"]
+            ];
+			
 			$(function(){
-				highlight("", "dropanchori");
-				highlight("/", "dropanchori");
-				highlight("/issue-i", "dropanchori");
-				highlight("/issue-i", "info-issue-i");
-				highlight("/special-issues", "dropanchors");
-				highlight("/kanon", "dropanchork");
+				for ( var i = 0; i < highlights.length; i++ ) {
 
-				highlight("", "descriptioni");
-				highlight("/", "descriptioni");
-				highlight("/issue-i", "descriptioni");
-				highlight("/issue-i", "descriptionisi");
-				highlight("/special-issues", "descriptions");
-				highlight("/kanon", "descriptionk");
+					var pair = highlights[i]
 
-				highlight("/deabonnieren", "etc");
-				highlight("/deabonnieren", "descriptiond");
-				
-				highlight("/impressum", "etc");
-				highlight("/impressum", "descriptionim");
-
-				highlight("/datenschutz", "etc");
-				highlight("/datenschutz", "descriptionda");
+					if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
+						document.getElementById(pair[1]).style.fontWeight = "700";
+					}
+                }
 			});
-
-			function highlight(url, element) {
-				if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + url).toLowerCase()) {
-					document.getElementById(element).style.fontWeight = "700";
-				}
-			}
+			
 		</script>
 
 		<script>
