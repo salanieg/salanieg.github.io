@@ -31,13 +31,15 @@
                         error: (err) => alert(err)
                     });
 
-                    document.getElementById("deabonnierenbutton").textContent = 'Deabonniert.';
+                    document.getElementById("deabonnierenbutton").innerHTML = '<span lang="de">Deabonniert.</span><span lang="en">Unsubscribed.</span>';
                     document.getElementById("deabonnierenbutton").disabled = true;
+                    setlanguage(selectedlanguage)
                 })
 
                 document.getElementById("deabonnieren").addEventListener('input', function(event){
-                    document.getElementById("deabonnierenbutton").textContent = 'Debonnieren';
+                    document.getElementById("deabonnierenbutton").innerHTML = '<span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span>';
                     document.getElementById("deabonnierenbutton").disabled = false;
+                    setlanguage(selectedlanguage)
                 });
             });
 
@@ -67,7 +69,7 @@
             <div id="deabonnieren-outer">
                 <div id="deabonnieren-inner">
                     <form id="deabonnieren" class="abo">
-                        <button type="submit" id="deabonnierenbutton">Deabonnieren</button>
+                        <button type="submit" id="deabonnierenbutton"><span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span></button>
                         <span><input type="email" name="Email" placeholder="Email" required></span>
                         <input type="hidden" name="_subject" value="Désabonnement">
                         <input type="hidden" name="_captcha" value="true">
