@@ -262,7 +262,7 @@ button[disabled]{
 	overflow:hidden;
 }
 
-.abo span {
+.abo>span {
 	display:block;
 	overflow:hidden;
 	padding-right:48px;

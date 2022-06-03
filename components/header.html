@@ -230,16 +230,25 @@
 
 			// LANGUAGE
 
-			// var selectedlanguage = "lngde"
 
-            // document.addEventListener("DOMContentLoaded", setlanguage(selectedlanguage));
+			var selectedlanguage = "de"
 
-			// function setlanguage(language) {
-			// 	document.getElementById("lngde").style.textDecoration = "none"
-			// 	document.getElementById("lngen").style.textDecoration = "none"
-			// 	document.getElementById(language).style.textDecoration = "underline"
-			// 	selectedlanguage = language
-			// }
+            document.addEventListener("DOMContentLoaded", setlanguage(selectedlanguage));
+
+			function setlanguage(language) {
+				
+				$('[lang="de"]').hide();
+				$('[lang="en"]').hide();
+				document.getElementById("lngde").style.textDecoration = "none"
+				document.getElementById("lngen").style.textDecoration = "none"
+				document.getElementById("lng" + language).style.textDecoration = "underline"
+				$('[lang="' + language + '"]').toggle();
+				selectedlanguage = language
+				
+
+				// $('[lang="en"]').toggle();
+				
+			}
 
 		</script>
 
@@ -478,14 +487,6 @@
 				cursor: pointer;
 			}
 
-			.en {
-				display: none;
-			}
-
-			.de {
-				display: none;
-			}
-
 		</style>
 	</head>
 
@@ -508,9 +509,9 @@
 						<!-- <hr class="mid-divider"> -->
 						<div class="menu-inside">
 						<div class="info" id="infoi">
-							<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span>ALTERNATIVE UTOPIEN</span></a>
-							<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>REFORM ODER REVOLUTION</span></a>
-							<a id="info-issue-iii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span>IST POPULISMUS GUT?</span></a>
+							<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en">ALTERNATIVE UTOPIAS</span></a>
+							<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en">REFORM OR REVOLUTION</span></a>
+							<a id="info-issue-iii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE III</span> <span lang="de">IST POPULISMUS GUT?</span><span lang="en">IS POPULISM A GOOD THING?</span></a>
 						</div></div>
 						<!-- <hr class="bottom-divider"> -->
 					</div>
@@ -546,7 +547,7 @@
 						<!-- <hr class="mid-divider"> -->
 						<div class="menu-inside">
 						<div class="info" id="infok">
-							<a href="https://www.GEFAENGNISHEFTE.org/kanon">Eine Zusammenstellung sehenswerter Inhalte</a>
+							<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en">A collection of content worth watching</span></a>
 						</div></div>
 						<!-- <hr class="bottom-divider"> -->
 					</div>
@@ -557,7 +558,7 @@
 				<div onmouseenter="openmenu('dropmenum', 'dropanchorm')">
 					<span class="dropanchor" id="dropanchorm">
 						<span class="label" id="etc" onclick="openmenu('dropmenum', 'dropanchorm')">ETC</span>
-						<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')">MENÜ</span>
+						<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')"><span lang="de">MENÜ</span><span lang="en">MENU</span></span>
 						<span class="label" id="closemenu" onclick="safeclosemenu()">X</span>
 					</span>
 
@@ -574,11 +575,11 @@
 									<!-- <span class="description" id="showissues" onclick="showissues()">Einblenden</span>
 									<span class="description" id="hideissues" onclick="hideissues()">Ausblenden</span> -->
 							</div>
-							<div id="issue-list">
+							<!-- <div id="issue-list">
 								<a class="description" id="descriptionisi" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span class="desclarge">ISSUE I</span><span class="descsmall">I</span><span>ALTERNATIVE UTOPIEN</span></a>
 								<a class="description" id="descriptionisii" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span class="desclarge">ISSUE II</span><span class="descsmall">II</span><span>REFORM ODER REVOLUTION</span></a>
 								<a class="description" id="descriptionisiii" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span class="desclarge">ISSUE III</span><span class="descsmall">III</span><span>IST POPULISMUS GUT?</span></a>
-							</div>
+							</div> -->
 							<!-- <div>
 								<a href="https://www.GEFAENGNISHEFTE.org/special-issues" class="spacedtitles"><span id="descriptions">SPECIAL&#x2005;ISSUES</span> -->
 								<!-- <span class="description desclarge">Projekte von Freund*innen</span> -->
@@ -598,14 +599,14 @@
 							
 							<div id="footer-wrap">
 								
-								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="desclarge">Unterstützen: paypal.me/GEFAENGNISHEFTE<br></a>
-								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="descsmall">Unterstützen<br></a>
-								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="desclarge">Kontaktieren: GEFAENGNISHEFTE@riseup.net<br></a>
-								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="descsmall">Kontaktieren<br></a>
-								<a href="https://www.GEFAENGNISHEFTE.org/deabonnieren" id="descriptiond">Deabonnieren<br></a>
-								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim">Impressum<br></a>
-								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda">Datenschutzerklärung<br></a>
-								<!-- <span>Sprache: <span class="lngop" id="lngde" onclick="setlanguage('lngde')">DE</span> / <span class="lngop" id="lngen" onclick="setlanguage('lngen')">EN</span><br></span> -->
+								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="desclarge"><span lang="de">Unterstützen: paypal.me/GEFAENGNISHEFTE</span><span lang="en">Support: paypal.me/GEFAENGNISHEFTE</span><br></a>
+								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="descsmall"><span lang="de">Unterstützen</span><span lang="en">Support</span><br></a>
+								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="desclarge"><span lang="de">Kontaktieren: GEFAENGNISHEFTE@riseup.net</span><span lang="en">Contact: GEFAENGNISHEFTE@riseup.net</span><br></a>
+								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="descsmall"><span lang="de">Kontaktieren</span><span lang="en">Contact</span><br></a>
+								<a href="https://www.GEFAENGNISHEFTE.org/deabonnieren" id="descriptiond"><span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span><br></a>
+								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
+								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en">Data Protection</span><br></a>
+								<span><span lang="de">Sprache:</span><span lang="en">Language:</span> <span class="lngop" id="lngde" onclick="setlanguage('de')">DE</span> / <span class="lngop" id="lngen" onclick="setlanguage('en')">EN</span><br></span>
 								
 								<!-- <div id="nachmodus">
 									<span onclick="togglenachtmodus()" style="cursor: pointer;">Nachtmodus </span>
@@ -615,12 +616,12 @@
 	
 							<div>
 								<form id="abonnieren" class="abo">
-									<button type="submit" id="abonnierenbutton">Abonnieren</button>
+									<button type="submit" id="abonnierenbutton"><span lang="de">Abonnieren</span><span lang="en">Subscribe</span></button>
 									<span><input type="email" name="Email" id="aboinput" placeholder="Email" required></span>
 									<input type="hidden" name="_subject" value="Abonnement">
 									<input type="hidden" name="_captcha" value="true">
 									
-									<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</label>
+									<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 								</form>
 							</div>
 						</div>
