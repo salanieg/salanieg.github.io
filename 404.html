@@ -8,6 +8,7 @@
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/fonts.css">
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/general.css">
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/red.css">
+        <script> $(function(){$("#header").load("components/header.html");}); </script>
 
         <style>
             /* BODY */
@@ -31,10 +32,15 @@
                 margin-bottom: 60px;
             }
 
+            #header {
+                display: none;
+            }
+
         </style>
     </head>
 
     <body>
+        <div id="header"></div>
         <div id="content">
             <div id="message404">
                 <h1 id="title404">404</h1>
