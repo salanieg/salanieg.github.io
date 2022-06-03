@@ -15,6 +15,7 @@
                     hidecookiecontent();
                 }
                 console.log("init2")
+                setlanguage(selectedlanguage)
             }
 
             function cookies(choice) {
@@ -90,7 +91,7 @@
                     {
                         var cookiedisclaimer = document.createElement("span");
                         console.log("hidecookiecontent5")
-                        cookiedisclaimer.innerHTML = "Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.";
+                        cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>consent to the use of cookies</span>.</span>";
                         cookiedisclaimer.className = "cookiedisclaimer";
                         console.log("hidecookiecontent6")
                         frames[i].style.display = "none"
