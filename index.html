@@ -59,7 +59,10 @@
 
                     $(".title").click(function (e) {
                         e.preventDefault();
-                        e.target.style.color = "white"
+                        // e.target.style.color = "white"
+                        for (let i = 0; i < issuetitles.length; i++) {
+                            document.getElementById(issuetitles[i]).style.color = "white"
+                        }
                     });
                 }
             });
