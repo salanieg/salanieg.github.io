@@ -33,8 +33,10 @@
 
             function cleartpcookies() {
                 currentchoice = localStorage.getItem("gefaengnishefte_cookies")
+                currentlanguage = localStorage.getItem("gefaengnishefte_language")
                 clearcookies()
                 localStorage.setItem("gefaengnishefte_cookies", currentchoice);
+                localStorage.setItem("gefaengnishefte_language", currentlanguage);
             }
 
             function clearcookies() {
