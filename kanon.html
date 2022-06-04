@@ -9,9 +9,27 @@
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/black.css">
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-        <script> $(function(){$("#header").load("components/header.html");}); </script>
-        <script> $(function(){$("#controls").load("components/controls.html", function() {initcontrols()});});</script>
-        <script> $(function(){$("#databanner").load("components/databanner.html", function() {initcookies()});}); </script>
+        <script>
+
+            // LOADING
+
+            var headerloaded, footerloaded, controlsloaded, databannerloaded = false;
+            
+            $(function(){
+                $("#header").load("components/header.html", function() {headerloaded = true; init()});
+                $("#controls").load("components/controls.html", function() {controlsloaded = true; init()});
+                $("#databanner").load("components/databanner.html", function() {databannerloaded = true; init()});
+            });
+
+            function init() {
+                if(headerloaded && controlsloaded && databannerloaded){
+                    initcontrols();
+                    initcookies();
+                    initlanguage();
+                }
+            }
+        
+        </script>
 
         <script>
             var placeholder = false;

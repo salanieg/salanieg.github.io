@@ -8,7 +8,23 @@
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/fonts.css">
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/general.css">
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/red.css">
-        <script> $(function(){$("#header").load("components/header.html");}); </script>
+        <script>
+
+            // LOADING
+
+            var headerloaded, footerloaded, controlsloaded, databannerloaded = false;
+            
+            $(function(){
+                $("#header").load("components/header.html", function() {headerloaded = true; init()});
+            });
+
+            function init() {
+                if(headerloaded){
+                    initlanguage();
+                }
+            }
+        
+        </script>
 
         <style>
             /* BODY */

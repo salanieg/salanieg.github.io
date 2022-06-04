@@ -217,13 +217,11 @@
 				document.getElementById("abonnierenbutton").textContent = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
 				document.getElementById("abonnierenbutton").disabled = true;
 				document.getElementById("aboinfo").style.display = "none";
-				setlanguage(selectedlanguage)
 			})
 
 			document.getElementById("abonnieren").addEventListener('input', function(event){
 				document.getElementById("abonnierenbutton").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
 				document.getElementById("abonnierenbutton").disabled = false;
-				setlanguage(selectedlanguage)
 			});
 
 		</script>
@@ -232,20 +230,26 @@
 
 			// LANGUAGE
 
+			function initlanguage() {
+console.log(localStorage.getItem("gefaengnishefte_language"))
+				if(localStorage.getItem("gefaengnishefte_language") != "de" || localStorage.getItem("gefaengnishefte_language") != "en") {
+					console.log("testuuu")
+					localStorage.setItem("gefaengnishefte_language", "de");
+				}
 
-			var selectedlanguage = "de"
-
-            document.addEventListener("DOMContentLoaded", setlanguage(selectedlanguage));
+				setlanguage(localStorage.getItem("gefaengnishefte_language"))
+			}
 
 			function setlanguage(language) {
-				
+
 				$('[lang="de"]').hide();
 				$('[lang="en"]').hide();
 				document.getElementById("lngde").style.textDecoration = "none"
 				document.getElementById("lngen").style.textDecoration = "none"
 				document.getElementById("lng" + language).style.textDecoration = "underline"
 				$('[lang="' + language + '"]').toggle();
-				selectedlanguage = language
+				localStorage.setItem("gefaengnishefte_language", language);
+				console.log(localStorage.getItem("gefaengnishefte_language"))
 				
 
 				// $('[lang="en"]').toggle();
