@@ -108,6 +108,7 @@
                 if(showcurrenttitle) {
                     document.getElementById("slideCurrent").innerHTML = (romannumerals[slideSelected]) + "/" + romannumerals[slideList.length - 1]
                     document.getElementById("slideCurrentTitle").innerHTML = titleList[slideSelected]
+                    initlanguage() //needed bc it changes DOM
                 }
             }
 
