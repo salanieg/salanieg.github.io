@@ -32,11 +32,13 @@
             });
 
             function cleartpcookies() {
-                currentchoice = localStorage.getItem("gefaengnishefte_cookies")
-                currentlanguage = localStorage.getItem("gefaengnishefte_language")
+                var currentchoice = localStorage.getItem("gefaengnishefte_cookies")
+                var currentlanguage = localStorage.getItem("gefaengnishefte_language")
+                // console.log(localStorage.getItem("gefaengnishefte_language"))
                 clearcookies()
                 localStorage.setItem("gefaengnishefte_cookies", currentchoice);
                 localStorage.setItem("gefaengnishefte_language", currentlanguage);
+                // console.log(localStorage.getItem("gefaengnishefte_language"))
             }
 
             function clearcookies() {

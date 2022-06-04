@@ -104,10 +104,10 @@
             // SLIDE SELECTION
 
             function displaycurrent() {
-                document.getElementById("slideCurrent").textContent = (slideSelected + 1) + "/" + slideList.length
+                document.getElementById("slideCurrent").innerHTML = (slideSelected + 1) + "/" + slideList.length
                 if(showcurrenttitle) {
-                    document.getElementById("slideCurrent").textContent = (romannumerals[slideSelected]) + "/" + romannumerals[slideList.length - 1]
-                    document.getElementById("slideCurrentTitle").textContent = titleList[slideSelected]
+                    document.getElementById("slideCurrent").innerHTML = (romannumerals[slideSelected]) + "/" + romannumerals[slideList.length - 1]
+                    document.getElementById("slideCurrentTitle").innerHTML = titleList[slideSelected]
                 }
             }
 

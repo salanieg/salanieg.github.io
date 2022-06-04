@@ -231,9 +231,7 @@
 			// LANGUAGE
 
 			function initlanguage() {
-console.log(localStorage.getItem("gefaengnishefte_language"))
-				if(localStorage.getItem("gefaengnishefte_language") != "de" || localStorage.getItem("gefaengnishefte_language") != "en") {
-					console.log("testuuu")
+				if(localStorage.getItem("gefaengnishefte_language") != "de" && localStorage.getItem("gefaengnishefte_language") != "en") {
 					localStorage.setItem("gefaengnishefte_language", "de");
 				}
 
@@ -249,7 +247,6 @@ console.log(localStorage.getItem("gefaengnishefte_language"))
 				document.getElementById("lng" + language).style.textDecoration = "underline"
 				$('[lang="' + language + '"]').toggle();
 				localStorage.setItem("gefaengnishefte_language", language);
-				console.log(localStorage.getItem("gefaengnishefte_language"))
 				
 
 				// $('[lang="en"]').toggle();
