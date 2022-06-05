@@ -196,17 +196,19 @@
 
             function copyanchor(anchor, id, textReplace) {
                 navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
-                var text = anchor.innerText
+                var text = anchor.innerHTML
                 if (text != textReplace){
                     textOriginal = text;
                     textList.push(textOriginal)
                 
-                    anchor.innerText = textReplace;
+                    anchor.innerHTML = textReplace;
                     setTimeout(function(){
-                        anchor.innerText = textList[textIndex];
+                        anchor.innerHTML = textList[textIndex];
                         textIndex = textIndex + 1;
+                        initlanguage()
                     }, 3000);
                 }
+                initlanguage()
             }
         </script>
 
