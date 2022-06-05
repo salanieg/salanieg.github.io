@@ -217,11 +217,13 @@
 				document.getElementById("abonnierenbutton").textContent = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
 				document.getElementById("abonnierenbutton").disabled = true;
 				document.getElementById("aboinfo").style.display = "none";
+				initlanguage() //needed bc it changes DOM
 			})
 
 			document.getElementById("abonnieren").addEventListener('input', function(event){
 				document.getElementById("abonnierenbutton").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
 				document.getElementById("abonnierenbutton").disabled = false;
+				initlanguage() //needed bc it changes DOM
 			});
 
 		</script>
@@ -309,7 +311,7 @@
 				text-align: right;
 				visibility: hidden;
 				font-size: 13pt;
-				padding:14px 20px 14px 20px; /* reduced by 1 top and bottom for border */
+				padding:15px 20px 15px 20px; /* reduced by 1 top and bottom for border */
 				margin: 0px;
 				-webkit-touch-callout: none;
 				-webkit-user-select: none;
