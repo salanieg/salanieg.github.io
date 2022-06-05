@@ -75,7 +75,7 @@
 
 				if ($(window).width() > 800) {
 					document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
-					document.getElementById(menu).style.border = "2px solid lightgrey";
+					// document.getElementById(menu).style.border = "2px outset grey";
 				}
 				else {
 					document.getElementById(menu).style.width = "100vw";
@@ -477,11 +477,14 @@
 			}
 
 			.menu-inside {
-				border-top: 2px solid lightgrey;
+				border: 1px outset grey;
 			}
 
 			@media screen and (max-width: 800px) {
 				.menu-inside {
+					border-right: 0px none transparent;
+					border-left: 0px none transparent;
+					border-top: 2px solid lightgrey;
 					border-bottom: 2px solid lightgrey;
 				}
 			}
