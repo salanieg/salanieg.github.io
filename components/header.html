@@ -244,8 +244,8 @@
 
 				$('[lang="de"]').hide();
 				$('[lang="en"]').hide();
-				document.getElementById("lngde").style.textDecoration = "none"
-				document.getElementById("lngen").style.textDecoration = "none"
+				document.getElementById("lang-de").style.textDecoration = "none"
+				document.getElementById("lang-en").style.textDecoration = "none"
 				document.getElementById("lng" + language).style.textDecoration = "underline"
 				$('[lang="' + language + '"]').toggle();
 				localStorage.setItem("gefaengnishefte_language", language);
@@ -491,7 +491,7 @@
 				}
 			}
 
-			.lngop {
+			.lang-option {
 				cursor: pointer;
 			}
 
@@ -614,7 +614,7 @@
 								<a href="https://www.GEFAENGNISHEFTE.org/deabonnieren" id="descriptiond"><span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span><br></a>
 								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
 								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en">Privacy policy</span><br></a>
-								<span><span lang="de">Sprache:</span><span lang="en">Language:</span> <span class="lngop" id="lngde" onclick="setlanguage('de')">DE</span> / <span class="lngop" id="lngen" onclick="setlanguage('en')">EN</span><br></span>
+								<span><span lang="de">Sprache:</span><span lang="en">Language:</span> <span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br></span>
 								
 								<!-- <div id="nachmodus">
 									<span onclick="togglenachtmodus()" style="cursor: pointer;">Nachtmodus </span>
