@@ -195,7 +195,7 @@
 					accepts: 'application/json',
 					data: $(event.target).serialize() + "&Code=" + makeid(40)
 					,
-					success: (data) => console.log(data),
+					success: (data) => console.log("submitted"),
 					error: (err) => alert(err)
 				});
 
@@ -233,7 +233,12 @@
 				document.getElementById("lang-en").style.textDecoration = "none"
 				document.getElementById("lang-" + language).style.textDecoration = "underline"
 				$('[lang="' + language + '"]').toggle();
-				localStorage.setItem("gefaengnishefte_language", language);				
+
+				if(document.getElementById('download-issue-footer')) {
+					document.getElementById('download-issue-footer').setAttribute('href', downloadlocation[language]);
+				}
+
+				localStorage.setItem("gefaengnishefte_language", language);	
 			}
 
 		</script>

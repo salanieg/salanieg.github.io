@@ -11,6 +11,25 @@
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script>
 
+            // VARIABLES
+
+            var showcurrenttitle = true;
+            var placeholder = true;
+            var controlsinit = false;
+            var autohidecontrols = false;
+            var slideSelected = 0;
+            var indexList = [
+                            "<span lang='de'>I – ALTERNATIVE UTOPIEN</span><span lang='en'>I – ALTERNATIVE UTOPIAS</span>", 
+                            "<span lang='de'>II – REFORM ODER REVOLUTION</span><span lang='en'>II – REFORM OR REVOLUTION</span>",
+                            "<span lang='de'>III – IST POPULISMUS GUT?</span><span lang='en'>III – IS POPULISM A GOOD THING?</span>"
+            ];
+
+            var titleList = [
+                            "<span lang='de'>ALTERNATIVE UTOPIEN</span><span lang='en'>ALTERNATIVE UTOPIAS</span>", 
+                            "<span lang='de'>REFORM ODER REVOLUTION</span><span lang='en'>ALTERNATIVE UTOPIAS</span>", 
+                            "<span lang='de'>IST POPULISMUS GUT?</span><span lang='en'>IS POPULISM A GOOD THING?</span>"
+            ];
+
             // LOADING
 
             var headerloaded, footerloaded, controlsloaded, databannerloaded = false;
@@ -32,25 +51,6 @@
         </script>
 
         <script>
-            var showcurrenttitle = true;
-            var placeholder = true;
-            var controlsloaded = false;
-            var autohidecontrols = false;
-            var slideSelected = 0;
-            var indexList = [
-                            "<span lang='de'>I – ALTERNATIVE UTOPIEN</span><span lang='en'>I – ALTERNATIVE UTOPIAS</span>", 
-                            "<span lang='de'>II – REFORM ODER REVOLUTION</span><span lang='en'>II – REFORM OR REVOLUTION</span>",
-                            "<span lang='de'>III – IST POPULISMUS GUT?</span><span lang='en'>III – IS POPULISM A GOOD THING?</span>"
-            ];
-
-            var titleList = [
-                            "<span lang='de'>ALTERNATIVE UTOPIEN</span><span lang='en'>ALTERNATIVE UTOPIAS</span>", 
-                            "<span lang='de'>REFORM ODER REVOLUTION</span><span lang='en'>ALTERNATIVE UTOPIAS</span>", 
-                            "<span lang='de'>IST POPULISMUS GUT?</span><span lang='en'>IS POPULISM A GOOD THING?</span>"
-            ];
-        </script>
-
-        <script>
 
             // COVERSCRIPT
 
@@ -63,8 +63,10 @@
             function selectcover(i) {
 
                 i = i - 1
-
-                if(coverSelectedLoaded) {
+                console.log("selectcover")
+                console.log(controlsloaded)
+                console.log(coverSelectedLoaded)
+                if(coverSelectedLoaded && controlsloaded) {
                     displayBySlideIndex(i) 
                     document.getElementById(issuetitles[textSelected]).style.fontWeight = "initial";
                     document.getElementById(issuetitles[i]).style.fontWeight = "700";
@@ -104,10 +106,8 @@
             });
 
             function checkload() {
-                
-                if(document.getElementById(coverSelected).complete && controlsloaded) {
+                if(document.getElementById(coverSelected).complete && controlsinit) {
                     loaded()
-                    console.log("testcover")
                 }
                 else {
                     setTimeout(checkload, 100)

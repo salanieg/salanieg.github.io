@@ -25,7 +25,7 @@
                 // for (let k = 0; k < slideList.length; k++) {
                 //     console.log(slideList[k])
                 // }
-
+                
                 if(!placeholder) {
                     document.getElementById(slideList[slideSelected]).style.display = "flex";
                 }
@@ -37,8 +37,8 @@
                 resetcontrols()
                 displaycurrent()
                 keeptop()
-                
-                controlsloaded = true;
+
+                controlsinit = true
             }
 
             document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
@@ -142,6 +142,7 @@
                 document.getElementById(slideList[slideSelected]).style.display = "none";
                 slideSelected = slideIndex;
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
+
                 resetcontrols();
                 displaycurrent();
                 hideSlideIndex();
@@ -158,7 +159,6 @@
                 }
 
                 var indexitems = document.getElementsByClassName("indexitem")
-
                 for (let i = 0; i < indexitems.length; i++) {
                     indexitems[i].style.fontWeight = "300"
                 }
