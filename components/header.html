@@ -124,7 +124,7 @@
 					dropmenus[i].style.border = "none transparent";
 				}
 
-				document.documentElement.style.setProperty('--header-divider', `none`); /*still necessary?*/
+				// document.documentElement.style.setProperty('--header-divider', `none`); /*still necessary?*/
 			}
 
 			// function showissues() {
@@ -151,14 +151,14 @@
 							["/", "dropanchori"],
 							["/issue-i", "dropanchori"],
 							["/issue-i", "info-issue-i"],
-							["/special-issues", "dropanchors"],
+							// ["/special-issues", "dropanchors"],
 							["/kanon", "dropanchork"],
 
 							["", "descriptioni"],
 							["/", "descriptioni"],
 							["/issue-i", "descriptioni"],
 							["/issue-i", "descriptionisi"],
-							["/special-issues", "descriptions"],
+							// ["/special-issues", "descriptions"],
 							["/kanon", "descriptionk"],
 
 							["/deabonnieren", "etc"],
@@ -246,7 +246,7 @@
 				$('[lang="en"]').hide();
 				document.getElementById("lang-de").style.textDecoration = "none"
 				document.getElementById("lang-en").style.textDecoration = "none"
-				document.getElementById("lng" + language).style.textDecoration = "underline"
+				document.getElementById("lang" + language).style.textDecoration = "underline"
 				$('[lang="' + language + '"]').toggle();
 				localStorage.setItem("gefaengnishefte_language", language);
 				
