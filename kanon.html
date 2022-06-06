@@ -11,6 +11,15 @@
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script>
 
+            // SET DEFAULT LANGUAGE
+
+            if(localStorage.getItem("gefaengnishefte_language")) {
+                $('[lang="' + localStorage.getItem("gefaengnishefte_language") + '"]').hide();
+            }
+            else {
+                $('[lang="en"]').hide();
+            }
+
             // VARIABLES
 
             var placeholder = false;
