@@ -110,7 +110,6 @@
 					document.getElementById("openmenu").style.display = "inline";
 				}
 
-				// hideissues()
 				menuopen = false
 			}
 
@@ -127,18 +126,6 @@
 				// document.documentElement.style.setProperty('--header-divider', `none`); /*still necessary?*/
 			}
 
-			// function showissues() {
-			// 	document.getElementById("showissues").style.display = "none";
-			// 	document.getElementById("hideissues").style.display = "inline";
-			// 	document.getElementById("issue-list").style.display = "block";
-			// }
-
-			// function hideissues() {
-			// 	document.getElementById("showissues").style.display = "inline";
-			// 	document.getElementById("hideissues").style.display = "none";
-			// 	document.getElementById("issue-list").style.display = "none";
-			// }
-
 			
 		</script>
 
@@ -151,14 +138,12 @@
 							["/", "dropanchori"],
 							["/issue-i", "dropanchori"],
 							["/issue-i", "info-issue-i"],
-							// ["/special-issues", "dropanchors"],
 							["/kanon", "dropanchork"],
 
 							["", "descriptioni"],
 							["/", "descriptioni"],
 							["/issue-i", "descriptioni"],
 							["/issue-i", "descriptionisi"],
-							// ["/special-issues", "descriptions"],
 							["/kanon", "descriptionk"],
 
 							["/deabonnieren", "etc"],
@@ -248,11 +233,7 @@
 				document.getElementById("lang-en").style.textDecoration = "none"
 				document.getElementById("lang-" + language).style.textDecoration = "underline"
 				$('[lang="' + language + '"]').toggle();
-				localStorage.setItem("gefaengnishefte_language", language);
-				
-
-				// $('[lang="en"]').toggle();
-				
+				localStorage.setItem("gefaengnishefte_language", language);				
 			}
 
 		</script>
@@ -525,24 +506,6 @@
 					</div>
 				</div>
 
-				<!-- SPECIAL ISSUES -->
-				
-				<!-- <div class="hmenu" onmouseenter="openmenu('dropmenus', 'dropanchors')">
-					<span class="dropanchor" id="dropanchors">
-						<a href="https://www.GEFAENGNISHEFTE.org/special-issues">SPECIAL ISSUES</a>
-					</span>
-
-					<div class="dropmenu" id="dropmenus">
-						<div class="menu-spacer">X</div>
-						<hr class="mid-divider">
-						<div class="menu-inside">
-						<div class="info" id="infos">
-							<a href="https://www.GEFAENGNISHEFTE.org/special-issues">Projekte von Freund*innen</a>
-						</div></div>
-						<hr class="bottom-divider">
-					</div>
-				</div> -->
-
 				<!-- KANON -->
 
 				<div class="hmenu" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
@@ -580,22 +543,9 @@
 						<div class="info" id="infoe">
 							<div class="spacedtitles">
 								<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a>
-									<!-- <span class="description" id="showissues" onclick="showissues()">Einblenden</span>
-									<span class="description" id="hideissues" onclick="hideissues()">Ausblenden</span> -->
 							</div>
-							<!-- <div id="issue-list">
-								<a class="description" id="descriptionisi" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span class="desclarge">ISSUE I</span><span class="descsmall">I</span><span>ALTERNATIVE UTOPIEN</span></a>
-								<a class="description" id="descriptionisii" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span class="desclarge">ISSUE II</span><span class="descsmall">II</span><span>REFORM ODER REVOLUTION</span></a>
-								<a class="description" id="descriptionisiii" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span class="desclarge">ISSUE III</span><span class="descsmall">III</span><span>IST POPULISMUS GUT?</span></a>
-							</div> -->
-							<!-- <div>
-								<a href="https://www.GEFAENGNISHEFTE.org/special-issues" class="spacedtitles"><span id="descriptions">SPECIAL&#x2005;ISSUES</span> -->
-								<!-- <span class="description desclarge">Projekte von Freund*innen</span> -->
-								<!-- </a>
-							</div> -->
 							<div  class="spacedtitles">
 								<a href="https://www.GEFAENGNISHEFTE.org/kanon" class="spacedtitles"><span id="descriptionk">KANON</span>
-								<!-- <span class="description desclarge">Sehenswertes</span> -->
 								</a>
 							</div>
 						</div>
@@ -615,10 +565,6 @@
 								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
 								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en">Privacy policy</span><br></a>
 								<span><span lang="de">Sprache:</span><span lang="en">Language:</span> <span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br></span>
-								
-								<!-- <div id="nachmodus">
-									<span onclick="togglenachtmodus()" style="cursor: pointer;">Nachtmodus </span>
-								</div> -->
 							</div>
 
 	

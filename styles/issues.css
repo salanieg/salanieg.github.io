@@ -55,6 +55,10 @@
 	width: 500px;
 }
 
+.abstract-separator {
+	height:65px;
+}
+
 .abstracttitle {
 	width:500px;
 	display:flex;
@@ -69,6 +73,12 @@
 .artikelarrow {
 	font-size:26pt;
 	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
 
@@ -93,6 +103,10 @@
 .artikel {
 	scroll-margin-top:50px;
 	width:700px;
+}
+
+.artikel-title {
+	margin-bottom: 65px;
 }
 
 .copylink {
