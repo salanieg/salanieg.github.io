@@ -246,7 +246,7 @@
 				$('[lang="en"]').hide();
 				document.getElementById("lang-de").style.textDecoration = "none"
 				document.getElementById("lang-en").style.textDecoration = "none"
-				document.getElementById("lang" + language).style.textDecoration = "underline"
+				document.getElementById("lang-" + language).style.textDecoration = "underline"
 				$('[lang="' + language + '"]').toggle();
 				localStorage.setItem("gefaengnishefte_language", language);
 				
