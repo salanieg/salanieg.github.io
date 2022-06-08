@@ -10,15 +10,6 @@
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/red.css">
         <script>
 
-            // SET DEFAULT LANGUAGE
-
-            if(localStorage.getItem("gefaengnishefte_language")) {
-                $('[lang="' + localStorage.getItem("gefaengnishefte_language") + '"]').hide();
-            }
-            else {
-                $('[lang="en"]').hide();
-            }
-
             // LOADING
 
             var headerloaded, footerloaded, controlsloaded, databannerloaded = false;
