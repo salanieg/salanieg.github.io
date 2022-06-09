@@ -229,11 +229,12 @@
 
 				$('[lang="de"]').hide();
 				$('[lang="en"]').hide();
+				console.log("testss")
 				document.getElementById("lang-de").style.textDecoration = "none"
 				document.getElementById("lang-en").style.textDecoration = "none"
 				document.getElementById("lang-" + language).style.textDecoration = "underline"
-				$('[lang="' + language + '"]').toggle();
-
+				$('[lang="' + language + '"]').show();
+				console.log("tesstss")
 				if(document.getElementById('download-issue-footer')) {
 					document.getElementById('download-issue-footer').setAttribute('href', downloadlocation[language]);
 				}

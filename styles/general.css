@@ -10,7 +10,7 @@ body {
 	background-color: var(--content-color);
 }
 
-*:lang(en) 	{
+*:lang(en):not(br) 	{
     display:none;
 }
 
