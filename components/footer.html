@@ -7,7 +7,7 @@
 
             function initfooter() {
                 // document.getElementById('download-issue').setAttribute('href', downloadlocation);
-                document.getElementById('download-issue-footer').setAttribute('href', downloadlocation["default"]);
+                document.getElementById('download-issue-footer-link').setAttribute('href', downloadlocation["default"]);
                 resetverticalbuttons()
                 initfootnotes()
             }
@@ -186,6 +186,20 @@
             })
         </script>
 
+        <!-- <script>
+            function sharenow () {
+                if (navigator.share) {
+                navigator.share({
+                    title: 'web.dev',
+                    text: 'Check out web.dev.',
+                    url: 'https://web.dev/',
+                })
+                    .then(() => console.log('Successful share'))
+                    .catch((error) => console.log('Error sharing', error));
+                }
+            }
+        </script> -->
+
         <script>
 
             // COPY LINK
@@ -211,13 +225,26 @@
                 initlanguage()
             }
         </script>
+    
+        <script>
+
+            // SHARE LINK
+
+            function opensharewindow() {
+                document.getElementById("sharewindow").style.display = "block"
+            }
+
+            function closesharewindow() {
+                document.getElementById("sharewindow").style.display = "none"
+            }
+        </script>
 
         <style>
 
             #footer {
                 display: flex;
                 justify-content: flex-end;
-                align-items: flex-start;
+                align-items: center;
                 color:white;
                 position: absolute;
                 height:fit-content;
@@ -225,7 +252,7 @@
                 left:0;
                 width:100%;
                 z-index:8;
-                background-color: #980000;
+                /* background-color: #980000; */
             }
 
             #footercontent {
@@ -233,24 +260,21 @@
                 justify-content: flex-end;
                 align-items: flex-start;
                 color:white;
-                gap:30px;
-                padding-left: 20px;
-                padding-right: 20px;
+                gap:10px;
+                padding: 10px 20px;
             }
 
-            .footerElement {
+            .footerelement {
                 text-align: center;
                 font-size: 12pt;
-            }
-
-            .footerElement:hover {
-                color:white !important;
-            }
-
-            #teilen {
+                width:180px;
+                height:fit-content;
                 cursor: pointer;
             }
 
+            .footerelement * {
+                color: black !important;
+            }
 
             /* RETURN TO TOP */
 
@@ -275,8 +299,8 @@
                 user-select: none;
             }
 
-            #to-top {bottom:90px;}
-            #to-bottom {bottom:40px;}
+            #to-top {bottom:110px;}
+            #to-bottom {bottom:60px;}
 
 
             #to-top-label {
@@ -298,7 +322,7 @@
                     display: none;
             }
 
-            @media screen and (max-width: 550px) {
+            @media screen and (max-width: 800px) {
                 #footercontent {
                     width:100%;
                     justify-content: space-between;
@@ -307,10 +331,28 @@
                 }
             }
 
-            @media screen and (max-width: 300px) {
+            @media screen and (max-width: 1600px) {
+
+                #footer {
+                    background-color: #980000;
+                }
+
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 98px) !important;
+                }
+            }
+
+            @media screen and (max-width: 450px) {
 
                 #footercontent {
                     gap:0px 20px;
+                }
+
+                .footerelement {
+                    text-align: center;
+                    font-size: 12pt;
+                    width:140px;
+                    height:fit-content;
                 }
 
                 .label-l {
@@ -322,6 +364,73 @@
                 }
             }
 
+            #sharewindow {
+                display:none;
+                position: fixed;
+                left:50%;
+                top:50%;
+                transform: translate(-50%, -50%);
+                max-width: 90vw;
+                /* max-height: 80vh; */
+                width: 400px;
+                /* height: 400px; */
+                background-color: #980000;
+                border:outset grey;
+            }
+
+            #closesharewindow {
+                font-size: 15pt;
+                cursor: pointer;
+                /* text-align: right; */
+                /* width:100%; */
+                padding:10px;
+            }
+
+            #shareoptions {
+                display:flex;
+                flex-wrap: wrap;
+                gap:20px;
+            }
+
+            .shareoption {
+                display:flex;
+                flex-flow:column;
+                align-items: center;
+                width:100px;
+                font-size: 13pt;
+            }
+
+            .shareimg {
+                width:40px;
+                height:40px;
+            }
+
+            .sharetxt {
+                text-align: center;
+            }
+
+            #linkoptions {
+                padding:10px;
+                margin-bottom: 20px;
+                line-height: 2;
+            }
+
+            #shareoptions {
+                padding:10px;
+                margin-bottom: 20px;
+            }
+
+            #link-kopieren {
+                padding: 5px 20px;
+                font-size: 15pt;
+                margin-bottom:20px;
+            }
+
+            #link-kopierenwrap {
+                display:flex;
+                justify-content:center;
+            }
+
 
         </style>
     </head>
@@ -331,15 +440,24 @@
         <div id="footer">
             <button id="to-top" onclick="verticalup()"><div id="to-top-label">‹</div></button>
             <button id="to-bottom" onclick="verticaldown()"><div id="to-top-label">›</div></button>
+
             <div id="footercontent">
-
-                <div class="footerElement" id="teilen" >
-                    <small class="footerElement"><span class="label-l" onclick="copyanchor(this, '', 'Link kopiert!')"><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></span><span class="label-s" onclick="copyanchor(this, ``, `<span lang='de'></small>[Link kopiert!]</span><span lang='en'></small>[Link copied!]</span>`)"><span lang="de">Teilen</span><span lang="en">Share</span></span></small>
-                </div>
-
-                <a class="footerElement" id="download-issue-footer" download><span class="label-l"><span lang="de">PDF herunterladen</span><span lang="en">Download PDF</span></span><span class="label-s"><span lang="de">Herunterladen</span><span lang="en">Download</span></span></a>
+                <button class="footerelement" id="teilen" onclick="opensharewindow()"><span class="label-l" ><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></span><span class="label-s"><span lang="de">Teilen</span><span lang="en">Share</span></span></button>
+                <a id="download-issue-footer-link" download><button class="footerelement" id="download-issue-footer"><span class="label-l"><span lang="de">PDF herunterladen</span><span lang="en">Download PDF</span></span><span class="label-s"><span lang="de">Herunterladen</span><span lang="en">Download</span></span></button></a>
             </div>
         </div>
 
+        <div id="sharewindow">
+            <div id="closesharewindow" onclick="closesharewindow()">X</div>
+            <div id="linkoptions">
+                <span id="link1">ISSUE I - ALTERNATIVE UTOPIEN</span><br>
+                <span id="link2">POSTHISTORISCHE KLASSENKÄMPFE</span><br>
+                <span id="link3">DER NEUE RAHMEN</span><br>
+                <span id="link4">AGIEREN & AGITIEREN</span><br>
+            </div>
+            <div id="link-kopierenwrap"><button id="link-kopieren">Link kopieren</button></div>
+        </div>
+        <!-- onclick="copyanchor(this, '', 'Link kopiert!')" -->
+        <!-- onclick="copyanchor(this, ``, `<span lang='de'></small>[Link kopiert!]</span><span lang='en'></small>[Link copied!]</span>`)" -->
     </body>
 </html>

@@ -159,8 +159,10 @@ h1 {
 h2, h3 {
 	font-size: 13pt;
 	font-weight: 700;
-	line-height: 31px;
+	line-height: 1.4;
 	font-family: "Spectral";
+	margin:0;
+	margin-bottom:28px;
 }
 
 p {

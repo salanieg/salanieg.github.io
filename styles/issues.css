@@ -1,7 +1,8 @@
 /* MAIN */
 
 #content {
-	height: calc(var(--vh, 1vh) * 100 - 102px);
+	/* height: calc(var(--vh, 1vh) * 100 - 102px); */
+	height: calc(var(--vh, 1vh) * 100 - 77px);
 	padding-left: 60px;
 	padding-right: 60px;
 	padding-top: 0px;
@@ -25,6 +26,10 @@
 	gap:250px 100px;
 	margin-bottom: 350px;
 	padding-top: 20px;
+	background-color: white;
+	border: solid 2px black;
+	padding:20px;
+	margin-top:20px;
 }
 
 #coverwrap {
@@ -63,7 +68,7 @@
 .abstracttitle {
 	width:500px;
 	display:flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
 }
 
@@ -80,6 +85,8 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+	line-height: 0.6;
+	margin-bottom: 0;
 }
 
 
@@ -104,6 +111,9 @@
 .artikel {
 	scroll-margin-top:50px;
 	width:700px;
+	background-color: white;
+	border: solid 2px black;
+	padding:20px;
 }
 
 .artikel-title {
@@ -136,8 +146,51 @@
 		align-items: center;
 	}
 
+	#inhaltsverzeichnis, #coverwrap {
+		background-color: white;
+		border: solid 2px black;
+		padding:20px;
+	} 
+
+	#info-wrapper {
+		padding-top: 20px;
+		background-color: #980000;
+		border: unset;
+		padding:0px;
+	}
+
 	#title, #coverwrap {
 		max-width: 700px;
+	}
+}
+
+@media screen and (max-width: 800px) {
+
+
+	#inhaltsverzeichnis, #coverwrap, .artikel {
+		background-color: white;
+		border: unset;
+		padding:0px;
+	} 
+
+	#info-wrapper {
+		padding-top: 20px;
+		background-color: white;
+		border: unset;
+		padding:0px;
+	}
+
+	:root {
+		--theme:white;
+		--default-scrollbar-color: #980000;
+		--header-color: #980000;
+		--header-color-contrast: white;
+		--header-color-text: white;
+		--content-color: white;
+		--content-color-contrast: #980000;
+		--content-color-text: black;
+		--content-color-link-hover: #980000;
+		--header-divider:none;
 	}
 }
 
@@ -251,3 +304,21 @@
 #download-issue:hover {
 	color:grey;
 }
+/* 
+#buttons {
+	display:flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	margin-bottom:200px;
+	padding: 50px;
+	align-items: center;
+	width: 650px;
+	gap:20px
+}
+
+#buttons > * {
+
+	font-size: 15pt;
+	width: 200px;
+
+} */

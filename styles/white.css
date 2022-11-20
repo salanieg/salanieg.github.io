@@ -1,10 +1,10 @@
 :root {
 	--theme:white;
-	--default-scrollbar-color: #980000;
+	--default-scrollbar-color: white;
 	--header-color: #980000;
 	--header-color-contrast: white;
 	--header-color-text: white;
-	--content-color: white;
+	--content-color: #980000;
 	--content-color-contrast: #980000;
 	--content-color-text: black;
 	--content-color-link-hover: #980000;
