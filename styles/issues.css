@@ -24,7 +24,7 @@
 	margin-bottom: 350px;
 	background-color: white;
 	border: solid 2px black;
-	margin-top:40px;
+	margin-top:20px;
 }
 
 #coverwrap {
@@ -46,7 +46,7 @@
 	column-gap:50px;
 	width: 100%;
 	max-width:900px;
-	margin-top: 100px;
+	margin-top: 60px;
 	font-weight: 700;
 	line-height: 2;
 	font-size: 15pt;
