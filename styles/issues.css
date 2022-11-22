@@ -8,6 +8,10 @@
 	padding-top: 0px;
 }
 
+#inhaltsverzeichnis, #coverwrap, .artikel {
+	padding:20px;
+}
+
 
 /* COVER */
 
@@ -18,11 +22,9 @@
 	justify-content: space-between;
 	gap:250px 100px;
 	margin-bottom: 350px;
-	padding-top: 20px;
 	background-color: white;
 	border: solid 2px black;
-	padding:20px;
-	margin-top:20px;
+	margin-top:40px;
 }
 
 #coverwrap {
@@ -50,8 +52,9 @@
 	font-size: 15pt;
 }
 
-.abstract {
-	width: 500px;
+.abstract, .abstracttitle {
+	width: 100%;
+	max-width: 500px;
 }
 
 .abstract-separator {
@@ -59,7 +62,6 @@
 }
 
 .abstracttitle {
-	width:500px;
 	display:flex;
 	align-items: flex-start;
 	justify-content: space-between;
@@ -106,7 +108,6 @@
 	width:700px;
 	background-color: white;
 	border: solid 2px black;
-	padding:20px;
 }
 
 .artikel-title {
@@ -126,18 +127,7 @@
 
 /* REACTIVE */
 
-@media screen and (max-width: 800px) {
-	#content {
-		padding-left:12px;
-		padding-right:12px;
-	}
-	
-	#info-wrapper, #inhaltsverzeichnis, #coverwrap, .artikel {
-		padding:10px !important;
-	}
-}
-
-@media screen and (max-width: 1700px) {
+@media screen and (max-width: 1750px) {
 	#inhalt {
 		justify-content: center;
 	}
@@ -166,6 +156,17 @@
 
 	#title, #coverwrap {
 		max-width: 700px;
+	}
+}
+
+@media screen and (max-width: 800px) {
+	#content {
+		padding-left:12px;
+		padding-right:12px;
+	}
+	
+	#inhaltsverzeichnis, #coverwrap, .artikel {
+		padding:10px;
 	}
 }
 
