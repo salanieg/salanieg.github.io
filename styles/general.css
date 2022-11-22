@@ -183,6 +183,7 @@ small {
 *::-webkit-scrollbar {
 	width: 8px;
 	height: 8px;
+	z-index:10;
 }
 
 *::-webkit-scrollbar-thumb {

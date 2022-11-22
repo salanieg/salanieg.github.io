@@ -301,7 +301,7 @@
 
             #to-top {bottom:110px;}
             #to-bottom {bottom:60px;}
-
+            
 
             #to-top-label {
                 position:relative;
@@ -319,7 +319,7 @@
             /* REACTIVE */
 
             .label-s {
-                    display: none;
+                display: none;
             }
 
             @media screen and (max-width: 800px) {
@@ -328,10 +328,15 @@
                     justify-content: space-between;
                     justify-content: space-evenly;
                     gap:15px;
+                    padding: 10px 30px;
+                }
+
+                #to-top, #to-bottom {
+                    right:30px;
                 }
             }
 
-            @media screen and (max-width: 1600px) {
+            @media screen and (max-width: 1700px) {
 
                 #footer {
                     background-color: #980000;
@@ -345,7 +350,7 @@
             @media screen and (max-width: 450px) {
 
                 #footercontent {
-                    gap:0px 20px;
+                    gap:0px 5px;
                 }
 
                 .footerelement {
@@ -457,7 +462,6 @@
             </div>
             <div id="link-kopierenwrap"><button id="link-kopieren">Link kopieren</button></div>
         </div>
-        <!-- onclick="copyanchor(this, '', 'Link kopiert!')" -->
         <!-- onclick="copyanchor(this, ``, `<span lang='de'></small>[Link kopiert!]</span><span lang='en'></small>[Link copied!]</span>`)" -->
     </body>
 </html>
