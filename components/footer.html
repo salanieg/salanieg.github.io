@@ -241,48 +241,12 @@
 
         <style>
 
-            #footer {
-                display: flex;
-                justify-content: flex-end;
-                align-items: center;
-                color:white;
-                position: absolute;
-                height:fit-content;
-                bottom:0;
-                left:0;
-                width:100%;
-                z-index:8;
-                /* background-color: #980000; */
-            }
-
-            #footercontent {
-                display: flex;
-                justify-content: flex-end;
-                align-items: flex-start;
-                color:white;
-                gap:10px;
-                padding: 10px 20px;
-            }
-
-            .footerelement {
-                text-align: center;
-                font-size: 12pt;
-                width:180px;
-                height:fit-content;
-                cursor: pointer;
-            }
-
-            .footerelement * {
-                color: black !important;
-            }
-
             /* RETURN TO TOP */
 
             #to-top, #to-bottom {
                 cursor: pointer;
                 font-size:13pt;
                 position: fixed;
-                bottom:40px;
                 right:20px;
                 background-color: var(--header-color);
                 color: var(--header-color-text);
@@ -316,62 +280,86 @@
             }
 
 
+            /* FOOTER */
+
+            #footer {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                color:white;
+                position: absolute;
+                height:fit-content;
+                bottom:0;
+                left:0;
+                width:100%;
+                z-index:8;
+            }
+
+            .footercontent {
+                display: flex;
+                justify-content: flex-end;
+                align-items: flex-start;
+                color:white;
+                gap:10px;
+                padding: 10px 20px;
+                white-space: nowrap;
+            }
+
+            .footerelement {
+                text-align: center;
+                font-size: 12pt;
+                width:180px;
+                height:fit-content;
+                cursor: pointer;
+            }
+
+            .footerelement * {
+                color: black !important;
+            }
+
+            .inlinefooter {
+                display: none;
+                margin-bottom: 100px;
+                width:100%;
+                padding: 0 !important;
+            }
+
             /* REACTIVE */
 
-            .label-s {
-                display: none;
-            }
+            @media screen and (max-width: 1750px), screen and (max-height: 1050px) {
 
-            @media screen and (max-width: 1550px), screen and (max-height: 1050px) {
-
-                /* #footercontent {
-                    border:outset grey;
-                    background-color: #980000;
-                } */
-                
-                #footer {
-                    background-color: #980000;
-                }
-
-                #content {
+                /* #content {
                     height: calc(var(--vh, 1vh) * 100 - 125px) !important;
-                }
-            }
+                } */
 
-            @media screen and (max-width: 800px) {
-                #footercontent {
+                .footercontent {
+                    display:none;
                     border:unset;
                     width:100%;
                     justify-content: space-between;
                     justify-content: center;
-                    gap:15px;
+                    gap:10px 15px;
                     padding: 10px 30px;
                 }
+
+                .inlinefooter {
+                    display: flex;
+                    flex-wrap: wrap;
+                }
+
+                #to-top {bottom:70px;}
+                #to-bottom {bottom:20px;}
+            }
+
+            @media screen and (max-width: 800px) {
 
                 #to-top, #to-bottom {
                     right:30px;
                 }
-
             }
 
-            @media screen and (max-width: 450px) {
 
-                #footercontent {
-                    gap:0px 5px;
-                }
-
-                .footerelement {
-                    width:140px;
-                }
-
-                .label-l {
-                    display: none;
-                }
-
-                .label-s {
-                    display: inline;
-                }
-            }
+            /* SHAREWINDOW */
 
             #sharewindow {
                 display:none;
@@ -451,9 +439,9 @@
             <button id="to-bottom" onclick="verticaldown()"><div id="to-top-label">›</div></button>
             <!-- <button id="plus" onclick="showfooter()"><div id="to-top-label">+</div></button> -->
 
-            <div id="footercontent">
-                <button class="footerelement" id="teilen" onclick="opensharewindow()"><span class="label-l" ><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></span><span class="label-s"><span lang="de">Teilen</span><span lang="en">Share</span></span></button>
-                <a id="download-issue-footer-link" download><button class="footerelement" id="download-issue-footer"><span class="label-l"><span lang="de">PDF herunterladen</span><span lang="en">Download PDF</span></span><span class="label-s"><span lang="de">Herunterladen</span><span lang="en">Download</span></span></button></a>
+            <div class="footercontent">
+                <button class="footerelement" id="teilen" onclick="opensharewindow()"><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></button>
+                <a id="download-issue-footer-link" download><button class="footerelement" id="download-issue-footer"><span lang="de">PDF herunterladen</span><span lang="en">Download PDF</span></button></a>
             </div>
         </div>
 
