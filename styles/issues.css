@@ -137,7 +137,7 @@
 
 #ccinfo {
 	display:flex;
-	flex-direction: column;
+	flex-wrap: wrap;
 	justify-content: space-between;
 	gap:30px;
 	width:700px;
@@ -145,11 +145,19 @@
 	border: solid 2px black;
 }
 
+#cctext {
+	/* max-width: 60%; */
+}
+
 #ccicon {
 	display: flex;
 	flex-flow: row;
 	gap:2px;
-	width: 50px;
+	align-items: flex-end;
+}
+
+#ccicon * {
+	height: 48px;
 }
 
 
