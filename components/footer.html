@@ -324,22 +324,34 @@
 
             @media screen and (max-width: 1550px), screen and (max-height: 1050px) {
 
-                #footer {
+                #footercontent {
+                    border:outset grey;
                     background-color: #980000;
+                }
+
+                #footer {
+                    /* background-color: #980000; */
                 }
 
                 #content {
                     height: calc(var(--vh, 1vh) * 100 - 125px) !important;
                 }
+                
+					
             }
 
             @media screen and (max-width: 800px) {
                 #footercontent {
+                    border:unset;
                     width:100%;
                     justify-content: space-between;
                     justify-content: center;
                     gap:15px;
                     padding: 10px 30px;
+                }
+
+                #footer {
+                    background-color: #980000;
                 }
 
                 #to-top, #to-bottom {
