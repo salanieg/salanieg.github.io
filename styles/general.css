@@ -65,15 +65,15 @@ body {
 }
 
 #content>* ::-moz-selection {
-	color: var(--content-color);
+	color: var(--content-color-contrast-text);
 	background: var(--content-color-contrast);
 }
 #content>* ::-webkit-selection {
-	color: var(--content-color);
+	color: var(--content-color-contrast-text);
 	background: var(--content-color-contrast);
 }
 #content>* ::selection {
-	color: var(--content-color);
+	color: var(--content-color-contrast-text);
 	background: var(--content-color-contrast);
 }
 
