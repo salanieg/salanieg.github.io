@@ -155,6 +155,11 @@ h1 {
 @media screen and (max-width: 400px) {h1 { font-size: 24pt;}}
 @media screen and (max-width: 375px) {h1 { font-size: 22pt;}}
 @media screen and (max-width: 350px) {h1 { font-size: 20pt;}}
+@media screen and (max-width: 340px) {h1 { font-size: 19pt;}}
+@media screen and (max-width: 330px) {h1 { font-size: 18pt;}}
+@media screen and (max-width: 320px) {h1 { font-size: 17pt;}}
+@media screen and (max-width: 310px) {h1 { font-size: 16pt;}}
+@media screen and (max-width: 300px) {h1 { font-size: 15pt;}}
 
 
 
