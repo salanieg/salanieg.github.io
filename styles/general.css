@@ -293,6 +293,8 @@ button[disabled]{
 .abo {
 	width:100%;
 	overflow:hidden;
+	display:flex;
+	flex-direction: row-reverse;
 }
 
 .abo>span {
@@ -321,7 +323,6 @@ button[disabled]{
 
 @media screen and (max-width: 470px) {
 	.abo {
-		display:flex;
 		flex-direction: column-reverse;
 		gap:5px;
 	}

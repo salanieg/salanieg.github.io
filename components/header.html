@@ -227,12 +227,12 @@
 
 				document.getElementById('emailabonnieren').style.display = "none";
 				document.getElementById('telegramabonnieren').style.display = "none"
-				document.getElementById('deaboabonnieren').style.display = "none"
+				// document.getElementById('deaboabonnieren').style.display = "none"
 				document.getElementById("aboemail").style.textDecoration = "none"
 				document.getElementById("abotelegram").style.textDecoration = "none"
 				// document.getElementById("abodeabo").style.textDecoration = "none"
 				document.getElementById("abo" + type).style.textDecoration = "underline"
-				document.getElementById(type + 'abonnieren').style.display = "block";
+				document.getElementById(type + 'abonnieren').style.display = "flex";
 
 				localStorage.setItem("gefaengnishefte_abo", type);	
 			}
@@ -518,6 +518,15 @@
 
 			.lang-option {
 				cursor: pointer;
+			}
+
+			#telegramabonnieren {
+				display: none;
+			}
+
+			#abonnierenbuttontelegram * {
+				text-align:center !important;
+				padding: 0 !important;
 			}
 
 		</style>
