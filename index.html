@@ -21,15 +21,15 @@
             var overridetitletext = "<span class='overridetitletextLarge'><span lang='de'>ÜBERSICHT</span><span lang='en'>OVERVIEW</span></span><span class='overridetitletextSmall'>#</span>"
             var slideSelected = 0;
             var indexList = [
-                            "<span lang='de'>I – ALTERNATIVE UTOPIEN</span><span lang='en'>I – ALTERNATIVE UTOPIAS</span>", 
-                            "<span lang='de'>II – REFORM ODER REVOLUTION</span><span lang='en'>II – REFORM OR REVOLUTION</span>"
+                            "<span lang='de'>ISSUE I – ALTERNATIVE UTOPIEN</span><span lang='en'>ISSUE I – ALTERNATIVE UTOPIAS</span>", 
+                            "<span lang='de'>ISSUE II – REFORM ODER REVOLUTION</span><span lang='en'>ISSUE II – REFORM OR REVOLUTION</span>"
                             // ,
                             // "<span lang='de'>III – IST POPULISMUS GUT?</span><span lang='en'>III – IS POPULISM A GOOD THING?</span>"
             ];
 
             var titleList = [
-                            "<span lang='de'>ISSUE I<br>ALTERNATIVE UTOPIEN</span><span lang='en'>ISSUE I<br>ALTERNATIVE UTOPIAS</span>", 
-                            "<span lang='de'>ISSUE II<br>REFORM ODER REVOLUTION</span><span lang='en'>ISSUE II<br>ALTERNATIVE UTOPIAS</span>"
+                            "<span lang='de'>ISSUE I – ALTERNATIVE UTOPIEN</span><span lang='en'>ISSUE I –ALTERNATIVE UTOPIAS</span>", 
+                            "<span lang='de'>ISSUE II –REFORM ODER REVOLUTION</span><span lang='en'>ISSUE II –ALTERNATIVE UTOPIAS</span>"
                             // , 
                             // "<span lang='de'>IST POPULISMUS GUT?</span><span lang='en'>IS POPULISM A GOOD THING?</span>"
             ];
@@ -256,6 +256,8 @@
 
                 .cover {
                     max-height: 60vh !important;
+                    max-width: 100% !important;
+                    min-width: unset;
                 }
 
                 #content {
@@ -278,7 +280,7 @@
                 }
 
                 .cover {
-                    max-height: 60vh !important;
+                    max-height: 50vh !important;
                 }
 
                 #content {
@@ -329,6 +331,9 @@
                     width: 45px !important;
                 }
             }
+
+            @media screen and (max-width: 450px) {#slideCurrentTitle * {font-size: 13pt;}}
+
 
         </style>
     </head>
