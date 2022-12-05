@@ -52,6 +52,12 @@
 	font-size: 15pt;
 }
 
+@media screen and (max-width: 500px) {
+	#title { 
+		margin-top: 30px;
+	}
+}
+
 @media screen and (max-width: 450px) {#title { font-size: 14pt;}}
 @media screen and (max-width: 400px) {#title { font-size: 13pt;}}
 @media screen and (max-width: 350px) {#title { font-size: 12pt;}}
