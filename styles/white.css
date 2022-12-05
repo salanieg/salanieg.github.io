@@ -5,8 +5,8 @@
 	--header-color-contrast: white;
 	--header-color-text: white;
 	--content-color: #980000;
-	--content-color-contrast-text: white;
-	--content-color-contrast: #980000;
+	--content-color-contrast-text: #980000;
+	--content-color-contrast: white;
 	--content-color-text: black;
 	--content-color-link-hover: #980000;
 	--header-divider:none;

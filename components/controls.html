@@ -110,6 +110,9 @@
                     document.getElementById("slideCurrentTitle").innerHTML = titleList[slideSelected]
                     initlanguage() //needed bc it changes DOM
                 }
+                if(overridetitle) {
+                    document.getElementById("slideCurrent").innerHTML = overridetitletext
+                }
             }
 
             function letztesissue() {
@@ -288,13 +291,11 @@
                 left:0;
             }
 
-            #letztes, #nächstes {
+            #letztes, #nächstes, #slideCurrent {
                 background-color: transparent;
                 color:white;
-                padding: 5px 15px 5px 15px;
-                width:175px;
-                font-size: 15pt;
-                cursor: pointer;
+                width: 45px;
+                height: 45px;
                 -webkit-tap-highlight-color: transparent;
                 -webkit-touch-callout: none;
                 -webkit-user-select: none;
@@ -304,13 +305,17 @@
                 user-select: none;
             }
 
+            #letztes, #nächstes {
+                padding: 5px 15px 5px 15px;
+                width:175px;
+                font-size: 15pt;
+                cursor: pointer;
+            }
+
             #slideCurrent {
-                color:white;
-                width:70px;
+                width:80px;
                 font-size: 20pt;
                 cursor: default;
-                border: solid transparent;
-                border-width: 2px;
             }
 
             #slideIndex {
@@ -372,7 +377,6 @@
                 #letztes, #nächstes {
                     padding:0px;
                     width: 45px;
-                    height: 45px;
                     font-size: 35pt;
                 }
             }
@@ -401,8 +405,8 @@
                 <button id="letztes" onclick="letztesissue()">
                     <span class="controlLabelLarge"><span lang="de">VORHERIGES</span><span lang="en">PREVIOUS</span></span><span class="controlLabelSmall">‹</span>
                 </button>
-                <div id="slideCurrent" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
-                </div>
+                <button id="slideCurrent" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
+                </button>
                 <button id="nächstes" onclick="nächstesissue()">
                     <span class="controlLabelLarge"><span lang="de">NÄCHSTES</span><span lang="en">NEXT</span></span><span class="controlLabelSmall">›</span>
                 </button>

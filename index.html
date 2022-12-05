@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang=de">
+<html>
     <head>
         <meta charset="UTF-8">
         <title>ISSUES</title>
@@ -17,6 +17,8 @@
             var placeholder = true;
             var controlsinit = false;
             var autohidecontrols = false;
+            var overridetitle = true;
+            var overridetitletext = "<span class='overridetitletextLarge'><span lang='de'>ÜBERSICHT</span><span lang='en'>OVERVIEW</span></span><span class='overridetitletextSmall'>#</span>"
             var slideSelected = 0;
             var indexList = [
                             "<span lang='de'>I – ALTERNATIVE UTOPIEN</span><span lang='en'>I – ALTERNATIVE UTOPIAS</span>", 
@@ -297,7 +299,35 @@
             }
 
             #slideCurrent {
-                display: none;
+                font-size: 15pt !important;
+                width:160px !important;
+                padding: 5px 15px 5px 15px !important;
+            }
+
+            .controlLabelLarge {
+                display: none!important;
+            }
+
+            .controlLabelSmall {
+                display: inline!important;
+            }
+
+            #letztes, #nächstes {
+                padding:0px!important;
+                font-size: 35pt!important;
+                width: 45px !important;
+            }
+
+
+            .overridetitletextSmall {display: none;}
+            @media screen and (max-width: 350px) {
+                .overridetitletextSmall {display: inline;}
+                .overridetitletextLarge {display: none;}
+                #slideCurrent {
+                    padding:0px!important;
+                    font-size: 22pt!important;
+                    width: 45px !important;
+                }
             }
 
         </style>
