@@ -156,6 +156,8 @@ h1 {
 @media screen and (max-width: 375px) {h1 { font-size: 22pt;}}
 @media screen and (max-width: 350px) {h1 { font-size: 20pt;}}
 
+
+
 h2, h3 {
 	font-size: 13pt;
 	font-weight: 700;
@@ -165,17 +167,36 @@ h2, h3 {
 	margin-bottom:28px;
 }
 
+@media screen and (max-width: 450px) {h2 { font-size: 12pt;}}
+@media screen and (max-width: 400px) {h2 { font-size: 11pt;}}
+@media screen and (max-width: 350px) {h2 { font-size: 10pt;}}
+@media screen and (max-width: 300px) {h2 { font-size: 9pt;}}
+
+@media screen and (max-width: 450px) {h3 { font-size: 12pt;}}
+@media screen and (max-width: 400px) {h3 { font-size: 11pt;}}
+@media screen and (max-width: 350px) {h3 { font-size: 10pt;}}
+@media screen and (max-width: 300px) {h3 { font-size: 9pt;}}
+
 p {
 	font-size: 13pt;
 	line-height: 1.9;
 	margin:0px;
 }
 
+
+@media screen and (max-width: 450px) {p { font-size: 12pt;}}
+@media screen and (max-width: 400px) {p { font-size: 11pt;}}
+@media screen and (max-width: 350px) {p { font-size: 10pt;}}
+@media screen and (max-width: 300px) {p { font-size: 9pt;}}
+
 small {
 	font-size: 11pt;
 	line-height: 1.75;
 	margin:0px;
 }
+
+@media screen and (max-width: 450px) {small { font-size: 10pt;}}
+@media screen and (max-width: 350px) {small { font-size: 9pt;}}
 
 
 /* SCROLLBAR */

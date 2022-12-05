@@ -143,6 +143,7 @@
                     ". . ."
                     ". . ."  !important;
                 place-items: center;
+                overflow-y: hidden;
             }
 
 
@@ -162,10 +163,6 @@
                 max-width:350px;
             }
 
-            #laden-wrap {
-                text-align: center;
-            }
-
             #slides > div {
                 text-align: center;
                 display: none;
@@ -179,13 +176,16 @@
 
             /* COVERS */
             
-            .cover-image {
+            .cover-image, #laden {
                 box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
-                cursor: pointer;
                 -webkit-tap-highlight-color: transparent;
-                transition: 0.7s;
                 max-width: 100%;
                 max-height: 100%;
+            }
+
+            .cover-image {
+                transition: 0.7s;
+                cursor: pointer;
             }
 
             .cover-image:hover {
@@ -193,9 +193,10 @@
             }
 
             #laden {
-                display:inline;
+                min-width:300px;
+                max-width:400px;
+                width: 100%;
                 cursor:wait;
-                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
             }
 
             .cover {
@@ -241,7 +242,7 @@
                     height: calc(var(--vh, 1vh) * 100 - 98px) !important;
             }
 
-            @media screen and (max-width: 799px) {
+            @media screen and (width < 800px) {
                 #controls {
                     display:block !important;
                 }
@@ -250,42 +251,26 @@
                     display:none;
                 }
 
-                #issue-wrap {
+                /* #issue-wrap {
                     width: 100%;
-                }
+                } */
 
-                .cover {
-                    max-height: 60vh !important;
-                    max-width: 100% !important;
+                .cover, #laden {
+                    max-height: 60vh;
+                    /* max-width: 100% !important; */
                     min-width: unset;
                 }
 
-                #content {
+                /* #content {
                     display: flex !important;
                     height: calc(var(--vh, 1vh) * 100 - 260px) !important;
-                }
+                } */
             }
 
-            @media screen and (width: 799px) {
-                #controls {
-                    display:block !important;
-                }
-
-                #text-wrap {
-                    display:none;
-                }
-
-                #issue-wrap {
-                    width: 100%;
-                }
-
-                .cover {
-                    max-height: 50vh !important;
-                }
-
-                #content {
-                    display: flex !important;
-                    height: calc(var(--vh, 1vh) * 100 - 260px) !important;
+            @media screen and (max-height: 800px) {
+                .cover, #laden {
+                    max-height: 50vh;
+                    min-width: unset;
                 }
             }
 
@@ -294,6 +279,8 @@
                     height: calc(var(--vh, 1vh) * 100 - 230px) !important;
                 }
             } */
+
+            /* SLIDES */
 
             #slideIndex {
                 font-size: 13pt !important;
@@ -332,7 +319,11 @@
                 }
             }
 
+            @media screen and (max-height: 800px) {#slideCurrentTitle * {font-size: 13pt;}}
+            @media screen and (max-height: 600px) {#slideCurrentTitle * {font-size: 11pt !important;}}
             @media screen and (max-width: 450px) {#slideCurrentTitle * {font-size: 13pt;}}
+            @media screen and (max-width: 350px) {#slideCurrentTitle * {font-size: 11pt !important;}}
+
 
 
         </style>
@@ -345,7 +336,7 @@
         <div id="content">
             <div id="issue-wrap">
                 <div id="cover-wrap">
-                    <div  class="cover" id="laden-wrap"><span><img id="laden" src="images/internal/din4load.gif"/></span></div>
+                    <div class="slide-cover" id="laden-wrap"><a class="cover"><img class="cover-image" id="laden" src="images/internal/din4load.gif"/></a></div>
                     <div id="slides">
                         <div class="slide-cover"><a class="cover" href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-i" lang="de" src="images/issues/de/issue-i-cover.jpg" alt="ISSUE I COVER"/><img class="cover-image" id="cover-i" lang="en" src="images/issues/en/issue-i-cover.jpg" alt="ISSUE I COVER"/></a></div>
                         <div class="slide-cover"><a class="cover" href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-ii" lang="de" src="images/issues/de/issue-i-cover.jpg" alt="ISSUE II COVER"/><img class="cover-image" id="cover-ii" lang="en" src="images/issues/en/issue-i-cover.jpg" alt="ISSUE II COVER"/></a></div>
