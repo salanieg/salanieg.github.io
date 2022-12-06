@@ -90,7 +90,7 @@
 
 			document.getElementById("aboinput").addEventListener('focus', (event) => {
 				document.getElementById("aboinfo").style.display = "block"
-				document.getElementById("telegramabo").style.display = "none";
+				// document.getElementById("telegramabo").style.display = "none";
 			});
 
 
@@ -231,6 +231,11 @@
 				document.getElementById("aboemail").style.textDecoration = "none"
 				document.getElementById("abotelegram").style.textDecoration = "none"
 				// document.getElementById("abodeabo").style.textDecoration = "none"
+
+				if(type == "telegram") {
+					document.getElementById("aboinfo").style.display = "none"
+				}
+
 				document.getElementById("abo" + type).style.textDecoration = "underline"
 				document.getElementById(type + 'abonnieren').style.display = "flex";
 
@@ -529,6 +534,10 @@
 				padding: 0 !important;
 			}
 
+			.info-inner {
+				max-width: 369px;
+			}
+
 		</style>
 	</head>
 
@@ -608,7 +617,7 @@
 						<!-- <hr class="mid-divider"> -->
 						<div class="info" id="infom">
 							
-							<div id="footer-wrap">
+							<div id="footer-wrap" class="info-inner">
 								
 								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="desclarge"><span lang="de">Unterstützen: paypal.me/GEFAENGNISHEFTE</span><span lang="en">Support: paypal.me/GEFAENGNISHEFTE</span><br></a>
 								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="descsmall"><span lang="de">Unterstützen</span><span lang="en">Support</span><br></a>
@@ -621,7 +630,7 @@
 							</div>
 
 	
-							<div>
+							<div class="info-inner">
 								<span id="aboselect">
 									<span lang="de">Abonnieren mit:</span><span lang="en">Subscribe via:</span>
 									<span class="lang-option" id="aboemail" onclick="setabo('email')">Email</span> / 
@@ -633,8 +642,8 @@
 									<span><input type="email" name="Email" id="aboinput" placeholder="Email" required></span>
 									<input type="hidden" name="_subject" value="Abonnement">
 									<input type="hidden" name="_captcha" value="true">
-									<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 								</form>
+								<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 								<form id="telegramabonnieren" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
 									<button type="submit" id="abonnierenbuttontelegram"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
 								</form>

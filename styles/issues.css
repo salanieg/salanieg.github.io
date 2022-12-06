@@ -286,11 +286,13 @@
 	background: white !important;
 }
 
+
+
 @media screen and (max-width: 1200px) {
 	.footnote .note {
 		position: fixed;
-		bottom: 60px;
-		left: 30px;
+		bottom: 20px;
+		left: 20px;
 	}
 
 	/* .footnote:focus .note {
@@ -298,6 +300,13 @@
 		bottom: 40px;
 		left: 20px;
 	} */
+}
+
+@media screen and (max-width: 800px) {
+
+	.footnote .note {
+		left:30px;
+	}
 }
 
 
