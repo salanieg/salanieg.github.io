@@ -101,7 +101,7 @@
 #inhalt {
 	text-align: justify;
 	line-height: 2;
-	margin-bottom: 140px;
+	/* margin-bottom: 140px; */
 }
 
 .artikelWrap {
@@ -143,6 +143,7 @@
 #info-wrapper-bottom {
 	display: flex;
 	width: 100%;
+	padding-top: 140px;
 	padding-bottom: 120px;
 }
 
@@ -301,21 +302,10 @@
 	} */
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (width < 800px) {
 
 	.footnote .note {
 		left:30px;
 	}
+
 }
-
-
-/* WIP */
-
-/* #mainoptions {
-	width:700px;
-	margin-bottom: 70px;
-} */
-
-/* #download-issue:hover {
-	color:grey;
-} */

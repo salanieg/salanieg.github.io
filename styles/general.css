@@ -272,8 +272,7 @@ input:active {
 button {
 	appearance: none;
 	border-radius: 0;
-	border-style:outset;
-	border-color: grey; 
+	border: 2px outset grey;
 }
 
 button:active {
