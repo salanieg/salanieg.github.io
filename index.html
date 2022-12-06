@@ -21,17 +21,13 @@
             var overridetitletext = "<span class='overridetitletextLarge'><span lang='de'>ÜBERSICHT</span><span lang='en'>OVERVIEW</span></span><span class='overridetitletextSmall'>#</span>"
             var slideSelected = 0;
             var indexList = [
-                            "<span lang='de'>ISSUE I – ALTERNATIVE UTOPIEN</span><span lang='en'>ISSUE I – ALTERNATIVE UTOPIAS</span>", 
-                            "<span lang='de'>ISSUE II – REFORM ODER REVOLUTION</span><span lang='en'>ISSUE II – REFORM OR REVOLUTION</span>"
-                            // ,
-                            // "<span lang='de'>III – IST POPULISMUS GUT?</span><span lang='en'>III – IS POPULISM A GOOD THING?</span>"
+                "<span class='slideIndexSpaced'><span class='slideIndexSpacedIssue'>ISSUE I</span> <span lang='de'>ALTERNATIVE UTOPIEN</span><span lang='en'>ALTERNATIVE UTOPIAS</span></span>",
+                "<span class='slideIndexSpaced'><span class='slideIndexSpacedIssue'>ISSUE II</span> <span lang='de'>REFORM ODER REVOLUTION</span><span lang='en'>REFORM OR REVOLUTION</span></span>"
             ];
 
             var titleList = [
-                            "<span lang='de'>ISSUE I – ALTERNATIVE UTOPIEN</span><span lang='en'>ISSUE I – ALTERNATIVE UTOPIAS</span>", 
-                            "<span lang='de'>ISSUE II – REFORM ODER REVOLUTION</span><span lang='en'>ISSUE II – ALTERNATIVE UTOPIAS</span>"
-                            // , 
-                            // "<span lang='de'>IST POPULISMUS GUT?</span><span lang='en'>IS POPULISM A GOOD THING?</span>"
+                "<a class='title-inner' href='https://www.GEFAENGNISHEFTE.org/issue-i'><span>ISSUE I</span><span>–</span><span lang='de'>ALTERNATIVE UTOPIEN</span><span lang='en'>ALTERNATIVE UTOPIAS</span></a>",
+                "<a class='title-inner' href='https://www.GEFAENGNISHEFTE.org/issue-i'><span>ISSUE II</span><span>–</span><span lang='de'>REFORM ODER REVOLUTION</span><span lang='en'>REFORM OR REVOLUTION</span></a>"
             ];
 
             // LOADING
@@ -279,15 +275,45 @@
 
             /* SLIDES */
 
+            .title-inner {
+				display:flex;
+				justify-content: center;
+				align-items: center;
+                gap:10px;
+            }
+
+            #slideIndex-wrap {
+                width:100% !important;
+                display: flex;
+                justify-content: center;
+            }
+
             #slideIndex {
-                font-size: 13pt !important;
-                text-align: left !important;
+                line-height: 1 !important;
+                max-width: 440px !important;
+                width:100% !important;
+                /* padding-left: 40px !important;
+                padding-right: 40px !important; */
+            }
+
+            .slideIndexSpaced {
+				width:100%;
+				display:flex;
+                gap:20px;
+				justify-content: space-between;
+				align-items: flex-start;
+                text-align: right;
+			}
+
+            .slideIndexSpacedIssue {
+                white-space: nowrap;
             }
 
             #slideCurrent {
                 font-size: 15pt !important;
                 width:160px !important;
                 padding: 5px 15px 5px 15px !important;
+                line-height: 1;
             }
 
             .controlLabelLarge {
@@ -316,11 +342,20 @@
                 }
             }
 
-            @media screen and (max-height: 800px) {#slideCurrentTitle * {font-size: 13pt;}}
-            @media screen and (max-height: 600px) {#slideCurrentTitle * {font-size: 11pt !important;}}
-            @media screen and (max-width: 450px) {#slideCurrentTitle * {font-size: 13pt;}}
-            @media screen and (max-width: 350px) {#slideCurrentTitle * {font-size: 11pt !important;}}
-
+            #slideCurrentTitle, #slideIndex {font-size: 15pt !important;}
+            
+            @media screen and (max-width: 450px) {
+                #slideCurrentTitle, #slideIndex {font-size: 14pt !important;}
+            }
+            @media screen and (max-width: 400px) {
+                #slideCurrentTitle, #slideIndex {font-size: 13pt !important;}
+            }
+            @media screen and (max-width: 350px) {
+                #slideCurrentTitle, #slideIndex {font-size: 12pt !important;}
+            }
+            @media screen and (max-width: 300px) {
+                #slideCurrentTitle, #slideIndex {font-size: 11pt !important;}
+            }
 
 
         </style>
