@@ -236,14 +236,10 @@
                     ". slides ."
                     ". . .";
                 place-items:center;
-                height: calc(var(--vh, 1vh) * 100 - 260px);
+                height: calc(var(--vh, 1vh) * 100 - 245px);
             }
 
-            @media screen and (max-height: 800px) {
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 210px) !important;
-                }
-            }
+
 
             #slides {
                 grid-area: slides;
@@ -388,16 +384,22 @@
             }
 
             @media screen and (max-height: 800px) {
-                #controls {
-                    padding-bottom:30px;
+
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 215px);
                 }
 
-                #slideCurrentTitle * {
-                    font-size: 13pt;
+                #controls {
+                    padding-bottom:30px;
                 }
             }
 
             @media screen and (max-height: 550px) {
+
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 195px);
+                }
+
                 #slideCurrentTitle {
                     padding-top:10px;
                     padding-bottom:10px;

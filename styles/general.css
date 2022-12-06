@@ -18,7 +18,7 @@ body {
 	color: var(--content-color-text);
 	background-color: var(--content-color);
 	height: calc(100vh - 100px);
-	height: calc(var(--vh, 1vh) * 100 - 98px);
+	height: calc(var(--vh, 1vh) * 100 - 98px); /* chack also in index */
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding: 20px;

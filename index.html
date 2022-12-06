@@ -255,7 +255,21 @@
                 }
 
                 #content {
-                    height: calc(var(--vh, 1vh) * 100 - 260px) !important;
+                    height: calc(var(--vh, 1vh) * 100 - 270px) !important;
+                }
+            }
+
+            /* LINKED TO CONTROL RESIZING */
+
+            @media screen and (max-height: 800px) {
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 240px) !important;
+                }
+            }
+
+            @media screen and (max-height: 550px) {
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 220px) !important;
                 }
             }
 
