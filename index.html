@@ -28,8 +28,8 @@
             ];
 
             var titleList = [
-                            "<span lang='de'>ISSUE I – ALTERNATIVE UTOPIEN</span><span lang='en'>ISSUE I –ALTERNATIVE UTOPIAS</span>", 
-                            "<span lang='de'>ISSUE II –REFORM ODER REVOLUTION</span><span lang='en'>ISSUE II –ALTERNATIVE UTOPIAS</span>"
+                            "<span lang='de'>ISSUE I – ALTERNATIVE UTOPIEN</span><span lang='en'>ISSUE I – ALTERNATIVE UTOPIAS</span>", 
+                            "<span lang='de'>ISSUE II – REFORM ODER REVOLUTION</span><span lang='en'>ISSUE II – ALTERNATIVE UTOPIAS</span>"
                             // , 
                             // "<span lang='de'>IST POPULISMUS GUT?</span><span lang='en'>IS POPULISM A GOOD THING?</span>"
             ];
@@ -144,6 +144,7 @@
                     ". . ."  !important;
                 place-items: center;
                 overflow-y: hidden;
+                height: calc(var(--vh, 1vh) * 100 - 98px) !important;;
             }
 
 
@@ -238,10 +239,6 @@
 
             /* REACTIVE */
 
-            #content {
-                    height: calc(var(--vh, 1vh) * 100 - 98px) !important;
-            }
-
             @media screen and (width < 800px) {
                 #controls {
                     display:block !important;
@@ -261,16 +258,16 @@
                     min-width: unset;
                 }
 
-                /* #content {
-                    display: flex !important;
+                #content {
                     height: calc(var(--vh, 1vh) * 100 - 260px) !important;
-                } */
+                }
             }
 
             @media screen and (max-height: 800px) {
                 .cover, #laden {
-                    max-height: 50vh;
+                    height: 50vh;
                     min-width: unset;
+                    max-width: fit-content;
                 }
             }
 
