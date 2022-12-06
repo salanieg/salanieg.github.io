@@ -156,9 +156,9 @@
 	border: solid 2px black;
 }
 
-#cctext {
-	/* max-width: 60%; */
-}
+/* #cctext {
+	max-width: 60%;
+} */
 
 #ccicon {
 	display: flex;
@@ -239,8 +239,7 @@
 	position: absolute;
 	bottom: 30px;
 	left: 20px;
-	border-color:grey;
-	border-style: outset;
+	border: 2px outset grey;
 	width: 400px;
 	max-width: calc(100vw - 135px);
 	font-size: 11pt;

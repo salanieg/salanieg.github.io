@@ -294,6 +294,7 @@ button[disabled]{
 	width:100%;
 	overflow:hidden;
 	display:flex;
+	justify-content: flex-end;
 	flex-direction: row-reverse;
 }
 
@@ -321,7 +322,7 @@ button[disabled]{
 	color: black;
 }
 
-@media screen and (max-width: 470px) {
+@media screen and (max-width: 450px) {
 	.abo {
 		flex-direction: column-reverse;
 		gap:5px;
@@ -330,10 +331,17 @@ button[disabled]{
 	.abo button, .abo input  {
 		font-size: 13pt;
 		text-align:left;
+		padding-left: 10px;
 	}
 
 	.abo span {
-		padding-right:44px;
+		padding-right:34px;
+	}
+}
+
+@media screen and (max-width: 350px) {
+	.abo button, .abo input  {
+		font-size: 11pt;
 	}
 }
 
