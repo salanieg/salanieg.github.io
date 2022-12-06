@@ -104,14 +104,18 @@
             // SLIDE SELECTION
 
             function displaycurrent() {
-                document.getElementById("slideCurrent").innerHTML = (slideSelected + 1) + "/" + slideList.length
                 if(showcurrenttitle) {
-                    document.getElementById("slideCurrent").innerHTML = (romannumerals[slideSelected]) + "/" + romannumerals[slideList.length - 1]
+                    // document.getElementById("slideCurrent").innerHTML = (romannumerals[slideSelected]) + "/" + romannumerals[slideList.length - 1]
                     document.getElementById("slideCurrentTitle").innerHTML = titleList[slideSelected]
-                    initlanguage() //needed bc it changes DOM
                 }
                 if(overridetitle) {
                     document.getElementById("slideCurrent").innerHTML = overridetitletext
+                }
+                else {
+                    document.getElementById("slideCurrent").innerHTML = (slideSelected + 1) + "/" + slideList.length
+                }
+
+                if(showcurrenttitle||overridetitle) {
                     initlanguage() //needed bc it changes DOM
                 }
             }
