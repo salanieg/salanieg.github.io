@@ -26,8 +26,8 @@
             ];
 
             var titleList = [
-                "<a class='title-inner' href='https://www.GEFAENGNISHEFTE.org/issue-i'><span>ISSUE I</span><span>–</span><span lang='de'>ALTERNATIVE UTOPIEN</span><span lang='en'>ALTERNATIVE UTOPIAS</span></a>",
-                "<a class='title-inner' href='https://www.GEFAENGNISHEFTE.org/issue-i'><span>ISSUE II</span><span>–</span><span lang='de'>REFORM ODER REVOLUTION</span><span lang='en'>REFORM OR REVOLUTION</span></a>"
+                "<a class='title-inner' href='https://www.GEFAENGNISHEFTE.org/issue-i'><span class='slideIndexSpacedIssue'>ISSUE I</span><span lang='de'>ALTERNATIVE UTOPIEN</span><span lang='en'>ALTERNATIVE UTOPIAS</span></a>",
+                "<a class='title-inner' href='https://www.GEFAENGNISHEFTE.org/issue-i'><span class='slideIndexSpacedIssue'>ISSUE II</span><span lang='de'>REFORM ODER REVOLUTION</span><span lang='en'>REFORM OR REVOLUTION</span></a>"
             ];
 
             // LOADING
@@ -267,20 +267,7 @@
                 }
             }
 
-            /* @media screen and (max-height: 800px) {
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 230px) !important;
-                }
-            } */
-
             /* SLIDES */
-
-            .title-inner {
-				display:flex;
-				justify-content: center;
-				align-items: center;
-                gap:10px;
-            }
 
             #slideIndex-wrap {
                 width:100% !important;
@@ -296,12 +283,21 @@
                 padding-right: 40px !important; */
             }
 
-            .slideIndexSpaced {
-				width:100%;
+            .title-inner, .slideIndexSpaced {
 				display:flex;
-                gap:20px;
-				justify-content: space-between;
 				align-items: flex-start;
+                gap:0px 30px;
+            }
+
+            .title-inner {
+				justify-content: center;
+                flex-wrap: wrap;
+                text-align: center;
+            }
+
+            .slideIndexSpaced {
+				justify-content: space-between;
+				width:100%;
                 text-align: right;
 			}
 
@@ -340,22 +336,33 @@
                     font-size: 22pt!important;
                     width: 45px !important;
                 }
+
+                .title-inner {
+                    flex-direction: column;
+                }
+                
+                .title-inner * {
+                    width: 100%;
+                }
             }
 
             #slideCurrentTitle, #slideIndex {font-size: 15pt !important;}
             
-            @media screen and (max-width: 450px) {
+            @media screen and (max-width: 500px) {
                 #slideCurrentTitle, #slideIndex {font-size: 14pt !important;}
             }
-            @media screen and (max-width: 400px) {
+            @media screen and (max-width: 450px) {
                 #slideCurrentTitle, #slideIndex {font-size: 13pt !important;}
             }
-            @media screen and (max-width: 350px) {
+            @media screen and (max-width: 400px) {
                 #slideCurrentTitle, #slideIndex {font-size: 12pt !important;}
             }
-            @media screen and (max-width: 300px) {
+            /* @media screen and (max-width: 350px) {
                 #slideCurrentTitle, #slideIndex {font-size: 11pt !important;}
             }
+            @media screen and (max-width: 300px) {
+                #slideCurrentTitle, #slideIndex {font-size: 10pt !important;}
+            } */
 
 
         </style>
