@@ -248,17 +248,17 @@
 			function setabo(type) {
 
 				document.getElementById('email-form').style.display = "none";
-				document.getElementById('telegramform').style.display = "none"
+				document.getElementById('telegram-form').style.display = "none"
 
-				document.getElementById("emailabooption").style.textDecoration = "none"
-				document.getElementById("telegramabooption").style.textDecoration = "none"
+				document.getElementById("email-abo-opt").style.textDecoration = "none"
+				document.getElementById("telegram-abo-opt").style.textDecoration = "none"
 
 				if(type == "telegram") {
 					document.getElementById("aboinfo").style.display = "none"
 				}
 
-				document.getElementById(type + 'abooption').style.textDecoration = "underline"
-				document.getElementById(type + 'form').style.display = "flex";
+				document.getElementById(type + '-abo-opt').style.textDecoration = "underline"
+				document.getElementById(type + '-form').style.display = "flex";
 
 				localStorage.setItem("gefaengnishefte_abo", type);	
 			}
@@ -601,8 +601,8 @@
 
 								<span id="aboselect">
 									<span lang="de">Abonnieren mit:</span><span lang="en">Subscribe via:</span>
-									<span class="lang-option" id="emailabooption" onclick="setabo('email')">Email</span> / 
-									<span class="lang-option" id="telegramabooption" onclick="setabo('telegram')">Telegram</span><br>
+									<span class="lang-option" id="email-abo-opt" onclick="setabo('email')">Email</span> / 
+									<span class="lang-option" id="telegram-abo-opt" onclick="setabo('telegram')">Telegram</span><br>
 								</span>
 
 								<form id="email-form" class="abo">
@@ -613,7 +613,7 @@
 								</form>
 								<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 								
-								<form id="telegramform" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
+								<form id="telegram-form" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
 									<button type="submit" id="telegram-abo-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
 								</form>
 
