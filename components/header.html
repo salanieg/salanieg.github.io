@@ -4,6 +4,11 @@
 
 		<script>
 
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//////////////////////////////////////////////////// GENERAL ////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 			// HEIGHTFIX
 
 			let vh = window.innerHeight * 0.01;
@@ -13,9 +18,48 @@
 				let vh = window.innerHeight * 0.01;
 				document.documentElement.style.setProperty('--vh', `${vh}px`);
 			});
-		</script>
 
-		<script>
+			
+			// CUSTOM SCROLLBAR
+			
+			var timeoutid;
+
+			function hidescrollbar() {
+				document.documentElement.style.setProperty('--scrollbar-color', 'transparent');
+			}
+
+			document.getElementById("content").addEventListener("scroll", () => {
+				document.documentElement.style.setProperty('--scrollbar-color', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color'));
+				clearTimeout(timeoutid)
+				timeoutid = setTimeout(hidescrollbar, 3000);
+			});
+
+
+			// LANGUAGE
+
+						function initlanguage() {
+				if(localStorage.getItem("gefaengnishefte_language") != "de" && localStorage.getItem("gefaengnishefte_language") != "en") {
+					localStorage.setItem("gefaengnishefte_language", "de");
+				}
+
+				setlanguage(localStorage.getItem("gefaengnishefte_language"))
+			}
+
+			function setlanguage(language) {
+
+				$('[lang="de"]').hide();
+				$('[lang="en"]').hide();
+				document.getElementById("lang-de").style.textDecoration = "none"
+				document.getElementById("lang-en").style.textDecoration = "none"
+				document.getElementById("lang-" + language).style.textDecoration = "underline"
+				$('*:lang(' + language + '):not(br)').show();
+
+				localStorage.setItem("gefaengnishefte_language", language);	
+			}
+
+
+			// VIDEO PAUSER
+
 			function pausevideos() {
 				var frames = document.getElementsByTagName("iframe")
 
@@ -24,27 +68,27 @@
 					frames[i].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
 				}
 			}
-		</script>
 
-		<script>
 
-			// CUSTOM SCROLLBAR
-			
-			var timeoutid;
+			// ID CREATION
 
-			function hidescrollbar() {
-				document.documentElement.style.setProperty('--scrollbar-color', 'transparent');
-			}
-			
-			document.getElementById("content").addEventListener("scroll", () => {
-				document.documentElement.style.setProperty('--scrollbar-color', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color'));
-				clearTimeout(timeoutid)
-				timeoutid = setTimeout(hidescrollbar, 3000);
-			});
+						function makeid(length) {
+                var result           = '';
+                var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                var charactersLength = characters.length;
+                for ( var i = 0; i < length; i++ ) {
+                    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                }
 
-		</script>
+                return result;
+            }
 
-		<script>
+
+
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////// MENUS /////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 			// DROPMENU
 
@@ -88,14 +132,8 @@
 				menuopen = true
 			}
 
-			document.getElementById("aboinput").addEventListener('focus', (event) => {
-				document.getElementById("aboinfo").style.display = "block"
-				// document.getElementById("telegramabo").style.display = "none";
-			});
-
-
 			function safeclosemenu() {
-				if(document.getElementById("aboinput") !== document.activeElement && document.getElementById("abocheckbox") !== document.activeElement && document.getElementById("abobutton") !== document.activeElement) {
+				if(document.getElementById("aboinput") !== document.activeElement && document.getElementById("abocheckbox") !== document.activeElement && document.getElementById("email-abo-btn") !== document.activeElement) {
 					closemenu()
 					document.getElementById("aboinfo").style.display = "none"
 				}
@@ -114,7 +152,6 @@
 				menuopen = false
 			}
 
-
 			function hidedropmenus() {
 				var dropmenus = document.getElementsByClassName("dropmenu")
 
@@ -123,14 +160,7 @@
 					dropmenus[i].style.width = "0vw";
 					dropmenus[i].style.border = "none transparent";
 				}
-
-				// document.documentElement.style.setProperty('--header-divider', `none`); /*still necessary?*/
 			}
-
-			
-		</script>
-
-		<script>
 
 			// NAVIGATION HIGHLIGHT
 			
@@ -168,21 +198,13 @@
                 }
 			});
 			
-		</script>
 
-		<script>
+			
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////// ABO //////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-			function makeid(length) {
-                var result           = '';
-                var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                var charactersLength = characters.length;
-                for ( var i = 0; i < length; i++ ) {
-                    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-                }
-
-                return result;
-            }
-
+			
 			// ABONNIEREN
 	
 			document.getElementById("emailabonnieren").addEventListener('submit', function(event){
@@ -200,20 +222,20 @@
 					error: (err) => alert(err)
 				});
 
-				document.getElementById("abonnierenbutton").textContent = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
-				document.getElementById("abonnierenbutton").disabled = true;
-				document.getElementById("telegramabo").style.display = "block";
+				document.getElementById("email-abo-btn").textContent = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
+				document.getElementById("email-abo-btn").disabled = true;
 				document.getElementById("aboinfo").style.display = "none";
 				initlanguage() //needed bc it changes DOM
 			})
 
-			document.getElementById("emailabonnieren").addEventListener('input', function(event){
-				document.getElementById("abonnierenbutton").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
-				document.getElementById("abonnierenbutton").disabled = false;
+			document.getElementById("email-form").addEventListener('input', function(event){
+				document.getElementById("email-abo-btn").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
+				document.getElementById("email-abo-btn").disabled = false;
 				initlanguage() //needed bc it changes DOM
 			});
 
-			// SWITCH
+
+			// SWITCH ABO TYPE
 			
 			function initsetabo() {
 				if(localStorage.getItem("gefaengnishefte_abo") != "email" && localStorage.getItem("gefaengnishefte_abo") != "telegram") {
@@ -225,48 +247,27 @@
 
 			function setabo(type) {
 
-				document.getElementById('emailabonnieren').style.display = "none";
-				document.getElementById('telegramabonnieren').style.display = "none"
-				// document.getElementById('deaboabonnieren').style.display = "none"
-				document.getElementById("aboemail").style.textDecoration = "none"
-				document.getElementById("abotelegram").style.textDecoration = "none"
-				// document.getElementById("abodeabo").style.textDecoration = "none"
+				document.getElementById('email-form').style.display = "none";
+				document.getElementById('telegramform').style.display = "none"
+
+				document.getElementById("emailabooption").style.textDecoration = "none"
+				document.getElementById("telegramabooption").style.textDecoration = "none"
 
 				if(type == "telegram") {
 					document.getElementById("aboinfo").style.display = "none"
 				}
 
-				document.getElementById("abo" + type).style.textDecoration = "underline"
-				document.getElementById(type + 'abonnieren').style.display = "flex";
+				document.getElementById(type + 'abooption').style.textDecoration = "underline"
+				document.getElementById(type + 'form').style.display = "flex";
 
 				localStorage.setItem("gefaengnishefte_abo", type);	
 			}
 
-		</script>
+			// FOCUS
 
-		<script>
-
-			// LANGUAGE
-
-			function initlanguage() {
-				if(localStorage.getItem("gefaengnishefte_language") != "de" && localStorage.getItem("gefaengnishefte_language") != "en") {
-					localStorage.setItem("gefaengnishefte_language", "de");
-				}
-
-				setlanguage(localStorage.getItem("gefaengnishefte_language"))
-			}
-
-			function setlanguage(language) {
-
-				$('[lang="de"]').hide();
-				$('[lang="en"]').hide();
-				document.getElementById("lang-de").style.textDecoration = "none"
-				document.getElementById("lang-en").style.textDecoration = "none"
-				document.getElementById("lang-" + language).style.textDecoration = "underline"
-				$('*:lang(' + language + '):not(br)').show();
-
-				localStorage.setItem("gefaengnishefte_language", language);	
-			}
+			document.getElementById("aboinput").addEventListener('focus', (event) => {
+				document.getElementById("aboinfo").style.display = "block"
+			});
 
 		</script>
 
@@ -368,6 +369,10 @@
 				white-space: normal;
 			}
 
+			.lang-option {
+				cursor: pointer;
+			}
+
 			
 			/* INFO */
 
@@ -400,7 +405,11 @@
 				padding-top: 0px;
 			}
 
-			
+			.menu-inside {
+				border: 2px outset grey;
+			}
+
+
 			/* TEXT ALIGN LAST */
 
 			.spacedissues, .spacedtitles {
@@ -442,10 +451,6 @@
 				order:-1;
 			}
 
-			#abonnierenbuttontelegram, #abonnierenbuttondeabo {
-				width: 100%;
-			}
-
 			#abocheckbox {
 				position:relative;
 				width: 15px;
@@ -463,23 +468,13 @@
 				display: none;
 			}
 
-			#abonnierenbuttontelegram {
+			#telegram-abo-btn {
+				width: 100%;
 				text-align:center !important;
 			}
 
-			#abonnierenbuttontelegram * {
+			#telegram-abo-btn * {
 				padding: 0 !important;
-			}
-
-
-			/* OTHER */
-
-			.menu-inside {
-				border: 2px outset grey;
-			}
-
-			.lang-option {
-				cursor: pointer;
 			}
 
 			/* REACTIVE */
@@ -539,13 +534,11 @@
 
 					<div class="dropmenu" id="dropmenui" >
 						<div class="menu-spacer">X</div>
-						<!-- <hr class="mid-divider"> -->
 						<div class="menu-inside">
 						<div class="info" id="infoi">
 							<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en">ALTERNATIVE UTOPIAS</span></a>
 							<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en">REFORM OR REVOLUTION</span></a>
 						</div></div>
-						<!-- <hr class="bottom-divider"> -->
 					</div>
 				</div>
 
@@ -558,12 +551,10 @@
 
 					<div class="dropmenu" id="dropmenuk">
 						<div class="menu-spacer">X</div>
-						<!-- <hr class="mid-divider"> -->
 						<div class="menu-inside">
 						<div class="info" id="infok">
 							<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en">A collection of content worth watching</span></a>
 						</div></div>
-						<!-- <hr class="bottom-divider"> -->
 					</div>
 				</div>
 
@@ -595,7 +586,6 @@
 						
 						<!-- INFO -->
 						<div class="menu-inside">
-						<!-- <hr class="mid-divider"> -->
 						<div class="info" id="infom">
 							
 							<div id="footer-wrap"class="info-inner">
@@ -611,26 +601,25 @@
 
 								<span id="aboselect">
 									<span lang="de">Abonnieren mit:</span><span lang="en">Subscribe via:</span>
-									<span class="lang-option" id="aboemail" onclick="setabo('email')">Email</span> / 
-									<span class="lang-option" id="abotelegram" onclick="setabo('telegram')">Telegram</span><br>
+									<span class="lang-option" id="emailabooption" onclick="setabo('email')">Email</span> / 
+									<span class="lang-option" id="telegramabooption" onclick="setabo('telegram')">Telegram</span><br>
 								</span>
 
-								<form id="emailabonnieren" class="abo">
-									<button type="submit" id="abonnierenbutton"><span lang="de">Abonnieren</span><span lang="en">Subscribe</span></button>
+								<form id="email-form" class="abo">
+									<button type="submit" id="email-abo-btn"><span lang="de">Abonnieren</span><span lang="en">Subscribe</span></button>
 									<span><input type="email" name="Email" id="aboinput" placeholder="Email" required></span>
 									<input type="hidden" name="_subject" value="Abonnement">
 									<input type="hidden" name="_captcha" value="true">
 								</form>
 								<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 								
-								<form id="telegramabonnieren" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
-									<button type="submit" id="abonnierenbuttontelegram"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
+								<form id="telegramform" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
+									<button type="submit" id="telegram-abo-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
 								</form>
 
 							</div>
 						</div>
 						</div>
-						<!-- <hr class="bottom-divider"> -->
 					</div>
 				</div>
 			</nav>
