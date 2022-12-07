@@ -109,10 +109,11 @@
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-            var layoutList = ["info-wrapper", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren", "ccinfo"]
+            var layoutList = ["info-wrapper", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren"]
             var layoutCurrent = 0
 
             function resetverticalbuttons() {
+                console.log(layoutCurrent)
                 if (layoutCurrent==0) {
                     document.getElementById("to-top").disabled = true;
                     document.getElementById("to-top").style.color = "lightgrey";
@@ -227,8 +228,11 @@
                 user-select: none;
             }
 
-            #to-top {bottom:105px;}
-            #to-bottom {bottom:55px;}
+            /* #to-top {bottom:105px;}
+            #to-bottom {bottom:55px;} */
+
+            #to-top {bottom:110px;}
+            #to-bottom {bottom:60px;}
             
 
             #to-top-label {
@@ -293,8 +297,8 @@
             @media screen and (max-width: 1750px) {
 
                 .footercontent {
-                    display:none;
-                    border:unset;
+                    /* display:none; */
+                    background-color: #980000;
                     width:100%;
                     justify-content: space-between;
                     justify-content: center;
@@ -302,13 +306,17 @@
                     padding: 10px 30px;
                 }
 
-                .inlinefooter {
-                    display: flex;
-                    flex-wrap: wrap;
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 125px); /* chack also in index */
                 }
 
-                #to-top {bottom:70px;}
-                #to-bottom {bottom:20px;}
+                /* .inlinefooter {
+                    display: flex;
+                    flex-wrap: wrap;
+                } */
+
+                /* #to-top {bottom:70px;}
+                #to-bottom {bottom:20px;} */
             }
 
             @media screen and (width < 800px), screen and (max-width: 800px) {
