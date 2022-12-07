@@ -7,14 +7,14 @@
             var datainfoshown = false;
 
             function initcookies() {
-                console.log("init1")
+                
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
                     showcookiecontent();
                 }
                 else {
                     hidecookiecontent();
                 }
-                console.log("init2")
+                
             }
 
             function cookies(choice) {
@@ -55,10 +55,9 @@
 
             function showcookiecontent() {
                 var frames = document.getElementsByTagName("iframe")
-                console.log("showcookiecontent1")
+                
                 for (let i = 0; i < frames.length; i++)
                 {
-                    console.log(frames.length)
 
                     let frameURL = frames[i].innerHTML
 
@@ -67,7 +66,7 @@
                     frames[i].src = frameURL
                     frames[i].style.display = "block"
                 }
-                console.log("showcookiecontent7")
+                
                 var cookiedisclaimers = document.getElementsByClassName("cookiedisclaimer")
 
                 for (let i = 0; i < cookiedisclaimers.length; i)
@@ -76,34 +75,27 @@
                 }
 
                 datainfoshown = false;
-                console.log("showcookiecontent8")
                 cleartpcookies()
-                console.log("showcookiecontent9")
             }
 
             function hidecookiecontent() {
-                console.log("hidecookiecontent1")
+                
                 if(!datainfoshown) {
-                    console.log("hidecookiecontent2")
-                    console.log("hidecookiecontent3")
+                    
                     var frames = document.getElementsByTagName("iframe")
-                    console.log("hidecookiecontent4")
+                    
                     for (let i = 0; i < frames.length; i++)
                     {
                         var cookiedisclaimer = document.createElement("span");
-                        console.log("hidecookiecontent5")
                         cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>consent to the use of cookies</span>.</span>";
                         cookiedisclaimer.className = "cookiedisclaimer";
-                        console.log("hidecookiecontent6")
+                        
                         frames[i].style.display = "none"
                         frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
-                        console.log("hidecookiecontent7")
                         
                         datainfoshown = true;
                     }
-                    console.log("hidecookiecontent8")
                 }
-                console.log("hidecookiecontent9")
             }
 
             function showdatabanner() {

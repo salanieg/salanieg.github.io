@@ -133,9 +133,15 @@
 			}
 
 			function safeclosemenu() {
-				if(document.getElementById("email-input") !== document.activeElement && document.getElementById("email-checkbox") !== document.activeElement && document.getElementById("email-btn") !== document.activeElement) {
+				if(document.getElementById("email-input") !== document.activeElement 
+				&& document.getElementById("email-checkbox") !== document.activeElement 
+				&& document.getElementById("email-btn") !== document.activeElement) 
+				{
 					closemenu()
-					document.getElementById("email-info").style.display = "none"
+					if(document.getElementById("email-input").value == "") {
+						document.getElementById("email-info").style.display = "none"
+						document.getElementById("email-checkbox").checked = false;
+					}
 				}
 			}
 
@@ -232,12 +238,6 @@
 				initlanguage() //needed bc it changes DOM
 			})
 
-			function showemailinfo() {
-				if(!emailinfodisabled) {
-					document.getElementById("email-info").style.display = "block"
-				}
-			}
-
 			document.getElementById("email-form").addEventListener('input', function(event){
 				document.getElementById("email-btn").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
 				document.getElementById("email-btn").disabled = false;
@@ -245,6 +245,12 @@
 				showemailinfo()
 				initlanguage() //needed bc it changes DOM
 			});
+
+			function showemailinfo() {
+				if(!emailinfodisabled) {
+					document.getElementById("email-info").style.display = "block"
+				}
+			}
 
 
 			// SWITCH ABO TYPE
@@ -277,7 +283,7 @@
 
 			// FOCUS
 
-			document.getElementById("email-input").addEventListener('focus', (event) => {showemailinfo()});
+			// document.getElementById("email-input").addEventListener('focus', (event) => {showemailinfo()});
 
 		</script>
 
@@ -445,9 +451,9 @@
 				line-height: 1.3 !important;
 			}
 
-			/* #email-checkbox {
-				position: absolute;
-			} */
+			#email-form {
+				flex-direction: column-reverse;
+			}
 
 			#email-checkbox {
 				display:inline;
@@ -617,13 +623,13 @@
 									<span class="lang-option" id="telegram-opt" onclick="setabo('telegram')">Telegram</span><br>
 								</span>
 
-								<form id="email-form" class="abo">
-									<button type="submit" id="email-btn"><span lang="de">Abonnieren</span><span lang="en">Subscribe</span></button>
-									<span><input type="email" name="Email" id="email-input" placeholder="Email" required></span>
+								<form id="email-form">
+									<span class="abo"><button type="submit" id="email-btn"><span lang="de">Abonnieren</span><span lang="en">Subscribe</span></button>
+									<span><input type="email" name="Email" id="email-input" placeholder="Email" required></span></span>
 									<input type="hidden" name="_subject" value="Abonnement">
 									<input type="hidden" name="_captcha" value="true">
+									<label id="email-info" for="email-checkbox"><input type="checkbox" id="email-checkbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 								</form>
-								<label id="email-info" for="email-checkbox"><input type="checkbox" id="email-checkbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 								
 								<form id="telegram-form" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
 									<button type="submit" id="telegram-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>

@@ -6,16 +6,14 @@
             // INIT
 
             function initfooter() {
-                // document.getElementById('download-issue').setAttribute('href', downloadlocation);
-                // document.getElementById('download-issue-footer-link').setAttribute('href', downloadlocation["default"]);
                 resetverticalbuttons()
                 initfootnotes()
             }
-        </script>
 
-        <script>
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////////////////////////// FOOTNOTES ///////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            // FOOTNOTES
 
             // ⁰¹²³⁴⁵⁶⁷⁸⁹⁽⁾
             var superscriptList = [
@@ -104,11 +102,12 @@
                 footnotefocused = "none";
             }
 
-        </script>
 
-        <script>
 
-            // VERTICAL NAVIGATION
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////// NAVIGATION ///////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
             var layoutList = ["info-wrapper", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren"]
             var layoutCurrent = 0
@@ -134,24 +133,20 @@
             }
 
             function verticalup() {
-                // var lastlay = layoutCurrent
 
                 if(layoutCurrent > 0) {
                     layoutCurrent = layoutCurrent - 1
                     document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
                     resetverticalbuttons()
-                    // console.log("UP from " + lastlay + " to " + layoutCurrent)
                 }
             }
 
             function verticaldown() {
-                // var lastlay = layoutCurrent
 
                 if(layoutCurrent < layoutList.length - 1) {
                     layoutCurrent = layoutCurrent + 1
                     document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
                     resetverticalbuttons()
-                    // console.log("DOWN from " + lastlay + " to " + layoutCurrent)
                 }
             }
             
@@ -160,49 +155,20 @@
                 
                 var scrollheight = document.getElementById("content").scrollTop
                 layoutCurrent = 0;
-                // var contentheight = window.innerHeight
-                // var lasti, last, offsetlast
-                // var istop = true;
                 for (let i = 0; i < layoutList.length; i++) {
-                    // offsetlast = document.getElementById(layoutList[0]).offsetTop
                     if(scrollheight >=document.getElementById(layoutList[i]).offsetTop - 150){
                         layoutCurrent = i;
-                        // offsetlast = document.getElementById(layoutList[i]).offsetTop
-                        // last = layoutList[i]
-                        // lasti = i
-                        // istop = false;
                     }
                 }
 
                 resetverticalbuttons()
-
-                // if(istop) {
-                //     layoutCurrent = 0;
-                //     offsetlast = document.getElementById(layoutList[0]).offsetTop
-                    // last = layoutList[0]
-                    // lasti = 0
-                // }
-                // console.log("SCROLLING: "+ Math.round(scrollheight) +"   \n element:"+last+" ("+offsetlast+" | "+layoutCurrent+")")
             })
-        </script>
 
-        <!-- <script>
-            function sharenow () {
-                if (navigator.share) {
-                navigator.share({
-                    title: 'web.dev',
-                    text: 'Check out web.dev.',
-                    url: 'https://web.dev/',
-                })
-                    .then(() => console.log('Successful share'))
-                    .catch((error) => console.log('Error sharing', error));
-                }
-            }
-        </script> -->
 
-        <script>
 
-            // COPY LINK
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////////////////////////////// SHARING ////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             var textOriginal;
             const textList = [];
@@ -224,9 +190,6 @@
                 }
                 initlanguage()
             }
-        </script>
-    
-        <script>
 
             // SHARE LINK
 
@@ -237,6 +200,7 @@
             function closesharewindow() {
                 document.getElementById("sharewindow").style.display = "none"
             }
+
         </script>
 
         <style>
@@ -328,10 +292,6 @@
 
             @media screen and (max-width: 1750px) {
 
-                /* #content {
-                    height: calc(var(--vh, 1vh) * 100 - 125px) !important;
-                } */
-
                 .footercontent {
                     display:none;
                     border:unset;
@@ -368,9 +328,7 @@
                 top:50%;
                 transform: translate(-50%, -50%);
                 max-width: 90vw;
-                /* max-height: 80vh; */
                 width: 400px;
-                /* height: 400px; */
                 background-color: #980000;
                 border: 2px outset grey;
             }
@@ -437,7 +395,6 @@
         <div id="footer">
             <button id="to-top" onclick="verticalup()"><div id="to-top-label">‹</div></button>
             <button id="to-bottom" onclick="verticaldown()"><div id="to-top-label">›</div></button>
-            <!-- <button id="plus" onclick="showfooter()"><div id="to-top-label">+</div></button> -->
 
             <div class="footercontent">
                 <button class="footerelement" id="teilen" onclick="opensharewindow()"><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></button>
@@ -456,6 +413,5 @@
             </div>
             <div id="link-kopierenwrap"><button id="link-kopieren">Link kopieren</button></div>
         </div>
-        <!-- onclick="copyanchor(this, ``, `<span lang='de'></small>[Link kopiert!]</span><span lang='en'></small>[Link copied!]</span>`)" -->
     </body>
 </html>
