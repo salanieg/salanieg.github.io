@@ -133,7 +133,7 @@
 			}
 
 			function safeclosemenu() {
-				if(document.getElementById("email-input") !== document.activeElement && document.getElementById("abocheckbox") !== document.activeElement && document.getElementById("email-btn") !== document.activeElement) {
+				if(document.getElementById("email-input") !== document.activeElement && document.getElementById("email-checkbox") !== document.activeElement && document.getElementById("email-btn") !== document.activeElement) {
 					closemenu()
 					document.getElementById("email-info").style.display = "none"
 				}
@@ -206,6 +206,8 @@
 
 			
 			// ABONNIEREN
+
+			var emailinfodisabled = false;
 	
 			document.getElementById("email-form").addEventListener('submit', function(event){
 
@@ -222,15 +224,25 @@
 					error: (err) => alert(err)
 				});
 
-				document.getElementById("email-btn").textContent = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
+				document.getElementById("email-btn").innerHTML = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
 				document.getElementById("email-btn").disabled = true;
 				document.getElementById("email-info").style.display = "none";
+				document.getElementById("email-checkbox").checked = false;
+				emailinfodisabled = true;
 				initlanguage() //needed bc it changes DOM
 			})
+
+			function showemailinfo() {
+				if(!emailinfodisabled) {
+					document.getElementById("email-info").style.display = "block"
+				}
+			}
 
 			document.getElementById("email-form").addEventListener('input', function(event){
 				document.getElementById("email-btn").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
 				document.getElementById("email-btn").disabled = false;
+				emailinfodisabled = false;
+				showemailinfo()
 				initlanguage() //needed bc it changes DOM
 			});
 
@@ -265,9 +277,7 @@
 
 			// FOCUS
 
-			document.getElementById("email-input").addEventListener('focus', (event) => {
-				document.getElementById("email-info").style.display = "block"
-			});
+			document.getElementById("email-input").addEventListener('focus', (event) => {showemailinfo()});
 
 		</script>
 
@@ -409,6 +419,14 @@
 				border: 2px outset grey;
 			}
 
+			#etc {
+				cursor: default;
+			}
+
+			#openmenu {
+				cursor: pointer;
+			}
+
 
 			/* TEXT ALIGN LAST */
 
@@ -419,20 +437,26 @@
 				align-items: center;
 			}
 			
+
 			/* FORM */
 
-			#etc {
-				cursor: default;
+			#abo-selection{
+				font-size: 11pt;
+				line-height: 1.3 !important;
 			}
 
-			#openmenu {
-				cursor: pointer;
-			}
-
-			#abocheckbox {
-				display:inline;
+			/* #email-checkbox {
 				position: absolute;
+			} */
+
+			#email-checkbox {
+				display:inline;
+				position:relative;
 				top: 3px;
+				width: 15px;
+				height:15px;
+				margin:0;
+				margin-top:20px;
 			}
 
 			#email-info {
@@ -444,28 +468,15 @@
 				order:-1;
 			}
 
+			#telegram-form {
+				display: none;
+			}
+
 			#telegram-opt {
 				font-size: 11pt;
 				line-height: 1.3 !important;
 				white-space: pre-wrap;
 				order:-1;
-			}
-
-			#abocheckbox {
-				position:relative;
-				width: 15px;
-				height:15px;
-				margin:0;
-				margin-top:20px;
-			}
-
-			#abo-selection{
-				font-size: 11pt;
-				line-height: 1.3 !important;
-			}
-
-			#telegram-form {
-				display: none;
 			}
 
 			#telegram-btn {
@@ -476,6 +487,7 @@
 			#telegram-btn * {
 				padding: 0 !important;
 			}
+
 
 			/* REACTIVE */
 
@@ -510,7 +522,7 @@
 			}
 
 			@media screen and (max-width: 400px) {
-				.desclarge {
+				.link-long {
 					display:none;
 				}
 			}
@@ -589,8 +601,8 @@
 						<div class="info" id="infom">
 							
 							<div id="footer-wrap"class="info-inner">
-								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en">Support</span><span class="desclarge">: paypal.me/GEFAENGNISHEFTE</span><br></a>
-								<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en">Contact</span><span class="desclarge">: GEFAENGNISHEFTE@riseup.net</span><br></a>
+								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en">Support</span><span class="link-long">: paypal.me/GEFAENGNISHEFTE</span><br></a>
+								<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en">Contact</span><span class="link-long">: GEFAENGNISHEFTE@riseup.net</span><br></a>
 								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
 								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en">Privacy policy</span><br></a>
 								<span><span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br></span>
@@ -611,7 +623,7 @@
 									<input type="hidden" name="_subject" value="Abonnement">
 									<input type="hidden" name="_captcha" value="true">
 								</form>
-								<label id="email-info" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
+								<label id="email-info" for="email-checkbox"><input type="checkbox" id="email-checkbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 								
 								<form id="telegram-form" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
 									<button type="submit" id="telegram-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
