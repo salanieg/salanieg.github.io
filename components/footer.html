@@ -299,8 +299,8 @@
                 .footercontent {
                     /* display:none; */
                     background-color: #980000;
+                    /* background-color: blue; */
                     width:100%;
-                    justify-content: space-between;
                     justify-content: center;
                     gap:10px 15px;
                     padding: 10px 30px;
@@ -318,6 +318,28 @@
                 /* #to-top {bottom:70px;}
                 #to-bottom {bottom:20px;} */
             }
+
+            @media screen and (max-width: 450px) {
+
+                .footercontent {
+                    gap:5px 10px;
+                    padding: 5px 0;
+                }
+
+                .footerelement {
+                    font-size: 9pt;
+                    width:120px;
+                }
+
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 111px); /* chack also in index */
+                }
+
+                #to-top {bottom:95px;}
+                #to-bottom {bottom:45px;}
+            }
+
+
 
             @media screen and (width < 800px), screen and (max-width: 800px) {
 
