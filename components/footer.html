@@ -113,7 +113,7 @@
             var layoutCurrent = 0
 
             function resetverticalbuttons() {
-                console.log(layoutCurrent)
+                
                 if (layoutCurrent==0) {
                     document.getElementById("to-top").disabled = true;
                     document.getElementById("to-top").style.color = "lightgrey";
@@ -406,8 +406,8 @@
 
             <div class="footercontent">
                 <button class="footerelement" id="teilen" onclick="opensharewindow()"><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></button>
-                <a lang="en" href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download><button class="footerelement">Download PDF</button></a>
-                <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download><button class="footerelement">PDF herunterladen</button></a>
+                <a lang="en" href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download class="footerelementwrap"><button class="footerelement">Download PDF</button></a>
+                <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download class="footerelementwrap"><button class="footerelement">PDF herunterladen</button></a>
             </div>
         </div>
 
