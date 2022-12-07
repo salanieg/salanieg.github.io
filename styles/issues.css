@@ -1,7 +1,6 @@
 /* MAIN */
 
 #content {
-	/* height: calc(var(--vh, 1vh) * 100 - 102px); */
 	height: calc(var(--vh, 1vh) * 100 - 77px);
 	padding-left: 60px;
 	padding-right: 60px;
@@ -101,7 +100,6 @@
 #inhalt {
 	text-align: justify;
 	line-height: 2;
-	/* margin-bottom: 140px; */
 }
 
 .artikelWrap {

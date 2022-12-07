@@ -80,26 +80,15 @@
 
                     $(".title").click(function (e) {
                         e.preventDefault();
-                        // e.target.style.color = "white"
                         for (let i = 0; i < issuetitles.length; i++) {
                             document.getElementById(issuetitles[i]).style.color = "white"
-
-                            // var titletext = document.getElementById(issuetitles[i]).childNodes
-
-                            // for (let i = 0; i < titletext.length; i++) {
-                            //     titletext[i].style.color = "white"
-                            // }
                         }
                     });
                 }
             });
 
 
-        </script>
-
-        <script>
-
-            // LOADING SCRIPT
+            // LOADING CHECK SCRIPT
 
             document.addEventListener("DOMContentLoaded", (event) => {
                 checkload()
@@ -143,13 +132,16 @@
                 height: calc(var(--vh, 1vh) * 100 - 98px) !important;;
             }
 
+            #controls {
+                display:none !important;
+            }
+
 
             /* WRAPS */
 
             #issue-wrap {
                 grid-area: issue-wrap;
 				display: flex;
-                /* flex-wrap: wrap; */
 				justify-content: center;
 				align-items: flex-start;
                 gap: 80px;
@@ -175,25 +167,25 @@
             
             .cover-image, #laden {
                 box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
-                -webkit-tap-highlight-color: transparent;
+                /* -webkit-tap-highlight-color: transparent; */
                 max-width: 100%;
                 max-height: 100%;
             }
 
+            #laden {
+                cursor:wait;
+                min-width:300px;
+                max-width:400px;
+                width: 100%;
+            }
+
             .cover-image {
-                transition: 0.7s;
                 cursor: pointer;
+                transition: 0.7s;
             }
 
             .cover-image:hover {
                 transform: scale(1.02);
-            }
-
-            #laden {
-                min-width:300px;
-                max-width:400px;
-                width: 100%;
-                cursor:wait;
             }
 
             .cover {
@@ -221,66 +213,6 @@
                 -webkit-tap-highlight-color: transparent;
             }
 
-            @media screen and (max-width: 1050px) {
-
-                #issue-wrap {
-                    gap: 40px;
-                }
-            }
-            
-            #controls {
-                display:none !important;
-            }
-
-
-            /* REACTIVE */
-
-            @media screen and (width < 800px) {
-                #controls {
-                    display:block !important;
-                }
-
-                #text-wrap {
-                    display:none;
-                }
-
-                /* #issue-wrap {
-                    width: 100%;
-                } */
-
-                .cover, #laden {
-                    max-height: 60vh;
-                    /* max-width: 100% !important; */
-                    min-width: unset;
-                }
-
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 270px) !important;
-                }
-            }
-
-            /* LINKED TO CONTROL RESIZING */
-
-            @media screen and (max-height: 800px) {
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 240px) !important;
-                }
-            }
-
-            @media screen and (max-height: 550px) {
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 220px) !important;
-                }
-            }
-
-            @media screen and (max-height: 800px) {
-                .cover, #laden {
-                    height: 50vh;
-                    min-width: unset;
-                    max-width: fit-content;
-                }
-            }
-
             /* SLIDES */
 
             #slideIndex-wrap {
@@ -293,8 +225,6 @@
                 line-height: 1 !important;
                 max-width: 440px !important;
                 width:100% !important;
-                /* padding-left: 40px !important;
-                padding-right: 40px !important; */
             }
 
             .title-inner, .slideIndexSpaced {
@@ -341,30 +271,43 @@
             }
 
 
-            .overridetitletextSmall {display: none;}
-            @media screen and (max-width: 350px) {
-                .overridetitletextSmall {display: inline;}
-                .overridetitletextLarge {display: none;}
-                #slideCurrent {
-                    padding:0px!important;
-                    font-size: 22pt!important;
-                    width: 45px !important;
-                }
+            /*/////////////////////// REACTIVE ///////////////////////*/
 
-                .title-inner {
-                    flex-direction: column;
-                }
-                
-                .title-inner * {
-                    width: 100%;
+            @media screen and (max-width: 1050px) {
+
+                #issue-wrap {
+                    gap: 40px;
                 }
             }
+
+            @media screen and (width < 800px) {
+                #controls {
+                    display:block !important;
+                }
+
+                #text-wrap {
+                    display:none;
+                }
+
+                .cover, #laden {
+                    max-height: 60vh;
+                    min-width: unset;
+                }
+
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 270px) !important;
+                }
+            }
+
+
+            /* SMALL SCREEN ADJUSTMENTS */
 
             #slideCurrentTitle, #slideIndex {font-size: 15pt !important;}
             
             @media screen and (max-width: 500px) {
                 #slideCurrentTitle, #slideIndex {font-size: 14pt !important;}
             }
+
             @media screen and (max-width: 450px) {
                 #slideCurrentTitle, #slideIndex {font-size: 13pt !important;}
             }
@@ -386,13 +329,63 @@
                 }
             }
 
+            .overridetitletextSmall {display: none;}
 
-            /* @media screen and (max-width: 350px) {
-                #slideCurrentTitle, #slideIndex {font-size: 11pt !important;}
+            @media screen and (max-width: 350px) {
+
+                .overridetitletextSmall {display: inline;}
+                .overridetitletextLarge {display: none;}
+                
+                #slideCurrent {
+                    padding:0px!important;
+                    font-size: 22pt!important;
+                    width: 45px !important;
+                }
+
+                .title-inner {
+                    flex-direction: column;
+                }
+                
+                .title-inner * {
+                    width: 100%;
+                }
             }
-            @media screen and (max-width: 300px) {
-                #slideCurrentTitle, #slideIndex {font-size: 10pt !important;}
-            } */
+
+
+            /* LINKED TO CONTROL RESIZING */
+
+            @media screen and (max-height: 800px) {
+                #controls {
+                    display:block !important;
+                }
+
+                #text-wrap {
+                    display:none;
+                }
+
+                .cover, #laden {
+                    max-height: 60vh;
+                    min-width: unset;
+                }
+
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 240px) !important;
+                }
+            }
+
+            @media screen and (max-height: 550px) {
+                #content {
+                    height: calc(var(--vh, 1vh) * 100 - 220px) !important;
+                }
+            }
+
+            @media screen and (max-height: 800px) {
+                .cover, #laden {
+                    height: 50vh;
+                    min-width: unset;
+                    max-width: fit-content;
+                }
+            }
 
 
         </style>
@@ -409,7 +402,6 @@
                     <div id="slides">
                         <div class="slide-cover"><a class="cover" href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-i" lang="de" src="images/issues/de/issue-i-cover.jpg" alt="ISSUE I COVER"/><img class="cover-image" id="cover-i" lang="en" src="images/issues/en/issue-i-cover.jpg" alt="ISSUE I COVER"/></a></div>
                         <div class="slide-cover"><a class="cover" href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-ii" lang="de" src="images/issues/de/issue-i-cover.jpg" alt="ISSUE II COVER"/><img class="cover-image" id="cover-ii" lang="en" src="images/issues/en/issue-i-cover.jpg" alt="ISSUE II COVER"/></a></div>
-                        <!-- <div><a href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="cover-iii" lang="de" src="images/issues/de/issue-iii-cover.jpg" alt="ISSUE III COVER"/><img class="cover-image" id="cover-iii" lang="en" src="images/issues/en/issue-iii-cover.jpg" alt="ISSUE III COVER"/></a></div> -->
                     </div>
                 </div>
                 <div id="text-wrap">
@@ -417,8 +409,6 @@
                     <hr>
                     <a class="title" id="title-ii" onmouseover="selectcover(2)" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span><span lang='de'>REFORM ODER REVOLUTION</span><span lang='en'>REFORM OR REVOLUTION</span></a>
                     <hr>
-                    <!-- <a class="title" id="title-iii" onmouseover="selectcover(3)" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE III</span><span lang='de'>IST POPULISMUS GUT?</span><span lang='en'>IS POPULISM A GOOD THING?</span></a>
-                    <hr> -->
                 </div>
 
                 

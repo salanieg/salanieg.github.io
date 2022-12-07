@@ -265,10 +265,6 @@
 				document.getElementById("lang-" + language).style.textDecoration = "underline"
 				$('*:lang(' + language + '):not(br)').show();
 
-				// if(document.getElementById('download-issue-footer')) {
-				// 	document.getElementById('download-issue-footer').setAttribute('href', downloadlocation[language]);
-				// }
-
 				localStorage.setItem("gefaengnishefte_language", language);	
 			}
 
@@ -360,29 +356,9 @@
 				font-size: 11pt;
 			}
 
-			.descsmall {
-				display:none;
-			}
-
-			@media screen and (max-width: 400px) {
-				.desclarge {
-					display:none;
-				}
-
-				.descsmall {
-					display:inline;
-				}
-			}
-
 			#hideissues {
 				display: none;
 			}
-
-			/* #issue-list {
-				display: none;
-				margin-top:5px;
-				margin-bottom:30px;
-			} */
 
 			#footer-wrap {
 				font-size: 11pt;
@@ -409,6 +385,12 @@
 				font-size: 13pt;
 			}
 
+			#infoe, #infom {
+				max-width: 400px;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
 			#infom {
 				padding-bottom:40px;
 			}
@@ -418,16 +400,15 @@
 				padding-top: 0px;
 			}
 
-
+			
 			/* TEXT ALIGN LAST */
 
-			.spacedissues, .spacedtitles, #issue-list>* {
+			.spacedissues, .spacedtitles {
 				width:100%;
 				display:flex;
 				justify-content: space-between;
 				align-items: center;
 			}
-
 			
 			/* FORM */
 
@@ -437,36 +418,6 @@
 
 			#openmenu {
 				cursor: pointer;
-			}
-
-			/* REACTIVE */
-
-			@media screen and (min-width: 800px) {
-
-				#openmenu {
-					display: none;
-				}
-
-				#infoe {
-					display: none;
-				}
-
-				#menuspacer {
-					display:none;
-					background-color: lightgray;
-				}
-			}
-
-			@media screen and (max-width: 800px) {
-				.hmenu, #etc {
-					display: none;
-				}
-			}
-
-			@media screen and (width: 800px) {
-				.hmenu, #etc {
-					display: block;
-				}
 			}
 
 			#abocheckbox {
@@ -508,23 +459,6 @@
 				line-height: 1.3 !important;
 			}
 
-			.menu-inside {
-				border: 2px outset grey;
-			}
-
-			@media screen and (max-width: 800px) {
-				.menu-inside {
-					border-right: 0px none transparent;
-					border-left: 0px none transparent;
-					border-top: 2px solid lightgrey;
-					border-bottom: 2px solid lightgrey;
-				}
-			}
-
-			.lang-option {
-				cursor: pointer;
-			}
-
 			#telegramabonnieren {
 				display: none;
 			}
@@ -537,10 +471,53 @@
 				padding: 0 !important;
 			}
 
-			#infoe, #infom {
-				max-width: 400px;
-				margin-left: auto;
-				margin-right: auto;
+
+			/* OTHER */
+
+			.menu-inside {
+				border: 2px outset grey;
+			}
+
+			.lang-option {
+				cursor: pointer;
+			}
+
+			/* REACTIVE */
+
+			@media screen and (width >= 800px) {
+
+				#openmenu {
+					display: none;
+				}
+
+				#infoe {
+					display: none;
+				}
+
+				#menuspacer {
+					display:none;
+					background-color: lightgray;
+				}
+			}
+
+			@media screen and (width < 800px) {
+
+				.hmenu, #etc {
+					display: none;
+				}
+
+				.menu-inside {
+					border-right: 0px none transparent;
+					border-left: 0px none transparent;
+					border-top: 2px solid lightgrey;
+					border-bottom: 2px solid lightgrey;
+				}
+			}
+
+			@media screen and (max-width: 400px) {
+				.desclarge {
+					display:none;
+				}
 			}
 
 		</style>
@@ -567,7 +544,6 @@
 						<div class="info" id="infoi">
 							<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en">ALTERNATIVE UTOPIAS</span></a>
 							<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en">REFORM OR REVOLUTION</span></a>
-							<!-- <a id="info-issue-iii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE III</span> <span lang="de">IST POPULISMUS GUT?</span><span lang="en">IS POPULISM A GOOD THING?</span></a> -->
 						</div></div>
 						<!-- <hr class="bottom-divider"> -->
 					</div>
@@ -623,12 +599,8 @@
 						<div class="info" id="infom">
 							
 							<div id="footer-wrap"class="info-inner">
-								
-								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="desclarge"><span lang="de">Unterstützen: paypal.me/GEFAENGNISHEFTE</span><span lang="en">Support: paypal.me/GEFAENGNISHEFTE</span><br></a>
-								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE" class="descsmall"><span lang="de">Unterstützen</span><span lang="en">Support</span><br></a>
-								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="desclarge"><span lang="de">Kontaktieren: GEFAENGNISHEFTE@riseup.net</span><span lang="en">Contact: GEFAENGNISHEFTE@riseup.net</span><br></a>
-								<a href="mailto:GEFAENGNISHEFTE@riseup.net" class="descsmall"><span lang="de">Kontaktieren</span><span lang="en">Contact</span><br></a>
-								<!-- <a href="https://www.GEFAENGNISHEFTE.org/deaboabonnieren" id="descriptiond"><span lang="de">Deabonnieren</span><span lang="en">Unsubribe</span><br></a> -->
+								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en">Support</span><span class="desclarge">: paypal.me/GEFAENGNISHEFTE</span><br></a>
+								<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en">Contact</span><span class="desclarge">: GEFAENGNISHEFTE@riseup.net</span><br></a>
 								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
 								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en">Privacy policy</span><br></a>
 								<span><span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br></span>
@@ -636,12 +608,13 @@
 
 	
 							<div class="info-inner">
+
 								<span id="aboselect">
 									<span lang="de">Abonnieren mit:</span><span lang="en">Subscribe via:</span>
 									<span class="lang-option" id="aboemail" onclick="setabo('email')">Email</span> / 
 									<span class="lang-option" id="abotelegram" onclick="setabo('telegram')">Telegram</span><br>
-									<!-- <span class="lang-option" id="abodeabo" onclick="setabo('deabo')"><span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span></span><br> -->
 								</span>
+
 								<form id="emailabonnieren" class="abo">
 									<button type="submit" id="abonnierenbutton"><span lang="de">Abonnieren</span><span lang="en">Subscribe</span></button>
 									<span><input type="email" name="Email" id="aboinput" placeholder="Email" required></span>
@@ -649,12 +622,11 @@
 									<input type="hidden" name="_captcha" value="true">
 								</form>
 								<label id="aboinfo" for="abocheckbox"><input type="checkbox" id="abocheckbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
+								
 								<form id="telegramabonnieren" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
 									<button type="submit" id="abonnierenbuttontelegram"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
 								</form>
-								<!-- <form id="deaboabonnieren" class="abo" action="https://www.GEFAENGNISHEFTE.org/deabonnieren">
-									<button type="submit" id="abonnierenbuttondeabo"><span lang="de">Email Deabonnieren</span><span lang="en">Unsubscribe email</span></button></button>
-								</form> -->
+
 							</div>
 						</div>
 						</div>
