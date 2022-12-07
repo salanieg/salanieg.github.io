@@ -4,11 +4,10 @@
 
         <script>
 
-            var romannumerals = [
-                "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"
-            ]
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////// INIT /////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            // INIT
 
             var slideList = []
 
@@ -20,11 +19,6 @@
                     slidesList.item(i).setAttribute('id', slideID);
                     slideList.push(slideID);
                 }
-
-                // console.log(slideList.length)
-                // for (let k = 0; k < slideList.length; k++) {
-                //     console.log(slideList[k])
-                // }
                 
                 if(!placeholder) {
                     document.getElementById(slideList[slideSelected]).style.display = "flex";
@@ -41,71 +35,16 @@
                 controlsinit = true
             }
 
-            document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
-
-            function initautohidecontrols() {
-                document.addEventListener("mousemove", timecontrols);
-                document.getElementById("controls").removeEventListener("mousemove", initautohidecontrols);
-            }
 
 
-
-            // AUTO HIDE INDEX SCROLLBAR
-
-            var timeoutIDindex;
-            var timeoutIDcontrols;
-            var oncontrols = false;
-
-            function hidescrollbarindex() {
-                document.documentElement.style.setProperty('--scrollbar-color-index', 'transparent');
-            }
-
-            document.getElementById("slideIndex").addEventListener("scroll", () => {
-                document.documentElement.style.setProperty('--scrollbar-color-index', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-index'));
-                clearTimeout(timeoutIDindex)
-                timeoutIDindex = setTimeout(hidescrollbarindex, 10000);
-            });
-
-            function hidecontrols() {
-                document.getElementById("controls-inner").style.visibility = "hidden";
-            }
-
-            // timer start
-
-            function timecontrols() {
-                if(autohidecontrols == true && oncontrols == false) {
-                    document.getElementById("controls-inner").style.visibility = "visible";
-                    clearTimeout(timeoutIDcontrols)
-                    timeoutIDcontrols = setTimeout(hidecontrols, 8000);
-                }
-            }
-
-            document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
-            document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
-            document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
-            document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
-
-            document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
-            document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
-            document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
-            document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
-
-            function entercontrols() {
-                clearTimeout(timeoutIDcontrols)
-                oncontrols = true;
-            }
-
-            function leavecontrols() {
-                timecontrols();
-                oncontrols = false;
-            }
-
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////////////////////////// SLIDE SELECTION ////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             // SLIDE SELECTION
 
             function displaycurrent() {
                 if(showcurrenttitle) {
-                    // document.getElementById("slideCurrent").innerHTML = (romannumerals[slideSelected]) + "/" + romannumerals[slideList.length - 1]
                     document.getElementById("slideCurrentTitle").innerHTML = titleList[slideSelected]
                 }
                 if(overridetitle) {
@@ -187,9 +126,27 @@
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
             }
 
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////// VISUAL TWEAKS /////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-            // VISUAL TWEAKS
+            var timeoutIDindex;
+            var timeoutIDcontrols;
+            var oncontrols = false;
+
+
+            // SCROLLBAR
+
+            function hidescrollbarindex() {
+                document.documentElement.style.setProperty('--scrollbar-color-index', 'transparent');
+            }
+
+            document.getElementById("slideIndex").addEventListener("scroll", () => {
+                document.documentElement.style.setProperty('--scrollbar-color-index', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-index'));
+                clearTimeout(timeoutIDindex)
+                timeoutIDindex = setTimeout(hidescrollbarindex, 10000);
+            });
 
             function keeptop() {
                 document.getElementById("content").scrollTop = 0;
@@ -198,6 +155,53 @@
                     setTimeout(hidescrollbar, 1);
                 }
             }
+
+
+            // CONTROL AUTO HIDING
+
+            document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
+
+            function initautohidecontrols() {
+                document.addEventListener("mousemove", timecontrols);
+                document.getElementById("controls").removeEventListener("mousemove", initautohidecontrols);
+            }
+
+            function hidecontrols() {
+                document.getElementById("controls-inner").style.visibility = "hidden";
+            }
+
+            // timer start
+
+            function timecontrols() {
+                if(autohidecontrols == true && oncontrols == false) {
+                    document.getElementById("controls-inner").style.visibility = "visible";
+                    clearTimeout(timeoutIDcontrols)
+                    timeoutIDcontrols = setTimeout(hidecontrols, 8000);
+                }
+            }
+
+            function entercontrols() {
+                clearTimeout(timeoutIDcontrols)
+                oncontrols = true;
+            }
+
+            function leavecontrols() {
+                timecontrols();
+                oncontrols = false;
+            }
+
+            document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
+            document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
+            document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
+            document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
+
+            document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
+            document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
+
+
+            // CONTROL DISABLEING
 
             function resetcontrols() {
                 if (slideSelected==0) {

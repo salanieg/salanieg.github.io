@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>DEABONNIEREN</title>
+        <title>email-deabo</title>
         <meta name="viewport" content="width=device-width, height=device-height, user-scalable=no">
         <link rel="icon" type="image/x-icon" href="images/internal/faviconred.ico">
         <link rel="stylesheet" href="styles/fonts.css">
@@ -34,7 +34,7 @@
 			// DEABONNIEREN
 
             document.addEventListener("DOMContentLoaded", () => {
-                document.getElementById("deabonnieren").addEventListener('submit', function(event){
+                document.getElementById("email-deabo").addEventListener('submit', function(event){
 
                     event.preventDefault()
 
@@ -49,13 +49,13 @@
                         error: (err) => alert(err)
                     });
 
-                    document.getElementById("deabonnierenbutton").innerHTML = '<span lang="de">Deabonniert.</span><span lang="en">Unsubscribed.</span>';
-                    document.getElementById("deabonnierenbutton").disabled = true;
+                    document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonniert.</span><span lang="en">Unsubscribed.</span>';
+                    document.getElementById("email-deabo-btn").disabled = true;
                 })
 
-                document.getElementById("deabonnieren").addEventListener('input', function(event){
-                    document.getElementById("deabonnierenbutton").innerHTML = '<span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span>';
-                    document.getElementById("deabonnierenbutton").disabled = false;
+                document.getElementById("email-deabo").addEventListener('input', function(event){
+                    document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span>';
+                    document.getElementById("email-deabo-btn").disabled = false;
                 });
             });
 
@@ -84,8 +84,8 @@
         <div id="content">
             <div id="deabonnieren-outer">
                 <div id="deabonnieren-inner">
-                    <form id="deabonnieren" class="abo">
-                        <button type="submit" id="deabonnierenbutton"><span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span></button>
+                    <form id="email-deabo" class="abo">
+                        <button type="submit" id="email-deabo-btn"><span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span></button>
                         <span><input type="email" name="Email" placeholder="Email" required></span>
                         <input type="hidden" name="_subject" value="Désabonnement">
                         <input type="hidden" name="_captcha" value="true">
