@@ -497,7 +497,7 @@
 
 			/* REACTIVE */
 
-			@media screen and (width >= 800px) {
+			@media screen and (width >= 800px), screen and (min-width: 800px) {
 
 				#openmenu {
 					display: none;
@@ -513,7 +513,7 @@
 				}
 			}
 
-			@media screen and (width < 800px) {
+			@media screen and (width < 800px), screen and (max-width: 800px) {
 
 				.hmenu, #etc {
 					display: none;
