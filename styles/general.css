@@ -351,26 +351,26 @@ button[disabled]{
 	}
 }
 
-.abo > input::selection {
+input::selection {
 	background: transparent !important;
 }
 
-.abo > input::-webkit-selection {
+input::-webkit-selection {
 	background: transparent !important;
 }
 
-.abo > input::-moz-selection {
+input::-moz-selection {
 	background: transparent !important;
 }
 
-.abo > button::selection {
+button::selection {
 	background: transparent !important;
 }
 
-.abo > button::-webkit-selection {
+button::-webkit-selection {
 	background: transparent !important;
 }
 
-.abo > button::-moz-selection {
+button::-moz-selection {
 	background: transparent !important;
 }
