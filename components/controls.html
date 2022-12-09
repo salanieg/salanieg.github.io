@@ -12,7 +12,7 @@
             var slideList = []
 
             function initcontrols() {
-                localStorage.getItem("gefaengnishefte_cookies") == "true"
+                localStorage.setItem("gefaengnishefte_cookies", true);
                 slidesList = document.getElementById("slides").children
                 for (let i = 0; i < slidesList.length; i++) {
                     let slideID = 'slide'+ (i+1)
