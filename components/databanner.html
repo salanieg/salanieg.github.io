@@ -62,12 +62,14 @@
 
                     if(frames[i].getAttribute('data-source') !== "youtube") {
                         frames[i].removeAttribute("sandbox")
+                        frames[i].frameborder = "0"
                         frames[i].innerHTML = ""
                         frames[i].src = frameURL
                         frames[i].style.display = "block"
                     }
                     else {
                         frames[i].style.display = "none"
+                        frames[i].frameborder = "0"
                         frames[i].title = "YouTube video player"
                         frames[i].allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         frames[i].setAttribute('allowFullScreen', '')
