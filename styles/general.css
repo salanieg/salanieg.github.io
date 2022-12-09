@@ -256,6 +256,10 @@ hr {
 	background-color: lightgray;
 }
 
+iframe {
+	border: 0;
+}
+
 input {
 	border-radius: 0;
 	border-style:inset;
