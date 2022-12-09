@@ -12,7 +12,7 @@
             var slideList = []
 
             function initcontrols() {
-
+                localStorage.getItem("gefaengnishefte_cookies") == "true"
                 slidesList = document.getElementById("slides").children
                 for (let i = 0; i < slidesList.length; i++) {
                     let slideID = 'slide'+ (i+1)
@@ -125,6 +125,8 @@
                 document.getElementById("slideIndex").style.display = "none";
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
             }
+
+
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             ///////////////////////////////////////////////// VISUAL TWEAKS /////////////////////////////////////////////////
