@@ -16,7 +16,7 @@
 
 #info-wrapper {
 	display:flex;
-	flex-wrap: wrap;
+	/* flex-wrap: wrap; */
 	align-items: flex-end;
 	justify-content: space-between;
 	gap:250px 100px;
@@ -29,6 +29,16 @@
 #coverwrap {
 	display:flex;
 	flex-direction: column;
+	height:fit-content;
+}
+
+#coverimagewrap {
+	width:100%;
+	height: fit-content;
+	max-height: 100%;
+	display:flex;
+	align-items: center;
+	justify-content: center;
 }
 
 #coverimage {
@@ -36,6 +46,7 @@
 	width:100%;
 	max-width:900px;
 	height:auto;
+
 }
 
 #title {
@@ -63,6 +74,7 @@
 @media screen and (max-width: 300px) {#title { font-size: 11pt;}}
 
 .abstract, .abstracttitle {
+	min-width: 500px;
 	width: 100%;
 	max-width: 500px;
 }
@@ -178,7 +190,11 @@
 
 /* REACTIVE */
 
-@media screen and (max-width: 1750px) {
+@media screen and (max-width: 1550px) {
+	.abstract, .abstracttitle {
+		max-width: unset;
+	}
+
 	#inhalt, .artikelWrap, #info-wrapper-bottom {
 		justify-content: center;
 	}
@@ -189,7 +205,7 @@
 		padding:0px;
 		padding-top: 20px;
 		display:flex;
-		flex-direction: column;
+		flex-direction: column; 
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: center;
