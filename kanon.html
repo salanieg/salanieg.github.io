@@ -79,6 +79,7 @@
                     initcookies();
                     initlanguage();
                     initsetabo();
+                    loadframes();
                     document.getElementById("headerlogo").firstChild.innerHTML = "KANON";
                 }
             }
@@ -159,6 +160,22 @@
                 font-size: 20pt;
                 white-space: nowrap;
             }
+
+            iframe {
+                aspect-ratio: 16/9;
+            }
+
+            /* .aspectratio16x9 {
+                aspect-ratio:16/9;
+            }
+
+            .aspectratio3x2 {
+                aspect-ratio:3/2;
+            }
+
+            .aspectratio4x3 {
+                aspect-ratio:4/3;
+            } */
             
         </style>
     </head>
@@ -170,37 +187,37 @@
 
             <div id="slides">
                 <div>
-                    <iframe class="large" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="RErdSr0iAcs" sandbox></iframe><!--"And I think to myself, what a wonderful world."-->
+                    <iframe class="large" src="about:blank" data-source="youtube" data-id="RErdSr0iAcs" sandbox></iframe><!--"And I think to myself, what a wonderful world."-->
                 </div>
 
                 <!-- <div>
-                    <iframe class="medium" style="aspect-ratio: 4/3" src="about:blank" data-source="youtube" data-id="-yrRhmRdQds" data-list="PLhAMGiT1MTPABwHxfRPa5ewEHm9nbpD_Q" sandbox></iframe>Marx & Engels - Stationen ihres Lebens
+                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="-yrRhmRdQds" data-list="PLhAMGiT1MTPABwHxfRPa5ewEHm9nbpD_Q" sandbox></iframe>Marx & Engels - Stationen ihres Lebens
                 </div> -->
 
                 <div>
                     <div class="slideGrid">
-                        <iframe class="small" style="aspect-ratio: 3/2" src="about:blank" data-source="youtube" data-id="6O7_YswJOXY" sandbox></iframe><!--Cornelius Castoriadis On The Imaginary Institution of Society-->
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="IaD1DcWfaGA" sandbox></iframe><!--Bernie Sanders interviews Punks [1988]-->
-                        <iframe class="small" style="aspect-ratio: 3/2" src="about:blank" data-source="youtube" data-id="_g8JVK4Fppw" sandbox></iframe><!--Sartre on Intellectualism-->
-                        <iframe class="small" style="aspect-ratio: 4/3" src="about:blank" data-source="youtube" data-id="H3AxGp5k-Qo" sandbox></iframe><!--Talkshow: Der zerstörte Tisch-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="6O7_YswJOXY" sandbox></iframe><!--Cornelius Castoriadis On The Imaginary Institution of Society-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="IaD1DcWfaGA" sandbox></iframe><!--Bernie Sanders interviews Punks [1988]-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="_g8JVK4Fppw" sandbox></iframe><!--Sartre on Intellectualism-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="H3AxGp5k-Qo" sandbox></iframe><!--Talkshow: Der zerstörte Tisch-->
                     </div>
                 </div>
 
                 <!-- <div>
-                    <iframe class="medium" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="6O7_YswJOXY" sandbox loading="lazy" frameborder=0>https://players.brightcove.net/6057277737001/AgPwICX30_default/slideIndex.html?videoId=6165059245001</iframe>KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD 
+                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="6O7_YswJOXY" sandbox loading="lazy" frameborder=0>https://players.brightcove.net/6057277737001/AgPwICX30_default/slideIndex.html?videoId=6165059245001</iframe>KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD 
                 </div> -->
 
                 <div>
-                    <iframe class="large" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="glaG64Ao7sM" data-list="PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" sandbox></iframe><!--KANON // MUSIK-->
+                    <iframe class="large" src="about:blank" data-source="youtube" data-id="glaG64Ao7sM" data-list="PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" sandbox></iframe><!--KANON // MUSIK-->
 
                     
                     <div class="slideFlex">
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="RM7lw0Ovzq0" sandbox></iframe>
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="FUQI-o02JYU" sandbox></iframe>
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="VYOjWnS4cMY" sandbox></iframe>
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="FJt7gNi3Nr4" sandbox></iframe>
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="tvTRZJ-4EyI" sandbox></iframe>
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="NLZRYQMLDW4" sandbox></iframe>
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="RM7lw0Ovzq0" sandbox></iframe>
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="FUQI-o02JYU" sandbox></iframe>
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="VYOjWnS4cMY" sandbox></iframe>
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="FJt7gNi3Nr4" sandbox></iframe>
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="tvTRZJ-4EyI" sandbox></iframe>
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="NLZRYQMLDW4" sandbox></iframe>
                     </div>
 
                     <div class="small">
@@ -212,45 +229,45 @@
 
                 <div>
                     <div class="slideRow">
-                        <iframe class="verysmall" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="-jAO9bVpqV8" sandbox></iframe><!--Friedrich Schiller „Die Bürgschaft“ (1798)-->
-                        <iframe class="verysmall" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="oe65t5m3cAU" sandbox></iframe><!--Jalava Lied-->
-                        <iframe class="verysmall" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="pm6qy_9E0rY" sandbox></iframe><!--Bernie Sanders 8 1/2 hour Filibuster but it's Lofi-->
+                        <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="-jAO9bVpqV8" sandbox></iframe><!--Friedrich Schiller „Die Bürgschaft“ (1798)-->
+                        <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="oe65t5m3cAU" sandbox></iframe><!--Jalava Lied-->
+                        <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="pm6qy_9E0rY" sandbox></iframe><!--Bernie Sanders 8 1/2 hour Filibuster but it's Lofi-->
                     </div>
                 </div>
 
                 <div>
-                    <iframe class="large" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="doaQC-S8de8" sandbox></iframe><!--Akira Kurosawa - Composing Movement-->
+                    <iframe class="large" src="about:blank" data-source="youtube" data-id="doaQC-S8de8" sandbox></iframe><!--Akira Kurosawa - Composing Movement-->
                 </div>
 
                 <div>
                     <div class="slideGrid">
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="xuCn8ux2gbs" sandbox></iframe><!--history of the entire world, i guess-->                                           
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="_ArVh3Cj9rw" sandbox></iframe><!--The Future Of Reasoning-->                                                        
-                        <!-- <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="1Jwo5qc78QU" sandbox></iframe>--> <!--YouTube's Copyright System Isn't Broken. The World's Is.-->
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="3LopI4YeC4I" sandbox></iframe><!--Is Success Luck or Hard Work?-->                                                  
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="xuCn8ux2gbs" sandbox></iframe><!--history of the entire world, i guess-->                                           
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="_ArVh3Cj9rw" sandbox></iframe><!--The Future Of Reasoning-->                                                        
+                        <!-- <iframe class="small" src="about:blank" data-source="youtube" data-id="1Jwo5qc78QU" sandbox></iframe>--> <!--YouTube's Copyright System Isn't Broken. The World's Is.-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="3LopI4YeC4I" sandbox></iframe><!--Is Success Luck or Hard Work?-->                                                  
                     </div>
                 </div>
 
                 <div>
-                    <iframe class="medium" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="jWJVMoe7OY0" data-list="PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" sandbox></iframe><!--Visual Investigations-->
+                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="jWJVMoe7OY0" data-list="PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" sandbox></iframe><!--Visual Investigations-->
                 </div>
 
                 <div>
-                    <iframe class="medium" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="AhRBsJYWR8Q" sandbox></iframe><!--The Problem With Human Rights-->
+                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="AhRBsJYWR8Q" sandbox></iframe><!--The Problem With Human Rights-->
                 </div>
 
                 <div>
-                    <iframe class="medium" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="TDcwIZzaf-k" sandbox></iframe><!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->
+                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="TDcwIZzaf-k" sandbox></iframe><!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->
                 </div>
 
                 <div>
-                    <iframe class="medium" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="B9v6q5YzbGA" sandbox></iframe><!--Hollywood Antivax Rally-->
+                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="B9v6q5YzbGA" sandbox></iframe><!--Hollywood Antivax Rally-->
                 </div>
 
                 <div>
                     <div class="slideRow">
-                        <iframe class="medium" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="6zzwYQch5R4" data-list="PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" sandbox></iframe><!--Faust 1960-->
-                        <iframe class="small" style="aspect-ratio: 16/9" src="about:blank" data-source="youtube" data-id="JlhANslhnNI" sandbox></iframe><!--Goethe Faust 3sat-->
+                        <iframe class="medium" src="about:blank" data-source="youtube" data-id="6zzwYQch5R4" data-list="PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" sandbox></iframe><!--Faust 1960-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="JlhANslhnNI" sandbox></iframe><!--Goethe Faust 3sat-->
                     </div>
                 </div>
 
@@ -267,7 +284,7 @@
 
                 <div>
                     <div class="slideRow">
-                        <iframe class="medium" style="aspect-ratio: 16/9" src="about:blank" sandbox loading="lazy" title="vimeo-player" allowfullscreen>https://player.vimeo.com/video/279828346</iframe><!--The Big Flat Now – 032c issue #34 (2018)-->
+                        <iframe class="medium" src="about:blank" sandbox loading="lazy" title="vimeo-player" allowfullscreen>https://player.vimeo.com/video/279828346</iframe><!--The Big Flat Now – 032c issue #34 (2018)-->
                         <div class="medium">
                             <p><small>ARTIKEL</small><br>
                             <a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></p>
@@ -279,7 +296,7 @@
                 </div>
 
                 <div>
-                    <iframe class="large" style="aspect-ratio: 4/3" src="about:blank" sandbox loading="lazy">https://www.google.com/maps/d/u/0/embed?mid=1AJO2WUYnUIA-Om_vcBTun6624hzfhX1i&ehbc=2E312F</iframe>
+                    <iframe class="large" src="about:blank" sandbox loading="lazy">https://www.google.com/maps/d/u/0/embed?mid=1AJO2WUYnUIA-Om_vcBTun6624hzfhX1i&ehbc=2E312F</iframe>
                 </div>
 
                 <div>
@@ -290,7 +307,7 @@
                 </div>
 
                 <div>
-                    <iframe class="large" style="aspect-ratio: 4/3" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
+                    <iframe class="large" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
                 </div>
             </div>
 

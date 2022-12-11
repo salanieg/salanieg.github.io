@@ -263,6 +263,13 @@ iframe {
 input {
 	border-radius: 0;
 	border-style:inset;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
 input:focus {
@@ -356,25 +363,31 @@ button[disabled]{
 }
 
 input::selection {
+	color:initial !important;
 	background: transparent !important;
 }
 
 input::-webkit-selection {
+	color:initial !important;
 	background: transparent !important;
 }
 
 input::-moz-selection {
+	color:initial !important;
 	background: transparent !important;
 }
 
 button::selection {
+	color:initial !important;
 	background: transparent !important;
 }
 
 button::-webkit-selection {
+	color:initial !important;
 	background: transparent !important;
 }
 
 button::-moz-selection {
+	color:initial !important;
 	background: transparent !important;
 }

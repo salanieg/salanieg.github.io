@@ -59,12 +59,19 @@
                 }
             }
 
+            function loadframes() {
+                loadframe(document.getElementById(slideList[slideSelected]).getElementsByTagName("iframe"), 0)
+            }
+
+
             function letztesissue() {
                 if(slideSelected>=0) {
                     document.getElementById(slideList[slideSelected]).style.display = "none";
                     slideSelected = slideSelected - 1;
                     document.getElementById(slideList[slideSelected]).style.display = "flex";
                 }
+
+                loadframes()
                 resetcontrols();
                 displaycurrent();
                 keeptop();
@@ -78,6 +85,8 @@
                     slideSelected = slideSelected + 1;
                     document.getElementById(slideList[slideSelected]).style.display = "flex";
                 }
+
+                loadframes()
                 resetcontrols();
                 displaycurrent();
                 keeptop();
@@ -90,6 +99,7 @@
                 slideSelected = slideIndex;
                 document.getElementById(slideList[slideSelected]).style.display = "flex";
 
+                loadframes()
                 resetcontrols();
                 displaycurrent();
                 hideSlideIndex();

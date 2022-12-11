@@ -74,12 +74,13 @@
                         frames[i].allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         frames[i].setAttribute('allowFullScreen', '')
 
-                        let thumbnail = document.createElement("div");
-                        thumbnail.innerHTML = "<img class='thumbnail' src='https://img.youtube.com/vi/" + frames[i].getAttribute('data-id') + "/mqdefault.jpg'><div class='yt-controls-wrap'><button class='play' onclick='play(this)'>PLAY</button><span class='yt-title'></span></div>";
-                        thumbnail.className = "lazythumbnail";
+                        let thumbnail = document.createElement("img")
+
+                        thumbnail.src = "https://img.youtube.com/vi/" + frames[i].getAttribute('data-id') + "/mqdefault.jpg"
+                        thumbnail.classList.add("thumbnail");
+                        thumbnail.classList.add(frames[i].className);
 
                         frames[i].parentNode.insertBefore(thumbnail, frames[i])
-                        thumbnail.firstChild.classList.add(frames[i].className);
                     }
                 }
                 
@@ -94,25 +95,33 @@
                 cleartpcookies()
             }
 
-            function play(button) {
+            function loadframe(frames, current) {
 
-                let thumbnail = button.parentNode.parentNode
-                let frame = thumbnail.nextSibling
+                if(current < frames.length) {
+                    if(frames[current].getAttribute('data-source') == "youtube") {
+                        let frame = frames[current]
+                        let thumbnail = frame.previousSibling
 
-                frame.removeAttribute("sandbox")
+                        frame.removeAttribute("sandbox")
 
-                if(frame.getAttribute('data-list') !== null) {
-                    frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?list=" + frame.getAttribute('data-list')
+                        if(frame.getAttribute('data-list') !== null) {
+                            frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?list=" + frame.getAttribute('data-list')
+                        }
+                        else {
+                            frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1"
+                        }
+
+                        frame.onload = function(){
+                            thumbnail.style.display = "none"
+                            frame.style.display = "block"
+                            loadframe(frames, current + 1)
+                        };
+                    }
+                    else {
+                        loadframe(frames, current + 1)
+                    }
                 }
-                else {
-                    frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1"
-                }
 
-                frame.onload = function(){
-                    thumbnail.style.display = "none"
-                    frame.style.display = "block"
-                    frame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*')
-                };
             }
 
             function hidecookiecontent() {
@@ -184,47 +193,10 @@
 
             @media screen and (max-width: 450px) {#dataoptionen { justify-content: space-around;}}
 
-
-            /* LAZY LOADING YOUTUBE */
-
-            .play {
-                /* font-weight: 700; */
-                font-size: 11pt;
-                /* padding: 0px 15px; */
-                height: 30px;
-                width: 60px;
-            }
-
-            .lazythumbnail {
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                gap:10px
-            }
-
-            .thumbnail {
-                aspect-ratio:16/9;
-            }
-
-            .yt-controls-wrap {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap:10px
-            }
-
-            .yt-title {
-                font-size: 15pt;
-                text-align: center;
-            }
-
         </style>
     </head>
 
     <body>
-        <div class="slideRow">
-            <!--Jalava Lied-->                                                                    <iframe id="testvideo" class="medium" style="aspect-ratio: 16/9"  src="about:blank" sandbox loading="lazy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">https://www.youtube-nocookie.com/embed/_ArVh3Cj9rw?modestbranding=1&enablejsapi=1</iframe>
-        </div>
         <div id="datenschutz">
             <div id="datenschutz-inner">
                 <div id="datainfo">

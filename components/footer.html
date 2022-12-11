@@ -93,6 +93,7 @@
                 footnotefocused.style.color = "#980000";
                 footnotefocused.childNodes[1].style.zIndex = "19";
                 footnotefocused.childNodes[1].style.display = "inline";
+                loadframe(document.getElementById(footnotefocused).getElementsByTagName("iframe"), 0)
             }
 
             function resetfootnote() {
@@ -299,9 +300,7 @@
             @media screen and (max-width: 1750px) {
 
                 .footercontent {
-                    /* display:none; */
                     background-color: #980000;
-                    /* background-color: blue; */
                     width:100%;
                     justify-content: center;
                     gap:10px 15px;
@@ -316,10 +315,28 @@
                     display: flex;
                     flex-wrap: wrap;
                 }
-
-                /* #to-top {bottom:70px;}
-                #to-bottom {bottom:20px;} */
             }
+
+
+            @media screen and (max-width: 1200px) {
+                .footnote .note {
+                    position: fixed;
+                    bottom: 60px;
+                    left: 20px;
+                }
+            }
+
+            @media screen and (width < 800px), screen and (max-width: 800px) {
+
+                #to-top, #to-bottom {
+                    right:30px;
+                }
+
+                .footnote .note {
+                    left:30px;
+                }
+            }
+
 
             @media screen and (max-width: 450px) {
 
@@ -339,15 +356,22 @@
 
                 #to-top {bottom:95px;}
                 #to-bottom {bottom:45px;}
+
+                
+                .footnote .note {
+                    bottom:45px;
+                }
             }
 
 
+                /* .footnote:focus .note {
+                    position: fixed;
+                    bottom: 40px;
+                    left: 20px;
+                } */
 
-            @media screen and (width < 800px), screen and (max-width: 800px) {
-
-                #to-top, #to-bottom {
-                    right:30px;
-                }
+            .footerelementwrap, .footerelement {
+                color:black !important;
             }
 
 
