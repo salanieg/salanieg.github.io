@@ -220,6 +220,11 @@
 	#title, #coverwrap {
 		max-width: 700px;
 	}
+
+	.abstract, .abstracttitle {
+		min-width: unset;
+		max-width: 500px;
+	}
 }
 
 @media screen and (max-width: 800px) {
