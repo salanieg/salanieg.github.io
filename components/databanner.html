@@ -93,11 +93,12 @@
 
                 datainfoshown = false;
                 cleartpcookies()
+                loadframes()
             }
 
             function loadframe(frames, current) {
 
-                if(current < frames.length) {
+                if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length) {
                     if(frames[current].getAttribute('data-source') == "youtube") {
                         let frame = frames[current]
                         let thumbnail = frame.previousSibling
@@ -121,7 +122,7 @@
                         loadframe(frames, current + 1)
                     }
                 }
-
+                cleartpcookies()
             }
 
             function hidecookiecontent() {
@@ -204,7 +205,7 @@
                 </div>
                 <div id="dataoptionen">
                     <button class="dataoption" onclick="cookies(true)"><span lang="de">Akzeptieren</span><span lang="en">Accept</span></button>
-                    <button class="dataoption" onclick="cookies(false)"><span lang="de">Ablehnen</span><span lang="en"></span>Reject</button>
+                    <button class="dataoption" onclick="cookies(false)"><span lang="de">Ablehnen</span><span lang="en">Reject</span></button>
                 </div>
             </div>
         </div>
