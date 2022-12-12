@@ -40,27 +40,8 @@
             var showcurrenttitle = false;
             var autohidecontrols = true;
             var overridetitle = false;
+            var useindexlist = false;
             var slideSelected = 0;
-            var indexList = [
-                            "<span lang='de'>HK Protest Footage</span><span lang='en'>HK Protest Footoage</span>", 
-                            // "<span lang='de'>Marx und Engels – Stationen ihres Lebens</span><span lang='en'>Marx and Engels – Stations Of Their Life</span>",
-                            "<span lang='de'>Historische Interviews</span><span lang='en'>Historical Interviews</span>",
-                            "<span lang='de'>Musik/Video</span><span lang='en'>Music/Video</span>",
-                            // "<span lang='de'>Kendrick Lamar Live Mashup</span><span lang='en'>Kendrick Lamar Live Mashup</span>",
-                            "<span lang='de'>Musik oder so</span><span lang='en'>Music or smth</span>",
-                            "<span lang='de'>Every Frame a Painting</span><span lang='en'>Every Frame a Painting</span>",
-                            "<span lang='de'>Famous Youtube</span><span lang='en'>Famous Youtube</span>",
-                            "<span lang='de'>Visual Investigations</span><span lang='en'>Visual Investigations</span>",
-                            "<span lang='de'>Cuck Philosophy</span><span lang='en'>Cuck Philosophy</span>",
-                            "<span lang='de'>Capital Punishment</span><span lang='en'>Capital Punishment</span>",
-                            "<span lang='de'>Channel 5 News</span><span lang='en'>Channel 5 News</span>",
-                            "<span lang='de'>Faust</span><span lang='en'>Faust</span>",
-                            "<span lang='de'>Websites</span><span lang='en'>Websites</span>",
-                            "<span lang='de'>THE BIG FLAT NOW</span><span lang='en'>THE BIG FLAT NOW</span>",
-                            "<span lang='de'>Videokarte</span><span lang='en'>Videokarte</span>",
-                            "<span lang='de'>Podcasts</span><span lang='en'>Podcasts</span>",
-                            "<span lang='de'>Günter Gaus</span><span lang='en'>Günter Gaus</span>"    
-            ];
 
 
             // LOADING AND LOGO CHANGE
@@ -164,18 +145,6 @@
             iframe {
                 aspect-ratio: 16/9;
             }
-
-            /* .aspectratio16x9 {
-                aspect-ratio:16/9;
-            }
-
-            .aspectratio3x2 {
-                aspect-ratio:3/2;
-            }
-
-            .aspectratio4x3 {
-                aspect-ratio:4/3;
-            } */
             
         </style>
     </head>
@@ -186,15 +155,15 @@
         <div id="content">
 
             <div id="slides">
-                <div>
+                <div data-title-de="HK Protest Footage" data-title-en="HK Protest Footage">
                     <iframe class="large" src="about:blank" data-source="youtube" data-id="RErdSr0iAcs" sandbox></iframe><!--"And I think to myself, what a wonderful world."-->
                 </div>
 
-                <!-- <div>
+                <!-- <div Marx und Engels – Stationen ihres Lebens Marx and Engels – Stations Of Their Life>
                     <iframe class="medium" src="about:blank" data-source="youtube" data-id="-yrRhmRdQds" data-list="PLhAMGiT1MTPABwHxfRPa5ewEHm9nbpD_Q" sandbox></iframe>Marx & Engels - Stationen ihres Lebens
                 </div> -->
 
-                <div>
+                <div data-title-de="Historische Interviews" data-title-en="Historical Interviews">
                     <div class="slideGrid">
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="6O7_YswJOXY" sandbox></iframe><!--Cornelius Castoriadis On The Imaginary Institution of Society-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="IaD1DcWfaGA" sandbox></iframe><!--Bernie Sanders interviews Punks [1988]-->
@@ -207,7 +176,7 @@
                     <iframe class="medium" src="about:blank" data-source="youtube" data-id="6O7_YswJOXY" sandbox loading="lazy" frameborder=0>https://players.brightcove.net/6057277737001/AgPwICX30_default/slideIndex.html?videoId=6165059245001</iframe>KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD 
                 </div> -->
 
-                <div>
+                <div data-title-de="Musik/Video" data-title-en="Music/Video">
                     <iframe class="large" src="about:blank" data-source="youtube" data-id="glaG64Ao7sM" data-list="PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" sandbox></iframe><!--KANON // MUSIK-->
 
                     
@@ -227,7 +196,7 @@
                     </div>
                 </div>
 
-                <div>
+                <div data-title-de="Musik oder so" data-title-en="Music or smth">
                     <div class="slideRow">
                         <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="-jAO9bVpqV8" sandbox></iframe><!--Friedrich Schiller „Die Bürgschaft“ (1798)-->
                         <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="oe65t5m3cAU" sandbox></iframe><!--Jalava Lied-->
@@ -235,11 +204,11 @@
                     </div>
                 </div>
 
-                <div>
+                <div data-title-de="Every Frame a Painting" data-title-en="Every Frame a Painting">
                     <iframe class="large" src="about:blank" data-source="youtube" data-id="doaQC-S8de8" sandbox></iframe><!--Akira Kurosawa - Composing Movement-->
                 </div>
 
-                <div>
+                <div data-title-de="Famous Youtube" data-title-en="Famous Youtube">
                     <div class="slideGrid">
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="xuCn8ux2gbs" sandbox></iframe><!--history of the entire world, i guess-->                                           
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="_ArVh3Cj9rw" sandbox></iframe><!--The Future Of Reasoning-->                                                        
@@ -248,30 +217,30 @@
                     </div>
                 </div>
 
-                <div>
+                <div data-title-de="Visual Investigations" data-title-en="Visual Investigations">
                     <iframe class="medium" src="about:blank" data-source="youtube" data-id="jWJVMoe7OY0" data-list="PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" sandbox></iframe><!--Visual Investigations-->
                 </div>
 
-                <div>
+                <div data-title-de="Cuck Philosophy" data-title-en="Cuck Philosophy">
                     <iframe class="medium" src="about:blank" data-source="youtube" data-id="AhRBsJYWR8Q" sandbox></iframe><!--The Problem With Human Rights-->
                 </div>
 
-                <div>
+                <div data-title-de="Capital Punishment" data-title-en="Capital Punishment">
                     <iframe class="medium" src="about:blank" data-source="youtube" data-id="TDcwIZzaf-k" sandbox></iframe><!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->
                 </div>
 
-                <div>
+                <div data-title-de="Channel 5 News" data-title-en="Channel 5 News">
                     <iframe class="medium" src="about:blank" data-source="youtube" data-id="B9v6q5YzbGA" sandbox></iframe><!--Hollywood Antivax Rally-->
                 </div>
 
-                <div>
+                <div data-title-de="Faust" data-title-en="Faust">
                     <div class="slideRow">
                         <iframe class="medium" src="about:blank" data-source="youtube" data-id="6zzwYQch5R4" data-list="PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" sandbox></iframe><!--Faust 1960-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="JlhANslhnNI" sandbox></iframe><!--Goethe Faust 3sat-->
                     </div>
                 </div>
 
-                <div>
+                <div data-title-de="Websites" data-title-en="Websites">
                     <div class="medium">
                         <p><small>WEBSITES</small><br>
                         <a href="https://fontsinuse.com/">Fonts In Use</a><br>
@@ -282,7 +251,7 @@
                     </div>
                 </div>
 
-                <div>
+                <div data-title-de="THE BIG FLAT NOW" data-title-en="THE BIG FLAT NOW">
                     <div class="slideRow">
                         <iframe class="medium" src="about:blank" sandbox loading="lazy" title="vimeo-player" allowfullscreen>https://player.vimeo.com/video/279828346</iframe><!--The Big Flat Now – 032c issue #34 (2018)-->
                         <div class="medium">
@@ -295,18 +264,18 @@
                     </div>
                 </div>
 
-                <div>
+                <div data-title-de="Videokarte" data-title-en="Videomap">
                     <iframe class="large" src="about:blank" sandbox loading="lazy">https://www.google.com/maps/d/u/0/embed?mid=1AJO2WUYnUIA-Om_vcBTun6624hzfhX1i&ehbc=2E312F</iframe>
                 </div>
 
-                <div>
+                <div data-title-de="Podcasts" data-title-en="Podcasts">
                     <iframe style="border-radius:12px" src="about:blank" sandbox width="700" height="232" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">https://open.spotify.com/embed/episode/6BGLCHADDW7AmhJOWLLcRN?utm_source=generator&theme=0</iframe>
                     <iframe style="border-radius:12px" src="about:blank" sandbox width="700" height="232" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">https://open.spotify.com/embed/episode/0a4wAoteCuEqSeyXznc0PN?utm_source=generator&theme=0</iframe>
                     <iframe style="border-radius:12px" src="about:blank" sandbox width="700" height="232" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">https://open.spotify.com/embed/episode/06fcDbL4KFfILiOYoKJg9z?utm_source=generator&theme=0</iframe>
                     <iframe style="border-radius:12px" src="about:blank" sandbox width="700" height="232" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">https://open.spotify.com/embed/episode/7yAUquucv8u2KAs0i6E5hu?utm_source=generator&theme=0</iframe>
                 </div>
 
-                <div>
+                <div data-title-de="Günter Gaus" data-title-en="Günter Gaus">
                     <iframe class="large" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
                 </div>
             </div>
