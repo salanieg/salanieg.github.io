@@ -33,6 +33,10 @@
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/red.css">
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        
+        <script type="text/javascript" src="components/controls.js"></script>
+        <script type="text/javascript" src="components/databanner.js"></script>
+        <script type="text/javascript" src="components/header.js"></script>
         <script type="text/javascript">
 
             // VARIABLES
@@ -58,15 +62,46 @@
 
             var headerloaded, footerloaded, controlsloaded, databannerloaded = false;
             
+
+            var getURL = function (url, success, error) {
+                if (!window.XMLHttpRequest) return;
+                var request = new XMLHttpRequest();
+                request.onreadystatechange = function () {
+                    if (request.readyState === 4) {
+                        if (request.status !== 200) {
+                            if (error && typeof error === 'function') {
+                                error(request.responseText, request);
+                            }
+                            return;
+                        }
+                        if (success && typeof success === 'function') {
+                            success(request.responseText, request);
+                        }
+                    }
+                };
+                request.open('GET', url);
+                request.send();
+            };
+
+            
+
             $(function(){
-                $("#header").load("components/header.html", function() {headerloaded = true; init()});
-                $("#controls").load("components/controls.html", function() {controlsloaded = true; init()});
-                $("#databanner").load("components/databanner.html", function() {databannerloaded = true; init()});
+
+                // document.getElementById("header").load("components/header.html", function() {headerloaded = true; init()});
+                // document.getElementById("controls").load("components/controls.html", function() {controlsloaded = true; init()});
+                // document.getElementById("databanner").load("components/databanner.html", function() {databannerloaded = true; init()});
             });
+
+
+            getURL('components/header.html', function (data) {document.querySelector('#header').innerHTML = data; headerloaded = true; console.log("1"); init()});
+            getURL('components/controls.html', function (data) {document.querySelector('#controls').innerHTML = data; controlsloaded = true; console.log("2"); init()});
+            getURL('components/databanner.html', function (data) {document.querySelector('#databanner').innerHTML = data; databannerloaded = true; console.log("3"); init()});
 
             function init() {
                 if(headerloaded && controlsloaded && databannerloaded){
+                    console.log("test")
                     initcontrols();
+                    console.log("test")
                     selectcover(1);
                     initcookies();
                     initlanguage();
@@ -118,7 +153,6 @@
 
             function seteagerload() {
 
-                console.log("test")
                 covers = document.getElementById("slides").getElementsByTagName("img")
                 
                 for (let i = 0; i < covers.length; i++) {
