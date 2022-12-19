@@ -96,12 +96,12 @@
             }
 
             function loadframe(frames, current) {
-
                 if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length) {
+
                     if(frames[current].getAttribute('data-source') == "youtube") {
                         let frame = frames[current]
                         let thumbnail = frame.previousSibling
-
+                        
                         frame.removeAttribute("sandbox")
 
                         if(frame.getAttribute('data-list') !== null) {
@@ -110,12 +110,13 @@
                         else {
                             frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1"
                         }
-
+                        
                         frame.onload = function(){
                             thumbnail.style.display = "none"
                             frame.style.display = "block"
                             loadframe(frames, current + 1)
                         };
+                        
                     }
                     else {
                         loadframe(frames, current + 1)
