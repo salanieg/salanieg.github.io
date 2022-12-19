@@ -309,3 +309,10 @@
 	color: #980000 !important;
 	background: white !important;
 }
+
+.footnotevideo {
+	width:100%;
+	height: auto;
+	min-height: auto;
+	aspect-ratio: 16/9;
+}
