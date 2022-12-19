@@ -91,7 +91,7 @@ function selectfootnote(event) {
     footnotefocused.style.color = "#980000";
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
-    loadframe(document.getElementById(footnotefocused).getElementsByTagName("iframe"), 0)
+    loadframe(footnotefocused.getElementsByTagName("iframe"), 0)
 }
 
 function resetfootnote() {

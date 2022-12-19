@@ -57,9 +57,11 @@ function initlanguage() {
 
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
 	// FIX!!!
+	document.addEventListener("DOMContentLoaded", sethighlights);
 	document.getElementById("content").addEventListener("scroll", customizescrollbar);
 	document.getElementById("email-form").addEventListener('submit', function(event){submitemail(event)})
 	document.getElementById("email-form").addEventListener('input', function(event){inputemail(event)})
+	
 }
 
 function setlanguage(language) {
@@ -210,14 +212,17 @@ var highlights = [
 				["/datenschutz", "descriptionda"]
 ];
 
-for ( var i = 0; i < highlights.length; i++ ) {
+function sethighlights() {
+	for ( var i = 0; i < highlights.length; i++ ) {
 
-	var pair = highlights[i]
-
-	if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
-		document.getElementById(pair[1]).style.fontWeight = "700";
+		var pair = highlights[i]
+	
+		if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
+			document.getElementById(pair[1]).style.fontWeight = "700";
+		}
 	}
 }
+
 
 
 
