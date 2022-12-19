@@ -20,15 +20,16 @@
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/fonts.css">
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/general.css">
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/red.css">
+
+        <script type="text/javascript" src="components/header.js"></script>
+
         <script>
 
             // LOADING
 
             var headerloaded, footerloaded, controlsloaded, databannerloaded = false;
             
-            $(function(){
-                $("#header").load("components/header.html", function() {headerloaded = true; init()});
-            });
+            getURL('components/header.html', function (data) {document.querySelector('#header').innerHTML = data; headerloaded = true; init()});
 
             function init() {
                 if(headerloaded){
