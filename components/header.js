@@ -11,22 +11,8 @@ function fetchHTML(url, id) {
 	.then(value => {
 		document.getElementById(id).innerHTML = value
 	});
-
-	// componentsloaded++
-	// console.log(componentsloaded)
-
-	// if(componentsloaded >= componentsrequired) {
-		
-		// init()
-	// }
 }
 
-// function testinit() {
-// 	if(componentsloaded >= componentsrequired) {
-// 		console.log("init!")
-// 		init()
-// 	}
-// }
 
 // HEIGHTFIX
 
@@ -63,6 +49,7 @@ function initlanguage() {
 
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
 	// FIX!!!
+	window.addEventListener("resize", openmenufix)
 	document.addEventListener("DOMContentLoaded", sethighlights);
 	document.getElementById("content").addEventListener("scroll", customizescrollbar);
 	document.getElementById("email-form").addEventListener('submit', function(event){submitemail(event)})
@@ -121,8 +108,8 @@ function pausevideos() {
 var menuopen = false;
 var windowwidth = window.innerWidth;
 
-window.addEventListener("resize", (event) => {
-	
+
+function openmenufix() {
 	if (window.innerWidth!=windowwidth) {
 
 		windowwidth = window.innerWidth;
@@ -136,7 +123,7 @@ window.addEventListener("resize", (event) => {
 			document.getElementById("openmenu").style.display = "none";
 		}
 	}
-});
+}
 
 function openmenu(menu, anchor) {
 	hidedropmenus();
