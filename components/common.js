@@ -3,30 +3,6 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// COMPONENT LOADING
-
-function fetchHTML(url, id) {
-	fetch(url)
-	.then(response => response.text())
-	.then(value => {
-		document.getElementById(id).innerHTML = value
-	});
-
-	// componentsloaded++
-	// console.log(componentsloaded)
-
-	// if(componentsloaded >= componentsrequired) {
-		
-		// init()
-	// }
-}
-
-// function testinit() {
-// 	if(componentsloaded >= componentsrequired) {
-// 		console.log("init!")
-// 		init()
-// 	}
-// }
 
 // HEIGHTFIX
 
@@ -72,13 +48,13 @@ function initlanguage() {
 
 function setlanguage(language) {
 
-	// // CHECK!!!
-	document.querySelectorAll('[lang="de"]').forEach((item) => {item.hidden = true;})
-	document.querySelectorAll('[lang="en"]').forEach((item) => {item.hidden = true;})
+	// CHECK!!!
+	document.querySelectorAll('[lang="de"]').forEach((item) => {item.style.display = 'none';})
+	document.querySelectorAll('[lang="en"]').forEach((item) => {item.style.display = 'none';})
 	document.getElementById("lang-de").style.textDecoration = "none"
 	document.getElementById("lang-en").style.textDecoration = "none"
 	document.getElementById("lang-" + language).style.textDecoration = "underline"
-	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
+	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.style.display = 'initial';})
 
 	localStorage.setItem("gefaengnishefte_language", language);	
 }

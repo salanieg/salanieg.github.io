@@ -10,10 +10,6 @@ body {
 	background-color: var(--content-color);
 }
 
-*:lang(en):not(br) 	{
-    display:none;
-}
-
 #content {
 	color: var(--content-color-text);
 	background-color: var(--content-color);
