@@ -62,10 +62,11 @@ function initfootnotes() {
         hidecookiecontent();
     }
 
+    document.addEventListener("click", focusfootnote)
     document.getElementById("content").addEventListener("scroll", autosetlayout)
 }
 
-document.addEventListener("click", focusfootnote)
+
 var footnotefocused = "none";
 
 function focusfootnote(event) {
