@@ -87,7 +87,7 @@ function showcookiecontent() {
 
     datainfoshown = false;
     cleartpcookies()
-    loadframes()
+    if(typeof variable !== 'undefined') {console.log("test"); loadframes()}
 }
 
 function loadframe(frames, current) {
