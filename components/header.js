@@ -3,6 +3,30 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+// COMPONENT LOADING
+
+function fetchHTML(url, id) {
+	fetch(url)
+	.then(response => response.text())
+	.then(value => {
+		document.getElementById(id).innerHTML = value
+	});
+
+	// componentsloaded++
+	// console.log(componentsloaded)
+
+	// if(componentsloaded >= componentsrequired) {
+		
+		// init()
+	// }
+}
+
+// function testinit() {
+// 	if(componentsloaded >= componentsrequired) {
+// 		console.log("init!")
+// 		init()
+// 	}
+// }
 
 // HEIGHTFIX
 

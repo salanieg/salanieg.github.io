@@ -37,18 +37,15 @@
 
             // LOADING
 
-            var headerloaded, footerloaded, controlsloaded, databannerloaded = false;
-            
-            getURL('components/header.html', function (data) {document.querySelector('#header').innerHTML = data; headerloaded = true; init()});
-            getURL('components/databanner.html', function (data) {document.querySelector('#databanner').innerHTML = data; databannerloaded = true; init()});
+            fetchHTML('components/header.html', 'header')
+            fetchHTML('components/databanner.html', 'databanner')
 
-            function init() {
-                if(headerloaded && databannerloaded){
-                    initcookies();
-                    initlanguage();
-                    initsetabo();
-                }
+            window.onload = function init() {
+                initcookies();
+                initlanguage();
+                initsetabo();
             }
+        
         
         </script>
 

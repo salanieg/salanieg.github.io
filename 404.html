@@ -24,18 +24,15 @@
         <script type="text/javascript" src="components/header.js"></script>
 
         <script>
-
+            
             // LOADING
 
-            var headerloaded, footerloaded, controlsloaded, databannerloaded = false;
-            
-            getURL('components/header.html', function (data) {document.querySelector('#header').innerHTML = data; headerloaded = true; init()});
+            fetchHTML('components/header.html', 'header')
 
-            function init() {
-                if(headerloaded){
-                    initlanguage();
-                }
+            window.onload = function init() {
+                initlanguage();
             }
+        
         
         </script>
 

@@ -6,7 +6,6 @@
 var slideList = []
 
 function initcontrols() {
-    
     slidesList = document.getElementById("slides").children
     for (let i = 0; i < slidesList.length; i++) {
         let slideID = 'slide'+ (i+1)
