@@ -41,12 +41,12 @@
 
 			function setlanguage(language) {
 
-				$('[lang="de"]').hide();
-				$('[lang="en"]').hide();
-				document.getElementById("lang-de").style.textDecoration = "none"
-				document.getElementById("lang-en").style.textDecoration = "none"
-				document.getElementById("lang-" + language).style.textDecoration = "underline"
-				$('*:lang(' + language + '):not(br)').show();
+				// $('[lang="de"]').hide();
+				// $('[lang="en"]').hide();
+				// document.getElementById("lang-de").style.textDecoration = "none"
+				// document.getElementById("lang-en").style.textDecoration = "none"
+				// document.getElementById("lang-" + language).style.textDecoration = "underline"
+				// $('*:lang(' + language + '):not(br)').show();
 
 				localStorage.setItem("gefaengnishefte_language", language);	
 			}
@@ -91,39 +91,38 @@
 
             window.addEventListener("resize", (event) => {
 				
-				if ($(window).width()!=windowwidth) {
+				// if ($(window).width()!=windowwidth) {
 
-					windowwidth = $(window).width();
+				// 	windowwidth = $(window).width();
 
-					closemenu()
+				// 	closemenu()
 
-					if ($(window).width() < 800 && !menuopen) {
-						document.getElementById("openmenu").style.display = "inline";
-					}
-					else {
-						document.getElementById("openmenu").style.display = "none";
-					}
-				}
+				// 	if ($(window).width() < 800 && !menuopen) {
+				// 		document.getElementById("openmenu").style.display = "inline";
+				// 	}
+				// 	else {
+				// 		document.getElementById("openmenu").style.display = "none";
+				// 	}
+				// }
             });
 
 			function openmenu(menu, anchor) {
-				hidedropmenus();
-				document.getElementById(menu).style.height = "fit-content";
-				document.getElementById(anchor).style.visibility = "visible";
+				// hidedropmenus();
+				// document.getElementById(menu).style.height = "fit-content";
+				// document.getElementById(anchor).style.visibility = "visible";
 
-				if ($(window).width() > 800) {
-					document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
-					// document.getElementById(menu).style.border = "2px outset grey";
-				}
-				else {
-					document.getElementById(menu).style.width = "100vw";
-					document.getElementById("headerlogo").style.visibility = "hidden";
-					document.getElementById("openmenu").style.display = "none";
-					document.getElementById("closemenu").style.display = "inline";
-					document.documentElement.style.setProperty('--header-divider', `block`);
-				}
+				// if ($(window).width() > 800) {
+				// 	document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
+				// }
+				// else {
+				// 	document.getElementById(menu).style.width = "100vw";
+				// 	document.getElementById("headerlogo").style.visibility = "hidden";
+				// 	document.getElementById("openmenu").style.display = "none";
+				// 	document.getElementById("closemenu").style.display = "inline";
+				// 	document.documentElement.style.setProperty('--header-divider', `block`);
+				// }
 
-				menuopen = true
+				// menuopen = true
 			}
 
 			function safeclosemenu() {
@@ -143,11 +142,11 @@
 
 				hidedropmenus();
 
-				if ($(window).width() < 800) {
-					document.getElementById("headerlogo").style.visibility = "visible";
-					document.getElementById("closemenu").style.display = "none";
-					document.getElementById("openmenu").style.display = "inline";
-				}
+				// if ($(window).width() < 800) {
+				// 	document.getElementById("headerlogo").style.visibility = "visible";
+				// 	document.getElementById("closemenu").style.display = "none";
+				// 	document.getElementById("openmenu").style.display = "inline";
+				// }
 
 				menuopen = false
 			}
@@ -187,16 +186,16 @@
 							["/datenschutz", "descriptionda"]
             ];
 			
-			$(function(){
-				for ( var i = 0; i < highlights.length; i++ ) {
+			// $(function(){
+			// 	for ( var i = 0; i < highlights.length; i++ ) {
 
-					var pair = highlights[i]
+			// 		var pair = highlights[i]
 
-					if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
-						document.getElementById(pair[1]).style.fontWeight = "700";
-					}
-                }
-			});
+			// 		if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
+			// 			document.getElementById(pair[1]).style.fontWeight = "700";
+			// 		}
+            //     }
+			// });
 			
 
 			
@@ -213,16 +212,16 @@
 
 				event.preventDefault()
 
-				$.ajax({
-					method: 'POST',
-					url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
-					dataType: 'json',
-					accepts: 'application/json',
-					data: $(event.target).serialize() + "&Code=" + makeid(40)
-					,
-					success: (data) => console.log("submitted"),
-					error: (err) => alert(err)
-				});
+				// $.ajax({
+				// 	method: 'POST',
+				// 	url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
+				// 	dataType: 'json',
+				// 	accepts: 'application/json',
+				// 	data: $(event.target).serialize() + "&Code=" + makeid(40)
+				// 	,
+				// 	success: (data) => console.log("submitted"),
+				// 	error: (err) => alert(err)
+				// });
 
 				document.getElementById("email-btn").innerHTML = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
 				document.getElementById("email-btn").disabled = true;

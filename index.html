@@ -32,7 +32,7 @@
         <link rel="stylesheet" href="styles/fonts.css">
         <link rel="stylesheet" href="styles/general.css">
         <link rel="stylesheet" href="styles/red.css">
-        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> -->
         
         <script type="text/javascript" src="components/controls.js"></script>
         <script type="text/javascript" src="components/databanner.js"></script>
@@ -85,12 +85,12 @@
 
             
 
-            $(function(){
+            // $(function(){
 
                 // document.getElementById("header").load("components/header.html", function() {headerloaded = true; init()});
                 // document.getElementById("controls").load("components/controls.html", function() {controlsloaded = true; init()});
                 // document.getElementById("databanner").load("components/databanner.html", function() {databannerloaded = true; init()});
-            });
+            // });
 
 
             getURL('components/header.html', function (data) {document.querySelector('#header').innerHTML = data; headerloaded = true; console.log("1"); init()});
@@ -135,17 +135,17 @@
 
             // PREVENT TOUCHING RESPONSE
 
-            document.addEventListener("DOMContentLoaded", (event) => {
-                if ('ontouchstart' in window) {
+            // document.addEventListener("DOMContentLoaded", (event) => {
+            //     if ('ontouchstart' in window) {
 
-                    $(".title").click(function (e) {
-                        e.preventDefault();
-                        for (let i = 0; i < issuetitles.length; i++) {
-                            document.getElementById(issuetitles[i]).style.color = "white"
-                        }
-                    });
-                }
-            });
+            //         $(".title").click(function (e) {
+            //             e.preventDefault();
+            //             for (let i = 0; i < issuetitles.length; i++) {
+            //                 document.getElementById(issuetitles[i]).style.color = "white"
+            //             }
+            //         });
+            //     }
+            // });
 
             // EAGER LOAD ACCORDING TO LANGUAGE
 

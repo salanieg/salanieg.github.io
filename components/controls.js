@@ -16,13 +16,13 @@
 
                 for (let i = 0; i < slideList.length; i++) {
                     if(useindexlist) {
-                        $('#slideIndex').append('<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')">' + indexList[i] + '</span><br>');
+                        // $('#slideIndex').append('<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')">' + indexList[i] + '</span><br>');
                     }
                     else {
                         let titleDE = document.getElementById(slideList[i]).getAttribute('data-title-de')
                         let titleEN = document.getElementById(slideList[i]).getAttribute('data-title-en')
                         
-                        $('#slideIndex').append('<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')">' + "<span lang='de'>" + titleDE + "</span><span lang='en'>" + titleEN + "</span>" + '</span><br>');
+                        // $('#slideIndex').append('<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')">' + "<span lang='de'>" + titleDE + "</span><span lang='en'>" + titleEN + "</span>" + '</span><br>');
                     }
                     
                 }
