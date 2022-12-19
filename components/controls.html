@@ -20,9 +20,9 @@
                     slideList.push(slideID);
                 }
                 
-                if(!placeholder) {
-                    document.getElementById(slideList[slideSelected]).style.display = "flex";
-                }
+                // if(!placeholder) {
+                //     document.getElementById(slideList[slideSelected]).style.display = "flex";
+                // }
 
                 for (let i = 0; i < slideList.length; i++) {
                     if(useindexlist) {
@@ -120,9 +120,9 @@
             // SLIDE INDEX
 
             function displaySlideIndex() {
-                if(placeholder) {
-                    document.getElementById("laden").style.display = "none";
-                }
+                // if(placeholder) {
+                //     document.getElementById("laden").style.display = "none";
+                // }
 
                 var indexitems = document.getElementsByClassName("indexitem")
                 for (let i = 0; i < indexitems.length; i++) {
@@ -136,9 +136,9 @@
             }
 
             function hideSlideIndex() {
-                if(placeholder) {
-                    document.getElementById("laden").style.display = "inline";
-                }
+                // if(placeholder) {
+                //     document.getElementById("laden").style.display = "inline";
+                // }
 
                 document.getElementById("slideCurrentTitle").style.display = "block";
                 document.getElementById("slideIndex").style.display = "none";

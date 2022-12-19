@@ -38,7 +38,6 @@
             // VARIABLES
 
             var showcurrenttitle = true;
-            var placeholder = true;
             var controlsinit = false;
             var autohidecontrols = false;
             var overridetitle = true;
@@ -68,9 +67,12 @@
             function init() {
                 if(headerloaded && controlsloaded && databannerloaded){
                     initcontrols();
+                    selectcover(1);
                     initcookies();
                     initlanguage();
                     initsetabo();
+                    document.getElementById("lang-de").addEventListener("click", seteagerload);
+                    document.getElementById("lang-en").addEventListener("click", seteagerload);
                 }
             }
         
@@ -82,22 +84,20 @@
 
             var textSelected = 0
             var issuetitles = ["title-i", "title-ii", "title-iii"]
-            var coverSelectedLoaded = false;
 
 
             function selectcover(i) {
 
                 i = i - 1
-                console.log("selectcover")
-                console.log(controlsloaded)
-                console.log(coverSelectedLoaded)
-                if(coverSelectedLoaded && controlsloaded) {
-                    displayBySlideIndex(i) 
+                if(controlsloaded) {
                     document.getElementById(issuetitles[textSelected]).style.fontWeight = "initial";
                     document.getElementById(issuetitles[i]).style.fontWeight = "700";
+                    displayBySlideIndex(i) 
                     textSelected = i
                 }
             }
+
+            // PREVENT TOUCHING RESPONSE
 
             document.addEventListener("DOMContentLoaded", (event) => {
                 if ('ontouchstart' in window) {
@@ -111,28 +111,20 @@
                 }
             });
 
+            // EAGER LOAD ACCORDING TO LANGUAGE
 
-            // LOADING CHECK SCRIPT
+            document.addEventListener("DOMContentLoaded", seteagerload);
 
-            document.addEventListener("DOMContentLoaded", (event) => {
-                checkload()
-                document.getElementById("coverSelected").addEventListener('load', checkload)
-            });
+            function seteagerload() {
 
-            function checkload() {
-                if(document.getElementById("coverSelected").complete && controlsinit) {
-                    loaded()
+                console.log("test")
+                covers = document.getElementById("slides").getElementsByTagName("img")
+                
+                for (let i = 0; i < covers.length; i++) {
+                    if(covers[i].lang == localStorage.getItem("gefaengnishefte_language")) {
+                        covers[i].loading = "eager"
+                    }
                 }
-                else {
-                    setTimeout(checkload, 100)
-                }
-            }
-
-            function loaded() {
-                document.getElementById("laden-wrap").style.display = "none"
-                displayBySlideIndex(slideSelected)
-                document.getElementById(issuetitles[textSelected]).style.fontWeight = "700";
-                coverSelectedLoaded = true;
             }
 
         </script>
@@ -171,6 +163,13 @@
                 gap: 80px;
             }
 
+            #cover-wrap {
+                max-height: 55vh;
+                min-width:300px;
+                max-width:400px;
+                width:min-content;
+            }
+
             #text-wrap {
                 min-width:350px;
                 max-width:350px;
@@ -188,25 +187,13 @@
             }
 
             /* COVERS */
-            
-            .cover-image, #laden {
-                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
-                /* -webkit-tap-highlight-color: transparent; */
-                
-                max-width: 100%;
-                max-height: 55vh;
-            }
-
-            #laden {
-                cursor:wait;
-                min-width:300px;
-                max-width:400px;
-                width: 100%;
-            }
 
             .cover-image {
                 cursor: pointer;
                 transition: 0.7s;
+                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
+                max-width: 100%;
+                max-height: 55vh;
             }
 
             .cover-image:hover {
@@ -314,7 +301,11 @@
                     display:none;
                 }
 
-                .cover, #laden {
+                #cover-wrap {
+                    width: unset;
+                }
+
+                .cover, #cover-wrap {
                     max-height: 60vh;
                     min-width: unset;
                 }
@@ -415,9 +406,8 @@
         <div id="content">
             <div id="issue-wrap">
                 <div id="cover-wrap">
-                    <div class="slide-cover" id="laden-wrap"><a class="cover"><img class="cover-image" id="laden" src="images/internal/din4load.WebP"/></a></div>
                     <div id="slides">
-                        <div class="slide-cover"><a class="cover" href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" id="coverSelected" loading="lazy" lang="de" src="images/issues/de/issue-i-cover.WebP" alt="ISSUE I COVER"/><img class="cover-image" id="coverSelected" loading="lazy" lang="en" src="images/issues/en/issue-i-cover.WebP" alt="ISSUE I COVER"/></a></div>
+                        <div class="slide-cover"><a class="cover" href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" loading="lazy" lang="de" src="images/issues/de/issue-i-cover.WebP" alt="ISSUE I COVER" /><img class="cover-image" loading="lazy" lang="en" src="images/issues/en/issue-i-cover.WebP" alt="ISSUE I COVER" /></a></div>
                         <div class="slide-cover"><a class="cover" href="https://www.GEFAENGNISHEFTE.org/issue-i"><img class="cover-image" loading="lazy" lang="de" src="images/issues/de/issue-i-cover.WebP" alt="ISSUE II COVER"/><img class="cover-image" loading="lazy" lang="en" src="images/issues/en/issue-i-cover.WebP" alt="ISSUE II COVER"/></a></div>
                     </div>
                 </div>
