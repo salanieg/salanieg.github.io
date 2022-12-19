@@ -31,13 +31,11 @@
         <link rel="stylesheet" href="styles/red.css">
 
         <script type="text/javascript" src="components/common.js"></script>
-
         <script>
 
             // LOADING
-
-            fetchHTML('components/header.html', 'header')
-            fetchHTML('components/databanner.html', 'databanner')
+            
+            fetchcomponents(["header", "databanner"])
 
             window.onload = function init() {
                 initcookies();

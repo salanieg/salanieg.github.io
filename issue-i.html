@@ -34,7 +34,6 @@
         <link rel="stylesheet" href="styles/issues.css">
 
         <script type="text/javascript" src="components/common.js"></script>
-
         <script>
 
             // VARIABLES
@@ -47,11 +46,9 @@
 
             // LOADING
 
-            fetchHTML('components/header.html', 'header')
-            fetchHTML('components/footer.html', 'footer')
-            fetchHTML('components/databanner.html', 'databanner')
+            fetchcomponents(["header", "footer", "databanner"])
 
-            window.onload = function init() {
+            function init() {
                 initfooter();
                 initcookies();
                 initlanguage();

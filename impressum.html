@@ -34,9 +34,8 @@
         <script>
 
             // LOADING
-
-            fetchHTML('components/header.html', 'header')
-            fetchHTML('components/databanner.html', 'databanner')
+            
+            fetchcomponents(["header", "databanner"])
 
             window.onload = function init() {
                 initcookies();

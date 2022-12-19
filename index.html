@@ -34,7 +34,6 @@
         <link rel="stylesheet" href="styles/red.css">
 
         <script type="text/javascript" src="components/common.js"></script>
-
         <script type="text/javascript">
 
             // VARIABLES
@@ -58,11 +57,9 @@
 
             // LOADING
 
-            fetchHTML('components/header.html', 'header')
-            fetchHTML('components/controls.html', 'controls')
-            fetchHTML('components/databanner.html', 'databanner')
+            fetchcomponents(["header", "controls", "databanner"])
 
-            window.onload = function init() {
+            function init() {
                 initcontrols();
                 selectcover(1);
                 initcookies();

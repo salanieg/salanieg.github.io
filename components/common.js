@@ -5,11 +5,27 @@
 
 // COMPONENT LOADING
 
-function fetchHTML(url, id) {
+var componentsloaded = 0
+var componentsneeded = 0
+
+function fetchcomponents(components) {
+	componentsneeded = components.length
+	
+	for (let i = 0; i < components.length; i++) {
+		fetchHTML("components/" + components[i] + ".html", components[i])
+	}
+}
+
+async function fetchHTML(url, id) {
 	fetch(url)
 	.then(response => response.text())
 	.then(value => {
 		document.getElementById(id).innerHTML = value
+
+		componentsloaded++
+		if(componentsloaded >= componentsneeded) {
+			init()
+		}
 	});
 }
 
@@ -230,7 +246,8 @@ function submitemail(event) {
 		},
 		body: JSON.stringify({
 			name: "FormSubmit",
-			message: "I'm from Devro LABS"
+			email: "test",
+			code: makeid(40)
 		})
 	})
 	// data: $(event.target).serialize() + "&Code=" + makeid(40)
@@ -635,24 +652,24 @@ function initcontrols() {
     }
 
     for (let i = 0; i < slideList.length; i++) {
+
+		let slide = document.getElementById(slideList[i])
+
+		let newbreak = document.createElement("br")
+		let newindex = document.createElement("span")
+		newindex.id = "index" + i
+		newindex.className = "indexitem"
+		newindex.onclick = function(){displayBySlideIndex(i)}
+
         if(useindexlist) {
-            document.getElementById('slideIndex').append('<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')">' + indexList[i] + '</span><br>');
+			newindex.innerHTML = indexList[i]
         }
         else {
-            let titleDE = document.getElementById(slideList[i]).getAttribute('data-title-de')
-            let titleEN = document.getElementById(slideList[i]).getAttribute('data-title-en')
-            
-            let newbreak = document.createElement("br")
-            let newindex = document.createElement("span")
-            newindex.id = "index" + i
-            newindex.className = "indexitem"
-            newindex.innerHTML = "<span lang='de'>" + titleDE + "</span><span lang='en'>" + titleEN + "</span>"
-            newindex.onclick = function(){displayBySlideIndex(i)}
-
-            document.getElementById('slideIndex').append(newindex)
-            document.getElementById('slideIndex').append(newbreak)
+			newindex.innerHTML = "<span lang='de'>" + slide.getAttribute('data-title-de') + "</span><span lang='en'>" + slide.getAttribute('data-title-en') + "</span>"
         }
-        
+
+		document.getElementById('slideIndex').append(newindex)
+		document.getElementById('slideIndex').append(newbreak)
     }
     
     displayBySlideIndex(slideSelected)

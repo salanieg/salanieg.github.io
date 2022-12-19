@@ -45,12 +45,10 @@
 
 
             // LOADING AND LOGO CHANGE
+            
+            fetchcomponents("header", "controls", "databanner")
 
-            fetchHTML('components/header.html', 'header')
-            fetchHTML('components/controls.html', 'controls')
-            fetchHTML('components/databanner.html', 'databanner')
-
-            window.onload = function init() {
+            function init() {
                 initcontrols();
                 initcookies();
                 initlanguage();
