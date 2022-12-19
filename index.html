@@ -90,9 +90,9 @@
 
                 i = i - 1
                 if(controlsloaded) {
-                    document.getElementById("text-wrap").style.visibility = "visible";
                     document.getElementById(issuetitles[textSelected]).style.fontWeight = "initial";
                     document.getElementById(issuetitles[i]).style.fontWeight = "700";
+                    document.getElementById("text-wrap").style.visibility = "visible";
                     displayBySlideIndex(i) 
                     textSelected = i
                 }
