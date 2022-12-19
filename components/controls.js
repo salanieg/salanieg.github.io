@@ -21,7 +21,15 @@ function initcontrols() {
             let titleDE = document.getElementById(slideList[i]).getAttribute('data-title-de')
             let titleEN = document.getElementById(slideList[i]).getAttribute('data-title-en')
             
-            document.getElementById('slideIndex').append('<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')">' + "<span lang='de'>" + titleDE + "</span><span lang='en'>" + titleEN + "</span>" + '</span><br>');
+            let newbreak = document.createElement("br")
+            let newindex = document.createElement("span")
+            newindex.id = "index" + i
+            newindex.className = "indexitem"
+            newindex.innerHTML = "<span lang='de'>" + titleDE + "</span><span lang='en'>" + titleEN + "</span>"
+            newindex.onclick = function(){displayBySlideIndex(i)}
+
+            document.getElementById('slideIndex').append(newindex)
+            document.getElementById('slideIndex').append(newbreak)
         }
         
     }
