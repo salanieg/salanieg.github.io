@@ -88,28 +88,39 @@
             function selectcover(i) {
 
                 i = i - 1
-                if(controlsloaded) {
-                    document.getElementById(issuetitles[textSelected]).style.fontWeight = "initial";
-                    document.getElementById(issuetitles[i]).style.fontWeight = "700";
-                    document.getElementById("text-wrap").style.visibility = "visible";
-                    displayBySlideIndex(i) 
-                    textSelected = i
-                }
+                document.getElementById(issuetitles[textSelected]).style.fontWeight = "initial";
+                document.getElementById(issuetitles[i]).style.fontWeight = "700";
+                document.getElementById("text-wrap").style.visibility = "visible";
+                displayBySlideIndex(i)
+                textSelected = i
             }
 
             // PREVENT TOUCHING RESPONSE
 
-            // document.addEventListener("DOMContentLoaded", (event) => {
-            //     if ('ontouchstart' in window) {
+            // TEST !!!
 
-            //         $(".title").click(function (e) {
-            //             e.preventDefault();
-            //             for (let i = 0; i < issuetitles.length; i++) {
-            //                 document.getElementById(issuetitles[i]).style.color = "white"
-            //             }
-            //         });
-            //     }
-            // });
+            document.addEventListener("DOMContentLoaded", (event) => {
+                if ('ontouchstart' in window) {
+
+                    let titles = document.getElementsByClassName("title")
+
+                    for (let i = 0; i < titles.length; i++) {
+                        titles[i].click(function (e) {
+                            e.preventDefault();
+                            for (let i = 0; i < issuetitles.length; i++) {
+                                document.getElementById(issuetitles[i]).style.color = "white"
+                            }
+                        });
+                    }
+
+                    // $(".title").click(function (e) {
+                    //     e.preventDefault();
+                    //     for (let i = 0; i < issuetitles.length; i++) {
+                    //         document.getElementById(issuetitles[i]).style.color = "white"
+                    //     }
+                    // });
+                }
+            });
 
             // EAGER LOAD ACCORDING TO LANGUAGE
 
@@ -117,7 +128,7 @@
 
             function seteagerload() {
 
-                covers = document.getElementById("slides").getElementsByTagName("img")
+                let covers = document.getElementById("slides").getElementsByTagName("img")
                 
                 for (let i = 0; i < covers.length; i++) {
                     if(covers[i].lang == localStorage.getItem("gefaengnishefte_language")) {
