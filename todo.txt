@@ -1,0 +1,19 @@
+BUGS
+
+clean up og images
+fix events
+fix kanon sizes
+fix highlights
+
+
+
+ADDITIONS
+
+cc in navigation?
+    requires bottom scroll functionality
+
+sharing
+    adjustlocation
+    make mutually exclusive with footnotes
+    
+add elionor
