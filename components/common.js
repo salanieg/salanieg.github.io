@@ -213,7 +213,7 @@ function hidecookiecontent() {
             cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>consent to the use of cookies</span>.</span>";
             cookiedisclaimer.className = "cookiedisclaimer";
             
-            // frames[i].style.display = "none"
+            frames[i].style.display = "none"
             frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
             
             datainfoshown = true;
