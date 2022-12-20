@@ -38,6 +38,7 @@
             fetchcomponents(["header", "databanner"])
 
             function init() {
+                initlisteners();
                 initcookies();
                 initlanguage();
                 initsetabo();
@@ -57,18 +58,7 @@
             let code = params.code;
 
             document.addEventListener("DOMContentLoaded", () => {
-
-                $.ajax({
-                    method: 'POST',
-                    url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
-                    dataType: 'json',
-                    accepts: 'application/json',
-                    data: "Code=" + code + "&_subject=Bestätigungsmail&_captcha=true"
-                    ,
-                    success: (data) => console.log(data),
-                    error: (err) => alert(err)
-                });
-
+                fetch_mail("Code=" + code + "&_subject=Bestätigungsmail&_captcha=true")
                 document.getElementById("bestätigungsinfo").innerHTML = "<span lang='de'>Deine E-mail wurde erfolgreich bestätigt!</span><span lang='en'>Your E-Mail has been confirmed successfully!</span>";
             });
 

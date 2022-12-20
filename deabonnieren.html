@@ -38,6 +38,7 @@
             fetchcomponents(["header", "databanner"])
 
             function init() {
+                initlisteners();
                 initcookies();
                 initlanguage();
                 initsetabo();
@@ -54,16 +55,8 @@
 
                     event.preventDefault()
 
-                    $.ajax({
-                        method: 'POST',
-                        url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
-                        dataType: 'json',
-                        accepts: 'application/json',
-                        data: $(event.target).serialize()
-                        ,
-                        success: (data) => console.log(data),
-                        error: (err) => alert(err)
-                    });
+                    let data = new FormData(event.target)
+                    fetch_mail(make_table(data))
 
                     document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonniert.</span><span lang="en" hidden>Unsubscribed.</span>';
                     document.getElementById("email-deabo-btn").disabled = true;

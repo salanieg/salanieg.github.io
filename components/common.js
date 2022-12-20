@@ -29,6 +29,15 @@ async function fetchHTML(url, id) {
 	});
 }
 
+function initlisteners() {
+	sethighlights()
+	window.addEventListener("resize", openmenufix)
+	document.addEventListener("DOMContentLoaded", sethighlights);
+	document.getElementById("content").addEventListener("scroll", customizescrollbar);
+	document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
+	document.getElementById("email-form").addEventListener('input', function(event){inputemail(event)})
+}
+
 
 // HEIGHTFIX
 
@@ -68,13 +77,6 @@ function initlanguage() {
 	}
 
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
-	// FIX!!!
-	sethighlights()
-	window.addEventListener("resize", openmenufix)
-	document.addEventListener("DOMContentLoaded", sethighlights);
-	document.getElementById("content").addEventListener("scroll", customizescrollbar);
-	document.getElementById("email-form").addEventListener('submit', function(event){submitemail(event)})
-	document.getElementById("email-form").addEventListener('input', function(event){inputemail(event)})
 }
 
 function setlanguage(language) {
@@ -224,36 +226,38 @@ var emailinfodisabled = false;
 
 // NEEDS FIXING!!!!!!!!!!!!!!!!!!!!!
 
-function submitemail(event) {
+function fetch_mail(content) {
+
+    fetch("https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0", {
+        method: "POST",
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(content)
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.log(error));
+}
+
+function make_table(data) {
+    let table = {}
+
+    for (let [key, value] of data) {
+        table[key] = value
+    }
+
+    return table
+}
+
+
+function submit_email(event) {
 	event.preventDefault()
 
-	// $.ajax({
-	// 	method: 'POST',
-	// 	url: 'https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0',
-	// 	dataType: 'json',
-	// 	accepts: 'application/json',
-	// 	data: $(event.target).serialize() + "&Code=" + makeid(40)
-	// 	,
-	// 	success: (data) => console.log("submitted"),
-	// 	error: (err) => alert(err)
-	// });
-	
-	fetch("https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0", {
-		method: "POST",
-		headers: { 
-			'Content-Type': 'application/json',
-			'Accept': 'application/json'
-		},
-		body: JSON.stringify({
-			name: "FormSubmit",
-			email: "test",
-			code: makeid(40)
-		})
-	})
-	// data: $(event.target).serialize() + "&Code=" + makeid(40)
-	.then(response => response.json())
-	.then(data => console.log(data))
-	.catch(error => console.log(error));
+    let data = new FormData(event.target)
+    data.append('Code', makeid(40));
+    fetch_mail(make_table(data))
 
 	document.getElementById("email-btn").innerHTML = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
 	document.getElementById("email-btn").disabled = true;
