@@ -60,12 +60,12 @@
             fetchcomponents(["header", "controls", "databanner"])
 
             function init() {
-                initlisteners();
                 initcontrols();
                 selectcover(1);
                 initcookies();
                 initlanguage();
                 initsetabo();
+                initlisteners();
                 document.getElementById("lang-de").addEventListener("click", seteagerload);
                 document.getElementById("lang-en").addEventListener("click", seteagerload);
             }
