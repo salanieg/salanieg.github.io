@@ -35,7 +35,6 @@ function initlisteners() {
 	document.getElementById("content").addEventListener("scroll", customizescrollbar);
 	document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
 	document.getElementById("email-form").addEventListener('input', function(event){inputemail(event)})
-    sethighlights()
 }
 
 

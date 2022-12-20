@@ -55,10 +55,14 @@
                 get: (searchParams, prop) => searchParams.get(prop),
             });
 
-            let code = params.code;
-
             document.addEventListener("DOMContentLoaded", () => {
-                fetch_mail("Code=" + code + "&_subject=Bestätigungsmail&_captcha=true")
+                
+                let table = {}
+                table["Code"] = params.code;
+                table["_subject"] = "Bestätigungsmail"
+                table["_captcha"] = true
+                
+                fetch_mail(table)
                 document.getElementById("bestätigungsinfo").innerHTML = "<span lang='de'>Deine E-mail wurde erfolgreich bestätigt!</span><span lang='en'>Your E-Mail has been confirmed successfully!</span>";
             });
 
@@ -83,7 +87,8 @@
 
         <div id="content">
             <div id="bestätigungsinfo">
-                <span lang='de'>Etwas ist bei der Bestätigung schiefgelaufen.<br>Bitte versuche es noch einmal, oder schreibe Nachricht an <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span><span lang='en'>Something went wrong during the confirmation process.<br>Please try again, or message us at <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span>
+                <span lang='de'>Etwas ist bei der Bestätigung schiefgelaufen.<br>Bitte versuche es noch einmal, oder schreibe Nachricht an <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span>
+                <span lang='en' hidden>Something went wrong during the confirmation process.<br>Please try again, or message us at <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span>
             </div>
         </div>
 
