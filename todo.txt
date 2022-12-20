@@ -10,11 +10,9 @@ fix highlights
 clean up og images
 improve sharing small screen
     maybe reset to center
+    auto hide when clicking away
 
 
 -------------- ADDITIONS --------------
-
-cc in navigation?
-    requires bottom scroll functionality
 
 add elionor

@@ -204,7 +204,7 @@ function showcookiecontent() {
 
     datainfoshown = false;
     cleartpcookies()
-    if(typeof slideSelected !== 'undefined'){loadframes()}
+    if(typeof usesslides !== 'undefined'){loadframes()}
 }
 
 function hidecookiecontent() {
@@ -231,14 +231,14 @@ function hidecookiecontent() {
 // FRAME LOADING
 
 function loadframes() {
-    loadframe(document.getElementById(slideList[slideSelected]).getElementsByTagName("iframe"), 0)
+    loadframe(document.getElementById(slideList[slideSelected]).getElementsByTagName("iframe"), 0, slideSelected)
 }
 
 
-function loadframe(frames, current) {
-    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length) {
+function loadframe(frames, current, slide) {
+    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length && slide == slideSelected) {
 
-        if(frames[current].getAttribute('data-source') == "youtube") {
+        if(frames[current].getAttribute('data-source') == "youtube" && frames[current].getAttribute('data-loaded') != "true") {
             let frame = frames[current]
             let thumbnail = frame.previousSibling
             
@@ -254,14 +254,21 @@ function loadframe(frames, current) {
             frame.onload = function(){
                 thumbnail.style.display = "none"
                 frame.style.display = "block"
-                loadframe(frames, current + 1)
+                frame.setAttribute('data-loaded', 'true')
+                loadframe(frames, current + 1, slide)
             };
             
         }
         else {
-            loadframe(frames, current + 1)
+            // if( frames[current].getAttribute('data-loaded') == "true") {
+            //     console.log("skipped load - was loaded")
+            // }
+            loadframe(frames, current + 1, slide)
         }
     }
+    // else if(slide != slideSelected) {
+    //     console.log("load aborted")
+    // }
     cleartpcookies()
 }
 
@@ -645,7 +652,7 @@ function selectfootnote(event) {
     footnotefocused.style.color = "#980000";
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
-    loadframe(footnotefocused.getElementsByTagName("iframe"), 0)
+    loadframe(footnotefocused.getElementsByTagName("iframe"), 0, slideSelected)
 }
 
 function resetfootnote() {
@@ -665,14 +672,14 @@ function resetfootnote() {
 var copy_link = ""
 
 function initsharewindow() {
-    for (let i = 0; i < links.length; i++) {
+    for (let i = 0; i < linkList.length; i++) {
         let new_link = document.createElement("span")
 		let new_link_de = document.createElement("span")
         let new_link_en = document.createElement("span")
         let new_break = document.createElement("br")
 
-        new_link_de.innerHTML = links[i].title_de
-        new_link_en.innerHTML = links[i].title_en
+        new_link_de.innerHTML = linkList[i].title_de
+        new_link_en.innerHTML = linkList[i].title_en
         new_link_de.lang = "de"
         new_link_en.lang = "en"
 
@@ -707,7 +714,7 @@ function select_share(index) {
     }
 
     linkopts.item(index).style.textDecoration = "underline"
-    copy_link = links[index].link
+    copy_link = linkList[index].link
 }
 
 
@@ -735,7 +742,6 @@ function copy_share() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-var layoutList = ["info-wrapper", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren"]
 var layoutCurrent = 0
 
 function resetverticalbuttons() {
@@ -749,7 +755,7 @@ function resetverticalbuttons() {
         document.getElementById("to-top").style.color = "white";
     }
     
-    if (layoutCurrent==layoutList.length-1) {
+    if (layoutCurrent>=layoutList.length-1) {
         document.getElementById("to-bottom").disabled = true;
         document.getElementById("to-bottom").style.color = "lightgrey";
     }
@@ -779,11 +785,21 @@ function verticaldown() {
 
 
 function autosetlayout() {
-    var scrollheight = document.getElementById("content").scrollTop
+    let scrollheight = document.getElementById("content").scrollTop
+    let offsetheight = document.getElementById("content").offsetHeight
+
     layoutCurrent = 0;
+
     for (let i = 0; i < layoutList.length; i++) {
-        if(scrollheight >=document.getElementById(layoutList[i]).offsetTop - 150){
+
+        let offsetTop = document.getElementById(layoutList[i]).offsetTop
+
+        if(scrollheight >= offsetTop - 150){
             layoutCurrent = i;
+        }
+        else if (scrollheight >= offsetTop - offsetheight && i == layoutList.length - 1) {
+            layoutCurrent = i;
+            // console.log(scrollheight+"/"+ (offsetTop - offsetheight) +" ("+ offsetTop +")")
         }
     }
 
@@ -797,6 +813,7 @@ function autosetlayout() {
 
 
 var slideList = []
+var slideSelected = 0;
 
 function initcontrols() {
     slidesList = document.getElementById("slides").children
