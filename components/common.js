@@ -690,7 +690,6 @@ function initsharewindow() {
 
 
 function opensharewindow() {
-    resetfootnote()
     document.getElementById("sharewindow").style.display = "block"
 }
 

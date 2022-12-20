@@ -9,6 +9,7 @@ fix highlights
 
 clean up og images
 improve sharing small screen
+    maybe reset to center
 
 
 -------------- ADDITIONS --------------
