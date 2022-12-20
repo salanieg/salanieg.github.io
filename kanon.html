@@ -130,13 +130,22 @@
                 }
             }
 
-            p {
-                font-size: 20pt;
-                white-space: nowrap;
-            }
-
             iframe {
                 aspect-ratio: 16/9;
+            }
+
+            .slidetext {
+                display:flex;
+                flex-direction: column;
+                gap:20px
+            }
+
+            .slidetexttitle {
+                font-size: 12pt;
+            }
+
+            .slidetextbody {
+                font-size: 20pt;
             }
             
         </style>
@@ -182,11 +191,13 @@
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="NLZRYQMLDW4" sandbox></iframe>
                     </div>
 
-                    <div class="small">
-                        <p><small>MUSIK/VIDEO</small><br>
-                        <a href="https://www.grammy.com/videos/watch-kendrick-lamar-u2-dave-chappelle-open-2018-grammys-grammy-rewind">KENDRICK LAMARS GRAMMY PERFORMANCE 2018<br>XXX, DNA, NEW FREEZER, KING'S DEAD MASHUP</a><br><!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD--> 
-                        </p>
+                    <div class="slideFlex">
+                        <div class="small slidetext">
+                            <span class="slidetexttitle">MUSIK/VIDEO</span>
+                            <span class="slidetextbody"><a href="https://www.grammy.com/videos/watch-kendrick-lamar-u2-dave-chappelle-open-2018-grammys-grammy-rewind">KENDRICK LAMARS GRAMMY PERFORMANCE 2018<br>XXX, DNA, NEW FREEZER, KING'S DEAD MASHUP</a></span><!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD-->
+                        </div>
                     </div>
+
                 </div>
 
                 <div data-title-de="Musik oder so" data-title-en="Music or smth">
