@@ -1,7 +1,7 @@
 /* SPECTRAL */
 
 
-@font-face {
+/* @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraLight.woff2') format('woff2'),
 			url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraLight.woff') format('woff'),
@@ -18,7 +18,7 @@
 	font-weight: 300;
 	font-style: normal;
 	font-display: block;
-}
+} */
 @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Regular.woff2') format('woff2'),
@@ -28,7 +28,7 @@
 	font-style: normal;
 	font-display: block;
 }
-@font-face {
+/* @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Medium.woff2') format('woff2'),
 			url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Medium.woff') format('woff'),
@@ -45,7 +45,7 @@
 	font-weight: 600;
 	font-style: normal;
 	font-display: block;
-}
+} */
 @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Bold.woff2') format('woff2'),
@@ -55,7 +55,7 @@
 	font-style: normal;
 	font-display: block;
 }
-@font-face {
+/* @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraBold.woff2') format('woff2'),
 			url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraBold.woff') format('woff'),
@@ -63,14 +63,14 @@
 	font-weight: 800;
 	font-style: normal;
 	font-display: block;
-}
+} */
 
 
 
 /* SPECTRAL ITALIC */
 
 
-@font-face {
+/* @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraLightItalic.woff2') format('woff2'),
 			url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraLightItalic.woff') format('woff'),
@@ -87,7 +87,7 @@
 	font-weight: 300;
 	font-style: italic;
 	font-display: block;
-}
+} */
 @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-Italic.woff2') format('woff2'),
@@ -97,7 +97,7 @@
 	font-style: italic;
 	font-display: block;
 }
-@font-face {
+/* @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-MediumItalic.woff2') format('woff2'),
 			url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-MediumItalic.woff') format('woff'),
@@ -114,7 +114,7 @@
 	font-weight: 600;
 	font-style: italic;
 	font-display: block;
-}
+} */
 @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-BoldItalic.woff2') format('woff2'),
@@ -124,7 +124,7 @@
 	font-style: italic;
 	font-display: block;
 }
-@font-face {
+/* @font-face {
 	font-family: "Spectral";
 	src:	url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraBoldItalic.woff2') format('woff2'),
 			url('https://www.GEFAENGNISHEFTE.org/fonts/Spectral/Spectral-ExtraBoldItalic.woff') format('woff'),
@@ -132,7 +132,7 @@
 	font-weight: 800;
 	font-style: italic;
 	font-display: block;
-}
+} */
 
 
 * {

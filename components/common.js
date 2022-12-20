@@ -2,7 +2,6 @@
 //////////////////////////////////////////////////// GENERAL ////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 // COMPONENT LOADING
 
 var componentsloaded = 0
@@ -29,12 +28,14 @@ async function fetchHTML(url, id) {
 	});
 }
 
-function initlisteners() {
-	window.addEventListener("resize", openmenufix)
+function initcommon() {
+    initcookies();
+    initlanguage();
+    initabo();
+    inithighlights();
+
+    window.addEventListener("resize", openmenufix)
 	document.getElementById("content").addEventListener("scroll", customizescrollbar);
-	document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
-	document.getElementById("email-form").addEventListener('input', function(event){inputemail(event)})
-    sethighlights()
 }
 
 
@@ -198,7 +199,7 @@ function showcookiecontent() {
 
     datainfoshown = false;
     cleartpcookies()
-    loadframes()
+    if(typeof slideSelected !== 'undefined'){loadframes()}
 }
 
 function hidecookiecontent() {
@@ -379,7 +380,7 @@ var highlights = [
 				["/datenschutz", "descriptionda"]
 ];
 
-function sethighlights() {
+function inithighlights() {
 	for (var i = 0; i < highlights.length; i++ ) {
 
 		var pair = highlights[i]
@@ -447,7 +448,39 @@ function submit_email(event) {
 	initlanguage() //needed bc it changes DOM
 }
 
-function inputemail(event) {
+function remove_email(event) {
+    event.preventDefault()
+
+    let data = new FormData(event.target)
+    fetch_mail(make_table(data))
+
+    document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonniert.</span><span lang="en" hidden>Unsubscribed.</span>';
+    document.getElementById("email-deabo-btn").disabled = true;
+	initlanguage() //needed bc it changes DOM
+}
+
+function confirm_email() {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+    
+    let table = {}
+    table["Code"] = params.code;
+    table["_subject"] = "Bestätigungsmail"
+    table["_captcha"] = true
+    
+    fetch_mail(table)
+    document.getElementById("email-confirm-info").innerHTML = "<span lang='de'>Deine E-mail wurde erfolgreich bestätigt!</span><span lang='en'>Your E-Mail has been confirmed successfully!</span>";
+	initlanguage() //needed bc it changes DOM
+}
+
+function input_remove_email() {
+    document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonnieren</span><span lang="en" hidden>Unsubscribe</span>';
+    document.getElementById("email-deabo-btn").disabled = false;
+	initlanguage() //needed bc it changes DOM
+}
+
+function input_email() {
 	document.getElementById("email-btn").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
 	document.getElementById("email-btn").disabled = false;
 	emailinfodisabled = false;
@@ -464,12 +497,22 @@ function showemailinfo() {
 
 // SWITCH ABO TYPE
 
-function initsetabo() {
+function initabo() {
 	if(localStorage.getItem("gefaengnishefte_abo") != "email" && localStorage.getItem("gefaengnishefte_abo") != "telegram") {
 		localStorage.setItem("gefaengnishefte_abo", "email");
 	}
 
 	setabo(localStorage.getItem("gefaengnishefte_abo"))
+
+
+
+    // LISTENERS
+	document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
+    document.getElementById("email-form").addEventListener('input', input_email)
+    if(document.getElementById("email-deabo-form")) {
+        document.getElementById("email-deabo-form").addEventListener('submit', function(event){remove_email(event)})
+        document.getElementById("email-deabo-form").addEventListener('input', input_remove_email);
+    }
 }
 
 function setabo(type) {
@@ -796,6 +839,7 @@ function displaycurrent() {
     }
 }
 
+
 function letztesissue() {
     if(slideSelected>=0) {
         document.getElementById(slideList[slideSelected]).style.display = "none";
@@ -803,12 +847,8 @@ function letztesissue() {
         document.getElementById(slideList[slideSelected]).style.display = "flex";
     }
 
-    loadframes()
-    resetcontrols();
-    displaycurrent();
-    keeptop();
+    switch_slide_routine()
     timecontrols();
-    pausevideos();
 }
 
 function nächstesissue() {
@@ -818,12 +858,8 @@ function nächstesissue() {
         document.getElementById(slideList[slideSelected]).style.display = "flex";
     }
 
-    loadframes()
-    resetcontrols();
-    displaycurrent();
-    keeptop();
+    switch_slide_routine()
     timecontrols();
-    pausevideos();
 }
 
 function displayBySlideIndex(slideIndex) {
@@ -831,10 +867,14 @@ function displayBySlideIndex(slideIndex) {
     slideSelected = slideIndex;
     document.getElementById(slideList[slideSelected]).style.display = "flex";
 
+    switch_slide_routine()
+    hideSlideIndex();
+}
+
+function switch_slide_routine() {
     loadframes()
     resetcontrols();
     displaycurrent();
-    hideSlideIndex();
     keeptop();
     pausevideos();
 }
@@ -845,7 +885,7 @@ function displayBySlideIndex(slideIndex) {
 function displaySlideIndex() {
     var indexitems = document.getElementsByClassName("indexitem")
     for (let i = 0; i < indexitems.length; i++) {
-        indexitems[i].style.fontWeight = "300"
+        indexitems[i].style.fontWeight = "400"
     }
 
     document.getElementById("index"+slideSelected).style.fontWeight = "700"

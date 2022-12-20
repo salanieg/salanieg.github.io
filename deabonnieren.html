@@ -36,37 +36,15 @@
             // LOADING
             
             fetchcomponents(["header", "databanner"])
-
+            
             function init() {
-                initcookies();
-                initlanguage();
-                initsetabo();
-                initlisteners();
+                initcommon()
             }
-        
         
         </script>
 
 		<script>
 			// DEABONNIEREN
-
-            document.addEventListener("DOMContentLoaded", () => {
-                document.getElementById("email-deabo").addEventListener('submit', function(event){
-
-                    event.preventDefault()
-
-                    let data = new FormData(event.target)
-                    fetch_mail(make_table(data))
-
-                    document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonniert.</span><span lang="en" hidden>Unsubscribed.</span>';
-                    document.getElementById("email-deabo-btn").disabled = true;
-                })
-
-                document.getElementById("email-deabo").addEventListener('input', function(event){
-                    document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonnieren</span><span lang="en" hidden>Unsubscribe</span>';
-                    document.getElementById("email-deabo-btn").disabled = false;
-                });
-            });
 
 		</script>
 
@@ -93,7 +71,7 @@
         <div id="content">
             <div id="deabonnieren-outer">
                 <div id="deabonnieren-inner">
-                    <form id="email-deabo" class="abo">
+                    <form id="email-deabo-form" class="abo">
                         <button type="submit" id="email-deabo-btn"><span lang="de">Deabonnieren</span><span lang="en" hidden>Unsubscribe</span></button>
                         <span><input type="email" name="Email" placeholder="Email" required></span>
                         <input type="hidden" name="_subject" value="Désabonnement">

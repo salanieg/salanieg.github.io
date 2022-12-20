@@ -62,10 +62,7 @@
             function init() {
                 initcontrols();
                 selectcover(1);
-                initcookies();
-                initlanguage();
-                initsetabo();
-                initlisteners();
+                initcommon();
                 document.getElementById("lang-de").addEventListener("click", seteagerload);
                 document.getElementById("lang-en").addEventListener("click", seteagerload);
             }
@@ -83,7 +80,7 @@
             function selectcover(i) {
 
                 i = i - 1
-                document.getElementById(issuetitles[textSelected]).style.fontWeight = "initial";
+                document.getElementById(issuetitles[textSelected]).style.fontWeight = "400";
                 document.getElementById(issuetitles[i]).style.fontWeight = "700";
                 document.getElementById("text-wrap").style.visibility = "visible";
                 displayBySlideIndex(i)
