@@ -31,10 +31,10 @@ async function fetchHTML(url, id) {
 
 function initlisteners() {
 	window.addEventListener("resize", openmenufix)
-	document.addEventListener("DOMContentLoaded", sethighlights);
 	document.getElementById("content").addEventListener("scroll", customizescrollbar);
 	document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
 	document.getElementById("email-form").addEventListener('input', function(event){inputemail(event)})
+    sethighlights()
 }
 
 
@@ -80,7 +80,6 @@ function initlanguage() {
 
 function setlanguage(language) {
 
-	// // CHECK!!!
 	document.querySelectorAll('[lang="de"]').forEach((item) => {item.hidden = true;})
 	document.querySelectorAll('[lang="en"]').forEach((item) => {item.hidden = true;})
 	document.getElementById("lang-de").style.textDecoration = "none"
@@ -206,7 +205,9 @@ function sethighlights() {
 		var pair = highlights[i]
 	
 		if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
-			document.getElementById(pair[1]).style.fontWeight = "700";
+            console.log(pair[0])
+            console.log(pair[1])
+            document.getElementById(pair[1]).style.fontWeight = "700";
 		}
 	}
 }
