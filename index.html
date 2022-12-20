@@ -91,19 +91,19 @@
 
             // TEST !!!
 
-            // document.addEventListener("DOMContentLoaded", (event) => {
-            //     if ('ontouchstart' in window) {
+            document.addEventListener("DOMContentLoaded", (event) => {
+                if ('ontouchstart' in window) {
 
-            //         let titles = document.getElementsByClassName("title")
+                    let titles = document.getElementsByClassName("title")
 
-            //         for (let i = 0; i < titles.length; i++) {
-            //             titles[i].click(function (e) {
-            //                 e.preventDefault();
-            //                 for (let i = 0; i < issuetitles.length; i++) {
-            //                     document.getElementById(issuetitles[i]).style.color = "white"
-            //                 }
-            //             });
-            //         }
+                    for (let i = 0; i < titles.length; i++) {
+                        titles[i].onclick(function (e) {
+                            e.preventDefault();
+                            for (let i = 0; i < issuetitles.length; i++) {
+                                document.getElementById(issuetitles[i]).style.color = "white"
+                            }
+                        });
+                    }
 
                     // $(".title").click(function (e) {
                     //     e.preventDefault();
@@ -111,8 +111,8 @@
                     //         document.getElementById(issuetitles[i]).style.color = "white"
                     //     }
                     // });
-            //     }
-            // });
+                }
+            });
 
             // EAGER LOAD ACCORDING TO LANGUAGE
 

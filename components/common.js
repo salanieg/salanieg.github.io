@@ -38,6 +38,11 @@ function initcommon() {
 	document.getElementById("content").addEventListener("scroll", customizescrollbar);
 }
 
+function initfooter() {
+    resetverticalbuttons()
+    initfootnotes()
+}
+
 
 // HEIGHTFIX
 
@@ -552,12 +557,6 @@ function makeid(length) {
 }
 
 
-// INIT
-
-function initfooter() {
-    resetverticalbuttons()
-    initfootnotes()
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////// FOOTNOTES ///////////////////////////////////////////////////
@@ -635,6 +634,7 @@ function focusfootnote(event) {
 }
 
 function selectfootnote(event) {
+    closesharewindow()
 
     if(footnotefocused != "none") {
         resetfootnote()
@@ -660,30 +660,37 @@ function resetfootnote() {
 //////////////////////////////////////////////////// SHARING ////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-var textOriginal;
-const textList = [];
-var textIndex = 0;
-
-function copyanchor(anchor, id, textReplace) {
-    navigator.clipboard.writeText('https://www.gefaengnishefte.org/issue-i' + id);
-    var text = anchor.innerHTML
-    if (text != textReplace){
-        textOriginal = text;
-        textList.push(textOriginal)
-    
-        anchor.innerHTML = textReplace;
-        setTimeout(function(){
-            anchor.innerHTML = textList[textIndex];
-            textIndex = textIndex + 1;
-            initlanguage()
-        }, 3000);
-    }
-    initlanguage()
-}
-
 // SHARE LINK
 
+var copy_link = ""
+
+function initsharewindow() {
+    for (let i = 0; i < links.length; i++) {
+        let new_link = document.createElement("span")
+		let new_link_de = document.createElement("span")
+        let new_link_en = document.createElement("span")
+        let new_break = document.createElement("br")
+
+        new_link_de.innerHTML = links[i].title_de
+        new_link_en.innerHTML = links[i].title_en
+        new_link_de.lang = "de"
+        new_link_en.lang = "en"
+
+        new_link.appendChild(new_link_de)
+        new_link.appendChild(new_link_en)
+        new_link.appendChild(new_break)
+
+        new_link.addEventListener("click", function(){select_share(i)})
+        document.getElementById("link-opt").appendChild(new_link)
+
+    }
+
+    select_share(0)
+}
+
+
 function opensharewindow() {
+    resetfootnote()
     document.getElementById("sharewindow").style.display = "block"
 }
 
@@ -692,67 +699,36 @@ function closesharewindow() {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////// INIT /////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function select_share(index) {
 
+    let linkopts = document.getElementById("link-opt").children
 
-var slideList = []
-
-function initcontrols() {
-    slidesList = document.getElementById("slides").children
-    for (let i = 0; i < slidesList.length; i++) {
-        let slideID = 'slide'+ (i+1)
-        slidesList.item(i).setAttribute('id', slideID);
-        slideList.push(slideID);
+    for (let i = 0; i < linkopts.length; i++) {
+        linkopts.item(i).style.textDecoration = "none"
     }
 
-    for (let i = 0; i < slideList.length; i++) {
-
-		let slide = document.getElementById(slideList[i])
-
-		let newbreak = document.createElement("br")
-		let newindex = document.createElement("span")
-		newindex.id = "index" + i
-		newindex.className = "indexitem"
-		newindex.onclick = function(){displayBySlideIndex(i)}
-
-        if(useindexlist) {
-			newindex.innerHTML = indexList[i]
-        }
-        else {
-			newindex.innerHTML = "<span lang='de'>" + slide.getAttribute('data-title-de') + "</span><span lang='en'>" + slide.getAttribute('data-title-en') + "</span>"
-        }
-
-		document.getElementById('slideIndex').append(newindex)
-		document.getElementById('slideIndex').append(newbreak)
-    }
-    
-    displayBySlideIndex(slideSelected)
-    resetcontrols()
-    displaycurrent()
-    keeptop()
-
-    document.getElementById("slideIndex").addEventListener("scroll", resetscrollbarindex)
-    
-    document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
-
-
-    document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
-    document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
-    document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
-    document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
-    
-    document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
-    document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
-    document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
-    document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
-
-
-
-    controlsinit = true
+    linkopts.item(index).style.textDecoration = "underline"
+    copy_link = links[index].link
 }
 
+
+function copy_share() {
+
+    navigator.clipboard.writeText(copy_link);
+    
+    let btn = document.getElementById("link-copy-btn")
+    let textOriginal = btn.innerHTML
+    let textReplace = '<span lang="de">Link kopiert!</span><span lang="en">Copied link!</span>'
+    
+    btn.innerHTML = textReplace;
+
+    setTimeout(function(){
+        btn.innerHTML = textOriginal;
+        initlanguage()
+    }, 3000);
+
+    initlanguage()
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -813,6 +789,68 @@ function autosetlayout() {
     }
 
     resetverticalbuttons()
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////// INIT CONTROLS ////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+var slideList = []
+
+function initcontrols() {
+    slidesList = document.getElementById("slides").children
+    for (let i = 0; i < slidesList.length; i++) {
+        let slideID = 'slide'+ (i+1)
+        slidesList.item(i).setAttribute('id', slideID);
+        slideList.push(slideID);
+    }
+
+    for (let i = 0; i < slideList.length; i++) {
+
+		let slide = document.getElementById(slideList[i])
+
+		let newbreak = document.createElement("br")
+		let newindex = document.createElement("span")
+		newindex.id = "index" + i
+		newindex.className = "indexitem"
+		newindex.onclick = function(){displayBySlideIndex(i)}
+
+        if(useindexlist) {
+			newindex.innerHTML = indexList[i]
+        }
+        else {
+			newindex.innerHTML = "<span lang='de'>" + slide.getAttribute('data-title-de') + "</span><span lang='en'>" + slide.getAttribute('data-title-en') + "</span>"
+        }
+
+		document.getElementById('slideIndex').append(newindex)
+		document.getElementById('slideIndex').append(newbreak)
+    }
+    
+    displayBySlideIndex(slideSelected)
+    resetcontrols()
+    displaycurrent()
+    keeptop()
+
+    document.getElementById("slideIndex").addEventListener("scroll", resetscrollbarindex)
+    
+    document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
+
+
+    document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
+    document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
+    document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
+    document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
+    
+    document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
+    document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
+    document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
+    document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
+
+
+
+    controlsinit = true
 }
 
 

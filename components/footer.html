@@ -91,6 +91,52 @@
                 width:120px;
             }
 
+
+
+            /* SHAREWINDOW */
+
+            #sharewindow {
+                display:none;
+                position: fixed;
+                left:50%;
+                top:50%;
+                transform: translate(-50%, -50%);
+	            padding: 10px;
+                max-width: calc(100vw - 135px);
+                width: 400px;
+                background-color: #980000;
+                border: 2px outset grey;
+            }
+
+            #closesharewindow {
+                font-size: 15pt;
+                cursor: pointer;
+                text-align: right;
+                margin-bottom: 10px;
+            }
+
+            #link-opt {
+                margin-bottom: 20px;
+                line-height: 2;
+                font-size: 12pt;
+            }
+
+            @media screen and (max-width: 500px) {#link-opt {font-size: 11pt;}}
+            @media screen and (max-width: 450px) {#link-opt {font-size: 10pt;}}
+            @media screen and (max-width: 400px) {#link-opt {font-size: 9pt;}}
+            @media screen and (max-width: 375px) {#link-opt {font-size: 8pt;}}
+            @media screen and (max-width: 350px) {#link-opt {font-size: 7pt;}}
+            @media screen and (max-width: 325px) {#link-opt {font-size: 6pt;}}
+
+
+            #link-copy-wrap {
+                display:flex;
+                justify-content:center;
+                margin-bottom: 10px;
+            }
+
+
+            
             /* REACTIVE */
 
             @media screen and (max-width: 1500px) {
@@ -120,6 +166,13 @@
                     bottom: 60px;
                     left: 20px;
                 }
+
+                #sharewindow {
+                    bottom: 60px;
+                    left: 20px;
+                    top: unset;
+                    transform: none;
+                }
             }
 
             @media screen and (width < 800px), screen and (max-width: 800px) {
@@ -131,6 +184,10 @@
                 .footnote .note {
                     left:30px;
                 }
+
+                #sharewindow {
+                    left:30px;
+                }
             }
 
 
@@ -140,8 +197,9 @@
                     gap:5px 10px;
                     padding: 5px 0;
                 }
+                
 
-                #footer .footercontent .footerelement {
+                .footerelement {
                     font-size: 9pt;
                     width:120px;
                 }
@@ -157,8 +215,11 @@
                 .footnote .note {
                     bottom:45px;
                 }
-            }
 
+                #sharewindow {
+                    bottom:45px;
+                }
+            }
 
                 /* .footnote:focus .note {
                     position: fixed;
@@ -168,74 +229,6 @@
 
             .footerelementwrap, .footerelement {
                 color:black !important;
-            }
-
-
-            /* SHAREWINDOW */
-
-            #sharewindow {
-                display:none;
-                position: fixed;
-                left:50%;
-                top:50%;
-                transform: translate(-50%, -50%);
-                max-width: 90vw;
-                width: 400px;
-                background-color: #980000;
-                border: 2px outset grey;
-            }
-
-            #closesharewindow {
-                font-size: 15pt;
-                cursor: pointer;
-                /* text-align: right; */
-                /* width:100%; */
-                padding:10px;
-            }
-
-            #shareoptions {
-                display:flex;
-                flex-wrap: wrap;
-                gap:20px;
-            }
-
-            .shareoption {
-                display:flex;
-                flex-flow:column;
-                align-items: center;
-                width:100px;
-                font-size: 13pt;
-            }
-
-            .shareimg {
-                width:40px;
-                height:40px;
-            }
-
-            .sharetxt {
-                text-align: center;
-            }
-
-            #linkoptions {
-                padding:10px;
-                margin-bottom: 20px;
-                line-height: 2;
-            }
-
-            #shareoptions {
-                padding:10px;
-                margin-bottom: 20px;
-            }
-
-            #link-kopieren {
-                padding: 5px 20px;
-                font-size: 15pt;
-                margin-bottom:20px;
-            }
-
-            #link-kopierenwrap {
-                display:flex;
-                justify-content:center;
             }
 
 
@@ -257,13 +250,8 @@
 
         <div id="sharewindow">
             <div id="closesharewindow" onclick="closesharewindow()">X</div>
-            <div id="linkoptions">
-                <span id="link1">ISSUE I - ALTERNATIVE UTOPIEN</span><br>
-                <span id="link2">POSTHISTORISCHE KLASSENKÄMPFE</span><br>
-                <span id="link3">DER NEUE RAHMEN</span><br>
-                <span id="link4">AGIEREN & AGITIEREN</span><br>
-            </div>
-            <div id="link-kopierenwrap"><button id="link-kopieren">Link kopieren</button></div>
+            <div id="link-opt"></div>
+            <div id="link-copy-wrap"><button id="link-copy-btn" class="footerelement" onclick="copy_share()"><span lang="de">Link kopieren</span><span lang="en" hidden>Copy link</span></button></div>
         </div>
     </body>
 </html>
