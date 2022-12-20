@@ -186,7 +186,6 @@ var highlights = [
 				["", "descriptioni"],
 				["/", "descriptioni"],
 				["/issue-i", "descriptioni"],
-				["/issue-i", "descriptionisi"],
 				["/kanon", "descriptionk"],
 
 				["/deabonnieren", "etc"],
