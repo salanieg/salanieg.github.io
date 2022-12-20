@@ -247,6 +247,9 @@ function loadframe(frames, current, slide) {
             if(frame.getAttribute('data-list') !== null) {
                 frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?list=" + frame.getAttribute('data-list')
             }
+            else if (frame.getAttribute('data-timestamp') !== null){
+                frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?t=" + frame.getAttribute('data-timestamp') + "?modestbranding=1&enablejsapi=1"
+            }
             else {
                 frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1"
             }
