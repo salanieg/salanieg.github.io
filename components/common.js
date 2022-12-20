@@ -30,12 +30,12 @@ async function fetchHTML(url, id) {
 }
 
 function initlisteners() {
-	sethighlights()
 	window.addEventListener("resize", openmenufix)
 	document.addEventListener("DOMContentLoaded", sethighlights);
 	document.getElementById("content").addEventListener("scroll", customizescrollbar);
 	document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
 	document.getElementById("email-form").addEventListener('input', function(event){inputemail(event)})
+    sethighlights()
 }
 
 
