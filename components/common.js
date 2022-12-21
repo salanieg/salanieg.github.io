@@ -198,8 +198,8 @@ function showcookiecontent() {
         else {
             frames[i].removeAttribute("sandbox")
             frames[i].frameborder = "0"
-            frames[i].innerHTML = ""
             frames[i].src = frames[i].innerHTML
+            frames[i].innerHTML = ""
             frames[i].style.display = "block"
         }
     }
