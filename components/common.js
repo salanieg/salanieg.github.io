@@ -169,21 +169,12 @@ function showcookiecontent() {
     
     for (let i = 0; i < frames.length; i++)
     {
-        let frameURL = frames[i].innerHTML
-
-        if(frames[i].getAttribute('data-source') !== "youtube") {
-            frames[i].removeAttribute("sandbox")
-            frames[i].frameborder = "0"
-            frames[i].innerHTML = ""
-            frames[i].src = frameURL
-            frames[i].style.display = "block"
-        }
-        else {
+        if(frames[i].getAttribute('data-source') == "youtube") {
             frames[i].style.display = "none"
             frames[i].frameborder = "0"
             frames[i].title = "YouTube video player"
             frames[i].allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            frames[i].setAttribute('allowFullScreen', '')
+            frames[i].setAttribute('allowfullScreen', '')
 
             let thumbnail = document.createElement("img")
 
@@ -192,6 +183,24 @@ function showcookiecontent() {
             thumbnail.classList.add(frames[i].className);
 
             frames[i].parentNode.insertBefore(thumbnail, frames[i])
+        }
+        else if(frames[i].getAttribute('data-source') == "spotify") {
+            frames[i].removeAttribute("sandbox")
+            frames[i].width = "700"
+            frames[i].height = "232"
+            frames[i].style.borderRadius = "12px"
+            frames[i].frameborder = "0"
+            frames[i].allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            frames[i].setAttribute('allowfullScreen', '')
+            frames[i].src = "https://open.spotify.com/embed/episode/" + frames[i].getAttribute('data-id') + "?utm_source=generator&theme=0"
+            frames[i].style.display = "block"
+        }
+        else {
+            frames[i].removeAttribute("sandbox")
+            frames[i].frameborder = "0"
+            frames[i].innerHTML = ""
+            frames[i].src = frames[i].innerHTML
+            frames[i].style.display = "block"
         }
     }
     
@@ -245,7 +254,7 @@ function loadframe(frames, current, slide) {
             frame.removeAttribute("sandbox")
 
             if(frame.getAttribute('data-list') !== null) {
-                frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1" + "?list=" + frame.getAttribute('data-list')
+                frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?list=" + frame.getAttribute('data-list') + "?modestbranding=1&enablejsapi=1"
             }
             else if (frame.getAttribute('data-timestamp') !== null){
                 frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1" + "?t=" + frame.getAttribute('data-timestamp')
@@ -258,7 +267,7 @@ function loadframe(frames, current, slide) {
                 thumbnail.style.display = "none"
                 frame.style.display = "block"
                 frame.setAttribute('data-loaded', 'true')
-                loadframe(frames, current + 1, slide)
+                loadframe(frames, current + 1 , slide)
             };
             
         }
@@ -266,7 +275,7 @@ function loadframe(frames, current, slide) {
             // if( frames[current].getAttribute('data-loaded') == "true") {
             //     console.log("skipped load - was loaded")
             // }
-            loadframe(frames, current + 1, slide)
+            loadframe(frames, current + 1 , slide)
         }
     }
     // else if(slide != slideSelected) {
