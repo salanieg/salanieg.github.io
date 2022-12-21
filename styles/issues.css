@@ -184,7 +184,7 @@
 
 /* REACTIVE */
 
-@media screen and (max-width: 1500px) {
+@media screen and (max-width: 1400px) {
 	.abstract, .abstracttitle {
 		max-width: unset;
 	}

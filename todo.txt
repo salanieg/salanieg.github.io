@@ -3,6 +3,7 @@
 fix events
 fix kanon sizes
 fix highlights
+api playlist
 
 
 -------------- IMPROVEMENTS --------------
@@ -11,7 +12,7 @@ clean up og images
 improve sharing small screen
     maybe reset to center
     auto hide when clicking away
-
+current++
 
 -------------- ADDITIONS --------------
 
