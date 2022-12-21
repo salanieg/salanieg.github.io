@@ -204,7 +204,7 @@ function showcookiecontent() {
 
     datainfoshown = false;
     cleartpcookies()
-    if(typeof usesslides !== 'undefined'){loadframes()}
+    if(typeof useslides !== 'undefined'){loadframes()}
 }
 
 function hidecookiecontent() {
