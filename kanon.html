@@ -59,6 +59,12 @@
 
         <style>
 
+            #slides > * {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
             .slideGrid, .slideColumn, .slideRow {
                     place-items:center;
                     gap:150px;
@@ -84,7 +90,7 @@
                 flex-flow: row wrap;
                 place-content: center;
                 gap:50px;
-                margin-top: 150px;
+                margin-top: 50px;
             }
 
             .large, .medium, .small, .verysmall {
@@ -121,12 +127,6 @@
                 .verysmall { width:50vw;}
             }
 
-            @media screen and (max-width: 400px) {
-                .large {
-                    width:90vw;
-                }
-            }
-
             iframe {
                 aspect-ratio: 16/9;
             }
@@ -155,28 +155,13 @@
 
             <div id="slides">
 
-                <div data-title-de="DKP is Market Socialism" data-title-en="DKP is Market Socialism">
-                    <iframe class="large" src="about:blank" data-source="youtube" data-id="BKGx5xrr5eg" sandbox></iframe><!--DKP is Market Socialism-->
-                </div>
-
                 <div data-title-de="history of the entire world, i guess" data-title-en="history of the entire world, i guess">
                     <iframe class="large" src="about:blank" data-source="youtube" data-id="xuCn8ux2gbs" sandbox></iframe><!--history of the entire world, i guess-->
                 </div>
 
-                <div data-title-de="The German Revoulution" data-title-en="The German Revoulution">
-                    <iframe class="large" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                </div>
-
-                <div data-title-de="HK Protest Footage" data-title-en="HK Protest Footage">
-                    <iframe class="large" src="about:blank" data-source="youtube" data-id="RErdSr0iAcs" sandbox></iframe><!--"And I think to myself, what a wonderful world."-->
-                </div>
-
                 <div data-title-de="Historische Interviews" data-title-en="Historical Interviews">
-                    
-                    <iframe class="large" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
-                    
-
                     <div class="slideFlex">
+                        <iframe class="large" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="hs9ZsKj-o1k" data-timestamp="1624" sandbox></iframe><!--Cornelius Castoriadis On The Imaginary Institution of Society-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="feepQg_Dx7U" sandbox></iframe><!--Louis Althusser: The Crisis of Marxism (interview)-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="_g8JVK4Fppw" sandbox></iframe><!--Sartre on Intellectualism-->
@@ -188,10 +173,21 @@
                     </div>
                 </div>
 
-                <div data-title-de="Musik/Video" data-title-en="Music/Video">
-                    <iframe class="large" src="about:blank" data-source="youtube" data-id="qbbQb9bEcDQ" data-list="PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" sandbox></iframe><!--KANON // MUSIK-->
+                <div data-title-de="DKP is Market Socialism" data-title-en="DKP is Market Socialism">
+                    <iframe class="large" src="about:blank" data-source="youtube" data-id="BKGx5xrr5eg" sandbox></iframe><!--DKP is Market Socialism-->
+                </div>
 
+                <div data-title-de="HK Protest Footage" data-title-en="HK Protest Footage">
+                    <iframe class="large" src="about:blank" data-source="youtube" data-id="RErdSr0iAcs" sandbox></iframe><!--"And I think to myself, what a wonderful world."-->
+                </div>
+
+                <div data-title-de="The German Revoulution" data-title-en="The German Revoulution">
+                    <iframe class="large" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                </div>
+
+                <div data-title-de="Musik/Video" data-title-en="Music/Video">
                     <div class="slideFlex">
+                        <iframe class="large" src="about:blank" data-source="youtube" data-id="qbbQb9bEcDQ" data-list="PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" sandbox></iframe><!--KANON // MUSIK-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="RM7lw0Ovzq0" sandbox></iframe>
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="FUQI-o02JYU" sandbox></iframe>
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="VYOjWnS4cMY" sandbox></iframe>
@@ -214,8 +210,8 @@
                     <div class="slideRow">
                         <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="-jAO9bVpqV8" sandbox></iframe><!--Friedrich Schiller „Die Bürgschaft“ (1798)-->
                         <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="oe65t5m3cAU" sandbox></iframe><!--Jalava Lied-->
-                        <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="pm6qy_9E0rY" sandbox></iframe><!--Bernie Sanders 8 1/2 hour Filibuster but it's Lofi-->
                         <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="UvEzFW_pH1g" sandbox></iframe><!--IFA Wartburg - Freie Deutsche Jugend (FDJ)-->
+                        <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="pm6qy_9E0rY" sandbox></iframe><!--Bernie Sanders 8 1/2 hour Filibuster but it's Lofi-->
                     </div>
                 </div>
 
@@ -231,20 +227,18 @@
                     </div>
                 </div>
 
-                <div data-title-de="Visual Investigations" data-title-en="Visual Investigations">
-                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="lDaNU7yDnsc" data-list="PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" sandbox></iframe><!--Visual Investigations-->
+                <div data-title-de="Investigationen" data-title-en="Investigations">
+                    <div class="slideFlex">
+                        <iframe class="medium" src="about:blank" data-source="youtube" data-id="lDaNU7yDnsc" data-list="PL4CGYNsoW2iAZt9-UzPyPZOH-AlRMxcIE" sandbox></iframe><!--Visual Investigations-->
+                        <iframe class="medium" src="about:blank" data-source="youtube" data-id="B9v6q5YzbGA" sandbox></iframe><!--Hollywood Antivax Rally-->
+                    </div>
                 </div>
 
-                <div data-title-de="Cuck Philosophy" data-title-en="Cuck Philosophy">
-                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="AhRBsJYWR8Q" sandbox></iframe><!--The Problem With Human Rights-->
-                </div>
-
-                <div data-title-de="Capital Punishment" data-title-en="Capital Punishment">
-                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="TDcwIZzaf-k" sandbox></iframe><!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->
-                </div>
-
-                <div data-title-de="Channel 5 News" data-title-en="Channel 5 News">
-                    <iframe class="medium" src="about:blank" data-source="youtube" data-id="B9v6q5YzbGA" sandbox></iframe><!--Hollywood Antivax Rally-->
+                <div data-title-de="Bread Tube" data-title-en="Bread Tube">
+                    <div class="slideFlex">
+                        <iframe class="medium" src="about:blank" data-source="youtube" data-id="AhRBsJYWR8Q" sandbox></iframe><!--The Problem With Human Rights-->
+                        <iframe class="medium" src="about:blank" data-source="youtube" data-id="TDcwIZzaf-k" sandbox></iframe><!--Capital Punishment (& Prison Abolition) | Philosophy Tube-->
+                    </div>
                 </div>
 
                 <div data-title-de="Faust" data-title-en="Faust">
