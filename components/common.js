@@ -15,20 +15,28 @@ function fetchcomponents(components) {
 	}
 }
 
-async function fetchHTML(url, id) {
-	fetch(url)
+async function fetchHTML(URL, ID) {
+	fetch(URL)
 	.then(response => response.text())
-	.then(value => {
-        console.log(id)
-        console.log(document.readyState)
-		document.getElementById(id).innerHTML = value
+	.then(value => {loadElement(ID, value)});
+}
 
-		componentsloaded++
-		if(componentsloaded >= componentsneeded) {
+function loadElement(ID, HTML) {
+    // console.log(document.readyState)
+    // console.log("load " + ID)
+    if (document.readyState == "loading") {
+        setTimeout(loadElement, 20, ID, HTML);
+    }
+    else {
+        document.getElementById(ID).innerHTML = HTML
+
+        componentsloaded++
+        if(componentsloaded >= componentsneeded) {
 			init()
 		}
-	});
+    }
 }
+
 
 function initcommon() {
     initcookies();
@@ -266,7 +274,7 @@ function loadframe(frames, current, slide) {
             }
             
             frame.onload = function(){
-                thumbnail.style.display = "none"
+                thumbnail.remove();
                 frame.style.display = "block"
                 frame.setAttribute('data-loaded', 'true')
                 loadframe(frames, current + 1 , slide)
@@ -294,7 +302,9 @@ function pausevideos() {
 
 	for (let i = 0; i < frames.length; i++)
 	{
-		frames[i].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
+        if(frames[i].getAttribute('data-source') == "youtube" && frames[i].getAttribute('data-list') === null) {
+            frames[i].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
+        }
 	}
 }
 
