@@ -302,7 +302,7 @@ function pausevideos() {
 
 	for (let i = 0; i < frames.length; i++)
 	{
-        if(frames[i].getAttribute('data-source') == "youtube" && frames[i].getAttribute('data-list') === null) {
+        if(frames[i].getAttribute('data-source') == "youtube") {
             frames[i].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
         }
 	}
@@ -395,26 +395,28 @@ function hidedropmenus() {
 // NAVIGATION HIGHLIGHT
 
 var highlights = [
-				["", "dropanchori"],
-				["/", "dropanchori"],
-				["/issue-i", "dropanchori"],
-				["/issue-i", "info-issue-i"],
-				["/kanon", "dropanchork"],
+    ["", "dropanchori"],
+    ["/", "dropanchori"],
+    ["/issue-i", "dropanchori"],
+    ["/issue-i", "info-issue-i"],
+    ["/kanon", "dropanchork"],
 
-				["", "descriptioni"],
-				["/", "descriptioni"],
-				["/issue-i", "descriptioni"],
-				["/kanon", "descriptionk"],
+    ["", "descriptioni"],
+    ["/", "descriptioni"],
+    ["/issue-i", "descriptioni"],
+    ["/kanon", "descriptionk"],
 
-				["/deabonnieren", "etc"],
-				["/deabonnieren", "descriptiond"],
+    ["/deabonnieren", "etc"],
+    ["/deabonnieren", "descriptiond"],
 
-				["/impressum", "etc"],
-				["/impressum", "descriptionim"],
+    ["/impressum", "etc"],
+    ["/impressum", "descriptionim"],
 
-				["/datenschutz", "etc"],
-				["/datenschutz", "descriptionda"]
+    ["/datenschutz", "etc"],
+    ["/datenschutz", "descriptionda"]
 ];
+
+
 
 function inithighlights() {
 	for (var i = 0; i < highlights.length; i++ ) {
@@ -422,13 +424,21 @@ function inithighlights() {
 		var pair = highlights[i]
 	
 		if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
-            console.log(pair[0])
-            console.log(pair[1])
+            console.log(pair[0] + " highlight -> " + pair[1])
             document.getElementById(pair[1]).style.fontWeight = "700";
 		}
 	}
 }
 
+
+// function inithighlights() {
+//     for (let [URLsnippet, ID] of highlights) {
+//         if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + URLsnippet).toLowerCase()) {
+//             console.log(URLsnippet + " highlight -> " + ID)
+//             document.getElementById(ID).style.fontWeight = "700";
+// 		}
+//     }
+// }
 
 
 
@@ -441,7 +451,17 @@ function inithighlights() {
 
 var emailinfodisabled = false;
 
-// NEEDS FIXING!!!!!!!!!!!!!!!!!!!!!
+
+function make_table(data) {
+    let table = {}
+
+    for (let [key, value] of data) {
+        table[key] = value
+    }
+
+    return table
+}
+
 
 function fetch_mail(content) {
 
@@ -456,16 +476,6 @@ function fetch_mail(content) {
         .then(response => response.json())
         .then(data => console.log(data))
         .catch(error => console.log(error));
-}
-
-function make_table(data) {
-    let table = {}
-
-    for (let [key, value] of data) {
-        table[key] = value
-    }
-
-    return table
 }
 
 
@@ -484,6 +494,7 @@ function submit_email(event) {
 	initlanguage() //needed bc it changes DOM
 }
 
+
 function remove_email(event) {
     event.preventDefault()
 
@@ -494,6 +505,7 @@ function remove_email(event) {
     document.getElementById("email-deabo-btn").disabled = true;
 	initlanguage() //needed bc it changes DOM
 }
+
 
 function confirm_email() {
     const params = new Proxy(new URLSearchParams(window.location.search), {
@@ -510,11 +522,13 @@ function confirm_email() {
 	initlanguage() //needed bc it changes DOM
 }
 
+
 function input_remove_email() {
     document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonnieren</span><span lang="en" hidden>Unsubscribe</span>';
     document.getElementById("email-deabo-btn").disabled = false;
 	initlanguage() //needed bc it changes DOM
 }
+
 
 function input_email() {
 	document.getElementById("email-btn").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
@@ -523,6 +537,7 @@ function input_email() {
 	showemailinfo()
 	initlanguage() //needed bc it changes DOM
 }
+
 
 function showemailinfo() {
 	if(!emailinfodisabled) {
@@ -637,11 +652,13 @@ function initfootnotes() {
         footnote.appendChild(note)
     }
 
-    console.log("initfootnotes catch")
-    console.log(localStorage.getItem("gefaengnishefte_cookies"))
+    // prob not needed anymore
+
+    // console.log("initfootnotes catch")
+    // console.log(localStorage.getItem("gefaengnishefte_cookies"))
     // catch footnotes loading after databanner
     if(localStorage.getItem("gefaengnishefte_cookies") != "true" && typeof hidecookiecontent === "function"){
-        console.log("initfootnotes hidecookiecontent")
+        // console.log("initfootnotes hidecookiecontent")
         hidecookiecontent();
     }
 
