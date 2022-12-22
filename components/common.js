@@ -19,6 +19,8 @@ async function fetchHTML(url, id) {
 	fetch(url)
 	.then(response => response.text())
 	.then(value => {
+        console.log(id)
+        console.log(document.readyState)
 		document.getElementById(id).innerHTML = value
 
 		componentsloaded++
