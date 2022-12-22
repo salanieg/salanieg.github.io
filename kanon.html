@@ -65,7 +65,7 @@
                 justify-content: center;
             }
 
-            .slideGrid, .slideColumn, .slideRow, .slideFlex {
+            .slideGrid, .slideColumn, .slideRow, .slideFlex, .slideGrow {
                 place-content:center;
             }
 
@@ -93,8 +93,11 @@
                 gap:100px;
             }
 
-            .growtriple > * {flex: 1 0 30%;}
-            .growdouble > * {flex: 1 0 40%;}
+            .slideGrow {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(30%, 1fr));
+                gap:50px;
+            }
 
             .large { width:70vw;}
             .medium { width:60vw;}
@@ -109,7 +112,7 @@
                     flex-flow: column wrap;
                 }
 
-                .slideGrid, .slideColumn, .slideRow, .slideFlex {
+                .slideGrid, .slideColumn, .slideRow, .slideFlex, .slideGrow {
                     gap:50px;
                 }
 
@@ -117,6 +120,17 @@
                 .medium { width:80vw;}
                 .small { width:60vw;}
                 .verysmall { width:60vw;}
+            }
+            
+            @media screen and (max-width: 600px) {
+                .slideGrow {
+                    grid-template-columns: repeat(auto-fit, minmax(100%, 1fr));
+                }
+
+                .slideGrow.large * {width:80vw;}
+                .slideGrow.medium * {width:80vw;}
+                .slideGrow.small * {width:60vw;}
+                .slideGrow.verysmall * {width:60vw;}
             }
 
             iframe {
@@ -158,7 +172,7 @@
                         <iframe class="large" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
                     </div>
 
-                    <div class="slideFlex growdouble large">
+                    <div class="slideGrow large">
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="hs9ZsKj-o1k" data-timestamp="1624" sandbox></iframe><!--Cornelius Castoriadis On The Imaginary Institution of Society-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="feepQg_Dx7U" sandbox></iframe><!--Louis Althusser: The Crisis of Marxism (interview)-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="_g8JVK4Fppw" sandbox></iframe><!--Sartre on Intellectualism-->
@@ -190,7 +204,7 @@
                         <iframe class="large" src="about:blank" data-source="youtube" data-id="qbbQb9bEcDQ" data-list="PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" sandbox></iframe><!--KANON // MUSIK-->
                     </div>
 
-                    <div class="slideFlex growtriple large">
+                    <div class="slideGrow large">
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="RM7lw0Ovzq0" sandbox></iframe>
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="FUQI-o02JYU" sandbox></iframe>
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="VYOjWnS4cMY" sandbox></iframe>
