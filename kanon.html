@@ -61,12 +61,15 @@
 
             #slides > * {
                 display: flex;
+                flex-flow: column;
                 align-items: center;
                 justify-content: center;
             }
 
             .slideGrid, .slideColumn, .slideRow, .slideFlex, .slideGrow {
                 place-content:center;
+                place-items:center;
+                max-width: 95vw;
             }
 
             .slideGrid {
@@ -81,11 +84,11 @@
                 gap:75px;
             }
 
-            .slideRow {
+            /* .slideRow {
                 display: flex;
                 flex-flow: row nowrap;
                 gap:150px;
-            }
+            } */
 
             .slideFlex {
                 display: flex;
@@ -99,10 +102,11 @@
                 gap:50px;
             }
 
-            .large { width:70vw;}
-            .medium { width:60vw;}
-            .small { width:50vw;}
-            .verysmall { width:40vw;}
+            .extreme {width:70vw;}
+            .large {width:60vw;}
+            .medium {width:50vw;}
+            .small {width:30vw;}
+            .verysmall {width:20vw;}
 
 
             @media screen and (max-width: 1200px) {
@@ -116,10 +120,11 @@
                     gap:50px;
                 }
 
-                .large { width:80vw;}
-                .medium { width:80vw;}
-                .small { width:60vw;}
-                .verysmall { width:60vw;}
+                .extreme {width:80vw;}
+                .large {width:80vw;}
+                .medium {width:80vw;}
+                .small {width:60vw;}
+                .verysmall {width:60vw;}
             }
             
             @media screen and (max-width: 600px) {
@@ -127,6 +132,7 @@
                     grid-template-columns: repeat(auto-fit, minmax(100%, 1fr));
                 }
 
+                .slideGrow.extreme * {width:80vw;}
                 .slideGrow.large * {width:80vw;}
                 .slideGrow.medium * {width:80vw;}
                 .slideGrow.small * {width:60vw;}
@@ -137,18 +143,25 @@
                 aspect-ratio: 16/9 !important;
             }
 
-            .slidetext {
+            .slideText {
                 display:flex;
+                width:fit-content;
                 flex-direction: column;
-                gap:20px
+                place-content: center;
             }
 
-            .slidetexttitle {
+            .slideTitle {
                 font-size: 12pt;
+                margin-bottom: 10px;
+                font-style: italic;
             }
 
-            .slidetextbody {
+            .slideBody {
                 font-size: 20pt;
+            }
+            
+            .left {
+                text-align: left;
             }
 
             /* #slideCurrentTitle {display: none !important;} */
@@ -169,14 +182,16 @@
 
                 <div data-title-de="Historische Interviews" data-title-en="Historical Interviews">
                     <div class="slideFlex">
-                        <iframe class="large" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
+                        <iframe class="extreme" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
                     </div>
 
-                    <div class="slideGrow large">
+                    <div class="slideGrow extreme">
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="hs9ZsKj-o1k" data-timestamp="1624" sandbox></iframe><!--Cornelius Castoriadis On The Imaginary Institution of Society-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="feepQg_Dx7U" sandbox></iframe><!--Louis Althusser: The Crisis of Marxism (interview)-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="_g8JVK4Fppw" sandbox></iframe><!--Sartre on Intellectualism-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="H3AxGp5k-Qo" sandbox></iframe><!--Talkshow: Der zerstörte Tisch-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="6TK9c-caEcw" sandbox></iframe><!--Bertrand Russell on his meeting with Vladimir Lenin in 1920-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="ihaB8AFOhZo" sandbox></iframe><!--Bertrand Russell - Botschaft an zukünftige Generationen (1959)-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="XruYsAmKLyU" sandbox></iframe><!--German WWI veteran describes killing a French soldier in a bayonet charge-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="67tHtpac5ws" sandbox></iframe><!--Milton Friedman - I, Pencil-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="IaD1DcWfaGA" sandbox></iframe><!--Bernie Sanders interviews Punks [1988]-->
@@ -194,17 +209,17 @@
 
                 <div data-title-de="Revoulutionen" data-title-en="Revoulutions">
                     <div class="slideColumn">
-                        <iframe class="large" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                        <iframe class="large" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->
+                        <iframe class="medium" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                        <iframe class="medium" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->
                     </div>
                 </div>
 
                 <div data-title-de="Musik/Video" data-title-en="Music/Video">
                     <div class="slideFlex">
-                        <iframe class="large" src="about:blank" data-source="youtube" data-id="qbbQb9bEcDQ" data-list="PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" sandbox></iframe><!--KANON // MUSIK-->
+                        <iframe class="extreme" src="about:blank" data-source="youtube" data-id="qbbQb9bEcDQ" data-list="PLnmTFbDYfiCBh7lDCnNVkE4OXHQrxMHYu" sandbox></iframe><!--KANON // MUSIK-->
                     </div>
 
-                    <div class="slideGrow large">
+                    <div class="slideGrow extreme">
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="RM7lw0Ovzq0" sandbox></iframe>
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="FUQI-o02JYU" sandbox></iframe>
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="VYOjWnS4cMY" sandbox></iframe>
@@ -215,16 +230,16 @@
                     </div>
 
                     <div class="slideFlex">
-                        <div class="small slidetext">
-                            <span class="slidetexttitle"><span lang="de">MUSIK/VIDEO</span><span lang="en" hidden>MUSIC/VIDEO</span></span>
-                            <span class="slidetextbody"><a href="https://www.grammy.com/videos/watch-kendrick-lamar-u2-dave-chappelle-open-2018-grammys-grammy-rewind">KENDRICK LAMARS GRAMMY PERFORMANCE 2018<br>XXX, DNA, NEW FREEZER, KING'S DEAD MASHUP</a></span><!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD-->
+                        <div class="small slideText">
+                            <span class="slideTitle"><span lang="de">MUSIK/VIDEO</span><span lang="en" hidden>MUSIC/VIDEO</span></span>
+                            <span class="slideBody"><a href="https://www.grammy.com/videos/watch-kendrick-lamar-u2-dave-chappelle-open-2018-grammys-grammy-rewind">KENDRICK LAMARS GRAMMY PERFORMANCE 2018<br>XXX, DNA, NEW FREEZER, KING'S DEAD MASHUP</a></span><!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD-->
                         </div>
                     </div>
 
                 </div>
 
                 <div data-title-de="Musik oder so" data-title-en="Music or smth">
-                    <div class="slideRow">
+                    <div class="slideGrid">
                         <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="-jAO9bVpqV8" sandbox></iframe><!--Friedrich Schiller „Die Bürgschaft“ (1798)-->
                         <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="oe65t5m3cAU" sandbox></iframe><!--Jalava Lied-->
                         <iframe class="verysmall" src="about:blank" data-source="youtube" data-id="UvEzFW_pH1g" sandbox></iframe><!--IFA Wartburg - Freie Deutsche Jugend (FDJ)-->
@@ -259,16 +274,16 @@
                 </div>
 
                 <div data-title-de="Faust" data-title-en="Faust">
-                    <div class="slideRow">
+                    <div class="slideGrid">
                         <iframe class="medium" src="about:blank" data-source="youtube" data-id="6zzwYQch5R4" data-list="PLtaO1nDQ6NsDK-N99vmVNFWnYQPaiVcQd" sandbox></iframe><!--Faust 1960-->
                         <iframe class="small" src="about:blank" data-source="youtube" data-id="JlhANslhnNI" sandbox></iframe><!--Goethe Faust 3sat-->
                     </div>
                 </div>
 
                 <div data-title-de="Websites" data-title-en="Websites">
-                    <div class="medium slidetext">
-                        <span class="slidetexttitle"><span lang="de">WEBSITES</span><span lang="en" hidden>WEBSITES</span></span>
-                        <span class="slidetextbody">
+                    <div class="medium slideText">
+                        <span class="slideTitle left"><span lang="de">Websites</span><span lang="en" hidden>Websites</span></span>
+                        <span class="slideBody left">
                             <a href="https://fontsinuse.com/">Fonts In Use</a><br>
                             <a href="https://commons.wikimedia.org/wiki/Main_Page">WIKIMEDIA COMMONS</a><br>
                             <a href="https://dexternavy.com/">Dexter Navy</a><br>
@@ -277,30 +292,43 @@
                     </div>
                 </div>
 
-                <div data-title-de="THE BIG FLAT NOW" data-title-en="THE BIG FLAT NOW">
-                    <div class="slideColumn">
-                        <iframe class="medium" src="about:blank" sandbox loading="lazy" title="vimeo-player" allowfullscreen>https://player.vimeo.com/video/279828346</iframe><!--The Big Flat Now – 032c issue #34 (2018)-->
-                        <div class="slideRow">
-                            <div class="slidetext">
-                                <span class="slidetexttitle"><span lang="de">ARTIKEL</span><span lang="en" hidden>ARTICLE</span></span>
-                                <span class="slidetextbody"><a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></span>
-                            </div>
-                            <div class="slidetext">
-                                <span class="slidetexttitle"><span lang="de">INSTALLATION</span><span lang="en" hidden>INSTALLATION</span></span>
-                                <span class="slidetextbody"><a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&slideIndex=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div data-title-de="Videokarte" data-title-en="Videomap">
                     <iframe class="large" src="about:blank" sandbox loading="lazy">https://www.google.com/maps/d/u/0/embed?mid=1AJO2WUYnUIA-Om_vcBTun6624hzfhX1i&ehbc=2E312F</iframe>
                 </div>
 
+                <div data-title-de="Stadplanung" data-title-en="City planning">
+                    <div class="slideColumn">
+                        <iframe src="about:blank" data-source="spotify" data-id="6dnfbAgKMRyYZyeRwN5m5R" sandbox></iframe><!--99% invisible Bijlmer (City of the Future)-->
+                        <div class="slideText">
+                            <span class="slideTitle"><span lang="de">Artikel</span><span lang="en" hidden>Article</span></span>
+                            <span class="slideBody"><a href="https://99percentinvisible.org/episode/bijlmer-city-future-part-1/">Bijlmer (City of the Future, Part 1)</a></span>
+                            <span class="slideBody"><a href="https://99percentinvisible.org/episode/blood-sweat-tears-city-future-part-2/">Blood, Sweat & Tears (City of the Future, Part 2)</a></span>
+                        </div>
+                    </div>
+                </div>
+
                 <div data-title-de="Podcasts" data-title-en="Podcasts">
-                    <iframe src="about:blank" data-source="spotify" data-id="6BGLCHADDW7AmhJOWLLcRN" sandbox></iframe><!--Philosophize This!-->
-                    <iframe src="about:blank" data-source="spotify" data-id="06fcDbL4KFfILiOYoKJg9z" sandbox></iframe><!--tl;dr-->
-                    <iframe src="about:blank" data-source="spotify" data-id="7yAUquucv8u2KAs0i6E5hu" sandbox></iframe><!--99% invisible-->
+                    <div class="slideColumn">
+                        <iframe src="about:blank" data-source="spotify" data-id="6BGLCHADDW7AmhJOWLLcRN" sandbox></iframe><!--Philosophize This!-->
+                        <iframe src="about:blank" data-source="spotify" data-id="06fcDbL4KFfILiOYoKJg9z" sandbox></iframe><!--tl;dr-->
+                        <iframe src="about:blank" data-source="spotify" data-id="7yAUquucv8u2KAs0i6E5hu" sandbox></iframe><!--99% invisible According to need-->
+                    </div>
+                </div>
+                
+                <div data-title-de="THE BIG FLAT NOW" data-title-en="THE BIG FLAT NOW">
+                    <div class="slideColumn">
+                        <iframe class="medium" src="about:blank" sandbox loading="lazy" title="vimeo-player" allowfullscreen>https://player.vimeo.com/video/279828346</iframe><!--The Big Flat Now – 032c issue #34 (2018)-->
+                        <div class="slideFlex">
+                            <div class="slideText">
+                                <span class="slideTitle"><span lang="de">Artikel</span><span lang="en" hidden>Article</span></span>
+                                <span class="slideBody"><a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></span>
+                            </div>
+                            <div class="slideText">
+                                <span class="slideTitle"><span lang="de">Installation</span><span lang="en" hidden>Installation</span></span>
+                                <span class="slideBody"><a href="https://www.youtube.com/watch?v=vn2vSQvk2nc&list=LL&slideIndex=614">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

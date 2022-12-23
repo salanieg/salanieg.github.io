@@ -103,14 +103,6 @@
                 }
             });
 
-            function clear_formatting(items) {
-                let titles = document.getElementsByClassName("title")
-
-                for (let i = 0; i < titles.length; i++) {
-                    titles[i].style.color = ""
-                }
-            }
-
             function prevent_link_events(event) {
                 event.preventDefault()
                 event.currentTarget.style.color = "white"
