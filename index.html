@@ -89,30 +89,34 @@
 
             // PREVENT TOUCHING RESPONSE
 
-            // TEST !!!
-
             document.addEventListener("DOMContentLoaded", (event) => {
-                if ('ontouchstart' in window) {
+                let titles = document.getElementsByClassName("title")
 
-                    let titles = document.getElementsByClassName("title")
-                    console.log("test")
-                    for (let i = 0; i < titles.length; i++) {
-                        titles[i].onclick(function (e) {
-                            e.preventDefault();
-                            for (let i = 0; i < issuetitles.length; i++) {
-                                document.getElementById(issuetitles[i]).style.color = "white"
-                            }
-                        });
-                    }
+                for (let i = 0; i < titles.length; i++) {
+                    titles[i].addEventListener("pointerdown", (event) => {
+                        if (event.pointerType === "touch" || event.pointerType === "pen") {
+                            event.currentTarget.addEventListener("click", prevent_link_events)
+                        }
+                    })
 
-                    // $(".title").click(function (e) {
-                    //     e.preventDefault();
-                    //     for (let i = 0; i < issuetitles.length; i++) {
-                    //         document.getElementById(issuetitles[i]).style.color = "white"
-                    //     }
-                    // });
+                    titles[i].addEventListener("mouseenter", ()=>{titles[i].style.color = ""})
                 }
             });
+
+            function clear_formatting(items) {
+                let titles = document.getElementsByClassName("title")
+
+                for (let i = 0; i < titles.length; i++) {
+                    titles[i].style.color = ""
+                }
+            }
+
+            function prevent_link_events(event) {
+                event.preventDefault()
+                event.currentTarget.style.color = "white"
+                event.currentTarget.removeEventListener("click", prevent_link_events)
+            }
+
 
             // EAGER LOAD ACCORDING TO LANGUAGE
 
