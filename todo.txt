@@ -1,9 +1,7 @@
 -------------- BUGS --------------
 
-fix events
-fix kanon sizes
-fix highlights
-api playlist
+api playlist?
+check safari preload
 
 -------------- IMPROVEMENTS --------------
 
@@ -11,7 +9,6 @@ clean up og images
 improve sharing small screen
     maybe reset to center
     auto hide when clicking away
-current++
 
 -------------- ADDITIONS --------------
 

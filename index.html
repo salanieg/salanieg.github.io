@@ -41,8 +41,9 @@
         <link rel="preload" as="fetch" crossorigin href="components/controls.html">
         <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
 
-        <link rel="preload" as="image" href="images/issues/de/issue-i-cover.WebP">
-        <link rel="preload" as="image" href="images/issues/de/issue-ii-cover.WebP">
+        <link rel="preload" as="image" fetchpriority="high" href="images/issues/de/issue-i-cover.WebP">
+        <link rel="preload" as="image" fetchpriority="high" href="images/issues/en/issue-i-cover.WebP">
+
 
         <script type="text/javascript" src="components/common.js"></script>
         <script type="text/javascript">
@@ -91,23 +92,23 @@
 
             // LOADING
 
-            // function preload() {
-            //     if(localStorage.getItem("gefaengnishefte_language")) {
-            //         load(issues, localStorage.getItem("gefaengnishefte_language"))
-            //     }
-            //     else {
-            //         load(issues, "de")
-            //     }
-            // }
+            function preload() {
+                if(localStorage.getItem("gefaengnishefte_language")) {
+                    load(issues, localStorage.getItem("gefaengnishefte_language"))
+                }
+                else {
+                    load(issues, "de")
+                }
+            }
 
-            // function load(list, lang) {
-            //     for (let i = 0; i < list.length; i++) {
-            //         var img = new Image();
-            //         img.src = list[i]["cover_" + lang]
-            //     }
-            // }
+            function load(list, lang) {
+                for (let i = 0; i < list.length; i++) {
+                    var img = new Image();
+                    img.src = list[i]["cover_" + lang]
+                }
+            }
 
-            // (() => {preload()})()
+            (() => {preload()})()
 
             document.addEventListener("DOMContentLoaded", preinit)
 
@@ -468,7 +469,6 @@
     </head>
 
     <body>
-        
         <div id="header"></div>
 
         <div id="content">
