@@ -38,14 +38,9 @@
 
             // VARIABLES
 
-            var footnoteList = [
-                '<span lang="de">Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</span><span lang="en" hidden>Cf. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984</span><br><br><iframe class="footnotevideo" src="about:blank" data-source="youtube" data-id="hs9ZsKj-o1k" sandbox></iframe>', 
-                ''
-            ];
+            const layoutList = ["info-wrapper", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren", "ccinfo"]
 
-            var layoutList = ["info-wrapper", "posthistorische-klassenkaempfe", "der-neue-rahmen", "agieren-und-agitieren", "ccinfo"]
-
-            var linkList = [
+            const linkList = [
                 {
                     title_de:"ISSUE I – ALTERNATIVE UTOPIEN",
                     title_en:"ISSUE I – ALTERNATIVE UTOPIAS",
@@ -68,6 +63,19 @@
                 }
             ]
 
+            const footnoteList = [
+                {
+                    text_de: "Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984",
+                    text_en: "Cf. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984",
+                    embed_source: "youtube",
+                    embed_id: "hs9ZsKj-o1k"
+                },
+                {
+                    text_de:"Vgl. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984",
+                    text_en:"Cf. Cornelius Castoriadis, Interview on Autonomy and Democracy, in: Paraskinio, ET1 1984",
+                    embed_url: "https://player.vimeo.com/video/279828346"
+                }
+            ]
 
             // LOADING
 
@@ -163,11 +171,8 @@
                 </div>
             </div>
 
-            <!-- <div class="footercontent inlinefooter">
-                <button class="footerelement" id="teilen" onclick="opensharewindow()"><span lang="de">ISSUE teilen</span><span lang="en" hidden>Share ISSUE</span></button>
-                <a lang="en" hidden href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download class="footerelementwrap"><button class="footerelement">Download PDF</button></a>
-                <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download class="footerelementwrap"><button class="footerelement">PDF herunterladen</button></a>
-            </div> -->
+
+
 
             <div id="inhalt">
 
@@ -238,11 +243,8 @@
                 </div>
             </div>
 
-            <!-- <div class="footercontent inlinefooter">
-                <button class="footerelement" id="teilen" onclick="opensharewindow()"><span lang="de">ISSUE teilen</span><span lang="en" hidden>Share ISSUE</span></button>
-                <a lang="en" hidden href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download class="footerelementwrap"><button class="footerelement">Download PDF</button></a>
-                <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download class="footerelementwrap"><button class="footerelement">PDF herunterladen</button></a>
-            </div> -->
+
+
 
             <div id="info-wrapper-bottom">
                 <div id="ccinfo">

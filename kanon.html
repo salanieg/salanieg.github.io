@@ -37,11 +37,12 @@
 
             // VARIABLES
 
-            var useslides = true;
-            var showcurrenttitle = false;
             var autohidecontrols = false;
-            var overridetitle = false;
-            var useindexlist = false;
+
+
+            // TEMPLATES
+
+            function index_template(slide, i) {return '<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')"><span lang="de">' + slide.getAttribute("data-title-de") + '</span><span lang="en">' + slide.getAttribute("data-title-en") + '</span></span><br>'}
 
 
             // LOADING AND LOGO CHANGE

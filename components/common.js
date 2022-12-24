@@ -223,7 +223,8 @@ function showcookiecontent() {
 
     datainfoshown = false;
     cleartpcookies()
-    if(typeof useslides !== 'undefined'){loadframes()}
+
+    if(document.getElementById("slides")){loadframes()}
 }
 
 function hidecookiecontent() {
@@ -636,35 +637,39 @@ function tosuperscript(num) {
 
 function initfootnotes() {
     console.log("initfootnotes")
-    for (let i = 1; i < footnoteList.length + 1; i++) {
-        let number = tosuperscript(i)
+    for (let i = 0; i < footnoteList.length; i++) {
 
-        let footnote = document.getElementById("f"+i)
+        let footnote = document.getElementById("f"+ (i+1))
         footnote.className = 'footnote';
         footnote.tabIndex = '0'
-        footnote.innerHTML = number;
+        footnote.innerHTML = tosuperscript(i+1)
         footnote.addEventListener("mouseenter", selectfootnote)
-
-        let note = document.createElement('span');
-        note.className = 'note';
-        note.innerHTML = number + " " + footnoteList[(i-1)];
-
-        footnote.appendChild(note)
+        footnote.insertAdjacentHTML('beforeend', footnote_template(i));
     }
 
-    // prob not needed anymore
-
-    // console.log("initfootnotes catch")
-    // console.log(localStorage.getItem("gefaengnishefte_cookies"))
-    // catch footnotes loading after databanner
-    if(localStorage.getItem("gefaengnishefte_cookies") != "true" && typeof hidecookiecontent === "function"){
-        // console.log("initfootnotes hidecookiecontent")
+    if(localStorage.getItem("gefaengnishefte_cookies") != "true"){
         hidecookiecontent();
     }
 
     document.addEventListener("click", focusfootnote)
     document.getElementById("content").addEventListener("scroll", autosetlayout)
 }
+
+function footnote_template(i) {
+
+    let note_info = footnoteList[i]
+    let note = tosuperscript(i+1) + ' <span lang="de">' + note_info.text_de + '</span><span lang="en">' + note_info.text_en + '</span>'
+
+    if(note_info.embed_source == "youtube" || note_info.embed_source == "spotify") {
+        note = note + '<br><br><iframe class="footnotevideo" src="about:blank" data-source=' + note_info.embed_source + ' data-id=' + note_info.embed_id + ' sandbox></iframe>'
+    }
+    else if (note_info.embed_url){
+        note = note + '<br><br><iframe class="footnotevideo" src="about:blank" sandbox loading="lazy">' + note_info.embed_url + '</iframe>'
+    }
+
+    return '<span class="note">' + note + '</span>'
+}
+
 
 
 var footnotefocused = "none";
@@ -714,27 +719,14 @@ var copy_link = ""
 
 function initsharewindow() {
     for (let i = 0; i < linkList.length; i++) {
-        let new_link = document.createElement("span")
-		let new_link_de = document.createElement("span")
-        let new_link_en = document.createElement("span")
-        let new_break = document.createElement("br")
-
-        new_link_de.innerHTML = linkList[i].title_de
-        new_link_en.innerHTML = linkList[i].title_en
-        new_link_de.lang = "de"
-        new_link_en.lang = "en"
-
-        new_link.appendChild(new_link_de)
-        new_link.appendChild(new_link_en)
-        new_link.appendChild(new_break)
-
-        new_link.addEventListener("click", function(){select_share(i)})
-        document.getElementById("link-opt").appendChild(new_link)
-
+        document.getElementById("link-opt").insertAdjacentHTML('beforeend', share_template(i));
     }
 
     select_share(0)
 }
+
+function share_template(i) {return '<span onclick="select_share(' + i + ')"><span lang="de">' + linkList[i].title_de + '</span><span lang="en">' + linkList[i].title_en + '</span><br></span>'}
+
 
 
 function opensharewindow() {
@@ -867,22 +859,9 @@ function initcontrols() {
     for (let i = 0; i < slideList.length; i++) {
 
 		let slide = document.getElementById(slideList[i])
+        let slideIndex = document.getElementById('slideIndex')
 
-		let newbreak = document.createElement("br")
-		let newindex = document.createElement("span")
-		newindex.id = "index" + i
-		newindex.className = "indexitem"
-		newindex.onclick = function(){displayBySlideIndex(i)}
-
-        if(useindexlist) {
-			newindex.innerHTML = indexList[i]
-        }
-        else {
-			newindex.innerHTML = "<span lang='de'>" + slide.getAttribute('data-title-de') + "</span><span lang='en'>" + slide.getAttribute('data-title-en') + "</span>"
-        }
-
-		document.getElementById('slideIndex').append(newindex)
-		document.getElementById('slideIndex').append(newbreak)
+        slideIndex.insertAdjacentHTML('beforeend', index_template(slide, i));
     }
     
     displayBySlideIndex(slideSelected)
@@ -904,10 +883,6 @@ function initcontrols() {
     document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
     document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
     document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
-
-
-
-    controlsinit = true
 }
 
 
@@ -919,8 +894,18 @@ function initcontrols() {
 // SLIDE SELECTION
 
 function displaycurrent() {
+
+    
+
+    let highlightcurrenttitle = (typeof highlight_title === "function")
+    let showcurrenttitle = (typeof index_title_template === "function")
+    let overridetitle = (typeof overridetitletext !== "undefined")
+
+    if(highlightcurrenttitle) {
+        highlight_title(slideSelected)
+    }
     if(showcurrenttitle) {
-        document.getElementById("slideCurrentTitle").innerHTML = titleList[slideSelected]
+        document.getElementById("slideCurrentTitle").innerHTML = index_title_template(slideSelected)
     }
     if(overridetitle) {
         document.getElementById("slideCurrent").innerHTML = overridetitletext
