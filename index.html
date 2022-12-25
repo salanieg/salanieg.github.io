@@ -4,50 +4,51 @@
         <script>
 
             // PRELOAD
+            console.log("PRE")
 
             let lang = localStorage.getItem("gefaengnishefte_language"); if(lang == "null") {lang = "de"}
-            let preload_item = document.createElement('link');
-            preload_item.rel = "preload"
-            preload_item.as = "image"
-            preload_item.fetchPriority = "high"
-            preload_item.href = "images/issues/" + lang + "/issue-i-cover.WebP"
-            document.getElementsByTagName('head')[0].appendChild(preload_item);
+            let preload = document.createElement('link');
+            preload.rel = "preload"
+            preload.as = "image"
+            preload.fetchPriority = "high"
+            preload.href = "images/issues/" + lang + "/issue-i-cover.WebP"
+            document.currentScript.parentNode.insertBefore(preload, document.currentScript.nextSibling);
 
-            // var lang = localStorage.getItem("gefaengnishefte_language"); if(lang == "null") {lang = "de"}
-
-            // const preloadList = [
-            //     {as: "fetch", href: "components/header.html", component:"header"},
-            //     {as: "fetch", href: "components/databanner.html", component:"databanner"},
-            //     {as: "fetch", href: "components/controls.html", component:"controls"},
-
-            //     {as: "font", href: "https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Regular.woff2"},
-            //     {as: "font", href: "https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Bold.woff2"},
-            //     {as: "font", href: "https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Italic.woff2"},
-
-            //     {as: "image", href: "images/issues/" + lang + "/issue-i-cover.WebP"},
-            // ]
-
-            // function preload(item) {
-            //     let preload_item = document.createElement('link');
-            //     preload_item.rel = "preload"
-            //     preload_item.as = item.as
-            //     preload_item.fetchPriority = "high"
-            //     if(item.as == "fetch" || item.as == "font" ) {
-            //     preload_item.setAttribute("crossorigin", "");
-            //     }
-            //     preload_item.href = item.href
-            //     document.getElementsByTagName('head')[0].appendChild(preload_item);
-            // }
-
-            // console.log("PRE")
-            // for (let i = 0; i < preloadList.length; i++) {
-            //     preload(preloadList[i])
-            // }
-            // console.log("PRE!")
-
-            // issues[0]["cover_" + lang]
+            console.log("PRE!")
 
         </script>
+
+        <!-- <script>
+
+            // PRELOAD
+            console.log("PRE")
+
+            var lang = localStorage.getItem("gefaengnishefte_language"); if(lang == "null") {lang = "de"}
+
+            const preloadList = [
+                {as: "fetch", href: "components/header.html", component:"header"},
+                {as: "fetch", href: "components/databanner.html", component:"databanner"},
+                {as: "fetch", href: "components/controls.html", component:"controls"},
+
+                {as: "image", href: "images/issues/" + lang + "/issue-i-cover.WebP"},
+            ]
+
+            function preload(item) {
+                let load = document.createElement('link');
+                load.rel = "preload"
+                load.as = item.as
+                load.fetchPriority = "high"
+                if(item.as == "fetch" || item.as == "font" ) {
+                    load.setAttribute("crossorigin", "");
+                }
+                load.href = item.href
+                document.currentScript.parentNode.insertBefore(load, document.currentScript.nextSibling);
+            }
+
+            for (let i = 0; i < preloadList.length; i++) {preload(preloadList[i])}
+            console.log("PRE!")
+
+        </script> -->
         
         <meta charset="UTF-8">
         <title>ISSUES</title>
