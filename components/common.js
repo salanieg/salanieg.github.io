@@ -87,7 +87,7 @@ function customizescrollbar() {
 
 
 function initlanguage() {
-    if(localStorage.getItem("gefaengnishefte_language") == "null") {localStorage.setItem("gefaengnishefte_language", "de")}
+    if(localStorage.getItem("gefaengnishefte_language") == null) {localStorage.setItem("gefaengnishefte_language", "de")}
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
 }
 
@@ -176,38 +176,40 @@ function showcookiecontent() {
     
     for (let i = 0; i < frames.length; i++)
     {
-        if(frames[i].getAttribute('data-source') == "youtube") {
-            frames[i].style.display = "none"
-            frames[i].frameborder = "0"
-            frames[i].title = "YouTube video player"
-            frames[i].allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            frames[i].setAttribute('allowfullScreen', '')
+        let frame = frames[i]
+
+        if(frame.getAttribute('data-source') == "youtube") {
+            frame.style.display = "none"
+            frame.frameborder = "0"
+            frame.title = "YouTube video player"
+            frame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            frame.setAttribute('allowfullScreen', '')
 
             let thumbnail = document.createElement("img")
 
-            thumbnail.src = "https://img.youtube.com/vi/" + frames[i].getAttribute('data-id') + "/mqdefault.jpg"
+            thumbnail.src = "https://img.youtube.com/vi/" + frame.getAttribute('data-id') + "/mqdefault.jpg"
             thumbnail.classList.add("thumbnail");
-            thumbnail.classList.add(frames[i].className);
+            thumbnail.classList.add(frame.className);
 
-            frames[i].parentNode.insertBefore(thumbnail, frames[i])
+            frame.parentNode.insertBefore(thumbnail, frame)
         }
-        else if(frames[i].getAttribute('data-source') == "spotify") {
-            frames[i].removeAttribute("sandbox")
-            frames[i].width = "700"
-            frames[i].height = "232"
-            frames[i].style.borderRadius = "12px"
-            frames[i].frameborder = "0"
-            frames[i].allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            frames[i].setAttribute('allowfullScreen', '')
-            frames[i].src = "https://open.spotify.com/embed/episode/" + frames[i].getAttribute('data-id') + "?utm_source=generator&theme=0"
-            frames[i].style.display = "block"
+        else if(frame.getAttribute('data-source') == "spotify") {
+            frame.removeAttribute("sandbox")
+            frame.width = "700"
+            frame.height = "232"
+            frame.style.borderRadius = "12px"
+            frame.frameborder = "0"
+            frame.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            frame.setAttribute('allowfullScreen', '')
+            frame.src = "https://open.spotify.com/embed/episode/" + frame.getAttribute('data-id') + "?utm_source=generator&theme=0"
+            frame.style.display = "block"
         }
         else {
-            frames[i].removeAttribute("sandbox")
-            frames[i].frameborder = "0"
-            frames[i].src = frames[i].innerHTML
-            frames[i].innerHTML = ""
-            frames[i].style.display = "block"
+            frame.removeAttribute("sandbox")
+            frame.frameborder = "0"
+            frame.src = frame.innerHTML
+            frame.innerHTML = ""
+            frame.style.display = "block"
         }
     }
     
@@ -417,11 +419,14 @@ var highlights = [
 
 
 function inithighlights() {
+
+    let window_url = window.location.href.toLowerCase()
+
 	for (var i = 0; i < highlights.length; i++ ) {
 
 		var pair = highlights[i]
 	
-		if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
+		if (window_url == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
             console.log(pair[0] + " highlight -> " + pair[1])
             document.getElementById(pair[1]).style.fontWeight = "700";
 		}
@@ -547,10 +552,7 @@ function showemailinfo() {
 // SWITCH ABO TYPE
 
 function initabo() {
-	if(localStorage.getItem("gefaengnishefte_abo") != "email" && localStorage.getItem("gefaengnishefte_abo") != "telegram") {
-		localStorage.setItem("gefaengnishefte_abo", "email");
-	}
-
+    if(localStorage.getItem("gefaengnishefte_abo") == null) {localStorage.setItem("gefaengnishefte_abo", "email")}
 	setabo(localStorage.getItem("gefaengnishefte_abo"))
 
 

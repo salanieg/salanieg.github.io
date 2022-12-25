@@ -4,6 +4,7 @@
         <script>
 
             // PRELOAD
+            
             console.log("PRE")
 
             let lang = localStorage.getItem("gefaengnishefte_language"); if(lang == "null") {lang = "de"}
@@ -151,7 +152,6 @@
 
             function init() {
                 console.log("INIT")
-                initcovers();
                 initcontrols();
                 displayBySlideIndex(slideSelected)
                 initcommon();
@@ -167,20 +167,11 @@
 
             // COVERSCRIPT
 
-            var coversloaded = false;
-
-            document.addEventListener("DOMContentLoaded", ()=>{})
-
-
             function initcovers() {
-                if(coversloaded == true) {return}
-                
                 for (let i = 0; i < issues.length; i++) {
                     document.getElementById("slides").insertAdjacentHTML('beforeend', cover_template(i));
                     document.getElementById("text-wrap").insertAdjacentHTML('beforeend', title_template(i));
                 }
-
-                coversloaded = true;
             }
 
 
