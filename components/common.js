@@ -87,7 +87,7 @@ function customizescrollbar() {
 
 
 function initlanguage() {
-    if(localStorage.getItem("gefaengnishefte_language") == null) {localStorage.setItem("gefaengnishefte_language", "de")}
+    if(localStorage.getItem("gefaengnishefte_language") === null) {localStorage.setItem("gefaengnishefte_language", "de")}
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
 }
 
