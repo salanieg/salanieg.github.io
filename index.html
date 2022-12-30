@@ -5,6 +5,7 @@
 
             // PRELOAD
             
+            console.time("PRE-TIME")
             console.log("PRE")
 
             let lang = localStorage.getItem("gefaengnishefte_language"); if(lang == "null") {lang = "de"}
@@ -15,7 +16,7 @@
             preload.href = "images/issues/" + lang + "/issue-i-cover.WebP"
             document.currentScript.parentNode.insertBefore(preload, document.currentScript.nextSibling);
 
-            console.log("PRE!")
+            console.timeEnd("PRE-TIME")
 
         </script>
 
@@ -91,7 +92,7 @@
         <link rel="preload" as="fetch" crossorigin href="components/controls.html">
         <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
 
-        <script type="text/javascript" src="components/common.js"></script>
+        <script type="text/javascript" src="components/common.js" defer></script>
         <script type="text/javascript">
 
             // VARIABLES
@@ -141,16 +142,18 @@
             document.addEventListener("DOMContentLoaded", preinit)
 
             function preinit() {
+                console.time("DOM-TIME")
                 console.log("DOM")
                 initcovers()
                 seteagerload()
                 init_prevent_touch_response()
-                console.log("DOM!")
+                console.timeEnd("DOM-TIME")
             }
 
             fetchcomponents(["header", "controls", "databanner"])
 
             function init() {
+                console.time("INIT-TIME")
                 console.log("INIT")
                 initcontrols();
                 displayBySlideIndex(slideSelected)
@@ -158,7 +161,7 @@
                 document.getElementById("lang-de").addEventListener("click", seteagerload);
                 document.getElementById("lang-en").addEventListener("click", seteagerload);
                 document.getElementById("text-wrap").style.visibility = "visible";
-                console.log("INIT!")
+                console.timeEnd("INIT-TIME")
             }
 
         </script>

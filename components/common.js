@@ -97,6 +97,8 @@ function setlanguage(language) {
 	document.querySelectorAll('[lang="en"]').forEach((item) => {item.hidden = true;})
 	document.getElementById("lang-de").style.textDecoration = "none"
 	document.getElementById("lang-en").style.textDecoration = "none"
+    alert("lang-" + language)
+    alert(document.getElementById("lang-" + language))
 	document.getElementById("lang-" + language).style.textDecoration = "underline"
 	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
