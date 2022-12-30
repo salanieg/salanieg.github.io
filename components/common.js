@@ -87,7 +87,42 @@ function customizescrollbar() {
 
 
 function initlanguage() {
-    if(localStorage.getItem("gefaengnishefte_language") === null) {localStorage.setItem("gefaengnishefte_language", "de")}
+
+    alert(localStorage.getItem("gefaengnishefte_language"))
+
+    if(localStorage.getItem("gefaengnishefte_language") === null) {
+        alert("=== null")
+        localStorage.setItem("gefaengnishefte_language", "de")
+    }
+    else if (localStorage.getItem("gefaengnishefte_language") == null ){
+        alert("== null")
+        localStorage.setItem("gefaengnishefte_language", "de")
+    }
+    else if (localStorage.getItem("gefaengnishefte_language") == "null" ){
+        alert("== string null")
+        localStorage.setItem("gefaengnishefte_language", "de")
+    }
+    else if (localStorage.getItem("gefaengnishefte_language") == "undefined" ) {
+        alert("== string undefined")
+        localStorage.setItem("gefaengnishefte_language", "de")
+    }
+    else if (!("gefaengnishefte_language" in localStorage)) {
+        alert("not in local storage")
+        localStorage.setItem("gefaengnishefte_language", "de")
+    }
+    else if (typeof "gefaengnishefte_language" !== variable) {
+        alert("type !== undefined")
+        localStorage.setItem("gefaengnishefte_language", "de")
+    }
+    else if (typeof "gefaengnishefte_language" != variable) {
+        alert("type != undefined")
+        localStorage.setItem("gefaengnishefte_language", "de")
+    }
+    else {
+        alert("fail")
+    }
+
+    if (!("gefaengnishefte_language" in localStorage)) {localStorage.setItem("gefaengnishefte_language", "de")}
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
 }
 
@@ -97,8 +132,7 @@ function setlanguage(language) {
 	document.querySelectorAll('[lang="en"]').forEach((item) => {item.hidden = true;})
 	document.getElementById("lang-de").style.textDecoration = "none"
 	document.getElementById("lang-en").style.textDecoration = "none"
-    alert("lang-" + language)
-    alert(document.getElementById("lang-" + language))
+    alert("lang-" + language + " ->" + document.getElementById("lang-" + language))
 	document.getElementById("lang-" + language).style.textDecoration = "underline"
 	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
