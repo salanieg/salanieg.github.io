@@ -90,39 +90,7 @@ function initlanguage() {
 
     alert(localStorage.getItem("gefaengnishefte_language"))
 
-    if(localStorage.getItem("gefaengnishefte_language") === null) {
-        alert("=== null")
-        localStorage.setItem("gefaengnishefte_language", "de")
-    }
-    else if (localStorage.getItem("gefaengnishefte_language") == null ){
-        alert("== null")
-        localStorage.setItem("gefaengnishefte_language", "de")
-    }
-    else if (localStorage.getItem("gefaengnishefte_language") == "null" ){
-        alert("== string null")
-        localStorage.setItem("gefaengnishefte_language", "de")
-    }
-    else if (localStorage.getItem("gefaengnishefte_language") == "undefined" ) {
-        alert("== string undefined")
-        localStorage.setItem("gefaengnishefte_language", "de")
-    }
-    else if (!("gefaengnishefte_language" in localStorage)) {
-        alert("not in local storage")
-        localStorage.setItem("gefaengnishefte_language", "de")
-    }
-    else if (typeof "gefaengnishefte_language" !== variable) {
-        alert("type !== undefined")
-        localStorage.setItem("gefaengnishefte_language", "de")
-    }
-    else if (typeof "gefaengnishefte_language" != variable) {
-        alert("type != undefined")
-        localStorage.setItem("gefaengnishefte_language", "de")
-    }
-    else {
-        alert("fail")
-    }
-
-    if (!("gefaengnishefte_language" in localStorage)) {localStorage.setItem("gefaengnishefte_language", "de")}
+    if(localStorage.getItem("gefaengnishefte_language") == "null" ){localStorage.setItem("gefaengnishefte_language", "de")}
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
 }
 
@@ -588,7 +556,7 @@ function showemailinfo() {
 // SWITCH ABO TYPE
 
 function initabo() {
-    if(localStorage.getItem("gefaengnishefte_abo") == null) {localStorage.setItem("gefaengnishefte_abo", "email")}
+    if(localStorage.getItem("gefaengnishefte_abo") == "null") {localStorage.setItem("gefaengnishefte_abo", "email")}
 	setabo(localStorage.getItem("gefaengnishefte_abo"))
 
 
