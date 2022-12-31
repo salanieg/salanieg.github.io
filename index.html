@@ -8,7 +8,7 @@
             console.time("PRE-TIME")
             console.log("PRE")
 
-            let lang = localStorage.getItem("gefaengnishefte_language"); if(lang == "null") {lang = "de"}
+            let lang = localStorage.getItem("gefaengnishefte_language"); if(lang == null) {lang = "de"}
             let preload = document.createElement('link');
             preload.rel = "preload"
             preload.as = "image"

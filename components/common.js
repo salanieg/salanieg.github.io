@@ -49,7 +49,7 @@ function initcommon() {
 }
 
 function initfooter() {
-    resetverticalbuttons()
+    limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
     initfootnotes()
 }
 
@@ -94,10 +94,8 @@ function initlanguage() {
 
 function setlanguage(language) {
 
-	document.querySelectorAll('[lang="de"]').forEach((item) => {item.hidden = true;})
-	document.querySelectorAll('[lang="en"]').forEach((item) => {item.hidden = true;})
-	document.getElementById("lang-de").style.textDecoration = "none"
-	document.getElementById("lang-en").style.textDecoration = "none"
+	document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
+    document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
 	document.getElementById("lang-" + language).style.textDecoration = "underline"
 	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
@@ -143,17 +141,24 @@ function showdatabanner() {
 
 // CLEARING
 
-window.addEventListener("beforeunload", function(e){
-    cleartpcookies()
-});
+window.addEventListener("beforeunload", cleartpcookies);
+
 
 function cleartpcookies() {
-    var currentchoice = localStorage.getItem("gefaengnishefte_cookies")
-    var currentlanguage = localStorage.getItem("gefaengnishefte_language")
+
+    let fpcookies = {}
+
+    for (let [key, value] of Object.entries(localStorage)) {
+        if(key.includes("gefaengnishefte_")) {fpcookies[key] = value}    
+    }
+
     clearcookies()
-    localStorage.setItem("gefaengnishefte_cookies", currentchoice);
-    localStorage.setItem("gefaengnishefte_language", currentlanguage);
+
+    for (let [key, value] of Object.entries(fpcookies)) {
+        localStorage.setItem(key, value)
+    }
 }
+
 
 function clearcookies() {
     sessionStorage.clear();
@@ -777,25 +782,52 @@ function copy_share() {
 
 var layoutCurrent = 0
 
-function resetverticalbuttons() {
+
+// RESSETTING
+// function limit_buttons() {
     
-    if (layoutCurrent==0) {
-        document.getElementById("to-top").disabled = true;
-        document.getElementById("to-top").style.color = "lightgrey";
+//     if (layoutCurrent==0) {
+//         disable("to-top")
+//     }
+//     else {
+//         enable("to-top")
+//     }
+    
+//     if (layoutCurrent>=layoutList.length-1) {
+//         disable("to-bottom")
+//     }
+//     else {
+//         enable("to-bottom")
+//     }
+// }
+
+function limit_buttons(current, list, first, last) {
+    
+    if (current==0) {
+        disable(first)
     }
     else {
-        document.getElementById("to-top").disabled = false;
-        document.getElementById("to-top").style.color = "white";
+        enable(first)
     }
     
-    if (layoutCurrent>=layoutList.length-1) {
-        document.getElementById("to-bottom").disabled = true;
-        document.getElementById("to-bottom").style.color = "lightgrey";
+    if (current>=list.length-1) {
+        disable(last)
     }
     else {
-        document.getElementById("to-bottom").disabled = false;
-        document.getElementById("to-bottom").style.color = "white";
+        enable(last)
     }
+}
+
+function disable(element) {
+    element = document.getElementById(element)
+    element.disabled = true;
+    element.style.color = "lightgrey";
+}
+
+function enable(element) {
+    element = document.getElementById(element)
+    element.disabled = false;
+    element.style.color = "white";
 }
 
 function verticalup() {
@@ -803,7 +835,7 @@ function verticalup() {
     if(layoutCurrent > 0) {
         layoutCurrent = layoutCurrent - 1
         document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
-        resetverticalbuttons()
+        limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
     }
 }
 
@@ -812,7 +844,7 @@ function verticaldown() {
     if(layoutCurrent < layoutList.length - 1) {
         layoutCurrent = layoutCurrent + 1
         document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
-        resetverticalbuttons()
+        limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
     }
 }
 
@@ -836,7 +868,7 @@ function autosetlayout() {
         }
     }
 
-    resetverticalbuttons()
+    limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
 }
 
 
@@ -865,24 +897,14 @@ function initcontrols() {
     }
     
     displayBySlideIndex(slideSelected)
-    resetcontrols()
+    limit_buttons(slideSelected, slideList, "letztes", "nächstes")
     displaycurrent()
     keeptop()
 
     document.getElementById("slideIndex").addEventListener("scroll", resetscrollbarindex)
-    
-    document.getElementById("controls").addEventListener("mousemove", initautohidecontrols);
-
-
-    document.getElementById("slideIndex").addEventListener("mouseenter", entercontrols)
-    document.getElementById("letztes").addEventListener("mouseenter", entercontrols)
-    document.getElementById("slideCurrent").addEventListener("mouseenter", entercontrols)
-    document.getElementById("nächstes").addEventListener("mouseenter", entercontrols)
-    
-    document.getElementById("slideIndex").addEventListener("mouseleave", leavecontrols)
-    document.getElementById("letztes").addEventListener("mouseleave", leavecontrols)
-    document.getElementById("slideCurrent").addEventListener("mouseleave", leavecontrols)
-    document.getElementById("nächstes").addEventListener("mouseleave", leavecontrols)
+    document.getElementById("controls").addEventListener("mousemove", initautohidecontrols)
+    document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseenter", entercontrols)})
+    document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseleave", leavecontrols)})
 }
 
 
@@ -894,8 +916,6 @@ function initcontrols() {
 // SLIDE SELECTION
 
 function displaycurrent() {
-
-    
 
     let highlightcurrenttitle = (typeof highlight_title === "function")
     let showcurrenttitle = (typeof index_title_template === "function")
@@ -953,7 +973,7 @@ function displayBySlideIndex(slideIndex) {
 
 function switch_slide_routine() {
     loadframes()
-    resetcontrols();
+    limit_buttons(slideSelected, slideList, "letztes", "nächstes")
     displaycurrent();
     keeptop();
     pausevideos();
@@ -1047,22 +1067,22 @@ function leavecontrols() {
 
 // CONTROL DISABLEING
 
-function resetcontrols() {
-    if (slideSelected==0) {
-        document.getElementById("letztes").disabled = true;
-        document.getElementById("letztes").style.color = "lightgrey";
-    }
-    else {
-        document.getElementById("letztes").disabled = false;
-        document.getElementById("letztes").style.color = "white";
-    }
+// function limit_buttons() {
+//     if (slideSelected==0) {
+//         document.getElementById("letztes").disabled = true;
+//         document.getElementById("letztes").style.color = "lightgrey";
+//     }
+//     else {
+//         document.getElementById("letztes").disabled = false;
+//         document.getElementById("letztes").style.color = "white";
+//     }
     
-    if (slideSelected==slideList.length-1) {
-        document.getElementById("nächstes").disabled = true;
-        document.getElementById("nächstes").style.color = "lightgrey";
-    }
-    else {
-        document.getElementById("nächstes").disabled = false;
-        document.getElementById("nächstes").style.color = "white";
-    }
-}
+//     if (slideSelected==slideList.length-1) {
+//         document.getElementById("nächstes").disabled = true;
+//         document.getElementById("nächstes").style.color = "lightgrey";
+//     }
+//     else {
+//         document.getElementById("nächstes").disabled = false;
+//         document.getElementById("nächstes").style.color = "white";
+//     }
+// }
