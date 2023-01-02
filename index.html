@@ -20,13 +20,7 @@
 
         </script>
 
-        <!-- <script>
-
-            // PRELOAD
-            console.log("PRE")
-
-            var lang = localStorage.getItem("gefaengnishefte_language"); if(lang == "null") {lang = "de"}
-
+        <!-- 
             const preloadList = [
                 {as: "fetch", href: "components/header.html", component:"header"},
                 {as: "fetch", href: "components/databanner.html", component:"databanner"},
@@ -48,9 +42,8 @@
             }
 
             for (let i = 0; i < preloadList.length; i++) {preload(preloadList[i])}
-            console.log("PRE!")
 
-        </script> -->
+        -->
         
         <meta charset="UTF-8">
         <title>ISSUES</title>
@@ -96,11 +89,10 @@
         <script type="text/javascript">
 
             // VARIABLES
-
-            const autohidecontrols = false;
+            
             const overridetitletext = "<span class='overridetitletextLarge'><span lang='de'>ÜBERSICHT</span><span lang='en'>OVERVIEW</span></span><span class='overridetitletextSmall'>#</span>"
 
-            const issues = [
+            const ISSUE_LIST = [
                 {
                     no: "ISSUE I",
                     title_no: "title-i",
@@ -108,7 +100,7 @@
                     title_en: "ALTERNATIVE <br class='spacedissuebreaks'>UTOPIAS",
                     cover_de: "images/issues/de/issue-i-cover.WebP",
                     cover_en: "images/issues/en/issue-i-cover.WebP",
-                    url: "https://www.GEFAENGNISHEFTE.org/issue-i"
+                    url: "issue-i"
                 },
                 {
                     no: "ISSUE II",
@@ -117,7 +109,7 @@
                     title_en: "REFORM OR <br class='spacedissuebreaks'>REVOLUTION",
                     cover_de: "images/issues/de/issue-ii-cover.WebP",
                     cover_en: "images/issues/en/issue-ii-cover.WebP",
-                    url: "https://www.GEFAENGNISHEFTE.org/issue-i"
+                    url: "issue-i"
                 },
                 {
                     no: "ISSUE III",
@@ -126,16 +118,16 @@
                     title_en: "ALGORITHMIC <br class='spacedissuebreaks'>RULE",
                     cover_de: "images/issues/de/issue-i-cover.WebP",
                     cover_en: "images/issues/en/issue-i-cover.WebP",
-                    url: "https://www.GEFAENGNISHEFTE.org/issue-i"
+                    url: "issue-i"
                 }
             ]
 
             // TEMPLATES
 
-            function index_template(slide, i){let issue = issues[i]; return '<span id="index' + i + '" class="indexitem" onclick="displaySlide(' + i + ')"><span class="slideIndexSpaced"><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
-            function index_title_template(i){let issue = issues[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
-            function cover_template(i){let issue = issues[i]; return '<div class="slide-cover"><a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" hidden src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a></div>'}
-            function title_template(i){let issue = issues[i]; return '<a class="title" onmouseover="displaySlide(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
+            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span id="index' + i + '" class="indexitem" onclick="displaySlide(' + i + ')"><span class="slideIndexSpaced"><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
+            function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
+            function cover_template(i){let issue = ISSUE_LIST[i]; return '<div class="slide-cover"><a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" hidden src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a></div>'}
+            function title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title" onmouseover="displaySlide(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
 
             // LOADING
 
@@ -170,7 +162,7 @@
             // COVERSCRIPT
 
             function initcovers() {
-                for (let i = 0; i < issues.length; i++) {
+                for (let i = 0; i < ISSUE_LIST.length; i++) {
                     document.getElementById("slides").insertAdjacentHTML('beforeend', cover_template(i));
                     document.getElementById("text-wrap").insertAdjacentHTML('beforeend', title_template(i));
                 }
@@ -406,19 +398,11 @@
 
 
             /* SMALL SCREEN ADJUSTMENTS */
-
-            #slideCurrentTitle, #slideIndex {font-size: 15pt !important;}
             
-            @media screen and (max-width: 500px) {
-                #slideCurrentTitle, #slideIndex {font-size: 14pt !important;}
-            }
 
-            @media screen and (max-width: 450px) {
-                #slideCurrentTitle, #slideIndex {font-size: 13pt !important;}
-            }
-
-            @media screen and (max-width: 430px) {
-                #slideCurrentTitle, #slideIndex {font-size: 12pt !important;}
+            #slideCurrentTitle, #slideIndex {
+                font-size: 1.25rem !important;
+	            font-size: clamp(1rem, -0.54rem + 5.7vw, 1.25rem) !important;
             }
 
             .spacedissuebreaks {

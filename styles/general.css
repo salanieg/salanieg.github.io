@@ -1,5 +1,12 @@
 * {max-width: 100%;}
 
+:root {
+	--font-small: clamp(0.75rem, 0.12rem + 2.88vw, 0.93rem); /* - */
+	--font-regular: clamp(0.75rem, -1.45rem + 11.7vw, 1.085rem); /* 13pt- */
+	--font-medium: clamp(0.9rem, 0.112rem + 11.2vw, 1.25rem);  /* 15pt-11pt | 450px-300px*/
+	--font-large: clamp(1.25rem, -0.85rem + 11.2vw, 3rem); /* 36pt- */
+}
+
 html {
 	overflow-x: hidden;
 	overflow-y: hidden;
@@ -137,67 +144,36 @@ a:hover, a:visited, a:link, a:active
 
 h1 {
 	white-space:nowrap;
-	font-size: 36pt;
+	font-size: 3rem;
+	font-size: var(--font-large);
 	font-weight: 700;
 	line-height: 1.4;
 	margin:0px;
 }
 
-@media screen and (max-width: 550px) {h1 { font-size: 34pt;}}
-@media screen and (max-width: 525px) {h1 { font-size: 32pt;}}
-@media screen and (max-width: 500px) {h1 { font-size: 30pt;}}
-@media screen and (max-width: 475px) {h1 { font-size: 28pt;}}
-@media screen and (max-width: 425px) {h1 { font-size: 26pt;}}
-@media screen and (max-width: 400px) {h1 { font-size: 24pt;}}
-@media screen and (max-width: 375px) {h1 { font-size: 22pt;}}
-@media screen and (max-width: 350px) {h1 { font-size: 20pt;}}
-@media screen and (max-width: 340px) {h1 { font-size: 19pt;}}
-@media screen and (max-width: 330px) {h1 { font-size: 18pt;}}
-@media screen and (max-width: 320px) {h1 { font-size: 17pt;}}
-@media screen and (max-width: 310px) {h1 { font-size: 16pt;}}
-@media screen and (max-width: 300px) {h1 { font-size: 15pt;}}
-
-
-
 h2, h3 {
-	font-size: 13pt;
+	font-size: 1.085rem;
+	font-size: var(--font-regular);
 	font-weight: 700;
 	line-height: 1.4;
-	font-family: "Spectral";
-	margin:0;
+	margin:0px;
 	margin-bottom:28px;
 }
 
-@media screen and (max-width: 450px) {h2 { font-size: 12pt;}}
-@media screen and (max-width: 400px) {h2 { font-size: 11pt;}}
-@media screen and (max-width: 350px) {h2 { font-size: 10pt;}}
-@media screen and (max-width: 300px) {h2 { font-size: 9pt;}}
-
-@media screen and (max-width: 450px) {h3 { font-size: 12pt;}}
-@media screen and (max-width: 400px) {h3 { font-size: 11pt;}}
-@media screen and (max-width: 350px) {h3 { font-size: 10pt;}}
-@media screen and (max-width: 300px) {h3 { font-size: 9pt;}}
-
 p {
-	font-size: 13pt;
+	font-size: 1.085rem;
+	font-size: var(--font-regular);
 	line-height: 1.9;
 	margin:0px;
 }
 
 
-@media screen and (max-width: 450px) {p { font-size: 12pt;}}
-@media screen and (max-width: 400px) {p { font-size: 11pt;}}
-@media screen and (max-width: 350px) {p { font-size: 10pt;}}
-@media screen and (max-width: 300px) {p { font-size: 9pt;}}
-
 small {
-	font-size: 11pt;
+	font-size: 0.93rem;
+	font-size: var(--font-small);
 	line-height: 1.75;
 	margin:0px;
 }
-
-@media screen and (max-width: 450px) {small { font-size: 10pt;}}
-@media screen and (max-width: 350px) {small { font-size: 9pt;}}
 
 
 /* SCROLLBAR */

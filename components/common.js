@@ -71,7 +71,7 @@ function initcommon() {
 }
 
 function initfooter() {
-    limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
+    limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     initfootnotes()
 }
 
@@ -100,6 +100,9 @@ function init_scrollbar() {
     document.getElementById("content").addEventListener("scroll", () => {
         reset_scrollbar('--scrollbar-color', '--default-scrollbar-color', "scrollbar", 3000)
     });
+
+    if(!document.getElementById("slideIndex")) {return}
+
     document.getElementById("slideIndex").addEventListener("scroll", () => {
         reset_scrollbar('--scrollbar-color-index', '--default-scrollbar-color-index', "scrollbar_index", 10000)
     })
@@ -769,17 +772,17 @@ function verticalup() {
 
     if(layoutCurrent > 0) {
         layoutCurrent = layoutCurrent - 1
-        document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
-        limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
+        document.getElementById(LAYOUT_LIST[layoutCurrent]).scrollIntoView()
+        limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     }
 }
 
 function verticaldown() {
 
-    if(layoutCurrent < layoutList.length - 1) {
+    if(layoutCurrent < LAYOUT_LIST.length - 1) {
         layoutCurrent = layoutCurrent + 1
-        document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
-        limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
+        document.getElementById(LAYOUT_LIST[layoutCurrent]).scrollIntoView()
+        limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     }
 }
 
@@ -790,20 +793,20 @@ function autosetlayout() {
 
     layoutCurrent = 0;
 
-    for (let i = 0; i < layoutList.length; i++) {
+    for (let i = 0; i < LAYOUT_LIST.length; i++) {
 
-        let offsetTop = document.getElementById(layoutList[i]).offsetTop
+        let offsetTop = document.getElementById(LAYOUT_LIST[i]).offsetTop
 
         if(scrollheight >= offsetTop - 150){
             layoutCurrent = i;
         }
-        else if (scrollheight >= offsetTop - offsetheight && i == layoutList.length - 1) {
+        else if (scrollheight >= offsetTop - offsetheight && i == LAYOUT_LIST.length - 1) {
             layoutCurrent = i;
             // console.log(scrollheight+"/"+ (offsetTop - offsetheight) +" ("+ offsetTop +")")
         }
     }
 
-    limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
+    limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
 }
 
 
@@ -835,7 +838,10 @@ function initcontrols() {
     
     displaySlide(slideCurrent)
 
-    document.getElementById("controls").addEventListener("mousemove", initautohidecontrols)
+    if(typeof AUTOHIDE_CONTROLS == "variable") {
+        document.getElementById("controls").addEventListener("mousemove", initautohidecontrols)
+    }
+
     document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseenter", entercontrols)})
     document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseleave", leavecontrols)})
 }
@@ -952,7 +958,7 @@ function hidecontrols() {
 // timer start
 
 function timecontrols() {
-    if(autohidecontrols == true && oncontrols == false) {
+    if(oncontrols == false) {
         document.getElementById("controls-inner").style.visibility = "visible";
         clearTimeout(TIMEOUT_IDS["controls"])
         TIMEOUT_IDS["controls"] = setTimeout(hidecontrols, 8000);
@@ -998,7 +1004,7 @@ function leavecontrols() {
 
 function initfootnotes() {
     console.log("initfootnotes")
-    for (let i = 0; i < footnoteList.length; i++) {
+    for (let i = 0; i < FOOTNOTE_LIST.length; i++) {
 
         let footnote = document.getElementById("f"+ (i+1))
         footnote.className = 'footnote';
@@ -1018,7 +1024,7 @@ function initfootnotes() {
 
 function footnote_template(i) {
 
-    let note_info = footnoteList[i]
+    let note_info = FOOTNOTE_LIST[i]
     let note = tosuperscript(i+1) + ' <span lang="de">' + note_info.text_de + '</span><span lang="en">' + note_info.text_en + '</span>'
 
     if(note_info.embed_source == "youtube" || note_info.embed_source == "spotify") {
@@ -1081,14 +1087,14 @@ function resetfootnote() {
 var copy_link = ""
 
 function initsharewindow() {
-    for (let i = 0; i < linkList.length; i++) {
+    for (let i = 0; i < LINK_LIST.length; i++) {
         document.getElementById("link-opt").insertAdjacentHTML('beforeend', share_template(i));
     }
 
     select_share(0)
 }
 
-function share_template(i) {return '<span onclick="select_share(' + i + ')"><span lang="de">' + linkList[i].title_de + '</span><span lang="en">' + linkList[i].title_en + '</span><br></span>'}
+function share_template(i) {return '<span onclick="select_share(' + i + ')"><span lang="de">' + LINK_LIST[i].title_de + '</span><span lang="en">' + LINK_LIST[i].title_en + '</span><br></span>'}
 
 
 
@@ -1110,7 +1116,7 @@ function select_share(index) {
     }
 
     linkopts.item(index).style.textDecoration = "underline"
-    copy_link = linkList[index].link
+    copy_link = LINK_LIST[index].link
 }
 
 
