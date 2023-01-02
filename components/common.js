@@ -713,7 +713,8 @@ const highlights = {
 
 function inithighlights() {
 
-    let window_url = window.location.href.toLowerCase().slice(0, string.indexOf('#'))
+    let safeclosemenu = window.location.href.toLowerCase()
+    safeclosemenu = safeclosemenu.slice(0, safeclosemenu.indexOf('#'))
     console.log(window_url)
 
     for (let [URLsnippet, IDs] of Object.entries(highlights)) {
