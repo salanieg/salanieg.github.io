@@ -106,6 +106,7 @@ function init_scrollbar() {
 }
 
 
+
 function reset_scrollbar(color_var, color_default, timeoutID, time) {
 
     color_default = getComputedStyle(document.documentElement).getPropertyValue(color_default)
@@ -116,9 +117,11 @@ function reset_scrollbar(color_var, color_default, timeoutID, time) {
 }
 
 
+
 function hide_scrollbar(color_var) {
     document.documentElement.style.setProperty(color_var, 'transparent');
 }
+
 
 
 function reset_scroll() {
@@ -167,6 +170,21 @@ function enable(element) {
 
 
 
+// ID CREATION
+
+function makeid(length) {
+	var result           = '';
+	var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	var charactersLength = characters.length;
+	for ( var i = 0; i < length; i++ ) {
+		result += characters.charAt(Math.floor(Math.random() * charactersLength));
+	}
+
+	return result;
+}
+
+
+
 // VIDEO PAUSER
 
 function pausevideos() {
@@ -180,6 +198,22 @@ function pausevideos() {
 	}
 }
 
+
+
+// SUPERSCRIPT
+
+const SUPERSCRIPT_LIST = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
+
+function tosuperscript(num) {
+    num = num.toString()
+    let nums = num.split('')
+
+    for (let i = 0; i < nums.length; i++){
+        nums[i] = SUPERSCRIPT_LIST[nums[i]]
+    }
+
+    return nums.join()
+}
 
 
 
@@ -360,6 +394,8 @@ function showcookiecontent() {
     if(document.getElementById("slides")){loadframes()}
 }
 
+
+
 function hidecookiecontent() {
     
     if(!datainfoshown) {
@@ -384,12 +420,12 @@ function hidecookiecontent() {
 // FRAME LOADING
 
 function loadframes() {
-    loadframe(document.getElementById(slideList[currentSlide]).getElementsByTagName("iframe"), 0, currentSlide)
+    loadframe(document.getElementById(slideList[slideCurrent]).getElementsByTagName("iframe"), 0, slideCurrent)
 }
 
 
 function loadframe(frames, current, slide) {
-    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length && slide == currentSlide) {
+    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length && slide == slideCurrent) {
 
         if(frames[current].getAttribute('data-source') == "youtube" && frames[current].getAttribute('data-loaded') != "true") {
             let frame = frames[current]
@@ -422,7 +458,7 @@ function loadframe(frames, current, slide) {
             loadframe(frames, current + 1 , slide)
         }
     }
-    // else if(slide != currentSlide) {
+    // else if(slide != slideCurrent) {
     //     console.log("load aborted")
     // }
     cleartpcookies()
@@ -579,19 +615,6 @@ function setabo(type) {
 // document.getElementById("email-input").addEventListener('focus', (event) => {showemailinfo()});
 
 
-// ID CREATION
-
-function makeid(length) {
-	var result           = '';
-	var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	var charactersLength = characters.length;
-	for ( var i = 0; i < length; i++ ) {
-		result += characters.charAt(Math.floor(Math.random() * charactersLength));
-	}
-
-	return result;
-}
-
 
 
 
@@ -717,7 +740,10 @@ function inithighlights() {
 
     if(window_url.includes("#")) {
         window_url = window_url.slice(0, window_url.indexOf('#'))
-        console.log(window_url)
+    }
+
+    if(window_url.includes("?")) {
+        window_url = window_url.slice(0, window_url.indexOf('?'))
     }
 
     for (let [URLsnippet, IDs] of Object.entries(highlights)) {
@@ -789,7 +815,7 @@ function autosetlayout() {
 // INIT
 
 var slideList = []
-var currentSlide = 0;
+var slideCurrent = 0;
 
 function initcontrols() {
     slidesList = document.getElementById("slides").children
@@ -807,7 +833,7 @@ function initcontrols() {
         slideIndex.insertAdjacentHTML('beforeend', index_template(slide, i));
     }
     
-    displaySlide(currentSlide)
+    displaySlide(slideCurrent)
 
     document.getElementById("controls").addEventListener("mousemove", initautohidecontrols)
     document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseenter", entercontrols)})
@@ -827,16 +853,16 @@ function displaycurrent() {
     let overridetitle = (typeof overridetitletext !== "undefined")
 
     if(highlightcurrenttitle) {
-        highlight_title(currentSlide)
+        highlight_title(slideCurrent)
     }
     if(showcurrenttitle) {
-        document.getElementById("slideCurrentTitle").innerHTML = index_title_template(currentSlide)
+        document.getElementById("slideCurrentTitle").innerHTML = index_title_template(slideCurrent)
     }
     if(overridetitle) {
         document.getElementById("slideCurrent").innerHTML = overridetitletext
     }
     else {
-        document.getElementById("slideCurrent").innerHTML = (currentSlide + 1) + "/" + slideList.length
+        document.getElementById("slideCurrent").innerHTML = (slideCurrent + 1) + "/" + slideList.length
     }
 
     if(showcurrenttitle||overridetitle) {
@@ -844,17 +870,17 @@ function displaycurrent() {
     }
 
     loadframes()
-    limit_buttons(currentSlide, slideList, "letztes", "nächstes")
+    limit_buttons(slideCurrent, slideList, "letztes", "nächstes")
     reset_scroll()
     pausevideos()
 }
 
 
 function letztesissue() {
-    if(currentSlide>=0) {
-        document.getElementById(slideList[currentSlide]).style.display = "none";
-        currentSlide = currentSlide - 1;
-        document.getElementById(slideList[currentSlide]).style.display = "flex";
+    if(slideCurrent>=0) {
+        document.getElementById(slideList[slideCurrent]).style.display = "none";
+        slideCurrent = slideCurrent - 1;
+        document.getElementById(slideList[slideCurrent]).style.display = "flex";
     }
 
     displaycurrent()
@@ -862,10 +888,10 @@ function letztesissue() {
 }
 
 function nächstesissue() {
-    if(currentSlide<=slideList.length-1) {
-        document.getElementById(slideList[currentSlide]).style.display = "none";
-        currentSlide = currentSlide + 1;
-        document.getElementById(slideList[currentSlide]).style.display = "flex";
+    if(slideCurrent<=slideList.length-1) {
+        document.getElementById(slideList[slideCurrent]).style.display = "none";
+        slideCurrent = slideCurrent + 1;
+        document.getElementById(slideList[slideCurrent]).style.display = "flex";
     }
 
     displaycurrent()
@@ -873,9 +899,9 @@ function nächstesissue() {
 }
 
 function displaySlide(slideIndex) {
-    document.getElementById(slideList[currentSlide]).style.display = "none";
-    currentSlide = slideIndex;
-    document.getElementById(slideList[currentSlide]).style.display = "flex";
+    document.getElementById(slideList[slideCurrent]).style.display = "none";
+    slideCurrent = slideIndex;
+    document.getElementById(slideList[slideCurrent]).style.display = "flex";
 
     displaycurrent()
     hideSlideIndex()
@@ -890,16 +916,16 @@ function displaySlideIndex() {
         indexitems[i].style.fontWeight = "400"
     }
 
-    document.getElementById("index"+currentSlide).style.fontWeight = "700"
+    document.getElementById("index"+slideCurrent).style.fontWeight = "700"
     document.getElementById("slideCurrentTitle").style.display = "none";
-    document.getElementById(slideList[currentSlide]).style.display = "none";
+    document.getElementById(slideList[slideCurrent]).style.display = "none";
     document.getElementById("slideIndex").style.display = "block";
 }
 
 function hideSlideIndex() {
     document.getElementById("slideCurrentTitle").style.display = "block";
     document.getElementById("slideIndex").style.display = "none";
-    document.getElementById(slideList[currentSlide]).style.display = "flex";
+    document.getElementById(slideList[slideCurrent]).style.display = "flex";
 }
 
 
@@ -970,31 +996,6 @@ function leavecontrols() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// ⁰¹²³⁴⁵⁶⁷⁸⁹⁽⁾
-var superscriptList = [
-    '⁰',
-    '¹',
-    '²',
-    '³',
-    '⁴',
-    '⁵',
-    '⁶',
-    '⁷',
-    '⁸',
-    '⁹'
-]
-
-function tosuperscript(num) {
-    num = num.toString()
-    nums = num.split('')
-
-    for (let i = 0; i < nums.length; i++){
-        nums[i] = superscriptList[nums[i]]
-    }
-
-    return nums.join()
-}
-
 function initfootnotes() {
     console.log("initfootnotes")
     for (let i = 0; i < footnoteList.length; i++) {
@@ -1058,7 +1059,7 @@ function selectfootnote(event) {
     footnotefocused.style.color = "#980000";
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
-    loadframe(footnotefocused.getElementsByTagName("iframe"), 0, currentSlide)
+    loadframe(footnotefocused.getElementsByTagName("iframe"), 0, slideCurrent)
 }
 
 function resetfootnote() {
