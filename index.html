@@ -132,10 +132,10 @@
 
             // TEMPLATES
 
-            function index_template(slide, i){let issue = issues[i]; return '<span id="index' + i + '" class="indexitem" onclick="displayBySlideIndex(' + i + ')"><span class="slideIndexSpaced"><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
+            function index_template(slide, i){let issue = issues[i]; return '<span id="index' + i + '" class="indexitem" onclick="displaySlide(' + i + ')"><span class="slideIndexSpaced"><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
             function index_title_template(i){let issue = issues[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
             function cover_template(i){let issue = issues[i]; return '<div class="slide-cover"><a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" hidden src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a></div>'}
-            function title_template(i){let issue = issues[i]; return '<a class="title" onmouseover="displayBySlideIndex(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
+            function title_template(i){let issue = issues[i]; return '<a class="title" onmouseover="displaySlide(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
 
             // LOADING
 
@@ -155,8 +155,7 @@
             function init() {
                 console.time("INIT-TIME")
                 console.log("INIT")
-                initcontrols();
-                displayBySlideIndex(slideSelected)
+                initcontrols()
                 initcommon();
                 document.getElementById("lang-de").addEventListener("click", seteagerload);
                 document.getElementById("lang-en").addEventListener("click", seteagerload);

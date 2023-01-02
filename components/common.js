@@ -1,6 +1,25 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////// GENERAL ////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+// GENERAL VARIABLES
+
+var TIMEOUT_IDS = []
+
+
 
 // COMPONENT LOADING
 
@@ -38,14 +57,17 @@ function loadElement(ID, HTML) {
 }
 
 
+
+// INIT
+
 function initcommon() {
     initcookies();
     initlanguage();
     initabo();
     inithighlights();
+    init_scrollbar()
 
     window.addEventListener("resize", openmenufix)
-	document.getElementById("content").addEventListener("scroll", customizescrollbar);
 }
 
 function initfooter() {
@@ -65,19 +87,122 @@ window.addEventListener('resize', () => {
 });
 
 
-// CUSTOM SCROLLBAR
 
-var timeoutid;
 
-function hidescrollbar() {
-	document.documentElement.style.setProperty('--scrollbar-color', 'transparent');
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////// SCROLLBAR ////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// SCROLLBAR FOR INDEX
+
+function init_scrollbar() {
+    document.getElementById("content").addEventListener("scroll", () => {
+        reset_scrollbar('--scrollbar-color', '--default-scrollbar-color', "scrollbar", 3000)
+    });
+    document.getElementById("slideIndex").addEventListener("scroll", () => {
+        reset_scrollbar('--scrollbar-color-index', '--default-scrollbar-color-index', "scrollbar_index", 10000)
+    })
 }
 
-function customizescrollbar() {
-	document.documentElement.style.setProperty('--scrollbar-color', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color'));
-	clearTimeout(timeoutid)
-	timeoutid = setTimeout(hidescrollbar, 3000);
+
+function reset_scrollbar(color_var, color_default, timeoutID, time) {
+
+    color_default = getComputedStyle(document.documentElement).getPropertyValue(color_default)
+    document.documentElement.style.setProperty(color_var, color_default);
+
+    clearTimeout(TIMEOUT_IDS[timeoutID])
+    TIMEOUT_IDS[timeoutID] = setTimeout(hide_scrollbar, time, color_var);
 }
+
+
+function hide_scrollbar(color_var) {
+    document.documentElement.style.setProperty(color_var, 'transparent');
+}
+
+
+function reset_scroll() {
+    document.getElementById("content").scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    setTimeout(hide_scrollbar, 1, '--scrollbar-color');
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////// LIB ///////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// RESSETTING
+
+function limit_buttons(current, list, first, last) {
+    
+    if (current==0) {
+        disable(first)
+    }
+    else {
+        enable(first)
+    }
+    
+    if (current>=list.length-1) {
+        disable(last)
+    }
+    else {
+        enable(last)
+    }
+}
+
+function disable(element) {
+    element = document.getElementById(element)
+    element.disabled = true;
+    element.style.color = "lightgrey";
+}
+
+function enable(element) {
+    element = document.getElementById(element)
+    element.disabled = false;
+    element.style.color = "white";
+}
+
+
+
+// VIDEO PAUSER
+
+function pausevideos() {
+	var frames = document.getElementsByTagName("iframe")
+
+	for (let i = 0; i < frames.length; i++)
+	{
+        if(frames[i].getAttribute('data-source') == "youtube") {
+            frames[i].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
+        }
+	}
+}
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////// BACK-END ////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
 
 
 
@@ -101,6 +226,9 @@ function setlanguage(language) {
 
 	localStorage.setItem("gefaengnishefte_language", language);	
 }
+
+
+
 
 
 
@@ -256,12 +384,12 @@ function hidecookiecontent() {
 // FRAME LOADING
 
 function loadframes() {
-    loadframe(document.getElementById(slideList[slideSelected]).getElementsByTagName("iframe"), 0, slideSelected)
+    loadframe(document.getElementById(slideList[currentSlide]).getElementsByTagName("iframe"), 0, currentSlide)
 }
 
 
 function loadframe(frames, current, slide) {
-    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length && slide == slideSelected) {
+    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length && slide == currentSlide) {
 
         if(frames[current].getAttribute('data-source') == "youtube" && frames[current].getAttribute('data-loaded') != "true") {
             let frame = frames[current]
@@ -294,160 +422,16 @@ function loadframe(frames, current, slide) {
             loadframe(frames, current + 1 , slide)
         }
     }
-    // else if(slide != slideSelected) {
+    // else if(slide != currentSlide) {
     //     console.log("load aborted")
     // }
     cleartpcookies()
 }
 
 
-// VIDEO PAUSER
-
-function pausevideos() {
-	var frames = document.getElementsByTagName("iframe")
-
-	for (let i = 0; i < frames.length; i++)
-	{
-        if(frames[i].getAttribute('data-source') == "youtube") {
-            frames[i].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
-        }
-	}
-}
 
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////// MENUS /////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// DROPMENU
-
-var menuopen = false;
-var windowwidth = window.innerWidth;
-
-
-function openmenufix() {
-	if (window.innerWidth!=windowwidth) {
-
-		windowwidth = window.innerWidth;
-
-		closemenu()
-
-		if (window.innerWidth < 800 && !menuopen) {
-			document.getElementById("openmenu").style.display = "inline";
-		}
-		else {
-			document.getElementById("openmenu").style.display = "none";
-		}
-	}
-}
-
-function openmenu(menu, anchor) {
-	hidedropmenus();
-	document.getElementById(menu).style.height = "fit-content";
-	document.getElementById(anchor).style.visibility = "visible";
-
-	if (window.innerWidth > 800) {
-		document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
-	}
-	else {
-		document.getElementById(menu).style.width = "100vw";
-		document.getElementById("headerlogo").style.visibility = "hidden";
-		document.getElementById("openmenu").style.display = "none";
-		document.getElementById("closemenu").style.display = "inline";
-		document.documentElement.style.setProperty('--header-divider', `block`);
-	}
-
-	menuopen = true
-}
-
-function safeclosemenu() {
-	if(document.getElementById("email-input") !== document.activeElement 
-	&& document.getElementById("email-checkbox") !== document.activeElement 
-	&& document.getElementById("email-btn") !== document.activeElement) 
-	{
-		closemenu()
-		if(document.getElementById("email-input").value == "") {
-			document.getElementById("email-info").style.display = "none"
-			document.getElementById("email-checkbox").checked = false;
-		}
-	}
-}
-
-function closemenu() {
-
-	hidedropmenus();
-
-	if (window.innerWidth < 800) {
-		document.getElementById("headerlogo").style.visibility = "visible";
-		document.getElementById("closemenu").style.display = "none";
-		document.getElementById("openmenu").style.display = "inline";
-	}
-
-	menuopen = false
-}
-
-function hidedropmenus() {
-	var dropmenus = document.getElementsByClassName("dropmenu")
-
-	for (let i = 0; i < dropmenus.length; i++)
-	{
-		dropmenus[i].style.width = "0vw";
-		dropmenus[i].style.border = "none transparent";
-	}
-}
-
-// NAVIGATION HIGHLIGHT
-
-var highlights = [
-    ["", "dropanchori"],
-    ["/", "dropanchori"],
-    ["/issue-i", "dropanchori"],
-    ["/issue-i", "info-issue-i"],
-    ["/kanon", "dropanchork"],
-
-    ["", "descriptioni"],
-    ["/", "descriptioni"],
-    ["/issue-i", "descriptioni"],
-    ["/kanon", "descriptionk"],
-
-    ["/deabonnieren", "etc"],
-    ["/deabonnieren", "descriptiond"],
-
-    ["/impressum", "etc"],
-    ["/impressum", "descriptionim"],
-
-    ["/datenschutz", "etc"],
-    ["/datenschutz", "descriptionda"]
-];
-
-
-
-function inithighlights() {
-
-    let window_url = window.location.href.toLowerCase()
-
-	for (var i = 0; i < highlights.length; i++ ) {
-
-		var pair = highlights[i]
-	
-		if (window_url == ("https://www.GEFAENGNISHEFTE.org" + pair[0]).toLowerCase()) {
-            console.log(pair[0] + " highlight -> " + pair[1])
-            document.getElementById(pair[1]).style.fontWeight = "700";
-		}
-	}
-}
-
-
-// function inithighlights() {
-//     for (let [URLsnippet, ID] of highlights) {
-//         if (window.location.href.toLowerCase() == ("https://www.GEFAENGNISHEFTE.org" + URLsnippet).toLowerCase()) {
-//             console.log(URLsnippet + " highlight -> " + ID)
-//             document.getElementById(ID).style.fontWeight = "700";
-// 		}
-//     }
-// }
 
 
 
@@ -610,6 +594,373 @@ function makeid(length) {
 
 
 
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// NAV //////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////// MENUS /////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// DROPMENU
+
+var menuopen = false;
+var windowwidth = window.innerWidth;
+
+
+function openmenufix() {
+	if (window.innerWidth!=windowwidth) {
+
+		windowwidth = window.innerWidth;
+
+		closemenu()
+
+		if (window.innerWidth < 800 && !menuopen) {
+			document.getElementById("openmenu").style.display = "inline";
+		}
+		else {
+			document.getElementById("openmenu").style.display = "none";
+		}
+	}
+}
+
+function openmenu(menu, anchor) {
+	hidedropmenus();
+	document.getElementById(menu).style.height = "fit-content";
+	document.getElementById(anchor).style.visibility = "visible";
+
+	if (window.innerWidth > 800) {
+		document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
+	}
+	else {
+		document.getElementById(menu).style.width = "100vw";
+		document.getElementById("headerlogo").style.visibility = "hidden";
+		document.getElementById("openmenu").style.display = "none";
+		document.getElementById("closemenu").style.display = "inline";
+		document.documentElement.style.setProperty('--header-divider', `block`);
+	}
+
+	menuopen = true
+}
+
+function safeclosemenu() {
+	if(document.getElementById("email-input") !== document.activeElement 
+	&& document.getElementById("email-checkbox") !== document.activeElement 
+	&& document.getElementById("email-btn") !== document.activeElement) 
+	{
+		closemenu()
+		if(document.getElementById("email-input").value == "") {
+			document.getElementById("email-info").style.display = "none"
+			document.getElementById("email-checkbox").checked = false;
+		}
+	}
+}
+
+function closemenu() {
+
+	hidedropmenus();
+
+	if (window.innerWidth < 800) {
+		document.getElementById("headerlogo").style.visibility = "visible";
+		document.getElementById("closemenu").style.display = "none";
+		document.getElementById("openmenu").style.display = "inline";
+	}
+
+	menuopen = false
+}
+
+function hidedropmenus() {
+	var dropmenus = document.getElementsByClassName("dropmenu")
+
+	for (let i = 0; i < dropmenus.length; i++)
+	{
+		dropmenus[i].style.width = "0vw";
+		dropmenus[i].style.border = "none transparent";
+	}
+}
+
+
+
+// NAVIGATION HIGHLIGHT
+
+const highlights = {
+    "": ["dropanchori", "descriptioni"],
+    "/": ["dropanchori", "descriptioni"],
+    "/issue-i": ["dropanchori", "descriptioni", "info-issue-i"],
+    "/kanon": ["dropanchork", "descriptionk"],
+    "/deabonnieren": ["etc", "descriptiond"],
+    "/impressum": ["etc", "descriptionim"],
+    "/datenschutz": ["etc", "descriptionda"],
+}
+
+
+function inithighlights() {
+
+    let window_url = window.location.href.toLowerCase().slice(0, string.indexOf('#'))
+    console.log(window_url)
+
+    for (let [URLsnippet, IDs] of Object.entries(highlights)) {
+        if (window_url == ("https://www.GEFAENGNISHEFTE.org" + URLsnippet).toLowerCase()) {
+            for (var i = 0; i < IDs.length; i++ ) {
+                console.log(URLsnippet + " highlight -> " + IDs[i])
+                document.getElementById(IDs[i]).style.fontWeight = "700";
+                return
+            }
+        }
+    }
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////// VERTICAL NAVIGATION ///////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+var layoutCurrent = 0
+
+function verticalup() {
+
+    if(layoutCurrent > 0) {
+        layoutCurrent = layoutCurrent - 1
+        document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
+        limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
+    }
+}
+
+function verticaldown() {
+
+    if(layoutCurrent < layoutList.length - 1) {
+        layoutCurrent = layoutCurrent + 1
+        document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
+        limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
+    }
+}
+
+
+function autosetlayout() {
+    let scrollheight = document.getElementById("content").scrollTop
+    let offsetheight = document.getElementById("content").offsetHeight
+
+    layoutCurrent = 0;
+
+    for (let i = 0; i < layoutList.length; i++) {
+
+        let offsetTop = document.getElementById(layoutList[i]).offsetTop
+
+        if(scrollheight >= offsetTop - 150){
+            layoutCurrent = i;
+        }
+        else if (scrollheight >= offsetTop - offsetheight && i == layoutList.length - 1) {
+            layoutCurrent = i;
+            // console.log(scrollheight+"/"+ (offsetTop - offsetheight) +" ("+ offsetTop +")")
+        }
+    }
+
+    limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////// CONTROLS //////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// INIT
+
+var slideList = []
+var currentSlide = 0;
+
+function initcontrols() {
+    slidesList = document.getElementById("slides").children
+    for (let i = 0; i < slidesList.length; i++) {
+        let slideID = 'slide'+ (i+1)
+        slidesList.item(i).setAttribute('id', slideID);
+        slideList.push(slideID);
+    }
+
+    for (let i = 0; i < slideList.length; i++) {
+
+		let slide = document.getElementById(slideList[i])
+        let slideIndex = document.getElementById('slideIndex')
+
+        slideIndex.insertAdjacentHTML('beforeend', index_template(slide, i));
+    }
+    
+    displaySlide(currentSlide)
+
+    document.getElementById("controls").addEventListener("mousemove", initautohidecontrols)
+    document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseenter", entercontrols)})
+    document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseleave", leavecontrols)})
+}
+
+
+
+
+
+// SLIDE SELECTION
+
+function displaycurrent() {
+
+    let highlightcurrenttitle = (typeof highlight_title === "function")
+    let showcurrenttitle = (typeof index_title_template === "function")
+    let overridetitle = (typeof overridetitletext !== "undefined")
+
+    if(highlightcurrenttitle) {
+        highlight_title(currentSlide)
+    }
+    if(showcurrenttitle) {
+        document.getElementById("slideCurrentTitle").innerHTML = index_title_template(currentSlide)
+    }
+    if(overridetitle) {
+        document.getElementById("slideCurrent").innerHTML = overridetitletext
+    }
+    else {
+        document.getElementById("slideCurrent").innerHTML = (currentSlide + 1) + "/" + slideList.length
+    }
+
+    if(showcurrenttitle||overridetitle) {
+        initlanguage() //needed bc it changes DOM
+    }
+
+    loadframes()
+    limit_buttons(currentSlide, slideList, "letztes", "nächstes")
+    reset_scroll()
+    pausevideos()
+}
+
+
+function letztesissue() {
+    if(currentSlide>=0) {
+        document.getElementById(slideList[currentSlide]).style.display = "none";
+        currentSlide = currentSlide - 1;
+        document.getElementById(slideList[currentSlide]).style.display = "flex";
+    }
+
+    displaycurrent()
+    timecontrols()
+}
+
+function nächstesissue() {
+    if(currentSlide<=slideList.length-1) {
+        document.getElementById(slideList[currentSlide]).style.display = "none";
+        currentSlide = currentSlide + 1;
+        document.getElementById(slideList[currentSlide]).style.display = "flex";
+    }
+
+    displaycurrent()
+    timecontrols()
+}
+
+function displaySlide(slideIndex) {
+    document.getElementById(slideList[currentSlide]).style.display = "none";
+    currentSlide = slideIndex;
+    document.getElementById(slideList[currentSlide]).style.display = "flex";
+
+    displaycurrent()
+    hideSlideIndex()
+}
+
+
+// SLIDE INDEX
+
+function displaySlideIndex() {
+    var indexitems = document.getElementsByClassName("indexitem")
+    for (let i = 0; i < indexitems.length; i++) {
+        indexitems[i].style.fontWeight = "400"
+    }
+
+    document.getElementById("index"+currentSlide).style.fontWeight = "700"
+    document.getElementById("slideCurrentTitle").style.display = "none";
+    document.getElementById(slideList[currentSlide]).style.display = "none";
+    document.getElementById("slideIndex").style.display = "block";
+}
+
+function hideSlideIndex() {
+    document.getElementById("slideCurrentTitle").style.display = "block";
+    document.getElementById("slideIndex").style.display = "none";
+    document.getElementById(slideList[currentSlide]).style.display = "flex";
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////// AUTO HIDING CONTROLS //////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// CONTROL AUTO HIDING
+
+
+var oncontrols = false;
+
+function initautohidecontrols() {
+    document.addEventListener("mousemove", timecontrols);
+    document.getElementById("controls").removeEventListener("mousemove", initautohidecontrols);
+}
+
+function hidecontrols() {
+    document.getElementById("controls-inner").style.visibility = "hidden";
+}
+
+// timer start
+
+function timecontrols() {
+    if(autohidecontrols == true && oncontrols == false) {
+        document.getElementById("controls-inner").style.visibility = "visible";
+        clearTimeout(TIMEOUT_IDS["controls"])
+        TIMEOUT_IDS["controls"] = setTimeout(hidecontrols, 8000);
+    }
+}
+
+function entercontrols() {
+    clearTimeout(TIMEOUT_IDS["controls"])
+    oncontrols = true;
+}
+
+function leavecontrols() {
+    timecontrols();
+    oncontrols = false;
+}
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////// FUNCTIONALITY /////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////// FOOTNOTES ///////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -703,7 +1054,7 @@ function selectfootnote(event) {
     footnotefocused.style.color = "#980000";
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
-    loadframe(footnotefocused.getElementsByTagName("iframe"), 0, slideSelected)
+    loadframe(footnotefocused.getElementsByTagName("iframe"), 0, currentSlide)
 }
 
 function resetfootnote() {
@@ -712,6 +1063,8 @@ function resetfootnote() {
     footnotefocused.childNodes[1].style.display = "none";
     footnotefocused = "none";
 }
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -773,316 +1126,3 @@ function copy_share() {
 
     initlanguage()
 }
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////// VERTICAL NAVIGATION ///////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-var layoutCurrent = 0
-
-
-// RESSETTING
-// function limit_buttons() {
-    
-//     if (layoutCurrent==0) {
-//         disable("to-top")
-//     }
-//     else {
-//         enable("to-top")
-//     }
-    
-//     if (layoutCurrent>=layoutList.length-1) {
-//         disable("to-bottom")
-//     }
-//     else {
-//         enable("to-bottom")
-//     }
-// }
-
-function limit_buttons(current, list, first, last) {
-    
-    if (current==0) {
-        disable(first)
-    }
-    else {
-        enable(first)
-    }
-    
-    if (current>=list.length-1) {
-        disable(last)
-    }
-    else {
-        enable(last)
-    }
-}
-
-function disable(element) {
-    element = document.getElementById(element)
-    element.disabled = true;
-    element.style.color = "lightgrey";
-}
-
-function enable(element) {
-    element = document.getElementById(element)
-    element.disabled = false;
-    element.style.color = "white";
-}
-
-function verticalup() {
-
-    if(layoutCurrent > 0) {
-        layoutCurrent = layoutCurrent - 1
-        document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
-        limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
-    }
-}
-
-function verticaldown() {
-
-    if(layoutCurrent < layoutList.length - 1) {
-        layoutCurrent = layoutCurrent + 1
-        document.getElementById(layoutList[layoutCurrent]).scrollIntoView()
-        limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
-    }
-}
-
-
-function autosetlayout() {
-    let scrollheight = document.getElementById("content").scrollTop
-    let offsetheight = document.getElementById("content").offsetHeight
-
-    layoutCurrent = 0;
-
-    for (let i = 0; i < layoutList.length; i++) {
-
-        let offsetTop = document.getElementById(layoutList[i]).offsetTop
-
-        if(scrollheight >= offsetTop - 150){
-            layoutCurrent = i;
-        }
-        else if (scrollheight >= offsetTop - offsetheight && i == layoutList.length - 1) {
-            layoutCurrent = i;
-            // console.log(scrollheight+"/"+ (offsetTop - offsetheight) +" ("+ offsetTop +")")
-        }
-    }
-
-    limit_buttons(layoutCurrent, layoutList, "to-top", "to-bottom")
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////// INIT CONTROLS ////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-var slideList = []
-var slideSelected = 0;
-
-function initcontrols() {
-    slidesList = document.getElementById("slides").children
-    for (let i = 0; i < slidesList.length; i++) {
-        let slideID = 'slide'+ (i+1)
-        slidesList.item(i).setAttribute('id', slideID);
-        slideList.push(slideID);
-    }
-
-    for (let i = 0; i < slideList.length; i++) {
-
-		let slide = document.getElementById(slideList[i])
-        let slideIndex = document.getElementById('slideIndex')
-
-        slideIndex.insertAdjacentHTML('beforeend', index_template(slide, i));
-    }
-    
-    displayBySlideIndex(slideSelected)
-    limit_buttons(slideSelected, slideList, "letztes", "nächstes")
-    displaycurrent()
-    keeptop()
-
-    document.getElementById("slideIndex").addEventListener("scroll", resetscrollbarindex)
-    document.getElementById("controls").addEventListener("mousemove", initautohidecontrols)
-    document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseenter", entercontrols)})
-    document.querySelectorAll("#slideIndex, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseleave", leavecontrols)})
-}
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////// SLIDE SELECTION ////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// SLIDE SELECTION
-
-function displaycurrent() {
-
-    let highlightcurrenttitle = (typeof highlight_title === "function")
-    let showcurrenttitle = (typeof index_title_template === "function")
-    let overridetitle = (typeof overridetitletext !== "undefined")
-
-    if(highlightcurrenttitle) {
-        highlight_title(slideSelected)
-    }
-    if(showcurrenttitle) {
-        document.getElementById("slideCurrentTitle").innerHTML = index_title_template(slideSelected)
-    }
-    if(overridetitle) {
-        document.getElementById("slideCurrent").innerHTML = overridetitletext
-    }
-    else {
-        document.getElementById("slideCurrent").innerHTML = (slideSelected + 1) + "/" + slideList.length
-    }
-
-    if(showcurrenttitle||overridetitle) {
-        initlanguage() //needed bc it changes DOM
-    }
-}
-
-
-function letztesissue() {
-    if(slideSelected>=0) {
-        document.getElementById(slideList[slideSelected]).style.display = "none";
-        slideSelected = slideSelected - 1;
-        document.getElementById(slideList[slideSelected]).style.display = "flex";
-    }
-
-    switch_slide_routine()
-    timecontrols();
-}
-
-function nächstesissue() {
-    if(slideSelected<=slideList.length-1) {
-        document.getElementById(slideList[slideSelected]).style.display = "none";
-        slideSelected = slideSelected + 1;
-        document.getElementById(slideList[slideSelected]).style.display = "flex";
-    }
-
-    switch_slide_routine()
-    timecontrols();
-}
-
-function displayBySlideIndex(slideIndex) {
-    document.getElementById(slideList[slideSelected]).style.display = "none";
-    slideSelected = slideIndex;
-    document.getElementById(slideList[slideSelected]).style.display = "flex";
-
-    switch_slide_routine()
-    hideSlideIndex();
-}
-
-function switch_slide_routine() {
-    loadframes()
-    limit_buttons(slideSelected, slideList, "letztes", "nächstes")
-    displaycurrent();
-    keeptop();
-    pausevideos();
-}
-
-
-// SLIDE INDEX
-
-function displaySlideIndex() {
-    var indexitems = document.getElementsByClassName("indexitem")
-    for (let i = 0; i < indexitems.length; i++) {
-        indexitems[i].style.fontWeight = "400"
-    }
-
-    document.getElementById("index"+slideSelected).style.fontWeight = "700"
-    document.getElementById("slideCurrentTitle").style.display = "none";
-    document.getElementById(slideList[slideSelected]).style.display = "none";
-    document.getElementById("slideIndex").style.display = "block";
-}
-
-function hideSlideIndex() {
-    document.getElementById("slideCurrentTitle").style.display = "block";
-    document.getElementById("slideIndex").style.display = "none";
-    document.getElementById(slideList[slideSelected]).style.display = "flex";
-}
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////// VISUAL TWEAKS /////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-var timeoutIDindex;
-var timeoutIDcontrols;
-var oncontrols = false;
-
-
-// SCROLLBAR
-
-function hidescrollbarindex() {
-    document.documentElement.style.setProperty('--scrollbar-color-index', 'transparent');
-}
-
-function resetscrollbarindex() {
-    document.documentElement.style.setProperty('--scrollbar-color-index', getComputedStyle(document.documentElement).getPropertyValue('--default-scrollbar-color-index'));
-    clearTimeout(timeoutIDindex)
-    timeoutIDindex = setTimeout(hidescrollbarindex, 10000);
-}
-
-function keeptop() {
-    document.getElementById("content").scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-    if(typeof hidescrollbar === "function"){
-        setTimeout(hidescrollbar, 1);
-    }
-}
-
-
-// CONTROL AUTO HIDING
-
-function initautohidecontrols() {
-    document.addEventListener("mousemove", timecontrols);
-    document.getElementById("controls").removeEventListener("mousemove", initautohidecontrols);
-}
-
-function hidecontrols() {
-    document.getElementById("controls-inner").style.visibility = "hidden";
-}
-
-// timer start
-
-function timecontrols() {
-    if(autohidecontrols == true && oncontrols == false) {
-        document.getElementById("controls-inner").style.visibility = "visible";
-        clearTimeout(timeoutIDcontrols)
-        timeoutIDcontrols = setTimeout(hidecontrols, 8000);
-    }
-}
-
-function entercontrols() {
-    clearTimeout(timeoutIDcontrols)
-    oncontrols = true;
-}
-
-function leavecontrols() {
-    timecontrols();
-    oncontrols = false;
-}
-
-
-// CONTROL DISABLEING
-
-// function limit_buttons() {
-//     if (slideSelected==0) {
-//         document.getElementById("letztes").disabled = true;
-//         document.getElementById("letztes").style.color = "lightgrey";
-//     }
-//     else {
-//         document.getElementById("letztes").disabled = false;
-//         document.getElementById("letztes").style.color = "white";
-//     }
-    
-//     if (slideSelected==slideList.length-1) {
-//         document.getElementById("nächstes").disabled = true;
-//         document.getElementById("nächstes").style.color = "lightgrey";
-//     }
-//     else {
-//         document.getElementById("nächstes").disabled = false;
-//         document.getElementById("nächstes").style.color = "white";
-//     }
-// }
