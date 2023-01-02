@@ -714,8 +714,11 @@ const highlights = {
 function inithighlights() {
 
     let window_url = window.location.href.toLowerCase()
-    window_url = window_url.slice(0, window_url.indexOf('#'))
-    console.log(window_url)
+
+    if(window_url.includes("#")) {
+        window_url = window_url.slice(0, window_url.indexOf('#'))
+        console.log(window_url)
+    }
 
     for (let [URLsnippet, IDs] of Object.entries(highlights)) {
         if (window_url == ("https://www.GEFAENGNISHEFTE.org" + URLsnippet).toLowerCase()) {
