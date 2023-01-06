@@ -4,46 +4,12 @@
         <script>
 
             // PRELOAD
-            
-            console.time("PRE-TIME")
-            console.log("PRE")
 
             let lang = localStorage.getItem("gefaengnishefte_language"); if(lang == null) {lang = "de"}
-            let preload = document.createElement('link');
-            preload.rel = "preload"
-            preload.as = "image"
-            preload.fetchPriority = "high"
-            preload.href = "images/issues/" + lang + "/issue-i-cover.WebP"
-            document.currentScript.parentNode.insertBefore(preload, document.currentScript.nextSibling);
-
-            console.timeEnd("PRE-TIME")
+            let preload = '<link rel="preload" as="image" fetchpriority="high" href="images/issues/' + lang + '/issue-i-cover.WebP">'
+            document.currentScript.insertAdjacentHTML("afterend", preload)
 
         </script>
-
-        <!-- 
-            const preloadList = [
-                {as: "fetch", href: "components/header.html", component:"header"},
-                {as: "fetch", href: "components/databanner.html", component:"databanner"},
-                {as: "fetch", href: "components/controls.html", component:"controls"},
-
-                {as: "image", href: "images/issues/" + lang + "/issue-i-cover.WebP"},
-            ]
-
-            function preload(item) {
-                let load = document.createElement('link');
-                load.rel = "preload"
-                load.as = item.as
-                load.fetchPriority = "high"
-                if(item.as == "fetch" || item.as == "font" ) {
-                    load.setAttribute("crossorigin", "");
-                }
-                load.href = item.href
-                document.currentScript.parentNode.insertBefore(load, document.currentScript.nextSibling);
-            }
-
-            for (let i = 0; i < preloadList.length; i++) {preload(preloadList[i])}
-
-        -->
         
         <meta charset="UTF-8">
         <title>ISSUES</title>
@@ -131,29 +97,11 @@
 
             // LOADING
 
-            document.addEventListener("DOMContentLoaded", preinit)
+            load_components(["header", "controls", "databanner"])
+            
+            // function add_init() {
+            // }
 
-            function preinit() {
-                console.time("DOM-TIME")
-                console.log("DOM")
-                initcovers()
-                seteagerload()
-                init_prevent_touch_response()
-                console.timeEnd("DOM-TIME")
-            }
-
-            fetchcomponents(["header", "controls", "databanner"])
-
-            function init() {
-                console.time("INIT-TIME")
-                console.log("INIT")
-                initcontrols()
-                initcommon();
-                document.getElementById("lang-de").addEventListener("click", seteagerload);
-                document.getElementById("lang-en").addEventListener("click", seteagerload);
-                document.getElementById("text-wrap").style.visibility = "visible";
-                console.timeEnd("INIT-TIME")
-            }
 
         </script>
 
@@ -161,11 +109,17 @@
 
             // COVERSCRIPT
 
+            document.addEventListener("DOMContentLoaded", initcovers)
+
             function initcovers() {
                 for (let i = 0; i < ISSUE_LIST.length; i++) {
                     document.getElementById("slides").insertAdjacentHTML('beforeend', cover_template(i));
                     document.getElementById("text-wrap").insertAdjacentHTML('beforeend', title_template(i));
                 }
+
+                
+                seteagerload()
+                init_prevent_touch_response()
             }
 
 
@@ -183,9 +137,10 @@
             function seteagerload() {
 
                 let covers = document.getElementById("slides").getElementsByTagName("img")
+                let current_lang = localStorage.getItem("gefaengnishefte_language")
                 
                 for (let i = 0; i < covers.length; i++) {
-                    if(covers[i].lang == localStorage.getItem("gefaengnishefte_language")) {
+                    if(covers[i].lang == current_lang) {
                         covers[i].loading = "eager"
                     }
                 }
@@ -253,7 +208,7 @@
             #text-wrap {
                 min-width:350px;
                 max-width:350px;
-                visibility: hidden;
+                /* visibility: hidden; */
             }
 
             #slides > div {

@@ -20,19 +20,41 @@
 var TIMEOUT_IDS = []
 
 
-
 // COMPONENT LOADING
 
 var componentsloaded = 0
 var componentsneeded = 0
 
-function fetchcomponents(components) {
+var LOADED = {              // SEQUENCE MATTERS
+    controls: {
+        init: false,
+        func: init_controls
+    },
+    databanner: {
+        init: false,
+        func: initcookies
+    },
+    footer: {
+        init: false,
+        func: init_footer
+    },
+    header: {
+        init: false,
+        func: init_header
+    }
+}
+
+
+function load_components(components) {
 	componentsneeded = components.length
 	
 	for (let i = 0; i < components.length; i++) {
 		fetchHTML("components/" + components[i] + ".html", components[i])
 	}
+
+    console.log("load_components")
 }
+
 
 async function fetchHTML(URL, ID) {
 	fetch(URL)
@@ -40,14 +62,17 @@ async function fetchHTML(URL, ID) {
 	.then(value => {loadElement(ID, value)});
 }
 
+
 function loadElement(ID, HTML) {
     // console.log(document.readyState)
     // console.log("load " + ID)
+    
     if (document.readyState == "loading") {
         setTimeout(loadElement, 20, ID, HTML);
     }
     else {
         document.getElementById(ID).innerHTML = HTML
+        LOADED[ID].init = true;
 
         componentsloaded++
         if(componentsloaded >= componentsneeded) {
@@ -57,23 +82,44 @@ function loadElement(ID, HTML) {
 }
 
 
-
 // INIT
 
-function initcommon() {
-    initcookies();
-    initlanguage();
-    initabo();
-    inithighlights();
-    init_scrollbar()
+function init() {
 
+    for (let key in LOADED) {
+        if(LOADED[key].init) {
+            LOADED[key].func()
+        }      
+    }
+
+    if(typeof add_init  === "function") {
+        add_init()
+    }
+
+}
+
+
+function init_header() {
+    init_language()
+    initabo()
+    inithighlights()
+    init_scrollbar()
     window.addEventListener("resize", openmenufix)
 }
 
-function initfooter() {
+
+function init_footer() {
     limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     initfootnotes()
+    initsharewindow()
 }
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////// SCROLL & WINDOW /////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // HEIGHTFIX
@@ -85,13 +131,6 @@ window.addEventListener('resize', () => {
 	let vh = window.innerHeight * 0.01;
 	document.documentElement.style.setProperty('--vh', `${vh}px`);
 });
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////// SCROLLBAR ////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // SCROLLBAR FOR INDEX
@@ -248,8 +287,20 @@ function tosuperscript(num) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-function initlanguage() {
-    if(localStorage.getItem("gefaengnishefte_language") == null){localStorage.setItem("gefaengnishefte_language", "de")}
+function init_language() {
+
+    reset_language()
+
+    if(typeof seteagerload === "function") {
+        document.getElementById("lang-de").addEventListener("click", seteagerload);
+        document.getElementById("lang-en").addEventListener("click", seteagerload);
+    }
+}
+
+function reset_language() {
+    if(localStorage.getItem("gefaengnishefte_language") == null){
+        localStorage.setItem("gefaengnishefte_language", "de")
+    }
     
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
 }
@@ -479,9 +530,45 @@ function loadframe(frames, current, slide) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// ABONNIEREN
+// ABO LIB
 
-var emailinfodisabled = false;
+const MAIL_MSG = {
+    "email-btn": {
+        initial: {msg: '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>', disabled: false, func: null},
+        // sending: {msg: '<span lang="de">Sende...</span><span lang="en">Sending...</span>', disabled: false, func: null},
+        success: {msg: '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>', disabled: true, func: reset_emailinfo},
+        error: {msg: '<span lang="de">FEHLER!</span><span lang="en">ERROR!</span>', disabled: false, func: null}
+    },
+    "email-deabo-btn": {
+        initial: {msg: '<span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span>', disabled: false, func: null},
+        // sending: {msg: '<span lang="de">Sende...</span><span lang="en">Sending...</span>', disabled: false, func: null},
+        success: {msg: '<span lang="de">Deabonniert.</span><span lang="en" hidden>Unsubscribed.</span>', disabled: true, func: null},
+        error: {msg: '<span lang="de">FEHLER!</span><span lang="en">ERROR!</span>', disabled: false, func: null}
+    },
+    "email-confirm-info": {
+        initial: {msg: '', disabled: false, func: null},
+        // sending: {msg: '<span lang="de">Sende...</span><span lang="en">Sending...</span>', disabled: false, func: null},
+        success: {msg: '<span lang="de">Deine E-mail wurde erfolgreich bestätigt!</span><span lang="en">Your E-Mail has been confirmed successfully!</span>', disabled: true, func: null},
+        error: {msg: '<span lang="de">Etwas ist bei der Bestätigung schiefgelaufen.<br>Bitte versuche es noch einmal, oder schreibe Nachricht an <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span><span lang="en" hidden>Something went wrong during the confirmation process.<br>Please try again, or message us at <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span>', disabled: false, func: null}
+    }
+}
+
+function change_text(ID, type) {
+    
+    let settings = MAIL_MSG[ID][type]
+    
+    document.getElementById(ID).innerHTML = settings.msg;
+
+    if(settings.disabled) {
+        document.getElementById(ID).disabled = settings.disabled;
+    }
+
+    if(settings.func) {
+        settings.func();
+    }
+
+    reset_language() //needed bc it changes DOM
+}
 
 
 function make_table(data) {
@@ -495,8 +582,10 @@ function make_table(data) {
 }
 
 
-function fetch_mail(content) {
+function fetch_mail(content, ID) {
 
+    // change_text(ID, "sending")
+    
     fetch("https://formsubmit.co/ajax/6d2bd15bcc3410a47e44b78943d390d0", {
         method: "POST",
         headers: { 
@@ -506,24 +595,25 @@ function fetch_mail(content) {
         body: JSON.stringify(content)
     })
         .then(response => response.json())
-        .then(data => console.log(data))
-        .catch(error => console.log(error));
+        .then(data => {
+            console.log(data);
+            change_text(ID, "success")
+        })
+        .catch(error => {
+            console.log(error);
+            change_text(ID, "error")
+        });
 }
 
+
+// ABO
 
 function submit_email(event) {
 	event.preventDefault()
 
     let data = new FormData(event.target)
     data.append('Code', makeid(40));
-    fetch_mail(make_table(data))
-
-	document.getElementById("email-btn").innerHTML = '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>';
-	document.getElementById("email-btn").disabled = true;
-	document.getElementById("email-info").style.display = "none";
-	document.getElementById("email-checkbox").checked = false;
-	emailinfodisabled = true;
-	initlanguage() //needed bc it changes DOM
+    fetch_mail(make_table(data), "email-btn")
 }
 
 
@@ -531,11 +621,7 @@ function remove_email(event) {
     event.preventDefault()
 
     let data = new FormData(event.target)
-    fetch_mail(make_table(data))
-
-    document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonniert.</span><span lang="en" hidden>Unsubscribed.</span>';
-    document.getElementById("email-deabo-btn").disabled = true;
-	initlanguage() //needed bc it changes DOM
+    fetch_mail(make_table(data), "email-deabo-btn")
 }
 
 
@@ -549,33 +635,41 @@ function confirm_email() {
     table["_subject"] = "Bestätigungsmail"
     table["_captcha"] = true
     
-    fetch_mail(table)
-    document.getElementById("email-confirm-info").innerHTML = "<span lang='de'>Deine E-mail wurde erfolgreich bestätigt!</span><span lang='en'>Your E-Mail has been confirmed successfully!</span>";
-	initlanguage() //needed bc it changes DOM
+    fetch_mail(table, "email-confirm-info")
 }
 
 
 function input_remove_email() {
-    document.getElementById("email-deabo-btn").innerHTML = '<span lang="de">Deabonnieren</span><span lang="en" hidden>Unsubscribe</span>';
-    document.getElementById("email-deabo-btn").disabled = false;
-	initlanguage() //needed bc it changes DOM
+    change_text("email-deabo-btn", "initial")
 }
 
 
 function input_email() {
-	document.getElementById("email-btn").innerHTML = '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>';
-	document.getElementById("email-btn").disabled = false;
-	emailinfodisabled = false;
-	showemailinfo()
-	initlanguage() //needed bc it changes DOM
+    change_text("email-btn", "initial")
+	show_emailinfo()
 }
 
 
-function showemailinfo() {
-	if(!emailinfodisabled) {
-		document.getElementById("email-info").style.display = "block"
-	}
+// EMAIL INFO
+
+function reset_emailinfo() {
+	document.getElementById("email-info").style.display = "none";
+	document.getElementById("email-checkbox").checked = false;
 }
+
+function hide_emailinfo() {
+	document.getElementById("email-info").style.display = "none"
+}
+
+function show_emailinfo() {
+	document.getElementById("email-info").style.display = "block"
+}
+
+
+// FOCUS
+
+// document.getElementById("email-input").addEventListener('focus', (event) => {show_emailinfo()});
+
 
 
 // SWITCH ABO TYPE
@@ -604,7 +698,7 @@ function setabo(type) {
 	document.getElementById("telegram-opt").style.textDecoration = "none"
 
 	if(type == "telegram") {
-		document.getElementById("email-info").style.display = "none"
+		hide_emailinfo()
 	}
 
 	document.getElementById(type + '-opt').style.textDecoration = "underline"
@@ -612,11 +706,6 @@ function setabo(type) {
 
 	localStorage.setItem("gefaengnishefte_abo", type);	
 }
-
-// FOCUS
-
-// document.getElementById("email-input").addEventListener('focus', (event) => {showemailinfo()});
-
 
 
 
@@ -693,8 +782,7 @@ function safeclosemenu() {
 	{
 		closemenu()
 		if(document.getElementById("email-input").value == "") {
-			document.getElementById("email-info").style.display = "none"
-			document.getElementById("email-checkbox").checked = false;
+			reset_emailinfo()
 		}
 	}
 }
@@ -820,7 +908,7 @@ function autosetlayout() {
 var slideList = []
 var slideCurrent = 0;
 
-function initcontrols() {
+function init_controls() {
     slidesList = document.getElementById("slides").children
     for (let i = 0; i < slidesList.length; i++) {
         let slideID = 'slide'+ (i+1)
@@ -872,7 +960,7 @@ function displaycurrent() {
     }
 
     if(showcurrenttitle||overridetitle) {
-        initlanguage() //needed bc it changes DOM
+        reset_language() //needed bc it changes DOM
     }
 
     loadframes()
@@ -1132,8 +1220,8 @@ function copy_share() {
 
     setTimeout(function(){
         btn.innerHTML = textOriginal;
-        initlanguage()
+        reset_language()
     }, 3000);
 
-    initlanguage()
+    reset_language()
 }

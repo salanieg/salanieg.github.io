@@ -48,15 +48,12 @@
             function index_template(slide, i) {return '<span id="index' + i + '" class="indexitem" onclick="displaySlide(' + i + ')"><span lang="de">' + slide.getAttribute("data-title-de") + '</span><span lang="en">' + slide.getAttribute("data-title-en") + '</span></span><br>'}
 
 
-            // LOADING AND LOGO CHANGE
+            // LOADING & LOGO CHANGE
 
-            fetchcomponents(["header", "controls", "databanner"])
-
-            function init() {
-                initcontrols();
-                initcommon();
-                loadframes();
-                document.getElementById("headerlogo").firstChild.innerHTML = "KANON";
+            load_components(["header", "controls", "databanner"])
+            
+            function add_init() {
+                document.getElementById("headerlogo").firstChild.innerHTML = "KANON"
             }
 
         </script>
