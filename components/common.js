@@ -28,19 +28,27 @@ var componentsneeded = 0
 var LOADED = {              // SEQUENCE MATTERS
     controls: {
         init: false,
-        func: init_controls
+        func: init_controls,
+        // tag: "div",
+        // fix: "append"
     },
     databanner: {
         init: false,
-        func: initcookies
+        func: initcookies,
+        // tag: "div",
+        // fix: "append"
     },
     footer: {
         init: false,
-        func: init_footer
+        func: init_footer,
+        // tag: "footer",
+        // fix: "append"
     },
     header: {
         init: false,
-        func: init_header
+        func: init_header,
+        // tag: "header",
+        // fix: "prepend"
     }
 }
 
@@ -71,6 +79,16 @@ function loadElement(ID, HTML) {
         setTimeout(loadElement, 20, ID, HTML);
     }
     else {
+        // let comp = document.createElement(LOADED[ID].tag)
+        // comp.innerHTML = HTML
+
+        // if(LOADED[ID].fix == "prepend") {
+        //     document.body.prepend(comp)
+        // }
+        // else {
+        //     document.body.append(comp)
+        // }
+
         document.getElementById(ID).innerHTML = HTML
         LOADED[ID].init = true;
 
@@ -806,7 +824,7 @@ function hidedropmenus() {
 	for (let i = 0; i < dropmenus.length; i++)
 	{
 		dropmenus[i].style.width = "0vw";
-		dropmenus[i].style.border = "none transparent";
+		// dropmenus[i].style.border = "none transparent";
 	}
 }
 
