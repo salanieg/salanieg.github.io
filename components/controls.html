@@ -7,19 +7,7 @@
 
             #content {
                 display: grid;
-                grid-template-columns: 1fr auto 1fr;
-                grid-template-rows: 1fr auto 1fr;
-                grid-template-areas: 
-                    ". . ."
-                    ". slides ."
-                    ". . .";
                 place-items:center;
-                height: calc(var(--vh, 1vh) * 100 - 245px);
-            }
-
-
-            #slides {
-                grid-area: slides;
             }
 
             #slides > div {
@@ -28,27 +16,19 @@
                 place-content: center;
                 text-align: center;
                 gap:40px 80px;
-                margin-bottom: 40px;
+                /* margin-bottom: 40px; */
             }
 
 
             /* CONTROLS */
 
             #controls {
-                position: absolute;
-                bottom:0;
                 display:flex;
                 align-items: center;
                 justify-content: center;
                 flex-direction: column;
                 width:100vw;
                 padding-bottom: 60px;
-            }
-
-            #controlsWrap {
-                display:flex;
-                place-items: center;
-                flex-direction: column;
             }
 
             #controls-inner {
@@ -162,10 +142,6 @@
 
             @media screen and (max-height: 800px) {
 
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 215px);
-                }
-
                 #controls {
                     padding-bottom:30px;
                 }
@@ -173,22 +149,26 @@
 
             @media screen and (max-height: 550px) {
 
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 195px);
-                }
-
                 #slideCurrentTitle {
                     padding-top:10px;
                     padding-bottom:10px;
                 }
             }
 
+            @media screen and (max-width: 300px) {
+
+                #controls-inner {
+                    flex-direction: column;
+                }
+            }
+            
+
         </style>
     </head>
 
     <body>
 
-        <div id="controlsWrap">
+        <div id="controls-inner">
             <div id="slideCurrentTitle"></div>
 
 

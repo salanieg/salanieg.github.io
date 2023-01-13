@@ -48,26 +48,19 @@
             /* FOOTER */
 
             #footer {
-                display: flex;
-                justify-content: flex-end;
-                align-items: center;
+                width:100vw;
                 color:white;
-                position: absolute;
-                height:fit-content;
-                bottom:0;
-                left:0;
-                width:100%;
+                background-color: #980000;
                 z-index:8;
             }
 
-            .footercontent {
+            #footer-inner {
+                white-space: nowrap;
                 display: flex;
                 justify-content: flex-end;
-                align-items: flex-start;
-                color:white;
+                align-items: center;
                 gap:10px;
                 padding: 10px 20px;
-                white-space: nowrap;
             }
 
             .footerelement {
@@ -82,14 +75,14 @@
                 color: black !important;
             }
 
-            .inlinefooter {
+            /* .inlinefooter {
                 display: none;
                 margin-bottom: 100px;
                 width:100%;
                 padding: 0 !important;
                 font-size: 9pt;
                 width:120px;
-            }
+            } */
 
 
 
@@ -145,19 +138,13 @@
 
             @media screen and (max-width: 1400px) {
 
-                .footercontent {
-                    background-color: #980000;
-                    width:100%;
+                #footer-inner {
                     justify-content: center;
                     gap:10px 15px;
                     padding: 10px 30px;
                 }
 
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 125px); /* chack also in index */
-                }
-
-                /* .inlinefooter {
+                /* .inlinefootercontent {
                     display: flex;
                     flex-wrap: wrap;
                 } */
@@ -197,19 +184,14 @@
 
             @media screen and (max-width: 450px) {
 
-                #footer .footercontent {
+                #footer-inner {
                     gap:5px 10px;
-                    padding: 5px 0;
+                    padding: 5px 0px;
                 }
-                
 
                 .footerelement {
                     font-size: 9pt;
                     width:120px;
-                }
-
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 111px); /* check also in index */
                 }
 
                 #to-top {bottom:95px;}
@@ -241,16 +223,14 @@
 
     <body>
 
-        <div id="footer">
-            <button id="to-top" onclick="verticalup()"><div id="to-top-label">‹</div></button>
-            <button id="to-bottom" onclick="verticaldown()"><div id="to-top-label">›</div></button>
-
-            <div class="footercontent">
-                <button class="footerelement" id="teilen" onclick="opensharewindow()"><span lang="de">ISSUE teilen</span><span lang="en" hidden>Share ISSUE</span></button>
-                <a lang="en" hidden href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download class="footerelementwrap"><button class="footerelement">Download PDF</button></a>
-                <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download class="footerelementwrap"><button class="footerelement">PDF herunterladen</button></a>
-            </div>
+        <div id="footer-inner">
+            <button class="footerelement" id="teilen" onclick="opensharewindow()"><span lang="de">ISSUE teilen</span><span lang="en" hidden>Share ISSUE</span></button>
+            <a lang="en" hidden href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download class="footerelementwrap"><button class="footerelement">Download PDF</button></a>
+            <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download class="footerelementwrap"><button class="footerelement">PDF herunterladen</button></a>
         </div>
+
+        <button id="to-top" onclick="verticalup()"><div id="to-top-label">‹</div></button>
+        <button id="to-bottom" onclick="verticaldown()"><div id="to-top-label">›</div></button>
 
         <div id="sharewindow">
             <div id="closesharewindow" onclick="closesharewindow()">X</div>

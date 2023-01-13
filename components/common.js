@@ -142,13 +142,13 @@ function init_footer() {
 
 // HEIGHTFIX
 
-let vh = window.innerHeight * 0.01;
-document.documentElement.style.setProperty('--vh', `${vh}px`);
+// let vh = window.innerHeight * 0.01;
+// document.documentElement.style.setProperty('--vh', `${vh}px`);
 
-window.addEventListener('resize', () => {
-	let vh = window.innerHeight * 0.01;
-	document.documentElement.style.setProperty('--vh', `${vh}px`);
-});
+// window.addEventListener('resize', () => {
+// 	let vh = window.innerHeight * 0.01;
+// 	document.documentElement.style.setProperty('--vh', `${vh}px`);
+// });
 
 
 // SCROLLBAR FOR INDEX
@@ -158,11 +158,11 @@ function init_scrollbar() {
         reset_scrollbar('--scrollbar-color', '--default-scrollbar-color', "scrollbar", 3000)
     });
 
-    if(!document.getElementById("slideIndex")) {return}
-
-    document.getElementById("slideIndex").addEventListener("scroll", () => {
-        reset_scrollbar('--scrollbar-color-index', '--default-scrollbar-color-index', "scrollbar_index", 10000)
-    })
+    if(document.getElementById("slideIndex")) {
+        document.getElementById("slideIndex").addEventListener("scroll", () => {
+            reset_scrollbar('--scrollbar-color-index', '--default-scrollbar-color-index', "scrollbar_index", 10000)
+        })
+    }
 }
 
 
@@ -236,7 +236,7 @@ function makeid(length) {
 	var result           = '';
 	var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 	var charactersLength = characters.length;
-	for ( var i = 0; i < length; i++ ) {
+	for (let i = 0; i < length; i++ ) {
 		result += characters.charAt(Math.floor(Math.random() * charactersLength));
 	}
 
@@ -400,7 +400,7 @@ function clearcookies() {
 
     var cookies = document.cookie.split(";");
 
-    for (var i = 0; i < cookies.length; i++) {
+    for (let i = 0; i < cookies.length; i++) {
         var cookie = cookies[i];
         var eqPos = cookie.indexOf("=");
         var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
@@ -857,7 +857,7 @@ function inithighlights() {
 
     for (let [URLsnippet, IDs] of Object.entries(highlights)) {
         if (window_url == ("https://www.GEFAENGNISHEFTE.org" + URLsnippet).toLowerCase()) {
-            for (var i = 0; i < IDs.length; i++ ) {
+            for (let i = 0; i < IDs.length; i++ ) {
                 console.log(URLsnippet + " highlight -> " + IDs[i])
                 document.getElementById(IDs[i]).style.fontWeight = "700";
                 return
@@ -878,7 +878,7 @@ function verticalup() {
 
     if(layoutCurrent > 0) {
         layoutCurrent = layoutCurrent - 1
-        document.getElementById(LAYOUT_LIST[layoutCurrent]).scrollIntoView()
+        document.getElementById(LAYOUT_LIST[layoutCurrent]).scrollIntoView({behavior: 'smooth'})
         limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     }
 }
@@ -887,7 +887,7 @@ function verticaldown() {
 
     if(layoutCurrent < LAYOUT_LIST.length - 1) {
         layoutCurrent = layoutCurrent + 1
-        document.getElementById(LAYOUT_LIST[layoutCurrent]).scrollIntoView()
+        document.getElementById(LAYOUT_LIST[layoutCurrent]).scrollIntoView({behavior: 'smooth'})
         limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     }
 }

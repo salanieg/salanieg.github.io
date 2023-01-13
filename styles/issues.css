@@ -1,10 +1,12 @@
 /* MAIN */
 
-#content {
-	height: calc(var(--vh, 1vh) * 100 - 77px);
-	padding-left: 60px;
-	padding-right: 60px;
-	padding-top: 0px;
+body {
+	grid-template-rows: auto 1fr auto;
+	grid-template-areas: "header" "main" "footer";
+}
+
+#content-inner {
+	padding: 0px 60px 20px 60px;
 }
 
 #inhaltsverzeichnis, #coverwrap, .artikel, #ccinfo {
@@ -222,9 +224,8 @@
 }
 
 @media screen and (max-width: 800px) {
-	#content {
-		padding-left:12px;
-		padding-right:12px;
+	#content-inner {
+		padding: 0px 12px;
 	}
 	
 	#inhaltsverzeichnis, #coverwrap, .artikel, #ccinfo {

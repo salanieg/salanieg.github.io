@@ -5,13 +5,14 @@
 
 			/* GENERAL */
 
-			#header-wrap {
+			#header-inner {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
 				padding:0px;
 				margin:0px;
 				font-size: 13pt;
+				height: 56px;
 			}
 
 			#navigation {
@@ -91,7 +92,7 @@
 				display: none;
 			}
 
-			#footer-wrap {
+			#info-general {
 				font-size: 11pt;
 				line-height: 1.7;
 				margin-bottom:40px;
@@ -229,7 +230,7 @@
 
 			@media screen and (width < 800px), screen and (max-width: 800px) {
 
-				.hmenu, #etc {
+				.menu-horizontal, #etc {
 					display: none;
 				}
 
@@ -251,7 +252,7 @@
 	</head>
 
 	<body>
-		<div id="header-wrap">
+		<div id="header-inner">
 
 			<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
 
@@ -259,7 +260,7 @@
 
 				<!-- ISSUES -->
 
-				<div class="hmenu" onmouseenter="openmenu('dropmenui', 'dropanchori')">
+				<div class="menu-horizontal" onmouseenter="openmenu('dropmenui', 'dropanchori')">
 					<span class="dropanchor" id="dropanchori">
 						<a href="https://www.GEFAENGNISHEFTE.org">ISSUES</a>
 					</span>
@@ -276,7 +277,7 @@
 
 				<!-- KANON -->
 
-				<div class="hmenu" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
+				<div class="menu-horizontal" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
 					<span class="dropanchor" id="dropanchork">
 						<a href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
 					</span>
@@ -320,7 +321,7 @@
 						<div class="menu-inside">
 						<div class="info" id="infom">
 							
-							<div id="footer-wrap"class="info-inner">
+							<div class="info-inner" id="info-general" >
 								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en" hidden>Support</span><span class="long">: paypal.me/GEFAENGNISHEFTE</span><br></a>
 								<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en" hidden>Contact</span><span class="long">: GEFAENGNISHEFTE@riseup.net</span><br></a>
 								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en" hidden>Legal Notice</span><br></a>

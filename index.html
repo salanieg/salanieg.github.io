@@ -175,22 +175,15 @@
 
             #content {
                 display: grid !important;
-                grid-template-columns: 1fr auto 1fr !important;
-                grid-template-rows: 20px 1fr auto 1fr 1fr 1fr 20px  !important;
-                grid-template-areas: 
-                    ". . ."
-                    ". . ."
-                    ". issue-wrap ."
-                    ". . ."
-                    ". . ."
-                    ". . ."
-                    ". . ."  !important;
-                place-items: center;
-                overflow-y: hidden;
-                height: calc(var(--vh, 1vh) * 100 - 98px) !important;;
+                grid-template-columns: auto !important;
+                grid-template-rows: auto!important;
+                grid-template-areas:
+                    "issue-wrap" !important;
+                place-items: center !important
             }
 
             #controls {
+                display: grid;
                 display:none !important;
             }
 
@@ -346,8 +339,9 @@
                     min-width: unset;
                 }
 
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 270px) !important;
+                body {
+                    grid-template-rows: auto minmax(0, 1fr) auto;
+                    grid-template-areas: "header" "main" "controls";
                 }
             }
 
@@ -396,41 +390,13 @@
             }
 
 
-            /* LINKED TO CONTROL RESIZING */
-
-            @media screen and (width < 800px) and (max-height: 800px), screen and (max-width: 800px) and (max-height: 800px) {
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 240px) !important;
-                }
-            }
-
-            @media screen and (width < 800px) and (max-height: 550px), screen and (max-width: 800px) and (max-height: 550px) {
-                #content {
-                    height: calc(var(--vh, 1vh) * 100 - 220px) !important;
-                }
-            }
-
-            @media screen and (max-height: 550px) {
-                .cover-image, #laden {
-                    height: 45vh;
-                }
-
-                #content {
-                    grid-template-columns: 1fr auto 1fr !important;
-                    grid-template-rows: auto  !important;
-                    grid-template-areas: 
-                        ". issue-wrap ."  !important;
-                }
-            }
-
-
         </style>
     </head>
 
     <body>
         <header id="header"></header>
 
-        <main id="content">
+        <main id="content"><div id="content-inner">
             <div id="issue-wrap">
                 <div id="cover-wrap">
                     <div id="slides"></div>
@@ -439,7 +405,7 @@
 
                 </div>
             </div>
-        </main>
+        </div></main>
         
         <div id="controls"></div>
         <div id="databanner"></div>

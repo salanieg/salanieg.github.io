@@ -53,12 +53,137 @@
             load_components(["header", "controls", "databanner"])
             
             function add_init() {
+                init_timelines()
                 document.getElementById("headerlogo").firstChild.innerHTML = "KANON"
             }
 
         </script>
 
+        <script>
+
+            var TIMELINES_INIT = false
+            var current_events = []
+
+            function init_timelines() {
+                let timelines = document.getElementsByClassName("timeline")
+
+                for (let i = 0; i < timelines.length; i++)
+                {
+                    let line = timelines[i].parentElement.getElementsByClassName("line")[0]
+                    let events = timelines[i].getElementsByClassName("event")
+
+                    let line_height = document.getElementById("content").offsetHeight - 40
+                    let line_offset = document.getElementById("content").offsetTop + 20
+
+                    line.style.height = line_height + "px"
+                    line.style.top = line_offset + "px"
+                    
+
+                    
+                    let start_date = 5000
+                    let end_date = -5000
+
+                    for (let k = 0; k < events.length; k++)
+                    {
+                        let date = events[k].getAttribute('data-date')
+
+                        if(date < start_date) {
+                            start_date = date
+                        }
+
+                        if(date >  end_date) {
+                            end_date = date
+                        }
+                    }
+
+
+
+                    let event_heights = []
+
+                    for (let k = 0; k < events.length; k++)
+                    {
+                        
+                        let event_dot = line.getElementsByClassName("event-dot")[k]
+                        let date = events[k].getAttribute('data-date')
+
+
+                        if(!TIMELINES_INIT) {
+                            event_dot = document.createElement("div")
+                            event_dot.className = "event-dot"
+                            event_dot.innerHTML = date
+                            event_dot.addEventListener("mouseover", () => {select_event(k, i)})
+                            
+                            line.appendChild(event_dot)
+                            current_events[i] = 0
+                            select_event(current_events[i], i)
+                        }
+
+                        
+                        let event_height = line_offset + ((date - start_date) / (end_date - start_date)) * line_height + "px"
+                        let prox_limit = 50
+                        
+                        if(window.innerHeight < 900 || window.innerWidth < 600) {
+                            prox_limit = 15
+                        }
+
+
+                        for (let l = 0; l < event_heights.length; l++)
+                        { 
+
+                            let comp_old = parseInt(event_heights[l], 10)
+                            let comp_new = parseInt(event_height, 10)
+
+                            if(comp_new >= comp_old && comp_new <= (comp_old + prox_limit)) {
+                                
+                                if((comp_new + 50) >= line_height) {
+                                    let event_old = line.getElementsByClassName("event-dot")[l]
+                                    event_old.style.top = line_offset + parseInt(event_old.style.top, 10) - prox_limit + "px"
+                                }
+                                else {
+                                    event_height = comp_new + prox_limit + "px"
+                                }
+                            }
+                            
+                        }
+
+                        event_dot.style.top = event_height
+                        event_heights[k] = event_height
+                    }
+                }
+
+                TIMELINES_INIT = true
+                window.addEventListener("resize", init_timelines)
+            }
+
+
+            function select_event(selection, timeline_index) {
+                let timeline = document.getElementsByClassName("timeline")[timeline_index]
+                let line = timeline.parentElement.getElementsByClassName("line")[0]
+
+                let current_event = current_events[timeline_index]
+                let events = timeline.getElementsByClassName("event")
+                let event_dots = line.getElementsByClassName("event-dot")
+
+                event_dots[current_event].style.backgroundColor = "black";
+                events[current_event].style.display = "none";
+                events[current_event].gridArea = "";
+                
+                event_dots[selection].style.backgroundColor = "#980000";
+                events[selection].style.display = "block";
+                events[selection].gridArea = "current_event";
+
+                current_events[timeline_index] = selection
+            }
+
+        </script>
+
         <style>
+
+            
+            body {
+                grid-template-rows: auto 1fr auto;
+                grid-template-areas: "header" "main" "controls";
+            }
 
             #slides > * {
                 display: flex;
@@ -130,7 +255,7 @@
             
             @media screen and (max-width: 600px) {
                 .slideGrow {
-                    grid-template-columns: repeat(auto-fit, minmax(100%, 1fr));
+                    grid-template-columns: repeat(auto-fit, minmax(80vh, 1fr));
                 }
 
                 .slideGrow.extreme * {width:80vw;}
@@ -166,16 +291,132 @@
             }
 
             /* #slideCurrentTitle {display: none !important;} */
+
+            .line {
+                position:fixed;
+                background-color: black;
+                border: 2px outset grey;
+                left:40px;
+            }
+
+            .event {
+                margin-left: 40px;
+                display: none;
+            }
+
+            .event-title {
+                font-size: var(--font-large);
+                margin-bottom: 60px;
+                font-style:italic;
+            }
+
+            .event-dot {
+                cursor: pointer;
+                position: fixed;
+                padding: 2px 7px;
+                font-size: var(--font-medium);
+                left:13px;
+                color: white;
+                border: 2px outset grey;
+                background-color: black;
+            }
+
             
+            @media screen and (max-height: 900px), screen and (max-width: 600px){
+
+                .event {
+                    margin-left: 20px;
+                }
+
+                .event-dot {
+                    font-size: 0pt;
+                    left: 36px;
+                    padding: 0px;
+                    height: 8px;
+                    width: 8px;
+                }
+            }
+
         </style>
     </head>
     
     <body>
         <header id="header"></header>
 
-        <main id="content">
+        <main id="content"><div id="content-inner">
 
             <div id="slides">
+
+                <div data-title-de="Revoulutionen" data-title-en="Revoulutions">
+                    <div class="line"></div>
+
+                    <div class="timeline extreme">
+
+                        <div class="event" data-date="1789">
+                            <div class="event-title"><span lang="de">Französische Revolution</span><span lang="en" hidden>French Revolution</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+                        
+                        <div class="event" data-date="1848">
+                            <div class="event-title"><span lang="de">Revolutionen von 1848</span><span lang="en" hidden>Revolutions of 1848</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions--> 
+       
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1871">
+                            <div class="event-title"><span lang="de">Pariser Kommune</span><span lang="en" hidden>Paris Commune</span></div>
+                            <span class="slideBody"><span lang="de">Vorgeschichte</span><span lang="en" hidden>Prerequisites</span></span>
+                            <div class="slideGrid">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="AdGhGX6z8BA" sandbox></iframe><!--Why did the French Commune Fail?-->
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="xVISzFmBiPU" sandbox></iframe><!--How Prussia Ended The French Empire: Franco-Prussian War | Animated History-->                       
+                            </div>
+                            <div class="medium slideText">
+                                <span class="slideTitle"><span lang="de">Text</span><span lang="en" hidden>Text</span></span>
+                                <span class="slideBody">
+                                    <a href="https://www.marxists.org/archive/marx/works/1871/civil-war-france/ch05.html">Karl Marx: The Civil War in France<br>The Paris Commune</a>
+                                </span>
+                            </div> 
+                        </div>
+
+                        <div class="event" data-date="1917">
+                            <div class="event-title"><span lang="de">Russische Revolution</span><span lang="en" hidden>Soviet Revolution</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1918">
+                            <div class="event-title"><span lang="de"></span>Deutsche Revolution<span lang="en" hidden>German Revolution</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1954">
+                            <div class="event-title"><span lang="de">Chinesische Revolution</span><span lang="en" hidden>Chinese Revolution</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1989">
+                            <div class="event-title"><span lang="de">Fall der Sovietunion</span><span lang="en" hidden>Collapse of the Soviet Union</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div data-title-de="history of the entire world, i guess" data-title-en="history of the entire world, i guess">
                     <iframe class="large" src="about:blank" data-source="youtube" data-id="xuCn8ux2gbs" sandbox></iframe><!--history of the entire world, i guess-->
@@ -206,13 +447,6 @@
 
                 <div data-title-de="HK Protest Footage" data-title-en="HK Protest Footage">
                     <iframe class="large" src="about:blank" data-source="youtube" data-id="RErdSr0iAcs" sandbox></iframe><!--"And I think to myself, what a wonderful world."-->
-                </div>
-
-                <div data-title-de="Revoulutionen" data-title-en="Revoulutions">
-                    <div class="slideColumn">
-                        <iframe class="medium" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                        <iframe class="medium" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->
-                    </div>
                 </div>
 
                 <div data-title-de="Musik/Video" data-title-en="Music/Video">
@@ -336,9 +570,9 @@
             <!-- <iframe class="medium" src="about:blank" data-source="youtube" data-id="-yrRhmRdQds" data-list="PLhAMGiT1MTPABwHxfRPa5ewEHm9nbpD_Q" sandbox></iframe>Marx & Engels - Stationen ihres Lebens
             <iframe class="medium" src="about:blank" data-source="youtube" data-id="6O7_YswJOXY" sandbox loading="lazy" frameborder=0>https://players.brightcove.net/6057277737001/AgPwICX30_default/slideIndex.html?videoId=6165059245001</iframe>KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD -->
 
-            <div id="controls"></div>
-        </main>
+        </div></main>
 
+        <div id="controls"></div>
         <div id="databanner"></div>
     </body>
 </html>
