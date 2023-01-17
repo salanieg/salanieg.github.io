@@ -29,15 +29,14 @@ body {
 	max-height: 100vh;
 	max-height: calc(var(--vh, 1vh) * 100);
 
+	padding:0px;
 	margin:0px;
 	background-color: var(--content-color);
 
 	display: grid;
 	grid-template-rows: auto 1fr;
 	grid-template-columns: auto;
-	grid-template-areas: 
-		"header"
-		"main";
+	grid-template-areas: "header" "main";
 	place-items: center;
 }
 
@@ -46,11 +45,8 @@ body {
 	background-color: var(--content-color);
 	overflow-y: auto;
 	height:100%;
-	scrollbar-gutter: stable both-edges;
-}
-
-#content-inner {
 	padding:20px;
+	scrollbar-gutter: stable both-edges;
 }
 
 
@@ -201,6 +197,10 @@ small {
 	margin:0px;
 }
 
+cite {
+	font-style: normal;
+}
+
 
 /* SCROLLBAR */
 
@@ -314,9 +314,9 @@ button[disabled]{
 }
 
 .abo>span {
-	display:block;
-	overflow:hidden;
-	padding-right:48px;
+	/* display:block;
+	overflow:hidden; */
+	padding-right: 5px;
 }
 
 .abo input {
@@ -349,8 +349,8 @@ button[disabled]{
 		padding-left: 10px;
 	}
 
-	.abo span {
-		padding-right:34px;
+	.abo>span {
+		padding-right: 0px;
 	}
 }
 

@@ -1,13 +1,13 @@
 :root {
 	--theme:white;
 	--default-scrollbar-color: white;
-	--header-color: #980000;
+	--header-color: #890000;
 	--header-color-contrast: white;
 	--header-color-text: white;
-	--content-color: #980000;
+	--content-color: #890000;
 	--content-color-contrast-text: white;
-	--content-color-contrast: #980000;
+	--content-color-contrast: #890000;
 	--content-color-text: black;
-	--content-color-link-hover: #980000;
+	--content-color-link-hover: #890000;
 	--header-divider:none;
 }

@@ -5,13 +5,15 @@ body {
 	grid-template-areas: "header" "main" "footer";
 }
 
-#content-inner {
+#content {
 	padding: 0px 60px 20px 60px;
 }
 
 #inhaltsverzeichnis, #coverwrap, .artikel, #ccinfo {
 	padding:20px;
 }
+
+:root { --illustration-height: 0px;}
 
 
 /* COVER */
@@ -138,14 +140,10 @@ body {
 
 /* CC INFO */
 
-#info-wrapper-bottom {
-	display: flex;
-	width: 100%;
-	padding-top: 140px;
-	padding-bottom: 120px;
-}
-
 #ccinfo {
+	width: 100%;
+	margin-top: 140px;
+	margin-bottom: 120px;
 	display:flex;
 	flex-wrap: wrap;
 	justify-content: space-between;
@@ -182,17 +180,13 @@ body {
 		height:unset !important;
 	}
 
-	#info-wrapper-bottom {
-		justify-content: center;
-	}
-
-	.artikel {
+	.artikel, #ccinfo {
 		margin-left: auto;
 		margin-right: auto;
 	}
 
 	#info-wrapper {
-		background-color: #980000;
+		background-color: #890000;
 		border: unset;
 		padding:0px;
 		padding-top: 20px;
@@ -220,7 +214,7 @@ body {
 }
 
 @media screen and (max-width: 800px) {
-	#content-inner {
+	#content {
 		padding: 0px 12px;
 	}
 	
@@ -250,7 +244,7 @@ body {
 .footnote > .note {
 	display: none;
 	padding: 10px;
-	background: #980000;
+	background: #890000;
 
 	position: absolute;
 	bottom: 30px;
@@ -275,11 +269,11 @@ body {
 
 
 .footnote:hover {
-	color: #980000;
+	color: #890000;
 }
 
 .footnote:focus {
-	color: #980000;
+	color: #890000;
 }
 
 .footnote .note {
@@ -287,17 +281,17 @@ body {
 }
 
 .footnote *::selection {
-	color: #980000 !important;
+	color: #890000 !important;
 	background: white !important;
 }
 
 .footnote *::-webkit-selection {
-	color: #980000 !important;
+	color: #890000 !important;
 	background: white !important;
 }
 
 .footnote *::-moz-selection {
-	color: #980000 !important;
+	color: #890000 !important;
 	background: white !important;
 }
 

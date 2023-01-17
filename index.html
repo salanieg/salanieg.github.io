@@ -31,13 +31,13 @@
         <link rel="icon" type="image/png" sizes="32x32" href="images/favicon/red/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="images/favicon/red/favicon-16x16.png">
         <link rel="manifest" href="images/favicon/red/site.webmanifest">
-        <link rel="mask-icon" href="images/favicon/red/safari-pinned-tab.svg" color="#980000">
+        <link rel="mask-icon" href="images/favicon/red/safari-pinned-tab.svg" color="#890000">
         <link rel="shortcut icon" href="images/favicon/red/favicon.ico">
         <meta name="apple-mobile-web-app-title" content="GEF&Auml;NGNISHEFTE">
         <meta name="application-name" content="GEF&Auml;NGNISHEFTE">
         <meta name="msapplication-TileColor" content="#000000">
         <meta name="msapplication-config" content="images/favicon/red/browserconfig.xml">
-        <meta name="theme-color" content="#980000">
+        <meta name="theme-color" content="#890000">
         
         <link rel="stylesheet" href="styles/fonts.css">
         <link rel="stylesheet" href="styles/general.css">
@@ -173,25 +173,19 @@
 
         <style>
 
-            #content {
-                display: grid !important;
-                grid-template-columns: auto !important;
-                grid-template-rows: auto!important;
-                grid-template-areas:
-                    "issue-wrap" !important;
-                place-items: center !important
-            }
-
             #controls {
                 display: grid;
                 display:none !important;
+            }
+
+            #cover-wrap {
+                margin-bottom: 20vw;
             }
 
 
             /* WRAPS */
 
             #issue-wrap {
-                grid-area: issue-wrap;
 				display: flex;
 				justify-content: center;
 				align-items: flex-start;
@@ -343,6 +337,10 @@
                     grid-template-rows: auto minmax(0, 1fr) auto;
                     grid-template-areas: "header" "main" "controls";
                 }
+
+                #cover-wrap {
+                    margin-bottom: 0;
+                }
             }
 
 
@@ -396,7 +394,7 @@
     <body>
         <header id="header"></header>
 
-        <main id="content"><div id="content-inner">
+        <main id="content">
             <div id="issue-wrap">
                 <div id="cover-wrap">
                     <div id="slides"></div>
@@ -405,7 +403,7 @@
 
                 </div>
             </div>
-        </div></main>
+        </main>
         
         <div id="controls"></div>
         <div id="databanner"></div>

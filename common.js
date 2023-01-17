@@ -1098,7 +1098,6 @@ function leavecontrols() {
 
 
 function initfootnotes() {
-    console.log("initfootnotes")
     for (let i = 0; i < FOOTNOTE_LIST.length; i++) {
 
         let footnote = document.getElementById("f"+ (i+1))
@@ -1157,7 +1156,7 @@ function selectfootnote(event) {
 
     footnotefocused = event.target;
 
-    footnotefocused.style.color = "#980000";
+    footnotefocused.style.color = "#890000";
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
     load_frame(footnotefocused.getElementsByTagName("iframe"), 0, slideCurrent)

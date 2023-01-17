@@ -9,13 +9,13 @@
         <link rel="icon" type="image/png" sizes="32x32" href="images/favicon/red/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="images/favicon/red/favicon-16x16.png">
         <link rel="manifest" href="images/favicon/red/site.webmanifest">
-        <link rel="mask-icon" href="images/favicon/red/safari-pinned-tab.svg" color="#980000">
+        <link rel="mask-icon" href="images/favicon/red/safari-pinned-tab.svg" color="#890000">
         <link rel="shortcut icon" href="images/favicon/red/favicon.ico">
         <meta name="apple-mobile-web-app-title" content="GEF&Auml;NGNISHEFTE">
         <meta name="application-name" content="GEF&Auml;NGNISHEFTE">
         <meta name="msapplication-TileColor" content="#000000">
         <meta name="msapplication-config" content="images/favicon/red/browserconfig.xml">
-        <meta name="theme-color" content="#980000">
+        <meta name="theme-color" content="#890000">
         
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/fonts.css">
         <link rel="stylesheet" href="https://www.gefaengnishefte.org/styles/general.css">
@@ -24,55 +24,34 @@
         <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Regular.woff2">
         <link rel="preload" as="font" crossorigin type="font/woff2"initlisteners href="https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Bold.woff2">
         <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Italic.woff2">
-        
-        <link rel="preload" as="fetch" crossorigin href="components/header.html">
-
-        <script type="text/javascript" src="common.js"></script>
-        <script>
-
-            // LOADING
-
-            load_components(["header"])
-
-        
-        </script>
 
         <style>
             /* BODY */
 
             #content {
                 display: grid;
-                grid-template-columns: 1fr auto 1fr 1fr;
-                grid-template-rows: 20px auto 20px;
-                grid-template-areas: 
-                    ". . . ."
-                    ". message404 . ."
-                    ". . . .";
-            }
-
-            #message404 {
-                grid-area: message404;
-                margin-top: 80px;
+                justify-items: center;
+                padding-top: 15vh;
             }
 
             #title404 {
                 margin-bottom: 60px;
             }
 
-            #header {
-                display: none;
-            }
-
         </style>
     </head>
 
     <body>
-        <header id="header"></header>
-        <main id="content"><div id="content-inner">
-            <div id="message404">
+        <main id="content">
+            <div>
                 <h1 id="title404">404</h1>
-                <p><span lang="de">Unter dieser URL existiert keine Seite.<br>Bitte schau nach, ob in der URL ein Fehler ist.<br><a href="https://www.gefaengnishefte.org" target="_self" style="text-decoration: underline;" >Zurück zur Startseite</a></span><span lang="en" hidden>There is no page under this URL.<br>Please check the URL for typos.<br><a href="https://www.gefaengnishefte.org" target="_self" style="text-decoration: underline;" >Return to main page</a></span></p>
+                <p>
+                    <span lang="de">Unter dieser URL existiert keine Seite.<br>Bitte schau nach, ob in der URL ein Fehler ist.</span>
+                    <span lang="en" hidden>There is no page under this URL.<br>Please check the URL for typos.</span>
+                    <br>
+                    <a href="https://www.gefaengnishefte.org" target="_self" style="text-decoration: underline;"><span lang="de">Zurück zur Startseite</span><span lang="en">Return to main page</span></a>
+                </p>
             </div>
-        </div></main>
+        </main>
     </body>
 </html>

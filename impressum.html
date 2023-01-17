@@ -18,13 +18,13 @@
         <link rel="icon" type="image/png" sizes="32x32" href="images/favicon/red/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="images/favicon/red/favicon-16x16.png">
         <link rel="manifest" href="images/favicon/red/site.webmanifest">
-        <link rel="mask-icon" href="images/favicon/red/safari-pinned-tab.svg" color="#980000">
+        <link rel="mask-icon" href="images/favicon/red/safari-pinned-tab.svg" color="#890000">
         <link rel="shortcut icon" href="images/favicon/red/favicon.ico">
         <meta name="apple-mobile-web-app-title" content="GEF&Auml;NGNISHEFTE">
         <meta name="application-name" content="GEF&Auml;NGNISHEFTE">
         <meta name="msapplication-TileColor" content="#000000">
         <meta name="msapplication-config" content="images/favicon/red/browserconfig.xml">
-        <meta name="theme-color" content="#980000">
+        <meta name="theme-color" content="#890000">
         
         <link rel="stylesheet" href="styles/fonts.css">
         <link rel="stylesheet" href="styles/general.css">
@@ -48,26 +48,21 @@
         </script>
 
         <style>
+
             #content {
                 display: grid;
-                grid-template-columns: 1fr auto 1fr;
-                grid-template-rows: 1fr auto 1fr;
-                grid-template-areas:
-                    ". . . "
-                    ". impressum-wrap ."
-                    ". . .";
-                place-items:center;
+                place-items: center;
             }
 
             #impressum-wrap {
-                grid-area: impressum-wrap;
+                max-width:1100px;
+                min-width:300px;
+                margin-bottom: 100px;
+
                 display:flex;
                 flex-wrap: wrap;
                 justify-content:center;
                 column-gap:100px;
-                max-width:1100px;
-                min-width:300px;
-                margin-bottom: 50px;
             }
 
             #impressum-wrap div {
@@ -102,7 +97,7 @@
 
         <header id="header"></header>
 
-        <main id="content"><div id="content-inner">
+        <main id="content">
             <div id="impressum-wrap">
                 <div>
                     <span lang="de"><h2>Impressum</h2><br><p>Niklas Mitländer<br>Lerchenfelder Straße 135-137/17<br>1070 Wien<br>Österreich<br><br><br>Telefon		+4915737581265<br>E-Mail		<a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></p></span><span lang="en" hidden><h2>Imprint</h2><br><p>Niklas Mitländer<br>Lerchenfelder Straße 135-137/17<br>1070 Vienna<br>Austria<br><br><br>Phone		+4915737581265<br>E-Mail		<a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></p></span>
@@ -125,7 +120,7 @@
                     <span lang="de"><h2>Finanzinformation</h2><br><p>Diese Hefte sind nicht-kommerziell und ausschließlich für private Zwecke bestimmt. Sämtliche Geldschenkungen werden ausschließlich zur Deckung der entstandenen und zukünftigen Kosten genutzt. Wir haben keinerlei Gewinn- oder Einkunftsabsichten. Wir verstehen uns daher steuerrechtlich als Liebhaberei.</p></span><span lang="en" hidden><h2>Financial Information</h2><br><p>These booklets are non-commercial and intended exclusively for private use. All monetary donations are used exclusively to cover the costs incurred and future costs. We have no profit or income intentions. We therefore see ourselves as a "Liebhaberei" in terms of tax law.</p></span>
                 </div>
             </div>
-        </div></main>
+        </main>
 
         <div id="databanner"></div>
     </body>

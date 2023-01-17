@@ -2,12 +2,12 @@
   --theme:black;
   --default-scrollbar-color: white;
   --header-color: black;
-  --header-color-contrast: #980000;
+  --header-color-contrast: #890000;
   --header-color-text: white;
   --content-color: black;
   --content-color-contrast-text: white;
-  --content-color-contrast: #980000;
+  --content-color-contrast: #890000;
   --content-color-text: white;
-  --content-color-link-hover: #980000;
+  --content-color-link-hover: #890000;
   --header-divider:none;
 }
