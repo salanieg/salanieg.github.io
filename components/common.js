@@ -894,15 +894,18 @@ function verticaldown() {
 
     if(layoutCurrent < LAYOUT_LIST.length - 1) {
         layoutCurrent = layoutCurrent + 1
-        moothscroll(LAYOUT_LIST[layoutCurrent])
+        smooth_scroll(LAYOUT_LIST[layoutCurrent])
         limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     }
 }
 
 
 function autosetlayout() {
+	
+	
     let scrollheight = document.getElementById("content").scrollTop
     let offsetheight = document.getElementById("content").offsetHeight
+let scrollmargin = 150
 
     layoutCurrent = 0;
 
@@ -910,13 +913,10 @@ function autosetlayout() {
 
         let offsetTop = document.getElementById(LAYOUT_LIST[i]).offsetTop
 
-        if(scrollheight >= offsetTop - 150){
+        if(scrollheight >= offsetTop - scrollmargin || scrollheight >= offsetTop - offsetheight && i == LAYOUT_LIST.length - 1){
             layoutCurrent = i;
         }
-        else if (scrollheight >= offsetTop - offsetheight && i == LAYOUT_LIST.length - 1) {
-            layoutCurrent = i;
-            // console.log(scrollheight+"/"+ (offsetTop - offsetheight) +" ("+ offsetTop +")")
-        }
+
     }
 
     limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
