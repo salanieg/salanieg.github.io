@@ -106,25 +106,16 @@ body {
 
 /* INHALT */
 
-#inhalt {
-	text-align: justify;
-	line-height: 2;
-}
-
-.artikelWrap {
-	width: 100%;
-	display:flex;
-	gap:100px;
-	justify-content: space-between;
-	align-items: flex-start;
-	flex-direction: row;
-	flex-wrap: wrap;
-	padding-bottom: 120px;
-}
-
 .artikel {
 	scroll-margin-top:50px;
-	width:700px;
+
+	text-align: justify;
+	line-height: 2;
+	
+	max-width: 700px;
+	width: 100%;
+	margin-bottom: 150px;
+	padding-bottom: 100px !important;
 	background-color: white;
 	border: solid 2px black;
 }
@@ -191,8 +182,13 @@ body {
 		height:unset !important;
 	}
 
-	#inhalt, .artikelWrap, #info-wrapper-bottom {
+	#info-wrapper-bottom {
 		justify-content: center;
+	}
+
+	.artikel {
+		margin-left: auto;
+		margin-right: auto;
 	}
 
 	#info-wrapper {
