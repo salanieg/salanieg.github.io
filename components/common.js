@@ -337,13 +337,14 @@ function reset_language() {
 }
 
 function setlanguage(language) {
-
+    console.time();
 	document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
     document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
 	document.getElementById("lang-" + language).style.textDecoration = "underline"
 	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
 	localStorage.setItem("gefaengnishefte_language", language);	
+    console.timeEnd();
 }
 
 
@@ -902,10 +903,9 @@ function verticaldown() {
 
 function autosetlayout() {
 	
-	
+	let scrollmargin = 150
     let scrollheight = document.getElementById("content").scrollTop
     let offsetheight = document.getElementById("content").offsetHeight
-let scrollmargin = 150
 
     layoutCurrent = 0;
 
@@ -931,7 +931,7 @@ let scrollmargin = 150
 // INIT
 
 var slideList = []
-var slideCurrent = 0;
+var slideCurrent = 0
 
 function init_controls() {
     slidesList = document.getElementById("slides").children
@@ -965,64 +965,70 @@ function init_controls() {
 
 // SLIDE SELECTION
 
-function displaycurrent() {
 
-    let highlightcurrenttitle = (typeof highlight_title === "function")
-    let showcurrenttitle = (typeof index_title_template === "function")
-    let overridetitle = (typeof overridetitletext !== "undefined")
+// function letztes() {
+//     if(slideCurrent>=0) {
+//         document.getElementById(slideList[slideCurrent]).style.display = "none";
+//         slideCurrent = slideCurrent - 1;
+//         document.getElementById(slideList[slideCurrent]).style.display = "flex";
+//     }
 
-    if(highlightcurrenttitle) {
+//     displaycurrent()
+//     timecontrols()
+// }
+
+// function nächstes() {
+//     if(slideCurrent<=slideList.length-1) {
+//         document.getElementById(slideList[slideCurrent]).style.display = "none";
+//         slideCurrent = slideCurrent + 1;
+//         document.getElementById(slideList[slideCurrent]).style.display = "flex";
+//     }
+
+//     displaycurrent()
+//     timecontrols()
+// }
+
+
+function letztes() {
+    if(slideCurrent>=0) {
+        displaySlide(slideCurrent - 1)
+    }
+}
+
+function nächstes() {
+    if(slideCurrent<=slideList.length-1) {
+        displaySlide(slideCurrent + 1)
+    }
+}
+
+function displaySlide(slideIndex) {
+
+    document.getElementById(slideList[slideCurrent]).style.display = "none";
+    document.getElementById(slideList[slideIndex]).style.display = "flex";
+    slideCurrent = slideIndex;
+
+
+    if(typeof highlight_title === "function") {
         highlight_title(slideCurrent)
     }
-    if(showcurrenttitle) {
+
+    if(typeof index_title_template === "function") {
         document.getElementById("slideCurrentTitle").innerHTML = index_title_template(slideCurrent)
     }
-    if(overridetitle) {
+    
+    if(typeof overridetitletext !== "undefined") {
         document.getElementById("slideCurrent").innerHTML = overridetitletext
     }
     else {
         document.getElementById("slideCurrent").innerHTML = (slideCurrent + 1) + "/" + slideList.length
     }
+    
 
-    if(showcurrenttitle||overridetitle) {
-        reset_language() //needed bc it changes DOM
-    }
-
+    reset_language()
     loadframes()
     limit_buttons(slideCurrent, slideList, "letztes", "nächstes")
     reset_scroll()
     pausevideos()
-}
-
-
-function letztesissue() {
-    if(slideCurrent>=0) {
-        document.getElementById(slideList[slideCurrent]).style.display = "none";
-        slideCurrent = slideCurrent - 1;
-        document.getElementById(slideList[slideCurrent]).style.display = "flex";
-    }
-
-    displaycurrent()
-    timecontrols()
-}
-
-function nächstesissue() {
-    if(slideCurrent<=slideList.length-1) {
-        document.getElementById(slideList[slideCurrent]).style.display = "none";
-        slideCurrent = slideCurrent + 1;
-        document.getElementById(slideList[slideCurrent]).style.display = "flex";
-    }
-
-    displaycurrent()
-    timecontrols()
-}
-
-function displaySlide(slideIndex) {
-    document.getElementById(slideList[slideCurrent]).style.display = "none";
-    slideCurrent = slideIndex;
-    document.getElementById(slideList[slideCurrent]).style.display = "flex";
-
-    displaycurrent()
     hideSlideIndex()
 }
 
