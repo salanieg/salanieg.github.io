@@ -894,7 +894,7 @@ function verticaldown() {
 
     if(layoutCurrent < LAYOUT_LIST.length - 1) {
         layoutCurrent = layoutCurrent + 1
-        moothscroll(LAYOUT_LIST[layoutCurrent])
+        smooth_scroll(LAYOUT_LIST[layoutCurrent])
         limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     }
 }
