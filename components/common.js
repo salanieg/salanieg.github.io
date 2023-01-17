@@ -229,6 +229,13 @@ function enable(element) {
 }
 
 
+// SCROLLING
+
+function smooth_scroll(ID) {
+    document.getElementById(ID).scrollIntoView({behavior: 'smooth'})
+}
+
+
 
 // ID CREATION
 
@@ -260,7 +267,7 @@ function pausevideos() {
 
 
 
-// SUPERSCRIPT
+// STRING EDITING
 
 const SUPERSCRIPT_LIST = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
 
@@ -273,6 +280,12 @@ function tosuperscript(num) {
     }
 
     return nums.join()
+}
+
+function remove_after(string, character) {
+    if(string.includes(character)) {
+        string = string.slice(0, string.indexOf(character))
+    }
 }
 
 
@@ -470,21 +483,20 @@ function showcookiecontent() {
 
 function hidecookiecontent() {
     
-    if(!datainfoshown) {
+    if(datainfoshown) {return}
         
-        var frames = document.getElementsByTagName("iframe")
+    var frames = document.getElementsByTagName("iframe")
+    
+    for (let i = 0; i < frames.length; i++)
+    {
+        var cookiedisclaimer = document.createElement("span");
+        cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>consent to the use of cookies</span>.</span>";
+        cookiedisclaimer.className = "cookiedisclaimer";
         
-        for (let i = 0; i < frames.length; i++)
-        {
-            var cookiedisclaimer = document.createElement("span");
-            cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>consent to the use of cookies</span>.</span>";
-            cookiedisclaimer.className = "cookiedisclaimer";
-            
-            frames[i].style.display = "none"
-            frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
-            
-            datainfoshown = true;
-        }
+        frames[i].style.display = "none"
+        frames[i].parentNode.insertBefore(cookiedisclaimer, frames[i])
+        
+        datainfoshown = true;
     }
 }
 
@@ -847,13 +859,8 @@ function inithighlights() {
 
     let window_url = window.location.href.toLowerCase()
 
-    if(window_url.includes("#")) {
-        window_url = window_url.slice(0, window_url.indexOf('#'))
-    }
-
-    if(window_url.includes("?")) {
-        window_url = window_url.slice(0, window_url.indexOf('?'))
-    }
+    remove_after(window_url, "#")
+    remove_after(window_url, "?")
 
     for (let [URLsnippet, IDs] of Object.entries(highlights)) {
         if (window_url == ("https://www.GEFAENGNISHEFTE.org" + URLsnippet).toLowerCase()) {
@@ -878,7 +885,7 @@ function verticalup() {
 
     if(layoutCurrent > 0) {
         layoutCurrent = layoutCurrent - 1
-        document.getElementById(LAYOUT_LIST[layoutCurrent]).scrollIntoView({behavior: 'smooth'})
+        smooth_scroll(LAYOUT_LIST[layoutCurrent])
         limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     }
 }
@@ -887,7 +894,7 @@ function verticaldown() {
 
     if(layoutCurrent < LAYOUT_LIST.length - 1) {
         layoutCurrent = layoutCurrent + 1
-        document.getElementById(LAYOUT_LIST[layoutCurrent]).scrollIntoView({behavior: 'smooth'})
+        moothscroll(LAYOUT_LIST[layoutCurrent])
         limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
     }
 }
@@ -1064,11 +1071,11 @@ function hidecontrols() {
 // timer start
 
 function timecontrols() {
-    if(oncontrols == false) {
-        document.getElementById("controls-inner").style.visibility = "visible";
-        clearTimeout(TIMEOUT_IDS["controls"])
-        TIMEOUT_IDS["controls"] = setTimeout(hidecontrols, 8000);
-    }
+    if(oncontrols) {return}
+
+    document.getElementById("controls-inner").style.visibility = "visible";
+    clearTimeout(TIMEOUT_IDS["controls"])
+    TIMEOUT_IDS["controls"] = setTimeout(hidecontrols, 8000);
 }
 
 function entercontrols() {
