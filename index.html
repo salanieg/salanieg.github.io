@@ -92,7 +92,7 @@
 
             function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span id="index' + i + '" class="indexitem" onclick="display_slide(' + i + ')"><span class="slide-index-spaced"><span class="slide-index-spaced-issue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
             function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slide-index-spaced-issue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
-            function cover_template(i){let issue = ISSUE_LIST[i]; return '<div class="slide-cover"><a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" hidden src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a></div>'}
+            function cover_template(i){let issue = ISSUE_LIST[i]; return '<a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" hidden src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a>'}
             function title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title" onmouseover="display_slide(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
 
             // LOADING
@@ -186,8 +186,8 @@
                 gap: 80px;
                 height:100%;
                 max-height:100%;
-                padding-top:5vh;
-                padding-bottom:15vh;
+                /* padding-top:5vh;
+                padding-bottom:15vh; */
             }
 
             #issue-list {
@@ -207,10 +207,6 @@
                 cursor: pointer;
                 transition: 0.7s;
                 box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
-                max-width: 100%;
-                max-height: 100%;
-                height: 55vh;
-
             }
 
             .cover-image:hover {
@@ -220,6 +216,8 @@
             .cover {
                 min-width:300px;
                 max-width:400px;
+                display: flex;
+                justify-content: center;
                 -webkit-tap-highlight-color: transparent;
                 -webkit-touch-callout: none;
                 -webkit-user-select: none;
@@ -303,6 +301,11 @@
             }
 
             @media screen and (width < 800px), screen and (max-width: 800px) {
+                body {
+                    grid-template-rows: auto minmax(0, 1fr) auto;
+                    grid-template-areas: "header" "main" "controls";
+                }
+                
                 #controls {
                     display:flex !important;
                 }
@@ -311,22 +314,9 @@
                     display:none;
                 }
 
-                #cover-wrap {
-                    width: unset;
-                }
-
-                .cover, #cover-wrap {
+                .cover {
                     max-height: 60vh;
                     min-width: unset;
-                }
-
-                body {
-                    grid-template-rows: auto minmax(0, 1fr) auto;
-                    grid-template-areas: "header" "main" "controls";
-                }
-
-                #cover-wrap {
-                    margin-bottom: 0;
                 }
             }
 
@@ -347,12 +337,15 @@
                 .spacedissuebreaks {
                     display:inline;
                 }
+
                 .slide-index-spaced {
                     justify-content: space-around;
                 }
             }
 
-            .overridetitletextSmall {display: none;}
+            .overridetitletextSmall {
+                display: none;
+            }
 
             @media screen and (max-width: 320px) {
 
@@ -378,9 +371,15 @@
                     width: 100%;
                 }
 
-                /* .cover-image {
-                    height:60vh;
-                } */
+                .cover {
+                    max-height: 30vh;
+                    min-width:unset;
+                    max-width:unset;
+                }
+
+                .cover-image {
+                    max-height: 30vh;                  
+                }
             }
 
 
