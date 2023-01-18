@@ -90,8 +90,8 @@
 
             // TEMPLATES
 
-            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span id="index' + i + '" class="indexitem" onclick="displaySlide(' + i + ')"><span class="slideIndexSpaced"><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
-            function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slideIndexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
+            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span id="index' + i + '" class="indexitem" onclick="displaySlide(' + i + ')"><span class="slide-indexSpaced"><span class="slide-indexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
+            function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slide-indexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
             function cover_template(i){let issue = ISSUE_LIST[i]; return '<div class="slide-cover"><a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" hidden src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a></div>'}
             function title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title" onmouseover="displaySlide(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
 
@@ -250,19 +250,13 @@
 
             /* SLIDES */
 
-            #slideIndex-wrap {
-                width:100% !important;
-                display: flex;
-                justify-content: center;
-            }
-
-            #slideIndex {
+            #slide-index {
                 line-height: 1 !important;
                 max-width: 440px !important;
                 width:100% !important;
             }
 
-            .title-inner, .slideIndexSpaced {
+            .title-inner, .slide-indexSpaced {
 				display:flex;
 				align-items: flex-start;
                 gap:0px 30px;
@@ -274,13 +268,13 @@
                 text-align: center;
             }
 
-            .slideIndexSpaced {
+            .slide-indexSpaced {
 				justify-content: space-between;
 				width:100%;
                 text-align: right;
 			}
 
-            .slideIndexSpacedIssue {
+            .slide-indexSpacedIssue {
                 white-space: nowrap;
             }
 
@@ -317,7 +311,7 @@
 
             @media screen and (width < 800px), screen and (max-width: 800px) {
                 #controls {
-                    display:block !important;
+                    display:flex !important;
                 }
 
                 #text-wrap {
@@ -347,7 +341,7 @@
             /* SMALL SCREEN ADJUSTMENTS */
             
 
-            #slideCurrentTitle, #slideIndex {
+            #slide-title, #slide-index {
                 font-size: 1.25rem !important;
 	            font-size: clamp(1rem, -0.54rem + 5.7vw, 1.25rem) !important;
             }
@@ -360,7 +354,7 @@
                 .spacedissuebreaks {
                     display:inline;
                 }
-                .slideIndexSpaced {
+                .slide-indexSpaced {
                     justify-content: space-around;
                 }
             }

@@ -60,19 +60,6 @@ body {
 }
 
 
-
-#header > * {
-	color: var(--header-color-text);
-	background-color: var(--header-color);
-}
-
-.bottom-divider {
-	display: var(--header-divider);
-}
-
-
-
-
 /* SELECTION */
 
 

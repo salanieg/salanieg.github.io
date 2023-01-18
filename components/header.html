@@ -5,14 +5,18 @@
 
 			/* GENERAL */
 
-			#header-inner {
+			#header {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
-				padding:0px;
-				margin:0px;
 				font-size: 13pt;
-				height: 56px;
+				
+				color: var(--header-color-text);
+				background-color: var(--header-color);
+			}
+
+			.bottom-divider {
+				display: var(--header-divider);
 			}
 
 			#navigation {
@@ -252,111 +256,107 @@
 	</head>
 
 	<body>
-		<div id="header-inner">
+		<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
 
-			<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
+		<nav id="navigation" onmouseleave="safeclosemenu()">
 
-			<nav id="navigation" onmouseleave="safeclosemenu()">
+			<!-- ISSUES -->
 
-				<!-- ISSUES -->
+			<div class="menu-horizontal" onmouseenter="openmenu('dropmenui', 'dropanchori')">
+				<span class="dropanchor" id="dropanchori">
+					<a href="https://www.GEFAENGNISHEFTE.org">ISSUES</a>
+				</span>
 
-				<div class="menu-horizontal" onmouseenter="openmenu('dropmenui', 'dropanchori')">
-					<span class="dropanchor" id="dropanchori">
-						<a href="https://www.GEFAENGNISHEFTE.org">ISSUES</a>
-					</span>
-
-					<div class="dropmenu" id="dropmenui" >
-						<div class="menu-spacer">X</div>
-						<div class="menu-inside">
-						<div class="info" id="infoi">
-							<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en" hidden>ALTERNATIVE UTOPIAS</span></a>
-							<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en" hidden>REFORM OR REVOLUTION</span></a>
-						</div></div>
-					</div>
+				<div class="dropmenu" id="dropmenui" >
+					<div class="menu-spacer">X</div>
+					<div class="menu-inside">
+					<div class="info" id="infoi">
+						<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en" hidden>ALTERNATIVE UTOPIAS</span></a>
+						<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en" hidden>REFORM OR REVOLUTION</span></a>
+					</div></div>
 				</div>
+			</div>
 
-				<!-- KANON -->
+			<!-- KANON -->
 
-				<div class="menu-horizontal" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
-					<span class="dropanchor" id="dropanchork">
-						<a href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
-					</span>
+			<div class="menu-horizontal" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
+				<span class="dropanchor" id="dropanchork">
+					<a href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
+				</span>
 
-					<div class="dropmenu" id="dropmenuk">
-						<div class="menu-spacer">X</div>
-						<div class="menu-inside">
-						<div class="info" id="infok">
-							<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en" hidden>A collection of content worth watching</span></a>
-						</div></div>
-					</div>
+				<div class="dropmenu" id="dropmenuk">
+					<div class="menu-spacer">X</div>
+					<div class="menu-inside">
+					<div class="info" id="infok">
+						<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en" hidden>A collection of content worth watching</span></a>
+					</div></div>
 				</div>
+			</div>
 
-				<!-- MENU/ETC -->
+			<!-- MENU/ETC -->
 
-				<div onmouseenter="openmenu('dropmenum', 'dropanchorm')">
-					<span class="dropanchor" id="dropanchorm">
-						<span class="label" id="etc" onclick="openmenu('dropmenum', 'dropanchorm')">ETC</span>
-						<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')"><span lang="de">MENÜ</span><span lang="en" hidden>MENU</span></span>
-						<span class="label" id="closemenu" onclick="safeclosemenu()">X</span>
-					</span>
+			<div onmouseenter="openmenu('dropmenum', 'dropanchorm')">
+				<span class="dropanchor" id="dropanchorm">
+					<span class="label" id="etc" onclick="openmenu('dropmenum', 'dropanchorm')">ETC</span>
+					<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')"><span lang="de">MENÜ</span><span lang="en" hidden>MENU</span></span>
+					<span class="label" id="closemenu" onclick="safeclosemenu()">X</span>
+				</span>
 
-					<!-- NAV -->
+				<!-- NAV -->
 
-					<div class="dropmenu" id="dropmenum">
-						<div class="menu-spacer">X</div>
+				<div class="dropmenu" id="dropmenum">
+					<div class="menu-spacer">X</div>
 
-						<!-- EXPANDEDMENU -->
+					<!-- EXPANDEDMENU -->
 
-						<div class="info" id="infoe">
-							<div class="spacedtitles">
-								<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a>
-							</div>
-							<div  class="spacedtitles">
-								<a href="https://www.GEFAENGNISHEFTE.org/kanon" class="spacedtitles"><span id="descriptionk">KANON</span>
-								</a>
-							</div>
+					<div class="info" id="infoe">
+						<div class="spacedtitles">
+							<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a>
 						</div>
+						<div  class="spacedtitles">
+							<a href="https://www.GEFAENGNISHEFTE.org/kanon" class="spacedtitles"><span id="descriptionk">KANON</span>
+							</a>
+						</div>
+					</div>
+					
+					<!-- INFO -->
+					<div class="menu-inside">
+					<div class="info" id="infom">
 						
-						<!-- INFO -->
-						<div class="menu-inside">
-						<div class="info" id="infom">
-							
-							<div class="info-inner" id="info-general" >
-								<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en" hidden>Support</span><span class="long">: paypal.me/GEFAENGNISHEFTE</span><br></a>
-								<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en" hidden>Contact</span><span class="long">: GEFAENGNISHEFTE@riseup.net</span><br></a>
-								<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en" hidden>Legal Notice</span><br></a>
-								<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en" hidden>Privacy policy</span><br></a>
-								<span><span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br></span>
-							</div>
-
-	
-							<div class="info-inner">
-
-								<span id="abo-selection">
-									<span class="long"><span lang="de">Abonnieren mit:</span><span lang="en" hidden>Subscribe via:</span></span>
-									<span class="lang-option" id="email-opt" onclick="setabo('email')">Email</span> / 
-									<span class="lang-option" id="telegram-opt" onclick="setabo('telegram')">Telegram</span><br>
-								</span>
-
-								<form id="email-form">
-									<span class="abo"><button type="submit" id="email-btn"><span lang="de">Abonnieren</span><span lang="en" hidden>Subscribe</span></button>
-									<span><input type="email" name="Email" id="email-input" placeholder="Email" required></span></span>
-									<input type="hidden" name="_subject" value="Abonnement">
-									<input type="hidden" name="_captcha" value="true">
-									<label id="email-info" for="email-checkbox"><input type="checkbox" id="email-checkbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en" hidden>I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
-								</form>
-								
-								<form id="telegram-form" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
-									<button type="submit" id="telegram-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en" hidden>t.me/GEFAENGNISHEFTE</span></button></button>
-								</form>
-
-							</div>
+						<div class="info-inner" id="info-general" >
+							<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en" hidden>Support</span><span class="long">: paypal.me/GEFAENGNISHEFTE</span><br></a>
+							<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en" hidden>Contact</span><span class="long">: GEFAENGNISHEFTE@riseup.net</span><br></a>
+							<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en" hidden>Legal Notice</span><br></a>
+							<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en" hidden>Privacy policy</span><br></a>
+							<span><span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br></span>
 						</div>
+
+
+						<div class="info-inner">
+
+							<span id="abo-selection">
+								<span class="long"><span lang="de">Abonnieren mit:</span><span lang="en" hidden>Subscribe via:</span></span>
+								<span class="lang-option" id="email-opt" onclick="setabo('email')">Email</span> / 
+								<span class="lang-option" id="telegram-opt" onclick="setabo('telegram')">Telegram</span><br>
+							</span>
+
+							<form id="email-form">
+								<span class="abo"><button type="submit" id="email-btn"><span lang="de">Abonnieren</span><span lang="en" hidden>Subscribe</span></button>
+								<span><input type="email" name="Email" id="email-input" placeholder="Email" required></span></span>
+								<input type="hidden" name="_subject" value="Abonnement">
+								<input type="hidden" name="_captcha" value="true">
+								<label id="email-info" for="email-checkbox"><input type="checkbox" id="email-checkbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en" hidden>I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
+							</form>
+							
+							<form id="telegram-form" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
+								<button type="submit" id="telegram-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en" hidden>t.me/GEFAENGNISHEFTE</span></button></button>
+							</form>
+
 						</div>
 					</div>
+					</div>
 				</div>
-			</nav>
-
-		</div>
+			</div>
+		</nav>
 	</body>
 </html>

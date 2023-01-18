@@ -29,20 +29,20 @@
                 flex-direction: column;
                 width:100vw;
                 padding-bottom: 60px;
+                gap:20px 70px;
+                
+                text-align: center;
+                flex-wrap:wrap;
             }
 
-            #controls-inner {
-                text-align: center;
+            #control-btns {
                 display: flex;
                 flex-wrap:wrap;
                 justify-content: center;
                 align-items: center;
-                gap:20px 70px;
-                width:100%;
-                bottom:0;
-                left:0;
+                gap:20px;
             }
-
+            
             #letztes, #nächstes, #slideCurrent {
                 background-color: transparent;
                 color:white;
@@ -70,7 +70,7 @@
                 cursor: default;
             }
 
-            #slideIndex {
+            #slide-index {
                 max-height:70vh;
                 overflow:auto;
                 color:white;
@@ -82,7 +82,7 @@
                 scrollbar-gutter: stable both-edges;
             }
 
-            #slideIndex>span:hover {
+            #slide-index>span:hover {
                 color:var(--content-color-link-hover);
                 cursor: pointer;
             }
@@ -94,11 +94,11 @@
                 --default-scrollbar-color-index: white;
             }
 
-            #slideIndex::-webkit-scrollbar-thumb {
+            #slide-index::-webkit-scrollbar-thumb {
                 background: var(--scrollbar-color-index) !important;
             }
 
-            #slideIndex {
+            #slide-index {
                 scrollbar-color: var(--scrollbar-color-index) !important;
             }
 
@@ -133,7 +133,7 @@
                 }
             }
 
-            #slideCurrentTitle {
+            #slide-title {
                 font-size: 15pt;
                 padding: 20px;
                 color:white;
@@ -149,7 +149,7 @@
 
             @media screen and (max-height: 550px) {
 
-                #slideCurrentTitle {
+                #slide-title {
                     padding-top:10px;
                     padding-bottom:10px;
                 }
@@ -157,7 +157,7 @@
 
             @media screen and (max-width: 300px) {
 
-                #controls-inner {
+                #control-btns {
                     flex-direction: column;
                 }
             }
@@ -167,26 +167,19 @@
     </head>
 
     <body>
+        <div id="slide-title"></div>
 
-        <div id="controls-inner">
-            <div id="slideCurrentTitle"></div>
+        <div id="slide-index" onmouseenter="display_slide_index()" onmouseleave="hide_slide_index()"></div>
 
-
-            <div id="slideIndex-wrap">
-                <div id="slideIndex" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()"></div>
-            </div>
-
-            <div id="controls-inner">
-                <button id="letztes" onclick="letztes()">
-                    <span class="controlLabelLarge"><span lang="de">VORHERIGES</span><span lang="en" hidden>PREVIOUS</span></span><span class="controlLabelSmall">‹</span>
-                </button>
-                <button id="slideCurrent" onmouseenter="displaySlideIndex()" onmouseleave="hideSlideIndex()">
-                </button>
-                <button id="nächstes" onclick="nächstes()">
-                    <span class="controlLabelLarge"><span lang="de">NÄCHSTES</span><span lang="en" hidden>NEXT</span></span><span class="controlLabelSmall">›</span>
-                </button>
-            </div>
+        <div id="control-btns">
+            <button id="letztes" onclick="letztes()">
+                <span class="controlLabelLarge"><span lang="de">VORHERIGES</span><span lang="en" hidden>PREVIOUS</span></span><span class="controlLabelSmall">‹</span>
+            </button>
+            <button id="slideCurrent" onmouseenter="display_slide_index()" onmouseleave="hide_slide_index()">
+            </button>
+            <button id="nächstes" onclick="nächstes()">
+                <span class="controlLabelLarge"><span lang="de">NÄCHSTES</span><span lang="en" hidden>NEXT</span></span><span class="controlLabelSmall">›</span>
+            </button>
         </div>
-
     </body>
 </html>

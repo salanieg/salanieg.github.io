@@ -5,18 +5,18 @@
 
             #databanner {
                 display:none;
-            }
 
-            #datenschutz {
-                background-color: var(--header-color);
-                color: white;
+                color: var(--header-color-text);
+				background-color: var(--header-color);
                 font-size: 13pt;
+                padding:20px;
                 position: absolute;
                 left: 0;
                 bottom: 0;
                 width:100%;
                 z-index: 20;
             }
+
 
             #datainfo {
                 width: 600px;
@@ -38,35 +38,27 @@
                 color:white;
             }
 
-            #datenschutz-inner {
-                padding:20px;
-            }
-
             @media screen and (max-width: 450px) {#dataoptionen { justify-content: space-around;}}
 
         </style>
     </head>
 
     <body>
-        <div id="datenschutz">
-            <div id="datenschutz-inner">
-                <div id="datainfo">
-                    <span lang="de">
-                        Um bestimmte Inhalte von anderen Seiten anzeigen zu können, sind Cookies notwendig. 
-                        Durch das Klicken des Akzeptieren-Buttons, kannst du deren Verwendung zustimmen. 
-                        Weitere Informationen dazu findest du in unserer <a style="text-decoration: underline;" href="https://www.GEFAENGNISHEFTE.org/datenschutz" target="_blank">Datenschutzerklärung</a>.
-                    </span>
-                    <span lang="en" hidden>
-                        In order to show certain content from other websites the use of cookies is necessary. 
-                        By clicking accept you can agree to their use. 
-                        Further information about this can be found in our <a style="text-decoration: underline;" href="https://www.GEFAENGNISHEFTE.org/datenschutz" target="_blank">data protection section</a>.
-                    </span>
-                </div>
-                <div id="dataoptionen">
-                    <button class="dataoption" onclick="cookies(true)"><span lang="de">Akzeptieren</span><span lang="en" hidden>Accept</span></button>
-                    <button class="dataoption" onclick="cookies(false)"><span lang="de">Ablehnen</span><span lang="en" hidden>Reject</span></button>
-                </div>
-            </div>
+        <div id="datainfo">
+            <span lang="de">
+                Um bestimmte Inhalte von anderen Seiten anzeigen zu können, sind Cookies notwendig. 
+                Durch das Klicken des Akzeptieren-Buttons, kannst du deren Verwendung zustimmen. 
+                Weitere Informationen dazu findest du in unserer <a style="text-decoration: underline;" href="https://www.GEFAENGNISHEFTE.org/datenschutz" target="_blank">Datenschutzerklärung</a>.
+            </span>
+            <span lang="en" hidden>
+                In order to show certain content from other websites the use of cookies is necessary. 
+                By clicking accept you can agree to their use. 
+                Further information about this can be found in our <a style="text-decoration: underline;" href="https://www.GEFAENGNISHEFTE.org/datenschutz" target="_blank">data protection section</a>.
+            </span>
+        </div>
+        <div id="dataoptionen">
+            <button class="dataoption" onclick="cookies(true)"><span lang="de">Akzeptieren</span><span lang="en" hidden>Accept</span></button>
+            <button class="dataoption" onclick="cookies(false)"><span lang="de">Ablehnen</span><span lang="en" hidden>Reject</span></button>
         </div>
     </body>
 </html>
