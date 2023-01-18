@@ -503,12 +503,12 @@ function hidecookiecontent() {
 // FRAME LOADING
 
 function load_slide_frames() {
-    load_frame(document.getElementById(slideList[slideCurrent]).getElementsByTagName("iframe"), 0, slideCurrent)
+    load_frame(document.getElementById(SLIDE_LIST[slide_current]).getElementsByTagName("iframe"), 0, slide_current)
 }
 
 
 function load_frame(frames, current, slide) {
-    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length && slide == slideCurrent) {
+    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length && slide == slide_current) {
 
         if(frames[current].getAttribute('data-source') == "youtube" && frames[current].getAttribute('data-loaded') != "true") {
             let frame = frames[current]
@@ -541,7 +541,7 @@ function load_frame(frames, current, slide) {
             load_frame(frames, current + 1 , slide)
         }
     }
-    // else if(slide != slideCurrent) {
+    // else if(slide != slide_current) {
     //     console.log("load aborted")
     // }
     cleartpcookies()
@@ -880,7 +880,7 @@ function inithighlights() {
 
 var layoutCurrent = 0
 
-function verticalup() {
+function hoch() {
 
     if(layoutCurrent > 0) {
         layoutCurrent = layoutCurrent - 1
@@ -889,7 +889,7 @@ function verticalup() {
     }
 }
 
-function verticaldown() {
+function runter() {
 
     if(layoutCurrent < LAYOUT_LIST.length - 1) {
         layoutCurrent = layoutCurrent + 1
@@ -928,33 +928,33 @@ function autosetlayout() {
 
 // INIT
 
-var slideList = []
-var slideCurrent = 0
+var SLIDE_LIST = []
+var slide_current = 0
 
 function init_controls() {
     slidesList = document.getElementById("slides").children
     for (let i = 0; i < slidesList.length; i++) {
         let slideID = 'slide'+ (i+1)
         slidesList.item(i).setAttribute('id', slideID);
-        slideList.push(slideID);
+        SLIDE_LIST.push(slideID);
     }
 
-    for (let i = 0; i < slideList.length; i++) {
+    for (let i = 0; i < SLIDE_LIST.length; i++) {
 
-		let slide = document.getElementById(slideList[i])
+		let slide = document.getElementById(SLIDE_LIST[i])
         let slide_index = document.getElementById('slide-index')
 
         slide_index.insertAdjacentHTML('beforeend', index_template(slide, i));
     }
     
-    displaySlide(slideCurrent)
+    display_slide(slide_current)
 
     if(typeof AUTOHIDE_CONTROLS == "variable") {
         document.getElementById("controls").addEventListener("mousemove", initautohidecontrols)
     }
 
-    document.querySelectorAll("#slide-index, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseenter", entercontrols)})
-    document.querySelectorAll("#slide-index, #slideCurrent, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseleave", leavecontrols)})
+    document.querySelectorAll("#slide-index, #slide-current, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseenter", entercontrols)})
+    document.querySelectorAll("#slide-index, #slide-current, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseleave", leavecontrols)})
 }
 
 
@@ -964,45 +964,45 @@ function init_controls() {
 // SLIDE SELECTION
 
 function letztes() {
-    if(slideCurrent>=0) {
-        displaySlide(slideCurrent - 1)
+    if(slide_current>=0) {
+        display_slide(slide_current - 1)
     }
 }
 
 
 function nächstes() {
-    if(slideCurrent<=slideList.length-1) {
-        displaySlide(slideCurrent + 1)
+    if(slide_current<=SLIDE_LIST.length-1) {
+        display_slide(slide_current + 1)
     }
 }
 
 
-function displaySlide(slide_index) {
+function display_slide(slide_index) {
 
-    document.getElementById(slideList[slideCurrent]).style.display = "none";
-    document.getElementById(slideList[slide_index]).style.display = "flex";
-    slideCurrent = slide_index;
+    document.getElementById(SLIDE_LIST[slide_current]).style.display = "none";
+    document.getElementById(SLIDE_LIST[slide_index]).style.display = "flex";
+    slide_current = slide_index;
 
 
     if(typeof highlight_title === "function") {
-        highlight_title(slideCurrent)
+        highlight_title(slide_current)
     }
 
     if(typeof index_title_template === "function") {
-        document.getElementById("slide-title").innerHTML = index_title_template(slideCurrent)
+        document.getElementById("slide-title").innerHTML = index_title_template(slide_current)
     }
     
     if(typeof overridetitletext !== "undefined") {
-        document.getElementById("slideCurrent").innerHTML = overridetitletext
+        document.getElementById("slide-current").innerHTML = overridetitletext
     }
     else {
-        document.getElementById("slideCurrent").innerHTML = (slideCurrent + 1) + "/" + slideList.length
+        document.getElementById("slide-current").innerHTML = (slide_current + 1) + "/" + SLIDE_LIST.length
     }
     
 
     reset_language()
     load_slide_frames()
-    limit_buttons(slideCurrent, slideList, "letztes", "nächstes")
+    limit_buttons(slide_current, SLIDE_LIST, "letztes", "nächstes")
     reset_scroll()
     pause_videos()
     hide_slide_index()
@@ -1017,16 +1017,16 @@ function display_slide_index() {
         indexitems[i].style.fontWeight = "400"
     }
 
-    document.getElementById("index"+slideCurrent).style.fontWeight = "700"
+    document.getElementById("index"+slide_current).style.fontWeight = "700"
     document.getElementById("slide-title").style.display = "none";
-    document.getElementById(slideList[slideCurrent]).style.display = "none";
+    document.getElementById(SLIDE_LIST[slide_current]).style.display = "none";
     document.getElementById("slide-index").style.display = "block";
 }
 
 function hide_slide_index() {
     document.getElementById("slide-title").style.display = "block";
     document.getElementById("slide-index").style.display = "none";
-    document.getElementById(slideList[slideCurrent]).style.display = "flex";
+    document.getElementById(SLIDE_LIST[slide_current]).style.display = "flex";
 }
 
 
@@ -1159,7 +1159,7 @@ function selectfootnote(event) {
     footnotefocused.style.color = "#890000";
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
-    load_frame(footnotefocused.getElementsByTagName("iframe"), 0, slideCurrent)
+    load_frame(footnotefocused.getElementsByTagName("iframe"), 0, slide_current)
 }
 
 function resetfootnote() {

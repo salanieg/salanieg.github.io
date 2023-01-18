@@ -56,7 +56,7 @@
 
             // VARIABLES
             
-            const overridetitletext = "<span class='overridetitletextLarge'><span lang='de'>ÜBERSICHT</span><span lang='en'>OVERVIEW</span></span><span class='overridetitletextSmall'>#</span>"
+            const overridetitletext = "<span lang='de'>ÜBERSICHT</span><span lang='en'>OVERVIEW</span>"
 
             const ISSUE_LIST = [
                 {
@@ -90,10 +90,10 @@
 
             // TEMPLATES
 
-            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span id="index' + i + '" class="indexitem" onclick="displaySlide(' + i + ')"><span class="slide-indexSpaced"><span class="slide-indexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
-            function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slide-indexSpacedIssue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
+            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span id="index' + i + '" class="indexitem" onclick="display_slide(' + i + ')"><span class="slide-index-spaced"><span class="slide-index-spaced-issue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
+            function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slide-index-spaced-issue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
             function cover_template(i){let issue = ISSUE_LIST[i]; return '<div class="slide-cover"><a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" hidden src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a></div>'}
-            function title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title" onmouseover="displaySlide(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
+            function title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title" onmouseover="display_slide(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
 
             // LOADING
 
@@ -114,7 +114,7 @@
             function initcovers() {
                 for (let i = 0; i < ISSUE_LIST.length; i++) {
                     document.getElementById("slides").insertAdjacentHTML('beforeend', cover_template(i));
-                    document.getElementById("text-wrap").insertAdjacentHTML('beforeend', title_template(i));
+                    document.getElementById("issue-list").insertAdjacentHTML('beforeend', title_template(i));
                 }
 
                 
@@ -174,14 +174,8 @@
         <style>
 
             #controls {
-                display: grid;
                 display:none !important;
             }
-
-            #cover-wrap {
-                margin-bottom: 20vw;
-            }
-
 
             /* WRAPS */
 
@@ -190,21 +184,19 @@
 				justify-content: center;
 				align-items: flex-start;
                 gap: 80px;
+                height:100%;
+                max-height:100%;
+                padding-top:5vh;
+                padding-bottom:15vh;
             }
 
-            #text-wrap {
+            #issue-list {
                 min-width:350px;
                 max-width:350px;
                 /* visibility: hidden; */
             }
-
-            #slides > div {
-                text-align: center;
-                display: none;
-                margin-bottom: 0 !important;
-            }
             
-            #text-wrap > * {
+            #issue-list > * {
                 margin-top: 15px;
                 margin-bottom: 15px;
             }
@@ -216,7 +208,9 @@
                 transition: 0.7s;
                 box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
                 max-width: 100%;
-                max-height: 55vh;
+                max-height: 100%;
+                height: 55vh;
+
             }
 
             .cover-image:hover {
@@ -256,7 +250,7 @@
                 width:100% !important;
             }
 
-            .title-inner, .slide-indexSpaced {
+            .title-inner, .slide-index-spaced {
 				display:flex;
 				align-items: flex-start;
                 gap:0px 30px;
@@ -268,28 +262,27 @@
                 text-align: center;
             }
 
-            .slide-indexSpaced {
+            .slide-index-spaced {
 				justify-content: space-between;
 				width:100%;
                 text-align: right;
 			}
 
-            .slide-indexSpacedIssue {
+            .slide-index-spaced-issue {
                 white-space: nowrap;
             }
 
-            #slideCurrent {
+            #slide-current {
                 font-size: 15pt !important;
                 width:160px !important;
                 padding: 5px 15px 5px 15px !important;
-                line-height: 1;
             }
 
-            .controlLabelLarge {
+            .control_label_large {
                 display: none!important;
             }
 
-            .controlLabelSmall {
+            .control_label_small {
                 display: inline!important;
             }
 
@@ -314,7 +307,7 @@
                     display:flex !important;
                 }
 
-                #text-wrap {
+                #issue-list {
                     display:none;
                 }
 
@@ -354,22 +347,27 @@
                 .spacedissuebreaks {
                     display:inline;
                 }
-                .slide-indexSpaced {
+                .slide-index-spaced {
                     justify-content: space-around;
                 }
             }
 
             .overridetitletextSmall {display: none;}
 
-            @media screen and (max-width: 350px) {
+            @media screen and (max-width: 320px) {
 
-                .overridetitletextSmall {display: inline;}
-                .overridetitletextLarge {display: none;}
-                
-                #slideCurrent {
-                    padding:0px!important;
-                    font-size: 22pt!important;
-                    width: 45px !important;
+                #controls {
+                    gap: 0px !important;
+                }
+
+                #slide-current {order:1;}
+                #letztes {order:2;}
+                #nächstes {order:3;}
+
+                #control-btns::after {
+                    content: '';
+                    width: 100%;
+                    order: 1;
                 }
 
                 .title-inner {
@@ -379,6 +377,10 @@
                 .title-inner * {
                     width: 100%;
                 }
+
+                /* .cover-image {
+                    height:60vh;
+                } */
             }
 
 
@@ -390,12 +392,8 @@
 
         <main id="content">
             <div id="issue-wrap">
-                <div id="cover-wrap">
-                    <div id="slides"></div>
-                </div>
-                <div id="text-wrap">
-
-                </div>
+                <div id="slides"></div>
+                <div id="issue-list"></div>
             </div>
         </main>
         

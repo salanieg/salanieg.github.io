@@ -16,7 +16,6 @@
                 place-content: center;
                 text-align: center;
                 gap:40px 80px;
-                /* margin-bottom: 40px; */
             }
 
 
@@ -29,7 +28,7 @@
                 flex-direction: column;
                 width:100vw;
                 padding-bottom: 60px;
-                gap:20px 70px;
+                gap:25px 70px;
                 
                 text-align: center;
                 flex-wrap:wrap;
@@ -40,10 +39,10 @@
                 flex-wrap:wrap;
                 justify-content: center;
                 align-items: center;
-                gap:20px;
+                gap:10px 20px;
             }
             
-            #letztes, #nächstes, #slideCurrent {
+            #letztes, #nächstes, #slide-current {
                 background-color: transparent;
                 color:white;
                 width: 45px;
@@ -64,7 +63,7 @@
                 cursor: pointer;
             }
 
-            #slideCurrent {
+            #slide-current {
                 width:80px;
                 font-size: 20pt;
                 cursor: default;
@@ -111,18 +110,18 @@
                 }
             }
 
-            .controlLabelSmall {
+            .control_label_small {
                 position:relative;
                 bottom:17px;
                 display: none;
             }
 
             @media screen and (max-width: 520px) {
-                .controlLabelLarge {
+                .control_label_large {
                     display: none;
                 }
 
-                .controlLabelSmall {
+                .control_label_small {
                     display: inline;
                 }
 
@@ -154,13 +153,6 @@
                     padding-bottom:10px;
                 }
             }
-
-            @media screen and (max-width: 300px) {
-
-                #control-btns {
-                    flex-direction: column;
-                }
-            }
             
 
         </style>
@@ -173,12 +165,12 @@
 
         <div id="control-btns">
             <button id="letztes" onclick="letztes()">
-                <span class="controlLabelLarge"><span lang="de">VORHERIGES</span><span lang="en" hidden>PREVIOUS</span></span><span class="controlLabelSmall">‹</span>
+                <span class="control_label_large"><span lang="de">VORHERIGES</span><span lang="en" hidden>PREVIOUS</span></span><span class="control_label_small">‹</span>
             </button>
-            <button id="slideCurrent" onmouseenter="display_slide_index()" onmouseleave="hide_slide_index()">
+            <button id="slide-current" onmouseenter="display_slide_index()" onmouseleave="hide_slide_index()">
             </button>
             <button id="nächstes" onclick="nächstes()">
-                <span class="controlLabelLarge"><span lang="de">NÄCHSTES</span><span lang="en" hidden>NEXT</span></span><span class="controlLabelSmall">›</span>
+                <span class="control_label_large"><span lang="de">NÄCHSTES</span><span lang="en" hidden>NEXT</span></span><span class="control_label_small">›</span>
             </button>
         </div>
     </body>
