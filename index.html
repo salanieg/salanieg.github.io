@@ -186,8 +186,8 @@
                 gap: 80px;
                 height:100%;
                 max-height:100%;
-                /* padding-top:5vh;
-                padding-bottom:15vh; */
+                padding-top:10%;
+                padding-bottom:25%;
             }
 
             #issue-list {
@@ -204,6 +204,7 @@
             /* COVERS */
 
             .cover-image {
+                object-fit: contain;
                 cursor: pointer;
                 transition: 0.7s;
                 box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
@@ -214,6 +215,7 @@
             }
 
             .cover {
+                max-height: 55vh;
                 min-width:300px;
                 max-width:400px;
                 display: flex;
@@ -315,8 +317,7 @@
                 }
 
                 .cover {
-                    max-height: 60vh;
-                    min-width: unset;
+                    min-width:unset;
                 }
             }
 
@@ -369,16 +370,6 @@
                 
                 .title-inner * {
                     width: 100%;
-                }
-
-                .cover {
-                    max-height: 30vh;
-                    min-width:unset;
-                    max-width:unset;
-                }
-
-                .cover-image {
-                    max-height: 30vh;                  
                 }
             }
 
