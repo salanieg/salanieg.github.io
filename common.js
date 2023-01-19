@@ -986,16 +986,10 @@ function display_slide(slide_index) {
     let timeline_index = document.getElementById(SLIDE_LIST[slide_current]).getAttribute("data-timeline-index")
     let timeline_btns = document.getElementById("timeline-btns")
     let timeline_lines = timeline_btns.getElementsByClassName("event-line")
-
-    console.log(timeline_btns)
-    console.log(timeline_lines)
-
+    
     for (let i = 0; i < timeline_lines.length; i++) {
         timeline_lines[i].style.display = "none"
     }
-
-    console.log(timeline_index)
-    console.log(timeline_lines[timeline_index])
 
     if(timeline_index) {
         timeline_btns.style.display = "flex"
@@ -1040,12 +1034,14 @@ function display_slide_index() {
     }
 
     document.getElementById("index"+slide_current).style.fontWeight = "700"
+    document.getElementById("timeline-btns").style.display = "none";
     document.getElementById("slide-title").style.display = "none";
     document.getElementById(SLIDE_LIST[slide_current]).style.display = "none";
     document.getElementById("slide-index").style.display = "block";
 }
 
 function hide_slide_index() {
+    document.getElementById("timeline-btns").style.display = "block";
     document.getElementById("slide-title").style.display = "block";
     document.getElementById("slide-index").style.display = "none";
     document.getElementById(SLIDE_LIST[slide_current]).style.display = "flex";
