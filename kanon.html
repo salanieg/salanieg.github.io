@@ -69,15 +69,12 @@
 
                 for (let i = 0; i < timelines.length; i++)
                 {
+                    let timeselector = timelines[i].parentElement.getElementsByClassName("timeselector")[0]
                     let line = timelines[i].parentElement.getElementsByClassName("line")[0]
                     let events = timelines[i].getElementsByClassName("event")
 
-                    let line_height = document.getElementById("content").offsetHeight - 40
-                    let line_offset = document.getElementById("content").offsetTop + 20
-
-                    line.style.height = line_height + "px"
-                    line.style.top = line_offset + "px"
-                    
+                    let line_width = line.offsetWidth
+                    // let line_offset = line.offsetLeft
 
                     
                     let start_date = 5000
@@ -98,7 +95,7 @@
 
 
 
-                    let event_heights = []
+                    let event_widths = []
 
                     for (let k = 0; k < events.length; k++)
                     {
@@ -114,40 +111,45 @@
                             event_dot.addEventListener("mouseover", () => {select_event(k, i)})
                             
                             line.appendChild(event_dot)
+
+
+                            event_btn = document.createElement("button")
+                            event_btn.className = "event-btn"
+                            event_btn.innerHTML = date
+                            event_btn.addEventListener("click", () => {select_event(k, i)})
+
+                            timeselector.appendChild(event_btn)
+
                             current_events[i] = 0
                             select_event(current_events[i], i)
                         }
 
 
-                        let event_height = line_offset + ((date - start_date) / (end_date - start_date)) * line_height + "px"
-                        let prox_limit = 50
-                        
-                        if(window.innerHeight < 900 || window.innerWidth < 600) {
-                            prox_limit = 15
-                        }
+                        let event_width = -28 + ((date - start_date) / (end_date - start_date)) * line_width + "px"
+                        let prox_limit = 60
 
 
-                        for (let l = 0; l < event_heights.length; l++)
+                        for (let l = 0; l < event_widths.length; l++)
                         { 
 
-                            let comp_old = parseInt(event_heights[l], 10)
-                            let comp_new = parseInt(event_height, 10)
+                            let comp_old = parseInt(event_widths[l], 10)
+                            let comp_new = parseInt(event_width, 10)
 
                             if(comp_new >= comp_old && comp_new <= (comp_old + prox_limit)) {
                                 
-                                if((comp_new + 50) >= line_height) {
+                                if((comp_new + 50) >= line_width) {
                                     let event_old = line.getElementsByClassName("event-dot")[l]
-                                    event_old.style.top = line_offset + parseInt(event_old.style.top, 10) - prox_limit + "px"
+                                    event_old.style.left = parseInt(event_old.style.left, 10) - prox_limit + "px"
                                 }
                                 else {
-                                    event_height = comp_new + prox_limit + "px"
+                                    event_width = comp_new + prox_limit + "px"
                                 }
                             }
                             
                         }
 
-                        event_dot.style.top = event_height
-                        event_heights[k] = event_height
+                        event_dot.style.left = event_width
+                        event_widths[k] = event_width
                     }
                 }
 
@@ -296,15 +298,30 @@
 
             /* #slide-title {display: none !important;} */
 
+            #timeline-wrap {
+                height:100%;
+                width:100vw;
+                gap: 40px;
+                display: grid;
+                grid-template-rows: auto auto;
+                grid-template-columns: auto;
+                grid-template-areas: "timeline" "events";
+                place-items: center;
+            }
+
+            .timeline {
+                grid-area: events;
+            }
+
             .line {
-                position:fixed;
+                position: relative;
+                grid-area: timeline;
                 background-color: black;
                 border: 2px outset grey;
-                left:40px;
+                width:100%
             }
 
             .event {
-                margin-left: 40px;
                 display: none;
             }
 
@@ -313,31 +330,47 @@
                 margin-bottom: 60px;
                 font-style:italic;
             }
-
-            .event-dot {
-                cursor: pointer;
-                position: fixed;
+            
+            .event-dot, .event-btn {
                 padding: 2px 7px;
                 font-size: var(--font-medium);
-                left:13px;
                 color: white;
-                border: 2px outset grey;
                 background-color: black;
             }
 
-            
-            @media screen and (max-height: 900px), screen and (max-width: 600px){
+            .event-dot {
+                cursor: pointer;
+                position: absolute;
+                border: 2px outset grey;
+                bottom:-19px;
+            }
 
-                .event {
-                    margin-left: 20px;
+            .timeselector {
+                grid-area: timeline;
+                display: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap:10px;
+            }
+
+            .event-btn {
+                outline: none;
+                text-align: center;
+            }
+
+            
+            @media screen and (max-width: 1000px){
+
+                .line {
+                    border:none;
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                    gap:10px;
                 }
 
                 .event-dot {
-                    font-size: 0pt;
-                    left: 36px;
-                    padding: 0px;
-                    height: 8px;
-                    width: 8px;
+                    position: static;
                 }
             }
 
@@ -351,36 +384,11 @@
 
             <div id="slides">
 
-                
+                <div class="timeline-wrap" data-title-de="Revoulutionen" data-title-en="Revoulutions">
 
-                <div data-title-de="history of the entire world, i guess" data-title-en="history of the entire world, i guess">
-                    <iframe class="large" src="about:blank" data-source="youtube" data-id="xuCn8ux2gbs" sandbox></iframe><!--history of the entire world, i guess-->
-                </div>
-
-                <div data-title-de="Historische Interviews" data-title-en="Historical Interviews">
-                    <div class="slideFlex">
-                        <iframe class="extreme" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
-                    </div>
-
-                    <div class="slideGrow extreme">
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="hs9ZsKj-o1k" data-timestamp="1624" sandbox></iframe><!--Cornelius Castoriadis On The Imaginary Institution of Society-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="feepQg_Dx7U" sandbox></iframe><!--Louis Althusser: The Crisis of Marxism (interview)-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="_g8JVK4Fppw" sandbox></iframe><!--Sartre on Intellectualism-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="H3AxGp5k-Qo" sandbox></iframe><!--Talkshow: Der zerstörte Tisch-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="6TK9c-caEcw" sandbox></iframe><!--Bertrand Russell on his meeting with Vladimir Lenin in 1920-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="ihaB8AFOhZo" sandbox></iframe><!--Bertrand Russell - Botschaft an zukünftige Generationen (1959)-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="XruYsAmKLyU" sandbox></iframe><!--German WWI veteran describes killing a French soldier in a bayonet charge-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="67tHtpac5ws" sandbox></iframe><!--Milton Friedman - I, Pencil-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="IaD1DcWfaGA" sandbox></iframe><!--Bernie Sanders interviews Punks [1988]-->
-                        <iframe class="small" src="about:blank" data-source="youtube" data-id="SYxZfksAyco" sandbox></iframe><!--30 Years of Speeches-->
-                    </div>
-                </div>
-
-                <div data-title-de="Revoulutionen" data-title-en="Revoulutions">
                     <div class="line"></div>
-
+                    
                     <div class="timeline extreme">
-
                         <div class="event" data-date="1789">
                             <div class="event-title"><span lang="de">Französische Revolution</span><span lang="en" hidden>French Revolution</span></div>
                             <div class="slideColumn">
@@ -446,6 +454,31 @@
                         </div>
                     </div>
                 </div>
+
+
+                <div data-title-de="history of the entire world, i guess" data-title-en="history of the entire world, i guess">
+                    <iframe class="large" src="about:blank" data-source="youtube" data-id="xuCn8ux2gbs" sandbox></iframe><!--history of the entire world, i guess-->
+                </div>
+
+                <div data-title-de="Historische Interviews" data-title-en="Historical Interviews">
+                    <div class="slideFlex">
+                        <iframe class="extreme" src="about:blank" data-source="youtube" data-id="SeIsyuoNfOg" data-list="PLnmTFbDYfiCB7ATkjsjXtMEADh2cC_4E0" sandbox></iframe><!--Günter Gaus-->
+                    </div>
+
+                    <div class="slideGrow extreme">
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="hs9ZsKj-o1k" data-timestamp="1624" sandbox></iframe><!--Cornelius Castoriadis On The Imaginary Institution of Society-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="feepQg_Dx7U" sandbox></iframe><!--Louis Althusser: The Crisis of Marxism (interview)-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="_g8JVK4Fppw" sandbox></iframe><!--Sartre on Intellectualism-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="H3AxGp5k-Qo" sandbox></iframe><!--Talkshow: Der zerstörte Tisch-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="6TK9c-caEcw" sandbox></iframe><!--Bertrand Russell on his meeting with Vladimir Lenin in 1920-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="ihaB8AFOhZo" sandbox></iframe><!--Bertrand Russell - Botschaft an zukünftige Generationen (1959)-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="XruYsAmKLyU" sandbox></iframe><!--German WWI veteran describes killing a French soldier in a bayonet charge-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="67tHtpac5ws" sandbox></iframe><!--Milton Friedman - I, Pencil-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="IaD1DcWfaGA" sandbox></iframe><!--Bernie Sanders interviews Punks [1988]-->
+                        <iframe class="small" src="about:blank" data-source="youtube" data-id="SYxZfksAyco" sandbox></iframe><!--30 Years of Speeches-->
+                    </div>
+                </div>
+
                 
                 <div data-title-de="DKP is Market Socialism" data-title-en="DKP is Market Socialism">
                     <iframe class="large" src="about:blank" data-source="youtube" data-id="BKGx5xrr5eg" sandbox></iframe><!--DKP is Market Socialism-->

@@ -52,7 +52,7 @@
         <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
 
         <script type="text/javascript" src="common.js"></script>
-        <script type="text/javascript">
+        <script>
 
             // VARIABLES
             
@@ -177,16 +177,17 @@
                 display:none !important;
             }
 
+            #content {
+                display: grid;
+                place-content: center;
+            }
+
             /* WRAPS */
 
             #issue-wrap {
 				display: flex;
 				justify-content: center;
-				align-items: flex-start;
                 gap: 80px;
-                height:100%;
-                max-height:100%;
-                padding-top:10%;
                 padding-bottom:25%;
             }
 
@@ -323,7 +324,6 @@
 
                 #issue-wrap {
                     padding: 0px;
-				    align-items: center;
                 }
             }
 
