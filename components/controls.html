@@ -5,7 +5,7 @@
 
             /* SLIDES */
 
-            #content {
+            #slides {
                 display: grid;
                 place-items:center;
             }
@@ -28,7 +28,6 @@
                 flex-direction: column;
                 width:100vw;
                 padding-bottom: 60px;
-                gap:25px 70px;
                 
                 text-align: center;
                 flex-wrap:wrap;
@@ -40,6 +39,7 @@
                 justify-content: center;
                 align-items: center;
                 gap:10px 20px;
+                padding-top: 25px;
             }
             
             #letztes, #nächstes, #slide-current {
@@ -67,6 +67,13 @@
                 width:80px;
                 font-size: 20pt;
                 cursor: default;
+            }
+
+            #slide-title {
+                font-size: 15pt;
+                padding-top: 25px;
+                color:white;
+                text-align:center;
             }
 
             #slide-index {
@@ -104,12 +111,6 @@
 
             /* SIZING */
 
-            @media screen and (max-width: 800px) {
-                #controls-inner {
-                    gap:20px;
-                }
-            }
-
             .control_label_small {
                 position:relative;
                 bottom:17px;
@@ -132,25 +133,14 @@
                 }
             }
 
-            #slide-title {
-                font-size: 15pt;
-                padding: 20px;
-                color:white;
-                text-align:center;
-            }
-
-            @media screen and (max-height: 800px) {
-
-                #controls {
-                    padding-bottom:30px;
-                }
-            }
-
-            @media screen and (max-height: 550px) {
+            @media screen and (max-height: 800px),  screen and (max-width: 520px){
 
                 #slide-title {
                     padding-top:10px;
-                    padding-bottom:10px;
+                }
+
+                #controls {
+                    padding-bottom:25px;
                 }
             }
             
@@ -163,11 +153,11 @@
 
         <div id="slide-index" onmouseenter="display_slide_index()" onmouseleave="hide_slide_index()"></div>
 
-        <div id="control-btns">
+        <div id="control-btns" onmouseleave="hide_slide_index()">
             <button id="letztes" onclick="letztes()">
                 <span class="control_label_large"><span lang="de">VORHERIGES</span><span lang="en" hidden>PREVIOUS</span></span><span class="control_label_small">‹</span>
             </button>
-            <button id="slide-current" onmouseenter="display_slide_index()" onmouseleave="hide_slide_index()">
+            <button id="slide-current" onmouseenter="display_slide_index()">
             </button>
             <button id="nächstes" onclick="nächstes()">
                 <span class="control_label_large"><span lang="de">NÄCHSTES</span><span lang="en" hidden>NEXT</span></span><span class="control_label_small">›</span>
