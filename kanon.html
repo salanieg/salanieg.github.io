@@ -66,6 +66,7 @@
             var current_events = []
             var timeline_counter = 0
 
+
             function init_timelines() {
                 let timelines = document.getElementsByClassName("events")
 
@@ -74,16 +75,42 @@
                     let timeline_btns = document.getElementById("timeline-btns")
                     let line = timeline_btns.getElementsByClassName("event-line")[i]
 
-                    if(!TIMELINES_INIT) {
-                        line = document.createElement("div")
-                        line.className = "event-line"
-                        timeline_btns.appendChild(line)
+                    line = document.createElement("div")
+                    line.className = "event-line"
+                    timeline_btns.appendChild(line)
 
-                        timelines[i].parentElement.parentElement.setAttribute("data-timeline-index", timeline_counter)
-                        timeline_counter = timeline_counter++
+                    timelines[i].parentElement.parentElement.setAttribute("data-timeline-index", timeline_counter)
+                    timeline_counter = timeline_counter++
+
+                    let events = timelines[i].getElementsByClassName("event")
+
+                    for (let k = 0; k < events.length; k++)
+                    {
+                        let event_btn = document.createElement("button")
+                        event_btn.className = "event-btn"
+                        event_btn.innerHTML = events[k].getAttribute('data-date')
+                        event_btn.addEventListener("click", () => {select_event(k, i)})
+
+                        line.appendChild(event_btn)
+
+                        current_events[i] = 0
+                        select_event(current_events[i], i)
                     }
+                }
 
-                    // let line = timelines[i].parentElement.getElementsByClassName("event-line")[0]
+                update_timelines()
+                window.addEventListener("resize", update_timelines)
+                display_slide(slide_current)
+
+            }
+
+
+            function update_timelines() {
+                let timelines = document.getElementsByClassName("events")
+
+                for (let i = 0; i < timelines.length; i++)
+                {
+                    let line = document.getElementById("timeline-btns").getElementsByClassName("event-line")[i]
                     let line_width = line.offsetWidth
                     let events = timelines[i].getElementsByClassName("event")
 
@@ -109,23 +136,8 @@
 
                     for (let k = 0; k < events.length; k++)
                     {
-                        
-                        let event_btn = line.getElementsByClassName("event-btn")[k]
                         let date = events[k].getAttribute('data-date')
                         let event_width = -28 + ((date - start_date) / (end_date - start_date)) * line_width + "px"
-
-                        console.log(event_width)
-                        if(!TIMELINES_INIT) {
-                            event_btn = document.createElement("button")
-                            event_btn.className = "event-btn"
-                            event_btn.innerHTML = date
-                            event_btn.addEventListener("click", () => {select_event(k, i)})
-
-                            line.appendChild(event_btn)
-
-                            current_events[i] = 0
-                            select_event(current_events[i], i)
-                        }
 
                         for (let l = 0; l < event_widths.length; l++)
                         { 
@@ -145,17 +157,12 @@
                                     event_width = current + PROX_LIMIT + "px"
                                 }
                             }
-                            
                         }
 
-                        event_btn.style.left = event_width
+                        line.getElementsByClassName("event-btn")[k].style.left = event_width
                         event_widths[k] = event_width
                     }
                 }
-
-                TIMELINES_INIT = true
-                window.addEventListener("resize", init_timelines)
-                display_slide(slide_current)
             }
 
 

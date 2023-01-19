@@ -1046,6 +1046,7 @@ function hide_slide_index() {
     if(document.getElementById(SLIDE_LIST[slide_current]).getAttribute("data-timeline-index")) {
         document.getElementById("timeline-btns").style.display = "flex";
     }
+    
     document.getElementById("slide-title").style.display = "block";
     document.getElementById("slide-index").style.display = "none";
     document.getElementById(SLIDE_LIST[slide_current]).style.display = "flex";
