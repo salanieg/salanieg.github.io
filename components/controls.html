@@ -93,6 +93,12 @@
                 cursor: pointer;
             }
 
+            #timeline-btns {
+                width:90vw;
+                margin-top: 40px;
+                margin-bottom: 25px;
+            }
+
             /* SCROLLBAR */
 
             :root {
@@ -135,6 +141,11 @@
 
             @media screen and (max-height: 800px) {
 
+                #timeline-btns {
+                    margin-top: 25px;
+                    margin-bottom: 0px;
+                }
+
                 #slide-title {
                     padding-top:10px;
                 }
@@ -149,6 +160,9 @@
     </head>
 
     <body>
+
+        <div id="timeline-btns"></div>
+
         <div id="slide-title"></div>
 
         <div id="slide-index" onmouseenter="display_slide_index()" onmouseleave="hide_slide_index()"></div>

@@ -1,11 +1,10 @@
 -------------- BUGS --------------
 
-api playlist?
 check safari preload
 
 -------------- IMPROVEMENTS --------------
 
-clean up og images
+change up og image color
 improve sharing small screen
     maybe reset to center
     auto hide when clicking away

@@ -64,13 +64,26 @@
             const PROX_LIMIT = 60
             var TIMELINES_INIT = false
             var current_events = []
+            var timeline_counter = 0
 
             function init_timelines() {
                 let timelines = document.getElementsByClassName("events")
 
                 for (let i = 0; i < timelines.length; i++)
                 {
-                    let line = timelines[i].parentElement.getElementsByClassName("event-line")[0]
+                    let timeline_btns = document.getElementById("timeline-btns")
+                    let line = timeline_btns.getElementsByClassName("event-line")[i]
+
+                    if(!TIMELINES_INIT) {
+                        line = document.createElement("div")
+                        line.className = "event-line"
+                        timeline_btns.appendChild(line)
+
+                        timelines[i].parentElement.parentElement.setAttribute("data-timeline-index", timeline_counter)
+                        timeline_counter = timeline_counter++
+                    }
+
+                    // let line = timelines[i].parentElement.getElementsByClassName("event-line")[0]
                     let line_width = line.offsetWidth
                     let events = timelines[i].getElementsByClassName("event")
 
@@ -142,12 +155,14 @@
 
                 TIMELINES_INIT = true
                 window.addEventListener("resize", init_timelines)
+                display_slide(slide_current)
             }
 
 
             function select_event(selection, timeline_index) {
+                let timeline_btns = document.getElementById("timeline-btns")
                 let timeline = document.getElementsByClassName("events")[timeline_index]
-                let line = timeline.parentElement.getElementsByClassName("event-line")[0]
+                let line = timeline_btns.getElementsByClassName("event-line")[timeline_index]
 
                 let current_event = current_events[timeline_index]
                 let events = timeline.getElementsByClassName("event")
@@ -291,7 +306,6 @@
                 background-color: black;
                 border: 2px outset grey;
                 width:100%;
-                margin-bottom: 100px;
             }
 
             .event-btn {
@@ -314,7 +328,6 @@
             .event-title {
                 font-size: var(--font-large);
                 margin-bottom: 60px;
-                font-style:italic;
             }
             
             
@@ -329,6 +342,7 @@
                 }
 
                 .event-btn {
+                    bottom: 0;
                     position: static;
                 }
             }
@@ -345,11 +359,9 @@
 
                 <div data-title-de="Revoulutionen" data-title-en="Revoulutions">
                     <div class="timeline extreme">
-                        <div class="event-line"></div>
-
                         <div class="events">
                             <div class="event" data-date="1789">
-                                <div class="event-title"><span lang="de">Französische Revolution</span><span lang="en" hidden>French Revolution</span></div>
+                                <div class="event-title"><span lang="de">FRANZÖSISCHE REVOLUTION</span><span lang="en" hidden>French Revolution</span></div>
                                 <div class="slideColumn">
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                     <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             

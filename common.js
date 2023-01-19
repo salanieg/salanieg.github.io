@@ -983,6 +983,28 @@ function display_slide(slide_index) {
     document.getElementById(SLIDE_LIST[slide_index]).style.display = "flex";
     slide_current = slide_index;
 
+    let timeline_index = document.getElementById(SLIDE_LIST[slide_current]).getAttribute("data-timeline-index")
+    let timeline_btns = document.getElementById("timeline-btns")
+    let timeline_lines = timeline_btns.getElementsByClassName("event-line")
+
+    console.log(timeline_btns)
+    console.log(timeline_lines)
+
+    for (let i = 0; i < timeline_lines.length; i++) {
+        timeline_lines[i].style.display = "none"
+    }
+
+    console.log(timeline_index)
+    console.log(timeline_lines[timeline_index])
+
+    if(timeline_index) {
+        timeline_btns.style.display = "flex"
+        timeline_lines[timeline_index].style.display = "flex"
+    }
+    else {
+        timeline_btns.style.display = "none"
+ 
+    }
 
     if(typeof highlight_title === "function") {
         highlight_title(slide_current)
