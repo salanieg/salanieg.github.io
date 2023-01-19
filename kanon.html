@@ -61,6 +61,7 @@
 
         <script>
 
+            const PROX_LIMIT = 60
             var TIMELINES_INIT = false
             var current_events = []
 
@@ -69,14 +70,11 @@
 
                 for (let i = 0; i < timelines.length; i++)
                 {
-                    let timeselector = timelines[i].parentElement.getElementsByClassName("timeselector")[0]
                     let line = timelines[i].parentElement.getElementsByClassName("line")[0]
+                    let line_width = line.offsetWidth
                     let events = timelines[i].getElementsByClassName("event")
 
-                    let line_width = line.offsetWidth
-                    // let line_offset = line.offsetLeft
 
-                    
                     let start_date = 5000
                     let end_date = -5000
 
@@ -94,61 +92,50 @@
                     }
 
 
-
                     let event_widths = []
 
                     for (let k = 0; k < events.length; k++)
                     {
                         
-                        let event_dot = line.getElementsByClassName("event-dot")[k]
+                        let event_btn = line.getElementsByClassName("event-btn")[k]
                         let date = events[k].getAttribute('data-date')
+                        let event_width = -28 + ((date - start_date) / (end_date - start_date)) * line_width + "px"
 
 
                         if(!TIMELINES_INIT) {
-                            event_dot = document.createElement("div")
-                            event_dot.className = "event-dot"
-                            event_dot.innerHTML = date
-                            event_dot.addEventListener("mouseover", () => {select_event(k, i)})
-                            
-                            line.appendChild(event_dot)
-
-
                             event_btn = document.createElement("button")
                             event_btn.className = "event-btn"
                             event_btn.innerHTML = date
                             event_btn.addEventListener("click", () => {select_event(k, i)})
 
-                            timeselector.appendChild(event_btn)
+                            line.appendChild(event_btn)
 
                             current_events[i] = 0
                             select_event(current_events[i], i)
                         }
 
-
-                        let event_width = -28 + ((date - start_date) / (end_date - start_date)) * line_width + "px"
-                        let prox_limit = 60
-
-
                         for (let l = 0; l < event_widths.length; l++)
                         { 
 
-                            let comp_old = parseInt(event_widths[l], 10)
-                            let comp_new = parseInt(event_width, 10)
+                            let compare = parseInt(event_widths[l], 10)
+                            let current = parseInt(event_width, 10)
 
-                            if(comp_new >= comp_old && comp_new <= (comp_old + prox_limit)) {
+                            if(current >= compare && current <= (compare + PROX_LIMIT)) {
                                 
-                                if((comp_new + 50) >= line_width) {
-                                    let event_old = line.getElementsByClassName("event-dot")[l]
-                                    event_old.style.left = parseInt(event_old.style.left, 10) - prox_limit + "px"
+                                if((current + 50) >= line_width) {
+                                    let event_old = line.getElementsByClassName("event-btn")[l]
+                                    let event_old_width = parseInt(event_old.style.left, 10) - PROX_LIMIT + "px"
+                                    event_old.style.left = event_old_width
+                                    event_widths[l] = event_old_width
                                 }
                                 else {
-                                    event_width = comp_new + prox_limit + "px"
+                                    event_width = current + PROX_LIMIT + "px"
                                 }
                             }
                             
                         }
 
-                        event_dot.style.left = event_width
+                        event_btn.style.left = event_width
                         event_widths[k] = event_width
                     }
                 }
@@ -164,13 +151,13 @@
 
                 let current_event = current_events[timeline_index]
                 let events = timeline.getElementsByClassName("event")
-                let event_dots = line.getElementsByClassName("event-dot")
+                let event_btns = line.getElementsByClassName("event-btn")
 
-                event_dots[current_event].style.backgroundColor = "black";
+                event_btns[current_event].style.backgroundColor = "black";
                 events[current_event].style.display = "none";
                 events[current_event].gridArea = "";
                 
-                event_dots[selection].style.backgroundColor = "#890000";
+                event_btns[selection].style.backgroundColor = "#890000";
                 events[selection].style.display = "block";
                 events[selection].gridArea = "current_event";
 
@@ -301,16 +288,12 @@
             #timeline-wrap {
                 height:100%;
                 width:100vw;
-                gap: 40px;
+                gap: 60px;
                 display: grid;
                 grid-template-rows: auto auto;
                 grid-template-columns: auto;
                 grid-template-areas: "timeline" "events";
                 place-items: center;
-            }
-
-            .timeline {
-                grid-area: events;
             }
 
             .line {
@@ -319,6 +302,24 @@
                 background-color: black;
                 border: 2px outset grey;
                 width:100%
+            }
+
+            .event-btn {
+                cursor: pointer;
+                position: absolute;
+                border: 2px outset grey;
+                bottom:-19px;
+                outline: none;
+                text-align: center;
+                padding: 2px 7px;
+                font-size: var(--font-medium);
+                color: white;
+                background-color: black;
+            }
+
+
+            .timeline {
+                grid-area: events;
             }
 
             .event {
@@ -331,33 +332,6 @@
                 font-style:italic;
             }
             
-            .event-dot, .event-btn {
-                padding: 2px 7px;
-                font-size: var(--font-medium);
-                color: white;
-                background-color: black;
-            }
-
-            .event-dot {
-                cursor: pointer;
-                position: absolute;
-                border: 2px outset grey;
-                bottom:-19px;
-            }
-
-            .timeselector {
-                grid-area: timeline;
-                display: none;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap:10px;
-            }
-
-            .event-btn {
-                outline: none;
-                text-align: center;
-            }
-
             
             @media screen and (max-width: 1000px){
 
@@ -369,7 +343,7 @@
                     gap:10px;
                 }
 
-                .event-dot {
+                .event-btn {
                     position: static;
                 }
             }
