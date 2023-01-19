@@ -68,27 +68,25 @@
 
 
             function init_timelines() {
-                let timelines = document.getElementsByClassName("events")
+                let timeline_btns = document.getElementById("timeline-btns")
+                let events = document.getElementsByClassName("events")
 
-                for (let i = 0; i < timelines.length; i++)
+                for (let i = 0; i < events.length; i++)
                 {
-                    let timeline_btns = document.getElementById("timeline-btns")
-                    let line = timeline_btns.getElementsByClassName("event-line")[i]
-
-                    line = document.createElement("div")
+                    let line = document.createElement("div")
                     line.className = "event-line"
                     timeline_btns.appendChild(line)
 
-                    timelines[i].parentElement.parentElement.setAttribute("data-timeline-index", timeline_counter)
+                    events[i].parentElement.parentElement.setAttribute("data-timeline-index", timeline_counter)
                     timeline_counter = timeline_counter++
 
-                    let events = timelines[i].getElementsByClassName("event")
+                    let event_list = events[i].getElementsByClassName("event")
 
-                    for (let k = 0; k < events.length; k++)
+                    for (let k = 0; k < event_list.length; k++)
                     {
                         let event_btn = document.createElement("button")
                         event_btn.className = "event-btn"
-                        event_btn.innerHTML = events[k].getAttribute('data-date')
+                        event_btn.innerHTML = event_list[k].getAttribute('data-date')
                         event_btn.addEventListener("click", () => {select_event(k, i)})
 
                         line.appendChild(event_btn)
@@ -100,8 +98,6 @@
 
                 update_timelines()
                 window.addEventListener("resize", update_timelines)
-                display_slide(slide_current)
-
             }
 
 
@@ -163,6 +159,8 @@
                         event_widths[k] = event_width
                     }
                 }
+
+                display_slide(slide_current)
             }
 
 
