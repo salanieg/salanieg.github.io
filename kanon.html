@@ -114,7 +114,7 @@
                         let date = events[k].getAttribute('data-date')
                         let event_width = -28 + ((date - start_date) / (end_date - start_date)) * line_width + "px"
 
-
+                        console.log(event_width)
                         if(!TIMELINES_INIT) {
                             event_btn = document.createElement("button")
                             event_btn.className = "event-btn"
@@ -361,7 +361,7 @@
                     <div class="timeline extreme">
                         <div class="events">
                             <div class="event" data-date="1789">
-                                <div class="event-title"><span lang="de">FRANZÖSISCHE REVOLUTION</span><span lang="en" hidden>French Revolution</span></div>
+                                <div class="event-title"><span lang="de">FRANZÖSISCHE REVOLUTION</span><span lang="en" hidden>FRENCH REVOLUTION</span></div>
                                 <div class="slideColumn">
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                     <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -369,7 +369,7 @@
                             </div>
                             
                             <div class="event" data-date="1848">
-                                <div class="event-title"><span lang="de">Revolutionen von 1848</span><span lang="en" hidden>Revolutions of 1848</span></div>
+                                <div class="event-title"><span lang="de">REVOLUTIONEN VON 1848</span><span lang="en" hidden>REVOLUTIONS OF 1848</span></div>
                                 <div class="slideColumn">
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                     <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions--> 
@@ -378,22 +378,24 @@
                             </div>
 
                             <div class="event" data-date="1871">
-                                <div class="event-title"><span lang="de">Pariser Kommune</span><span lang="en" hidden>Paris Commune</span></div>
-                                <span class="slideBody"><span lang="de">Vorgeschichte</span><span lang="en" hidden>Prerequisites</span></span>
-                                <div class="slideGrid">
-                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="AdGhGX6z8BA" sandbox></iframe><!--Why did the French Commune Fail?-->
-                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="xVISzFmBiPU" sandbox></iframe><!--How Prussia Ended The French Empire: Franco-Prussian War | Animated History-->                       
+                                <div class="slideColumn">
+                                    <div class="event-title"><span lang="de">PARISER KOMMUNE</span><span lang="en" hidden>PARIS COMMUNE</span></div>
+                                    <span class="slideBody"><span lang="de">Vorgeschichte</span><span lang="en" hidden>Prerequisites</span></span>
+                                    <div class="slideGrid">
+                                        <iframe class="small" src="about:blank" data-source="youtube" data-id="AdGhGX6z8BA" sandbox></iframe><!--Why did the French Commune Fail?-->
+                                        <iframe class="small" src="about:blank" data-source="youtube" data-id="xVISzFmBiPU" sandbox></iframe><!--How Prussia Ended The French Empire: Franco-Prussian War | Animated History-->                       
+                                    </div>
+                                    <div class="medium slideText">
+                                        <span class="slideTitle"><span lang="de">Text</span><span lang="en" hidden>Text</span></span>
+                                        <span class="slideBody">
+                                            <a href="https://www.marxists.org/archive/marx/works/1871/civil-war-france/ch05.html">Karl Marx: The Civil War in France<br>The Paris Commune</a>
+                                        </span>
+                                    </div> 
                                 </div>
-                                <div class="medium slideText">
-                                    <span class="slideTitle"><span lang="de">Text</span><span lang="en" hidden>Text</span></span>
-                                    <span class="slideBody">
-                                        <a href="https://www.marxists.org/archive/marx/works/1871/civil-war-france/ch05.html">Karl Marx: The Civil War in France<br>The Paris Commune</a>
-                                    </span>
-                                </div> 
                             </div>
 
                             <div class="event" data-date="1917">
-                                <div class="event-title"><span lang="de">Russische Revolution</span><span lang="en" hidden>Soviet Revolution</span></div>
+                                <div class="event-title"><span lang="de">RUSSISCHE REVOLUTION</span><span lang="en" hidden>SOVIET REVOLUTION</span></div>
                                 <div class="slideColumn">
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                     <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -401,7 +403,7 @@
                             </div>
 
                             <div class="event" data-date="1918">
-                                <div class="event-title"><span lang="de"></span>Deutsche Revolution<span lang="en" hidden>German Revolution</span></div>
+                                <div class="event-title"><span lang="de"></span>DEUTSCHE REVOLUTION<span lang="en" hidden>GERMAN REVOLUTION</span></div>
                                 <div class="slideColumn">
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                     <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -409,7 +411,7 @@
                             </div>
 
                             <div class="event" data-date="1954">
-                                <div class="event-title"><span lang="de">Chinesische Revolution</span><span lang="en" hidden>Chinese Revolution</span></div>
+                                <div class="event-title"><span lang="de">CHINESISCHE REVOLUTION</span><span lang="en" hidden>CHINESE REVOLUTION</span></div>
                                 <div class="slideColumn">
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                     <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -417,7 +419,7 @@
                             </div>
 
                             <div class="event" data-date="1989">
-                                <div class="event-title"><span lang="de">Fall der Sovietunion</span><span lang="en" hidden>Collapse of the Soviet Union</span></div>
+                                <div class="event-title"><span lang="de">FALL DER SOVIETUNION</span><span lang="en" hidden>COLLAPSE OF THE SOVIET UNION</span></div>
                                 <div class="slideColumn">
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                     <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             

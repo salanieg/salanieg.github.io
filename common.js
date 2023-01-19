@@ -991,6 +991,8 @@ function display_slide(slide_index) {
         timeline_lines[i].style.display = "none"
     }
 
+    console.log(timeline_index)
+
     if(timeline_index) {
         timeline_btns.style.display = "flex"
         timeline_lines[timeline_index].style.display = "flex"
@@ -1041,7 +1043,9 @@ function display_slide_index() {
 }
 
 function hide_slide_index() {
-    document.getElementById("timeline-btns").style.display = "block";
+    if(document.getElementById(SLIDE_LIST[slide_current]).getAttribute("data-timeline-index")) {
+        document.getElementById("timeline-btns").style.display = "flex";
+    }
     document.getElementById("slide-title").style.display = "block";
     document.getElementById("slide-index").style.display = "none";
     document.getElementById(SLIDE_LIST[slide_current]).style.display = "flex";
