@@ -69,24 +69,24 @@
 
             function init_timelines() {
                 let timeline_btns = document.getElementById("timeline-btns")
-                let events = document.getElementsByClassName("events")
+                let timelines = document.getElementsByClassName("timeline")
 
-                for (let i = 0; i < events.length; i++)
+                for (let i = 0; i < timelines.length; i++)
                 {
                     let line = document.createElement("div")
                     line.className = "event-line"
                     timeline_btns.appendChild(line)
 
-                    events[i].parentElement.parentElement.setAttribute("data-timeline-index", timeline_counter)
+                    timelines[i].setAttribute("data-timeline-index", timeline_counter)
                     timeline_counter = timeline_counter++
 
-                    let event_list = events[i].getElementsByClassName("event")
+                    let events = timelines[i].getElementsByClassName("event")
 
-                    for (let k = 0; k < event_list.length; k++)
+                    for (let k = 0; k < events.length; k++)
                     {
                         let event_btn = document.createElement("button")
                         event_btn.className = "event-btn"
-                        event_btn.innerHTML = event_list[k].getAttribute('data-date')
+                        event_btn.innerHTML = events[k].getAttribute('data-date')
                         event_btn.addEventListener("click", () => {select_event(k, i)})
 
                         line.appendChild(event_btn)
@@ -102,7 +102,7 @@
 
 
             function update_timelines() {
-                let timelines = document.getElementsByClassName("events")
+                let timelines = document.getElementsByClassName("timeline")
 
                 for (let i = 0; i < timelines.length; i++)
                 {
@@ -165,21 +165,15 @@
 
 
             function select_event(selection, timeline_index) {
-                let timeline_btns = document.getElementById("timeline-btns")
-                let timeline = document.getElementsByClassName("events")[timeline_index]
-                let line = timeline_btns.getElementsByClassName("event-line")[timeline_index]
-
+                let event_btns = document.getElementsByClassName("event-line")[timeline_index].getElementsByClassName("event-btn")
+                let events = document.getElementsByClassName("timeline")[timeline_index].getElementsByClassName("event")
                 let current_event = current_events[timeline_index]
-                let events = timeline.getElementsByClassName("event")
-                let event_btns = line.getElementsByClassName("event-btn")
 
                 event_btns[current_event].style.backgroundColor = "black";
                 events[current_event].style.display = "none";
-                events[current_event].gridArea = "";
                 
                 event_btns[selection].style.backgroundColor = "#890000";
                 events[selection].style.display = "block";
-                events[selection].gridArea = "current_event";
 
                 current_events[timeline_index] = selection
             }
@@ -364,73 +358,73 @@
 
                 <div data-title-de="Revoulutionen" data-title-en="Revoulutions">
                     <div class="timeline extreme">
-                        <div class="events">
-                            <div class="event" data-date="1789">
-                                <div class="event-title"><span lang="de">FRANZÖSISCHE REVOLUTION</span><span lang="en" hidden>FRENCH REVOLUTION</span></div>
-                                <div class="slideColumn">
-                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                                    <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
-                                </div>
-                            </div>
-                            
-                            <div class="event" data-date="1848">
-                                <div class="event-title"><span lang="de">REVOLUTIONEN VON 1848</span><span lang="en" hidden>REVOLUTIONS OF 1848</span></div>
-                                <div class="slideColumn">
-                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                                    <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions--> 
-        
-                                </div>
-                            </div>
 
-                            <div class="event" data-date="1871">
-                                <div class="slideColumn">
-                                    <div class="event-title"><span lang="de">PARISER KOMMUNE</span><span lang="en" hidden>PARIS COMMUNE</span></div>
-                                    <span class="slideBody"><span lang="de">Vorgeschichte</span><span lang="en" hidden>Prerequisites</span></span>
-                                    <div class="slideGrid">
-                                        <iframe class="small" src="about:blank" data-source="youtube" data-id="AdGhGX6z8BA" sandbox></iframe><!--Why did the French Commune Fail?-->
-                                        <iframe class="small" src="about:blank" data-source="youtube" data-id="xVISzFmBiPU" sandbox></iframe><!--How Prussia Ended The French Empire: Franco-Prussian War | Animated History-->                       
-                                    </div>
-                                    <div class="medium slideText">
-                                        <span class="slideTitle"><span lang="de">Text</span><span lang="en" hidden>Text</span></span>
-                                        <span class="slideBody">
-                                            <a href="https://www.marxists.org/archive/marx/works/1871/civil-war-france/ch05.html">Karl Marx: The Civil War in France<br>The Paris Commune</a>
-                                        </span>
-                                    </div> 
-                                </div>
-                            </div>
-
-                            <div class="event" data-date="1917">
-                                <div class="event-title"><span lang="de">RUSSISCHE REVOLUTION</span><span lang="en" hidden>SOVIET REVOLUTION</span></div>
-                                <div class="slideColumn">
-                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                                    <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
-                                </div>
-                            </div>
-
-                            <div class="event" data-date="1918">
-                                <div class="event-title"><span lang="de"></span>DEUTSCHE REVOLUTION<span lang="en" hidden>GERMAN REVOLUTION</span></div>
-                                <div class="slideColumn">
-                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                                    <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
-                                </div>
-                            </div>
-
-                            <div class="event" data-date="1954">
-                                <div class="event-title"><span lang="de">CHINESISCHE REVOLUTION</span><span lang="en" hidden>CHINESE REVOLUTION</span></div>
-                                <div class="slideColumn">
-                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                                    <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
-                                </div>
-                            </div>
-
-                            <div class="event" data-date="1989">
-                                <div class="event-title"><span lang="de">FALL DER SOVIETUNION</span><span lang="en" hidden>COLLAPSE OF THE SOVIET UNION</span></div>
-                                <div class="slideColumn">
-                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
-                                    <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
-                                </div>
+                        <div class="event" data-date="1789">
+                            <div class="event-title"><span lang="de">FRANZÖSISCHE REVOLUTION</span><span lang="en" hidden>FRENCH REVOLUTION</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
                             </div>
                         </div>
+                        
+                        <div class="event" data-date="1848">
+                            <div class="event-title"><span lang="de">REVOLUTIONEN VON 1848</span><span lang="en" hidden>REVOLUTIONS OF 1848</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions--> 
+    
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1871">
+                            <div class="slideColumn">
+                                <div class="event-title"><span lang="de">PARISER KOMMUNE</span><span lang="en" hidden>PARIS COMMUNE</span></div>
+                                <span class="slideBody"><span lang="de">Vorgeschichte</span><span lang="en" hidden>Prerequisites</span></span>
+                                <div class="slideGrid">
+                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="AdGhGX6z8BA" sandbox></iframe><!--Why did the French Commune Fail?-->
+                                    <iframe class="small" src="about:blank" data-source="youtube" data-id="xVISzFmBiPU" sandbox></iframe><!--How Prussia Ended The French Empire: Franco-Prussian War | Animated History-->                       
+                                </div>
+                                <div class="medium slideText">
+                                    <span class="slideTitle"><span lang="de">Text</span><span lang="en" hidden>Text</span></span>
+                                    <span class="slideBody">
+                                        <a href="https://www.marxists.org/archive/marx/works/1871/civil-war-france/ch05.html">Karl Marx: The Civil War in France<br>The Paris Commune</a>
+                                    </span>
+                                </div> 
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1917">
+                            <div class="event-title"><span lang="de">RUSSISCHE REVOLUTION</span><span lang="en" hidden>SOVIET REVOLUTION</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1918">
+                            <div class="event-title"><span lang="de"></span>DEUTSCHE REVOLUTION<span lang="en" hidden>GERMAN REVOLUTION</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1954">
+                            <div class="event-title"><span lang="de">CHINESISCHE REVOLUTION</span><span lang="en" hidden>CHINESE REVOLUTION</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+
+                        <div class="event" data-date="1989">
+                            <div class="event-title"><span lang="de">FALL DER SOVIETUNION</span><span lang="en" hidden>COLLAPSE OF THE SOVIET UNION</span></div>
+                            <div class="slideColumn">
+                                <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
+                                <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -585,8 +579,8 @@
                 </div>
             </div>
 
-            <!-- <iframe class="medium" src="about:blank" data-source="youtube" data-id="-yrRhmRdQds" data-list="PLhAMGiT1MTPABwHxfRPa5ewEHm9nbpD_Q" sandbox></iframe>Marx & Engels - Stationen ihres Lebens
-            <iframe class="medium" src="about:blank" data-source="youtube" data-id="6O7_YswJOXY" sandbox loading="lazy" frameborder=0>https://players.brightcove.net/6057277737001/AgPwICX30_default/slide_index.html?videoId=6165059245001</iframe>KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD -->
+            <!-- data-source="youtube" data-id="-yrRhmRdQds" data-list="PLhAMGiT1MTPABwHxfRPa5ewEHm9nbpD_Q" Marx & Engels - Stationen ihres Lebens
+            https://players.brightcove.net/6057277737001/AgPwICX30_default/slide_index.html?videoId=6165059245001 KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD -->
 
         </main>
 
