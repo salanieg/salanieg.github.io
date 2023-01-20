@@ -188,6 +188,10 @@ cite {
 	font-style: normal;
 }
 
+.right {text-align: right !important;}
+.center {text-align: center !important;}
+.left {text-align: left !important;}
+
 
 /* SCROLLBAR */
 
@@ -213,27 +217,6 @@ cite {
 
 /* ELEMENTS */
 
-.logo {
-	width:fit-content;
-	border:solid;
-	border-width: 2px;
-	margin:13px 0px 13px 20px;
-	padding:0px 20px;
-	background-color:white;
-	color:black;
-	-webkit-tap-highlight-color: transparent;
-	-webkit-touch-callout: none;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-}
-
-.logo > a {
-	color:black !important;
-}
-
 hr {
 	margin:0px;
 	padding:0px;
@@ -243,6 +226,7 @@ hr {
 
 iframe {
 	border: 0;
+	aspect-ratio: 16/9;
 }
 
 input {
@@ -289,6 +273,34 @@ button[disabled]{
   color: rgba(211, 211, 211, 0.5);
   color:rgba(128, 128, 128, 0.5)
 }
+
+
+/* TITLES */
+
+.issue-title {
+	display: flex;
+	justify-content: space-between;
+	white-space:wrap;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	white-space: nowrap;
+	cursor: pointer;
+	text-align: right;
+	gap:0px 30px;
+	width:100%;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.issue-title br {
+	display: none;
+}
+
+@media screen and (max-width: 400px) {
+	.issue-title br {
+		display:inline;
+	}
+}
+
 
 /* FORM */
 

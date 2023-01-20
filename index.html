@@ -62,8 +62,8 @@
                 {
                     no: "ISSUE I",
                     title_no: "title-i",
-                    title_de: "ALTERNATIVE <br class='spacedissuebreaks'>UTOPIEN",
-                    title_en: "ALTERNATIVE <br class='spacedissuebreaks'>UTOPIAS",
+                    title_de: "ALTERNATIVE <br>UTOPIEN",
+                    title_en: "ALTERNATIVE <br>UTOPIAS",
                     cover_de: "images/issues/de/issue-i-cover.WebP",
                     cover_en: "images/issues/en/issue-i-cover.WebP",
                     url: "issue-i"
@@ -71,8 +71,8 @@
                 {
                     no: "ISSUE II",
                     title_no: "title-ii",
-                    title_de: "REFORM ODER <br class='spacedissuebreaks'>REVOLUTION",
-                    title_en: "REFORM OR <br class='spacedissuebreaks'>REVOLUTION",
+                    title_de: "REFORM ODER <br>REVOLUTION",
+                    title_en: "REFORM OR <br>REVOLUTION",
                     cover_de: "images/issues/de/issue-ii-cover.WebP",
                     cover_en: "images/issues/en/issue-ii-cover.WebP",
                     url: "issue-i"
@@ -80,8 +80,8 @@
                 {
                     no: "ISSUE III",
                     title_no: "title-iii",
-                    title_de: "REGELN DES <br class='spacedissuebreaks'>ALGORHYTMUS",
-                    title_en: "ALGORITHMIC <br class='spacedissuebreaks'>RULE",
+                    title_de: "REGELN DES <br>ALGORHYTMUS",
+                    title_en: "ALGORITHMIC <br>RULE",
                     cover_de: "images/issues/de/issue-i-cover.WebP",
                     cover_en: "images/issues/en/issue-i-cover.WebP",
                     url: "issue-i"
@@ -90,19 +90,16 @@
 
             // TEMPLATES
 
-            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span id="index' + i + '" class="indexitem" onclick="display_slide(' + i + ')"><span class="slide-index-spaced"><span class="slide-index-spaced-issue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></span></span><br>'}
-            function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title-inner" href=' + issue.url + '><span class="slide-index-spaced-issue">' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a>'}
-            function cover_template(i){let issue = ISSUE_LIST[i]; return '<a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" hidden src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a>'}
-            function title_template(i){let issue = ISSUE_LIST[i]; return '<a class="title" onmouseover="display_slide(' + i + ')" href=' + issue.url + '><span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span></a><hr>'}
+            function cover_template(i){let issue = ISSUE_LIST[i]; return '<a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a>'}
+            function basic_template(issue) {return '<span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span>'}
+            function title_template(i){let issue = ISSUE_LIST[i]; return '<a onmouseover="display_slide(' + i + ')" class="issue-title" href=' + issue.url + '>' + basic_template(issue) + '</a><hr>'}
+            function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="issue-title center" href=' + issue.url + '>' + basic_template(issue) + '</a>'}
+            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span onclick="display_slide(' + i + ')" id="index' + i + '" class="indexitem issue-title">' + basic_template(issue) + '</span><br>'}
 
             // LOADING
 
             load_components(["header", "controls", "databanner"])
             
-            // function add_init() {
-            // }
-
-
         </script>
 
         <script>
@@ -125,7 +122,7 @@
 
             function highlight_title(i) {
 
-                let titles = document.querySelectorAll('.title');
+                let titles = document.getElementById("issue-list").querySelectorAll('.issue-title');
 
                 titles.forEach((title) => {title.style.fontWeight = "400"});
                 titles.item(i).style.fontWeight = "700";
@@ -175,10 +172,6 @@
 
             #controls {
                 display:none !important;
-            }
-
-            #timeline-buttons {
-                display:none !important;            
             }
 
             #content {
@@ -252,31 +245,19 @@
 
             #slide-index {
                 line-height: 1 !important;
-                max-width: 440px !important;
+                max-width: 480px !important;
                 width:100% !important;
             }
 
-            .title-inner, .slide-index-spaced {
-				display:flex;
-				align-items: flex-start;
-                gap:0px 30px;
-            }
-
-            .title-inner {
-				justify-content: center;
-                flex-wrap: wrap;
-                text-align: center;
-            }
-
-            .slide-index-spaced {
+            /* .slide-index-spaced {
 				justify-content: space-between;
 				width:100%;
                 text-align: right;
-			}
+			} */
 
-            .slide-index-spaced-issue {
+            /* .slide-index-spaced-issue {
                 white-space: nowrap;
-            }
+            } */
 
             #slide-current {
                 font-size: 15pt !important;
@@ -340,20 +321,6 @@
 	            font-size: clamp(1rem, -0.54rem + 5.7vw, 1.25rem) !important;
             }
 
-            .spacedissuebreaks {
-                display: none;
-            }
-
-            @media screen and (max-width: 400px) {
-                .spacedissuebreaks {
-                    display:inline;
-                }
-
-                .slide-index-spaced {
-                    justify-content: space-around;
-                }
-            }
-
             .title-small {
                 display: none;
             }
@@ -373,24 +340,6 @@
                     width: 45px !important;
                     font-size: 20pt !important;
                 }
-
-                /* #slide-current {order:1;}
-                #letztes {order:2;}
-                #nächstes {order:3;}
-
-                #control-btns::after {
-                    content: '';
-                    width: 100%;
-                    order: 1;
-                } */
-
-                /* .title-inner {
-                    flex-direction: column;
-                } */
-                
-                /* .title-inner * {
-                    width: 100%;
-                } */
             }
 
 

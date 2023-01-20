@@ -54,7 +54,7 @@
             
             function add_init() {
                 init_timelines()
-                document.getElementById("headerlogo").firstChild.innerHTML = "KANON"
+                document.getElementById("logo").innerHTML = "KANON"
             }
 
         </script>
@@ -62,7 +62,6 @@
         <script>
 
             const PROX_LIMIT = 60
-            var TIMELINES_INIT = false
             var current_events = []
             var timeline_counter = 0
 
@@ -272,10 +271,6 @@
                 .slideGrow.verysmall * {width:60vw;}
             }
 
-            iframe {
-                aspect-ratio: 16/9 !important;
-            }
-
             .slideText {
                 display:flex;
                 width:fit-content;
@@ -291,10 +286,6 @@
 
             .slideBody {
                 font-size: 20pt;
-            }
-            
-            .left {
-                text-align: left;
             }
 
 
@@ -360,7 +351,7 @@
                     <div class="timeline extreme">
 
                         <div class="event" data-date="1789">
-                            <div class="event-title"><span lang="de">FRANZÖSISCHE REVOLUTION</span><span lang="en" hidden>FRENCH REVOLUTION</span></div>
+                            <div class="event-title"><span lang="de">FRANZÖSISCHE REVOLUTION</span><span lang="en">FRENCH REVOLUTION</span></div>
                             <div class="slideColumn">
                                 <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                 <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -368,7 +359,7 @@
                         </div>
                         
                         <div class="event" data-date="1848">
-                            <div class="event-title"><span lang="de">REVOLUTIONEN VON 1848</span><span lang="en" hidden>REVOLUTIONS OF 1848</span></div>
+                            <div class="event-title"><span lang="de">REVOLUTIONEN VON 1848</span><span lang="en">REVOLUTIONS OF 1848</span></div>
                             <div class="slideColumn">
                                 <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                 <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions--> 
@@ -378,14 +369,14 @@
 
                         <div class="event" data-date="1871">
                             <div class="slideColumn">
-                                <div class="event-title"><span lang="de">PARISER KOMMUNE</span><span lang="en" hidden>PARIS COMMUNE</span></div>
-                                <span class="slideBody"><span lang="de">Vorgeschichte</span><span lang="en" hidden>Prerequisites</span></span>
+                                <div class="event-title"><span lang="de">PARISER KOMMUNE</span><span lang="en">PARIS COMMUNE</span></div>
+                                <span class="slideBody"><span lang="de">Vorgeschichte</span><span lang="en">Prerequisites</span></span>
                                 <div class="slideGrid">
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="AdGhGX6z8BA" sandbox></iframe><!--Why did the French Commune Fail?-->
                                     <iframe class="small" src="about:blank" data-source="youtube" data-id="xVISzFmBiPU" sandbox></iframe><!--How Prussia Ended The French Empire: Franco-Prussian War | Animated History-->                       
                                 </div>
                                 <div class="medium slideText">
-                                    <span class="slideTitle"><span lang="de">Text</span><span lang="en" hidden>Text</span></span>
+                                    <span class="slideTitle"><span lang="de">Text</span><span lang="en">Text</span></span>
                                     <span class="slideBody">
                                         <a href="https://www.marxists.org/archive/marx/works/1871/civil-war-france/ch05.html">Karl Marx: The Civil War in France<br>The Paris Commune</a>
                                     </span>
@@ -394,7 +385,7 @@
                         </div>
 
                         <div class="event" data-date="1917">
-                            <div class="event-title"><span lang="de">RUSSISCHE REVOLUTION</span><span lang="en" hidden>SOVIET REVOLUTION</span></div>
+                            <div class="event-title"><span lang="de">RUSSISCHE REVOLUTION</span><span lang="en">SOVIET REVOLUTION</span></div>
                             <div class="slideColumn">
                                 <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                 <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -402,7 +393,7 @@
                         </div>
 
                         <div class="event" data-date="1918">
-                            <div class="event-title"><span lang="de"></span>DEUTSCHE REVOLUTION<span lang="en" hidden>GERMAN REVOLUTION</span></div>
+                            <div class="event-title"><span lang="de"></span>DEUTSCHE REVOLUTION<span lang="en">GERMAN REVOLUTION</span></div>
                             <div class="slideColumn">
                                 <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                 <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -410,7 +401,7 @@
                         </div>
 
                         <div class="event" data-date="1954">
-                            <div class="event-title"><span lang="de">CHINESISCHE REVOLUTION</span><span lang="en" hidden>CHINESE REVOLUTION</span></div>
+                            <div class="event-title"><span lang="de">CHINESISCHE REVOLUTION</span><span lang="en">CHINESE REVOLUTION</span></div>
                             <div class="slideColumn">
                                 <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                 <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -418,7 +409,7 @@
                         </div>
 
                         <div class="event" data-date="1989">
-                            <div class="event-title"><span lang="de">FALL DER SOVIETUNION</span><span lang="en" hidden>COLLAPSE OF THE SOVIET UNION</span></div>
+                            <div class="event-title"><span lang="de">FALL DER SOVIETUNION</span><span lang="en">COLLAPSE OF THE SOVIET UNION</span></div>
                             <div class="slideColumn">
                                 <iframe class="small" src="about:blank" data-source="youtube" data-id="2B-EWxPyIf4" data-list="PL7y0zyKXzhwzrZ0raG4HpT8ZdXx9USoW3" sandbox></iframe><!--The German Revoulution-->
                                 <iframe class="small" src="about:blank" data-source="spotify" data-id="0a4wAoteCuEqSeyXznc0PN" sandbox></iframe><!--Revoulutions-->             
@@ -478,7 +469,7 @@
 
                     <div class="slideFlex">
                         <div class="small slideText">
-                            <span class="slideTitle"><span lang="de">MUSIK/VIDEO</span><span lang="en" hidden>MUSIC/VIDEO</span></span>
+                            <span class="slideTitle"><span lang="de">MUSIK/VIDEO</span><span lang="en">MUSIC/VIDEO</span></span>
                             <span class="slideBody"><a href="https://www.grammy.com/videos/watch-kendrick-lamar-u2-dave-chappelle-open-2018-grammys-grammy-rewind">KENDRICK LAMARS GRAMMY PERFORMANCE 2018<br>XXX, DNA, NEW FREEZER, KING'S DEAD MASHUP</a></span><!--KENDRICK LAMAR - XXX, DNA, NEW FREEZER, KING'S DEAD-->
                         </div>
                     </div>
@@ -529,7 +520,7 @@
 
                 <div data-title-de="Websites" data-title-en="Websites">
                     <div class="medium slideText">
-                        <span class="slideTitle left"><span lang="de">Websites</span><span lang="en" hidden>Websites</span></span>
+                        <span class="slideTitle left"><span lang="de">Websites</span><span lang="en">Websites</span></span>
                         <span class="slideBody left">
                             <a href="https://fontsinuse.com/">Fonts In Use</a><br>
                             <a href="https://commons.wikimedia.org/wiki/Main_Page">WIKIMEDIA COMMONS</a><br>
@@ -547,7 +538,7 @@
                     <div class="slideColumn">
                         <iframe src="about:blank" data-source="spotify" data-id="6dnfbAgKMRyYZyeRwN5m5R" sandbox></iframe><!--99% invisible Bijlmer (City of the Future)-->
                         <div class="slideText">
-                            <span class="slideTitle left"><span lang="de">Artikel</span><span lang="en" hidden>Article</span></span>
+                            <span class="slideTitle left"><span lang="de">Artikel</span><span lang="en">Article</span></span>
                             <span class="slideBody left"><a href="https://99percentinvisible.org/episode/bijlmer-city-future-part-1/">Bijlmer (City of the Future, Part 1)</a></span>
                             <span class="slideBody left"><a href="https://99percentinvisible.org/episode/blood-sweat-tears-city-future-part-2/">Blood, Sweat & Tears (City of the Future, Part 2)</a></span>
                         </div>
@@ -567,11 +558,11 @@
                         <iframe class="medium" src="about:blank" sandbox loading="lazy" title="vimeo-player" allowfullscreen>https://player.vimeo.com/video/279828346</iframe><!--The Big Flat Now – 032c issue #34 (2018)-->
                         <div class="slideFlex">
                             <div class="slideText">
-                                <span class="slideTitle"><span lang="de">Artikel</span><span lang="en" hidden>Article</span></span>
+                                <span class="slideTitle"><span lang="de">Artikel</span><span lang="en">Article</span></span>
                                 <span class="slideBody"><a href="https://032c.com/the-big-flat-now-power-flatness-and-nowness-in-the-third-millennium">THE BIG FLAT NOW:<br>Power, Flatness, and Nowness<br>in the Third Millennium</a></span>
                             </div>
                             <div class="slideText">
-                                <span class="slideTitle"><span lang="de">Installation</span><span lang="en" hidden>Installation</span></span>
+                                <span class="slideTitle"><span lang="de">Installation</span><span lang="en">Installation</span></span>
                                 <span class="slideBody"><a href="https://berlinischegalerie.de/ausstellung/loredana-nemes/">Berlinische Galerie:<br>Loredana Nemes.<br>Gier Angst Liebe<br>(22.06.–15.10.2018)</a></span>
                             </div>
                         </div>

@@ -19,6 +19,22 @@
 				display: var(--header-divider);
 			}
 
+			#logo {
+				width:fit-content;
+				border: 2px solid black;
+				margin:13px 0px 13px 20px;
+				padding:0px 20px;
+				background-color:white;
+				color:black !important;
+				-webkit-tap-highlight-color: transparent;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+
 			#navigation {
 				display: flex;
 				gap: 30px;
@@ -126,7 +142,7 @@
 			}
 
 			#infoe, #infom {
-				max-width: 400px;
+				max-width: 480px;
 				margin-left: auto;
 				margin-right: auto;
 			}
@@ -152,16 +168,6 @@
 				cursor: pointer;
 			}
 
-
-			/* TEXT ALIGN LAST */
-
-			.spacedissues, .spacedtitles {
-				width:100%;
-				display:flex;
-				justify-content: space-between;
-				align-items: center;
-			}
-			
 
 			/* FORM */
 
@@ -252,11 +258,12 @@
 				}
 			}
 
+
 		</style>
 	</head>
 
 	<body>
-		<div id="headerlogo" class="logo"><a href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a></div> 
+		<a id="logo" href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a>
 
 		<nav id="navigation" onmouseleave="safeclosemenu()">
 
@@ -271,8 +278,8 @@
 					<div class="menu-spacer">X</div>
 					<div class="menu-inside">
 					<div class="info" id="infoi">
-						<a id="info-issue-i" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en" hidden>ALTERNATIVE UTOPIAS</span></a>
-						<a id="info-issue-ii" class="spacedissues" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en" hidden>REFORM OR REVOLUTION</span></a>
+						<a id="info-issue-i" class="issue-title" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en">ALTERNATIVE UTOPIAS</span></a>
+						<a id="info-issue-ii" class="issue-title" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en">REFORM OR REVOLUTION</span></a>
 					</div></div>
 				</div>
 			</div>
@@ -288,7 +295,7 @@
 					<div class="menu-spacer">X</div>
 					<div class="menu-inside">
 					<div class="info" id="infok">
-						<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en" hidden>A collection of content worth watching</span></a>
+						<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en">A collection of content worth watching</span></a>
 					</div></div>
 				</div>
 			</div>
@@ -298,7 +305,7 @@
 			<div onmouseenter="openmenu('dropmenum', 'dropanchorm')">
 				<span class="dropanchor" id="dropanchorm">
 					<span class="label" id="etc" onclick="openmenu('dropmenum', 'dropanchorm')">ETC</span>
-					<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')"><span lang="de">MENÜ</span><span lang="en" hidden>MENU</span></span>
+					<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')"><span lang="de">MENÜ</span><span lang="en">MENU</span></span>
 					<span class="label" id="closemenu" onclick="safeclosemenu()">X</span>
 				</span>
 
@@ -310,13 +317,8 @@
 					<!-- EXPANDEDMENU -->
 
 					<div class="info" id="infoe">
-						<div class="spacedtitles">
-							<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a>
-						</div>
-						<div  class="spacedtitles">
-							<a href="https://www.GEFAENGNISHEFTE.org/kanon" class="spacedtitles"><span id="descriptionk">KANON</span>
-							</a>
-						</div>
+						<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a><br>
+						<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span id="descriptionk">KANON</span></a>
 					</div>
 					
 					<!-- INFO -->
@@ -324,10 +326,10 @@
 					<div class="info" id="infom">
 						
 						<div class="info-inner" id="info-general" >
-							<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en" hidden>Support</span><span class="long">: paypal.me/GEFAENGNISHEFTE</span><br></a>
-							<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en" hidden>Contact</span><span class="long">: GEFAENGNISHEFTE@riseup.net</span><br></a>
-							<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en" hidden>Legal Notice</span><br></a>
-							<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en" hidden>Privacy policy</span><br></a>
+							<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en">Support</span><span class="long">: paypal.me/GEFAENGNISHEFTE</span><br></a>
+							<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en">Contact</span><span class="long">: GEFAENGNISHEFTE@riseup.net</span><br></a>
+							<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
+							<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en">Privacy policy</span><br></a>
 							<span><span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br></span>
 						</div>
 
@@ -335,21 +337,21 @@
 						<div class="info-inner">
 
 							<span id="abo-selection">
-								<span class="long"><span lang="de">Abonnieren mit:</span><span lang="en" hidden>Subscribe via:</span></span>
+								<span class="long"><span lang="de">Abonnieren mit:</span><span lang="en">Subscribe via:</span></span>
 								<span class="lang-option" id="email-opt" onclick="setabo('email')">Email</span> / 
 								<span class="lang-option" id="telegram-opt" onclick="setabo('telegram')">Telegram</span><br>
 							</span>
 
 							<form id="email-form">
-								<span class="abo"><button type="submit" id="email-btn"><span lang="de">Abonnieren</span><span lang="en" hidden>Subscribe</span></button>
+								<span class="abo"><button type="submit" id="email-btn"><span lang="de">Abonnieren</span><span lang="en">Subscribe</span></button>
 								<span><input type="email" name="Email" id="email-input" placeholder="Email" required></span></span>
 								<input type="hidden" name="_subject" value="Abonnement">
 								<input type="hidden" name="_captcha" value="true">
-								<label id="email-info" for="email-checkbox"><input type="checkbox" id="email-checkbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en" hidden>I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
+								<label id="email-info" for="email-checkbox"><input type="checkbox" id="email-checkbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
 							</form>
 							
 							<form id="telegram-form" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
-								<button type="submit" id="telegram-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en" hidden>t.me/GEFAENGNISHEFTE</span></button></button>
+								<button type="submit" id="telegram-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
 							</form>
 
 						</div>

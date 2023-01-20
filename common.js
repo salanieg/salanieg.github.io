@@ -571,14 +571,14 @@ const MAIL_MSG = {
     "email-deabo-btn": {
         initial: {msg: '<span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span>', disabled: false, func: null},
         // sending: {msg: '<span lang="de">Sende...</span><span lang="en">Sending...</span>', disabled: false, func: null},
-        success: {msg: '<span lang="de">Deabonniert.</span><span lang="en" hidden>Unsubscribed.</span>', disabled: true, func: null},
+        success: {msg: '<span lang="de">Deabonniert.</span><span lang="en">Unsubscribed.</span>', disabled: true, func: null},
         error: {msg: '<span lang="de">FEHLER!</span><span lang="en">ERROR!</span>', disabled: false, func: null}
     },
     "email-confirm-info": {
         initial: {msg: '', disabled: false, func: null},
         // sending: {msg: '<span lang="de">Sende...</span><span lang="en">Sending...</span>', disabled: false, func: null},
         success: {msg: '<span lang="de">Deine E-mail wurde erfolgreich bestätigt!</span><span lang="en">Your E-Mail has been confirmed successfully!</span>', disabled: true, func: null},
-        error: {msg: '<span lang="de">Etwas ist bei der Bestätigung schiefgelaufen.<br>Bitte versuche es noch einmal, oder schreibe Nachricht an <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span><span lang="en" hidden>Something went wrong during the confirmation process.<br>Please try again, or message us at <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span>', disabled: false, func: null}
+        error: {msg: '<span lang="de">Etwas ist bei der Bestätigung schiefgelaufen.<br>Bitte versuche es noch einmal, oder schreibe Nachricht an <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span><span lang="en">Something went wrong during the confirmation process.<br>Please try again, or message us at <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span>', disabled: false, func: null}
     }
 }
 
@@ -795,7 +795,7 @@ function openmenu(menu, anchor) {
 	}
 	else {
 		document.getElementById(menu).style.width = "100vw";
-		document.getElementById("headerlogo").style.visibility = "hidden";
+		document.getElementById("logo").style.visibility = "hidden";
 		document.getElementById("openmenu").style.display = "none";
 		document.getElementById("closemenu").style.display = "inline";
 		document.documentElement.style.setProperty('--header-divider', `block`);
@@ -821,7 +821,7 @@ function closemenu() {
 	hidedropmenus();
 
 	if (window.innerWidth < 800) {
-		document.getElementById("headerlogo").style.visibility = "visible";
+		document.getElementById("logo").style.visibility = "visible";
 		document.getElementById("closemenu").style.display = "none";
 		document.getElementById("openmenu").style.display = "inline";
 	}
@@ -983,23 +983,25 @@ function display_slide(slide_index) {
     document.getElementById(SLIDE_LIST[slide_index]).style.display = "flex";
     slide_current = slide_index;
 
-    let timeline_index = document.getElementById(SLIDE_LIST[slide_current]).getElementsByClassName("timeline")[0].getAttribute("data-timeline-index")
-    let timeline_btns = document.getElementById("timeline-btns")
-    let timeline_lines = timeline_btns.getElementsByClassName("event-line")
+    if(typeof timeline_counter !== "undefined") {
+        let timeline_index = document.getElementById(SLIDE_LIST[slide_current]).getElementsByClassName("timeline")[0].getAttribute("data-timeline-index")
+        let timeline_btns = document.getElementById("timeline-btns")
+        let timeline_lines = timeline_btns.getElementsByClassName("event-line")
+        
+        for (let i = 0; i < timeline_lines.length; i++) {
+            timeline_lines[i].style.display = "none"
+        }
     
-    for (let i = 0; i < timeline_lines.length; i++) {
-        timeline_lines[i].style.display = "none"
-    }
-
-    console.log(timeline_index)
-
-    if(timeline_index) {
-        timeline_btns.style.display = "flex"
-        timeline_lines[timeline_index].style.display = "flex"
-    }
-    else {
-        timeline_btns.style.display = "none"
- 
+        console.log(timeline_index)
+    
+        if(timeline_index) {
+            timeline_btns.style.display = "flex"
+            timeline_lines[timeline_index].style.display = "flex"
+        }
+        else {
+            timeline_btns.style.display = "none"
+     
+        }
     }
 
     if(typeof highlight_title === "function") {
