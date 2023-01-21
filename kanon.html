@@ -63,7 +63,6 @@
 
             const PROX_LIMIT = 60
             var current_events = []
-            var timeline_counter = 0
 
 
             function init_timelines() {
@@ -76,8 +75,7 @@
                     line.className = "event-line"
                     timeline_btns.appendChild(line)
 
-                    timelines[i].setAttribute("data-timeline-index", timeline_counter)
-                    timeline_counter = timeline_counter++
+                    timelines[i].setAttribute("data-timeline-index", i)
 
                     let events = timelines[i].getElementsByClassName("event")
 
@@ -89,14 +87,30 @@
                         event_btn.addEventListener("click", () => {select_event(k, i)})
 
                         line.appendChild(event_btn)
-
-                        current_events[i] = 0
-                        select_event(current_events[i], i)
                     }
+
+                    
+                    current_events[i] = 0
+                    select_event(current_events[i], i)
                 }
 
                 update_timelines()
                 window.addEventListener("resize", update_timelines)
+            }
+
+            
+            function select_event(selection, timeline_index) {
+                let event_btns = document.getElementsByClassName("event-line")[timeline_index].getElementsByClassName("event-btn")
+                let events = document.getElementsByClassName("timeline")[timeline_index].getElementsByClassName("event")
+                let current_event = current_events[timeline_index]
+
+                event_btns[current_event].style.backgroundColor = "black";
+                events[current_event].style.display = "none";
+                
+                event_btns[selection].style.backgroundColor = "#890000";
+                events[selection].style.display = "block";
+
+                current_events[timeline_index] = selection
             }
 
 
@@ -160,21 +174,6 @@
                 }
 
                 display_slide(slide_current)
-            }
-
-
-            function select_event(selection, timeline_index) {
-                let event_btns = document.getElementsByClassName("event-line")[timeline_index].getElementsByClassName("event-btn")
-                let events = document.getElementsByClassName("timeline")[timeline_index].getElementsByClassName("event")
-                let current_event = current_events[timeline_index]
-
-                event_btns[current_event].style.backgroundColor = "black";
-                events[current_event].style.display = "none";
-                
-                event_btns[selection].style.backgroundColor = "#890000";
-                events[selection].style.display = "block";
-
-                current_events[timeline_index] = selection
             }
 
         </script>

@@ -9,21 +9,18 @@
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
+				gap:5px;
 				font-size: 13pt;
 				
 				color: var(--header-color-text);
 				background-color: var(--header-color);
 			}
 
-			.bottom-divider {
-				display: var(--header-divider);
-			}
-
 			#logo {
 				width:fit-content;
 				border: 2px solid black;
-				margin:13px 0px 13px 20px;
-				padding:0px 20px;
+				padding: 0px 20px;
+				margin-left: 20px;
 				background-color:white;
 				color:black !important;
 				-webkit-tap-highlight-color: transparent;
@@ -36,9 +33,9 @@
 			}
 
 			#navigation {
+				padding: 15px 20px;
 				display: flex;
 				gap: 30px;
-				padding:15px 20px 15px 10px;
 			}
 
 			a:active, a:visited, a:link {
@@ -54,46 +51,14 @@
 
 			/* DROPMENU */
 
-			.dropmenu {
-				overflow:hidden;
-				white-space: nowrap;
-				position:absolute;
-				right:0;
-				top:0;
-				width: 0vw;
-				background-color: var(--header-color);
-				z-index:11;
-			}
-
 			.dropanchor {
 				position: relative;
 				z-index:12;
 			}
 
-			.menu-spacer {
-				text-align: right;
-				visibility: hidden;
-				font-size: 13pt;
-				padding:15px 20px 15px 20px; /* reduced by 1 top and bottom for border */
-				margin: 0px;
-				-webkit-touch-callout: none;
-				-webkit-user-select: none;
-				-khtml-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
+			#etc {
+				cursor: default;
 			}
-
-			#showissues:hover, #hideissues:hover {
-				color: lightgray;
-			}
-
-			#showissues, #hideissues {
-				cursor: pointer;
-			}
-
-
-			/* EXPANDED */
 
 			#closemenu, #openmenu {
 				cursor: pointer;
@@ -104,20 +69,38 @@
 				width:100vw;
 			}
 
-			.description {
-				font-size: 11pt;
-			}
-
-			#hideissues {
+			.dropmenu {
 				display: none;
+				overflow: hidden;
+				white-space: nowrap;
+				position: absolute;
+				right:0;
+				margin-top: 15px;
+				background-color: var(--header-color);
+				z-index:11;
 			}
 
-			#info-general {
-				font-size: 11pt;
+			.menu-content {
+				border: 2px outset grey;
+				padding: 25px 40px 25px 40px;
 				line-height: 1.7;
-				margin-bottom:40px;
-				text-align: left;
-				white-space: normal;
+			}
+
+
+			/* EXPANDED */
+
+			#menu-expanded, #menu-etc {
+				max-width: 480px;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			#menu-expanded {
+				padding-top: 0px;
+			}
+
+			#menu-etc {
+				padding-bottom:40px;
 			}
 
 			.lang-option {
@@ -127,45 +110,11 @@
 			
 			/* INFO */
 
-			.info {
-				padding: 25px 40px 25px 40px;
+			#info-general {
+				font-size: 11pt;
 				line-height: 1.7;
-				font-size: 13pt;
-			}
-
-			#infos, #infok {
-				text-align: left;
-			}
-
-			#infoi {
-				font-size: 13pt;
-			}
-
-			#infoe, #infom {
-				max-width: 480px;
-				margin-left: auto;
-				margin-right: auto;
-			}
-
-			#infom {
-				padding-bottom:40px;
-			}
-
-			#infoe {
-				margin-top: 0px;
-				padding-top: 0px;
-			}
-
-			.menu-inside {
-				border: 2px outset grey;
-			}
-
-			#etc {
-				cursor: default;
-			}
-
-			#openmenu {
-				cursor: pointer;
+				margin-bottom:40px;
+				white-space: normal;
 			}
 
 
@@ -228,14 +177,15 @@
 					display: none;
 				}
 
-				#infoe {
+				#menu-expanded {
 					display: none;
 				}
+			}
 
-				#menuspacer {
-					display:none;
-					background-color: lightgray;
-				}
+			.menu-divider {
+				display: none;
+				height: 2px;
+				color: lightgrey;
 			}
 
 			@media screen and (width < 800px), screen and (max-width: 800px) {
@@ -244,11 +194,12 @@
 					display: none;
 				}
 
-				.menu-inside {
-					border-right: 0px none transparent;
-					border-left: 0px none transparent;
-					border-top: 2px solid lightgrey;
-					border-bottom: 2px solid lightgrey;
+				.menu-divider {
+					display: block;
+				}
+
+				.menu-content {
+					border: 0px none transparent;
 				}
 			}
 
@@ -265,77 +216,65 @@
 	<body>
 		<a id="logo" href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a>
 
+		<!-- <nav id="navigation" > -->
 		<nav id="navigation" onmouseleave="safeclosemenu()">
 
 			<!-- ISSUES -->
 
-			<div class="menu-horizontal" onmouseenter="openmenu('dropmenui', 'dropanchori')">
-				<span class="dropanchor" id="dropanchori">
-					<a href="https://www.GEFAENGNISHEFTE.org">ISSUES</a>
-				</span>
+			<div class="menu-horizontal" onmouseenter="openmenu(this)">
+				<a class="dropanchor" id="highlight-issues" href="https://www.GEFAENGNISHEFTE.org">ISSUES</a>
 
-				<div class="dropmenu" id="dropmenui" >
-					<div class="menu-spacer">X</div>
-					<div class="menu-inside">
-					<div class="info" id="infoi">
-						<a id="info-issue-i" class="issue-title" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en">ALTERNATIVE UTOPIAS</span></a>
-						<a id="info-issue-ii" class="issue-title" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en">REFORM OR REVOLUTION</span></a>
-					</div></div>
+				<div class="dropmenu menu-content">
+					<a id="info-issue-i" class="issue-title" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en">ALTERNATIVE UTOPIAS</span></a>
+					<a id="info-issue-ii" class="issue-title" href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en">REFORM OR REVOLUTION</span></a>
 				</div>
 			</div>
 
 			<!-- KANON -->
 
-			<div class="menu-horizontal" onmouseenter="openmenu('dropmenuk', 'dropanchork')">
-				<span class="dropanchor" id="dropanchork">
-					<a href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
-				</span>
+			<div class="menu-horizontal" onmouseenter="openmenu(this)">
+				<a class="dropanchor" id="highlight-kanon" href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
 
-				<div class="dropmenu" id="dropmenuk">
-					<div class="menu-spacer">X</div>
-					<div class="menu-inside">
-					<div class="info" id="infok">
-						<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en">A collection of content worth watching</span></a>
-					</div></div>
+				<div class="dropmenu menu-content">
+					<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en">A collection of content worth watching</span></a>
 				</div>
 			</div>
 
 			<!-- MENU/ETC -->
 
-			<div onmouseenter="openmenu('dropmenum', 'dropanchorm')">
-				<span class="dropanchor" id="dropanchorm">
-					<span class="label" id="etc" onclick="openmenu('dropmenum', 'dropanchorm')">ETC</span>
-					<span class="label" id="openmenu" onclick="openmenu('dropmenum', 'dropanchorm')"><span lang="de">MENÜ</span><span lang="en">MENU</span></span>
+			<div onmouseenter="openmenu(this)">
+				<span class="dropanchor" id="highlight-etc">
+					<span class="label" id="etc">ETC</span>
+					<span class="label" id="openmenu" onclick="openmenu(this)"><span lang="de">MENÜ</span><span lang="en">MENU</span></span>
 					<span class="label" id="closemenu" onclick="safeclosemenu()">X</span>
 				</span>
 
 				<!-- NAV -->
 
-				<div class="dropmenu" id="dropmenum">
-					<div class="menu-spacer">X</div>
+				<div class="dropmenu">
 
 					<!-- EXPANDEDMENU -->
 
-					<div class="info" id="infoe">
-						<a href="https://www.GEFAENGNISHEFTE.org"><span id="descriptioni">ISSUES</span></a><br>
-						<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span id="descriptionk">KANON</span></a>
+					<div class="menu-content" id="menu-expanded">
+						<a id="highlight-issues-expanded" href="https://www.GEFAENGNISHEFTE.org">ISSUES</a><br>
+						<a id="highlight-kanon-expanded" href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
 					</div>
 					
+				
+					<hr class="menu-divider">
+
 					<!-- INFO -->
-					<div class="menu-inside">
-					<div class="info" id="infom">
+					<div class="menu-content" id="menu-etc">
 						
-						<div class="info-inner" id="info-general" >
+						<div id="info-general">
 							<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en">Support</span><span class="long">: paypal.me/GEFAENGNISHEFTE</span><br></a>
 							<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en">Contact</span><span class="long">: GEFAENGNISHEFTE@riseup.net</span><br></a>
-							<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="descriptionim"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
-							<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="descriptionda"><span lang="de">Datenschutzerklärung</span><span lang="en">Privacy policy</span><br></a>
-							<span><span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br></span>
+							<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="highlight-impressum"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
+							<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="highlight-datenschutz"><span lang="de">Datenschutzerklärung</span><span lang="en">Privacy policy</span><br></a>
+							<span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br>
 						</div>
 
-
-						<div class="info-inner">
-
+						<div>
 							<span id="abo-selection">
 								<span class="long"><span lang="de">Abonnieren mit:</span><span lang="en">Subscribe via:</span></span>
 								<span class="lang-option" id="email-opt" onclick="setabo('email')">Email</span> / 
@@ -353,10 +292,10 @@
 							<form id="telegram-form" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
 								<button type="submit" id="telegram-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
 							</form>
-
 						</div>
 					</div>
-					</div>
+
+					<hr class="menu-divider">
 				</div>
 			</div>
 		</nav>

@@ -785,26 +785,41 @@ function openmenufix() {
 	}
 }
 
-function openmenu(menu, anchor) {
+function check_menu_origin(origin) {
+    if(origin.getElementsByClassName("dropanchor").length == 0  || origin.getElementsByClassName("dropmenu").length == 0) {
+        origin = origin.parentElement
+        return check_menu_origin(origin)
+    }
+    else {
+        return origin
+    }
+}
+
+function openmenu(origin) {
+    origin = check_menu_origin(origin)
+    
+    let anchor = origin.getElementsByClassName("dropanchor")[0]
+    let menu = origin.getElementsByClassName("dropmenu")[0]
+
 	hidedropmenus();
-	document.getElementById(menu).style.height = "fit-content";
-	document.getElementById(anchor).style.visibility = "visible";
+    menu.style.display = "block"
+	anchor.style.visibility = "visible";
 
 	if (window.innerWidth > 800) {
-		document.getElementById(menu).style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
+		menu.style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
 	}
 	else {
-		document.getElementById(menu).style.width = "100vw";
+		menu.style.width = "100vw";
 		document.getElementById("logo").style.visibility = "hidden";
 		document.getElementById("openmenu").style.display = "none";
 		document.getElementById("closemenu").style.display = "inline";
-		document.documentElement.style.setProperty('--header-divider', `block`);
 	}
 
 	menuopen = true
 }
 
 function safeclosemenu() {
+    
 	if(document.getElementById("email-input") !== document.activeElement 
 	&& document.getElementById("email-checkbox") !== document.activeElement 
 	&& document.getElementById("email-btn") !== document.activeElement) 
@@ -834,8 +849,7 @@ function hidedropmenus() {
 
 	for (let i = 0; i < dropmenus.length; i++)
 	{
-		dropmenus[i].style.width = "0vw";
-		// dropmenus[i].style.border = "none transparent";
+        dropmenus[i].style.display = "none";
 	}
 }
 
@@ -844,13 +858,13 @@ function hidedropmenus() {
 // NAVIGATION HIGHLIGHT
 
 const highlights = {
-    "": ["dropanchori", "descriptioni"],
-    "/": ["dropanchori", "descriptioni"],
-    "/issue-i": ["dropanchori", "descriptioni", "info-issue-i"],
-    "/kanon": ["dropanchork", "descriptionk"],
-    "/deabonnieren": ["etc", "descriptiond"],
-    "/impressum": ["etc", "descriptionim"],
-    "/datenschutz": ["etc", "descriptionda"],
+    "": ["highlight-issues", "highlight-issues-expanded"],
+    "/": ["highlight-issues", "highlight-issues-expanded"],
+    "/issue-i": ["highlight-issues", "highlight-issues-expanded", "info-issue-i"],
+    "/kanon": ["highlight-kanon", "highlight-kanon-expanded"],
+    "/deabonnieren": ["etc"],
+    "/impressum": ["etc", "highlight-impressum"],
+    "/datenschutz": ["etc", "highlight-datenschutz"],
 }
 
 

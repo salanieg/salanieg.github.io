@@ -286,7 +286,7 @@ button[disabled]{
 	white-space: nowrap;
 	cursor: pointer;
 	text-align: right;
-	gap:0px 30px;
+	gap:15px;
 	width:100%;
 	-webkit-tap-highlight-color: transparent;
 }
@@ -306,16 +306,11 @@ button[disabled]{
 
 .abo {
 	width:100%;
+	gap:2px;
 	overflow:hidden;
 	display:flex;
 	justify-content: flex-end;
 	flex-direction: row-reverse;
-}
-
-.abo>span {
-	/* display:block;
-	overflow:hidden; */
-	padding-right: 5px;
 }
 
 .abo input {
