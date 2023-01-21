@@ -810,15 +810,18 @@ function openmenu(origin) {
 	}
 	else {
 		menu.style.width = "100vw";
-		document.getElementById("logo").style.visibility = "hidden";
+		document.getElementById("logo").style.display = "none";
 		document.getElementById("openmenu").style.display = "none";
 		document.getElementById("closemenu").style.display = "inline";
+        document.getElementById("navigation").style.width = "100vw";
+        document.getElementById("navigation").style.justifyContent = "flex-end";
 	}
 
 	menuopen = true
 }
 
 function safeclosemenu() {
+    console.log("test")
     
 	if(document.getElementById("email-input") !== document.activeElement 
 	&& document.getElementById("email-checkbox") !== document.activeElement 
@@ -836,9 +839,11 @@ function closemenu() {
 	hidedropmenus();
 
 	if (window.innerWidth < 800) {
-		document.getElementById("logo").style.visibility = "visible";
+		document.getElementById("logo").style.display = "inline";
 		document.getElementById("closemenu").style.display = "none";
 		document.getElementById("openmenu").style.display = "inline";
+        document.getElementById("navigation").style.width = "fit-content";
+        document.getElementById("navigation").style.justifyContent = "space-between";
 	}
 
 	menuopen = false
