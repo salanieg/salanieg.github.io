@@ -776,7 +776,7 @@ function openmenufix() {
 
 		closemenu()
 
-		if (window.innerWidth < 800 && !menuopen) {
+		if (window.innerWidth <= 800 && !menuopen) {
 			document.getElementById("openmenu").style.display = "inline";
 		}
 		else {
@@ -807,7 +807,7 @@ function openmenu(origin) {
     menu.style.display = "block"
 	anchor.style.visibility = "visible";
 
-	if (window.innerWidth > 800) {
+	if (window.innerWidth >= 800) {
 		menu.style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
 	}
 	else {

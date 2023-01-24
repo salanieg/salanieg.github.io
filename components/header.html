@@ -99,6 +99,11 @@
 				padding-top: 0px;
 			}
 
+			.menu-divider {
+				height: 2px;
+				color: lightgrey;
+			}
+
 			#menu-etc {
 				padding-bottom:40px;
 			}
@@ -171,30 +176,17 @@
 
 			/* REACTIVE */
 
-			@media screen and (width >= 800px), screen and (min-width: 800px) {
-
-				#openmenu {
-					display: none;
-				}
-
-				#menu-expanded {
-					display: none;
-				}
-			}
-
-			.menu-divider {
+			#openmenu, #menu-expanded, .menu-divider {
 				display: none;
-				height: 2px;
-				color: lightgrey;
 			}
 
-			@media screen and (width < 800px), screen and (max-width: 800px) {
+			@media screen and (max-width: 800px) {
 
 				.menu-horizontal, #etc {
 					display: none;
 				}
 
-				.menu-divider {
+				#openmenu, #menu-expanded, .menu-divider {
 					display: block;
 				}
 

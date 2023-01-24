@@ -184,7 +184,7 @@
             #issue-wrap {
 				display: flex;
 				justify-content: center;
-                gap: 80px;
+                gap: 60px;
                 padding-bottom:25%;
             }
 
@@ -249,16 +249,6 @@
                 width:100% !important;
             }
 
-            /* .slide-index-spaced {
-				justify-content: space-between;
-				width:100%;
-                text-align: right;
-			} */
-
-            /* .slide-index-spaced-issue {
-                white-space: nowrap;
-            } */
-
             #slide-current {
                 font-size: 15pt !important;
                 width:160px !important;
@@ -282,14 +272,8 @@
 
             /*/////////////////////// REACTIVE ///////////////////////*/
 
-            @media screen and (max-width: 1050px) {
 
-                #issue-wrap {
-                    gap: 40px;
-                }
-            }
-
-            @media screen and (width < 800px), screen and (max-width: 800px) {
+            @media screen and (max-width: 800px) {
                 body {
                     grid-template-rows: auto minmax(0, 1fr) auto;
                     grid-template-areas: "header" "main" "controls";
