@@ -195,20 +195,6 @@
             }
 
 
-            @media screen and (max-width: 900px) {
-                #sharewindow, .note {
-                    position: fixed;
-                    bottom: 60px;
-                    left: 20px;
-                }
-
-                #sharewindow {
-                    top: unset;
-                    transform: none;
-                }
-            }
-
-
             @media screen and (width < 800px), screen and (max-width: 800px) {
 
                 #to-top, #to-bottom {
@@ -216,7 +202,14 @@
                 }
 
                 #sharewindow, .note {
-                    left:30px;
+                    position: fixed;
+                    bottom: 60px;
+                    left: 30px;
+                }
+
+                #sharewindow {
+                    top: unset;
+                    transform: none;
                 }
             }
 
@@ -233,10 +226,11 @@
                     width:120px;
                 }
 
-                #to-top {bottom:95px;}
-                #to-bottom {bottom:45px;}
+                #to-top {
+                    bottom:95px;
+                }
                 
-                #sharewindow, .note {
+                #to-bottom, #sharewindow, .note {
                     bottom:45px;
                 }
             }

@@ -216,7 +216,7 @@
 	<body>
 		<a id="logo" href="https://www.GEFAENGNISHEFTE.org">GEFÄNGNISHEFTE</a>
 		
-		<nav id="navigation" onmouseleave="safeclosemenu()">
+		<nav id="navigation" onmouseleave="(function(){console.log('nav');safeclosemenu()})()">
 
 			<!-- ISSUES -->
 
@@ -244,7 +244,7 @@
 			<div onmouseenter="openmenu(this)">
 				<span class="dropanchor" id="etc">ETC</span>
 				<span class="dropanchor" id="openmenu" onclick="openmenu(this)"><span lang="de">MENÜ</span><span lang="en">MENU</span></span>
-				<span class="dropanchor" id="closemenu" onclick="safeclosemenu()">X</span>
+				<span class="dropanchor" id="closemenu" onclick="(function(){console.log('X');safeclosemenu()})()">X</span>
 
 				<div class="dropmenu">
 

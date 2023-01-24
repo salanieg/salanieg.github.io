@@ -797,6 +797,8 @@ function check_menu_origin(origin) {
 }
 
 function openmenu(origin) {
+    
+    console.log("open")
     origin = check_menu_origin(origin)
     
     let anchor = origin.getElementsByClassName("dropanchor")[0]
@@ -812,17 +814,17 @@ function openmenu(origin) {
 	else {
 		menu.style.width = "100vw";
 		document.getElementById("logo").style.display = "none";
-		document.getElementById("openmenu").style.display = "none";
-		document.getElementById("closemenu").style.display = "inline";
         document.getElementById("navigation").style.width = "100vw";
         document.getElementById("navigation").style.justifyContent = "flex-end";
+		document.getElementById("openmenu").style.display = "none";
+		document.getElementById("closemenu").style.display = "inline";
 	}
 
 	menuopen = true
 }
 
 function safeclosemenu() {
-    console.log("test")
+    console.log("close")
     
 	if(document.getElementById("email-input") !== document.activeElement 
 	&& document.getElementById("email-checkbox") !== document.activeElement 
@@ -1237,20 +1239,26 @@ function footnote_horizontal_bounds() {
     let noteWidth = note.offsetWidth
     let noteY = note.getBoundingClientRect().left
     let noteYoffset = parseInt(getComputedStyle(note).getPropertyValue("left"), 10)
+    let margin = 20
 
-    if(windowWidth < 900){
+    if(windowWidth < 800){
         note.style.left = "";
         note.style.right = "";
     }
-    else if(noteY + noteWidth > windowWidth - 20) {
-        note.style.left = "unset"
-        note.style.right = noteYoffset + "px"
-        console.log("left")
-    }
-    else if((noteY - 2 * noteYoffset - noteWidth) < 0 + 20) {
+    else if(noteY + noteWidth < windowWidth - margin) {
         note.style.left = noteYoffset + "px"
         note.style.right = "unset"
-        console.log("right")
+        // console.log("right")
+    }
+    else if(noteY + 0.5 * noteWidth < windowWidth - margin && (noteY - 2 * noteYoffset - 0.5 * noteWidth) > 0 + margin) {
+        note.style.left = -0.5 * noteWidth + "px"
+        note.style.right = "unset"
+        // console.log("center")
+    }
+    else if((noteY - 2 * noteYoffset - noteWidth) > 0 + margin) {
+        note.style.left = "unset"
+        note.style.right = noteYoffset + "px"
+        // console.log("left")
     }
 }
 

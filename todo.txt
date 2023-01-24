@@ -1,6 +1,7 @@
 -------------- BUGS --------------
 
 check safari preload
+manu double click
 
 -------------- IMPROVEMENTS --------------
 
