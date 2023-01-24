@@ -1,7 +1,7 @@
 -------------- BUGS --------------
 
 check safari preload
-manu double click
+check widescreen compatability
 
 -------------- IMPROVEMENTS --------------
 

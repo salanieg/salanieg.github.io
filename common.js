@@ -34,7 +34,7 @@ var LOADED = {              // SEQUENCE MATTERS
     },
     databanner: {
         init: false,
-        func: initcookies,
+        func: init_cookies,
         // tag: "div",
         // fix: "append"
     },
@@ -101,14 +101,15 @@ function loadElement(ID, HTML) {
 // INIT
 
 function init() {
-    init_language()
-    init_scrollbar()
 
     for (let key in LOADED) {
         if(LOADED[key].init) {
             LOADED[key].func()
         }      
     }
+
+    init_scrollbar()
+    init_language()
 
     if(typeof add_init  === "function") {
         add_init()
@@ -325,6 +326,7 @@ function init_language() {
     }
 }
 
+
 function reset_language() {
     if(localStorage.getItem("gefaengnishefte_language") == null){
         localStorage.setItem("gefaengnishefte_language", "de")
@@ -332,6 +334,7 @@ function reset_language() {
     
 	setlanguage(localStorage.getItem("gefaengnishefte_language"))
 }
+
 
 function setlanguage(language) {
 	document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
@@ -355,7 +358,7 @@ function setlanguage(language) {
 
 var datainfoshown = false;
 
-function initcookies() {
+function init_cookies() {
     
     if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
         showcookiecontent();
@@ -373,11 +376,11 @@ function cookies(choice) {
         localStorage.setItem("gefaengnishefte_cookies", choice);
     }
 
-    initcookies();
+    init_cookies();
 }
 
 
-function showdatabanner() {
+function show_databanner() {
     document.getElementById("databanner").style.display = "block";
 }
 
@@ -486,7 +489,7 @@ function hidecookiecontent() {
     for (let i = 0; i < frames.length; i++)
     {
         var cookiedisclaimer = document.createElement("span");
-        cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='showdatabanner()'>consent to the use of cookies</span>.</span>";
+        cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='show_databanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='show_databanner()'>consent to the use of cookies</span>.</span>";
         cookiedisclaimer.className = "cookiedisclaimer";
         
         frames[i].style.display = "none"

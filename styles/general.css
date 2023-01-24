@@ -17,6 +17,10 @@ html {
 box-sizing: inherit;
 }
 
+*:lang('de'):not(br) {
+	visibility: hidden;
+}
+
 body {
 	
 	width: 100vw;
