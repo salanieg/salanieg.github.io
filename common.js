@@ -128,8 +128,9 @@ function init_header() {
 
 function init_footer() {
     limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
-    initfootnotes()
-    initsharewindow()
+    document.getElementById("content").addEventListener("scroll", autosetlayout)
+    init_footnotes()
+    init_sharewindow()
 }
 
 
@@ -1141,7 +1142,7 @@ function leavecontrols() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-function initfootnotes() {
+function init_footnotes() {
     for (let i = 0; i < FOOTNOTE_LIST.length; i++) {
 
         let footnote = document.getElementById("f"+ (i+1))
@@ -1156,8 +1157,8 @@ function initfootnotes() {
         hidecookiecontent();
     }
 
+    window.addEventListener("resize", footnote_horizontal_bounds)
     document.addEventListener("click", focusfootnote)
-    document.getElementById("content").addEventListener("scroll", autosetlayout)
 }
 
 function footnote_template(i) {
@@ -1192,7 +1193,7 @@ function focusfootnote(event) {
 }
 
 function selectfootnote(event) {
-    closesharewindow()
+    close_sharewindow()
 
     if(footnotefocused != "none") {
         resetfootnote()
@@ -1201,16 +1202,56 @@ function selectfootnote(event) {
     footnotefocused = event.target;
 
     footnotefocused.style.color = "#890000";
+    
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
+    
+    footnote_horizontal_bounds() 
+
     load_frame(footnotefocused.getElementsByTagName("iframe"), 0, slide_current)
 }
 
 function resetfootnote() {
     footnotefocused.style.color = "black";
-    footnotefocused.childNodes[1].style.zIndex = "0";
-    footnotefocused.childNodes[1].style.display = "none";
+
+    let note = footnotefocused.childNodes[1]
+    note.style.zIndex = "0";
+    note.style.display = "none";
+    note.style.left = "";
+    note.style.right = "";
+
     footnotefocused = "none";
+}
+
+function footnote_horizontal_bounds() {
+
+    if(footnotefocused == "none"){return}
+    
+
+    let note = footnotefocused.childNodes[1]
+
+    note.style.left = "";
+    note.style.right = "";
+
+    let windowWidth = document.getElementById("content").offsetWidth
+    let noteWidth = note.offsetWidth
+    let noteY = note.getBoundingClientRect().left
+    let noteYoffset = parseInt(getComputedStyle(note).getPropertyValue("left"), 10)
+
+    if(windowWidth < 900){
+        note.style.left = "";
+        note.style.right = "";
+    }
+    else if(noteY + noteWidth > windowWidth - 20) {
+        note.style.left = "unset"
+        note.style.right = noteYoffset + "px"
+        console.log("left")
+    }
+    else if((noteY - 2 * noteYoffset - noteWidth) < 0 + 20) {
+        note.style.left = noteYoffset + "px"
+        note.style.right = "unset"
+        console.log("right")
+    }
 }
 
 
@@ -1224,7 +1265,7 @@ function resetfootnote() {
 
 var copy_link = ""
 
-function initsharewindow() {
+function init_sharewindow() {
     for (let i = 0; i < LINK_LIST.length; i++) {
         document.getElementById("link-opt").insertAdjacentHTML('beforeend', share_template(i));
     }
@@ -1236,12 +1277,14 @@ function share_template(i) {return '<span onclick="select_share(' + i + ')"><spa
 
 
 
-function opensharewindow() {
+function open_sharewindow() {
     document.getElementById("sharewindow").style.display = "block"
+    // document.getElementById("sharewindow").showModal()
 }
 
-function closesharewindow() {
+function close_sharewindow() {
     document.getElementById("sharewindow").style.display = "none"
+    // document.getElementById("sharewindow").close()
 }
 
 

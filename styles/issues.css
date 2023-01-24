@@ -126,17 +126,6 @@ body {
 	margin-bottom: 65px;
 }
 
-.copylink {
-	font-weight: 700;
-	font-size: 11pt;
-	text-align: left;
-	cursor: pointer;
-	margin-top: 10px;
-	line-height: 1.3;
-	color:grey;
-}
-
-
 
 /* CC INFO */
 
@@ -221,83 +210,11 @@ body {
 	#inhaltsverzeichnis, #coverwrap, .artikel, #ccinfo {
 		padding:10px;
 	}
-}
 
 
-/* GUTTER FIX */
+	/* GUTTER FIX */
 
-@media screen and (max-width: 1000px) {
 	#info-wrapper {
 		flex-direction: row;
 	}
-}
-
-
-/* FOOTNOTES */
-
-.footnote {
-	text-decoration: none;
-	position: relative;
-	cursor: pointer;
-}
-
-.footnote > .note {
-	display: none;
-	padding: 10px;
-	background: #890000;
-
-	position: absolute;
-	bottom: 30px;
-	left: 20px;
-	border: 2px outset grey;
-	width: 400px;
-	max-width: calc(100vw - 135px);
-	font-size: 11pt;
-	line-height: 1.7;
-}
-
-.footnote * {
-	color: white !important;
-	font-size: 11pt;
-}
-
-.footnote a:hover {
-	color: lightgrey !important;
-	transition: 0.1;
-}
-
-
-
-.footnote:hover {
-	color: #890000;
-}
-
-.footnote:focus {
-	color: #890000;
-}
-
-.footnote .note {
-	cursor: auto;
-}
-
-.footnote *::selection {
-	color: #890000 !important;
-	background: white !important;
-}
-
-.footnote *::-webkit-selection {
-	color: #890000 !important;
-	background: white !important;
-}
-
-.footnote *::-moz-selection {
-	color: #890000 !important;
-	background: white !important;
-}
-
-.footnotevideo {
-	width:100%;
-	height: auto;
-	min-height: auto;
-	aspect-ratio: 16/9;
 }

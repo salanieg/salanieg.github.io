@@ -25,9 +25,6 @@
                 user-select: none;
             }
 
-            /* #to-top {bottom:105px;}
-            #to-bottom {bottom:55px;} */
-
             #to-top {bottom:110px;}
             #to-bottom {bottom:60px;}
             
@@ -54,7 +51,7 @@
                 z-index:8;
             }
 
-            #footer-inner {
+            #footer-content {
                 white-space: nowrap;
                 display: flex;
                 justify-content: flex-end;
@@ -69,21 +66,82 @@
                 width:180px;
                 height:fit-content;
                 cursor: pointer;
+                color:black !important;
             }
 
-            .footerelement * {
-                color: black !important;
+
+            /* FOOTNOTES */
+
+            .footnote {
+                text-decoration: none;
+                position: relative;
+                cursor: pointer;
             }
 
-            /* .inlinefooter {
+            .note {
                 display: none;
-                margin-bottom: 100px;
-                width:100%;
-                padding: 0 !important;
-                font-size: 9pt;
-                width:120px;
-            } */
+                position: absolute;
+                bottom: 30px;
+                left: 10px;
+                font-size: 11pt;
+                line-height: 1.7;
+            }
 
+            
+            .footnotevideo {
+                width:100%;
+                height: auto;
+                min-height: auto;
+                aspect-ratio: 16/9;
+            }
+
+            .footnote * {
+                color: white !important;
+                font-size: 11pt;
+            }
+
+            .footnote a:hover {
+                color: lightgrey !important;
+                transition: 0.1;
+            }
+
+            .footnote:hover {
+                color: #890000;
+            }
+
+            .footnote:focus {
+                color: #890000;
+            }
+
+            .footnote .note {
+                cursor: auto;
+            }
+
+            .footnote *::selection {
+                color: #890000 !important;
+                background: white !important;
+            }
+
+            .footnote *::-webkit-selection {
+                color: #890000 !important;
+                background: white !important;
+            }
+
+            .footnote *::-moz-selection {
+                color: #890000 !important;
+                background: white !important;
+            }
+
+
+            /* UNIFIED FOOTNOTE AND SHAREWINDOW */
+
+            .note, #sharewindow {
+                width: 400px;
+                max-width: calc(100vw - 110px);
+                background-color: #890000;
+                border: 2px outset grey;
+                padding: 10px;
+            }
 
 
             /* SHAREWINDOW */
@@ -94,37 +152,20 @@
                 left:50%;
                 top:50%;
                 transform: translate(-50%, -50%);
-	            padding: 10px;
-                max-width: calc(100vw - 135px);
-                width: 400px;
-                background-color: #890000;
-                border: 2px outset grey;
+                /* margin:0px; */
             }
 
-            #closesharewindow {
+            #close_sharewindow {
                 font-size: 15pt;
                 cursor: pointer;
                 text-align: right;
                 margin-bottom: 10px;
+                color: white;
             }
 
             #link-opt > * {
                 cursor: pointer;
             }
-
-            #link-opt {
-                margin-bottom: 20px;
-                line-height: 2;
-                font-size: 12pt;
-            }
-
-            @media screen and (max-width: 500px) {#link-opt {font-size: 11pt;}}
-            @media screen and (max-width: 450px) {#link-opt {font-size: 10pt;}}
-            @media screen and (max-width: 400px) {#link-opt {font-size: 9pt;}}
-            @media screen and (max-width: 375px) {#link-opt {font-size: 8pt;}}
-            @media screen and (max-width: 350px) {#link-opt {font-size: 7pt;}}
-            @media screen and (max-width: 325px) {#link-opt {font-size: 6pt;}}
-
 
             #link-copy-wrap {
                 display:flex;
@@ -132,39 +173,40 @@
                 margin-bottom: 10px;
             }
 
+            #link-opt {
+                margin-bottom: 20px;
+                line-height: 2;
+                font-size: 0.93rem;
+	            font-size: var(--font-small);
+                color: white;
+            }
 
             
             /* REACTIVE */
 
             @media screen and (max-width: 1400px) {
 
-                #footer-inner {
+                #footer-content {
                     justify-content: center;
                     gap:10px 15px;
                     padding: 10px 30px;
                 }
-
-                /* .inlinefootercontent {
-                    display: flex;
-                    flex-wrap: wrap;
-                } */
             }
 
 
-            @media screen and (max-width: 1200px) {
-                .footnote .note {
+            @media screen and (max-width: 900px) {
+                #sharewindow, .note {
                     position: fixed;
                     bottom: 60px;
                     left: 20px;
                 }
 
                 #sharewindow {
-                    bottom: 60px;
-                    left: 20px;
                     top: unset;
                     transform: none;
                 }
             }
+
 
             @media screen and (width < 800px), screen and (max-width: 800px) {
 
@@ -172,11 +214,7 @@
                     right:30px;
                 }
 
-                .footnote .note {
-                    left:30px;
-                }
-
-                #sharewindow {
+                #sharewindow, .note {
                     left:30px;
                 }
             }
@@ -184,7 +222,7 @@
 
             @media screen and (max-width: 450px) {
 
-                #footer-inner {
+                #footer-content {
                     gap:5px 10px;
                     padding: 5px 0px;
                 }
@@ -196,25 +234,10 @@
 
                 #to-top {bottom:95px;}
                 #to-bottom {bottom:45px;}
-
                 
-                .footnote .note {
+                #sharewindow, .note {
                     bottom:45px;
                 }
-
-                #sharewindow {
-                    bottom:45px;
-                }
-            }
-
-                /* .footnote:focus .note {
-                    position: fixed;
-                    bottom: 40px;
-                    left: 20px;
-                } */
-
-            .footerelementwrap, .footerelement {
-                color:black !important;
             }
 
 
@@ -223,17 +246,17 @@
 
     <body>
 
-        <div id="footer-inner">
-            <button class="footerelement" id="teilen" onclick="opensharewindow()"><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></button>
-            <a lang="en" href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download class="footerelementwrap"><button class="footerelement">Download PDF</button></a>
-            <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download class="footerelementwrap"><button class="footerelement">PDF herunterladen</button></a>
+        <div id="footer-content">
+            <button class="footerelement" id="teilen" onclick="open_sharewindow()"><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></button>
+            <a lang="en" href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download><button class="footerelement">Download PDF</button></a>
+            <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download><button class="footerelement">PDF herunterladen</button></a>
         </div>
 
         <button id="to-top" onclick="hoch()"><div id="to-top-label">‹</div></button>
         <button id="to-bottom" onclick="runter()"><div id="to-top-label">›</div></button>
 
         <div id="sharewindow">
-            <div id="closesharewindow" onclick="closesharewindow()">X</div>
+            <div id="close_sharewindow" onclick="close_sharewindow()">X</div>
             <div id="link-opt"></div>
             <div id="link-copy-wrap"><button id="link-copy-btn" class="footerelement" onclick="copy_share()"><span lang="de">Link kopieren</span><span lang="en">Copy link</span></button></div>
         </div>
