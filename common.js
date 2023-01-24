@@ -59,8 +59,6 @@ function load_components(components) {
 	for (let i = 0; i < components.length; i++) {
 		fetchHTML("components/" + components[i] + ".html", components[i])
 	}
-
-    console.log("load_components")
 }
 
 
@@ -103,6 +101,8 @@ function loadElement(ID, HTML) {
 // INIT
 
 function init() {
+    init_language()
+    init_scrollbar()
 
     for (let key in LOADED) {
         if(LOADED[key].init) {
@@ -118,10 +118,8 @@ function init() {
 
 
 function init_header() {
-    init_language()
-    initabo()
-    inithighlights()
-    init_scrollbar()
+    init_abo()
+    init_highlights()
     window.addEventListener("resize", openmenufix)
 }
 
@@ -336,14 +334,12 @@ function reset_language() {
 }
 
 function setlanguage(language) {
-    console.time()
 	document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
     document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
 	document.getElementById("lang-" + language).style.textDecoration = "underline"
 	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
 	localStorage.setItem("gefaengnishefte_language", language);
-    console.timeEnd()
 }
 
 
@@ -704,7 +700,7 @@ function show_emailinfo() {
 
 // SWITCH ABO TYPE
 
-function initabo() {
+function init_abo() {
     if(localStorage.getItem("gefaengnishefte_abo") == null) {localStorage.setItem("gefaengnishefte_abo", "email")}
 	setabo(localStorage.getItem("gefaengnishefte_abo"))
 
@@ -786,6 +782,7 @@ function openmenufix() {
 	}
 }
 
+
 function check_menu_origin(origin) {
     if(origin.getElementsByClassName("dropanchor").length == 0  || origin.getElementsByClassName("dropmenu").length == 0) {
         origin = origin.parentElement
@@ -796,9 +793,8 @@ function check_menu_origin(origin) {
     }
 }
 
+
 function openmenu(origin) {
-    
-    console.log("open")
     origin = check_menu_origin(origin)
     
     let anchor = origin.getElementsByClassName("dropanchor")[0]
@@ -823,19 +819,20 @@ function openmenu(origin) {
 	menuopen = true
 }
 
+
 function safeclosemenu() {
-    console.log("close")
-    
-	if(document.getElementById("email-input") !== document.activeElement 
-	&& document.getElementById("email-checkbox") !== document.activeElement 
-	&& document.getElementById("email-btn") !== document.activeElement) 
-	{
-		closemenu()
-		if(document.getElementById("email-input").value == "") {
-			reset_emailinfo()
-		}
-	}
+
+    for (let value of ["email-input", "email-checkbox", "email-btn"]) {
+        if(document.getElementById(value) === document.activeElement) {return}
+    }
+
+    if(document.getElementById("email-input").value == "") {
+        reset_emailinfo()
+    }
+
+    closemenu()
 }
+
 
 function closemenu() {
 
@@ -851,6 +848,7 @@ function closemenu() {
 
 	menuopen = false
 }
+
 
 function hidedropmenus() {
 	var dropmenus = document.getElementsByClassName("dropmenu")
@@ -876,7 +874,7 @@ const highlights = {
 }
 
 
-function inithighlights() {
+function init_highlights() {
 
     let window_url = window.location.href.toLowerCase()
 
