@@ -1015,10 +1015,7 @@ function display_slide(slide_index) {
             timeline_lines[i].style.display = "none"
         }
     
-        console.log(timeline_index)
-    
         if(timeline_index) {
-            console.log(timeline_btns)
             timeline_btns.style.display = "flex"
             timeline_lines[timeline_index].style.display = "flex"
         }
