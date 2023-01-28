@@ -1006,7 +1006,7 @@ function display_slide(slide_index) {
     document.getElementById(SLIDE_LIST[slide_index]).style.display = "flex";
     slide_current = slide_index;
 
-    if(typeof timeline_counter !== "undefined") {
+    if(typeof current_events !== "undefined") {
         let timeline_index = document.getElementById(SLIDE_LIST[slide_current]).getElementsByClassName("timeline")[0].getAttribute("data-timeline-index")
         let timeline_btns = document.getElementById("timeline-btns")
         let timeline_lines = timeline_btns.getElementsByClassName("event-line")
@@ -1018,6 +1018,7 @@ function display_slide(slide_index) {
         console.log(timeline_index)
     
         if(timeline_index) {
+            console.log(timeline_btns)
             timeline_btns.style.display = "flex"
             timeline_lines[timeline_index].style.display = "flex"
         }
