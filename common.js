@@ -896,8 +896,8 @@ function init_highlights() {
             for (let i = 0; i < IDs.length; i++ ) {
                 console.log(URLsnippet + " highlight -> " + IDs[i])
                 document.getElementById(IDs[i]).style.fontWeight = "700";
-                return
             }
+            return
         }
     }
 }
