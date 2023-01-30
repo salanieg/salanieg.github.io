@@ -102,6 +102,10 @@ function loadElement(ID, HTML) {
 
 function init() {
 
+    if(typeof pre_init  === "function") {
+        pre_init()
+    }
+
     for (let key in LOADED) {
         if(LOADED[key].init) {
             LOADED[key].func()
@@ -111,8 +115,8 @@ function init() {
     init_scrollbar()
     init_language()
 
-    if(typeof add_init  === "function") {
-        add_init()
+    if(typeof suf_init  === "function") {
+        suf_init()
     }
 
 }
@@ -1006,23 +1010,27 @@ function display_slide(slide_index) {
     document.getElementById(SLIDE_LIST[slide_index]).style.display = "flex";
     slide_current = slide_index;
 
-    if(typeof current_events !== "undefined") {
-        let timeline_index = document.getElementById(SLIDE_LIST[slide_current]).getElementsByClassName("timeline")[0].getAttribute("data-timeline-index")
-        let timeline_btns = document.getElementById("timeline-btns")
-        let timeline_lines = timeline_btns.getElementsByClassName("event-line")
-        
-        for (let i = 0; i < timeline_lines.length; i++) {
-            timeline_lines[i].style.display = "none"
-        }
-    
-        if(timeline_index) {
+    let timeline = document.getElementById(SLIDE_LIST[slide_current]).getElementsByClassName("timeline")[0]
+    let timeline_btns = document.getElementById("timeline-btns")
+    let timeline_lines = timeline_btns.getElementsByClassName("event-line")
+
+    for (let i = 0; i < timeline_lines.length; i++) {
+        timeline_lines[i].style.display = "none"
+    }
+
+    if(timeline) {
+        if(timeline.hasAttribute("data-timeline-index")) {
+            let timeline_index = timeline.getAttribute("data-timeline-index")
+
             timeline_btns.style.display = "flex"
             timeline_lines[timeline_index].style.display = "flex"
         }
         else {
             timeline_btns.style.display = "none"
-     
         }
+    }
+    else {
+        timeline_btns.style.display = "none"
     }
 
     if(typeof highlight_title === "function") {
