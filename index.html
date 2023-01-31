@@ -94,7 +94,7 @@
             function basic_template(issue) {return '<span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span>'}
             function title_template(i){let issue = ISSUE_LIST[i]; return '<a onmouseover="display_slide(' + i + ')" class="issue-title" href=' + issue.url + '>' + basic_template(issue) + '</a><hr>'}
             function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="issue-title center" href=' + issue.url + '>' + basic_template(issue) + '</a>'}
-            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span onclick="display_slide(' + i + ')" id="index' + i + '" class="indexitem issue-title">' + basic_template(issue) + '</span><br><hr><br>'}
+            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span onclick="display_slide(' + i + ')" id="index' + i + '" class="indexitem issue-title">' + basic_template(issue) + '</span><hr>'}
 
             // LOADING
 
@@ -188,15 +188,14 @@
                 padding-bottom:25%;
             }
 
-            #issue-list {
-                min-width:350px;
-                max-width:350px;
+            #issue-list, #slide-index {
+                width:100% !important;
+                max-width:350px !important;
                 /* visibility: hidden; */
             }
             
-            #issue-list > * {
-                margin-top: 15px;
-                margin-bottom: 15px;
+            #issue-list > *, #slide-index > * {
+                margin: 15px 0px;
             }
 
             /* COVERS */
@@ -245,9 +244,12 @@
 
             #slide-index {
                 line-height: 1 !important;
-                max-width: 480px !important;
                 width:100% !important;
+                max-width:390px !important; 
             }
+            /* TIED TO ISSUE LIST WITH PADDING */
+
+
 
             #slide-current {
                 font-size: 15pt !important;
@@ -300,9 +302,13 @@
             /* SMALL SCREEN ADJUSTMENTS */
             
 
-            #slide-title, #slide-index {
+            #slide-title {
                 font-size: 1.25rem !important;
 	            font-size: clamp(1rem, -0.54rem + 5.7vw, 1.25rem) !important;
+            }
+
+            #slide-index {
+                font-size: 1rem !important;
             }
 
             .title-small {
