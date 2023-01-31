@@ -85,15 +85,16 @@
                 }
             ]
 
-            document.querySelector(':root').style.setProperty("--illustration-height", "683px")
-
-
             // LOADING
 
             load_components(["header", "footer", "databanner"])
-        
+            // document.querySelector(':root').style.setProperty("--illustration-height", "683px")
+
         </script>
 
+        <style>
+            :root { --illustration-height: 683px !important; }
+        </style>
     </head>
 
     <body>
@@ -101,9 +102,7 @@
         <header id="header"></header>
 
         <main id="content">
-        
             <section id="info-wrapper">
-
                 <div id="coverwrap">
                     <div id="coverimagewrap" style="height:var(--illustration-height)"><img id="coverimage" src="images/issues/issue-i-illustration.WebP" alt="ISSUE I ILLUSTRATION"></div>
                     <cite id="title"><span lang="de">ISSUE I&#x2005;&#x2005;&#x2005;&#x2005;MÄRZ 2022</span><span lang="en">ISSUE I&#x2005;&#x2005;&#x2005;&#x2005;MARCH 2022</span><span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en">ALTERNATIVE UTOPIAS</span></cite>
@@ -225,9 +224,7 @@
                     <img src="images/internal/nc-eu.svg">
                 </div>
             </section>
-        
         </main>
-
         
         <footer id="footer"></footer>
         <div id="databanner"></div>

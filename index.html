@@ -94,7 +94,7 @@
             function basic_template(issue) {return '<span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span>'}
             function title_template(i){let issue = ISSUE_LIST[i]; return '<a onmouseover="display_slide(' + i + ')" class="issue-title" href=' + issue.url + '>' + basic_template(issue) + '</a><hr>'}
             function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="issue-title center" href=' + issue.url + '>' + basic_template(issue) + '</a>'}
-            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span onclick="display_slide(' + i + ')" id="index' + i + '" class="indexitem issue-title">' + basic_template(issue) + '</span><br>'}
+            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span onclick="display_slide(' + i + ')" id="index' + i + '" class="indexitem issue-title">' + basic_template(issue) + '</span><br><hr><br>'}
 
             // LOADING
 

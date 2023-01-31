@@ -888,13 +888,10 @@ function init_highlights() {
     remove_after(window_url, "#")
     remove_after(window_url, "?")
 
-    console.log(window_url)
-
     for (let [URLsnippet, IDs] of Object.entries(highlights)) {
-        console.log(URLsnippet + " + " + IDs)
         if (window_url == ("https://www.GEFAENGNISHEFTE.org" + URLsnippet).toLowerCase()) {
             for (let i = 0; i < IDs.length; i++ ) {
-                console.log(URLsnippet + " highlight -> " + IDs[i])
+                console.log("window: " + window_url + "   snippet: " + URLsnippet + " -> " + IDs[i])
                 document.getElementById(IDs[i]).style.fontWeight = "700";
             }
             return
