@@ -1041,8 +1041,8 @@ function display_slide(slide_index) {
         document.getElementById("slide-title").innerHTML = index_title_template(slide_current)
     }
     
-    if(typeof overridetitletext !== "undefined") {
-        document.getElementById("slide-current").innerHTML = overridetitletext
+    if(typeof OVERRIDE_TITLE_TEXT !== "undefined") {
+        document.getElementById("slide-current").innerHTML = OVERRIDE_TITLE_TEXT
     }
     else {
         document.getElementById("slide-current").innerHTML = (slide_current + 1) + "/" + SLIDE_LIST.length
