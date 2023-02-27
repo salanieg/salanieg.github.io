@@ -114,7 +114,7 @@
                     document.getElementById("issue-list").insertAdjacentHTML('beforeend', title_template(i));
                 }
 
-                
+                document.getElementById("issue-list").style.visibility = "visible"
                 seteagerload()
                 init_prevent_touch_response()
             }
@@ -188,10 +188,13 @@
                 padding-bottom:25%;
             }
 
+            #issue-list {    
+                visibility: hidden;
+            }
+
             #issue-list, #slide-index {
                 width:100% !important;
-                max-width:350px !important;
-                /* visibility: hidden; */
+                width:350px !important;
             }
             
             #issue-list > *, #slide-index > * {
