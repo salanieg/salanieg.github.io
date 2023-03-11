@@ -1066,6 +1066,7 @@ function display_slide_index() {
         indexitems[i].style.fontWeight = "400"
     }
 
+    document.getElementById("slide-current").disabled = true;
     document.getElementById("index"+slide_current).style.fontWeight = "700"
     document.getElementById("timeline-btns").style.display = "none";
     document.getElementById("slide-title").style.display = "none";
@@ -1078,6 +1079,7 @@ function hide_slide_index() {
         document.getElementById("timeline-btns").style.display = "flex";
     }
 
+    document.getElementById("slide-current").disabled = false;
     document.getElementById("slide-title").style.display = "block";
     document.getElementById("slide-index").style.display = "none";
     document.getElementById(SLIDE_LIST[slide_current]).style.display = "flex";
