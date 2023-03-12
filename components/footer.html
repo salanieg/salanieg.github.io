@@ -53,6 +53,9 @@
             }
 
             #footer-content {
+                position: fixed;
+                right: 0;
+                bottom: 5px;
                 white-space: nowrap;
                 display: flex;
                 justify-content: flex-end;
@@ -188,6 +191,9 @@
             @media screen and (max-width: 1400px) {
 
                 #footer-content {
+                    position: static;
+                    right: unset;
+                    bottom: unset;
                     justify-content: center;
                     gap:10px 15px;
                     padding: 10px 30px;

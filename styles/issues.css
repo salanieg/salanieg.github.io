@@ -1,8 +1,8 @@
 /* MAIN */
 
 body {
-	grid-template-rows: auto 1fr auto;
-	grid-template-areas: "header" "main" "footer";
+	grid-template-rows: auto 1fr;
+	grid-template-areas: "header" "main";
 }
 
 #content {
@@ -161,6 +161,11 @@ body {
 /* REACTIVE */
 
 @media screen and (max-width: 1400px) {
+	body {
+		grid-template-rows: auto 1fr auto;
+		grid-template-areas: "header" "main" "footer";
+	}
+	
 	.abstract, .abstracttitle {
 		max-width: unset;
 	}
