@@ -3,8 +3,8 @@
 :root {
 	--font-small: clamp(0.75rem, 0.12rem + 2.88vw, 0.93rem); /* - */
 	--font-regular: clamp(0.75rem, -1.45rem + 11.7vw, 1.085rem); /* 13pt- */
-	--font-medium: clamp(0.9rem, 0.112rem + 11.2vw, 1.25rem);  /* 15pt-11pt | 450px-300px*/
-	--font-large: clamp(1.25rem, -0.85rem + 11.2vw, 3rem); /* 36pt- */
+	--font-medium: clamp(0.9rem, 0.2rem + 3.73333333333333vw, 1.25rem);  /* 15pt-11pt | 450px-300px*/
+	--font-large: clamp(0.9rem, -0.0444444444444445rem + 6.04444444444445vw, 2.6rem); /* 43.75-21.875 vw */
 }
 
 html {
