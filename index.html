@@ -91,6 +91,13 @@
             
         </script>
 
+        <script>
+            function open_launchpad() {
+                document.getElementById("foyer").style.display = "none"
+                document.getElementById("launchpad").style.display = "block"
+            }
+        </script>
+
         <style>
 
             #controls {
@@ -258,6 +265,9 @@
                 }
             }
 
+            #launchpad {
+                display: none;
+            }
 
         </style>
     </head>
@@ -267,9 +277,14 @@
 
         <main id="content">
             <img src="images/logo.png" alt="wormhole">
-            <span id="issue-wrap">Ἀγεωμέτρητος μηδεὶς εἰσίτω.</span>
-            <span>No one should enter without knowledge of the geometry.</span><br>
-            <button>Accept and continue</button>
+            <div id="foyer">
+                <span id="issue-wrap">Ἀγεωμέτρητος μηδεὶς εἰσίτω.</span>
+                <span>No one should enter without knowledge of the geometry.</span><br>
+                <button onclick="open_launchpad()">Accept and continue</button>
+            </div>
+            <div id="launchpad">
+                test
+            </div>
         </main>
         
         <div id="databanner"></div>

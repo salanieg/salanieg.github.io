@@ -8,7 +8,6 @@
 }
 
 :root {
-	--theme:red;
 	--default-scrollbar-color: white;
 	--header-color: #1c1c1c;
 	--header-color-contrast: white;
@@ -18,7 +17,7 @@
 	--content-color-contrast: white;
 	--content-color-text: white;
 	--content-color-link-hover: lightgray;
-  }
+}
 
 html {
 	overflow-x: hidden;
