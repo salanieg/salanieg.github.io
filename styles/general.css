@@ -7,6 +7,19 @@
 	--font-large: clamp(0.9rem, -0.0444444444444445rem + 6.04444444444445vw, 2.6rem); /* 43.75-21.875 vw */
 }
 
+:root {
+	--theme:red;
+	--default-scrollbar-color: white;
+	--header-color: #1c1c1c;
+	--header-color-contrast: white;
+	--header-color-text: white;
+	--content-color: #1c1c1c;
+	--content-color-contrast-text: #1c1c1c;
+	--content-color-contrast: white;
+	--content-color-text: white;
+	--content-color-link-hover: lightgray;
+  }
+
 html {
 	overflow-x: hidden;
 	overflow-y: hidden;

@@ -41,14 +41,12 @@
         
         <link rel="stylesheet" href="styles/fonts.css">
         <link rel="stylesheet" href="styles/general.css">
-        <link rel="stylesheet" href="styles/red.css">
 
         <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Regular.woff2">
         <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Bold.woff2">
         <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.gefaengnishefte.org/fonts/Spectral/Spectral-Italic.woff2">
         
         <link rel="preload" as="fetch" crossorigin href="components/header.html">
-        <link rel="preload" as="fetch" crossorigin href="components/controls.html">
         <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
 
         <script type="text/javascript" src="common.js"></script>
@@ -89,74 +87,8 @@
 
             // LOADING
 
-            load_components(["header", "controls", "databanner"])
+            load_components(["header", "databanner"])
             
-        </script>
-
-        <script>
-
-            // COVERSCRIPT
-
-            document.addEventListener("DOMContentLoaded", initcovers)
-
-            function initcovers() {
-                for (let i = 0; i < ISSUE_LIST.length; i++) {
-                    document.getElementById("slides").insertAdjacentHTML('beforeend', cover_template(i));
-                    document.getElementById("issue-list").insertAdjacentHTML('beforeend', title_template(i));
-                }
-
-                document.getElementById("issue-list").style.visibility = "visible"
-                seteagerload()
-                init_prevent_touch_response()
-            }
-
-
-            function highlight_title(i) {
-
-                let titles = document.getElementById("issue-list").querySelectorAll('.issue-title');
-
-                titles.forEach((title) => {title.style.fontWeight = "400"});
-                titles.item(i).style.fontWeight = "700";
-            }
-
-
-            // EAGER LOAD ACCORDING TO LANGUAGE
-
-            function seteagerload() {
-
-                let covers = document.getElementById("slides").getElementsByTagName("img")
-                let current_lang = localStorage.getItem("gefaengnishefte_language")
-                
-                for (let i = 0; i < covers.length; i++) {
-                    if(covers[i].lang == current_lang) {
-                        covers[i].loading = "eager"
-                    }
-                }
-            }
-
-
-            // PREVENT TOUCHING RESPONSE
-
-            function init_prevent_touch_response() {
-                let titles = document.getElementsByClassName("title")
-
-                for (let i = 0; i < titles.length; i++) {
-                    titles[i].addEventListener("pointerdown", (event) => {
-                        if (event.pointerType === "touch" || event.pointerType === "pen") {
-                            event.currentTarget.addEventListener("click", prevent_link_events)
-                        }
-                    })
-
-                    titles[i].addEventListener("mouseenter", ()=>{titles[i].style.color = ""})
-                }
-            }
-
-            function prevent_link_events(event) {
-                event.preventDefault()
-                event.currentTarget.style.color = "white"
-                event.currentTarget.removeEventListener("click", prevent_link_events)
-            }
-
         </script>
 
         <style>
@@ -334,13 +266,12 @@
         <header id="header"></header>
 
         <main id="content">
-            <div id="issue-wrap">
-                <div id="slides"></div>
-                <div id="issue-list"></div>
-            </div>
+            <img src="images/logo.png" alt="wormhole">
+            <span id="issue-wrap">Ἀγεωμέτρητος μηδεὶς εἰσίτω.</span>
+            <span>No one should enter without knowledge of the geometry.</span><br>
+            <button>Accept and continue</button>
         </main>
         
-        <div id="controls"></div>
         <div id="databanner"></div>
     </body>
 </html>
