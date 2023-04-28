@@ -130,75 +130,19 @@
 				line-height: 1.3 !important;
 			}
 
-			#email-form {
-				flex-direction: column-reverse;
-			}
-
-			#email-checkbox {
-				display:inline;
-				position:relative;
-				top: 3px;
-				width: 15px;
-				height:15px;
-				margin:0;
-				margin-top:20px;
-			}
-
-			#email-info {
-				display:none;
-				font-size: 9pt;
-				line-height: 1.3 !important;
-				text-align: justify;
-				white-space: pre-wrap;
-				order:-1;
-			}
-
-			#telegram-form {
-				display: none;
-			}
-
-			#telegram-opt {
-				font-size: 11pt;
-				line-height: 1.3 !important;
-				white-space: pre-wrap;
-				order:-1;
-			}
-
-			#telegram-btn {
-				width: 100%;
-				text-align:center !important;
-			}
-
-			#telegram-btn * {
-				padding: 0 !important;
-			}
-
 
 			/* REACTIVE */
 
-			#openmenu, #menu-expanded, .menu-divider {
+			.menu-horizontal, #etc {
 				display: none;
 			}
 
-			@media screen and (max-width: 800px) {
-
-				.menu-horizontal, #etc {
-					display: none;
-				}
-
-				#openmenu, #menu-expanded, .menu-divider {
-					display: block;
-				}
-
-				.menu-content {
-					border: 0px none transparent;
-				}
+			#openmenu, #menu-expanded, .menu-divider {
+				display: block;
 			}
 
-			@media screen and (max-width: 400px) {
-				.long {
-					display:none;
-				}
+			.menu-content {
+				border: 0px none transparent;
 			}
 
 
@@ -206,80 +150,24 @@
 	</head>
 
 	<body>
-		<a id="logo" href="https://www.GEFAENGNISHEFTE.org">dialectic wormhole</a>
+		<div></div>
 		
 		<nav id="navigation" onmouseleave="safeclosemenu()">
-
-			<!-- ISSUES -->
-
-			<div class="menu-horizontal" onmouseenter="openmenu(this)">
-				<a class="dropanchor" id="highlight-issues" href="https://www.GEFAENGNISHEFTE.org">ISSUES</a>
-
-				<div class="dropmenu menu-content">
-					<a class="issue-title" id="info-issue-i"  href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE I</span> <span lang="de">ALTERNATIVE UTOPIEN</span><span lang="en">ALTERNATIVE UTOPIAS</span></a>
-					<a class="issue-title" id="info-issue-ii"  href="https://www.GEFAENGNISHEFTE.org/issue-i"><span>ISSUE II</span> <span lang="de">REFORM ODER REVOLUTION</span><span lang="en">REFORM OR REVOLUTION</span></a>
-				</div>
-			</div>
-
-			<!-- KANON -->
-
-			<div class="menu-horizontal" onmouseenter="openmenu(this)">
-				<a class="dropanchor" id="highlight-kanon" href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
-
-				<div class="dropmenu menu-content">
-					<a href="https://www.GEFAENGNISHEFTE.org/kanon"><span lang="de">Eine Zusammenstellung sehenswerter Inhalte</span><span lang="en">A collection of content worth watching</span></a>
-				</div>
-			</div>
 
 			<!-- MENU/ETC -->
 
 			<div>
-				<span class="dropanchor" id="etc" onmouseenter="openmenu(this)">ETC</span>
 				<span class="dropanchor" id="openmenu" onclick="openmenu(this)"><span lang="de">MENÜ</span><span lang="en">MENU</span></span>
 				<span class="dropanchor" id="closemenu" onclick="safeclosemenu()">X</span>
 
 				<div class="dropmenu">
 
-					<!-- EXPANDED MENU -->
+					<!--MENU -->
 
 					<div class="menu-content" id="menu-expanded">
-						<a id="highlight-issues-expanded" href="https://www.GEFAENGNISHEFTE.org">ISSUES</a><br>
-						<a id="highlight-kanon-expanded" href="https://www.GEFAENGNISHEFTE.org/kanon">KANON</a>
-					</div>
-					
-				
-					<hr class="menu-divider">
-
-					<!-- INFO -->
-					<div class="menu-content" id="menu-etc">
-						
-						<div id="info-general">
-							<a href="https://www.paypal.com/paypalme/GEFAENGNISHEFTE"><span lang="de">Unterstützen</span><span lang="en">Support</span><span class="long">: paypal.me/GEFAENGNISHEFTE</span><br></a>
-							<a href="mailto:GEFAENGNISHEFTE@riseup.net"><span lang="de">Kontaktieren</span><span lang="en">Contact</span><span class="long">: GEFAENGNISHEFTE@riseup.net</span><br></a>
-							<a href="https://www.GEFAENGNISHEFTE.org/impressum" id="highlight-impressum"><span lang="de">Impressum</span><span lang="en">Legal Notice</span><br></a>
-							<a href="https://www.GEFAENGNISHEFTE.org/datenschutz" id="highlight-datenschutz"><span lang="de">Datenschutzerklärung</span><span lang="en">Privacy policy</span><br></a>
-							<span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br>
-						</div>
-
-						<div>
-							<span id="abo-selection">
-								<span class="long"><span lang="de">Abonnieren mit:</span><span lang="en">Subscribe via:</span></span>
-								<span class="lang-option" id="email-opt" onclick="setabo('email')">Email</span> / 
-								<span class="lang-option" id="telegram-opt" onclick="setabo('telegram')">Telegram</span><br>
-							</span>
-
-							<form id="email-form">
-								<span class="abo"><button type="submit" id="email-btn"><span lang="de">Abonnieren</span><span lang="en">Subscribe</span></button>
-								<span><input type="email" name="Email" id="email-input" placeholder="Email" required></span></span>
-								<input type="hidden" name="_subject" value="Abonnement">
-								<input type="hidden" name="_captcha" value="true">
-								<label id="email-info" for="email-checkbox"><input type="checkbox" id="email-checkbox" required>   <span lang="de">Ich möchte über neue ISSUES benachrichtigt werden. <br><br>Hinweise zum Widerruf und der Verarbeitung deiner Daten geben wir in unserer <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">Datenschutzerklärung</a>. Einen Link zum <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">Deabonnieren</a> findest du in jeder Mail.</span><span lang="en">I want to be notified about new ISSUES. <br><br>We provide information on revocation and the processing of your data in our <a href="https://www.GEFAENGNISHEFTE.org/datenschutz">data protection section</a>. A link to <a href="https://www.GEFAENGNISHEFTE.org/deabonnieren">unsubscribe</a> is included in every mail.</span></label>
-							</form>
-							
-							<form id="telegram-form" class="abo" action="https://t.me/GEFAENGNISHEFTE" target="_blank">
-								<button type="submit" id="telegram-btn"><span lang="de">t.me/GEFAENGNISHEFTE</span><span lang="en">t.me/GEFAENGNISHEFTE</span></button></button>
-							</form>
-						</div>
+						<a id="highlight-issues-expanded" href="https://www.dialecticwormhole.page">LAUNCHPAD</a><br>
+						<a id="highlight-kanon-expanded" href="https://www.dialecticwormhole.page/impressum">IMPRESSUM</a><br>
+						<span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span><br>
 					</div>
 
 					<hr class="menu-divider">

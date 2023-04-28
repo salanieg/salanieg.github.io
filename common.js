@@ -713,29 +713,29 @@ function init_abo() {
 
 
 
-    // LISTENERS
-	document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
-    document.getElementById("email-form").addEventListener('input', input_email)
-    if(document.getElementById("email-deabo-form")) {
-        document.getElementById("email-deabo-form").addEventListener('submit', function(event){remove_email(event)})
-        document.getElementById("email-deabo-form").addEventListener('input', input_remove_email);
-    }
+    // // LISTENERS
+	// document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
+    // document.getElementById("email-form").addEventListener('input', input_email)
+    // if(document.getElementById("email-deabo-form")) {
+    //     document.getElementById("email-deabo-form").addEventListener('submit', function(event){remove_email(event)})
+    //     document.getElementById("email-deabo-form").addEventListener('input', input_remove_email);
+    // }
 }
 
 function setabo(type) {
 
-	document.getElementById('email-form').style.display = "none";
-	document.getElementById('telegram-form').style.display = "none"
+	// document.getElementById('email-form').style.display = "none";
+	// document.getElementById('telegram-form').style.display = "none"
 
-	document.getElementById("email-opt").style.textDecoration = "none"
-	document.getElementById("telegram-opt").style.textDecoration = "none"
+	// document.getElementById("email-opt").style.textDecoration = "none"
+	// document.getElementById("telegram-opt").style.textDecoration = "none"
 
-	if(type == "telegram") {
-		hide_emailinfo()
-	}
+	// if(type == "telegram") {
+	// 	hide_emailinfo()
+	// }
 
-	document.getElementById(type + '-opt').style.textDecoration = "underline"
-	document.getElementById(type + '-form').style.display = "flex";
+	// document.getElementById(type + '-opt').style.textDecoration = "underline"
+	// document.getElementById(type + '-form').style.display = "flex";
 
 	localStorage.setItem("gefaengnishefte_abo", type);	
 }
@@ -774,19 +774,19 @@ var windowwidth = window.innerWidth;
 
 
 function openmenufix() {
-	if (window.innerWidth!=windowwidth) {
+	// if (window.innerWidth!=windowwidth) {
 
-		windowwidth = window.innerWidth;
+	// 	windowwidth = window.innerWidth;
 
-		closemenu()
+	// 	closemenu()
 
-		if (window.innerWidth <= 800 && !menuopen) {
-			document.getElementById("openmenu").style.display = "inline";
-		}
-		else {
-			document.getElementById("openmenu").style.display = "none";
-		}
-	}
+	// 	if (window.innerWidth <= 800 && !menuopen) {
+	// 		document.getElementById("openmenu").style.display = "inline";
+	// 	}
+	// 	else {
+	// 		document.getElementById("openmenu").style.display = "none";
+	// 	}
+	// }
 }
 
 
@@ -829,13 +829,13 @@ function openmenu(origin) {
 
 function safeclosemenu() {
 
-    for (let value of ["email-input", "email-checkbox", "email-btn"]) {
-        if(document.getElementById(value) === document.activeElement) {return}
-    }
+    // for (let value of ["email-input", "email-checkbox", "email-btn"]) {
+    //     if(document.getElementById(value) === document.activeElement) {return}
+    // }
 
-    if(document.getElementById("email-input").value == "") {
-        reset_emailinfo()
-    }
+    // if(document.getElementById("email-input").value == "") {
+    //     reset_emailinfo()
+    // }
 
     closemenu()
 }

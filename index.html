@@ -1,43 +1,9 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <script>
-
-            // PRELOAD
-
-            let lang = localStorage.getItem("gefaengnishefte_language"); if(lang == null) {lang = "de"}
-            let preload = '<link rel="preload" as="image" fetchpriority="high" href="images/issues/' + lang + '/issue-i-cover.WebP">'
-            document.currentScript.insertAdjacentHTML("afterend", preload)
-
-        </script>
-        
+    <head>        
         <meta charset="UTF-8">
-        <title>ISSUES</title>
+        <title>DIALECTIC WORMHOLE</title>
         <meta name="viewport" content="width=device-width, height=device-height, user-scalable=no">
-        <meta name="description" content="Gedanken einer politisch desinteressierten Jugend.">
-        <meta property="og:type" content="website"/>
-        <meta property="og:site_name" content="GEFÄNGNISHEFTE"/>
-        <meta property="og:title" content="ISSUES"/>
-        <meta property="og:description" content="Gedanken einer politisch desinteressierten Jugend."/>
-        <meta property="og:image" itemprop="image" content="https://www.gefaengnishefte.org/images/opengraph/red_2x1.jpg"/>
-        <meta property="og:image:type" content="image/jpeg"/>
-        <meta property="og:image:width" content="1200"/>
-        <meta property="og:image:height" content="630"/>
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:image" content="https://www.gefaengnishefte.org/images/opengraph/red_1x1.jpg" />
-
-        <!-- https://realfavicongenerator.net/ -->
-        <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/red/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="images/favicon/red/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="images/favicon/red/favicon-16x16.png">
-        <link rel="manifest" href="images/favicon/red/site.webmanifest">
-        <link rel="mask-icon" href="images/favicon/red/safari-pinned-tab.svg" color="#890000">
-        <link rel="shortcut icon" href="images/favicon/red/favicon.ico">
-        <meta name="apple-mobile-web-app-title" content="GEF&Auml;NGNISHEFTE">
-        <meta name="application-name" content="GEF&Auml;NGNISHEFTE">
-        <meta name="msapplication-TileColor" content="#000000">
-        <meta name="msapplication-config" content="images/favicon/red/browserconfig.xml">
-        <meta name="theme-color" content="#890000">
         
         <link rel="stylesheet" href="styles/fonts.css">
         <link rel="stylesheet" href="styles/general.css">
@@ -51,39 +17,6 @@
 
         <script type="text/javascript" src="common.js"></script>
         <script>
-
-            // VARIABLES
-            
-            const OVERRIDE_TITLE_TEXT = "<span class='title-large'><span lang='de'>ÜBERSICHT</span><span lang='en'>OVERVIEW</span></span><span class='title-small'>#</span>"
-
-            const ISSUE_LIST = [
-                {
-                    no: "ISSUE I",
-                    title_no: "title-i",
-                    title_de: "ALTERNATIVE <br>UTOPIEN",
-                    title_en: "ALTERNATIVE <br>UTOPIAS",
-                    cover_de: "images/issues/de/issue-i-cover.WebP",
-                    cover_en: "images/issues/en/issue-i-cover.WebP",
-                    url: "issue-i"
-                },
-                {
-                    no: "ISSUE II",
-                    title_no: "title-ii",
-                    title_de: "REFORM ODER <br>REVOLUTION",
-                    title_en: "REFORM OR <br>REVOLUTION",
-                    cover_de: "images/issues/de/issue-ii-cover.WebP",
-                    cover_en: "images/issues/en/issue-ii-cover.WebP",
-                    url: ""
-                }
-            ]
-
-            // TEMPLATES
-
-            function cover_template(i){let issue = ISSUE_LIST[i]; return '<a class="cover" href=' + issue.url + '><img class="cover-image" loading="lazy" lang="de" src=' + issue.cover_de + ' alt=' + issue.no + ' COVER/><img class="cover-image" loading="lazy" lang="en" src=' + issue.cover_en + ' alt=' + issue.no + 'COVER/></a>'}
-            function basic_template(issue) {return '<span>' + issue.no + '</span><span lang="de">' + issue.title_de + '</span><span lang="en">' + issue.title_en + '</span>'}
-            function title_template(i){let issue = ISSUE_LIST[i]; return '<a onmouseover="display_slide(' + i + ')" class="issue-title" href=' + issue.url + '>' + basic_template(issue) + '</a><hr>'}
-            function index_title_template(i){let issue = ISSUE_LIST[i]; return '<a class="issue-title center" href=' + issue.url + '>' + basic_template(issue) + '</a>'}
-            function index_template(slide, i){let issue = ISSUE_LIST[i]; return '<span onclick="display_slide(' + i + ')" id="index' + i + '" class="indexitem issue-title">' + basic_template(issue) + '</span><hr>'}
 
             // LOADING
 
@@ -100,169 +33,11 @@
 
         <style>
 
-            #controls {
-                display:none !important;
-            }
-
             #content {
                 display: grid;
                 place-content: center;
-            }
-
-            /* WRAPS */
-
-            #issue-wrap {
-				display: flex;
-				justify-content: center;
-                gap: 60px;
-                padding-bottom:25%;
-            }
-
-            #issue-list {    
-                visibility: hidden;
-            }
-
-            #issue-list, #slide-index {
-                width:100% !important;
-                width:350px !important;
-            }
-            
-            #issue-list > *, #slide-index > * {
-                margin: 15px 0px;
-            }
-
-            /* COVERS */
-
-            .cover-image {
-                
-                max-height: 55vh;
-                object-fit: contain;
-                cursor: pointer;
-                transition: 0.7s;
-                box-shadow: 10px 10px 10px 0px rgba(0,0,0,0.35);
-            }
-
-            .cover-image:hover {
-                transform: scale(1.02);
-            }
-
-            .cover {
-                min-width:300px;
-                max-width:400px;
-                display: flex;
-                justify-content: center;
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
-
-            .slide-cover {
-                width: fit-content;
-            }
-
-            .title {
-                display:flex;
-                justify-content: space-between;
-                white-space:nowrap;
-                flex-wrap: wrap;
-                cursor: pointer;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            /* SLIDES */
-
-            #slide-index {
-                line-height: 1 !important;
-                width:100% !important;
-                max-width:390px !important; 
-            }
-            /* TIED TO ISSUE LIST WITH PADDING */
-
-
-
-            #slide-current {
-                font-size: 15pt !important;
-                width:160px !important;
-                padding: 5px 15px 5px 15px !important;
-            }
-
-            .control_label_large {
-                display: none!important;
-            }
-
-            .control_label_small {
-                display: inline!important;
-            }
-
-            #letztes, #nächstes {
-                padding:0px!important;
-                font-size: 35pt!important;
-                width: 45px !important;
-            }
-
-
-            /*/////////////////////// REACTIVE ///////////////////////*/
-
-
-            @media screen and (max-width: 800px) {
-                body {
-                    grid-template-rows: auto minmax(0, 1fr) auto;
-                    grid-template-areas: "header" "main" "controls";
-                }
-                
-                #controls {
-                    display:flex !important;
-                }
-
-                #issue-list {
-                    display:none;
-                }
-
-                .cover {
-                    min-width:unset;
-                }
-
-                #issue-wrap {
-                    padding: 0px;
-                }
-            }
-
-
-            /* SMALL SCREEN ADJUSTMENTS */
-            
-
-            #slide-title {
-                font-size: 1.25rem !important;
-	            font-size: clamp(1rem, -0.54rem + 5.7vw, 1.25rem) !important;
-            }
-
-            #slide-index {
-                font-size: 1rem !important;
-            }
-
-            .title-small {
-                display: none;
-            }
-
-            @media screen and (max-width: 320px) {
-
-                .title-small {
-                    display: inline;
-                }
-
-                .title-large {
-                    display: none;
-                }
-
-                #slide-current {
-                    padding:0px !important;
-                    width: 45px !important;
-                    font-size: 20pt !important;
-                }
+                align-items: start;
+                max-width: 500px;
             }
 
             #launchpad {
@@ -276,14 +51,21 @@
         <header id="header"></header>
 
         <main id="content">
-            <img src="images/logo.png" alt="wormhole">
+            <img id="mainlogo" src="images/logo.png" alt="wormhole">
+            <br><br>
             <div id="foyer">
-                <span id="issue-wrap">Ἀγεωμέτρητος μηδεὶς εἰσίτω.</span>
-                <span>No one should enter without knowledge of the geometry.</span><br>
+                <span>Ἀγεωμέτρητος μηδεὶς εἰσίτω.</span>
+                <br>
+                <span>No one should enter without knowledge of the geometry.</span>
+                <br><br>
                 <button onclick="open_launchpad()">Accept and continue</button>
             </div>
             <div id="launchpad">
-                test
+                <span>Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectical wormhole, and to reassemble it, that is the desideratum of this website.</span>
+                <br><br>
+                <span>The content of this website is therefore usually available under a Free Culture Licence (CC BY-SA 4.0). The licence, if available, can be viewed next to the corresponding content.</span>
+                <br><br>
+                <span>Greetings, I am a metro train operating robot. Where would you like to go?</span>
             </div>
         </main>
         
