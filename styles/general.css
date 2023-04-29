@@ -61,7 +61,7 @@ body {
 	background-color: var(--content-color);
 	overflow-y: auto;
 	height:100%;
-	padding:20px;
+	padding:40px;
 	scrollbar-gutter: stable both-edges;
 }
 
