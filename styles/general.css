@@ -266,6 +266,7 @@ input:active {
 }
 
 button {
+	font-family: "OldStandard";
 	font-size: var(--font-regular);
 	appearance: none;
 	border-radius: 20px;

@@ -149,7 +149,7 @@
     font-family: 'Old Standard TT';
     src: url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Regular.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Regular.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Regular.ttf') format('truetype');
+        url('https://www.dialecticwormhole.page/fonts/Roboto/OldStandardTT-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
