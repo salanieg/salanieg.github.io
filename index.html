@@ -35,6 +35,7 @@
                     document.getElementById(PAGE_ITEMS[i]).style.display = "none"
                 }
                 document.getElementById(id).style.display = "block"
+                load_frame(document.getElementById(id).getElementsByTagName("iframe"), 0, slide_current)
             }
         </script>
 
@@ -42,7 +43,7 @@
 
             #content {
                 display: grid;
-                place-content: center;
+                justify-content: center;
                 align-items: start;
             }
 
@@ -93,6 +94,29 @@
                 margin-top: 100px;
             }
 
+            iframe {
+                margin-bottom: 50px;
+            }
+
+            p {
+                text-align: justify;
+            }
+
+            .extreme {width:70vw;}
+            .large {width:60vw;}
+            .medium {width:50vw;}
+            .small {width:30vw;}
+            .verysmall {width:20vw;}
+
+
+            @media screen and (max-width: 1200px) {
+                .extreme {width:80vw;}
+                .large {width:80vw;}
+                .medium {width:80vw;}
+                .small {width:60vw;}
+                .verysmall {width:60vw;}
+            }
+
         </style>
     </head>
 
@@ -120,15 +144,9 @@
                 <p>This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. Muench argues that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
             </div>
             <div id="rabbit-hole">
-<<<<<<< HEAD
                 <div class="nav"><button onclick="display('launchpad')">Launchpad</button></div>
-                <p><span class="blink">|</span> If one wants to criticise culture in order to change it, there is no antagonist to fight.  Indeed, if you want to effectively stand up for culture, you have to fight facts¹. This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts.
-                For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.
-=======
-                <div class="top-nav"><button onclick="display('launchpad')">Launchpad</button></div>
                 <p><span class="blink">|</span> If one wants to criticise culture in order to change it, there is no antagonist to fight.  Indeed, if you want to effectively stand up for culture, you have to fight a system of circumstances¹. This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts.
                 For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.<br><br>
->>>>>>> 49cf987a5277ed1a3729f6db2ae2f256fa336a53
                 ¹Vgl. Flusser, Vilém: Ins Universum der technischen Bilder, 7. Aufl., Berlin, Deutschland: Edition Flusser, 2018, S. 73</p>
                 <p>Do not follow the white rabbit</p>
                 <button onclick="display('videos')">A curated collection of videos worth watching</button>
@@ -136,11 +154,11 @@
             <div id="videos">
                 <div class="nav"><button onclick="display('launchpad')">Launchpad</button></div>
                 <div class="video">
-                    <iframe width="560" height="315" src="https://www.youtube.com/embed/fonsUaFURPI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    <iframe class="small" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox></iframe>
                     <p>A mildly philosophical approach, trying to deliver an explanation for the emerging internet phenomenon of "The Backrooms"</p>
                 </div>
                 <div class="video">
-                    <iframe width="560" height="315" src="https://www.youtube.com/embed/2jy3JU-ORpo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    <iframe class="small"  src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
                     <p>An unsettling simulation of an escalated nuclear war</p>
                 </div>
             </div>

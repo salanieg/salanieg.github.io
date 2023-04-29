@@ -364,7 +364,7 @@ var datainfoshown = false;
 
 function init_cookies() {
     
-    if(localStorage.getItem("gefaengnishefte_cookies") == "true"){
+    if(localStorage.getItem("dialecticwormhole_cookies") == "true"){
         showcookiecontent();
     }
     else {
@@ -377,7 +377,7 @@ function cookies(choice) {
     document.getElementById("databanner").style.display = "none";
 
     if(choice) {
-        localStorage.setItem("gefaengnishefte_cookies", choice);
+        localStorage.setItem("dialecticwormhole_cookies", choice);
     }
 
     init_cookies();
@@ -493,7 +493,7 @@ function hidecookiecontent() {
     for (let i = 0; i < frames.length; i++)
     {
         var cookiedisclaimer = document.createElement("span");
-        cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='show_databanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='show_databanner()'>consent to the use of cookies</span>.</span>";
+        cookiedisclaimer.innerHTML = "<span>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='show_databanner()'>consent to the use of cookies</span>.</span><br><br>";
         cookiedisclaimer.className = "cookiedisclaimer";
         
         frames[i].style.display = "none"
@@ -512,7 +512,7 @@ function load_slide_frames() {
 
 
 function load_frame(frames, current, slide) {
-    if(localStorage.getItem("gefaengnishefte_cookies") == "true" && current < frames.length && slide == slide_current) {
+    if(localStorage.getItem("dialecticwormhole_cookies") == "true" && current < frames.length && slide == slide_current) {
 
         if(frames[current].getAttribute('data-source') == "youtube" && frames[current].getAttribute('data-loaded') != "true") {
             let frame = frames[current]
@@ -1168,7 +1168,7 @@ function init_footnotes() {
         footnote.insertAdjacentHTML('beforeend', footnote_template(i));
     }
 
-    if(localStorage.getItem("gefaengnishefte_cookies") != "true"){
+    if(localStorage.getItem("dialecticwormhole_cookies") != "true"){
         hidecookiecontent();
     }
 
