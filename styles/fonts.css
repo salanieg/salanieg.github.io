@@ -1,140 +1,163 @@
-/* SPECTRAL */
+/* ROBOTO */
 
 
-/* @font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraLight.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraLight.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraLight.ttf') format('truetype');
-	font-weight: 200;
-	font-style: normal;
-	font-display: block;
-}
 @font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Light.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Light.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Light.ttf') format('truetype');
-	font-weight: 300;
-	font-style: normal;
-	font-display: block;
-} */
-@font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Regular.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Regular.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Regular.ttf') format('truetype');
-	font-weight: 400;
-	font-style: normal;
-	font-display: block;
+    font-family: 'Roboto';
+    src: url('Roboto-Black.woff2') format('woff2'),
+        url('Roboto-Black.woff') format('woff'),
+        url('Roboto-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
 }
-/* @font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Medium.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Medium.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Medium.ttf') format('truetype');
-	font-weight: 500;
-	font-style: normal;
-	font-display: block;
-}
+
 @font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-SemiBold.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-SemiBold.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-SemiBold.ttf') format('truetype');
-	font-weight: 600;
-	font-style: normal;
-	font-display: block;
-} */
-@font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Bold.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Bold.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Bold.ttf') format('truetype');
-	font-weight: 700;
-	font-style: normal;
-	font-display: block;
+    font-family: 'Roboto';
+    src: url('Roboto-BlackItalic.woff2') format('woff2'),
+        url('Roboto-BlackItalic.woff') format('woff'),
+        url('Roboto-BlackItalic.ttf') format('truetype');
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
 }
-/* @font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraBold.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraBold.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraBold.ttf') format('truetype');
-	font-weight: 800;
-	font-style: normal;
-	font-display: block;
-} */
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-Bold.woff2') format('woff2'),
+        url('Roboto-Bold.woff') format('woff'),
+        url('Roboto-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-BoldItalic.woff2') format('woff2'),
+        url('Roboto-BoldItalic.woff') format('woff'),
+        url('Roboto-BoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-Italic.woff2') format('woff2'),
+        url('Roboto-Italic.woff') format('woff'),
+        url('Roboto-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-Light.woff2') format('woff2'),
+        url('Roboto-Light.woff') format('woff'),
+        url('Roboto-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-LightItalic.woff2') format('woff2'),
+        url('Roboto-LightItalic.woff') format('woff'),
+        url('Roboto-LightItalic.ttf') format('truetype');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-Medium.woff2') format('woff2'),
+        url('Roboto-Medium.woff') format('woff'),
+        url('Roboto-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-MediumItalic.woff2') format('woff2'),
+        url('Roboto-MediumItalic.woff') format('woff'),
+        url('Roboto-MediumItalic.ttf') format('truetype');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-Regular.woff2') format('woff2'),
+        url('Roboto-Regular.woff') format('woff'),
+        url('Roboto-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-Thin.woff2') format('woff2'),
+        url('Roboto-Thin.woff') format('woff'),
+        url('Roboto-Thin.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('Roboto-ThinItalic.woff2') format('woff2'),
+        url('Roboto-ThinItalic.woff') format('woff'),
+        url('Roboto-ThinItalic.ttf') format('truetype');
+    font-weight: 100;
+    font-style: italic;
+    font-display: swap;
+}
 
 
 
-/* SPECTRAL ITALIC */
+/* OLD STANDARD */
+
+@font-face {
+    font-family: 'Old Standard TT';
+    src: url('OldStandardTT-Italic.woff2') format('woff2'),
+        url('OldStandardTT-Italic.woff') format('woff'),
+        url('OldStandardTT-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Old Standard TT';
+    src: url('OldStandardTT-Bold.woff2') format('woff2'),
+        url('OldStandardTT-Bold.woff') format('woff'),
+        url('OldStandardTT-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Old Standard TT';
+    src: url('OldStandardTT-Regular.woff2') format('woff2'),
+        url('OldStandardTT-Regular.woff') format('woff'),
+        url('OldStandardTT-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
 
 
-/* @font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraLightItalic.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraLightItalic.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraLightItalic.ttf') format('truetype');
-	font-weight: 200;
-	font-style: italic;
-	font-display: block;
-}
-@font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-LightItalic.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-LightItalic.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-LightItalic.ttf') format('truetype');
-	font-weight: 300;
-	font-style: italic;
-	font-display: block;
-} */
-@font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Italic.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Italic.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Italic.ttf') format('truetype');
-	font-weight: 400;
-	font-style: italic;
-	font-display: block;
-}
-/* @font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-MediumItalic.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-MediumItalic.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-MediumItalic.ttf') format('truetype');
-	font-weight: 500;
-	font-style: italic;
-	font-display: block;
-}
-@font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-SemiBoldItalic.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-SemiBoldItalic.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-SemiBoldItalic.ttf') format('truetype');
-	font-weight: 600;
-	font-style: italic;
-	font-display: block;
-} */
-@font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-BoldItalic.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-BoldItalic.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-BoldItalic.ttf') format('truetype');
-	font-weight: 700;
-	font-style: italic;
-	font-display: block;
-}
-/* @font-face {
-	font-family: "Spectral";
-	src:	url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraBoldItalic.woff2') format('woff2'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraBoldItalic.woff') format('woff'),
-			url('https://www.dialecticwormhole.page/fonts/Spectral/Spectral-ExtraBoldItalic.ttf') format('truetype');
-	font-weight: 800;
-	font-style: italic;
-	font-display: block;
-} */
 
 
 * {
-	font-family: "Spectral";
+	font-family: "Roboto";
 }

@@ -8,9 +8,13 @@
         <link rel="stylesheet" href="styles/fonts.css">
         <link rel="stylesheet" href="styles/general.css">
 
-        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Regular.woff2">
-        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Bold.woff2">
-        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Spectral/Spectral-Italic.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Regular.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Bold.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Italic.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Regular.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Bold.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Italic.woff2">
+
         
         <link rel="preload" as="fetch" crossorigin href="components/header.html">
         <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
@@ -59,7 +63,24 @@
             }
 
             p {
-                margin-bottom: 20px;
+                margin-bottom: 30px;
+            }
+
+            .blink {
+			    animation: blinker 1.5s linear infinite;
+                color: #00ff00;
+            }
+
+            @keyframes blinker {
+                50% {
+                    opacity: 0;
+                }
+            }
+
+            .top-nav {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 50px;
             }
 
         </style>
@@ -85,10 +106,12 @@
                 </div>
             </div>
             <div id="magazine">
+                <div class="top-nav"><button onclick="display('launchpad')">Launchpad</button></div>
                 <p>This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. Muench argues that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
             </div>
             <div id="rabbit-hole">
-                <p>If one wants to criticise culture in order to change it, there is no antagonist to fight.  Indeed, if you want to effectively stand up for culture, you have to fight facts¹. This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts.
+                <div class="top-nav"><button onclick="display('launchpad')">Launchpad</button></div>
+                <p><span class="blink">|</span> If one wants to criticise culture in order to change it, there is no antagonist to fight.  Indeed, if you want to effectively stand up for culture, you have to fight facts¹. This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts.
                 For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.
                 ¹Vgl. Flusser, Vilém: Ins Universum der technischen Bilder, 7. Aufl., Berlin, Deutschland: Edition Flusser, 2018, S. 73</p>
             </div>
