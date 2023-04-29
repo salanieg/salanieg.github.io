@@ -267,8 +267,12 @@ input:active {
 
 button {
 	appearance: none;
-	border-radius: 0;
-	border: 2px outset grey;
+	border-radius: 20px;
+	padding: 5px 20px;
+	min-width: 120px;
+	background: grey;
+	/* background: linear-gradient(120deg, grey, grey, grey); */
+	border: 0px solid grey;
 	-webkit-tap-highlight-color: transparent;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
@@ -276,11 +280,18 @@ button {
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+	cursor: pointer;
 }
 
 button:active {
-	border-style:inset;	
+	border-style:solid;	
 }
+
+/* button:hover {
+	background-position: 0 0;
+	transition: background 0.2s ease;
+	background: linear-gradient(120deg, grey, white, grey);
+} */
 
 button:disabled,
 button[disabled]{
@@ -291,84 +302,8 @@ button[disabled]{
 }
 
 
-/* TITLES */
-
-.issue-title {
-	display: flex;
-	justify-content: space-between;
-	white-space:wrap;
-	flex-wrap: nowrap;
-	align-items: flex-start;
-	white-space: nowrap;
-	cursor: pointer;
-	text-align: right;
-	gap:15px;
-	width:100%;
-	-webkit-tap-highlight-color: transparent;
-}
-
-.issue-title br {
-	display: none;
-}
-
-@media screen and (max-width: 400px) {
-	.issue-title br {
-		display:inline;
-	}
-}
-
-
 /* FORM */
 
-.abo {
-	width:100%;
-	gap:2px;
-	overflow:hidden;
-	display:flex;
-	justify-content: flex-end;
-	flex-direction: row-reverse;
-}
-
-.abo input {
-	width:100%;
-	background-color:white;
-}
-
-.abo button {
-	float:right;
-	background-color:lightgrey;
-	cursor: pointer;
-}
-
-.abo input, .abo button {
-	height: fit-content;
-	font-size:15pt;
-	padding: 5px 20px;
-	color: black;
-}
-
-@media screen and (max-width: 450px) {
-	.abo {
-		flex-direction: column-reverse;
-		gap:5px;
-	}
-
-	.abo button, .abo input  {
-		font-size: 13pt;
-		text-align:left;
-		padding-left: 10px;
-	}
-
-	.abo>span {
-		padding-right: 0px;
-	}
-}
-
-@media screen and (max-width: 350px) {
-	.abo button, .abo input  {
-		font-size: 11pt;
-	}
-}
 
 input::selection {
 	color:initial !important;

@@ -341,12 +341,12 @@ function reset_language() {
 
 
 function setlanguage(language) {
-	document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
-    document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
-	document.getElementById("lang-" + language).style.textDecoration = "underline"
-	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
+	// document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
+    // document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
+	// document.getElementById("lang-" + language).style.textDecoration = "underline"
+	// document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
-	localStorage.setItem("gefaengnishefte_language", language);
+	// localStorage.setItem("gefaengnishefte_language", language);
 }
 
 
@@ -778,7 +778,7 @@ function openmenufix() {
 
 	// 	windowwidth = window.innerWidth;
 
-	// 	closemenu()
+	// closemenu()
 
 	// 	if (window.innerWidth <= 800 && !menuopen) {
 	// 		document.getElementById("openmenu").style.display = "inline";
@@ -819,9 +819,10 @@ function openmenu(origin) {
 		document.getElementById("logo").style.display = "none";
         document.getElementById("navigation").style.width = "100vw";
         document.getElementById("navigation").style.justifyContent = "flex-end";
+	}
+
 		document.getElementById("openmenu").style.display = "none";
 		document.getElementById("closemenu").style.display = "inline";
-	}
 
 	menuopen = true
 }
@@ -852,6 +853,9 @@ function closemenu() {
         document.getElementById("navigation").style.width = "fit-content";
         document.getElementById("navigation").style.justifyContent = "space-between";
 	}
+
+    document.getElementById("closemenu").style.display = "none";
+    document.getElementById("openmenu").style.display = "inline";
 
 	menuopen = false
 }
