@@ -25,14 +25,14 @@
         </script>
 
         <script>
-            function open_launchpad() {
-                document.getElementById("foyer").style.display = "none"
-                document.getElementById("launchpad").style.display = "block"
-            }
+            const PAGE_ITEMS = ['foyer','launchpad','magazine','rabbit-hole']
 
-            function close_launchpad() {
-                document.getElementById("launchpad").style.display = "none"
-                document.getElementById("foyer").style.display = "block"
+            function display(id) {
+                for (let i = 0; i < PAGE_ITEMS.length; i++)
+                {
+                    document.getElementById(PAGE_ITEMS[i]).style.display = "none"
+                }
+                document.getElementById(id).style.display = "block"
             }
         </script>
 
@@ -45,7 +45,7 @@
                 max-width: 500px;
             }
 
-            #launchpad {
+            #launchpad, #magazine, #rabbit-hole {
                 display: none;
             }
 
@@ -54,35 +54,45 @@
                 justify-content: space-between;
             }
 
+            #mainlogo {
+                margin-bottom: 50px;
+            }
+
+            p {
+                margin-bottom: 20px;
+            }
+
         </style>
     </head>
 
     <body>
-        <header id="header"></header>
+        <!-- <header id="header"></header> -->
 
         <main id="content">
             <img id="mainlogo" src="images/logo.png" alt="wormhole">
-            <br><br>
             <div id="foyer">
-                <span>Ἀγεωμέτρητος μηδεὶς εἰσίτω.</span>
-                <br>
-                <span>No one should enter without knowledge of the geometry.</span>
-                <br><br>
-                <button onclick="open_launchpad()">Accept and continue</button>
+                <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br>No one should enter without knowledge of the geometry.</p>
+                <button onclick="display('launchpad')">Accept and continue</button>
             </div>
             <div id="launchpad">
-                <span><p>Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectical wormhole, and to reassemble it, that is the desideratum of this website.</p></span>
-                <br><br>
-                <span><p>The content of this website is therefore usually available under a Free Culture Licence (CC BY-SA 4.0). The licence, if available, can be viewed next to the corresponding content.</p></span>
-                <br><br>
-                <span><p>Greetings, I am a metro train operating robot. Where would you like to go?</p></span>
-                <br><br>
+                <p>Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectical wormhole, and to reassemble it, that is the desideratum of this website.</p>
+                <p>The content of this website is therefore usually available under a Free Culture Licence (CC BY-SA 4.0). The licence, if available, can be viewed next to the corresponding content.</p>
+                <p>Greetings, I am a metro train operating robot. Where would you like to go?</p>
                 <div id="metro-robot-options">
-                    <button onclick="close_launchpad()">Foyer</button>
-                    <a href="https://www.dialecticwormhole.page/magazine"><button>Magazine</button></a>
-                    <a href="https://www.dialecticwormhole.page/rabbit-hole"><button>Rabbit hole</button></a>
+                    <button onclick="display('foyer')">Foyer</button>
+                    <button onclick="display('magazine')">Magazine</button></a>
+                    <button onclick="display('rabbit-hole')">Rabbit hole</button></a>
                 </div>
             </div>
+            <div id="magazine">
+                <p>This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. Muench argues that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
+            </div>
+            <div id="rabbit-hole">
+                <p>If one wants to criticise culture in order to change it, there is no antagonist to fight.  Indeed, if you want to effectively stand up for culture, you have to fight facts¹. This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts.
+                For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.
+                ¹Vgl. Flusser, Vilém: Ins Universum der technischen Bilder, 7. Aufl., Berlin, Deutschland: Edition Flusser, 2018, S. 73</p>
+            </div>
+            <!-- <a href="https://www.dialecticwormhole.page/impressum">Impressum</a> -->
         </main>
         
         <div id="databanner"></div>
