@@ -3,9 +3,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Black.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Black.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Black.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Black.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Black.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Black.ttf') format('truetype');
     font-weight: 900;
     font-style: normal;
     font-display: swap;
@@ -13,9 +13,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-BlackItalic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-BlackItalic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-BlackItalic.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-BlackItalic.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-BlackItalic.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-BlackItalic.ttf') format('truetype');
     font-weight: 900;
     font-style: italic;
     font-display: swap;
@@ -23,9 +23,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Bold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Bold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Bold.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Bold.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Bold.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Bold.ttf') format('truetype');
     font-weight: bold;
     font-style: normal;
     font-display: swap;
@@ -33,9 +33,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-BoldItalic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-BoldItalic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-BoldItalic.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-BoldItalic.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-BoldItalic.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-BoldItalic.ttf') format('truetype');
     font-weight: bold;
     font-style: italic;
     font-display: swap;
@@ -43,9 +43,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Italic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Italic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Italic.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Italic.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Italic.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Italic.ttf') format('truetype');
     font-weight: normal;
     font-style: italic;
     font-display: swap;
@@ -53,9 +53,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Light.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Light.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Light.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Light.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Light.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Light.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
     font-display: swap;
@@ -63,9 +63,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-LightItalic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-LightItalic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-LightItalic.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-LightItalic.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-LightItalic.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-LightItalic.ttf') format('truetype');
     font-weight: 300;
     font-style: italic;
     font-display: swap;
@@ -73,9 +73,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Medium.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Medium.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Medium.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Medium.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Medium.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Medium.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -83,9 +83,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-MediumItalic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-MediumItalic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-MediumItalic.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-MediumItalic.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-MediumItalic.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-MediumItalic.ttf') format('truetype');
     font-weight: 500;
     font-style: italic;
     font-display: swap;
@@ -93,9 +93,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Regular.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Regular.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Regular.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Regular.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Regular.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -103,9 +103,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Thin.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Thin.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-Thin.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Thin.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Thin.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Thin.ttf') format('truetype');
     font-weight: 100;
     font-style: normal;
     font-display: swap;
@@ -113,9 +113,9 @@
 
 @font-face {
     font-family: 'Roboto';
-    src: url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-ThinItalic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-ThinItalic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/Roboto-ThinItalic.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-ThinItalic.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-ThinItalic.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-ThinItalic.ttf') format('truetype');
     font-weight: 100;
     font-style: italic;
     font-display: swap;
@@ -127,9 +127,9 @@
 
 @font-face {
     font-family: 'Old Standard TT';
-    src: url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Italic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Italic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Italic.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Italic.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Italic.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Italic.ttf') format('truetype');
     font-weight: normal;
     font-style: italic;
     font-display: swap;
@@ -137,9 +137,9 @@
 
 @font-face {
     font-family: 'Old Standard TT';
-    src: url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Bold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Bold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Bold.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Bold.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Bold.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Bold.ttf') format('truetype');
     font-weight: bold;
     font-style: normal;
     font-display: swap;
@@ -147,9 +147,9 @@
 
 @font-face {
     font-family: 'Old Standard TT';
-    src: url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Regular.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/OldStandard/OldStandardTT-Regular.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Roboto/OldStandardTT-Regular.ttf') format('truetype');
+    src: url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Regular.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Regular.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Roboto/OldStandardTT-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
