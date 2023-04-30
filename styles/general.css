@@ -168,12 +168,13 @@ a:hover, a:visited, a:link, a:active
 /* TEXT */
 
 h1 {
+	font-family: "Old Standard TT";
 	white-space:nowrap;
 	font-size: 3rem;
-	font-size: var(--font-large);
+	font-size: var(--font-medium);
 	font-weight: 700;
 	line-height: 1.4;
-	margin:0px;
+	margin-bottom:20px;
 }
 
 h2, h3 {
@@ -266,15 +267,15 @@ input:active {
 }
 
 button {
-	font-family: "OldStandard";
+	font-family: "Old Standard TT";
 	font-size: var(--font-regular);
 	appearance: none;
 	border-radius: 20px;
 	padding: 5px 20px;
 	min-width: 120px;
-	background: grey;
+	background: white;
 	/* background: linear-gradient(120deg, grey, grey, grey); */
-	border: 0px solid grey;
+	border: 0px solid white;
 	-webkit-tap-highlight-color: transparent;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
