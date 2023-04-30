@@ -39,11 +39,31 @@
         <script>
             const PAGE_ITEMS = ['foyer','launchpad','magazine','rabbit-hole', 'videos']
 
+            function pre_init() {
+                if(localStorage.getItem("dialecticwormhole_skip") == "true"){
+                    display("launchpad");
+                }
+            }
+
+            function display_and_skip(id) {
+                localStorage.setItem("dialecticwormhole_skip", true);
+                display(id)
+            }
+
             function display(id) {
+
                 for (let i = 0; i < PAGE_ITEMS.length; i++)
                 {
                     document.getElementById(PAGE_ITEMS[i]).style.display = "none"
                 }
+                
+                if(id == "foyer" || id == "launchpad") {
+                    document.getElementById("back").style.display = "none"
+                }
+                else {
+                    document.getElementById("back").style.display = "inline"
+                }
+
                 document.getElementById(id).style.display = "block"
                 load_frame(document.getElementById(id).getElementsByTagName("iframe"), 0, slide_current)
             }
@@ -62,7 +82,7 @@
                 max-width: 500px;
             }
 
-            #launchpad, #magazine, #rabbit-hole, #videos {
+            #launchpad, #magazine, #rabbit-hole, #videos, #back {
                 display: none;
             }
 
@@ -89,12 +109,6 @@
                 50% {
                     opacity: 0;
                 }
-            }
-
-            .nav {
-                display: flex;
-                justify-content: center;
-                margin-bottom: 50px;
             }
 
             #impressum-footer {
@@ -124,17 +138,34 @@
                 .verysmall {width:60vw;}
             }
 
+            .nav {
+                color: white;
+                cursor: pointer;
+            }
+
+            header {
+                display: flex;
+                width:100%;
+                flex-flow: row;
+                padding: 5px;
+                gap: 15px;
+                justify-content: flex-end;
+            }
+
         </style>
     </head>
 
     <body>
-        <!-- <header id="header"></header> -->
+        <header>
+            <span class="nav" id="back" onclick="display('launchpad')">Back to launchpad</span>
+            <a class="nav" href="https://www.dialecticwormhole.page/impressum">Impressum</a>
+        </header>
 
         <main id="content">
             <img id="mainlogo" src="files/logo.png" alt="wormhole">
             <div id="foyer">
                 <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br>No one should enter without knowledge of the geometry.</p>
-                <button onclick="display('launchpad')">Accept and continue</button>
+                <button onclick="display_and_skip('launchpad')">Accept and continue</button>
             </div>
             <div id="launchpad">
                 <p>Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectical wormhole, and to reassemble it, that is the desideratum of this website.</p>
@@ -147,12 +178,10 @@
                 </div>
             </div>
             <div id="magazine">
-                <div class="nav"><button onclick="display('launchpad')">Launchpad</button></div>
                 <p>This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. Muench argues that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
                 <a href="files/Ist der Mensch als Nietzsches Raubtier wirklich autark.pdf" target="_blank"><button>Open</button></a>
             </div>
             <div id="rabbit-hole">
-                <div class="nav"><button onclick="display('launchpad')">Launchpad</button></div>
                 <p><span class="blink">|</span> If one wants to criticise culture in order to change it, there is no antagonist to fight.  Indeed, if you want to effectively stand up for culture, you have to fight a system of circumstances¹. This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts.
                 For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.<br><br>
                 ¹Vgl. Flusser, Vilém: Ins Universum der technischen Bilder, 7. Aufl., Berlin, Deutschland: Edition Flusser, 2018, S. 73</p>
@@ -160,7 +189,6 @@
                 <button onclick="display('videos')">A curated collection of videos worth watching</button>
             </div>
             <div id="videos">
-                <div class="nav"><button onclick="display('launchpad')">Launchpad</button></div>
                 <div class="video">
                     <iframe class="small" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox></iframe>
                     <p>A mildly philosophical approach, trying to deliver an explanation for the emerging internet phenomenon of "The Backrooms"</p>
@@ -170,8 +198,6 @@
                     <p>An unsettling simulation of an escalated nuclear war</p>
                 </div>
             </div>
-            <br><br><br><br><br><br>
-            <div class="nav"><a id="impressum-footer" href="https://www.dialecticwormhole.page/impressum">Impressum</a></div>
         </main>
         
         <div id="databanner"></div>
