@@ -172,7 +172,7 @@ h1 {
 	white-space:nowrap;
 	font-size: 3rem;
 	font-size: var(--font-medium);
-	font-weight: 700;
+	font-weight: normal;
 	line-height: 1.4;
 	margin-bottom:20px;
 }
