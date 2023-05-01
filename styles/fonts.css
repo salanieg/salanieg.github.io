@@ -121,7 +121,18 @@
     font-display: swap;
 }
 
+/*SKYLUKE*/
 
+
+@font-face {
+    font-family: 'SkyLukeStandard';
+    src: url('https://www.dialecticwormhole.page/files/fonts/SkyLukeStandard/SkyLukeStandard.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/SkyLukeStandard/SkyLukeStandard.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/SkyLukeStandard/SkyLukeStandard.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
 
 /* OLD STANDARD */
 
