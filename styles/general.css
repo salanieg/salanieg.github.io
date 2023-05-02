@@ -168,11 +168,11 @@ a:hover, a:visited, a:link, a:active
 /* TEXT */
 
 h1 {
-	font-family: "SkyLukeNew";
+	font-family: "Old Standard TT";
 	white-space:nowrap;
 	font-size: 3rem;
 	font-size: var(--font-medium);
-	font-weight: normal;
+	font-weight: 700;
 	line-height: 1.4;
 	margin-bottom:20px;
 }
