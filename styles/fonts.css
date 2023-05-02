@@ -125,8 +125,10 @@
 
 
 @font-face {
-    font-family: 'SkyLukeNew';
-    src: url('salanieg.github.io/files/fonts/SkyLukeNew/SkyLuke-0Wa1X.otf') format('opentype');
+    font-family: 'SkyLukeStandard';
+    src: url('https://www.dialecticwormhole.page/files/fonts/SkyLukeStandard/SkyLukeStandard.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/SkyLukeStandard/SkyLukeStandard.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/SkyLukeStandard/SkyLukeStandard.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -163,12 +165,10 @@
     font-style: normal;
     font-display: swap;
 }
+
+
+
+
 * {
 	font-family: "Roboto";
-}
-* {
-	font-family: "SkyLukeNew";
-}
-* {
-	font-family: "Old Standard TT";
 }
