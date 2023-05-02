@@ -126,9 +126,7 @@
 
 @font-face {
     font-family: 'SkyLukeStandard';
-    src: url('salanieg.github.io/files/fonts/SkyLukeFont/SkyLukeStandard.woff2') format('woff2'),
-        url('salanieg.github.io/files/fonts/SkyLukeFont/SkyLukeStandard.woff') format('woff'),
-        url('salanieg.github.io/files/fonts/SkyLukeFont/SkyLukeStandard.ttf') format('truetype');
+    src: url('salanieg.github.io/files/fonts/SkyLukeNew/SkyLuke-0Wa1X.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
