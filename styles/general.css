@@ -168,7 +168,7 @@ a:hover, a:visited, a:link, a:active
 /* TEXT */
 
 h1 {
-	font-family: "SkyLukeStandard";
+	font-family: "SkyLukeNew";
 	white-space:nowrap;
 	font-size: 3rem;
 	font-size: var(--font-medium);
