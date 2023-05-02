@@ -267,41 +267,44 @@ input:active {
 }
 
 button {
-font-family: "Roboto";
-font-size: var(--font-regular);
-appearance: none;
-border-radius: 20px;
-padding: 5px 20px;
-min-width: 120px;
-background: #1c1c1c;
-border: none;
-color: white;
-text-shadow: 0px 0px 4px rgba(255,255,255,0.4);
-box-shadow: 0px 0px 4px rgba(255,255,255,0.2);
--webkit-tap-highlight-color: transparent;
--webkit-touch-callout: none;
--webkit-user-select: none;
--khtml-user-select: none;
--moz-user-select: none;
--ms-user-select: none;
-user-select: none;
-cursor: pointer;
+  font-family: "Roboto";
+  font-size: var(--font-regular);
+  appearance: none;
+  border-radius: 20px;
+  padding: 5px 20px;
+  min-width: 120px;
+  background: white;
+  /* background: linear-gradient(120deg, grey, grey, grey); */
+  border: 0px solid white;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  color: white; /* set the text color to white */
+  background-color: #1c1c1c; /* set the background color to 1c1c1c */
+  box-shadow: 0px 0px 5px white; /* add a subtle white glow effect */
 }
 
 button:active {
-border-style:solid;
+  border-style: solid;
 }
 
-button:hover {
-box-shadow: 0px 0px 8px rgba(255,255,255,0.4);
-}
+/* button:hover {
+  background-position: 0 0;
+  transition: background 0.2s ease;
+  background: linear-gradient(120deg, grey, white, grey);
+} */
 
 button:disabled,
 button[disabled]{
-cursor:not-allowed !important;
-border: outset rgba(128, 128, 128, 0.3);
-color: rgba(211, 211, 211, 0.5);
-color:rgba(128, 128, 128, 0.5)
+  cursor: not-allowed !important;
+  border: outset rgba(128, 128, 128, 0.3);
+  color: rgba(211, 211, 211, 0.5);
+  color: rgba(128, 128, 128, 0.5)
 }
 
 
