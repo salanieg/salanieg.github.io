@@ -267,7 +267,7 @@ input:active {
 }
 
 button {
-	font-family: "Old Standard TT";
+	font-family: "Roboto";
 	font-size: var(--font-regular);
 	appearance: none;
 	border-radius: 20px;
