@@ -283,14 +283,13 @@ button {
   -ms-user-select: none;
   user-select: none;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.5), 0 0 40px rgba(255, 255, 255, 0.5), 0 0 80px rgba(255, 255, 255, 0.5);
-  background: linear-gradient(120deg, #fff, #fff, #fff);
+  box-shadow: 0 0 10px white, 0 0 20px white, 0 0 40px white, 0 0 80px white;
   transition: box-shadow 0.5s ease;
   color: white;
 }
 
 button:hover {
-  box-shadow: 0 0 10px rgba(255, 255, 255, 1), 0 0 20px rgba(255, 255, 255, 1), 0 0 40px rgba(255, 255, 255, 1), 0 0 80px rgba(255, 255, 255, 1);
+  box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 40px #fff, 0 0 80px #fff;
 }
 
 button:active {
@@ -305,6 +304,7 @@ button[disabled]{
   color: rgba(211, 211, 211, 0.5);
   color:rgba(128, 128, 128, 0.5)
 }
+
 
 
 /* FORM */
