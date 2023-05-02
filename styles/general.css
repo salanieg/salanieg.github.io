@@ -267,64 +267,41 @@ input:active {
 }
 
 button {
-  font-family: "Roboto";
-  font-size: var(--font-regular);
-  appearance: none;
-  border-radius: 20px;
-  padding: 5px 20px;
-  min-width: 120px;
-  background: white;
-  border: 0px solid white;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-button:before {
-  content: "";
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  z-index: -1;
-  background: linear-gradient(120deg, #00cfff, #0055ff);
-  border-radius: 22px;
-  animation: pulse 1.5s ease-out infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0.8);
-    opacity: 0.5;
-  }
+	font-family: "Old Standard TT";
+	font-size: var(--font-regular);
+	appearance: none;
+	border-radius: 20px;
+	padding: 5px 20px;
+	min-width: 120px;
+	background: white;
+	/* background: linear-gradient(120deg, grey, grey, grey); */
+	border: 0px solid white;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	cursor: pointer;
 }
 
 button:active {
-  border-style: solid;
+	border-style:solid;	
 }
 
+/* button:hover {
+	background-position: 0 0;
+	transition: background 0.2s ease;
+	background: linear-gradient(120deg, grey, white, grey);
+} */
+
 button:disabled,
-button[disabled] {
-  cursor: not-allowed !important;
+button[disabled]{
+  cursor:not-allowed !important;
   border: outset rgba(128, 128, 128, 0.3);
   color: rgba(211, 211, 211, 0.5);
-  color: rgba(128, 128, 128, 0.5);
+  color:rgba(128, 128, 128, 0.5)
 }
 
 
