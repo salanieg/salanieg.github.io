@@ -37,7 +37,7 @@
         </script>
 
         <script>
-            const PAGE_ITEMS = ['foyer','launchpad','magazine','rabbit-hole', 'videos']
+            const PAGE_ITEMS = ['foyer','launchpad','nexus','abyss','videos']
 
             function pre_init() {
                 if(localStorage.getItem("dialecticwormhole_skip") == "true"){
@@ -85,7 +85,7 @@
                 max-width: 500px;
             }
 
-            #foyer, #launchpad, #magazine, #rabbit-hole, #videos, #back {
+            #foyer, #launchpad, #nexus, #abyss, #videos, #back {
                 display: none;
             }
 
@@ -179,8 +179,8 @@
                 <p>The content of this website is therefore usually available under a Free Culture Licence (CC BY-SA 4.0). The licence, if available, can be viewed next to the corresponding content.</p>
                 <p>Greetings, I am a metro train operating robot. Where would you like to go?</p>
                 <div id="metro-robot-options">
-                    <button onclick="display('magazine')">nexus</button></a>
-                    <button onclick="display('rabbit-hole')">abyss</button></a>
+                    <button onclick="display('nexus')">nexus</button></a>
+                    <button onclick="display('abyss')">abyss</button></a>
                 </div><br><br>
             </div>
             <div id="nexus">
