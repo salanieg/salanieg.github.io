@@ -68,22 +68,35 @@
                 }
             }
 
-            function show_info(event) {
+
+            function reset_info() {
                 let essay_infos = document.getElementsByClassName("essay-info")
 
                 for (let i = 0; i < essay_infos.length; i++) {
                     essay_infos[i].style.display = "none"
                 }
+            }
+
+            function show_info(event) {                
 
                 let essay = event.target
 
-                // when clicking the h2 heading you have to go back up to the main essay di
+                // when clicking the h2 heading you have to go back up to the main essay div
 
-                if(essay.className != "essay") {
+                while(essay.className != "essay") {
                     essay = essay.parentElement
                 }
 
-                essay.getElementsByClassName("essay-info")[0].style.display = "block"
+                let essay_info = essay.getElementsByClassName("essay-info")[0]
+                
+                if(window.getComputedStyle(essay_info, null).display == "none") {
+                    reset_info()
+                    essay_info.style.display = "block"
+                }
+                else {
+                    reset_info()
+                }
+
             }
 
 
@@ -94,6 +107,8 @@
             }
 
             function display(id) {
+
+                reset_info()
 
                 for (let i = 0; i < PAGE_ITEMS.length; i++)
                 {
@@ -202,7 +217,7 @@
                 color: white; /* set the text color to white */
                 background-color: #1c1c1c; /* set the background color to 1c1c1c */
                 box-shadow: 0px 0px 5px white; /* add a subtle white glow effect */
-                margin-bottom: 60px;
+                margin-bottom: 30px;
             }
 
             .essay-info {
