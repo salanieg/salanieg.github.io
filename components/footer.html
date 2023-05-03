@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+            /* RETURN TO TOP */
+
+            /* #to-top, #to-bottom {
+                z-index: 20;
+                cursor: pointer;
+                font-size:13pt;
+                position: fixed;
+                right:20px;
+                background-color: var(--header-color);
+                color: var(--header-color-text);
+                padding:0px;
+                width: 45px;
+                height: 45px;
+                font-size: 35pt;
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            #to-top {bottom:110px;}
+            #to-bottom {bottom:60px;}
+            
+
+            #to-top-label {
+                position:relative;
+                bottom:16px;
+                left:2px;
+                transform: rotate(90deg);
+                -webkit-transform: rotate(90deg);
+                -moz-transform: rotate(90deg);
+                -ms-transform: rotate(90deg);
+                -o-transform: rotate(90deg);
+                -o-transform: rotate(90deg);
+            } */
+
+
+            /* FOOTER */
+
+            /* #footer {
+                width:100vw;
+                color:white;
+                background-color: #890000;
+                z-index:8;
+            }
+
+            #footer-content {
+                position: fixed;
+                right: 0;
+                bottom: 5px;
+                white-space: nowrap;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                gap:10px;
+                padding: 10px 20px;
+            }
+
+            .footerelement {
+                text-align: center;
+                font-size: 12pt;
+                width:180px;
+                height:fit-content;
+                cursor: pointer;
+                color:black !important;
+            } */
+
+
+            /* FOOTNOTES */
+
+            .footnote {
+                text-decoration: none;
+                position: relative;
+                cursor: pointer;
+            }
+
+            .note {
+                display: none;
+                position: absolute;
+                bottom: 30px;
+                left: 10px;
+                font-size: 11pt;
+                line-height: 1.7;
+            }
+
+            
+            .footnotevideo {
+                width:100%;
+                height: auto;
+                min-height: auto;
+                aspect-ratio: 16/9;
+            }
+
+            .footnote * {
+                color: white !important;
+                font-size: 11pt;
+            }
+
+            .footnote a:hover {
+                color: lightgrey !important;
+                transition: 0.1;
+            }
+
+            .footnote:hover {
+                color: grey;
+            }
+
+            .footnote:focus {
+                color: grey;
+            }
+
+            .footnote .note {
+                cursor: auto;
+            }
+
+            .footnote *::selection {
+                color: grey !important;
+                background: white !important;
+            }
+
+            .footnote *::-webkit-selection {
+                color: grey !important;
+                background: white !important;
+            }
+
+            .footnote *::-moz-selection {
+                color: grey !important;
+                background: white !important;
+            }
+
+
+            /* UNIFIED FOOTNOTE AND SHAREWINDOW */
+
+            .note, #sharewindow {
+                border-radius: 20px;
+                color: white; /* set the text color to white */
+                background-color: #1c1c1c; /* set the background color to 1c1c1c */
+                box-shadow: 0px 0px 5px white; /* add a subtle white glow effect */
+                width: 400px;
+                max-width: calc(100vw - 110px);
+                background-color: #1c1c1c;
+                border: 0px solid white;
+                padding: 5px 20px;            
+            }
+
+
+            /* SHAREWINDOW */
+
+            #sharewindow {
+                display:none;
+                position: fixed;
+                left:50%;
+                top:50%;
+                transform: translate(-50%, -50%);
+                /* margin:0px; */
+            }
+
+            #close_sharewindow {
+                font-size: 15pt;
+                cursor: pointer;
+                text-align: right;
+                margin-bottom: 10px;
+                color: white;
+            }
+
+            #link-opt > * {
+                cursor: pointer;
+            }
+
+            #link-copy-wrap {
+                display:flex;
+                justify-content:center;
+                margin-bottom: 10px;
+            }
+
+            #link-opt {
+                margin-bottom: 20px;
+                line-height: 2;
+                font-size: 0.93rem;
+	            font-size: var(--font-small);
+                color: white;
+            }
+
+            
+            /* REACTIVE */
+
+            @media screen and (max-width: 1400px) {
+
+                #footer-content {
+                    position: static;
+                    right: unset;
+                    bottom: unset;
+                    justify-content: center;
+                    gap:10px 15px;
+                    padding: 10px 30px;
+                }
+            }
+
+
+            @media screen and (width < 800px), screen and (max-width: 800px) {
+
+                #to-top, #to-bottom {
+                    right:30px;
+                }
+
+                #sharewindow, .note {
+                    position: fixed;
+                    bottom: 60px;
+                    left: 30px;
+                }
+
+                #sharewindow {
+                    top: unset;
+                    transform: none;
+                }
+            }
+
+
+            @media screen and (max-width: 450px) {
+
+                #footer-content {
+                    gap:5px 10px;
+                    padding: 5px 0px;
+                }
+
+                .footerelement {
+                    font-size: 9pt;
+                    width:120px;
+                }
+
+                #to-top {
+                    bottom:95px;
+                }
+                
+                #to-bottom, #sharewindow, .note {
+                    bottom:45px;
+                }
+            }
+
+
+        </style>
+    </head>
+
+    <body>
+
+        <!-- <div id="footer-content">
+            <button class="footerelement" id="teilen" onclick="open_sharewindow()"><span lang="de">ISSUE teilen</span><span lang="en">Share ISSUE</span></button>
+            <a lang="en" href="files/en/ISSUE I – ALTERNATIVE UTOPIAS.pdf" download><button class="footerelement">Download PDF</button></a>
+            <a lang="de" href="files/de/ISSUE I – ALTERNATIVE UTOPIEN.pdf" download><button class="footerelement">PDF herunterladen</button></a>
+        </div>
+
+        <button id="to-top" onclick="hoch()"><div id="to-top-label">‹</div></button>
+        <button id="to-bottom" onclick="runter()"><div id="to-top-label">›</div></button>
+
+        <div id="sharewindow">
+            <div id="close_sharewindow" onclick="close_sharewindow()">X</div>
+            <div id="link-opt"></div>
+            <div id="link-copy-wrap"><button id="link-copy-btn" class="footerelement" onclick="copy_share()"><span lang="de">Link kopieren</span><span lang="en">Copy link</span></button></div>
+        </div> -->
+    </body>
+</html>

@@ -130,10 +130,10 @@ function init_header() {
 
 
 function init_footer() {
-    limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
-    document.getElementById("content").addEventListener("scroll", autosetlayout)
+    // limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
+    // document.getElementById("content").addEventListener("scroll", autosetlayout)
     init_footnotes()
-    init_sharewindow()
+    // init_sharewindow()
 }
 
 
@@ -1165,7 +1165,7 @@ function init_footnotes() {
         let footnote = document.getElementById("f"+ (i+1))
         footnote.className = 'footnote';
         footnote.tabIndex = '0'
-        footnote.innerHTML = tosuperscript(i+1)
+        footnote.innerHTML = "*"
         footnote.addEventListener("mouseenter", selectfootnote)
         footnote.insertAdjacentHTML('beforeend', footnote_template(i));
     }
@@ -1181,7 +1181,10 @@ function init_footnotes() {
 function footnote_template(i) {
 
     let note_info = FOOTNOTE_LIST[i]
-    let note = tosuperscript(i+1) + ' <span lang="de">' + note_info.text_de + '</span><span lang="en">' + note_info.text_en + '</span>'
+    // let note = tosuperscript(i+1) + ' <span lang="de">' + note_info.text_de + '</span><span lang="en">' + note_info.text_en + '</span>'
+    let note = '<span>' + note_info.text_en + '</span>'
+
+
 
     if(note_info.embed_source == "youtube" || note_info.embed_source == "spotify") {
         note = note + '<br><br><iframe class="footnotevideo" src="about:blank" data-source=' + note_info.embed_source + ' data-id=' + note_info.embed_id + ' sandbox></iframe>'
@@ -1218,7 +1221,7 @@ function selectfootnote(event) {
 
     footnotefocused = event.target;
 
-    footnotefocused.style.color = "#890000";
+    footnotefocused.style.color = "lightblue";
     
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
@@ -1229,7 +1232,7 @@ function selectfootnote(event) {
 }
 
 function resetfootnote() {
-    footnotefocused.style.color = "black";
+    footnotefocused.style.color = "white";
 
     let note = footnotefocused.childNodes[1]
     note.style.zIndex = "0";
@@ -1301,12 +1304,12 @@ function share_template(i) {return '<span onclick="select_share(' + i + ')"><spa
 
 
 function open_sharewindow() {
-    document.getElementById("sharewindow").style.display = "block"
+    // document.getElementById("sharewindow").style.display = "block"
     // document.getElementById("sharewindow").showModal()
 }
 
 function close_sharewindow() {
-    document.getElementById("sharewindow").style.display = "none"
+    // document.getElementById("sharewindow").style.display = "none"
     // document.getElementById("sharewindow").close()
 }
 
