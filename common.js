@@ -512,9 +512,7 @@ function load_slide_frames() {
 
 
 function load_frame(frames, current, slide) {
-    console.log(localStorage.getItem("dialecticwormhole_cookies"))
     if(localStorage.getItem("dialecticwormhole_cookies") == "true" && current < frames.length && slide == slide_current) {
-        console.log("test2")
 
         if(frames[current].getAttribute('data-source') == "youtube" && frames[current].getAttribute('data-loaded') != "true") {
             let frame = frames[current]

@@ -142,25 +142,23 @@
             .note, #sharewindow {
                 border-radius: 20px;
                 color: white; /* set the text color to white */
-                background-color: #1c1c1c; /* set the background color to 1c1c1c */
                 box-shadow: 0px 0px 5px white; /* add a subtle white glow effect */
                 width: 400px;
-                max-width: calc(100vw - 110px);
+                max-width: calc(100vw - 60px);
                 background-color: #1c1c1c;
                 border: 0px solid white;
-                padding: 5px 20px;            
+                padding: 10px 20px;            
             }
 
 
             /* SHAREWINDOW */
 
-            #sharewindow {
+            /* #sharewindow {
                 display:none;
                 position: fixed;
                 left:50%;
                 top:50%;
                 transform: translate(-50%, -50%);
-                /* margin:0px; */
             }
 
             #close_sharewindow {
@@ -187,12 +185,12 @@
                 font-size: 0.93rem;
 	            font-size: var(--font-small);
                 color: white;
-            }
+            } */
 
             
             /* REACTIVE */
 
-            @media screen and (max-width: 1400px) {
+            /* @media screen and (max-width: 1400px) {
 
                 #footer-content {
                     position: static;
@@ -202,19 +200,23 @@
                     gap:10px 15px;
                     padding: 10px 30px;
                 }
-            }
+            } */
 
 
             @media screen and (width < 800px), screen and (max-width: 800px) {
 
-                #to-top, #to-bottom {
+                /* #to-top, #to-bottom {
                     right:30px;
-                }
+                } */
 
                 #sharewindow, .note {
                     position: fixed;
                     bottom: 60px;
                     left: 30px;
+                }
+
+                .note, #sharewindow {
+                    width: 500px;         
                 }
 
                 #sharewindow {
@@ -224,7 +226,7 @@
             }
 
 
-            @media screen and (max-width: 450px) {
+            /* @media screen and (max-width: 450px) {
 
                 #footer-content {
                     gap:5px 10px;
@@ -243,7 +245,7 @@
                 #to-bottom, #sharewindow, .note {
                     bottom:45px;
                 }
-            }
+            } */
 
 
         </style>
