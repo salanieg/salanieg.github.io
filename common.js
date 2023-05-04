@@ -124,7 +124,7 @@ function init() {
 
 function init_header() {
     init_abo()
-    init_highlights()
+    // init_highlights()
     window.addEventListener("resize", openmenufix)
 }
 
@@ -874,34 +874,34 @@ function hidedropmenus() {
 
 // NAVIGATION HIGHLIGHT
 
-const highlights = {
-    "": ["highlight-issues", "highlight-issues-expanded"],
-    "/": ["highlight-issues", "highlight-issues-expanded"],
-    "/issue-i": ["highlight-issues", "highlight-issues-expanded", "info-issue-i"],
-    "/kanon": ["highlight-kanon", "highlight-kanon-expanded"],
-    "/deabonnieren": ["etc"],
-    "/impressum": ["etc", "highlight-impressum"],
-    "/datenschutz": ["etc", "highlight-datenschutz"],
-}
+// const highlights = {
+//     "": ["highlight-issues", "highlight-issues-expanded"],
+//     "/": ["highlight-issues", "highlight-issues-expanded"],
+//     "/issue-i": ["highlight-issues", "highlight-issues-expanded", "info-issue-i"],
+//     "/kanon": ["highlight-kanon", "highlight-kanon-expanded"],
+//     "/deabonnieren": ["etc"],
+//     "/impressum": ["etc", "highlight-impressum"],
+//     "/datenschutz": ["etc", "highlight-datenschutz"],
+// }
 
 
-function init_highlights() {
+// function init_highlights() {
 
-    let window_url = window.location.href.toLowerCase()
+//     let window_url = window.location.href.toLowerCase()
 
-    remove_after(window_url, "#")
-    remove_after(window_url, "?")
+//     remove_after(window_url, "#")
+//     remove_after(window_url, "?")
 
-    for (let [URLsnippet, IDs] of Object.entries(highlights)) {
-        if (window_url == ("https://www.dialecticwormhole.page" + URLsnippet).toLowerCase()) {
-            for (let i = 0; i < IDs.length; i++ ) {
-                console.log("window: " + window_url + "   snippet: " + URLsnippet + " -> " + IDs[i])
-                document.getElementById(IDs[i]).style.fontWeight = "700";
-            }
-            return
-        }
-    }
-}
+//     for (let [URLsnippet, IDs] of Object.entries(highlights)) {
+//         if (window_url == ("https://www.dialecticwormhole.page" + URLsnippet).toLowerCase()) {
+//             for (let i = 0; i < IDs.length; i++ ) {
+//                 console.log("window: " + window_url + "   snippet: " + URLsnippet + " -> " + IDs[i])
+//                 document.getElementById(IDs[i]).style.fontWeight = "700";
+//             }
+//             return
+//         }
+//     }
+// }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
