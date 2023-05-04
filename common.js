@@ -493,7 +493,7 @@ function hidecookiecontent() {
     for (let i = 0; i < frames.length; i++)
     {
         var cookiedisclaimer = document.createElement("span");
-        cookiedisclaimer.innerHTML = "<span>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='show_databanner()'>consent to the use of cookies</span>.</span><br><br>";
+        cookiedisclaimer.innerHTML = "<span lang='de'>Dieser Inhalt erfordert die <span style='text-decoration: underline; cursor: pointer;' onclick='show_databanner()'>Zustimmung zu Cookies</span>.</span><span lang='en'>This content requires your <span style='text-decoration: underline; cursor: pointer;' onclick='show_databanner()'>consent to the use of cookies</span>.</span>";
         cookiedisclaimer.className = "cookiedisclaimer";
         
         frames[i].style.display = "none"
