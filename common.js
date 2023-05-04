@@ -123,9 +123,9 @@ function init() {
 
 
 function init_header() {
-    init_abo()
+    // init_abo()
     // init_highlights()
-    window.addEventListener("resize", openmenufix)
+    // window.addEventListener("resize", openmenufix)
 }
 
 
