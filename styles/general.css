@@ -54,8 +54,6 @@ body {
 	grid-template-columns: auto;
 	grid-template-areas: "header" "main";
 	place-items: center;
-	justify-content: center;
-	align-content: start;
 }
 
 #content {
@@ -65,6 +63,9 @@ body {
 	height:100%;
 	padding:40px;
 	scrollbar-gutter: stable both-edges;
+	display: grid;
+	justify-content: center;
+	align-content: start;
 }
 
 @media screen and (max-width: 400px) {#content { padding:20px;}}
@@ -179,16 +180,18 @@ a:hover, a:visited, a:link, a:active
 /* TEXT */
 
 h1 {
-	font-family: "SkyLukeStandard", sans-serif;
+	font-family: "Syne", sans-serif;
 	white-space:nowrap;
 	font-size: 3rem;
 	font-size: var(--font-medium);
-	font-weight: 700;
+	font-weight: 800;
 	line-height: 1.4;
 	margin-bottom:20px;
 }
 
 h2, h3 {
+	
+	font-family: "Syne", sans-serif;
 	font-size: 1.085rem;
 	font-size: var(--font-regular);
 	font-weight: 700;
@@ -281,7 +284,8 @@ input:active {
 }
 
 button {
-  font-family: "Roboto";
+  font-family: "Syne";
+  font-weight: 800;
   font-size: var(--font-regular);
   appearance: none;
   border-radius: 20px;

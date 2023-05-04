@@ -1,7 +1,7 @@
 /* ROBOTO */
 
 
-@font-face {
+/* @font-face {
     font-family: 'Roboto';
     src: url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Black.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Black.woff') format('woff'),
@@ -119,12 +119,12 @@
     font-weight: 100;
     font-style: italic;
     font-display: swap;
-}
+} */
 
 /*SKYLUKE*/
 
 
-@font-face {
+/* @font-face {
     font-family: 'SkyLukeStandard';
     src: url('https://www.dialecticwormhole.page/files/fonts/SkyLukeFont/SkyLukeStandard.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/files/fonts/SkyLukeFont/SkyLukeStandard.woff') format('woff'),
@@ -132,11 +132,11 @@
     font-weight: normal;
     font-style: normal;
     font-display: swap;
-}
+} */
 
 /* OLD STANDARD */
 
-@font-face {
+/* @font-face {
     font-family: 'Old Standard TT';
     src: url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Italic.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Italic.woff') format('woff'),
@@ -164,11 +164,63 @@
     font-weight: normal;
     font-style: normal;
     font-display: swap;
+} */
+
+
+/* SYNE */
+
+
+@font-face {
+    font-family: 'Syne';
+    src: url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Bold.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Bold.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Syne';
+    src: url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Medium.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Medium.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Syne';
+    src: url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-ExtraBold.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-ExtraBold.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-ExtraBold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Syne';
+    src: url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-SemiBold.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-SemiBold.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Syne';
+    src: url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Regular.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Regular.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }
 
 
-
-
 * {
-	font-family: "Roboto";
+	font-family: "Syne";
 }
