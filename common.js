@@ -1179,8 +1179,7 @@ function init_footnotes() {
 function footnote_template(i) {
 
     let note_info = FOOTNOTE_LIST[i]
-    // let note = tosuperscript(i+1) + ' <span lang="de">' + note_info.text_de + '</span><span lang="en">' + note_info.text_en + '</span>'
-    let note = '<span>' + note_info.text_en + '</span>'
+    let note = '<span lang="de">' + note_info.text_de + '</span><span lang="en">' + note_info.text_en + '</span>'
 
 
 

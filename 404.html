@@ -38,6 +38,11 @@
                 margin-bottom: 60px;
             }
 
+            @keyframes blink {
+                0% { opacity: 1; }
+                50% { opacity: 0; }
+                100% { opacity: 1; }
+            }
         </style>
     </head>
 
@@ -45,22 +50,12 @@
         <main id="content">
            <div>
                <h1 id="title404">404</h1>
-             <p>
-                  <span>There is no page under this URL.<br>Please check the URL for typos.<br><i>Best regards,<br>The Schildermaler</i></span>
-                  <br><br>
-         <a href="https://www.dialecticwormhole.page" target="_self"><button style="background-color: nero; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">stalemate resolve</button></a>
-             </p>
+                <p>
+                    <span>There is no page under this URL.<br>Please check the URL for typos.<br><i>Best regards,<br>The Schildermaler</i></span>
+                    <br><br>
+                    <a href="https://www.dialecticwormhole.page" target="_self"><button style="background-color: nero; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">stalemate resolve</button></a>
+                </p>
             </div>
-
-    <style>
-        @keyframes blink {
-             0% { opacity: 1; }
-            50% { opacity: 0; }
-            100% { opacity: 1; }
-            }
-    </style>
-
-
         </main>
     </body>
 </html>

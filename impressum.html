@@ -65,40 +65,24 @@
         <style>
 
             #content {
-                display: grid;
-                place-items: center;
                 gap: 100px;
             }
 
-            main > * {
-                width: 100%;
-                max-width: 500px;
-            }
-
-            #ccicon {
+            /* #ccicon {
                 display: flex;
                 flex-flow: row;
                 gap:2px;
-            }
+            } */
 
             #dataoptionen {
                 display:flex;
                 flex-flow: row wrap;
                 justify-content:flex-start !important;
-                /* align-items: center; */
                 gap:20px;
             }
 
-            .dataoption {
-                width:140px;
-                cursor: pointer;
-                font-size: 13pt;
-                background-color: transparent;
-                color:white;
-            }
-
             #clearcookies {
-                width:290px;
+                width:fit-content;
             }
 
         </style>
@@ -136,15 +120,15 @@
 
             <div>
                 <p>
-                    <span lang="de">Diese Internetseite verwendet Cookies, um das vollständige Anzeigen aller Inhalte zu ermöglichen. Durch das klicken des Akzeptieren-Buttons, stimmst du deren Verwendung zu. Weitere Informationen hierzu findest du auf dieser Seite.</span><span lang="en">This website uses cookies to enable the full display of all content. By clicking the Accept button, you agree to their use. You can find more information on this page.</span>
-                
+                    <span lang="de">Diese Internetseite verwendet Cookies, um das vollständige Anzeigen aller Inhalte zu ermöglichen. Durch das klicken des Akzeptieren-Buttons, stimmst du deren Verwendung zu. Weitere Informationen hierzu findest du auf dieser Seite.</span>
+                    <span lang="en">This website uses cookies to enable the full display of all content. By clicking the Accept button, you agree to their use. You can find more information on this page.</span>
                 </p>
                 <div id="dataoptionen">
-                    <button id="acceptcookies" class="dataoption" onclick="acceptcookiesbutton()"><span>Accept</span></button>
-                    <button id="clearcookies" class="dataoption" onclick="clearcookiesbutton()"><span>Decline and delete cookies*</span></button>
+                    <button id="acceptcookies" class="dataoption" onclick="acceptcookiesbutton()"><span lang="de">Akzeptieren</span><span lang="en">Accept</span></button>
+                    <button id="clearcookies" class="dataoption" onclick="clearcookiesbutton()"><span lang="de">Ablehnen und Cookies löschen*</span><span lang="en">Decline and delete cookies*</span></button>
                 </div>
                 <br>
-                <small><span>* Not all third-party cookies can always be deleted by us.</span></small>
+                <small><span lang="de">* Nicht immer können alle Third-Party-Cookies von uns gelöscht werden.</span><span lang="en">* Not all third-party cookies can always be deleted by us.</span></small>
             </div>
 
             <div>

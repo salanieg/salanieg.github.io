@@ -54,6 +54,8 @@ body {
 	grid-template-columns: auto;
 	grid-template-areas: "header" "main";
 	place-items: center;
+	justify-content: center;
+	align-content: start;
 }
 
 #content {
@@ -63,6 +65,15 @@ body {
 	height:100%;
 	padding:40px;
 	scrollbar-gutter: stable both-edges;
+}
+
+@media screen and (max-width: 400px) {#content { padding:20px;}}
+
+
+main > * {
+	width: 100%;
+	max-width: 500px;
+
 }
 
 
