@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			
+            nav {
+                color: white;
+                cursor: pointer;
+            }
+
+            header {
+                display: flex;
+                width:100%;
+                flex-flow: row;
+                padding: 5px;
+                gap: 20px;
+                justify-content: flex-end;
+            }
+
+			.small-text {
+				display: none;
+			}
+
+			@media screen and (max-width: 400px) {
+				header {
+					justify-content: space-around;
+				}
+
+				.extended-text {
+					display: none;
+				}
+
+				.small-text {
+					display: inline;
+				}
+			}
+
+
+		</style>
+	</head>
+
+	<body>
+		<nav id="back" onclick="display('launchpad')"><span class="extended-text">Back to launchpad</span><span class="small-text">Launchpad</span></nav>
+		<nav><a class="nav" href="https://www.dialecticwormhole.page/impressum">Impressum</a></nav>
+		<nav><span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span></nav>
+	</body>
+</html>

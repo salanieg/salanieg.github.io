@@ -332,21 +332,21 @@ function init_language() {
 
 
 function reset_language() {
-    if(localStorage.getItem("gefaengnishefte_language") == null){
-        localStorage.setItem("gefaengnishefte_language", "de")
+    if(localStorage.getItem("dialecticwormhole_language") == null){
+        localStorage.setItem("dialecticwormhole_language", "de")
     }
     
-	setlanguage(localStorage.getItem("gefaengnishefte_language"))
+	setlanguage(localStorage.getItem("dialecticwormhole_language"))
 }
 
 
 function setlanguage(language) {
-	// document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
-    // document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
-	// document.getElementById("lang-" + language).style.textDecoration = "underline"
-	// document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
+	document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
+    document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
+	document.getElementById("lang-" + language).style.textDecoration = "underline"
+	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
-	// localStorage.setItem("gefaengnishefte_language", language);
+	localStorage.setItem("dialecticwormhole_language", language);
 }
 
 
@@ -1159,13 +1159,13 @@ function leavecontrols() {
 
 function init_footnotes() {
     for (let i = 0; i < FOOTNOTE_LIST.length; i++) {
-
-        let footnote = document.getElementById("f"+ (i+1))
-        footnote.className = 'footnote';
-        footnote.tabIndex = '0'
-        footnote.innerHTML = "*"
-        footnote.addEventListener("mouseenter", selectfootnote)
-        footnote.insertAdjacentHTML('beforeend', footnote_template(i));
+        document.querySelectorAll("[data-footnote='" + (i+1) + "']").forEach((footnote) => {
+            footnote.className = 'footnote';
+            footnote.tabIndex = '0'
+            footnote.innerHTML = "*"
+            footnote.addEventListener("mouseenter", selectfootnote)
+            footnote.insertAdjacentHTML('beforeend', footnote_template(i));
+        })
     }
 
     if(localStorage.getItem("dialecticwormhole_cookies") != "true"){
