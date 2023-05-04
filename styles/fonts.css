@@ -175,7 +175,7 @@
     src: url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Bold.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Bold.woff') format('woff'),
         url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Bold.ttf') format('truetype');
-    font-weight: bold;
+    font-weight: 700;
     font-style: normal;
     font-display: swap;
 }
@@ -195,7 +195,7 @@
     src: url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-ExtraBold.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-ExtraBold.woff') format('woff'),
         url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-ExtraBold.ttf') format('truetype');
-    font-weight: bold;
+    font-weight: 800;
     font-style: normal;
     font-display: swap;
 }
@@ -215,7 +215,7 @@
     src: url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Regular.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Regular.woff') format('woff'),
         url('https://www.dialecticwormhole.page/files/fonts/Syne/Syne-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
