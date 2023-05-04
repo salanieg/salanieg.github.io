@@ -345,7 +345,7 @@ function setlanguage(language) {
     document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
 	document.getElementById("lang-" + language).style.textDecoration = "underline"
 	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
-
+    
 	localStorage.setItem("dialecticwormhole_language", language);
 }
 
