@@ -773,7 +773,7 @@ var menuopen = false;
 var windowwidth = window.innerWidth;
 
 
-function openmenufix() {
+// function openmenufix() {
 	// if (window.innerWidth!=windowwidth) {
 
 	// 	windowwidth = window.innerWidth;
@@ -787,7 +787,7 @@ function openmenufix() {
 	// 		document.getElementById("openmenu").style.display = "none";
 	// 	}
 	// }
-}
+// }
 
 
 function check_menu_origin(origin) {
