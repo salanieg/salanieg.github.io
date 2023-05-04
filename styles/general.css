@@ -191,6 +191,9 @@ p {
 	font-size: var(--font-regular);
 	line-height: 1.9;
 	margin:0px;
+	overflow-wrap: break-word;
+	text-align: justify;
+	margin-bottom: 40px;
 }
 
 
