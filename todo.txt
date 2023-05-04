@@ -6,7 +6,8 @@ language not implemented fully
 -------------- IMPROVEMENTS --------------
 
 navigation buttons
-sharing with suburl
+dynamic url
+sharing with suburl or #
 
 -------------- ADDITIONS --------------
 

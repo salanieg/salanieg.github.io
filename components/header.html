@@ -35,12 +35,21 @@
 				}
 			}
 
+			#back:hover {
+				color: lightgrey;
+			}
+
+			#back-link {
+				display: none;
+			}
+
 
 		</style>
 	</head>
 
 	<body>
 		<nav id="back" onclick="display('launchpad')"><span class="extended-text"><span lang="de">Back to launchpad</span><span lang="en">Back to launchpad</span></span><span class="small-text">Launchpad</span></nav>
+		<nav id="back-link"><a href="https://www.dialecticwormhole.page"><span lang="de">Back to launchpad</span><span lang="en">Back to launchpad</span></span><span class="small-text">Launchpad</span></a></nav>
 		<nav><a class="nav" href="https://www.dialecticwormhole.page/impressum">Impressum</a></nav>
 		<nav><span class="lang-option" id="lang-de" onclick="setlanguage('de')">DE</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">EN</span></nav>
 	</body>
