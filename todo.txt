@@ -1,7 +1,6 @@
 -------------- BUGS --------------
 
-impressum back to launchpad not working
-language not implemented fully
+
 
 -------------- IMPROVEMENTS --------------
 
