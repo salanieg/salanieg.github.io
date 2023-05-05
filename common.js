@@ -479,6 +479,7 @@ function showcookiecontent() {
     datainfoshown = false;
     cleartpcookies()
 
+    load_frame(document.getElementById(current_id).getElementsByTagName("iframe"), 0, slide_current)
     if(document.getElementById("slides")){load_slide_frames()}
 }
 
@@ -530,7 +531,9 @@ function load_frame(frames, current, slide) {
                 frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1"
             }
             
+            console.log(frames[current])
             frame.onload = function(){
+                console.log("loaded")
                 thumbnail.remove();
                 frame.style.display = "block"
                 frame.setAttribute('data-loaded', 'true')

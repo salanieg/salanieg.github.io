@@ -56,6 +56,7 @@
 
         <script>
             const PAGE_ITEMS = ['foyer','launchpad','nexus','abyss','videos']
+            var current_id = "foyer"
 
             function pre_init() {
                 if(localStorage.getItem("dialecticwormhole_skip") == "true"){
@@ -126,6 +127,7 @@
                 document.getElementById(id).style.display = "block"
                 load_frame(document.getElementById(id).getElementsByTagName("iframe"), 0, slide_current)
 
+                current_id = id
                 // window.history.pushState(id, '', '/' + id);  
             }
 
