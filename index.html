@@ -57,10 +57,11 @@
         <script>
             const PAGE_ITEMS = ['foyer','launchpad','nexus','abyss','videos']
             var current_id = "foyer"
+            var RECENT_LIST = []
+            var redirect = false
 
             function pre_init() {
                 if(localStorage.getItem("dialecticwormhole_skip") == "true"){
-                    display("launchpad");
                     let url = document.URL.split("/")[1]
                     if(url == "") {url = "launchpad"}
                     display(url)
@@ -108,7 +109,12 @@
                 display(id)
             }
 
-            function display(id) {
+            function display(id) {  
+
+                if(!redirect) {
+                    RECENT_LIST.push(current_id);
+                    redirect = false
+                }
 
                 reset_info()
 
@@ -128,14 +134,19 @@
                 load_frame(document.getElementById(id).getElementsByTagName("iframe"), 0, slide_current)
 
                 current_id = id
-                // window.history.pushState(id, '', '/' + id);  
+                window.history.pushState(id, '', '/' + id);
             }
 
-            // window.onpopstate = function(e){
-            //     e.preventDefault()
-            //     console.log(e.state)
-            //     display(e.state)
-            // };
+
+            window.onpopstate = function(event){
+                if(RECENT_LIST.length > 1) {
+                    event.preventDefault()
+                    console.log(RECENT_LIST)
+                    redirect = true
+                    display(RECENT_LIST.pop())
+                }
+
+            };
         </script>
 
         <style>
