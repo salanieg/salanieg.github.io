@@ -134,7 +134,7 @@
                 load_frame(document.getElementById(id).getElementsByTagName("iframe"), 0, slide_current)
 
                 current_id = id
-                window.history.pushState(id, '', '/' + id);
+                window.history.pushState(id, '', id);
             }
 
 
@@ -222,8 +222,8 @@
                 </p>
                 <p><span lang="de">Wohin möchten Sie navigieren?</span><span lang="en">Where would you like to navigate?</span></p>
                 <div class="nav-buttons">
-                    <button onclick="display('nexus')">nexus</button></a>
-                    <button onclick="display('abyss')">abyss</button></a>
+                    <button onclick="display('nexus')">nexus</button>
+                    <button onclick="display('abyss')">abyss</button>
                 </div>
             </div>
             <div id="nexus">
