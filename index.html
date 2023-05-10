@@ -62,7 +62,9 @@
 
             function pre_init() {
                 if(localStorage.getItem("dialecticwormhole_skip") == "true"){
-                    let url = document.URL.split("/")[1]
+                    let url = document.URL.split("/")[3]
+                    console.log(document.URL)
+                    console.log(url)
                     if(url == "") {url = "launchpad"}
                     display(url)
                 }
