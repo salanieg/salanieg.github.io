@@ -1,13 +1,10 @@
 -------------- BUGS --------------
 
-
+navigation buttons sometimes do weird things
 
 -------------- IMPROVEMENTS --------------
 
-display when coming through other url
-navigation buttons
-dynamic url
-sharing with suburl or #
+
 
 -------------- ADDITIONS --------------
 
