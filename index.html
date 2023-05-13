@@ -1,30 +1,35 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>THE DIALECTIC WORMHOLE</title>
-  <meta name="viewport" content="width=device-width, height=device-height, user-scalable=no">
-  <link rel="apple-touch-icon" sizes="180x180" href="files/favicon/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="files/favicon/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="files/favicon/favicon-16x16.png">
-  <link rel="manifest" href="files/favicon/site.webmanifest">
-  <link rel="mask-icon" href="files/favicon/safari-pinned-tab.svg" color="#1c1c1c">
-  <link rel="shortcut icon" href="files/favicon/favicon.ico">
-  <meta name="msapplication-TileColor" content="#1c1c1c">
-  <meta name="msapplication-config" content="files/favicon/browserconfig.xml">
-  <meta name="theme-color" content="#1c1c1c">
-  <link rel="stylesheet" href="styles/fonts.css">
-  <link rel="stylesheet" href="styles/general.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preload" as="font" crossorigin="" type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Regular.woff2">
-  <link rel="preload" as="font" crossorigin="" type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Bold.woff2">
-  <link rel="preload" as="font" crossorigin="" type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Italic.woff2">
-  <link rel="preload" as="font" crossorigin="" type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Regular.woff2">
-  <link rel="preload" as="font" crossorigin="" type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Bold.woff2">
-  <link rel="preload" as="font" crossorigin="" type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Italic.woff2">
-  <link rel="preload" as="fetch" crossorigin="" href="components/databanner.html">
-  <script type="text/javascript" src="common.js"></script>
-  <script>
+    <head>        
+        <meta charset="UTF-8">
+        <title>THE DIALECTIC WORMHOLE</title>
+        <meta name="viewport" content="width=device-width, height=device-height, user-scalable=no">
+        
+        <link rel="apple-touch-icon" sizes="180x180" href="files/favicon/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="files/favicon/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="files/favicon/favicon-16x16.png">
+        <link rel="manifest" href="files/favicon/site.webmanifest">
+        <link rel="mask-icon" href="files/favicon/safari-pinned-tab.svg" color="#1c1c1c">
+        <link rel="shortcut icon" href="files/favicon/favicon.ico">
+        <meta name="msapplication-TileColor" content="#1c1c1c">
+        <meta name="msapplication-config" content="files/favicon/browserconfig.xml">
+        <meta name="theme-color" content="#1c1c1c">
+
+        <link rel="stylesheet" href="styles/fonts.css">
+        <link rel="stylesheet" href="styles/general.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Regular.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Bold.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/Roboto/Roboto-Italic.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Regular.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Bold.woff2">
+        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/files/fonts/OldStandard/OldStandardTT-Italic.woff2">
+
+        <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
+
+        <script type="text/javascript" src="common.js"></script>
+        <script>
 
             // LOADING
 
@@ -51,8 +56,9 @@
                 }
             ]
 
-  </script>
-  <script>
+        </script>
+
+        <script>
             const PAGE_ITEMS = ['foyer','launchpad','nexus','abyss','videos']
             var current_id = "foyer"
             var RECENT_LIST = []
@@ -151,8 +157,9 @@
                 }
 
             };
-  </script>
-  <style>
+        </script>
+
+        <style>
 
             #foyer, #launchpad, #nexus, #abyss, #videos, #back {
                 display: none;
@@ -205,75 +212,104 @@
                 margin: 0px;
             }
 
-  </style>
-</head>
-<body>
-  <header id="header"></header>
-  <main id="content">
-    <img onclick="display_and_skip('launchpad')" id="mainlogo" src="files/logo.png" alt="wormhole">
-    <div id="foyer">
-      <h3>the dialectic wormhole</h3>
-      <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br>
-      <span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p><button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button>
-    </div>
-    <div id="launchpad">
-      <h1>launchpad</h1>
-      <p><span lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.</span> <span lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.</span></p>
-      <h1>transit</h1>
-      <p><span lang="de">Hinweis: Die Linie U1 verkehrt derzeit nur von Muggenhof bis Langwasser Süd.</span> <span lang="en">Note: The U1 line currently only serves from Muggenhof to Langwasser Süd.</span></p>
-      <div class="nav-buttons">
-        <button onclick="display('nexus')">nexus</button> <button onclick="display('abyss')">abyss</button>
-      </div>
-    </div>
-    <div id="nexus">
-      <h1>nexus</h1>
-      <div class="essay" onclick="show_info(event)">
-        <h2><span lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</span><span lang="en">Is man as Nietzsche's predator really self-sufficient?</span></h2>
-        <div class="essay-info">
-          <p><br>
-          <span lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</span> <span lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</span></p>
-          <div class="nav-buttons">
-            <a lang="de" href="files/DWNietzschesRaubtier.pdf" target="_blank"><button>datei öffnen</button></a> <a lang="en" href="files/DWNietzschesRaubtier(en).pdf" target="_blank"><button>open file</button></a>
-          </div>
-        </div>
-      </div>
-      <div class="essay" onclick="show_info(event)">
-        <h2><span lang="de">Massenkultur - Entfremdung durch Imitation?</span><span lang="en">Mass culture - alienation through imitation?</span></h2>
-        <div class="essay-info">
-          <p><br>
-          <span lang="de">In diesem Essay wird die Rolle der Nachahmung in der Massenkultur erörtert, wobei der Schwerpunkt auf den Auswirkungen auf Individualität und Kreativität liegt. Der Autor argumentiert, dass die Fähigkeit zur Nachahmung zwar wichtig ist, um kulturelle Artefakte zu schaffen, die die Massen ansprechen, dass aber die Betonung der Nachahmung in der Massenkultur zu einem Verlust an Originalität und zu einer Konzentration darauf geführt hat, einem möglichst großen Publikum zu gefallen. Letztlich geht es in dem Essay um die Frage, ob die auf Nachahmung ausgerichtete Kultur der Massenkultur die Kreativität unterdrückt oder das kollektive Schaffen fördert.</span> <span lang="en">This essay discusses the role of imitation in mass culture, with a focus on the impact on individuality and creativity. The author argues that while the ability to imitate is important in creating cultural artifacts that appeal to the masses, the emphasis on imitation in mass culture has led to a loss of originality and a focus on pleasing the largest possible audience. Ultimately, the essay questions whether the imitation-driven culture of mass culture is stifling creativity or fostering collective creation.</span></p>
-          <div class="nav-buttons">
-            <a lang="de" href="files/DWEntfremdungdurchImitation.pdf" target="_blank"><button>datei öffnen</button></a> <a lang="en" href="files/DWEntfremdungdurchImitation(en).pdf" target="_blank"><button>open file</button></a>
-          </div>
-        </div>
-      </div>
-      <div class="essay" onclick="show_info(event)">
-        <h2><span lang="de">Philanthrokapitalismus: Solidarität als Ware?</span><span lang="en">Philanthrocapitalism: Solidarity as a Commodity?</span></h2>
-        <div class="essay-info">
-          <p><br>
-          <span lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</span> <span lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</span></p>
-          <div class="nav-buttons">
-            <a lang="de" href="files/DWPhilanthrokapitalismus.pdf" target="_blank"><button>datei öffnen</button></a> <a lang="en" href="files/DWPhilanthrokapitalismus(en).pdf" target="_blank"><button>open file</button></a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="abyss">
-      <h1>abyss</h1>
-      <p><span lang="de">"Wer mit Ungeheuern kämpft, mag zusehn, daß er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein."</span> <span lang="en">"Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you."</span></p>
-      <p><span lang="de">Wenn man die Kultur kritisieren will, um sie zu verändern, gibt es keinen Gegenspieler, den man bekämpfen kann. Tatsächlich muss man, wenn man effektiv für die Kultur eintreten will, ein System von Umständen bekämpfen. Das ist es, was die Apostel der Matrix-Filmreihe nicht verstehen wollen: Sie verwandeln sich in Verschwörungsideologen, die versuchen, einen Kampf gegen Figuren zu führen, anstatt sich dem Entwirren von Sachverhalten zu widmen. Aus diesem Grund distanziert sich diese Website nicht nur von Verschwörungsideologien, sondern auch von der Ideologie der Matrix.</span> <span lang="en">If one wants to criticise culture in order to change it, there is no antagonist to fight. Indeed, if you want to effectively stand up for culture, you have to fight a system of circumstances. This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts. For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.</span></p>
-      <h1>video collection</h1>
-      <div class="video">
-        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox=""></iframe>
-        <p><span lang="de">Ein leicht philosophischer Ansatz, der versucht, eine Erklärung für das aufkommende Internetphänomen der "Backrooms" zu liefern</span><span lang="en">A mildly philosophical approach, trying to deliver an explanation for the emerging internet phenomenon of "The Backrooms"</span></p>
-      </div>
-      <div class="video">
-        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox=""></iframe>
-        <p><span lang="de">Eine beunruhigende Simulation eines eskalierten Atomkriegs</span><span lang="en">An unsettling simulation of an escalated nuclear war</span></p>
-      </div>
-    </div>
-  </main>
-  <footer id="footer"></footer>
-  <div id="databanner"></div>
-</body>
+        </style>
+    </head>
+
+    <body>
+        <header id="header"></header>
+
+        <main id="content">
+        <img onclick="display_and_skip('launchpad')" id="mainlogo" src="files/logo.png" alt="wormhole">
+   	 <div id="foyer">
+            <h3>the dialectic wormhole</h3>
+       		<p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
+        	<button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button>
+  	 </div>
+            <div id="launchpad">
+                <h1>launchpad</h1>
+                <p>
+                    <span lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></span>
+                    <span lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></span>
+                </p>
+                <h1>⫸ transit ⫷</h1>
+                <p><span lang="de">Hinweis: Die Linie U1 verkehrt derzeit nur von Muggenhof bis Langwasser Süd.<span data-footnote="4"></span></span>
+                   <span lang="en">Note: The U1 line currently only serves from Muggenhof to Langwasser Süd.<span data-footnote="4"></span></span>
+                </p>
+                <div class="nav-buttons">
+                    <button onclick="display('nexus')">nexus</button>
+                    <button onclick="display('abyss')">abyss</button>
+                </div>
+            </div>
+            <div id="nexus">
+                <h1>nexus</h1>
+                <div class="essay" onclick="show_info(event)"><h2><span lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</span><span lang="en">Is man as Nietzsche's predator really self-sufficient?</span></h2>
+                    <div class="essay-info">
+                        <p>
+                            <br>
+                            <span lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</span>
+                            <span lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</span>
+                        </p>
+                        <div class="nav-buttons">
+                            <a lang="de" href="files/DWNietzschesRaubtier.pdf" target="_blank"><button>datei öffnen</button></a>
+                            <a lang="en" href="files/DWNietzschesRaubtier(en).pdf" target="_blank"><button>open file</button></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="essay" onclick="show_info(event)"><h2><span lang="de">Massenkultur - Entfremdung durch Imitation?</span><span lang="en">Mass culture - alienation through imitation?</span></h2>
+                    <div class="essay-info">
+                        <p>
+                            <br>
+                            <span lang="de">In diesem Essay wird die Rolle der Nachahmung in der Massenkultur erörtert, wobei der Schwerpunkt auf den Auswirkungen auf Individualität und Kreativität liegt. Der Autor argumentiert, dass die Fähigkeit zur Nachahmung zwar wichtig ist, um kulturelle Artefakte zu schaffen, die die Massen ansprechen, dass aber die Betonung der Nachahmung in der Massenkultur zu einem Verlust an Originalität und zu einer Konzentration darauf geführt hat, einem möglichst großen Publikum zu gefallen. Letztlich geht es in dem Essay um die Frage, ob die auf Nachahmung ausgerichtete Kultur der Massenkultur die Kreativität unterdrückt oder das kollektive Schaffen fördert.</span>
+                            <span lang="en">This essay discusses the role of imitation in mass culture, with a focus on the impact on individuality and creativity. The author argues that while the ability to imitate is important in creating cultural artifacts that appeal to the masses, the emphasis on imitation in mass culture has led to a loss of originality and a focus on pleasing the largest possible audience. Ultimately, the essay questions whether the imitation-driven culture of mass culture is stifling creativity or fostering collective creation.</span>
+                        </p>
+                        <div class="nav-buttons">
+                            <a lang="de" href="files/DWEntfremdungdurchImitation.pdf" target="_blank"><button>datei öffnen</button></a>
+                            <a lang="en" href="files/DWEntfremdungdurchImitation(en).pdf" target="_blank"><button>open file</button></a>
+                        </div>
+                    </div>
+                </div>
+                   <div class="essay" onclick="show_info(event)"><h2><span lang="de">Philanthrokapitalismus: Solidarität als Ware?</span><span lang="en">Philanthrocapitalism: Solidarity as a Commodity?</span></h2>
+                    <div class="essay-info">
+                        <p>
+                            <br>
+                            <span lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</span>
+                            <span lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</span>
+                        </p>
+                        <div class="nav-buttons">
+                            <a lang="de" href="files/DWPhilanthrokapitalismus.pdf" target="_blank"><button>datei öffnen</button></a>
+                            <a lang="en" href="files/DWPhilanthrokapitalismus(en).pdf" target="_blank"><button>open file</button></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="abyss">
+                <h1>abyss</h1>
+                <p>
+                    <span lang="de">Wenn man die Kultur kritisieren will, um sie zu verändern, gibt es keinen Gegenspieler, den man bekämpfen kann. Tatsächlich muss man, wenn man effektiv für die Kultur eintreten will, ein System von Umständen bekämpfen.<span data-footnote="2"></span> Das ist es, was die Apostel der Matrix-Filmreihe nicht verstehen wollen: Sie verwandeln sich in Verschwörungsideologen, die versuchen, einen Kampf gegen Figuren zu führen, anstatt sich dem Entwirren von Sachverhalten zu widmen. Aus diesem Grund distanziert sich diese Website nicht nur von Verschwörungsideologien, sondern auch von der Ideologie der Matrix.</span>
+                    <span lang="en">If one wants to criticise culture in order to change it, there is no antagonist to fight. Indeed, if you want to effectively stand up for culture, you have to fight a system of circumstances.<span data-footnote="2"></span> This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts. For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.</span>
+                </p>     
+                <button onclick="display('videos')"><span lang="de">Eine kuratierte Auswahl sehenswerter Videos</span><span lang="en">A curated collection of videos worth watching</span></button>
+<button onclick="display('bilder')"><span lang="de">Eine Sammlung von Bildern</span><span lang="en">A collection of images</span></button>
+            </div>
+            <div id="videos">
+                <h1>Videos</h1>
+                <p>
+                    <span lang="de">„Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.“<span data-footnote="3"></span></span>
+                    <span lang="en">"Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you."<span data-footnote="3"></span></span>
+                </p>
+                <div class="video"> 
+                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox></iframe>
+                    <p><span lang="de">Ein leicht philosophischer Ansatz, der versucht, eine Erklärung für das aufkommende Internetphänomen der "Hinterzimmer" zu liefern</span><span lang="en">A mildly philosophical approach, trying to deliver an explanation for the emerging internet phenomenon of "The Backrooms"</span></p>
+                </div>
+                <div class="video">
+                    <iframe class="adaptive"  src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
+                    <p><span lang="de">Eine beunruhigende Simulation eines eskalierten Atomkriegs</span><span lang="en">An unsettling simulation of an escalated nuclear war</span></p>
+                </div>
+            </div>
+        </main>
+
+        <footer id="footer"></footer>
+        
+        <div id="databanner"></div>
+    </body>
 </html>
