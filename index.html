@@ -164,7 +164,7 @@
             .nav-buttons {
                 display: flex;
                 justify-content: space-between;
-                align-items: flex-start;
+                align-items: center;
                 flex-wrap: wrap;
                 gap: 15px;
                 margin: 20px;
@@ -173,13 +173,17 @@
             @media screen and (max-width: 600px) {
                 .nav-buttons {
                     flex-direction: column;
-                    justify-content: flex-start;
                 }
 
                 .nav-buttons button {
                     width: 100%;
                     max-width: 180px;
                 }
+
+                .blink {
+                    text-align: center;
+                }
+
             }
 
 
