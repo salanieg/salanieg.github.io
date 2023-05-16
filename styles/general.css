@@ -179,8 +179,16 @@ a:hover, a:visited, a:link, a:active
 
 
 /* TEXT */
-
 h1 {
+	font-size: 5rem;
+	font-size: var(--font-large);
+	font-weight: 800;
+	line-height: 0.8;
+	margin:0px;
+	margin-bottom:50px;
+}
+
+h2 {
 	white-space:nowrap;
 	font-size: 3rem;
 	font-size: var(--font-medium);
@@ -195,18 +203,8 @@ h1 {
     100% {opacity: 1;}
 }
 
-h1b {
-    white-space:nowrap;
-    font-size: 3rem;
-    font-size: var(--font-medium);
-    font-weight: 800;
-    line-height: 1.4;
-    margin-bottom:20px;
-    animation: blink 2s linear infinite;
-}
 
-
-h2 {
+h3 {
 	font-size: 1.085rem;
 	font-size: var(--font-regular);
 	font-weight: 700;
@@ -214,14 +212,7 @@ h2 {
 	margin:0px;
 }
 
-h3 {
-	font-size: 5rem;
-	font-size: var(--font-large);
-	font-weight: 800;
-	line-height: 0.8;
-	margin:0px;
-	margin-bottom:50px;
-}
+
 
 p {
 	font-size: 1.085rem;
@@ -239,6 +230,10 @@ small {
 	font-size: var(--font-small);
 	line-height: 1.75;
 	margin:0px;
+}
+
+.blink {
+    animation: blink 2s linear infinite;
 }
 
 cite {
