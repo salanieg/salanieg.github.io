@@ -164,9 +164,9 @@
             .nav-buttons {
                 display: flex;
                 justify-content: space-between;
-                align-items: center;
+                align-items: flex-start;
                 flex-wrap: wrap;
-                gap: 10px;
+                gap: 15px;
                 margin: 20px;
             }
 
@@ -174,6 +174,11 @@
                 .nav-buttons {
                     flex-direction: column;
                     justify-content: flex-start;
+                }
+
+                .nav-buttons button {
+                    width: 100%;
+                    max-width: 180px;
                 }
             }
 
