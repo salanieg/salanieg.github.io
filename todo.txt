@@ -4,7 +4,9 @@ navigation buttons sometimes do weird things
 
 -------------- IMPROVEMENTS --------------
 
+meta descriptions
 
+add explicit height and width to images
 
 -------------- ADDITIONS --------------
 
