@@ -140,6 +140,7 @@
                 load_frame(document.getElementById(id).getElementsByTagName("iframe"), 0, slide_current)
 
                 current_id = id
+                if(document.URL.includes("5500")) {return}
                 window.history.pushState(id, '', id);
             }
 
@@ -157,7 +158,7 @@
 
         <style>
 
-            #foyer, #launchpad, #nexus, #abyss, #videos, #back {
+            main > div {
                 display: none;
             }
 
@@ -242,19 +243,19 @@
         <header id="header"></header>
 
         <main id="content">
-        <img onclick="display_and_skip('launchpad')" id="mainlogo" src="files/logo.png" alt="wormhole">
-   	 <div id="foyer">
-            <h1>the dialectic wormhole</h1>
-       		<p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
-        	<button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button>
-  	 </div>
+            <img onclick="display_and_skip('launchpad')" id="mainlogo" src="files/logo.png" alt="wormhole">
+            <div id="foyer">
+                    <h1>the dialectic wormhole</h1>
+                    <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
+                    <button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button>
+            </div>
             <div id="launchpad">
                 <h2>launchpad</h2>
-                <p>
-                    <span lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></span>
-                    <span lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></span>
-                </p>
-               <h3 class="blink">select your target</h3><br>
+                <!-- <p> -->
+                    <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
+                    <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
+                <!-- </p> -->
+                <h3 class="blink">select your target</h3><br>
                 <div class="nav-buttons">
                     <button onclick="display('nexus')">nexus</button>
                     <button onclick="display('abyss')">abyss</button>
