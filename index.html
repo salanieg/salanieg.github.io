@@ -78,16 +78,25 @@
 
 
             function reset_info() {
+                console.log("test")
                 let essay_infos = document.getElementsByClassName("essay-info")
-
+                console.log(essay_infos)
                 for (let i = 0; i < essay_infos.length; i++) {
                     essay_infos[i].style.display = "none"
+                }
+
+                let essay_close = document.getElementsByClassName("essay-close")
+                console.log(essay_close)
+                for (let i = 0; i < essay_close.length; i++) {
+                    essay_close[i].style.display = "none"
                 }
             }
 
             function show_info(event) {                
 
                 let essay = event.target
+
+                if(essay.className == "essay-close") {return}
 
                 // when clicking the h3 heading you have to go back up to the main essay div
 
@@ -96,14 +105,18 @@
                 }
 
                 let essay_info = essay.getElementsByClassName("essay-info")[0]
+                let essay_close = essay.getElementsByClassName("essay-close")[0]
 
-                if(window.getComputedStyle(essay_info, null).display == "none") {
-                    reset_info()
-                    essay_info.style.display = "block"
-                }
-                else {
-                    reset_info()
-                }
+                reset_info()
+                essay_close.style.display = "block"
+                essay_info.style.display = "block"
+                // if(window.getComputedStyle(essay_info, null).display == "none") {
+                //     reset_info()
+                //     essay_info.style.display = "block"
+                // }
+                // else {
+                //     reset_info()
+                // }
 
             }
 
@@ -156,7 +169,36 @@
                     display(RECENT_LIST.pop())
                 }
 
-            };
+            }
+
+            function album_cycle(event, change) {
+                let album_controls = event.target.parentElement
+                let album = album_controls.parentElement
+                let album_images = album.getElementsByTagName("div")[0].getElementsByTagName("img")
+                let current_image = album.getAttribute('data-current')
+                
+                
+                current_image = Number(current_image) + change
+
+                if(current_image < 0) {
+                    current_image = 0
+                }
+                else if (current_image >= album_images.length-1){
+                    current_image = album_images.length-1
+                }
+
+                console.log(current_image)
+                
+                for (let i = 0; i < album_images.length; i++)
+                {                  
+                    album_images[i].style.display = "none"
+                }
+                album_images[current_image].style.display = "block"
+                album.setAttribute('data-current', current_image)
+
+            }
+
+
         </script>
 
         <style>
@@ -208,6 +250,14 @@
 
 
             .essay {
+                display:grid;
+                align-items: start;
+                grid-template-columns: auto auto;
+                grid-template-rows: auto auto auto;
+                grid-template-areas: 
+                    "title close"
+                    "info info"
+                    "files files";
                 border-radius: 20px;
                 padding: 20px 20px;
                 min-width: 120px;
@@ -227,12 +277,24 @@
             }
 
             .essay-info {
+                grid-area:info;
                 display:none;
                 margin-top: 30px;
             }
 
             .essay-files {
+                grid-area:files;
                 margin: 20px;
+            }
+            
+            .essay-title {
+                grid-area: title;
+            }
+
+            .essay-close {
+                grid-area: close;
+                min-width: unset;
+                max-width: fit-content;
             }
 
             
@@ -252,6 +314,48 @@
             p, h2, h3 {
                 max-width: 500px;
             }
+
+            .album {
+                border-radius: 20px;
+                padding: 20px 20px;
+                border: 0px solid white;
+                color: white; /* set the text color to white */
+                background-color: #1c1c1c; /* set the background color to 1c1c1c */
+                box-shadow: 0px 0px 5px white; /* add a subtle white glow effect */
+                margin-bottom: 25px;
+                grid-template-rows: 25px auto 50px;
+                height: 675px;
+                display: grid;
+                gap:20px
+            }
+
+            .album-images {
+                display: grid;
+                place-items: center;
+            }
+
+            .album-images img {
+                display:none;
+                max-height: 500px;
+            }
+
+            .album-images > img:first-child {
+                display: block;
+            }
+
+            .album-controls {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .album-controls button {
+                min-width: unset;
+                max-width: fit-content;
+            }
+
 
         </style>
     </head>
@@ -283,12 +387,16 @@
             <div id="nexus">
                 <h2>nexus</h2>
                 <div class="essay" onclick="show_info(event)">
-                    <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
-                    <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>
+                    <div class="essay-title">
+                        <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
+                        <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>    
+                    </div>
+                    <button class="essay-close" onclick="reset_info()">x</button>
+
                     <div class="essay-info">
                         <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
                         <p lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
-
+                    
                         <div class="essay-files">
                             <a lang="de" href="files/de/DWNietzschesRaubtier.pdf" target="_blank"><button>datei öffnen</button></a>
                             <a lang="en" href="files/en/DWNietzschesRaubtier.pdf" target="_blank"><button>open file</button></a>
@@ -296,8 +404,12 @@
                     </div>
                 </div>
                 <div class="essay" onclick="show_info(event)">
-                    <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
-                    <h3 lang="en">Mass culture - alienation through imitation?</h3>
+                    <div class="essay-title">
+                        <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
+                        <h3 lang="en">Mass culture - alienation through imitation?</h3>    
+                    </div>
+                    <button class="essay-close" onclick="reset_info()">x</button>
+
                     <div class="essay-info">
                         <p lang="de">In diesem Essay wird die Rolle der Nachahmung in der Massenkultur erörtert, wobei der Schwerpunkt auf den Auswirkungen auf Individualität und Kreativität liegt. Der Autor argumentiert, dass die Fähigkeit zur Nachahmung zwar wichtig ist, um kulturelle Artefakte zu schaffen, die die Massen ansprechen, dass aber die Betonung der Nachahmung in der Massenkultur zu einem Verlust an Originalität und zu einer Konzentration darauf geführt hat, einem möglichst großen Publikum zu gefallen. Letztlich geht es in dem Essay um die Frage, ob die auf Nachahmung ausgerichtete Kultur der Massenkultur die Kreativität unterdrückt oder das kollektive Schaffen fördert.</p>
                         <p lang="en">This essay discusses the role of imitation in mass culture, with a focus on the impact on individuality and creativity. The author argues that while the ability to imitate is important in creating cultural artifacts that appeal to the masses, the emphasis on imitation in mass culture has led to a loss of originality and a focus on pleasing the largest possible audience. Ultimately, the essay questions whether the imitation-driven culture of mass culture is stifling creativity or fostering collective creation.</p>
@@ -308,7 +420,13 @@
                         </div>
                     </div>
                 </div>
-                   <div class="essay" onclick="show_info(event)"><h3 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h3><h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3>
+                <div class="essay" onclick="show_info(event)">
+                    <div class="essay-title">
+                        <h3 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h3>
+                        <h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3>    
+                    </div>
+                    <button class="essay-close" onclick="reset_info()">x</button>
+
                     <div class="essay-info">
                         <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
                         <p lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
@@ -324,10 +442,8 @@
 
             <div id="abyss">
                 <h2>abyss</h2>
-                <!-- <p>
-                    <span lang="de">„Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.“<span data-footnote="3"></span></span>
-                    <span lang="en">"Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you."<span data-footnote="3"></span></span>
-                </p> -->
+                <p lang="de">„Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.“<span data-footnote="3"></span></p>
+                <p lang="en">"Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you."<span data-footnote="3"></span></p>
                 <p lang="de">Willkommen, unerschrockene Reisende, an der kosmischen Grenze, am Rande der Zivilisation! Hier trifft Einsamkeit auf Eitelkeit! Ahead lies an ancient citadel, forgotten by time. Vor uns liegt eine alte, von der Zeit vergessene Zitadelle. In ihrem Herzen enthüllt ein glänzender Abgrund einen ätherischen Aufzug, dessen Aufstieg in Rätsel gehüllt ist und zum mystischen Pantheon führt.</p>
                 <p lang="en">Welcome, intrepid travelers, to the cosmic frontier, to the edge of civilization! Here loneliness meets vanity! Ahead lies an ancient citadel, forgotten by time. At its heart, a resplendit abyss reveals an ethereal elevator whose ascent is shrouded in mystery and leads to the mystical Pantheon.</p>
                 <div class="nav-buttons"><button onclick="display('pantheon')">pantheon</button></div>
@@ -372,6 +488,23 @@
                     <button onclick="display('gallery')">gallery</button>
                     <button onclick="display('gazette')">gazette</button>
                     <button onclick="display('transit')">transit</button>
+                </div>
+            </div>
+
+
+            <div id="gallery">
+                <div class="album" data-current="0">
+                    <h3 lang="de" class="album-name">Big D - macker numero uno</h3>
+                    <h3 lang="en" class="album-name">Big D - macker numero uno</h3>
+                    <div class="album-images">
+                        <img src="images/logo.png">
+                        <img src="images/logo.png"> 
+                        <img src="images/logo.png">
+                    </div>
+                    <div class="album-controls">
+                        <button onclick="album_cycle(event, -1)">⮜</button>
+                        <button onclick="album_cycle(event, 1)">⮞</button>
+                    </div>
                 </div>
             </div>
         </main>
