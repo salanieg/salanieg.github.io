@@ -35,6 +35,8 @@
 
         
         <script>
+            var CURRENT_ID = "content"
+
             function clearcookiesbutton() {
                 clearcookies()
                 changelabel("clearcookies", "<span>Cookies successfully deleted!*</span>", "<span>Decline and delete cookies*</span>")
@@ -82,13 +84,9 @@
                 width:fit-content;
             }
 
-            #back-link {
-				display: inline;
-			}
-
-            #back {
-				display: none;
-			}
+            h1, h2, h3 {
+                white-space: normal;
+            }
 
         </style>
     </head>

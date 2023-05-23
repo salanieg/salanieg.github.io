@@ -479,7 +479,7 @@ function showcookiecontent() {
     datainfoshown = false;
     cleartpcookies()
 
-    load_frame(document.getElementById(current_id).getElementsByTagName("iframe"), 0, slide_current)
+    load_frame(document.getElementById(CURRENT_ID).getElementsByTagName("iframe"), 0, slide_current)
     if(document.getElementById("slides")){load_slide_frames()}
 }
 

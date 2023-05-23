@@ -197,13 +197,6 @@ h2 {
 	margin-bottom:20px;
 }
 
-@keyframes blink {
-    0% {opacity: 1;}
-    50% {opacity: 0.2;}
-    100% {opacity: 1;}
-}
-
-
 h3 {
 	font-size: 1.085rem;
 	font-size: var(--font-regular);
@@ -211,8 +204,6 @@ h3 {
 	line-height: 1.4;
 	margin:0px;
 }
-
-
 
 p {
 	font-size: 1.085rem;
@@ -224,7 +215,6 @@ p {
 	margin-bottom: 40px;
 }
 
-
 small {
 	font-size: 0.93rem;
 	font-size: var(--font-small);
@@ -234,6 +224,12 @@ small {
 
 .blink {
     animation: blink 2s linear infinite;
+}
+
+@keyframes blink {
+    0% {opacity: 1;}
+    50% {opacity: 0.2;}
+    100% {opacity: 1;}
 }
 
 cite {
