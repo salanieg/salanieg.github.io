@@ -39,12 +39,12 @@
 
             function clearcookiesbutton() {
                 clearcookies()
-                changelabel("clearcookies", "<span>Cookies successfully deleted!*</span>", "<span>Decline and delete cookies*</span>")
+                changelabel("clearcookies", "<span lang='de'>Cookies erfolgreich gelöscht!*</span><span lang='en'>Cookies successfully deleted!*</span>", "<span lang='de'>Ablehnen und Cookies löschen*</span><span lang='en'>Decline and delete cookies*</span>")
             }
 
             function acceptcookiesbutton() {
                 cookies(true)
-                changelabel("acceptcookies", "<span>Accepted!</span>", "<span>Accept</span>")
+                changelabel("acceptcookies", "<span lang='de'>Akzeptiert!</span><span lang='en'>Accepted!</span>", "<span lang='de'>Akzeptieren</span><span lang='en'>Accept</span>")
             }
 
             function changelabel(element, msg1, msg2) {
@@ -54,9 +54,9 @@
                 element.innerHTML = msg1
                 setTimeout(function(){
                     element.innerHTML = msg2
-                    initlanguage() //needed bc it changes DOM
+                    init_language() //needed bc it changes DOM
                 }, 3000);
-                initlanguage() //needed bc it changes DOM
+                init_language() //needed bc it changes DOM
             }
         </script>
 
