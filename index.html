@@ -66,9 +66,6 @@
                     if(url == null) {url = document.URL.split("/")[3]}
                     if(url == "" || document.URL.includes("5500")) {url = "launchpad"}
 
-                    console.log(document.URL)
-                    console.log(url)
-
                     display(url)
                 }
                 else {
@@ -78,15 +75,21 @@
 
 
             function reset_cards() {
-                console.log("test")
-                let essay_infos = document.getElementsByClassName("card-content")
-                console.log(essay_infos)
-                for (let i = 0; i < essay_infos.length; i++) {
-                    essay_infos[i].style.display = "none"
+
+                let card = document.getElementsByClassName("card")
+
+                for (let i = 0; i < card.length; i++) {
+                    card[i].style.cursor = "pointer"
+                }
+                
+                let card_content = document.getElementsByClassName("card-content")
+
+                for (let i = 0; i < card_content.length; i++) {
+                    card_content[i].style.display = "none"
                 }
 
                 let card_close = document.getElementsByClassName("card-close")
-                console.log(card_close)
+
                 for (let i = 0; i < card_close.length; i++) {
                     card_close[i].style.display = "none"
                 }
@@ -108,6 +111,7 @@
                 let card_close = card.getElementsByClassName("card-close")[0]
 
                 reset_cards()
+                card.style.cursor = "auto"
                 card_close.style.display = "block"
                 card_content.style.display = "block"
                 // if(window.getComputedStyle(essay_info, null).display == "none") {
@@ -172,9 +176,11 @@
             }
 
             function album_cycle(event, change) {
+                console.log("testin")
                 let album_controls = event.target.parentElement
-                let album = album_controls.parentElement
-                let album_images = album.getElementsByTagName("div")[1].getElementsByTagName("img")
+                let album = album_controls.parentElement.parentElement
+                console.log(album)
+                let album_images = album.getElementsByClassName("album-images")[0].getElementsByTagName("img")
                 let current_image = album.getAttribute('data-current')
                 
                 
@@ -274,68 +280,49 @@
 
                 border-radius: 20px;
                 border: 0px solid white;
-                color: white; /* set the text color to white */
-                background-color: #1c1c1c; /* set the background color to 1c1c1c */
-                box-shadow: 0px 0px 5px white; /* add a subtle white glow effect */
-                
-                display: grid;
-                grid-template-rows: auto auto;
-                grid-template-columns: auto auto;
-                grid-template-areas: 
-                    "card-title card-close"
-                    "card-content card-content";
-                
-                align-items: start;
+                box-shadow: 0px 0px 5px white;
+
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
             }
             
-            .card-title {
-                grid-area: card-title;
+            .card-header {
                 width:100%;
+                display: flex;
+                align-items: start;
+                justify-content: space-between;
+                gap:20px
             }
 
             .card-close {
-                grid-area: card-close;
                 min-width: unset;
                 max-width: fit-content;
             }
 
             .card-content {
                 margin-top: 30px;
-                grid-area: card-content;
-            }
-
-
-
-
-            .essay-files, .album-controls {
-                margin: 20px;
-            }
-
-            /* ESSAY */
-
-            .essay {
-                cursor: pointer;
-            }
-
-            .card-content {
                 display:none;
             }
 
 
 
+            /* ESSAY */
+
+            .essay-files {
+                margin: 20px;
+            }
+            
+
             /* ALBUM */
 
-            .album {
-                /* gap:20px; */
-            }
-
             .album-images {
-                height:500px;
-                display: grid;
+                height: 500px;
+                display:grid;
                 place-items: center;
             }
 
             .album-images img {
+                max-height:500px;
                 display:none;
             }
 
@@ -349,6 +336,7 @@
                 align-items: center;
                 flex-wrap: wrap;
                 gap: 15px;
+                margin-top:30px;
             }
 
             .album-controls button {
@@ -387,11 +375,11 @@
             <div id="nexus">
                 <h2>nexus</h2>
                 <div class="essay card" onclick="show_card_content(event)">
-                    <div class="card-title">
+                    <div class="card-header">
                         <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
-                        <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>    
+                        <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>
+                        <button class="card-close" onclick="reset_cards()">x</button>  
                     </div>
-                    <button class="card-close" onclick="reset_cards()">x</button>
 
                     <div class="card-content">
                         <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
@@ -404,11 +392,11 @@
                     </div>
                 </div>
                 <div class="essay card" onclick="show_card_content(event)">
-                    <div class="card-title">
+                    <div class="card-header">
                         <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
-                        <h3 lang="en">Mass culture - alienation through imitation?</h3>    
+                        <h3 lang="en">Mass culture - alienation through imitation?</h3>
+                        <button class="card-close" onclick="reset_cards()">x</button>      
                     </div>
-                    <button class="card-close" onclick="reset_cards()">x</button>
 
                     <div class="card-content">
                         <p lang="de">In diesem Essay wird die Rolle der Nachahmung in der Massenkultur erörtert, wobei der Schwerpunkt auf den Auswirkungen auf Individualität und Kreativität liegt. Der Autor argumentiert, dass die Fähigkeit zur Nachahmung zwar wichtig ist, um kulturelle Artefakte zu schaffen, die die Massen ansprechen, dass aber die Betonung der Nachahmung in der Massenkultur zu einem Verlust an Originalität und zu einer Konzentration darauf geführt hat, einem möglichst großen Publikum zu gefallen. Letztlich geht es in dem Essay um die Frage, ob die auf Nachahmung ausgerichtete Kultur der Massenkultur die Kreativität unterdrückt oder das kollektive Schaffen fördert.</p>
@@ -421,11 +409,11 @@
                     </div>
                 </div>
                 <div class="essay card" onclick="show_card_content(event)">
-                    <div class="card-title">
+                    <div class="card-header">
                         <h3 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h3>
-                        <h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3>    
+                        <h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3> 
+                        <button class="card-close" onclick="reset_cards()">x</button>     
                     </div>
-                    <button class="card-close" onclick="reset_cards()">x</button>
 
                     <div class="card-content">
                         <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
@@ -494,21 +482,21 @@
 
             <div id="gallery">
                 <div class="album card" data-current="0" onclick="show_card_content(event)">
-                    <div class="card-title">
-                        <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
-                        <h3 lang="en">Massenkultur - Entfremdung durch Imitation?</h3>    
+                    <div class="card-header">
+                        <h3 lang="de">BIG D - macker numero uno</h3>
+                        <h3 lang="en">BIG D - macker numero uno</h3>
+                        <button class="card-close" onclick="reset_cards()">x</button>      
                     </div>
-                    <button class="card-close" onclick="reset_cards()">x</button>
 
                     <div class="card-content">
                         <div class="album-images">
-                            <img src="images/logo.png">
-                            <img src="images/logo.png"> 
-                            <img src="images/logo.png">
+                            <img src="images/1.jpg">
+                            <img src="images/2.jpg">                      
+                            <img src="images/3.jpg">
                         </div>
                         <div class="album-controls">
-                            <button onclick="album_cycle(event, -1)">⮜</button>
-                            <button onclick="album_cycle(event, 1)">⮞</button>
+                            <button onclick="album_cycle(event, -1)">&lt;</button>
+                            <button onclick="album_cycle(event, 1)">&gt;</button>
                         </div>
                     </div>
                 </div>
