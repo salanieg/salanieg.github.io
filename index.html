@@ -77,45 +77,45 @@
             }
 
 
-            function reset_info() {
+            function reset_cards() {
                 console.log("test")
-                let essay_infos = document.getElementsByClassName("essay-info")
+                let essay_infos = document.getElementsByClassName("card-content")
                 console.log(essay_infos)
                 for (let i = 0; i < essay_infos.length; i++) {
                     essay_infos[i].style.display = "none"
                 }
 
-                let essay_close = document.getElementsByClassName("essay-close")
-                console.log(essay_close)
-                for (let i = 0; i < essay_close.length; i++) {
-                    essay_close[i].style.display = "none"
+                let card_close = document.getElementsByClassName("card-close")
+                console.log(card_close)
+                for (let i = 0; i < card_close.length; i++) {
+                    card_close[i].style.display = "none"
                 }
             }
 
-            function show_info(event) {                
+            function show_card_content(event) {                
 
-                let essay = event.target
+                let card = event.target
 
-                if(essay.className == "essay-close") {return}
+                if(card.classList[0] == "card-close") {return}
 
                 // when clicking the h3 heading you have to go back up to the main essay div
 
-                while(essay.className != "essay") {
-                    essay = essay.parentElement
+                while(card.classList[1] != "card") {
+                    card = card.parentElement
                 }
 
-                let essay_info = essay.getElementsByClassName("essay-info")[0]
-                let essay_close = essay.getElementsByClassName("essay-close")[0]
+                let card_content = card.getElementsByClassName("card-content")[0]
+                let card_close = card.getElementsByClassName("card-close")[0]
 
-                reset_info()
-                essay_close.style.display = "block"
-                essay_info.style.display = "block"
+                reset_cards()
+                card_close.style.display = "block"
+                card_content.style.display = "block"
                 // if(window.getComputedStyle(essay_info, null).display == "none") {
-                //     reset_info()
+                //     reset_cards()
                 //     essay_info.style.display = "block"
                 // }
                 // else {
-                //     reset_info()
+                //     reset_cards()
                 // }
 
             }
@@ -134,7 +134,7 @@
                     redirect = false
                 }
 
-                reset_info()
+                reset_cards()
 
                 let page_elements = document.getElementById("content").childNodes;
 
@@ -174,7 +174,7 @@
             function album_cycle(event, change) {
                 let album_controls = event.target.parentElement
                 let album = album_controls.parentElement
-                let album_images = album.getElementsByTagName("div")[0].getElementsByTagName("img")
+                let album_images = album.getElementsByTagName("div")[1].getElementsByTagName("img")
                 let current_image = album.getAttribute('data-current')
                 
                 
@@ -195,7 +195,6 @@
                 }
                 album_images[current_image].style.display = "block"
                 album.setAttribute('data-current', current_image)
-
             }
 
 
@@ -248,55 +247,6 @@
                 margin: 50px 0px;
             }
 
-
-            .essay {
-                display:grid;
-                align-items: start;
-                grid-template-columns: auto auto;
-                grid-template-rows: auto auto auto;
-                grid-template-areas: 
-                    "title close"
-                    "info info"
-                    "files files";
-                border-radius: 20px;
-                padding: 20px 20px;
-                min-width: 120px;
-                border: 0px solid white;                
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-                cursor: pointer;
-                color: white; /* set the text color to white */
-                background-color: #1c1c1c; /* set the background color to 1c1c1c */
-                box-shadow: 0px 0px 5px white; /* add a subtle white glow effect */
-                margin-bottom: 25px;
-            }
-
-            .essay-info {
-                grid-area:info;
-                display:none;
-                margin-top: 30px;
-            }
-
-            .essay-files {
-                grid-area:files;
-                margin: 20px;
-            }
-            
-            .essay-title {
-                grid-area: title;
-            }
-
-            .essay-close {
-                grid-area: close;
-                min-width: unset;
-                max-width: fit-content;
-            }
-
             
             .adaptive {width:100%;}
             
@@ -315,28 +265,78 @@
                 max-width: 500px;
             }
 
-            .album {
-                border-radius: 20px;
+
+            /* CARDS */
+
+            .card {
                 padding: 20px 20px;
+                margin-bottom: 25px;
+
+                border-radius: 20px;
                 border: 0px solid white;
                 color: white; /* set the text color to white */
                 background-color: #1c1c1c; /* set the background color to 1c1c1c */
                 box-shadow: 0px 0px 5px white; /* add a subtle white glow effect */
-                margin-bottom: 25px;
-                grid-template-rows: 25px auto 50px;
-                height: 675px;
+                
                 display: grid;
-                gap:20px
+                grid-template-rows: auto auto;
+                grid-template-columns: auto auto;
+                grid-template-areas: 
+                    "card-title card-close"
+                    "card-content card-content";
+                
+                align-items: start;
+            }
+            
+            .card-title {
+                grid-area: card-title;
+                width:100%;
+            }
+
+            .card-close {
+                grid-area: card-close;
+                min-width: unset;
+                max-width: fit-content;
+            }
+
+            .card-content {
+                margin-top: 30px;
+                grid-area: card-content;
+            }
+
+
+
+
+            .essay-files, .album-controls {
+                margin: 20px;
+            }
+
+            /* ESSAY */
+
+            .essay {
+                cursor: pointer;
+            }
+
+            .card-content {
+                display:none;
+            }
+
+
+
+            /* ALBUM */
+
+            .album {
+                /* gap:20px; */
             }
 
             .album-images {
+                height:500px;
                 display: grid;
                 place-items: center;
             }
 
             .album-images img {
                 display:none;
-                max-height: 500px;
             }
 
             .album-images > img:first-child {
@@ -386,14 +386,14 @@
 
             <div id="nexus">
                 <h2>nexus</h2>
-                <div class="essay" onclick="show_info(event)">
-                    <div class="essay-title">
+                <div class="essay card" onclick="show_card_content(event)">
+                    <div class="card-title">
                         <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
                         <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>    
                     </div>
-                    <button class="essay-close" onclick="reset_info()">x</button>
+                    <button class="card-close" onclick="reset_cards()">x</button>
 
-                    <div class="essay-info">
+                    <div class="card-content">
                         <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
                         <p lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
                     
@@ -403,14 +403,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="essay" onclick="show_info(event)">
-                    <div class="essay-title">
+                <div class="essay card" onclick="show_card_content(event)">
+                    <div class="card-title">
                         <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
                         <h3 lang="en">Mass culture - alienation through imitation?</h3>    
                     </div>
-                    <button class="essay-close" onclick="reset_info()">x</button>
+                    <button class="card-close" onclick="reset_cards()">x</button>
 
-                    <div class="essay-info">
+                    <div class="card-content">
                         <p lang="de">In diesem Essay wird die Rolle der Nachahmung in der Massenkultur erörtert, wobei der Schwerpunkt auf den Auswirkungen auf Individualität und Kreativität liegt. Der Autor argumentiert, dass die Fähigkeit zur Nachahmung zwar wichtig ist, um kulturelle Artefakte zu schaffen, die die Massen ansprechen, dass aber die Betonung der Nachahmung in der Massenkultur zu einem Verlust an Originalität und zu einer Konzentration darauf geführt hat, einem möglichst großen Publikum zu gefallen. Letztlich geht es in dem Essay um die Frage, ob die auf Nachahmung ausgerichtete Kultur der Massenkultur die Kreativität unterdrückt oder das kollektive Schaffen fördert.</p>
                         <p lang="en">This essay discusses the role of imitation in mass culture, with a focus on the impact on individuality and creativity. The author argues that while the ability to imitate is important in creating cultural artifacts that appeal to the masses, the emphasis on imitation in mass culture has led to a loss of originality and a focus on pleasing the largest possible audience. Ultimately, the essay questions whether the imitation-driven culture of mass culture is stifling creativity or fostering collective creation.</p>
                         
@@ -420,14 +420,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="essay" onclick="show_info(event)">
-                    <div class="essay-title">
+                <div class="essay card" onclick="show_card_content(event)">
+                    <div class="card-title">
                         <h3 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h3>
                         <h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3>    
                     </div>
-                    <button class="essay-close" onclick="reset_info()">x</button>
+                    <button class="card-close" onclick="reset_cards()">x</button>
 
-                    <div class="essay-info">
+                    <div class="card-content">
                         <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
                         <p lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
 
@@ -493,17 +493,23 @@
 
 
             <div id="gallery">
-                <div class="album" data-current="0">
-                    <h3 lang="de" class="album-name">Big D - macker numero uno</h3>
-                    <h3 lang="en" class="album-name">Big D - macker numero uno</h3>
-                    <div class="album-images">
-                        <img src="images/logo.png">
-                        <img src="images/logo.png"> 
-                        <img src="images/logo.png">
+                <div class="album card" data-current="0" onclick="show_card_content(event)">
+                    <div class="card-title">
+                        <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
+                        <h3 lang="en">Massenkultur - Entfremdung durch Imitation?</h3>    
                     </div>
-                    <div class="album-controls">
-                        <button onclick="album_cycle(event, -1)">⮜</button>
-                        <button onclick="album_cycle(event, 1)">⮞</button>
+                    <button class="card-close" onclick="reset_cards()">x</button>
+
+                    <div class="card-content">
+                        <div class="album-images">
+                            <img src="images/logo.png">
+                            <img src="images/logo.png"> 
+                            <img src="images/logo.png">
+                        </div>
+                        <div class="album-controls">
+                            <button onclick="album_cycle(event, -1)">⮜</button>
+                            <button onclick="album_cycle(event, 1)">⮞</button>
+                        </div>
                     </div>
                 </div>
             </div>
