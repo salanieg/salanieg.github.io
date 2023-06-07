@@ -52,6 +52,13 @@
                     text_en: "Note: The U1 line currently only serves from Muggenhof to Langwasser Süd. Best regards, the robotic subway operator!"
                 }
             ]
+
+            var ABYSS_SECTION_LIST = [
+                "pantheon",
+                "gallery",
+                "gazette",
+                "transit"
+            ]
         </script>
 
         <script>
@@ -66,10 +73,10 @@
                     if(url == null) {url = document.URL.split("/")[3]}
                     if(url == "" || document.URL.includes("5500")) {url = "launchpad"}
 
-                    display(url)
+                    display_section(url)
                 }
                 else {
-                    display("foyer");
+                    display_section("foyer");
                 }
             }
 
@@ -128,10 +135,10 @@
 
             function display_and_skip(id) {
                 localStorage.setItem("dialecticwormhole_skip", true);
-                display(id)
+                display_section(id)
             }
 
-            function display(id) {  
+            function display_section(id) {  
 
                 if(!redirect) {
                     RECENT_LIST.push(CURRENT_ID);
@@ -157,6 +164,7 @@
                 }
 
                 document.getElementById(id).style.display = "block"
+                generate_path(document.getElementById(id))
                 load_frame(document.getElementById(id).getElementsByTagName("iframe"), 0, slide_current)
 
                 CURRENT_ID = id
@@ -170,7 +178,7 @@
                     event.preventDefault()
                     console.log(RECENT_LIST)
                     redirect = true
-                    display(RECENT_LIST.pop())
+                    display_section(RECENT_LIST.pop())
                 }
 
             }
@@ -204,6 +212,17 @@
             }
 
 
+            function generate_path(section) {
+                let path = section.getElementsByClassName("path")[0]
+
+                if(!path) {return}
+
+                let path_A = ABYSS_SECTION_LIST.pop()
+                let path_B = ABYSS_SECTION_LIST.pop()
+                path.innerHTML = "<p>Choose your path</p><div class='path-options'><button onclick='display_section(" + path_A + ")'>" + path_A + "</button><button onclick='display_section(" + path_B + ")'>" + path_B + "</button></div>"
+            }
+
+
         </script>
 
         <style>
@@ -212,7 +231,7 @@
                 display: none;
             }
 
-            .nav-buttons {
+            .path-options {
                 display: flex;
                 justify-content: flex-start;
                 align-items: center;
@@ -223,11 +242,11 @@
             }
 
             /* @media screen and (max-width: 600px) {
-                .nav-buttons {
+                .path-options {
                     flex-direction: column;
                 }
 
-                .nav-buttons button {
+                .path-options button {
                     width: 100%;
                     max-width: 180px;
                 }
@@ -369,9 +388,9 @@
                 <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
                 <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
                 <h3 class="select-target">select your target</h3><br>
-                <div class="nav-buttons">
-                    <button onclick="display('nexus')">nexus</button>
-                    <button onclick="display('abyss')">abyss</button>
+                <div class="path-options">
+                    <button onclick="display_section('nexus')">nexus</button>
+                    <button onclick="display_section('abyss')">abyss</button>
                 </div>
             </div>
 
@@ -441,7 +460,7 @@
                 <p lang="en"><i>»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«</i><span data-footnote="3"></span></p>
                 <p lang="de">Willkommen am Rande des Abgrunds, werte Reisende! Erhebt euch aus der Finsternis, um im Pantheon wiederaufzuerstehen... oder erlebt das Schicksal derer, die vom Abgrund verschlungen werden.</p>
                 <p lang="en">Welcome to the edge of the abyss, dear travelers! Rise from the darkness to be resurrected in the Pantheon... or experience the fate of those swallowed by the abyss.</p>
-                <div class="nav-buttons"><button onclick="display('pantheon')">pantheon</button></div>
+                <div class="path-options"><button onclick="display_section('pantheon')">pantheon</button></div>
                 <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos. Sie sind nicht nur Reisende, Sie sind Pioniere!</p>
                 <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching. You are not just travellers, you are pioneers!</p>
 
@@ -465,6 +484,8 @@
                     <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
                     <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
                 </div>
+
+                <div class="path"></div>
             </div>
 
 
@@ -475,10 +496,10 @@
                 <!-- <p lang="de">Wenn man die Kultur kritisieren will, um sie zu verändern, gibt es keinen Gegenspieler, den man bekämpfen kann. Tatsächlich muss man, wenn man effektiv für die Kultur eintreten will, ein System von Umständen bekämpfen.<span data-footnote="2"></span> Das ist es, was die Apostel der Matrix-Filmreihe nicht verstehen wollen: Sie verwandeln sich in Verschwörungsideologen, die versuchen, einen Kampf gegen Figuren zu führen, anstatt sich dem Entwirren von Sachverhalten zu widmen. Aus diesem Grund distanziert sich diese Website nicht nur von Verschwörungsideologien, sondern auch von der Ideologie der Matrix.</p>
                 <p lang="en">If one wants to criticise culture in order to change it, there is no antagonist to fight. Indeed, if you want to effectively stand up for culture, you have to fight a system of circumstances.<span data-footnote="2"></span> This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts. For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.</p>-->
                 <h3 class="select-target">select your target</h3><br>
-                <div class="nav-buttons">
-                    <button onclick="display('gallery')">gallery</button>
-                    <button onclick="display('gazette')">gazette</button>
-                    <button onclick="display('transit')">transit</button>
+                <div class="path-options">
+                    <button onclick="display_section('gallery')">gallery</button>
+                    <button onclick="display_section('gazette')">gazette</button>
+                    <button onclick="display_section('transit')">transit</button>
                 </div>
             </div>
 
