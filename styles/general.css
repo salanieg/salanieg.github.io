@@ -205,6 +205,7 @@ h3 {
 }
 
 p {
+	font-family: "Syne Mono";
 	font-size: 1.085rem;
 	font-size: var(--font-regular);
 	line-height: 1.9;
