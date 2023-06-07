@@ -53,12 +53,28 @@
                 }
             ]
 
-            var ABYSS_SECTION_LIST = [
-                "pantheon",
-                "gallery",
-                "gazette",
-                "transit"
-            ]
+            var ABYSS_SECTION_LIST = {
+                "pantheon": {
+                    button: "pantheon",
+                    text_de: "Erhebt euch aus der Finsternis, um im Pantheon wiederaufzuerstehen...",
+                    text_en: "Rise from the darkness to be resurrected in the Pantheon..."
+                },
+                "gallery": {
+                    button: "gallery",
+                    text_de: "text_gallery_de",
+                    text_en: "text_gallery_en"
+                },
+                "gazette": {
+                    button: "gazette",
+                    text_de: "text_gazette_de",
+                    text_en: "text_gazette_en"
+                },
+                "transit": {
+                    button: "transit",
+                    text_de: "text_transit_de",
+                    text_en: "text_transit_en"
+                }
+            }
         </script>
 
         <script>
@@ -163,9 +179,11 @@
                     document.getElementById("back").style.display = "inline"
                 }
 
-                document.getElementById(id).style.display = "block"
-                generate_path(document.getElementById(id))
-                load_frame(document.getElementById(id).getElementsByTagName("iframe"), 0, slide_current)
+                let section = document.getElementById(id)
+                section.style.display = "block"
+                delete ABYSS_SECTION_LIST[section]
+                generate_path(section)
+                load_frame(section.getElementsByTagName("iframe"), 0, slide_current)
 
                 CURRENT_ID = id
                 if(document.URL.includes("5500")) {return}
@@ -176,7 +194,6 @@
             window.onpopstate = function(event){
                 if(RECENT_LIST.length > 1) {
                     event.preventDefault()
-                    console.log(RECENT_LIST)
                     redirect = true
                     display_section(RECENT_LIST.pop())
                 }
@@ -184,10 +201,9 @@
             }
 
             function album_cycle(event, change) {
-                console.log("testin")
                 let album_controls = event.target.parentElement
                 let album = album_controls.parentElement.parentElement
-                console.log(album)
+                // console.log(album)
                 let album_images = album.getElementsByClassName("album-images")[0].getElementsByTagName("img")
                 let current_image = album.getAttribute('data-current')
                 
@@ -201,7 +217,7 @@
                     current_image = album_images.length-1
                 }
 
-                console.log(current_image)
+                // console.log(current_image)
                 
                 for (let i = 0; i < album_images.length; i++)
                 {                  
@@ -215,13 +231,38 @@
             function generate_path(section) {
                 let path = section.getElementsByClassName("path")[0]
 
-                if(!path) {return}
+                if(!path || path.getAttribute('data-generated')) {return}
 
-                let path_A = ABYSS_SECTION_LIST.pop()
-                let path_B = ABYSS_SECTION_LIST.pop()
-                path.innerHTML = "<p>Choose your path</p><div class='path-options'><button onclick='display_section(" + path_A + ")'>" + path_A + "</button><button onclick='display_section(" + path_B + ")'>" + path_B + "</button></div>"
+                if(Object.keys(ABYSS_SECTION_LIST).length > 1) {
+                    let path_A = pop_random(ABYSS_SECTION_LIST)
+                    let path_B = pop_random(ABYSS_SECTION_LIST)
+                    path.innerHTML = "<p lang='de'>Wähle deinen Pfad! " + path_A.text_de + " " + path_B.text_de + "</p><p lang='en'>Choose your path!" + path_A.text_en + " " + path_B.text_en + "</p><div class='path-options'><button onclick='display_section(`" + path_A.button + "`)'>" + path_A.button + "</button><button onclick='display_section(`" + path_B.button + "`)'>" + path_B.button + "</button></div>"
+                }
+                else if(Object.keys(ABYSS_SECTION_LIST).length == 1) {
+                    let path = pop_random(ABYSS_SECTION_LIST)
+                    path.innerHTML = "<p lang='de'>Dir bleibt ein einziger Pfad! " + path.text_de + "</p><p lang='en'>There is only one path left!" + path.text_en + "</p><div class='path-options'><button onclick='display_section(`" + path.button + "`)'>" + ABYSS_SECTION_LIST[path].button + "</button></div>"
+                }
+                else {
+                    path.innerHTML = "<p lang='de'>Du hast dich durch den Abgrund geschlagen.</p><p lang='en'>You have made it through the abyss.</p><div class='path-options'><button onclick='display_section(`launchpad`)'>launchpad</button></div>"
+                }
+
+                path.setAttribute('data-generated', "true")
+                reset_language() //needed bc it changes DOM
             }
+            
 
+            function pop_random(list) {
+                let keys = Object.keys(list)
+                let index = Math.floor(Math.random()*keys.length)
+                let element = keys[index]
+
+                console.log(keys)
+                console.log(element)
+
+                let object = list[element]
+                delete list[element]
+                return object
+            }
 
         </script>
 
@@ -461,10 +502,11 @@
                 <p lang="de">Willkommen am Rande des Abgrunds, werte Reisende! Erhebt euch aus der Finsternis, um im Pantheon wiederaufzuerstehen... oder erlebt das Schicksal derer, die vom Abgrund verschlungen werden.</p>
                 <p lang="en">Welcome to the edge of the abyss, dear travelers! Rise from the darkness to be resurrected in the Pantheon... or experience the fate of those swallowed by the abyss.</p>
                 <div class="path-options"><button onclick="display_section('pantheon')">pantheon</button></div>
+                <div class="path"></div>
                 <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos. Sie sind nicht nur Reisende, Sie sind Pioniere!</p>
                 <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching. You are not just travellers, you are pioneers!</p>
 
-                 <div class="video">
+                <div class="video">
                     <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="Ppa__7ZLAU8" sandbox></iframe>
                     <p lang="de">arbeit, us-geschichte, ausbeutung</p><p lang="en">work, us-history, exploitation</p>
                 </div>
@@ -485,7 +527,7 @@
                     <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
                 </div>
 
-                <div class="path"></div>
+                
             </div>
 
 
@@ -495,12 +537,8 @@
                 <p lang="en">Welcome, intrepid travelers, to the edge of civilization! You escaped the abyss, but you can’t escape the boundaries of your mind... nor the consequences of your actions. Welcome to the Pantheon, a place to empty the mind... reflect on the past... the present... and the future.</p>
                 <!-- <p lang="de">Wenn man die Kultur kritisieren will, um sie zu verändern, gibt es keinen Gegenspieler, den man bekämpfen kann. Tatsächlich muss man, wenn man effektiv für die Kultur eintreten will, ein System von Umständen bekämpfen.<span data-footnote="2"></span> Das ist es, was die Apostel der Matrix-Filmreihe nicht verstehen wollen: Sie verwandeln sich in Verschwörungsideologen, die versuchen, einen Kampf gegen Figuren zu führen, anstatt sich dem Entwirren von Sachverhalten zu widmen. Aus diesem Grund distanziert sich diese Website nicht nur von Verschwörungsideologien, sondern auch von der Ideologie der Matrix.</p>
                 <p lang="en">If one wants to criticise culture in order to change it, there is no antagonist to fight. Indeed, if you want to effectively stand up for culture, you have to fight a system of circumstances.<span data-footnote="2"></span> This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts. For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.</p>-->
-                <h3 class="select-target">select your target</h3><br>
-                <div class="path-options">
-                    <button onclick="display_section('gallery')">gallery</button>
-                    <button onclick="display_section('gazette')">gazette</button>
-                    <button onclick="display_section('transit')">transit</button>
-                </div>
+                
+                <div class="path"></div>
             </div>
 
 
@@ -523,6 +561,20 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="path"></div>
+            </div>
+
+
+            <div id="transit">
+
+                <div class="path"></div>
+            </div>
+
+
+            <div id="gazette">
+
+                <div class="path"></div>
             </div>
         </main>
 
