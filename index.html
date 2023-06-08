@@ -246,7 +246,7 @@
                     path.innerHTML = "<p lang='de'>Du hast dich durch den Abgrund geschlagen.</p><p lang='en'>You have made it through the abyss.</p><div class='path-options'><button onclick='display_section(`launchpad`)'>launchpad</button></div>"
                 }
 
-                
+
                 path.setAttribute('data-generated', "true")
                 reset_language() //needed bc it changes DOM
             }
@@ -281,6 +281,10 @@
                 gap: 20px;
                 margin: 20px;
                 margin-bottom: 40px;
+            }
+
+            .path {
+                margin-top: 80px;
             }
 
             /* @media screen and (max-width: 600px) {
@@ -381,7 +385,7 @@
             /* ALBUM */
 
             .album-images {
-                height: 500px;
+                /* height: 500px; */
                 display:grid;
                 place-items: center;
             }
