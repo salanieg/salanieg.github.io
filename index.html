@@ -44,8 +44,8 @@
                     text_en: "Cf. Flusser, Vilém: Ins Universum der technischen Bilder, 7th ed., Berlin, Germany: Edition Flusser, 2018, p. 73"
                 },
                 {
-                    text_de: "Friedrich Nietzsche",
-                    text_en: "Friedrich Nietzsche"
+                    text_de: "Friedrich Nietzsche, Jenseits von Gut und Böse",
+                    text_en: "Friedrich Nietzsche, Beyond Good and Evil"
                 },
                 {
                     text_de: "Hinweis: Die Linie U1 verkehrt derzeit nur von Muggenhof bis Langwasser Süd. Mit freundlichen Grüßen, der U-Bahn-steuernde Roboter!",
@@ -61,18 +61,23 @@
                 },
                 "gallery": {
                     button: "gallery",
-                    text_de: "text_gallery_de",
-                    text_en: "text_gallery_en"
+                    text_de: "Taucht auf aus den Tiefen der Dunkelheit und erhebt euch in die Sphäre der Galerie, wo euer Geist Erneuerung findet...",
+                    text_en: "Emerging from the depths of obscurity, transcend into the realm of the gallery, where your spirit finds rejuvenation..."
                 },
                 "gazette": {
                     button: "gazette",
-                    text_de: "text_gazette_de",
-                    text_en: "text_gazette_en"
+                    text_de: "Erwacht in den Seiten der Gazette, wo Geschichten zum Leben erweckt werden, Flüstern durch die Korridore der Tinte hallen und Wissen im flackernden Licht der Neugierde tanzt, euch einladend, das weite Geflecht menschlicher Erfahrungen zu erkunden...",
+                    text_en: "Awaken within the pages of the Gazette, where stories come alive, whispers echo through the corridors of ink, and knowledge dances in the flickering light of curiosity, inviting you to explore the vast tapestry of human experiences..."
                 },
                 "transit": {
                     button: "transit",
-                    text_de: "text_transit_de",
-                    text_en: "text_transit_en"
+                    text_de: "Umarmt den Wind des Wandels und begebt euch auf eine transformative Reise durch die Sphäre des Transits, wo die Grenzen von Zeit und Raum verschwimmen und die Essenz eures Seins neu geformt wird..",
+                    text_en: "Embrace the winds of change and embark on a transformative journey through the realm of transit, where the boundaries of time and space blur, and the very essence of your being is reshaped..."
+                }, 
+                "kaleidoscope": {
+                    button: "kaleidoscope",
+                    text_de: "Tretet ein in die bezaubernde Sphäre des Kaleidoskops, in der die Realität sich in ein faszinierendes Gewebe aus leuchtenden Farben und ständig wechselnden Mustern auflöst, und offenbart das Kaleidoskop eurer eigenen Vorstellungskraft...",
+                    text_en: "Step into the kaleidoscope's enchanting realm, where reality fractures into a mesmerizing tapestry of vibrant colors and ever-shifting patterns, unveiling the kaleidoscope of your own imagination.."
                 }
             }
         </script>
@@ -181,7 +186,8 @@
 
                 let section = document.getElementById(id)
                 section.style.display = "block"
-                delete ABYSS_SECTION_LIST[section]
+                delete ABYSS_SECTION_LIST[id]
+                add_visited(id)
                 generate_path(section)
                 load_frame(section.getElementsByTagName("iframe"), 0, slide_current)
 
@@ -236,14 +242,14 @@
                 if(Object.keys(ABYSS_SECTION_LIST).length > 1) {
                     let path_A = pop_random(ABYSS_SECTION_LIST)
                     let path_B = pop_random(ABYSS_SECTION_LIST)
-                    path.innerHTML = "<p lang='de'>Wähle deinen Pfad! " + path_A.text_de + " " + path_B.text_de + "</p><p lang='en'>Choose your path!" + path_A.text_en + " " + path_B.text_en + "</p><div class='path-options'><button onclick='display_section(`" + path_A.button + "`)'>" + path_A.button + "</button><button onclick='display_section(`" + path_B.button + "`)'>" + path_B.button + "</button></div>"
+                    path.innerHTML = path.innerHTML + "<p lang='de'>Wähle deinen Pfad! " + path_A.text_de + " oder " + path_B.text_de + "</p><p lang='en'>Choose your path! " + path_A.text_en + " or " + path_B.text_en + "</p><div class='path-options'><button onclick='display_section(`" + path_A.button + "`)'>" + path_A.button + "</button><button onclick='display_section(`" + path_B.button + "`)'>" + path_B.button + "</button></div>"
                 }
                 else if(Object.keys(ABYSS_SECTION_LIST).length == 1) {
-                    let path = pop_random(ABYSS_SECTION_LIST)
-                    path.innerHTML = "<p lang='de'>Dir bleibt ein einziger Pfad! " + path.text_de + "</p><p lang='en'>There is only one path left!" + path.text_en + "</p><div class='path-options'><button onclick='display_section(`" + path.button + "`)'>" + ABYSS_SECTION_LIST[path].button + "</button></div>"
+                    let path_A = pop_random(ABYSS_SECTION_LIST)
+                    path.innerHTML = path.innerHTML + "<p lang='de'>Dir bleibt ein einziger Pfad! " + path_A.text_de + "</p><p lang='en'>There is only one path left! " + path_A.text_en + "</p><div class='path-options'><button onclick='display_section(`" + path_A.button + "`)'>" + path_A.button + "</button></div>"
                 }
                 else {
-                    path.innerHTML = "<p lang='de'>Du hast dich durch den Abgrund geschlagen.</p><p lang='en'>You have made it through the abyss.</p><div class='path-options'><button onclick='display_section(`launchpad`)'>launchpad</button></div>"
+                    path.innerHTML = path.innerHTML + "<p lang='de'>Du hast dich durch den Abgrund geschlagen.</p><p lang='en'>You have made it through the abyss.</p><div class='path-options'><button onclick='display_section(`launchpad`)'>launchpad</button></div>"
                 }
 
 
@@ -251,18 +257,32 @@
                 reset_language() //needed bc it changes DOM
             }
             
+            var last_index
 
             function pop_random(list) {
                 let keys = Object.keys(list)
                 let index = Math.floor(Math.random()*keys.length)
                 let element = keys[index]
 
+                if(last_index == index) {return pop_random(list)}
+
+                last_index = index
+
                 console.log(keys)
                 console.log(element)
 
                 let object = list[element]
-                delete list[element]
+                // delete list[element]
                 return object
+            }
+
+            function add_visited(id) {
+                let visited_sections = document.getElementById("visited-sections").children
+                for (let i = 0; i < visited_sections.length; i++) {
+                    if(visited_sections.item(i).innerHTML == id) {
+                        visited_sections.item(i).style.display = "block";
+                    }
+                }
             }
 
         </script>
@@ -413,6 +433,19 @@
                 max-width: fit-content;
             }
 
+            #visited-sections {
+                display: flex;
+                /* justify-content: center; */
+                gap: 20px;
+                margin-left: 20px;
+                margin-right: 20px;
+                margin-bottom: 40px
+            }
+
+            #visited-sections button {
+                display: none;
+            }
+
 
         </style>
     </head>
@@ -502,7 +535,28 @@
 
             <div id="abyss">
                 <h2>abyss</h2>
-                <p lang="de"><i>»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«<span data-footnote="3"></span></i></p>
+                <p lang="de"><i>»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«</i><span data-footnote="3"></span></p>
+                <p lang="en"><i>»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«</i><span data-footnote="3"></span></p>
+                <div class="path">
+                    <p lang="de">Willkommen am Rande des Abgrunds, werte Reisende! Sie sind nicht nur Reisende, Sie sind Pioniere!</p>
+                    <p lang="en">Welcome to the edge of the abyss, dear travelers! You are not just travellers, you are pioneers!</p>    
+                </div>
+
+                <p lang="de">Du hast folgende Orte im Abyss bereits besucht:</p>
+                <p lang="en">You have visited the following places in the abyss:</p>
+                <div id="visited-sections">
+                    <button onclick="display_section('gazette')">gazette</button>
+                    <button onclick="display_section('pantheon')">pantheon</button>
+                    <button onclick="display_section('gallery')">gallery</button>
+                    <button onclick="display_section('transit')">transit</button>
+                    <button onclick="display_section('kaleidoscope')">kaleidoscope</button>
+                </div>
+            </div>
+
+
+            <!-- <div id="abyss">
+                <h2>abyss</h2>
+                <p lang="de"><i>»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«</i><span data-footnote="3"></span></p>
                 <p lang="en"><i>»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«</i><span data-footnote="3"></span></p>
                 <p lang="de">Willkommen am Rande des Abgrunds, werte Reisende! Erhebt euch aus der Finsternis, um im Pantheon wiederaufzuerstehen... oder erlebt das Schicksal derer, die vom Abgrund verschlungen werden.</p>
                 <p lang="en">Welcome to the edge of the abyss, dear travelers! Rise from the darkness to be resurrected in the Pantheon... or experience the fate of those swallowed by the abyss.</p>
@@ -510,7 +564,7 @@
                 <div class="path"></div>
                 <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos. Sie sind nicht nur Reisende, Sie sind Pioniere!</p>
                 <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching. You are not just travellers, you are pioneers!</p>
-
+            
                 <div class="video">
                     <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="Ppa__7ZLAU8" sandbox></iframe>
                     <p lang="de">arbeit, us-geschichte, ausbeutung</p><p lang="en">work, us-history, exploitation</p>
@@ -531,9 +585,8 @@
                     <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
                     <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
                 </div>
-
-                
-            </div>
+            
+            </div> -->
 
 
             <div id="pantheon">
@@ -565,6 +618,37 @@
                             <button onclick="album_cycle(event, 1)">&gt;</button>
                         </div>
                     </div>
+                </div>
+
+                <div class="path"></div>
+            </div>
+
+
+            <div id="kaleidoscope">
+
+                <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos.</p>
+                <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching.</p>
+
+
+                <div class="video">
+                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="Ppa__7ZLAU8" sandbox></iframe>
+                    <p lang="de">arbeit, us-geschichte, ausbeutung</p><p lang="en">work, us-history, exploitation</p>
+                </div>
+                <div class="video">
+                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="IFe9wiDfb0E" sandbox></iframe>
+                    <p lang="de">jenseits, recht, kapitalismus</p><p lang="en">afterlife, legal, capitalism</p>
+                </div>
+                <div class="video">
+                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="gEyFH-a-XoQ" sandbox></iframe>
+                    <p lang="de">kafka, verwirrung, flughafen</p><p lang="en">kafka, confusion, airport</p>
+                </div>
+                <div class="video">
+                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox></iframe>
+                    <p lang="de">philosophie, vergessen, furcht</p><p lang="en">philosophy, oblivion, fear</p>
+                </div>
+                <div class="video">
+                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
+                    <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
                 </div>
 
                 <div class="path"></div>
