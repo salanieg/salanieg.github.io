@@ -74,10 +74,10 @@
                     text_de: "Umarmt den Wind des Wandels und begebt euch auf eine transformative Reise durch die Sphäre des Transits, wo die Grenzen von Zeit und Raum verschwimmen und die Essenz eures Seins neu geformt wird..",
                     text_en: "Embrace the winds of change and embark on a transformative journey through the realm of transit, where the boundaries of time and space blur, and the very essence of your being is reshaped..."
                 }, 
-                "kaleidoscope": {
-                    button: "kaleidoscope",
+                "obolodeon": {
+                    button: "obolodeon",
                     text_de: "Tretet ein in die bezaubernde Sphäre des Kaleidoskops, in der die Realität sich in ein faszinierendes Gewebe aus leuchtenden Farben und ständig wechselnden Mustern auflöst, und offenbart das Kaleidoskop eurer eigenen Vorstellungskraft...",
-                    text_en: "Step into the kaleidoscope's enchanting realm, where reality fractures into a mesmerizing tapestry of vibrant colors and ever-shifting patterns, unveiling the kaleidoscope of your own imagination.."
+                    text_en: "Step into the obolodeon's enchanting realm, where reality fractures into a mesmerizing tapestry of vibrant colors and ever-shifting patterns, unveiling the obolodeon of your own imagination.."
                 }
             }
         </script>
@@ -186,9 +186,9 @@
 
                 let section = document.getElementById(id)
                 section.style.display = "block"
-                delete ABYSS_SECTION_LIST[id]
-                add_visited(id)
-                generate_path(section)
+                // delete ABYSS_SECTION_LIST[id]
+                // add_visited(id)
+                // generate_path(section)
                 load_frame(section.getElementsByTagName("iframe"), 0, slide_current)
 
                 CURRENT_ID = id
@@ -277,7 +277,7 @@
             }
 
             function add_visited(id) {
-                let visited_sections = document.getElementById("visited-sections").children
+                let visited_sections = document.getElementById("section-overview").children
                 for (let i = 0; i < visited_sections.length; i++) {
                     if(visited_sections.item(i).innerHTML == id) {
                         visited_sections.item(i).style.display = "block";
@@ -433,8 +433,9 @@
                 max-width: fit-content;
             }
 
-            #visited-sections {
+            #section-overview {
                 display: flex;
+                flex-wrap: wrap;
                 /* justify-content: center; */
                 gap: 20px;
                 margin-left: 20px;
@@ -442,8 +443,9 @@
                 margin-bottom: 40px
             }
 
-            #visited-sections button {
-                display: none;
+            #section-overview button {
+                /* display: none; */
+                width: fit-content;
             }
 
 
@@ -537,19 +539,16 @@
                 <h2>abyss</h2>
                 <p lang="de"><i>»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«</i><span data-footnote="3"></span></p>
                 <p lang="en"><i>»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«</i><span data-footnote="3"></span></p>
-                <div class="path">
-                    <p lang="de">Willkommen am Rande des Abgrunds, werte Reisende! Sie sind nicht nur Reisende, Sie sind Pioniere!</p>
-                    <p lang="en">Welcome to the edge of the abyss, dear travelers! You are not just travellers, you are pioneers!</p>    
-                </div>
-
-                <p lang="de">Du hast folgende Orte im Abyss bereits besucht:</p>
-                <p lang="en">You have visited the following places in the abyss:</p>
-                <div id="visited-sections">
-                    <button onclick="display_section('gazette')">gazette</button>
+                
+                <p lang="de">Willkommen am Rande des Abgrunds, werte Reisende! Sie sind nicht nur Reisende, Sie sind Pioniere!</p>
+                <p lang="en">Welcome to the edge of the abyss, dear travelers! You are not just travellers, you are pioneers!</p>
+                
+                <div id="section-overview">
+                    <button onclick="display_section('obolodeon')">obolodeon</button>
                     <button onclick="display_section('pantheon')">pantheon</button>
                     <button onclick="display_section('gallery')">gallery</button>
+                    <button onclick="display_section('gazette')">gazette</button>
                     <button onclick="display_section('transit')">transit</button>
-                    <button onclick="display_section('kaleidoscope')">kaleidoscope</button>
                 </div>
             </div>
 
@@ -624,7 +623,7 @@
             </div>
 
 
-            <div id="kaleidoscope">
+            <div id="obolodeon">
 
                 <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos.</p>
                 <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching.</p>
