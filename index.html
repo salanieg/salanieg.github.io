@@ -295,10 +295,10 @@
 
             .sections {
                 display: flex;
-                justify-content: flex-start;
+                justify-content: space-between;
                 flex-wrap: wrap;
-                gap: 20px;
-                margin: 20px;
+                gap: 30px;
+                margin-top: 20px;
                 margin-bottom: 40px;
             }
 
@@ -359,7 +359,7 @@
             }
 
             p, h2, h3 {
-                max-width: 500px;
+                /* max-width: 500px; */
             }
 
 
@@ -454,6 +454,33 @@
                 width: fit-content;
             }
 
+            .sections button {
+                width: 140px;
+            }
+
+            .sectionthumbnail {
+                object-fit: cover;
+                width: 100%;
+                width: 400px;
+                flex-grow: 3;
+                
+
+                border-radius: 20px;
+                border: 0px solid white;
+                box-shadow: 0px 0px 5px white;
+                cursor: pointer;
+
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+            }
+
+            .section-option {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                justify-content: flex-start;
+            }
+
 
         </style>
     </head>
@@ -466,20 +493,26 @@
             <div id="foyer">
                 <h1>the dialectic wormhole</h1>
                 <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
-                <button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button>
+                <p style="color: red;">we are under construction /// please leave this site immediately</p>
+
+                <!-- <button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
             </div>
 
 
             <div id="launchpad">
                 <h2>launchpad</h2>
-<span style="color: red;">we are under construction /// please leave this site immediately ///</span>
-
                 <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
                 <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
                 <h3 class="select-target">select your target</h3><br>
                 <div class="sections">
-                    <button onclick="display_section('nexus')">nexus</button>
-                    <button onclick="display_section('abyss')">abyss</button>
+                    <div class="section-option">
+                        <img  onclick="display_section('nexus')" class="sectionthumbnail" src="images/sections/nexus.jpeg" alt="nexus thumbnail">
+                        <button onclick="display_section('nexus')">nexus</button>    
+                    </div>
+                    <div class="section-option">
+                        <img  onclick="display_section('abyss')" class="sectionthumbnail" src="images/sections/abyss.jpeg" alt="abyss thumbnail">
+                        <button onclick="display_section('abyss')">abyss</button>
+                    </div>
                 </div>
             </div>
 
@@ -552,11 +585,21 @@
                 <p lang="en">Welcome to the edge of the abyss, dear travelers! You are not just travellers, you are pioneers!</p>
                 
                 <div class="sections">
-                    <button onclick="display_section('obolodeon')">obolodeon</button>
-                    <button onclick="display_section('pantheon')">pantheon</button>
-                    <button onclick="display_section('gallery')">gallery</button>
-                    <button onclick="display_section('gazette')">gazette</button>
-                    <button onclick="display_section('transit')">transit</button>
+                    <div class="section-option">
+                        <img  onclick="display_section('obolodeon')" class="sectionthumbnail" src="images/sections/obolodeon.jpeg" alt="obolodeon thumbnail">
+                        <button onclick="display_section('obolodeon')">nexus</button>    
+                    </div>
+                    <div class="section-option">
+                        <img  onclick="display_section('pantheon')" class="sectionthumbnail" src="images/sections/pantheon.jpeg" alt="pantheon thumbnail">
+                        <button onclick="display_section('pantheon')">abyss</button>
+                    </div>
+                    <div class="section-option">
+                        <img  onclick="display_section('transit')" class="sectionthumbnail" src="images/sections/transit.jpeg" alt="transit thumbnail">
+                        <button onclick="display_section('transit')">nexus</button>    
+                    </div>
+                    <div class="section-option">
+                        <button onclick="display_section('gallery')">abyss</button>
+                    </div>
                 </div>
             </div>
 
@@ -608,6 +651,12 @@
 
 
             <div id="gallery">
+
+            </div>
+
+
+            <div id="obolodeon">
+
                 <div class="album card" data-current="0" onclick="show_card_content(event)">
                     <div class="card-header">
                         <h3 lang="de">non-places</h3>
@@ -628,10 +677,6 @@
                 </div>
 
                 <div class="path"></div>
-            </div>
-
-
-            <div id="obolodeon">
 
                 <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos.</p>
                 <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching.</p>
@@ -668,10 +713,10 @@
             </div>
 
 
-            <div id="gazette">
+            <!-- <div id="gazette">
 
                 <div class="path"></div>
-            </div>
+            </div> -->
         </main>
 
         <footer id="footer"></footer>
