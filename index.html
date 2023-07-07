@@ -163,7 +163,10 @@
             function display_section(id) {  
 
                 if(!redirect) {
+                    console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
+
                     RECENT_LIST.push(CURRENT_ID);
+
                     redirect = false
                 }
 
@@ -203,9 +206,9 @@
             window.onpopstate = function(event){
                 if(RECENT_LIST.length >= 1) {
                     event.preventDefault()
-                    redirect = true
+                    // redirect = true
                     let pop = RECENT_LIST.pop()
-                    console.log("RECENT LIST: " + RECENT_LIST + " POPPED: " + pop)
+                    console.log("POP RECENT LIST: " + RECENT_LIST + " POPPED: " + pop)
                     display_section(pop)
                 }
 

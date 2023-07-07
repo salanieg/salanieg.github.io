@@ -531,7 +531,7 @@ function load_frame(frames, current, slide) {
                 frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1"
             }
             
-            console.log(frames[current])
+            // console.log(frames[current])
             frame.onload = function(){
                 console.log("loaded")
                 thumbnail.remove();
