@@ -355,14 +355,28 @@
                 justify-content: center;
                 align-items: center;
                 flex-wrap: wrap;
-                gap: 15px;
+                gap: 35px;
                 margin-top:30px;
             }
 
-            .album-controls button {
+            .album-controls span {
+                font-size: 26pt;
+                font-weight: 800;
+                cursor: pointer;
+                
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            /* .album-controls button {
                 min-width: unset;
                 max-width: fit-content;
-            }
+            } */
 
             #section-overview {
                 display: flex;
@@ -547,8 +561,8 @@
                             <img src="images/n2.webp">
                         </div>
                         <div class="album-controls">
-                            <button onclick="album_cycle(event, -1)">&lt;</button>
-                            <button onclick="album_cycle(event, 1)">&gt;</button>
+                            <span onclick="album_cycle(event, -1)">&lt;</span>
+                            <span onclick="album_cycle(event, 1)">&gt;</span>
                         </div>
                     </div>
                 </div>
