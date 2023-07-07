@@ -84,6 +84,7 @@
 
         <script>
             var CURRENT_ID = "foyer"
+            var CURRENT_CARD_ID = ""
             var RECENT_LIST = []
             var redirect = false
 
@@ -99,11 +100,26 @@
                 else {
                     display_section("foyer");
                 }
+
+                document.body.addEventListener('click', (event) => {reset_cards(event)})
             }
 
 
-            function reset_cards() {
+            function reset_cards(event) {
+              
+                if(event) {
+                    
+                    let card = event.target
+                    while(!card.classList.contains("card")) {   
+                        card = card.parentElement
+                        if(!card) {break}
+                    }
 
+                    if(card && card.id == CURRENT_CARD_ID) {
+                        return
+                    }
+                } 
+                
                 let card = document.getElementsByClassName("card")
 
                 for (let i = 0; i < card.length; i++) {
@@ -115,41 +131,26 @@
                 for (let i = 0; i < card_content.length; i++) {
                     card_content[i].style.display = "none"
                 }
-
-                let card_close = document.getElementsByClassName("card-close")
-
-                for (let i = 0; i < card_close.length; i++) {
-                    card_close[i].style.display = "none"
-                }
             }
 
-            function show_card_content(event) {                
+            function show_card_content(event) {   
 
                 let card = event.target
 
-                if(card.classList[0] == "card-close") {return}
-
                 // when clicking the h3 heading you have to go back up to the main essay div
 
-                while(card.classList[1] != "card") {
+                while(!card.classList.contains("card")) {
                     card = card.parentElement
                 }
 
                 let card_content = card.getElementsByClassName("card-content")[0]
-                let card_close = card.getElementsByClassName("card-close")[0]
 
-                reset_cards()
+
+                reset_cards(null)
+
                 card.style.cursor = "auto"
-                card_close.style.display = "block"
                 card_content.style.display = "block"
-                // if(window.getComputedStyle(essay_info, null).display == "none") {
-                //     reset_cards()
-                //     essay_info.style.display = "block"
-                // }
-                // else {
-                //     reset_cards()
-                // }
-
+                CURRENT_CARD_ID = card.id      
             }
 
 
@@ -166,15 +167,14 @@
                     redirect = false
                 }
 
-                reset_cards()
+                document.getElementById("content").scrollTop = 0;
+                reset_cards(null)
 
-                let page_elements = document.getElementById("content").childNodes;
+                let page_elements = document.getElementById("content").getElementsByTagName("section");
 
                 for (let i = 0; i < page_elements.length; i++)
-                {                    
-                    if(page_elements[i].tagName == "DIV") {
-                        page_elements[i].style.display = "none"
-                    }
+                {
+                    page_elements[i].style.display = "none"
                 }
                 
                 if(id == "foyer" || id == "launchpad") {
@@ -186,9 +186,7 @@
 
                 let section = document.getElementById(id)
                 section.style.display = "block"
-                // delete ABYSS_SECTION_LIST[id]
-                // add_visited(id)
-                // generate_path(section)
+                
                 load_frame(section.getElementsByTagName("iframe"), 0, slide_current)
 
                 CURRENT_ID = id
@@ -209,7 +207,7 @@
             function album_cycle(event, change) {
                 let album_controls = event.target.parentElement
                 let album = album_controls.parentElement.parentElement
-                // console.log(album)
+
                 let album_images = album.getElementsByClassName("album-images")[0].getElementsByTagName("img")
                 let current_image = album.getAttribute('data-current')
                 
@@ -222,8 +220,6 @@
                 else if (current_image >= album_images.length-1){
                     current_image = album_images.length-1
                 }
-
-                // console.log(current_image)
                 
                 for (let i = 0; i < album_images.length; i++)
                 {                  
@@ -233,63 +229,11 @@
                 album.setAttribute('data-current', current_image)
             }
 
-
-            function generate_path(section) {
-                let path = section.getElementsByClassName("path")[0]
-
-                if(!path || path.getAttribute('data-generated')) {return}
-
-                if(Object.keys(ABYSS_SECTION_LIST).length > 1) {
-                    let path_A = pop_random(ABYSS_SECTION_LIST)
-                    let path_B = pop_random(ABYSS_SECTION_LIST)
-                    path.innerHTML = path.innerHTML + "<p lang='de'>Wähle deinen Pfad! " + path_A.text_de + " oder " + path_B.text_de + "</p><p lang='en'>Choose your path! " + path_A.text_en + " or " + path_B.text_en + "</p><div class='sections'><button onclick='display_section(`" + path_A.button + "`)'>" + path_A.button + "</button><button onclick='display_section(`" + path_B.button + "`)'>" + path_B.button + "</button></div>"
-                }
-                else if(Object.keys(ABYSS_SECTION_LIST).length == 1) {
-                    let path_A = pop_random(ABYSS_SECTION_LIST)
-                    path.innerHTML = path.innerHTML + "<p lang='de'>Dir bleibt ein einziger Pfad! " + path_A.text_de + "</p><p lang='en'>There is only one path left! " + path_A.text_en + "</p><div class='sections'><button onclick='display_section(`" + path_A.button + "`)'>" + path_A.button + "</button></div>"
-                }
-                else {
-                    path.innerHTML = path.innerHTML + "<p lang='de'>Du hast dich durch den Abgrund geschlagen.</p><p lang='en'>You have made it through the abyss.</p><div class='sections'><button onclick='display_section(`launchpad`)'>launchpad</button></div>"
-                }
-
-
-                path.setAttribute('data-generated', "true")
-                reset_language() //needed bc it changes DOM
-            }
-            
-            var last_index
-
-            function pop_random(list) {
-                let keys = Object.keys(list)
-                let index = Math.floor(Math.random()*keys.length)
-                let element = keys[index]
-
-                if(last_index == index) {return pop_random(list)}
-
-                last_index = index
-
-                console.log(keys)
-                console.log(element)
-
-                let object = list[element]
-                // delete list[element]
-                return object
-            }
-
-            function add_visited(id) {
-                let visited_sections = document.getElementById("section-overview").children
-                for (let i = 0; i < visited_sections.length; i++) {
-                    if(visited_sections.item(i).innerHTML == id) {
-                        visited_sections.item(i).style.display = "block";
-                    }
-                }
-            }
-
         </script>
 
         <style>
 
-            main > div {
+            section {
                 display: none;
             }
 
@@ -313,25 +257,8 @@
                 margin-top: 80px;
             }
 
-            /* @media screen and (max-width: 600px) {
-                .sections {
-                    flex-direction: column;
-                }
-
-                .sections button {
-                    width: 100%;
-                    max-width: 180px;
-                }
-
-                .blink {
-                    text-align: center;
-                }
-
-            } */
-
             .select-target {
                 animation: blink 2s linear infinite;
-                /* text-align: center; */
             }
 
             @keyframes blink {
@@ -358,10 +285,6 @@
                 margin: 0px;
             }
 
-            p, h2, h3 {
-                /* max-width: 500px; */
-            }
-
 
             /* CARDS */
 
@@ -375,14 +298,6 @@
 
                 -webkit-tap-highlight-color: transparent;
                 -webkit-touch-callout: none;
-            }
-            
-            .card-header {
-                width:100%;
-                display: flex;
-                align-items: start;
-                justify-content: space-between;
-                gap:20px
             }
 
             .card-close {
@@ -461,7 +376,7 @@
             .sectionthumbnail {
                 object-fit: cover;
                 width: 100%;
-                width: 400px;
+                /* width: 250px; */
                 flex-grow: 3;
                 
 
@@ -490,20 +405,20 @@
 
         <main id="content">
             <img onclick="display_and_skip('launchpad')" id="mainlogo" src="images/logo.png" alt="wormhole">
-            <div id="foyer">
+
+            <section id="foyer">
                 <h1>the dialectic wormhole</h1>
                 <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
                 <p style="color: red;">we are under construction /// please leave this site immediately</p>
 
                 <!-- <button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
-            </div>
+            </section>
 
 
-            <div id="launchpad">
+            <section id="launchpad">
                 <h2>launchpad</h2>
                 <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
                 <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
-                <h3>select your target</h3><br>
                 <div class="sections">
                     <div class="section-option">
                         <img  onclick="display_section('nexus')" class="sectionthumbnail" src="images/sections/nexus.jpeg" alt="nexus thumbnail">
@@ -513,21 +428,22 @@
                         <img  onclick="display_section('abyss')" class="sectionthumbnail" src="images/sections/abyss.jpeg" alt="abyss thumbnail">
                         <button onclick="display_section('abyss')">abyss</button>
                     </div>
+                    <div class="section-option">
+                        <img  onclick="display_section('about')" class="sectionthumbnail" src="images/sections/about.jpeg" alt="about thumbnail">
+                        <button onclick="display_section('about')">about</button>
+                    </div>
                 </div>
-            </div>
+            </section>
 
 
-            <div id="nexus">
+            <section id="nexus">
                 <h2>nexus</h2>
                 <p lang="de">Du bist im Nexus gelandet! Dies ist das Herzstück dieser Website, ein Magazin, das philosophischen Essays gewidmet ist und eine vielfältige Auswahl an Themen behandelt.</p>
                 <p lang="en">You have arrived in the nexus! This is the core of this website, a magazine dedicated to philosophical essays covering a diverse range of topics.</p>
                 
                 <div class="essay card" onclick="show_card_content(event)">
-                    <div class="card-header">
-                        <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
-                        <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>
-                        <button class="card-close" onclick="reset_cards()">x</button>  
-                    </div>
+                    <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
+                    <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>
 
                     <div class="card-content">
                         <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
@@ -540,11 +456,8 @@
                     </div>
                 </div>
                 <div class="essay card" onclick="show_card_content(event)">
-                    <div class="card-header">
-                        <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
-                        <h3 lang="en">Mass culture - alienation through imitation?</h3>
-                        <button class="card-close" onclick="reset_cards()">x</button>      
-                    </div>
+                    <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
+                    <h3 lang="en">Mass culture - alienation through imitation?</h3>
 
                     <div class="card-content">
                         <p lang="de">In diesem Essay wird die Rolle der Nachahmung in der Massenkultur erörtert, wobei der Schwerpunkt auf den Auswirkungen auf Individualität und Kreativität liegt. Der Autor argumentiert, dass die Fähigkeit zur Nachahmung zwar wichtig ist, um kulturelle Artefakte zu schaffen, die die Massen ansprechen, dass aber die Betonung der Nachahmung in der Massenkultur zu einem Verlust an Originalität und zu einer Konzentration darauf geführt hat, einem möglichst großen Publikum zu gefallen. Letztlich geht es in dem Essay um die Frage, ob die auf Nachahmung ausgerichtete Kultur der Massenkultur die Kreativität unterdrückt oder das kollektive Schaffen fördert.</p>
@@ -557,11 +470,8 @@
                     </div>
                 </div>
                 <div class="essay card" onclick="show_card_content(event)">
-                    <div class="card-header">
-                        <h3 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h3>
-                        <h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3> 
-                        <button class="card-close" onclick="reset_cards()">x</button>     
-                    </div>
+                    <h3 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h3>
+                    <h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3>  
 
                     <div class="card-content">
                         <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
@@ -573,10 +483,10 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
 
-            <div id="abyss">
+            <section id="abyss">
                 <h2>abyss</h2>
                 <p lang="de"><i>»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«</i><span data-footnote="3"></span></p>
                 <p lang="en"><i>»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«</i><span data-footnote="3"></span></p>
@@ -598,56 +508,16 @@
                         <button onclick="display_section('transit')">transit</button>    
                     </div>
                 </div>
-            </div>
+            </section>
 
 
-            <!-- <div id="abyss">
-                <h2>abyss</h2>
-                <p lang="de"><i>»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«</i><span data-footnote="3"></span></p>
-                <p lang="en"><i>»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«</i><span data-footnote="3"></span></p>
-                <p lang="de">Willkommen am Rande des Abgrunds, werte Reisende! Erhebt euch aus der Finsternis, um im Pantheon wiederaufzuerstehen... oder erlebt das Schicksal derer, die vom Abgrund verschlungen werden.</p>
-                <p lang="en">Welcome to the edge of the abyss, dear travelers! Rise from the darkness to be resurrected in the Pantheon... or experience the fate of those swallowed by the abyss.</p>
-                <div class="sections"><button onclick="display_section('pantheon')">pantheon</button></div>
-                <div class="path"></div>
-                <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos. Sie sind nicht nur Reisende, Sie sind Pioniere!</p>
-                <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching. You are not just travellers, you are pioneers!</p>
-            
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="Ppa__7ZLAU8" sandbox></iframe>
-                    <p lang="de">arbeit, us-geschichte, ausbeutung</p><p lang="en">work, us-history, exploitation</p>
-                </div>
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="IFe9wiDfb0E" sandbox></iframe>
-                    <p lang="de">jenseits, recht, kapitalismus</p><p lang="en">afterlife, legal, capitalism</p>
-                </div>
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="gEyFH-a-XoQ" sandbox></iframe>
-                    <p lang="de">kafka, verwirrung, flughafen</p><p lang="en">kafka, confusion, airport</p>
-                </div>
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox></iframe>
-                    <p lang="de">philosophie, vergessen, furcht</p><p lang="en">philosophy, oblivion, fear</p>
-                </div>
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
-                    <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
-                </div>
-            
-            </div> -->
-
-
-            <div id="pantheon">
+            <section id="pantheon">
                 <h2>pantheon</h2>
                 <p lang="de">Willkommen, unerschrockene Reisende, am Rande der Zivilisation! Ihr seid dem Abgrund entkommen, aber ihr könnt weder den Grenzen eures Geistes entkommen... noch den Konsequenzen eures Handelns. Willkommen im Pantheon, einem Ort, um den Kopf frei zu bekommen... um über die Vergangenheit nachzudenken... über die Gegenwart... und über die Zukunft.</p>
                 <p lang="en">Welcome, intrepid travelers, to the edge of civilization! You escaped the abyss, but you can’t escape the boundaries of your mind... nor the consequences of your actions. Welcome to the Pantheon, a place to empty the mind... reflect on the past... the present... and the future.</p>
-                <!-- <p lang="de">Wenn man die Kultur kritisieren will, um sie zu verändern, gibt es keinen Gegenspieler, den man bekämpfen kann. Tatsächlich muss man, wenn man effektiv für die Kultur eintreten will, ein System von Umständen bekämpfen.<span data-footnote="2"></span> Das ist es, was die Apostel der Matrix-Filmreihe nicht verstehen wollen: Sie verwandeln sich in Verschwörungsideologen, die versuchen, einen Kampf gegen Figuren zu führen, anstatt sich dem Entwirren von Sachverhalten zu widmen. Aus diesem Grund distanziert sich diese Website nicht nur von Verschwörungsideologien, sondern auch von der Ideologie der Matrix.</p>
-                <p lang="en">If one wants to criticise culture in order to change it, there is no antagonist to fight. Indeed, if you want to effectively stand up for culture, you have to fight a system of circumstances.<span data-footnote="2"></span> This is what apostles of the Matrix film series do not want to understand: They are turning into conspiracy ideologues who try to fight the battle against figures instead of devoting themselves to disentangling facts. For this reason, this website distances itself not only from conspiracy ideologies, but also from the ideology of the Matrix.</p>-->
                 <div class="album card" data-current="0" onclick="show_card_content(event)">
-                    <div class="card-header">
-                        <h3 lang="de">non-places</h3>
-                        <h3 lang="en">non-places</h3>
-                        <button class="card-close" onclick="reset_cards()">x</button>      
-                    </div>
+                    <h3 lang="de">non-places</h3>
+                    <h3 lang="en">non-places</h3>
 
                     <div class="card-content">
                         <div class="album-images">
@@ -660,15 +530,10 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
 
-            <div id="obolodeon">
-
-
-
-                <div class="path"></div>
-
+            <section id="obolodeon">
                 <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos.</p>
                 <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching.</p>
 
@@ -693,13 +558,18 @@
                     <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
                     <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
                 </div>
-            </div>
+            </section>
 
 
-            <div id="transit">
+            <section id="transit">
+                <h2>transit</h2>
+                <h3>select your target</h3>
+            </section>
 
-                <div class="path"></div>
-            </div>
+            <section id="about">
+                <h2>about</h2>
+                <p>Debitz</p>
+            </section>
         </main>
 
         <footer id="footer"></footer>
