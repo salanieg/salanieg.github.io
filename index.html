@@ -177,10 +177,15 @@
                     page_elements[i].style.display = "none"
                 }
                 
-                if(id == "foyer" || id == "launchpad") {
+                if(id == "foyer") {
+                    document.getElementById("footer-nav").style.display = "none"
+                }
+                else if (id == "launchpad") {
+                    document.getElementById("footer-nav").style.display = "flex"
                     document.getElementById("back").style.display = "none"
                 }
                 else {
+                    document.getElementById("footer-nav").style.display = "flex"
                     document.getElementById("back").style.display = "inline"
                 }
 
@@ -232,6 +237,11 @@
         </script>
 
         <style>
+
+            #content {
+                display: grid;
+                grid-template-rows: auto auto 1fr;
+            }
 
             section {
                 display: none;
@@ -400,6 +410,13 @@
                 display: none;
             }
 
+            #footer-nav {
+                display: flex;
+                justify-content: flex-end;
+                flex-direction: column;
+                margin-top: 120px;
+            }
+
 
         </style>
     </head>
@@ -408,8 +425,6 @@
         <header id="header"></header>
 
         <main id="content">
-            <nav><span id="back" onclick="display_section('launchpad')">launchpad </span> > <span id="back" onclick="display_section('abyss')"> abyss</span> > <span id="back" onclick="display_section('obolodeon')"> obolodeon</span></nav>
-
 
             <img onclick="display_and_skip('launchpad')" id="mainlogo" src="images/logo.png" alt="wormhole">
 
@@ -578,12 +593,11 @@
                 <p>Debitz</p>
             </section>
 
-            <br>
-            <br>
-            <br>
-            <br>
-            <nav><a class="nav" href="https://www.dialecticwormhole.page/impressum">impressum</a></nav>
-            <nav><span class="lang-option" id="lang-de" onclick="setlanguage('de')">de</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">en</span></nav>    
+            <div id="footer-nav">
+                <nav id="back" onclick="display_section('launchpad')"><span>launchpad</span></nav>
+                <nav><a class="nav" href="https://www.dialecticwormhole.page/impressum">impressum</a></nav>
+                <nav><span class="lang-option" id="lang-de" onclick="setlanguage('de')">de</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">en</span></nav>    
+            </div>
         </main>
 
         <footer id="footer"></footer>
