@@ -396,6 +396,10 @@
                 justify-content: flex-start;
             }
 
+            #header {
+                display: none;
+            }
+
 
         </style>
     </head>
@@ -404,6 +408,9 @@
         <header id="header"></header>
 
         <main id="content">
+            <button onclick="display_section('launchpad')">back to launchpad</button>    
+
+
             <img onclick="display_and_skip('launchpad')" id="mainlogo" src="images/logo.png" alt="wormhole">
 
             <section id="foyer">
@@ -570,6 +577,13 @@
                 <h2>about</h2>
                 <p>Debitz</p>
             </section>
+
+            <br>
+            <br>
+            <br>
+            <br>
+            <nav><a class="nav" href="https://www.dialecticwormhole.page/impressum">impressum</a></nav>
+            <nav><span class="lang-option" id="lang-de" onclick="setlanguage('de')">de</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">en</span></nav>    
         </main>
 
         <footer id="footer"></footer>
