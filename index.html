@@ -201,10 +201,12 @@
 
 
             window.onpopstate = function(event){
-                if(RECENT_LIST.length > 1) {
+                if(RECENT_LIST.length >= 1) {
                     event.preventDefault()
                     redirect = true
-                    display_section(RECENT_LIST.pop())
+                    let pop = RECENT_LIST.pop()
+                    console.log("RECENT LIST: " + RECENT_LIST + " POPPED: " + pop)
+                    display_section(pop)
                 }
 
             }
