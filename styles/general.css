@@ -61,7 +61,7 @@ body {
 	background-color: var(--content-color);
 	overflow-y: auto;
 	height:100%;
-	padding:40px;
+	padding: 20px;
 	scrollbar-gutter: stable both-edges;
 	display: grid;
 	justify-content: center;
