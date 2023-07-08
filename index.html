@@ -213,13 +213,15 @@
 
             window.onpopstate = function(event){
                 if(RECENT_LIST.length >= 1) {
+                    
+                    event.preventDefault()
+                    
                     if(RECENT_LIST[RECENT_LIST.length - 1] == "foyer") {
                         
                         let inner_pop = RECENT_LIST.pop()
                         console.log("FOYER! RECENT LIST:" + RECENT_LIST + " LENGTH: " + RECENT_LIST.length + " POPPED:" + inner_pop)
                         return
                     }
-                    event.preventDefault()
                     redirect = true
                     let pop = RECENT_LIST.pop()
 
