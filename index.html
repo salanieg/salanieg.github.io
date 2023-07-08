@@ -209,7 +209,7 @@
 
             window.onpopstate = function(event){
                 if(RECENT_LIST.length >= 1) {
-                    if([RECENT_LIST.length - 1] == "foyer") {
+                    if(RECENT_LIST[RECENT_LIST.length - 1] == "foyer") {
                         console.log("FOYER!")
                         return
                     }
