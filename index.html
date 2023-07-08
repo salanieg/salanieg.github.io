@@ -211,6 +211,7 @@
                 if(RECENT_LIST.length >= 1) {
                     if(RECENT_LIST[RECENT_LIST.length - 1] == "foyer") {
                         console.log("FOYER!")
+                        RECENT_LIST.pop()
                         return
                     }
                     event.preventDefault()
