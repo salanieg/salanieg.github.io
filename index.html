@@ -212,7 +212,7 @@
 
 
             window.onpopstate = function(event){
-                    event.preventDefault()
+                event.preventDefault()
                 if(RECENT_LIST.length >= 1) {
                     
 
@@ -227,6 +227,9 @@
 
                     console.log("POP RECENT LIST: " + RECENT_LIST + " POPPED: " + pop)
                     display_section(pop)
+                }
+                else {
+                    history.back()
                 }
 
             }
