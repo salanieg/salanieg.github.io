@@ -163,15 +163,15 @@
             function display_section(id) {  
 
                 if(back_nav) {
+                    console.log("BACK NAV: " + RECENT_LIST)
                     back_nav = false
                 }
                 else {
-                    console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
-
                     while(CURRENT_ID == RECENT_LIST[RECENT_LIST.length - 1]) {
                         RECENT_LIST[RECENT_LIST.length - 1] = null
-                        console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
                     }
+
+                    console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
                     RECENT_LIST.push(CURRENT_ID);
                 }
 
@@ -205,16 +205,15 @@
 
             window.onpopstate = function(event){
                 event.preventDefault()
-                if(RECENT_LIST.length > 1) {
+                if(RECENT_LIST.length > 1 && RECENT_LIST[RECENT_LIST.length - 1] != "foyer") {
                     
 
-                    if(RECENT_LIST[RECENT_LIST.length - 1] == "foyer") {
-                        
-                        let inner_pop = RECENT_LIST.pop()
-                        console.log("FOYER! RECENT LIST:" + RECENT_LIST + " LENGTH: " + RECENT_LIST.length + " POPPED:" + inner_pop)
-			            history.back()
-                        return
-                    }
+                    // if(RECENT_LIST[RECENT_LIST.length - 1] == "foyer") {
+                    //     let inner_pop = RECENT_LIST.pop()
+                    //     console.log("FOYER! RECENT LIST:" + RECENT_LIST + " LENGTH: " + RECENT_LIST.length + " POPPED:" + inner_pop)
+			        //     history.back()
+                    //     return
+                    // }
                     back_nav = true
                     let pop = RECENT_LIST.pop()
 
