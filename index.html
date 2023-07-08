@@ -184,17 +184,21 @@
                     page_elements[i].style.display = "none"
                 }
                 
-                if(id == "foyer") {
-                    document.getElementById("footer-nav").style.display = "none"
-                }
-                else if (id == "launchpad") {
-                    document.getElementById("footer-nav").style.display = "flex"
+                if(id == "foyer" || id == "launchpad") {
+                    // document.getElementById("footer-nav").style.display = "none"
                     document.getElementById("back").style.display = "none"
                 }
                 else {
-                    document.getElementById("footer-nav").style.display = "flex"
                     document.getElementById("back").style.display = "inline"
                 }
+                // else if (id == "launchpad") {
+                //     // document.getElementById("footer-nav").style.display = "flex"
+                //     document.getElementById("back").style.display = "none"
+                // }
+                // else {
+                //     // document.getElementById("footer-nav").style.display = "flex"
+                //     document.getElementById("back").style.display = "inline"
+                // }
 
                 let section = document.getElementById(id)
                 section.style.display = "block"
