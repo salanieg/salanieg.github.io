@@ -86,7 +86,7 @@
             var CURRENT_ID = "foyer"
             var CURRENT_CARD_ID = ""
             var RECENT_LIST = []
-            var redirect = false
+            var back_nav = false
 
             function pre_init() {
                 if(localStorage.getItem("dialecticwormhole_skip") == "true"){
@@ -162,7 +162,10 @@
 
             function display_section(id) {  
 
-                if(!redirect) {
+                if(back_nav) {
+                    redirect = false
+                }
+                else {
                     console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
 
                     while(CURRENT_ID == RECENT_LIST[RECENT_LIST.length - 1]) {
@@ -170,8 +173,6 @@
                         console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
                     }
                     RECENT_LIST.push(CURRENT_ID);
-
-                    redirect = false
                 }
 
                 document.getElementById("content").scrollTop = 0;
@@ -185,20 +186,11 @@
                 }
                 
                 if(id == "foyer" || id == "launchpad") {
-                    // document.getElementById("footer-nav").style.display = "none"
                     document.getElementById("back").style.display = "none"
                 }
                 else {
                     document.getElementById("back").style.display = "inline"
                 }
-                // else if (id == "launchpad") {
-                //     // document.getElementById("footer-nav").style.display = "flex"
-                //     document.getElementById("back").style.display = "none"
-                // }
-                // else {
-                //     // document.getElementById("footer-nav").style.display = "flex"
-                //     document.getElementById("back").style.display = "inline"
-                // }
 
                 let section = document.getElementById(id)
                 section.style.display = "block"
@@ -220,10 +212,10 @@
                         
                         let inner_pop = RECENT_LIST.pop()
                         console.log("FOYER! RECENT LIST:" + RECENT_LIST + " LENGTH: " + RECENT_LIST.length + " POPPED:" + inner_pop)
-			history.back()
+			            history.back()
                         return
                     }
-                    redirect = true
+                    back_nav = true
                     let pop = RECENT_LIST.pop()
 
                     console.log("POP RECENT LIST: " + RECENT_LIST + " POPPED: " + pop)
