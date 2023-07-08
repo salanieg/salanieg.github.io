@@ -210,8 +210,9 @@
             window.onpopstate = function(event){
                 if(RECENT_LIST.length >= 1) {
                     if(RECENT_LIST[RECENT_LIST.length - 1] == "foyer") {
-                        console.log("FOYER!")
-                        RECENT_LIST.pop()
+                        
+                        let inner_pop = RECENT_LIST.pop()
+                        console.log("FOYER! POPPED" + inner_pop)
                         return
                     }
                     event.preventDefault()
