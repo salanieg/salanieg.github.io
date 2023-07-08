@@ -32,8 +32,6 @@
 
             load_components(["header", "footer", "databanner"])
             
-            
-        
             const FOOTNOTE_LIST = [
                 {
                     text_de: "Der Inhalt dieser Website ist daher in der Regel unter einer freien Kulturlizenz (CC BY-SA 4.0) verfügbar. Die Lizenz kann, falls vorhanden, neben dem entsprechenden Inhalt eingesehen werden.",
@@ -52,34 +50,6 @@
                     text_en: "Note: The U1 line currently only serves from Muggenhof to Langwasser Süd. Best regards, the robotic subway operator!"
                 }
             ]
-
-            var ABYSS_SECTION_LIST = {
-                "pantheon": {
-                    button: "pantheon",
-                    text_de: "Erhebt euch aus der Finsternis, um im Pantheon wiederaufzuerstehen...",
-                    text_en: "Rise from the darkness to be resurrected in the Pantheon..."
-                },
-                "gallery": {
-                    button: "gallery",
-                    text_de: "Taucht auf aus den Tiefen der Dunkelheit und erhebt euch in die Sphäre der Galerie, wo euer Geist Erneuerung findet...",
-                    text_en: "Emerging from the depths of obscurity, transcend into the realm of the gallery, where your spirit finds rejuvenation..."
-                },
-                "gazette": {
-                    button: "gazette",
-                    text_de: "Erwacht in den Seiten der Gazette, wo Geschichten zum Leben erweckt werden, Flüstern durch die Korridore der Tinte hallen und Wissen im flackernden Licht der Neugierde tanzt, euch einladend, das weite Geflecht menschlicher Erfahrungen zu erkunden...",
-                    text_en: "Awaken within the pages of the Gazette, where stories come alive, whispers echo through the corridors of ink, and knowledge dances in the flickering light of curiosity, inviting you to explore the vast tapestry of human experiences..."
-                },
-                "transit": {
-                    button: "transit",
-                    text_de: "Umarmt den Wind des Wandels und begebt euch auf eine transformative Reise durch die Sphäre des Transits, wo die Grenzen von Zeit und Raum verschwimmen und die Essenz eures Seins neu geformt wird..",
-                    text_en: "Embrace the winds of change and embark on a transformative journey through the realm of transit, where the boundaries of time and space blur, and the very essence of your being is reshaped..."
-                }, 
-                "obolodeon": {
-                    button: "obolodeon",
-                    text_de: "Tretet ein in die bezaubernde Sphäre des Kaleidoskops, in der die Realität sich in ein faszinierendes Gewebe aus leuchtenden Farben und ständig wechselnden Mustern auflöst, und offenbart das Kaleidoskop eurer eigenen Vorstellungskraft...",
-                    text_en: "Step into the obolodeon's enchanting realm, where reality fractures into a mesmerizing tapestry of vibrant colors and ever-shifting patterns, unveiling the obolodeon of your own imagination.."
-                }
-            }
         </script>
 
         <script>
@@ -163,7 +133,7 @@
             function display_section(id) {  
 
                 if(back_nav) {
-                    console.log("BACK NAV: " + RECENT_LIST)
+                    // console.log("BACK NAV: " + RECENT_LIST)
                     back_nav = false
                 }
                 else {
@@ -171,7 +141,7 @@
                         RECENT_LIST[RECENT_LIST.length - 1] = null
                     }
 
-                    console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
+                    // console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
                     RECENT_LIST.push(CURRENT_ID);
                 }
 
@@ -204,7 +174,9 @@
 
 
             window.onpopstate = function(event){
+
                 event.preventDefault()
+
                 if(RECENT_LIST.length > 1 && RECENT_LIST[RECENT_LIST.length - 1] != "foyer") {
                     
 
@@ -214,11 +186,13 @@
 			        //     history.back()
                     //     return
                     // }
-                    back_nav = true
-                    let pop = RECENT_LIST.pop()
+                    // let pop = RECENT_LIST.pop()
 
-                    console.log("POP RECENT LIST: " + RECENT_LIST + " POPPED: " + pop)
-                    display_section(pop)
+                    // console.log("POP RECENT LIST: " + RECENT_LIST + " POPPED: " + pop)
+
+                    
+                    back_nav = true
+                    display_section(RECENT_LIST.pop())
                 }
                 else {
                     history.back()
@@ -255,11 +229,6 @@
 
         <style>
 
-            /* #content {
-                display: grid;
-                grid-template-rows: auto auto 1fr;
-            } */
-
             section {
                 display: none;
             }
@@ -284,7 +253,7 @@
                 margin-top: 80px;
             }
 
-            .select-target {
+            /* .select-target {
                 animation: blink 2s linear infinite;
             }
 
@@ -292,7 +261,7 @@
                 0% {opacity: 1;}
                 50% {opacity: 0.2;}
                 100% {opacity: 1;}
-            }
+            } */
 
             #mainlogo {
                 margin: 50px 0px;
@@ -326,15 +295,6 @@
                 -webkit-tap-highlight-color: transparent;
                 -webkit-touch-callout: none;
             }
-
-            /* .card-close {
-                border-radius: 10px;
-                height:35px;
-                padding: 0px;
-                width:35px;
-                min-width: 35px;
-                max-width: 35px;
-            } */
 
             .card-content {
                 margin-top: 30px;
@@ -390,15 +350,9 @@
                 user-select: none;
             }
 
-            /* .album-controls button {
-                min-width: unset;
-                max-width: fit-content;
-            } */
-
             #section-overview {
                 display: flex;
                 flex-wrap: wrap;
-                /* justify-content: center; */
                 gap: 20px;
                 margin-left: 20px;
                 margin-right: 20px;
@@ -406,7 +360,6 @@
             }
 
             #section-overview button {
-                /* display: none; */
                 width: fit-content;
             }
 
@@ -417,9 +370,6 @@
             .sectionthumbnail {
                 object-fit: cover;
                 width: 100%;
-                /* width: 250px; */
-                flex-grow: 3;
-                
 
                 border-radius: 20px;
                 border: 0px solid white;
@@ -437,17 +387,6 @@
                 justify-content: flex-start;
             }
 
-            /* #header {
-                display: none;
-            } */
-
-            /* #footer-nav {
-                display: flex;
-                justify-content: flex-end;
-                flex-direction: column;
-                margin-top: 120px;
-            } */
-
 
         </style>
     </head>
@@ -463,7 +402,6 @@
                 <h1>the dialectic wormhole</h1>
                 <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
                 <p style="color: red;">we are under construction /// please leave this site immediately</p>
-
                 <!-- <button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
             </section>
 
@@ -508,6 +446,7 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="essay card" onclick="show_card_content(event)">
                     <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
                     <h3 lang="en">Mass culture - alienation through imitation?</h3>
@@ -522,6 +461,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="essay card" onclick="show_card_content(event)">
                     <h3 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h3>
                     <h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3>  
@@ -536,7 +476,8 @@
                         </div>
                     </div>
                 </div>
-		    <div class="essay card" onclick="show_card_content(event)">
+
+		        <div class="essay card" onclick="show_card_content(event)">
                     <h3 lang="de">Charakterisierung der modernen Wahlkampfkommunikation: Kanäle der politischen Kommunikation</h3>
                     <h3 lang="en">Characterization of modern election campaign communication: Channels of political communication</h3>  
 
@@ -605,13 +546,13 @@
                         <div class="album-images">
                            	<img src="images/tg1.webp">
                            	<img src="images/tg2.webp">
-				<img src="images/tg3.webp">
-				<img src="images/tg4.webp">
-				<img src="images/tg5.webp">
-				<img src="images/tg6.webp">
-				<img src="images/tg7.webp">
-				<img src="images/tg8.webp">
-				<img src="images/tg9.webp">
+                            <img src="images/tg3.webp">
+                            <img src="images/tg4.webp">
+                            <img src="images/tg5.webp">
+                            <img src="images/tg6.webp">
+                            <img src="images/tg7.webp">
+                            <img src="images/tg8.webp">
+                            <img src="images/tg9.webp">
                         </div>
                         <div class="album-controls">
                             <span onclick="album_cycle(event, -1)">&lt;</span>
@@ -623,6 +564,7 @@
 
 
             <section id="obolodeon">
+                <h2>obolodeon</h2>
                 <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett des Geistes. Genieße unsere Sammlung sehenswerter Videos.</p>
                 <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet of the mind. Enjoy our collection of videos worth watching.</p>
 
@@ -657,15 +599,9 @@
 
             <section id="about">
                 <h2>about</h2>
-		<p lang="de">Sei gegrüßt!<br><br>Dieses kleine Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln, sodass ich und du keine sozialen Medien nutzen müssen. Ich versuche, regelmäßig eine Vielzahl von Inhalten hochzuladen, einschließlich Philosophie, Politik, Wissenschaft oder einfach nur Unterhaltung.<br><br>Wenn du an neuen Inhalten interessiert bist, dannn besuche von Zeit zu Zeit gerne die Orte (oder Nicht-Orte) innerhalb dieser Website.<br><br>🛈 Du kannst das Wurmloch-Symbol nutzen, um zur Startseite zurückzukehren!<br><br>Diese Seite ist keine Plattform. Bitte beachte, dass ich nicht vorhabe und auch nicht in der Lage sein werde, eine Kommentarinfrastruktur zu bieten. Solltest du das Bedürfnis haben, mich zu kontaktieren und einen spezifischen Grund dafür haben, besuche bitte das Impressum für Kontaktinformationen.<br><br>Trotz des unheimlichen Designs gibt es auf dieser Seite keine Schockeffekte. Sei eingeladen, das dialektische Wurmloch zu entdecken und zu teilen, und genieße deinen Besuch!<br><br>Beste Grüße<br>Dennis, Admin</p>
+		        <p lang="de">Sei gegrüßt!<br><br>Dieses kleine Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln, sodass ich und du keine sozialen Medien nutzen müssen. Ich versuche, regelmäßig eine Vielzahl von Inhalten hochzuladen, einschließlich Philosophie, Politik, Wissenschaft oder einfach nur Unterhaltung.<br><br>Wenn du an neuen Inhalten interessiert bist, dannn besuche von Zeit zu Zeit gerne die Orte (oder Nicht-Orte) innerhalb dieser Website.<br><br>🛈 Du kannst das Wurmloch-Symbol nutzen, um zur Startseite zurückzukehren!<br><br>Diese Seite ist keine Plattform. Bitte beachte, dass ich nicht vorhabe und auch nicht in der Lage sein werde, eine Kommentarinfrastruktur zu bieten. Solltest du das Bedürfnis haben, mich zu kontaktieren und einen spezifischen Grund dafür haben, besuche bitte das Impressum für Kontaktinformationen.<br><br>Trotz des unheimlichen Designs gibt es auf dieser Seite keine Schockeffekte. Sei eingeladen, das dialektische Wurmloch zu entdecken und zu teilen, und genieße deinen Besuch!<br><br>Beste Grüße<br>Dennis, Admin</p>
                 <p lang="en">Hey there!<br><br>This little website project is dedicated to gather some interesting stuff I want to share in one place, so me and you dont't have to use social media. I try to regularly upload a wide range of content, including philosophy, science, politics or just entertainment.<br><br>If you are interested in new content, you might want to visit the places (or non-places) within this website from time to time.<br><br>🛈 Consider using the wormhole icon to navigate back to the launchpad!<br><br>This site is not a platform. Please take into account that I do not plan and will not be able to provide any comment infrastructure. If you find the need to contact me and have an specific reason to do so, please visit the impressum for contact information.<br><br>Despite the eerie design, there are no jumpscares on this site. Feel free to discover and share the dialectic wormhole and enjoy your visit!<br><br>Yours sincerely,<br>Dennis, admin</p>
             </section>
-<!-- 
-            <div id="footer-nav">
-                <nav id="back" onclick="display_section('launchpad')"><span>launchpad</span></nav>
-                <nav><a class="nav" href="https://www.dialecticwormhole.page/impressum">impressum</a></nav>
-                <nav><span class="lang-option" id="lang-de" onclick="setlanguage('de')">de</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">en</span></nav>    
-            </div> -->
         </main>
 
         <footer id="footer"></footer>
