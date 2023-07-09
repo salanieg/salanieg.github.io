@@ -234,11 +234,11 @@
             }
 
             .sections {
-                display: grid;
-                grid-template-rows: auto;
+                display: flex;
+                /* grid-template-rows: auto;
                 grid-template-columns: 1fr 1fr 1fr;
                 grid-template-areas: ". . .";
-                place-items: center;
+                place-items: center; */
                 justify-content: space-between;
                 flex-wrap: wrap;
                 gap: 30px;
@@ -247,14 +247,15 @@
             }
 
             .cards {
-                display: grid;
+                /* display: flex; */
+                /* display: grid;
                 grid-template-rows: auto;
                 grid-template-columns: 1fr 1fr 1fr 1fr;
-                grid-template-areas: ". . . .";
+                grid-template-areas: ". . . ."; */
                 /* place-items: center; */
-                justify-content: space-between;
-                flex-wrap: wrap;
-                gap: 30px;
+                /* justify-content: space-between;
+                flex-wrap: wrap; */
+                /* gap: 30px; */
                 margin-top: 20px;
                 margin-bottom: 40px;
             }
@@ -272,9 +273,9 @@
             #mainlogo {
                 margin: 50px 0px;
                 cursor: pointer;
-                max-width: 700px;
+                /* max-width: 700px;
                 margin-left: auto;
-                margin-right: auto;
+                margin-right: auto; */
 
                 
                 -webkit-tap-highlight-color: transparent;
@@ -300,6 +301,7 @@
             .card {
                 padding: 20px 20px;
                 margin-bottom: 25px;
+                width: 100%;
 
                 border-radius: 20px;
                 border: 0px solid white;
