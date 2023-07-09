@@ -215,9 +215,9 @@ p {
 	line-height: 1.9;
 	margin:0px;
 	overflow-wrap: break-word;
-	text-align: justify;
+	text-align: left;
 	margin-bottom: 40px;
-	font-size: 3rem;
+	font-size: 2rem;
 	font-weight: 700;
 	line-height: 1.3;
 }
