@@ -89,17 +89,47 @@ main > * {
 
 /* SELECTION */
 
-#header *::selection, *::-webkit-selection, *::-moz-selection {
+#header *::-moz-selection {
 	color: var(--header-color);
 	background: var(--header-color-contrast);
 }
 
-#content *::selection, *::-webkit-selection, *::-moz-selection {
+#header *::-webkit-selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
+
+#header *::selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
+
+#content *::-moz-selection {
 	color: var(--content-color-contrast-text);
 	background: var(--content-color-contrast);
 }
 
-#footer *::selection, *::-webkit-selection, *::-moz-selection {
+#content *::-webkit-selection {
+	color: var(--content-color-contrast-text);
+	background: var(--content-color-contrast);
+}
+
+#content *::selection {
+	color: var(--content-color-contrast-text);
+	background: var(--content-color-contrast);
+}
+
+#footer *::-moz-selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
+
+#footer *::-webkit-selection {
+	color: var(--header-color);
+	background: var(--header-color-contrast);
+}
+
+#footer *::selection {
 	color: var(--header-color);
 	background: var(--header-color-contrast);
 }
@@ -308,12 +338,32 @@ button[disabled]{
 /* FORM */
 
 
-input::selection, input::-webkit-selection, input::-moz-selection  {
+input::-moz-selection  {
 	color:initial !important;
 	background: transparent !important;
 }
 
-button::selection, button::-webkit-selection, button::-moz-selection  {
+input::-webkit-selection {
+	color:initial !important;
+	background: transparent !important;
+}
+
+input::selection {
+	color:initial !important;
+	background: transparent !important;
+}
+
+button::-moz-selection  {
+	color:initial !important;
+	background: transparent !important;
+}
+
+button::-webkit-selection  {
+	color:initial !important;
+	background: transparent !important;
+}
+
+button::selection  {
 	color:initial !important;
 	background: transparent !important;
 }
