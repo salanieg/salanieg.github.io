@@ -296,7 +296,7 @@ button {
   font-weight: 700;
   font-size: var(--font-regular);
   appearance: none;
-  border-radius: 20px;
+  border-radius: 0px;
   padding: 5px 20px;
   min-width: 120px;
   background: white;
