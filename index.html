@@ -626,29 +626,6 @@
     <h2>transit</h2>
     <p lang="de">Willkommen im interdimensionalen Reisebüro. Bitte wähle dein Ziel.</p>
     <p lang="en">Welcome to the interdimensional travel agency. Please select your target.</p>
-    
-    <!-- Adding example links -->
-    <a href="https://example-link1.com" id="link1">Example Link 1</a><br>
-    <a href="https://example-link2.com" id="link2">Example Link 2</a><br>
-    <a href="https://example-link3.com" id="link3">Example Link 3</a><br>
-
-    <!-- Adding a button to randomly visit one of the links -->
-    <button id="randomButton">RANDOM</button>
-
-    <script>
-        // JavaScript to implement the RANDOM button functionality
-        document.getElementById("randomButton").addEventListener("click", function() {
-            // Array of link IDs
-            var links = ["link1", "link2"];
-
-            // Generate a random index
-            var randomIndex = Math.floor(Math.random() * links.length);
-            
-            // Get the link by ID and navigate
-            var randomLink = document.getElementById(links[randomIndex]).href;
-            window.location.href = randomLink;
-        });
-    </script>
 </section>
 
 
