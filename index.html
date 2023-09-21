@@ -424,29 +424,100 @@
                 <h2>launchpad</h2>
                 <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
                 <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
-               	<div class="sections">
+        <div class="sections">
+		<div class="section-option">
+                        <img  onclick="display_section('nexus')" class="sectionthumbnail" src="images/sections/nexus.webp" alt="nexus thumbnail">
+                        <button onclick="display_section('nexus')">nexus</button>    
+                </div>
 		<div class="section-option">
                         <img  onclick="display_section('abyss')" class="sectionthumbnail" src="images/sections/abyss.webp" alt="abyss thumbnail">
                         <button onclick="display_section('abyss')">abyss</button>
-                    </div>
-                    <div class="section-option">
-                        <img  onclick="display_section('nexus')" class="sectionthumbnail" src="images/sections/nexus.webp" alt="nexus thumbnail">
-                        <button onclick="display_section('nexus')">nexus</button>    
-                    </div>
-                    <div class="section-option">
+        	 </div>
+                 <div class="section-option">
                         <img  onclick="display_section('about')" class="sectionthumbnail" src="images/sections/about.webp" alt="about thumbnail">
                         <button onclick="display_section('about')">about</button>
-                    </div>
                 </div>
+         </div>
             </section>
 
 
             <section id="nexus">
                 <h2>nexus</h2>
-                <p lang="de">Du bist im Nexus gelandet! Dies ist das Herzstück dieser Website, ein Magazin, das philosophischen Essays gewidmet ist und eine vielfältige Auswahl an Themen behandelt.</p>
-                <p lang="en">You have arrived in the nexus! This is the core of this website, a magazine dedicated to philosophical essays covering a diverse range of topics.</p>
+                <p lang="de">Du bist im Nexus gelandet! Dies ist das Herzstück dieser Website.</p>
+                <p lang="en">You have arrived in the nexus! This is the core of this website.</p>
+
+		  <div class="album card" data-current="0" onclick="show_card_content(event)">
+                    <h3 lang="de">nicht-orte</h3>
+                    <h3 lang="en">non-places</h3>
+
+                    <div class="card-content">
+                        <div class="album-images">
+                            <img src="images/n1.webp">
+                            <img src="images/n2.webp">
+                        </div>
+                        <div class="album-controls">
+                            <span onclick="album_cycle(event, -1)">&lt;</span>
+                            <span onclick="album_cycle(event, 1)">&gt;</span>
+                        </div>
+                    </div>
+                </div>
+		      <div class="album card" data-current="0" onclick="show_card_content(event)">
+                    <h3 lang="de">the great kingdom</h3>
+                    <h3 lang="en">the great kingdom</h3>
+
+                    <div class="card-content">
+                        <div class="album-images">
+                           	<img src="images/tg1.webp">
+                           	<img src="images/tg2.webp">
+                            <img src="images/tg3.webp">
+                            <img src="images/tg4.webp">
+                            <img src="images/tg5.webp">
+                            <img src="images/tg6.webp">
+                            <img src="images/tg7.webp">
+                            <img src="images/tg8.webp">
+                            <img src="images/tg9.webp">
+                        </div>
+                        <div class="album-controls">
+                            <span onclick="album_cycle(event, -1)">&lt;</span>
+                            <span onclick="album_cycle(event, 1)">&gt;</span>
+                        </div>
+                    </div>
+                </div>
+              
+            </section>
+
+
+            <section id="abyss">
+                <h2>abyss</h2>
+                <p lang="de">»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«<span data-footnote="3"></span></p>
+                <p lang="en">»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«<span data-footnote="3"></span></p>
                 
-                <div class="cards">
+                <p lang="de">Willkommen am Rand des Abgrunds, werte Reisende! Erhebt euch aus dem Abgrund, um im Obolodeon-Theater wiederaufzuerstehen, bahnt euch euren Weg durch die Arkaden des Pantheons oder stellt euch dem Schicksal jener, die vom Abgrund verschlungen werden. Setzt eure Reise im Transitbereich fort, um weitere unbekannte Orte zu erkunden. Das Abenteuer erwartet euch!</p>
+                <p lang="en">Welcome to the edge of the abyss, dear travelers! Rise from the abyss to resurrect in the obolodeon theatre, make your way through the arcades of the pantheon, or face the fate of those who are consumed by the abyss. To explore new unknown places, start your next journey in the transit area. The adventure awaits!</p>
+                
+                <div class="sections">
+                    <div class="section-option">
+                        <img  onclick="display_section('obolodeon')" class="sectionthumbnail" src="images/sections/obolodeon.webp" alt="obolodeon thumbnail">
+                        <button onclick="display_section('obolodeon')">obolodeon</button>    
+                    </div>
+                    <div class="section-option">
+                        <img  onclick="display_section('pantheon')" class="sectionthumbnail" src="images/sections/pantheon.webp" alt="pantheon thumbnail">
+                        <button onclick="display_section('pantheon')">pantheon</button>
+                    </div>
+                    <div class="section-option">
+                        <img  onclick="display_section('transit')" class="sectionthumbnail" src="images/sections/transit.webp" alt="transit thumbnail">
+                        <button onclick="display_section('transit')">transit</button>    
+                    </div>
+                </div>
+            </section>
+
+
+            <section id="pantheon">
+                <h2>pantheon</h2>
+                <p lang="de">Willkommen, unerschrockene Reisende, am Rande der Zivilisation! Ihr seid dem Abgrund entkommen, aber ihr könnt weder den Grenzen eures Geistes entkommen... noch den Konsequenzen eures Handelns. Willkommen im Pantheon, einem Ort, um den Kopf frei zu bekommen... um über die Vergangenheit nachzudenken... über die Gegenwart... und über die Zukunft.</p>
+                <p lang="en">Welcome, intrepid travelers, to the edge of civilization! You escaped the abyss, but you can’t escape the boundaries of your mind... nor the consequences of your actions. Welcome to the Pantheon, a place to empty the mind... reflect on the past... the present... and the future.</p>
+
+		 <div class="cards">
                     <div class="essay card" onclick="show_card_content(event)">
                         <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
                         <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>
@@ -505,75 +576,6 @@
                                 <a lang="de" href="files/de/DWKanäle_der_politischen_Kommunikation.pdf" target="_blank"><button>datei öffnen</button></a>
                                 <a lang="en" href="files/en/DWKanäle_der_politischen_Kommunikation.pdf" target="_blank"><button>open file</button></a>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-
-            <section id="abyss">
-                <h2>abyss</h2>
-                <p lang="de">»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«<span data-footnote="3"></span></p>
-                <p lang="en">»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«<span data-footnote="3"></span></p>
-                
-                <p lang="de">Willkommen am Rand des Abgrunds, werte Reisende! Erhebt euch aus dem Abgrund, um im Obolodeon-Theater wiederaufzuerstehen, bahnt euch euren Weg durch die Arkaden des Pantheons oder stellt euch dem Schicksal jener, die vom Abgrund verschlungen werden. Setzt eure Reise im Transitbereich fort, um weitere unbekannte Orte zu erkunden. Das Abenteuer erwartet euch!</p>
-                <p lang="en">Welcome to the edge of the abyss, dear travelers! Rise from the abyss to resurrect in the obolodeon theatre, make your way through the arcades of the pantheon, or face the fate of those who are consumed by the abyss. To explore new unknown places, start your next journey in the transit area. The adventure awaits!</p>
-                
-                <div class="sections">
-                    <div class="section-option">
-                        <img  onclick="display_section('obolodeon')" class="sectionthumbnail" src="images/sections/obolodeon.webp" alt="obolodeon thumbnail">
-                        <button onclick="display_section('obolodeon')">obolodeon</button>    
-                    </div>
-                    <div class="section-option">
-                        <img  onclick="display_section('pantheon')" class="sectionthumbnail" src="images/sections/pantheon.webp" alt="pantheon thumbnail">
-                        <button onclick="display_section('pantheon')">pantheon</button>
-                    </div>
-                    <div class="section-option">
-                        <img  onclick="display_section('transit')" class="sectionthumbnail" src="images/sections/transit.webp" alt="transit thumbnail">
-                        <button onclick="display_section('transit')">transit</button>    
-                    </div>
-                </div>
-            </section>
-
-
-            <section id="pantheon">
-                <h2>pantheon</h2>
-                <p lang="de">Willkommen, unerschrockene Reisende, am Rande der Zivilisation! Ihr seid dem Abgrund entkommen, aber ihr könnt weder den Grenzen eures Geistes entkommen... noch den Konsequenzen eures Handelns. Willkommen im Pantheon, einem Ort, um den Kopf frei zu bekommen... um über die Vergangenheit nachzudenken... über die Gegenwart... und über die Zukunft.</p>
-                <p lang="en">Welcome, intrepid travelers, to the edge of civilization! You escaped the abyss, but you can’t escape the boundaries of your mind... nor the consequences of your actions. Welcome to the Pantheon, a place to empty the mind... reflect on the past... the present... and the future.</p>
-                <div class="album card" data-current="0" onclick="show_card_content(event)">
-                    <h3 lang="de">nicht-orte</h3>
-                    <h3 lang="en">non-places</h3>
-
-                    <div class="card-content">
-                        <div class="album-images">
-                            <img src="images/n1.webp">
-                            <img src="images/n2.webp">
-                        </div>
-                        <div class="album-controls">
-                            <span onclick="album_cycle(event, -1)">&lt;</span>
-                            <span onclick="album_cycle(event, 1)">&gt;</span>
-                        </div>
-                    </div>
-                </div>
-		      <div class="album card" data-current="0" onclick="show_card_content(event)">
-                    <h3 lang="de">the great kingdom</h3>
-                    <h3 lang="en">the great kingdom</h3>
-
-                    <div class="card-content">
-                        <div class="album-images">
-                           	<img src="images/tg1.webp">
-                           	<img src="images/tg2.webp">
-                            <img src="images/tg3.webp">
-                            <img src="images/tg4.webp">
-                            <img src="images/tg5.webp">
-                            <img src="images/tg6.webp">
-                            <img src="images/tg7.webp">
-                            <img src="images/tg8.webp">
-                            <img src="images/tg9.webp">
-                        </div>
-                        <div class="album-controls">
-                            <span onclick="album_cycle(event, -1)">&lt;</span>
-                            <span onclick="album_cycle(event, 1)">&gt;</span>
                         </div>
                     </div>
                 </div>
