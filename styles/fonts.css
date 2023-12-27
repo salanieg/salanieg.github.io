@@ -73,9 +73,9 @@
 
 @font-face {
     font-family: 'Squatina';
-    src: url('Squatina-Regular.ttf') format('truetype'),
-        url('Squatina-Regular.woff2') format('woff2'),
-        url('Squatina-Regular.woff') format('woff');
+    src: url('https://www.dialecticwormhole.page/fonts/Squatina/Squatina-Regular.ttf') format('truetype'),
+        url('https://www.dialecticwormhole.page/fonts/Squatina/Squatina-Regular.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/fonts/Squatina/Squatina-Regular.woff') format('woff');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
