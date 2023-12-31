@@ -17,12 +17,13 @@
 			}
 
             header {
+				padding: 1vw;
                 display: flex;
                 width:100%;
                 flex-flow: row;
-                padding: 5px;
                 gap: 20px;
-                justify-content: flex-end;
+				align-items: center;
+                justify-content: space-between;
             }
 
 			.small-text {
@@ -51,14 +52,177 @@
 				display: none;
 			}
 
+			#header-title {
+				font-family: "Squatina" !important;
+				color: white;
+				font-size: 5vw;
+				letter-spacing: 0.5em;
+				font-weight: 300;
+				/* position: relative; */
+				vertical-align: middle;
+				/* top:10px */
+			}
+
+			#burger {
+				height: 100%;
+				height: 50px;
+			}
+
+			#spacer {
+				width:50px;
+			}
+
+			.logo {
+                cursor: pointer;
+				height: 120px;
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+				padding-left: 20px;
+				padding-right: 20px;
+			}
+
+			#burger-menu {
+				display: none;
+			}
+
+			#full-logo {
+				display: none;
+			}
+			
+
+
+			/* MENU */
+			#menu {
+				display: none;
+				position: absolute;
+				bottom: 0;
+				color: white;
+				place-items: center;
+			}
+
+
+
+			.nav {
+				display: grid;
+				grid-template-rows: auto;
+				grid-template-columns: 1fr 1fr 1fr;
+				grid-template-areas: ". . .";
+				place-items: center;
+				gap: 20px;
+				margin: 40px;
+				height: min-content;
+				width: fit-content;
+			}
+
+
+			#main-nav > * {
+				cursor: pointer;
+				border-radius: 0px;
+                border: 0px solid white;
+                box-shadow: 0px 0px 5px white;
+
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+
+				width: 100%;
+				max-width: 350px;
+			}
+
+			#sub-nav > * {
+				font-size: var(--font-medium);;
+			}
+
+			#sub-nav {
+				grid-template-columns: 1fr 1fr;
+				grid-template-areas: ". .";
+			}
+
+
+			header {
+				justify-content: center;
+			}
+
+			/* REACTIVE */
+			
+            @media screen and (max-width: 1000px) {
+
+				.nav {
+					grid-template-columns: 1fr 1fr;
+					grid-template-areas: ". .";
+				}
+
+				#mid-nav {
+					grid-template-columns: 1fr 1fr 1fr;
+					grid-template-areas: ". . .";
+				}
+
+
+
+                #header-title {
+                    display: none;
+                }
+
+				#full-logo {
+					display: block;
+				}
+
+				#side-logo {
+					display: none;
+				}
+
+
+
+				.logo {
+					height: 150px;
+				}
+
+				#spacer {
+					display: none;
+				}
+            }
+
+			.lang-option {
+				cursor: pointer;
+			}
+
+
+
 
 		</style>
 	</head>
 
 	<body>
-		<nav id="back" onclick="display_section('launchpad')"><span>launchpad</span></nav>
-		<nav id="back-link"><a href="https://www.dialecticwormhole.page">launchpad</a></nav>
-		<nav><a class="nav" href="https://www.dialecticwormhole.page/impressum">impressum</a></nav>
-		<nav><span class="lang-option" id="lang-de" onclick="setlanguage('de')">de</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">en</span></nav>
+		<!-- <div id="spacer"></div> -->
+
+		<!-- <div id="header-title">DIALECTIC WORMHOLE</div> -->
+		<img onclick="openmenu()" id="full-logo" class="logo" src="images/header.svg" alt="wormhole">
+		<img onclick="openmenu()" id="side-logo" class="logo" src="images/header_wide.svg" alt="wormhole">
+
+		<div id="menu">
+			<div id="main-nav" class="nav">
+				<img onclick="display_section('nexus')" src="images/sections/nexus.webp" alt="nexus">
+				<img onclick="display_section('abyss')" src="images/sections/abyss.webp" alt="abyss">
+				<img onclick="display_section('about')" src="images/sections/about.webp" alt="about">
+				<img onclick="display_section('pantheon')" src="images/sections/pantheon.webp" alt="pantheon">
+				<img onclick="display_section('obolodeon')" src="images/sections/obolodeon.webp" alt="obolodeon">
+				<img onclick="display_section('transit')" src="images/sections/transit.webp" alt="transit">
+			</div>
+
+			<!-- <div id="mid-nav" class="nav">
+				<button onclick="display_section('nexus')">nexus</button>
+				<button onclick="display_section('nexus')">nexus</button>
+				<button onclick="display_section('nexus')">nexus</button>
+				<button onclick="display_section('nexus')">nexus</button>
+
+			</div> -->
+
+			<div id="sub-nav" class="nav">
+				<a href="https://www.dialecticwormhole.page/impressum">impressum</a>
+				<span><span class="lang-option" id="lang-de" onclick="setlanguage('de')">de</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">en</span></span>
+			</div>
+		</div>
+		
+		
+
 	</body>
 </html>

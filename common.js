@@ -804,30 +804,31 @@ function check_menu_origin(origin) {
 }
 
 
-function openmenu(origin) {
-    origin = check_menu_origin(origin)
-    
-    let anchor = origin.getElementsByClassName("dropanchor")[0]
-    let menu = origin.getElementsByClassName("dropmenu")[0]
+function openmenu() {
 
-	hidedropmenus();
-    menu.style.display = "block"
-	anchor.style.visibility = "visible";
+    let nav_items = document.getElementsByClassName("nav")
 
-	if (window.innerWidth >= 800) {
-		menu.style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
-	}
-	else {
-		menu.style.width = "100vw";
-		document.getElementById("logo").style.display = "none";
-        document.getElementById("navigation").style.width = "100vw";
-        document.getElementById("navigation").style.justifyContent = "flex-end";
-	}
+    for (let i = 0; i < nav_items.length; i++) {
+        let items = nav_items[i].childNodes
 
-		document.getElementById("openmenu").style.display = "none";
-		document.getElementById("closemenu").style.display = "inline";
+        for (let i = 0; i < items.length; i++) {
+            items[i].addEventListener("click", openmenu)
+        }
+    }
 
-	menuopen = true
+    if(menuopen) {
+        document.getElementById("content").style.display = "initial";
+        document.getElementById("menu").style.display = "none";
+        menuopen = false
+        
+    }
+    else {
+        document.getElementById("content").style.display = "none";
+        document.getElementById("menu").style.display = "grid";
+        document.getElementById("menu").style.width = "100vw";
+        document.getElementById("menu").style.height = 'calc(100vh - ' + document.getElementById("header").offsetHeight + 'px)';
+        menuopen = true
+    }
 }
 
 
@@ -844,24 +845,6 @@ function safeclosemenu() {
     closemenu()
 }
 
-
-function closemenu() {
-
-	hidedropmenus();
-
-	if (window.innerWidth < 800) {
-		document.getElementById("logo").style.display = "inline";
-		document.getElementById("closemenu").style.display = "none";
-		document.getElementById("openmenu").style.display = "inline";
-        document.getElementById("navigation").style.width = "fit-content";
-        document.getElementById("navigation").style.justifyContent = "space-between";
-	}
-
-    document.getElementById("closemenu").style.display = "none";
-    document.getElementById("openmenu").style.display = "inline";
-
-	menuopen = false
-}
 
 
 function hidedropmenus() {

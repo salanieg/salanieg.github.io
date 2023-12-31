@@ -71,11 +71,6 @@ body {
 @media screen and (max-width: 400px) {#content { padding:20px;}}
 
 
-main > * {
-	width: 100%;
-	max-width: 550px;
-}
-
 
 #header {grid-area: header;}
 #content {grid-area: main;}

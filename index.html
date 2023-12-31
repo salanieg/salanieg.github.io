@@ -155,12 +155,12 @@
                     page_elements[i].style.display = "none"
                 }
                 
-                if(id == "foyer" || id == "launchpad") {
-                    document.getElementById("back").style.display = "none"
-                }
-                else {
-                    document.getElementById("back").style.display = "inline"
-                }
+                // if(id == "foyer" || id == "launchpad") {
+                //     // document.getElementById("back").style.display = "none"
+                // }
+                // else {
+                //     // document.getElementById("back").style.display = "inline"
+                // }
 
                 let section = document.getElementById(id)
                 section.style.display = "block"
@@ -233,18 +233,7 @@
                 display: none;
             }
 
-            .sections {
-                display: flex;
-                /* grid-template-rows: auto;
-                grid-template-columns: 1fr 1fr 1fr;
-                grid-template-areas: ". . .";
-                place-items: center; */
-                justify-content: space-between;
-                flex-wrap: wrap;
-                gap: 30px;
-                margin-top: 20px;
-                margin-bottom: 40px;
-            }
+
 
             .cards {
                 /* display: flex; */
@@ -270,18 +259,7 @@
                 100% {opacity: 1;}
             } */
 
-            #mainlogo {
-                margin: 50px 0px;
-                cursor: pointer;
-                font-family: "Squatina" !important;
-                /* max-width: 700px;
-                margin-left: auto;
-                margin-right: auto; */
 
-                
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-            }
 
             .adaptive {width:100%;}
             
@@ -401,6 +379,60 @@
                 flex-direction: column;
                 gap: 15px;
                 justify-content: flex-start;
+        
+            }
+
+            .section-option {
+                width:100%;
+                margin-left: auto;
+	            margin-right: auto;
+            }
+
+            .intro {
+                width: 100%;
+                margin-left: auto;
+	            margin-right: auto;
+                max-width: 550px;
+            }
+
+
+            .sections, .cards {
+                display: grid;
+                grid-template-rows: auto;
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-areas: ". . .";
+                place-items: center;
+                /* justify-content: space-between;
+                flex-wrap: wrap; */
+                gap: 30px;
+                margin-top: 20px;
+                margin-bottom: 40px;
+                justify-items: center;
+            }
+
+            .cards {
+                align-items: start;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+
+            @media screen and (max-width: 1000px) {
+                .sections, .cards {
+                    display: flex;
+                    place-items: center;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                }
+
+                .cards {
+                    gap: 10px;
+                }
+
+
+                .intro {
+                    width: 100%;
+                    max-width: unset;
+                }
             }
 
 
@@ -412,41 +444,46 @@
 
         <main id="content">
 
-            <img onclick="display_and_skip('launchpad')" id="mainlogo" src="images/logo.webp" alt="wormhole">
 
             <section id="foyer">
-                <h1>the dialectic wormhole</h1>
-                <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
-              <button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button>
+                <!-- <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
+                <button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
+                <span lang="de">In Wartung.</span><span lang="en">Under maintenance.</span></p>
+                <button onclick="display_and_skip('launchpad')"><span lang="de">Betreten auf eigenes Risiko!!!</span><span lang="en">Enter at your own risk!!!</span></button>
             </section>
 
 
             <section id="launchpad">
-                <h2>launchpad</h2>
-                <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
-                <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
-        <div class="sections">
-		<div class="section-option">
-                        <img  onclick="display_section('nexus')" class="sectionthumbnail" src="images/sections/nexus.webp" alt="nexus thumbnail">
-                        <button onclick="display_section('nexus')">nexus</button>    
+                <div class="intro">
+                    <h2>launchpad</h2>
+                    <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
+                    <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
                 </div>
-		<div class="section-option">
+                <div class="sections">
+                    <div class="section-option">
+                            <img  onclick="display_section('nexus')" class="sectionthumbnail" src="images/sections/nexus.webp" alt="nexus thumbnail">
+                            <button onclick="display_section('nexus')">nexus</button>    
+                    </div>
+		            <div class="section-option">
                         <img  onclick="display_section('abyss')" class="sectionthumbnail" src="images/sections/abyss.webp" alt="abyss thumbnail">
                         <button onclick="display_section('abyss')">abyss</button>
-        	 </div>
-                 <div class="section-option">
+        	        </div>
+                    <div class="section-option">
                         <img  onclick="display_section('about')" class="sectionthumbnail" src="images/sections/about.webp" alt="about thumbnail">
                         <button onclick="display_section('about')">about</button>
+                    </div>
                 </div>
-         </div>
             </section>
 
 
             <section id="nexus">
-                <h2>nexus</h2>
-                <p lang="de">Du bist im Nexus gelandet! Dies ist das Herzstück dieser Website: Eine wachsende Collage aus meinen Publikationen und anderen lesenswerten Inhalten.</p>
-                <p lang="en">You have landed in the Nexus! This is the heart of this website: A growing collage of my publications and other content worth reading.</p>
-		<div class="cards">
+                <div class="intro">
+                    <h2>nexus</h2>
+                    <p lang="de">Du bist im Nexus gelandet! Dies ist das Herzstück dieser Website: Eine wachsende Collage aus meinen Publikationen und anderen lesenswerten Inhalten.</p>
+                    <p lang="en">You have landed in the Nexus! This is the heart of this website: A growing collage of my publications and other content worth reading.</p>    
+                </div>
+		        
+                <div class="cards">
                     <div class="essay card" onclick="show_card_content(event)">
                         <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
                         <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>
@@ -513,12 +550,15 @@
 
 
             <section id="abyss">
-                <h2>abyss</h2>
-                <p lang="de">»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.« – Willkommen am Rand des Abgrunds, werte Reisende! Erhebt euch aus dem Abgrund, um im Obolodeon-Theater aufzuerstehen, bahnt euch euren Weg durch die Arkaden des Pantheons oder stellt euch dem Schicksal jener, die vom Abgrund verschlungen werden. Setzt eure Reise im Transitbereich fort, um weitere unbekannte Orte zu erkunden. Das Abenteuer erwartet euch!<span data-footnote="3"></span></p>
-                <p lang="en">»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.« – Welcome to the edge of the abyss, dear travelers! Rise from the abyss to resurrect in the obolodeon theatre, make your way through the arcades of the pantheon, or face the fate of those who are consumed by the abyss. To explore new unknown places, start your next journey in the transit area. The adventure awaits!<span data-footnote="3"></span></p>
-             
+                
+                <div class="intro">
+                    <h2>abyss</h2>
+                    <p lang="de">»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.« – Willkommen am Rand des Abgrunds, werte Reisende! Erhebt euch aus dem Abgrund, um im Obolodeon-Theater aufzuerstehen, bahnt euch euren Weg durch die Arkaden des Pantheons oder stellt euch dem Schicksal jener, die vom Abgrund verschlungen werden. Setzt eure Reise im Transitbereich fort, um weitere unbekannte Orte zu erkunden. Das Abenteuer erwartet euch!<span data-footnote="3"></span></p>
+                    <p lang="en">»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.« – Welcome to the edge of the abyss, dear travelers! Rise from the abyss to resurrect in the obolodeon theatre, make your way through the arcades of the pantheon, or face the fate of those who are consumed by the abyss. To explore new unknown places, start your next journey in the transit area. The adventure awaits!<span data-footnote="3"></span></p>
+                </div>
+                
                 <div class="sections">
-		<div class="section-option">
+		            <div class="section-option">
                         <img  onclick="display_section('pantheon')" class="sectionthumbnail" src="images/sections/pantheon.webp" alt="pantheon thumbnail">
                         <button onclick="display_section('pantheon')">pantheon</button>
                     </div>
@@ -535,43 +575,49 @@
 
 
             <section id="pantheon">
-                <h2>pantheon</h2>
-                <p lang="de">Willkommen, unerschrockene Reisende, am Rande der Zivilisation! Hier findet ihr eine Galerie von Analog- und Digitalfotografien, die unter anderen Umständen in einem Social-Media-Feed gelandet wäre.</p>
-                <p lang="en">Welcome, intrepid travelers, to the edge of civilization! Here you will find a gallery of analogue and digital photographs that, under other circumstances, would have ended up in a social media feed.</p>
-		<div class="album card" data-current="0" onclick="show_card_content(event)">
-                    <h3 lang="de">nicht-orte</h3>
-                    <h3 lang="en">non-places</h3>
+                <div class="intro">
+                    <h2>pantheon</h2>
+                    <p lang="de">Willkommen, unerschrockene Reisende, am Rande der Zivilisation! Hier findet ihr eine Galerie von Analog- und Digitalfotografien, die unter anderen Umständen in einem Social-Media-Feed gelandet wäre.</p>
+                    <p lang="en">Welcome, intrepid travelers, to the edge of civilization! Here you will find a gallery of analogue and digital photographs that, under other circumstances, would have ended up in a social media feed.</p>
+		        </div>
 
-                    <div class="card-content">
-                        <div class="album-images">
-                            <img src="images/n1.webp">
-                            <img src="images/n2.webp">
-                        </div>
-                        <div class="album-controls">
-                            <span onclick="album_cycle(event, -1)">&lt;</span>
-                            <span onclick="album_cycle(event, 1)">&gt;</span>
+                <div class="cards">
+                    <div class="album card" data-current="0" onclick="show_card_content(event)">
+                        <h3 lang="de">nicht-orte</h3>
+                        <h3 lang="en">non-places</h3>
+
+                        <div class="card-content">
+                            <div class="album-images">
+                                <img src="images/n1.webp">
+                                <img src="images/n2.webp">
+                            </div>
+                            <div class="album-controls">
+                                <span onclick="album_cycle(event, -1)">&lt;</span>
+                                <span onclick="album_cycle(event, 1)">&gt;</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-		      <div class="album card" data-current="0" onclick="show_card_content(event)">
-                    <h3 lang="de">the great kingdom</h3>
-                    <h3 lang="en">the great kingdom</h3>
+                    
+                    <div class="album card" data-current="0" onclick="show_card_content(event)">
+                        <h3 lang="de">the great kingdom</h3>
+                        <h3 lang="en">the great kingdom</h3>
 
-                    <div class="card-content">
-                        <div class="album-images">
-                           	<img src="images/tg1.webp">
-                           	<img src="images/tg2.webp">
-                            <img src="images/tg3.webp">
-                            <img src="images/tg4.webp">
-                            <img src="images/tg5.webp">
-                            <img src="images/tg6.webp">
-                            <img src="images/tg7.webp">
-                            <img src="images/tg8.webp">
-                            <img src="images/tg9.webp">
-                        </div>
-                        <div class="album-controls">
-                            <span onclick="album_cycle(event, -1)">&lt;</span>
-                            <span onclick="album_cycle(event, 1)">&gt;</span>
+                        <div class="card-content">
+                            <div class="album-images">
+                                <img src="images/tg1.webp">
+                                <img src="images/tg2.webp">
+                                <img src="images/tg3.webp">
+                                <img src="images/tg4.webp">
+                                <img src="images/tg5.webp">
+                                <img src="images/tg6.webp">
+                                <img src="images/tg7.webp">
+                                <img src="images/tg8.webp">
+                                <img src="images/tg9.webp">
+                            </div>
+                            <div class="album-controls">
+                                <span onclick="album_cycle(event, -1)">&lt;</span>
+                                <span onclick="album_cycle(event, 1)">&gt;</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -580,57 +626,63 @@
 
 
             <section id="obolodeon">
-                <h2>obolodeon</h2>
-                <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett. Ihr seid dem Abgrund entkommen, aber ihr könnt weder den Grenzen eures Geistes entkommen... noch den Konsequenzen eures Handelns. Willkommen im Obolodeon, einem Ort, um den Kopf frei zu bekommen... um über die Vergangenheit nachzudenken... über die Gegenwart... und über die Zukunft.</p>
-                <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet. You escaped the abyss, but you can’t escape the boundaries of your mind... nor the consequences of your actions. Welcome to the Obolodeon, a place to empty the mind... reflect on the past... the present... and the future.</p>
-
-
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="Ppa__7ZLAU8" sandbox></iframe>
-                    <p lang="de">arbeit, us-geschichte, ausbeutung</p><p lang="en">work, us-history, exploitation</p>
+                <div class="intro">
+                    <h2>obolodeon</h2>
+                    <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett. Ihr seid dem Abgrund entkommen, aber ihr könnt weder den Grenzen eures Geistes entkommen... noch den Konsequenzen eures Handelns. Willkommen im Obolodeon, einem Ort, um den Kopf frei zu bekommen... um über die Vergangenheit nachzudenken... über die Gegenwart... und über die Zukunft.</p>
+                    <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet. You escaped the abyss, but you can’t escape the boundaries of your mind... nor the consequences of your actions. Welcome to the Obolodeon, a place to empty the mind... reflect on the past... the present... and the future.</p>
+                
+                    <div class="video">
+                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="Ppa__7ZLAU8" sandbox></iframe>
+                        <p lang="de">arbeit, us-geschichte, ausbeutung</p><p lang="en">work, us-history, exploitation</p>
+                    </div>
+                    <div class="video">
+                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="IFe9wiDfb0E" sandbox></iframe>
+                        <p lang="de">jenseits, recht, kapitalismus</p><p lang="en">afterlife, legal, capitalism</p>
+                    </div>
+                    <div class="video">
+                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="gEyFH-a-XoQ" sandbox></iframe>
+                        <p lang="de">kafka, verwirrung, flughafen</p><p lang="en">kafka, confusion, airport</p>
+                    </div>
+                    <div class="video">
+                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox></iframe>
+                        <p lang="de">philosophie, vergessen, furcht</p><p lang="en">philosophy, oblivion, fear</p>
+                    </div>
+                    <div class="video">
+                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
+                        <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
+                    </div>
+                    <div class="video">
+                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="ubNF9QNEQLA" sandbox></iframe>
+                        <p lang="de">detektiv, rätsel, überraschung</p><p lang="en">detective, brainteaser, surprise</p>
+                    </div>
+                    <div class="video">
+                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fp2OZRr9jXY" sandbox></iframe>
+                        <p lang="de">studierende, wohnungen, brd-geschichte</p><p lang="en">students, housing, brd-history</p>
+                    </div>
+                    <div class="video">
+                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="wO61D9x6lNY" sandbox></iframe>
+                        <p lang="de">mathematik, geometrie, erklärung</p><p lang="en">mathematics, geometry, explanation</p>
+                    </div>
+    
                 </div>
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="IFe9wiDfb0E" sandbox></iframe>
-                    <p lang="de">jenseits, recht, kapitalismus</p><p lang="en">afterlife, legal, capitalism</p>
-                </div>
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="gEyFH-a-XoQ" sandbox></iframe>
-                    <p lang="de">kafka, verwirrung, flughafen</p><p lang="en">kafka, confusion, airport</p>
-                </div>
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox></iframe>
-                    <p lang="de">philosophie, vergessen, furcht</p><p lang="en">philosophy, oblivion, fear</p>
-                </div>
-                <div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
-                    <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
-                </div>
-<div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="ubNF9QNEQLA" sandbox></iframe>
-                    <p lang="de">detektiv, rätsel, überraschung</p><p lang="en">detective, brainteaser, surprise</p>
-                </div>
-<div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fp2OZRr9jXY" sandbox></iframe>
-                    <p lang="de">studierende, wohnungen, brd-geschichte</p><p lang="en">students, housing, brd-history</p>
-                </div>
-<div class="video">
-                    <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="wO61D9x6lNY" sandbox></iframe>
-                    <p lang="de">mathematik, geometrie, erklärung</p><p lang="en">mathematics, geometry, explanation</p>
-                </div>
- </section>
+            </section>
 
 
             <section id="transit">
-    <h2>transit</h2>
-    <p lang="de">Willkommen im interdimensionalen Reisebüro. Bitte wähle dein Ziel.</p>
-    <p lang="en">Welcome to the interdimensional travel agency. Please select your target.</p>
-</section>
+                <div class="intro">
+                    <h2>transit</h2>
+                    <p lang="de">Willkommen im interdimensionalen Reisebüro. Bitte wähle dein Ziel.</p>
+                    <p lang="en">Welcome to the interdimensional travel agency. Please select your target.</p>
+                </div>
+            </section>
 
 
             <section id="about">
-                <h2>about</h2>
-		<p lang="de">Dieses kleine Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln, sodass ich und du keine sozialen Medien nutzen müssen. Ich versuche, regelmäßig eine Vielzahl von Inhalten hochzuladen, einschließlich Philosophie, Politik, Wissenschaft oder einfach nur Unterhaltung.<br><br>Wenn du an neuen Inhalten interessiert bist, dannn besuche von Zeit zu Zeit gerne die Orte (oder Nicht-Orte) innerhalb dieser Website.<br><br>☞ Du kannst das Wurmloch-Symbol nutzen, um zur Startseite zurückzukehren!<br><br>Diese Seite ist keine Plattform. Bitte beachte, dass ich nicht vorhabe und auch nicht in der Lage sein werde, eine Kommentarinfrastruktur zu bieten. Solltest du das Bedürfnis haben, mich zu kontaktieren und einen spezifischen Grund dafür haben, besuche bitte das Impressum für Kontaktinformationen.<br><br>Trotz des unheimlichen Designs gibt es auf dieser Seite keine Schockeffekte. Sei eingeladen, das dialektische Wurmloch zu entdecken und zu teilen, und genieße deinen Besuch!<br><br>Beste Grüße<br>Dennis, V.i.S.d.P., Hüter des Wurmlochs<br><br>Besonderer Dank an:<br>Niki, IT Associate, Hüter der Lorbeeren</p>
-                <p lang="en">This little website project is dedicated to gather some interesting stuff I want to share in one place, so me and you dont't have to use social media. I try to regularly upload a wide range of content, including philosophy, science, politics or just entertainment.<br><br>If you are interested in new content, you might want to visit the places (or non-places) within this website from time to time.<br><br>☞ Consider using the wormhole icon to navigate back to the launchpad!<br><br>This site is not a platform. Please take into account that I do not plan and will not be able to provide any comment infrastructure. If you find the need to contact me and have an specific reason to do so, please visit the impressum for contact information.<br><br>Despite the eerie design, there are no jumpscares on this site. Feel free to discover and share the dialectic wormhole and enjoy your visit!<br><br>Yours sincerely,<br>Dennis, responsible person according to press law, keeper of the wormhole<br><br>Special thanks to:<br>Niki, IT associate, keeper of the laurels</p>
+                <div class="intro">
+                    <h2>about</h2>
+                    <p lang="de">Dieses kleine Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln, sodass ich und du keine sozialen Medien nutzen müssen. Ich versuche, regelmäßig eine Vielzahl von Inhalten hochzuladen, einschließlich Philosophie, Politik, Wissenschaft oder einfach nur Unterhaltung.<br><br>Wenn du an neuen Inhalten interessiert bist, dannn besuche von Zeit zu Zeit gerne die Orte (oder Nicht-Orte) innerhalb dieser Website.<br><br>☞ Du kannst das Wurmloch-Symbol nutzen, um zur Startseite zurückzukehren!<br><br>Diese Seite ist keine Plattform. Bitte beachte, dass ich nicht vorhabe und auch nicht in der Lage sein werde, eine Kommentarinfrastruktur zu bieten. Solltest du das Bedürfnis haben, mich zu kontaktieren und einen spezifischen Grund dafür haben, besuche bitte das Impressum für Kontaktinformationen.<br><br>Trotz des unheimlichen Designs gibt es auf dieser Seite keine Schockeffekte. Sei eingeladen, das dialektische Wurmloch zu entdecken und zu teilen, und genieße deinen Besuch!<br><br>Beste Grüße<br>Dennis, V.i.S.d.P., Hüter des Wurmlochs<br><br>Besonderer Dank an:<br>Niki, IT Associate, Hüter der Lorbeeren</p>
+                    <p lang="en">This little website project is dedicated to gather some interesting stuff I want to share in one place, so me and you dont't have to use social media. I try to regularly upload a wide range of content, including philosophy, science, politics or just entertainment.<br><br>If you are interested in new content, you might want to visit the places (or non-places) within this website from time to time.<br><br>☞ Consider using the wormhole icon to navigate back to the launchpad!<br><br>This site is not a platform. Please take into account that I do not plan and will not be able to provide any comment infrastructure. If you find the need to contact me and have an specific reason to do so, please visit the impressum for contact information.<br><br>Despite the eerie design, there are no jumpscares on this site. Feel free to discover and share the dialectic wormhole and enjoy your visit!<br><br>Yours sincerely,<br>Dennis, responsible person according to press law, keeper of the wormhole<br><br>Special thanks to:<br>Niki, IT associate, keeper of the laurels</p>
+                </div>
             </section>
         </main>
 
