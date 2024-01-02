@@ -454,14 +454,16 @@
                 }
             }
 
-            #foyer {
-                height:100vh;
+            .intro {
+                max-width: 550px;
             }
 
-            #intro_quote {
-                width: fit-content;
-                margin-left: auto;
-                margin-right: auto;
+            #intro_container {
+                height: 80vh;
+                display: grid;
+                place-items: center;
+                align-content: center;
+                gap:30px;
             }
 
             #intro_hole {
@@ -474,6 +476,12 @@
                 grid-row: 1;
             }
 
+            .intro_hole_inner {
+                width: 75vw;
+                max-width: 800px;
+                max-height: 70vh;
+            }
+
         </style>
     </head>
 
@@ -484,13 +492,14 @@
 
 
             <section id="foyer">
-                <!-- <p id="intro_quote">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p> -->
-                <p id="intro_quote"><span lang="de">In Wartung. Betreten auf eigenes Risiko!</span><span lang="en">Under maintenance. Enter at your own risk!</span></p>
-                <div id="intro_hole" onclick="display_and_skip('launchpad')">
-                    <img lang="de" id="intro_hole_inner" src="images/eintreten.webp" alt="eintreten">
-                    <img lang="en" id="intro_hole_inner" src="images/enter.webp" alt="enter">   
-                    <!-- <button id="intro_button" ><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
- 
+                <div id="intro_container">
+                    <!-- <p id="intro_quote">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p> -->
+                    <p id="intro_quote"><span lang="de">In Wartung. Betreten auf eigenes Risiko!</span><span lang="en">Under maintenance. Enter at your own risk!</span></p>
+                    <div id="intro_hole" onclick="display_and_skip('launchpad')">
+                        <img lang="de" class="intro_hole_inner" src="images/eintreten.svg" alt="eintreten">
+                        <img lang="en" class="intro_hole_inner" src="images/enter.svg" alt="enter">   
+                        <!-- <button id="intro_button" ><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
+                    </div>
                 </div>
             </section>
 
@@ -527,23 +536,23 @@
 		        
                 <div class="cards">
                     <div class="essay card" onclick="show_card_content(event)">
-                        <h3 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h3>
-                        <h3 lang="en">Is man as Nietzsche's predator really self-sufficient?</h3>
+                        <h2 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h2>
+                        <h2 lang="en">Is man as Nietzsche's predator really self-sufficient?</h2>
 
                         <div class="card-content">
                             <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
                             <p lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
                         
                             <div class="essay-files">
-                                <a lang="de" href="files/de/DWNietzschesRaubtier.pdf" target="_blank"><button>datei öffnen</button></a>
-                                <a lang="en" href="files/en/DWNietzschesRaubtier.pdf" target="_blank"><button>open file</button></a>
+                                <a lang="de" href="files/de/DWNietzschesRaubtier.pdf" target="_blank"><button>öffnen</button></a>
+                                <a lang="en" href="files/en/DWNietzschesRaubtier.pdf" target="_blank"><button>open</button></a>
                             </div>
                         </div>
                     </div>
                     
                     <div class="essay card" onclick="show_card_content(event)">
-                        <h3 lang="de">Massenkultur - Entfremdung durch Imitation?</h3>
-                        <h3 lang="en">Mass culture - alienation through imitation?</h3>
+                        <h2 lang="de">Massenkultur - Entfremdung durch Imitation?</h2>
+                        <h2 lang="en">Mass culture - alienation through imitation?</h2>
 
 
                         <div class="card-content">
@@ -551,38 +560,38 @@
                             <p lang="en">This essay discusses the role of imitation in mass culture, with a focus on the impact on individuality and creativity. The author argues that while the ability to imitate is important in creating cultural artifacts that appeal to the masses, the emphasis on imitation in mass culture has led to a loss of originality and a focus on pleasing the largest possible audience. Ultimately, the essay questions whether the imitation-driven culture of mass culture is stifling creativity or fostering collective creation.</p>
                             
                             <div class="essay-files">
-                                <a lang="de" href="files/de/DWEntfremdungdurchImitation.pdf" target="_blank"><button>datei öffnen</button></a>
-                                <a lang="en" href="files/en/DWEntfremdungdurchImitation.pdf" target="_blank"><button>open file</button></a>
+                                <a lang="de" href="files/de/DWEntfremdungdurchImitation.pdf" target="_blank"><button>öffnen</button></a>
+                                <a lang="en" href="files/en/DWEntfremdungdurchImitation.pdf" target="_blank"><button>open</button></a>
                             </div>
                         </div>
                     </div>
 
                     <div class="essay card" onclick="show_card_content(event)">
-                        <h3 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h3>
-                        <h3 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h3>  
+                        <h2 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h2>
+                        <h2 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h2>  
 
                         <div class="card-content">
                             <p lang="de">Dieser kurze Aufsatz untersucht das Konzept des Philanthrokapitalismus im Kontext von kontroversen Marketing-Strategien und beleuchtet die Implikationen der Übertragung der philanthropischen Verantwortung und der anschließenden Umverteilung von Reichtum auf die Bourgeoisie. Die Diskussion nimmt eine marxistische Perspektive ein und stellt die Frage, ob das Proletariat ohne Bedenken diese Pflicht an Akteure innerhalb der Bourgeoisie abgeben kann und beleuchtet die potenziellen Risiken, die mit dieser Machtverschiebung verbunden sind. Diese Untersuchung verdeutlicht die komplexen Dynamiken zwischen Kapitalismus, Philanthropie und der gesellschaftlichen Wahrnehmung der Superreichen.</p>
                             <p lang="en">This short essay investigates the concept of philanthrocapitalism within the context of controversial marketing strategies, examining the implications of entrusting the bourgeoisie with philanthropic responsibility and the subsequent redistribution of wealth. The discussion takes a Marxist perspective, questioning whether the proletariat can, without hesitation, yield this duty to actors within the bourgeoisie, and scrutinizing the potential risks inherent to this shift in power. This exploration elucidates the intricate dynamics between capitalism, philanthropy, and the societal perception of the ultra-wealthy.</p>
 
                             <div class="essay-files">
-                                <a lang="de" href="files/de/DWPhilanthrokapitalismus.pdf" target="_blank"><button>datei öffnen</button></a>
-                                <a lang="en" href="files/en/DWPhilanthrokapitalismus.pdf" target="_blank"><button>open file</button></a>
+                                <a lang="de" href="files/de/DWPhilanthrokapitalismus.pdf" target="_blank"><button>öffnen</button></a>
+                                <a lang="en" href="files/en/DWPhilanthrokapitalismus.pdf" target="_blank"><button>open</button></a>
                             </div>
                         </div>
                     </div>
 
                     <div class="essay card" onclick="show_card_content(event)">
-                        <h3 lang="de">Charakterisierung der modernen Wahlkampfkommunikation: Kanäle der politischen Kommunikation</h3>
-                        <h3 lang="en">Characterization of modern election campaign communication: Channels of political communication</h3>  
+                        <h2 lang="de">Charakterisierung der modernen Wahlkampfkommunikation: Kanäle der politischen Kommunikation</h2>
+                        <h2 lang="en">Characterization of modern election campaign communication: Channels of political communication</h2>  
 
                         <div class="card-content">
                             <p lang="de">Diese Semesterarbeit untersucht die Entwicklung der politischen Kommunikation, wobei der Schwerpunkt auf den Kanälen liegt, die die moderne Wahlkampfkommunikation prägen. Sie beginnt mit den Arbeiterbewegungen des 19. Jahrhunderts und erstreckt sich bis in die heutige digitale Ära. Die zentrale Forschungsfrage lautet: „Welche Kanäle der politischen Kommunikation charakterisieren die moderne Wahlkampfkommunikation?“ Durch eine Literaturrecherche verfolgt die Arbeit die Entwicklung der Wahlkampfkommunikation und bewertet die Wirksamkeit verschiedener Kanäle, um Schlüsseltrends in der heutigen politischen Diskussion zu identifizieren.</p>
                             <p lang="en">This term paper explores the evolution of political communication, focusing on channels shaping modern election campaign communication. It starts from 19th-century labor movements and extends to the current digital era. The key research question is: "Which channels of political communication characterize modern election campaign communication?" Through a literature review, the paper traces the development of election campaign communication and evaluates the efficacy of various channels to identify key trends in today's political discourse.</p>
 
                             <div class="essay-files">
-                                <a lang="de" href="files/de/DWKanäle_der_politischen_Kommunikation.pdf" target="_blank"><button>datei öffnen</button></a>
-                                <a lang="en" href="files/en/DWKanäle_der_politischen_Kommunikation.pdf" target="_blank"><button>open file</button></a>
+                                <a lang="de" href="files/de/DWKanäle_der_politischen_Kommunikation.pdf" target="_blank"><button>öffnen</button></a>
+                                <a lang="en" href="files/en/DWKanäle_der_politischen_Kommunikation.pdf" target="_blank"><button>open</button></a>
                             </div>
                         </div>
                     </div>
@@ -593,13 +602,16 @@
 
             <section id="abyss">
                 
-                <div class="intro">
-                    <h2>ABYSS</h2>
-                    <p lang="de">»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.« – Willkommen am Rand des Abgrunds, werte Reisende! Erhebt euch aus dem Abgrund, um im Obolodeon-Theater aufzuerstehen, bahnt euch euren Weg durch die Arkaden des Pantheons oder stellt euch dem Schicksal jener, die vom Abgrund verschlungen werden. Setzt eure Reise im Transitbereich fort, um weitere unbekannte Orte zu erkunden. Das Abenteuer erwartet euch!<span data-footnote="3"></span></p>
-                    <p lang="en">»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.« – Welcome to the edge of the abyss, dear travelers! Rise from the abyss to resurrect in the obolodeon theatre, make your way through the arcades of the pantheon, or face the fate of those who are consumed by the abyss. To explore new unknown places, start your next journey in the transit area. The adventure awaits!<span data-footnote="3"></span></p>
-                </div>
+
                 
                 <div class="sections">
+
+                    <div class="section-option intro">
+                        <h2>ABYSS</h2>
+                        <p lang="de">»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«<span data-footnote="3"></span><br><br>Willkommen am Rand des Abgrunds, werte Reisende! Erhebt euch aus dem Abgrund, um im Obolodeon-Theater aufzuerstehen, bahnt euch euren Weg durch die Arkaden des Pantheons oder stellt euch dem Schicksal jener, die vom Abgrund verschlungen werden. Setzt eure Reise im Transitbereich fort, um weitere unbekannte Orte zu erkunden. Das Abenteuer erwartet euch!</p>
+                        <p lang="en">»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«<span data-footnote="3"></span><br><br>Welcome to the edge of the abyss, dear travelers! Rise from the abyss to resurrect in the obolodeon theatre, make your way through the arcades of the pantheon, or face the fate of those who are consumed by the abyss. To explore new unknown places, start your next journey in the transit area. The adventure awaits!</p>
+                    </div>
+
 		            <div class="section-option">
                         <img  onclick="display_section('pantheon')" class="sectionthumbnail" src="images/sections_labeled/pantheon.webp" alt="pantheon thumbnail">
                         <!-- <button onclick="display_section('pantheon')">PANTHEON</button> -->

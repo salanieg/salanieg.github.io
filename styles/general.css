@@ -68,7 +68,7 @@ body {
 	align-content: start;
 }
 
-@media screen and (max-width: 400px) {#content { padding:20px;}}
+@media screen and (max-width: 400px) {#content { padding:10px;}}
 
 
 
@@ -190,7 +190,7 @@ h1 {
 
 h2 {
 	font-family: "Geist";
-	white-space:nowrap;
+	/* white-space:nowrap; */
 	font-size: 3rem;
 	font-size: var(--font-medium);
 	font-weight: 800;
