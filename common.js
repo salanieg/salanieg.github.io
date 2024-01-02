@@ -805,15 +805,11 @@ function check_menu_origin(origin) {
 
 
 function openmenu() {
+    
+    let items = document.getElementById("main-nav").childNodes
 
-    let nav_items = document.getElementsByClassName("nav")
-
-    for (let i = 0; i < nav_items.length; i++) {
-        let items = nav_items[i].childNodes
-
-        for (let i = 0; i < items.length; i++) {
-            items[i].addEventListener("click", openmenu)
-        }
+    for (let i = 0; i < items.length; i++) {
+        items[i].addEventListener("click", openmenu)
     }
 
     if(menuopen) {

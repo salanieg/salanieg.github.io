@@ -179,6 +179,7 @@ a:hover, a:visited, a:link, a:active
 
 /* TEXT */
 h1 {
+	font-family: "Geist";
 	font-size: 5rem;
 	font-size: var(--font-large);
 	font-weight: 800;
@@ -188,6 +189,7 @@ h1 {
 }
 
 h2 {
+	font-family: "Geist";
 	white-space:nowrap;
 	font-size: 3rem;
 	font-size: var(--font-medium);
@@ -287,7 +289,7 @@ input:active {
 }
 
 button {
-  font-family: "Syne";
+	font-family: "Geist";
   font-weight: 700;
   font-size: var(--font-regular);
   appearance: none;
