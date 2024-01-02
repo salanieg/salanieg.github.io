@@ -69,6 +69,7 @@
                     display_section(url)
                 }
                 else {
+                    document.getElementById("header").style.display = "none"
                     display_section("foyer");
                 }
 
@@ -128,6 +129,7 @@
 
             function display_and_skip(id) {
                 localStorage.setItem("dialecticwormhole_skip", true);
+                document.getElementById("header").style.display = "block"
                 display_section(id)
             }
 
@@ -229,6 +231,8 @@
         </script>
 
         <style>
+
+
 
             section {
                 display: none;
@@ -351,7 +355,6 @@
                 gap: 20px;
                 margin-left: 20px;
                 margin-right: 20px;
-                margin-bottom: 40px
             }
 
             #section-overview button {
@@ -389,31 +392,53 @@
 	            margin-right: auto;
             }
 
-            .intro {
-                width: 100%;
-                margin-left: auto;
-	            margin-right: auto;
-                max-width: 550px;
-            }
-
 
             .sections, .cards {
                 display: grid;
                 grid-template-rows: auto;
-                grid-template-columns: 1fr 1fr 1fr;
-                grid-template-areas: ". . .";
+                grid-template-columns: 1.5fr 1fr 1fr 1fr;
+                grid-template-areas: ". . . .";
                 place-items: center;
-                /* justify-content: space-between;
-                flex-wrap: wrap; */
                 gap: 30px;
                 margin-top: 20px;
-                margin-bottom: 40px;
-                justify-items: center;
+                margin-bottom: 60px;
             }
+
 
             .cards {
                 align-items: start;
                 grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            @media screen and (min-width: 1000px) {
+                .sections {
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows: 1fr 1fr;
+                    grid-template-areas: 
+                    ". . "
+                    ". . ";
+                    justify-items: start;
+
+                }
+            }
+
+            
+            @media screen and (min-width: 1400px) {
+                .sections {
+                    grid-template-rows: auto;
+                    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+                    grid-template-areas: ". . . .";
+                    justify-items: center;
+                }
+
+                .sections .intro {
+                    padding-right: 15px;
+
+                }
+
+                #content {
+                    align-content: center;
+                }
             }
 
 
@@ -425,17 +450,28 @@
                     flex-wrap: wrap;
                 }
 
+
+
                 .cards {
                     gap: 10px;
                 }
-
-
-                .intro {
-                    width: 100%;
-                    max-width: unset;
-                }
             }
 
+            #intro_quote {
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            #intro_hole {
+                display: grid;
+                place-items: center;
+            }
+
+            #intro_hole_inner, #intro_button {
+                grid-column: 1;
+                grid-row: 1;
+            }
 
         </style>
     </head>
@@ -447,20 +483,24 @@
 
 
             <section id="foyer">
-                <!-- <p>Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p>
-                <button onclick="display_and_skip('launchpad')"><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
-                <span lang="de">In Wartung.</span><span lang="en">Under maintenance.</span></p>
-                <button onclick="display_and_skip('launchpad')"><span lang="de">Betreten auf eigenes Risiko!!!</span><span lang="en">Enter at your own risk!!!</span></button>
+                <!-- <p id="intro_quote">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p> -->
+                <p id="intro_quote"><span lang="de">In Wartung.</span><span lang="en">Under maintenance.</span></p>
+                <div id="intro_hole" onclick="display_and_skip('launchpad')">
+                    <img id="intro_hole_inner" src="images/logo.webp" alt="wormhole">   
+                    <!-- <button id="intro_button" ><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
+                    <button id="intro_button" ><span lang="de">Betreten auf eigenes Risiko!!!</span><span lang="en">Enter at your own risk!!!</span></button>
+ 
+                </div>
             </section>
 
 
             <section id="launchpad">
-                <div class="intro">
-                    <h2>launchpad</h2>
-                    <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
-                    <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
-                </div>
                 <div class="sections">
+                    <div class="section-option intro">
+                        <h2>launchpad</h2>
+                        <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
+                        <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
+                    </div>
                     <div class="section-option">
                             <img  onclick="display_section('nexus')" class="sectionthumbnail" src="images/sections/nexus.webp" alt="nexus thumbnail">
                             <button onclick="display_section('nexus')">nexus</button>    
