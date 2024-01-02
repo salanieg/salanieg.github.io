@@ -81,7 +81,193 @@
     font-display: swap;
 }
 
+/* GEIST */
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Black.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Black.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Black.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Bold.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Bold.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-UltraBlack.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-UltraBlack.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-UltraBlack.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Thin.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Thin.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Thin.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-SemiBold.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-SemiBold.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Black.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Black.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Black.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Medium.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Medium.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Bold.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Bold.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Medium.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Medium.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Light.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Light.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Regular.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Regular.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-Regular.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-UltraBlack.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-UltraBlack.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-UltraBlack.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-UltraLight.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-UltraLight.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-UltraLight.ttf') format('truetype');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-SemiBold.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-SemiBold.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Regular.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Regular.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Regular.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-UltraLight.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-UltraLight.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/GeistMono-UltraLight.ttf') format('truetype');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Thin.woff2') format('woff2'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Thin.woff') format('woff'),
+        url('https/www.dialecticwormhole.page/fonts/Geist/Geist-Thin.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+
+
+
 
 * {
-	font-family: "Syne";
+	font-family: "Geist";
 }
