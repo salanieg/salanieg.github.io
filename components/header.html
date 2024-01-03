@@ -18,12 +18,8 @@
 
             header {
 				padding: 1vw;
-                display: flex;
-                width:100%;
-                flex-flow: row;
-                gap: 20px;
-				align-items: center;
-                justify-content: space-between;
+				/* height: calc(var(--vh, 1vh) * 100); */
+
             }
 
 			.small-text {
@@ -72,10 +68,10 @@
 				width:50px;
 			}
 
-			.logo {
+			#logo {
                 cursor: pointer;
 				width:100%;
-				max-height: 200px;
+				max-height: 150px;
                 -webkit-tap-highlight-color: transparent;
                 -webkit-touch-callout: none;
 				padding-left: 20px;
@@ -85,18 +81,12 @@
 			#burger-menu {
 				display: none;
 			}
-
-			#full-logo {
-				display: none;
-			}
 			
 
 
 			/* MENU */
 			#menu {
 				display: none;
-				position: absolute;
-				bottom: 0;
 				color: white;
 				place-items: center;
 			}
@@ -106,14 +96,22 @@
 			.nav {
 				display: grid;
 				grid-template-rows: auto;
-				grid-template-columns: 1fr 1fr 1fr;
-				grid-template-areas: ". . .";
+				grid-template-columns: 1fr 1fr 1fr 1fr;
+				grid-template-areas: ". . . .";
 				place-items: center;
 				gap: 20px;
 				margin-left: 40px;
 				margin-right: 40px;
-				height: min-content;
-				width: fit-content;
+			}
+
+			#main-nav {
+				min-height: unset;
+				align-content: center;
+			}
+
+			#main-nav img:nth-child(1) {
+				grid-row-start: 1;
+				grid-row-end: 3;
 			}
 
 
@@ -127,16 +125,24 @@
                 -webkit-touch-callout: none;
 
 				width: 100%;
-				max-width: 350px;
+				max-width: 300px;
+				/* max-height: 15vh; */
+				object-fit:contain;
 			}
 
+
+
 			#sub-nav > * {
-				font-size: var(--font-medium);;
+				font-size: var(--font-medium);
 			}
 
 			#sub-nav {
 				grid-template-columns: 1fr 1fr;
 				grid-template-areas: ". .";
+				padding-bottom: 20px;
+				height: 100%;
+				display: grid;
+				align-items: end;
 			}
 
 
@@ -148,29 +154,28 @@
 			
             @media screen and (max-width: 1000px) {
 
-				.nav {
+				#main-nav {
 					grid-template-columns: 1fr 1fr;
 					grid-template-areas: ". .";
 				}
 
-				#mid-nav {
-					grid-template-columns: 1fr 1fr 1fr;
-					grid-template-areas: ". . .";
+				#main-nav img:nth-child(1) {
+					grid-column-start: 1;
+					grid-column-end: 3;
+					grid-row-start: unset;
+					grid-row-end: unset;
 				}
 
+
+				#main-nav > * {
+					max-width: unset;
+				}
 
 
                 #header-title {
                     display: none;
                 }
 
-				#full-logo {
-					display: block;
-				}
-
-				#side-logo {
-					display: none;
-				}
 
 				#spacer {
 					display: none;
@@ -181,6 +186,22 @@
 				cursor: pointer;
 			}
 
+			@media screen and (max-height: 900px) and (max-width: 1000px) {
+
+				#main-nav img:nth-child(1) {
+					grid-column-start: 1;
+					grid-column-end: 4;
+					grid-row-start: unset;
+					grid-row-end: unset;
+				}
+
+				#main-nav {
+					grid-template-columns: 1fr 1fr 1fr;
+					grid-template-areas: ". . .";
+				}
+
+			}
+
 
 
 
@@ -188,38 +209,23 @@
 	</head>
 
 	<body>
-		<!-- <div id="spacer"></div> -->
-
-		<!-- <div id="header-title">DIALECTIC WORMHOLE</div> -->
-		<img onclick="openmenu()" id="full-logo" class="logo" src="images/header.svg" alt="wormhole">
-		<img onclick="openmenu()" id="side-logo" class="logo" src="images/header.svg" alt="wormhole">
+		<img onclick="openmenu()" id="logo" src="images/header.svg" alt="wormhole">
 
 		<div id="menu">
 			<div id="main-nav" class="nav">
+				<img onclick="display_section('launchpad')" src="images/sections_labeled/launchpad.webp" alt="launchpad">
 				<img onclick="display_section('nexus')" src="images/sections_labeled/nexus.webp" alt="nexus">
 				<img onclick="display_section('abyss')" src="images/sections_labeled/abyss.webp" alt="abyss">
 				<img onclick="display_section('about')" src="images/sections_labeled/about.webp" alt="about">
 				<img onclick="display_section('pantheon')" src="images/sections_labeled/pantheon.webp" alt="pantheon">
 				<img onclick="display_section('obolodeon')" src="images/sections_labeled/obolodeon.webp" alt="obolodeon">
 				<img onclick="display_section('transit')" src="images/sections_labeled/transit.webp" alt="transit">
-				<p onclick="display_section('launchpad')" style="text-align: center; box-shadow: unset;" >FOYER [BILD FEHLT]</p>
 			</div>
-
-			<!-- <div id="mid-nav" class="nav">
-				<button onclick="display_section('nexus')">nexus</button>
-				<button onclick="display_section('nexus')">nexus</button>
-				<button onclick="display_section('nexus')">nexus</button>
-				<button onclick="display_section('nexus')">nexus</button>
-
-			</div> -->
 
 			<div id="sub-nav" class="nav">
 				<a href="https://www.dialecticwormhole.page/impressum">impressum</a>
 				<span><span class="lang-option" id="lang-de" onclick="setlanguage('de')">de</span> / <span class="lang-option" id="lang-en" onclick="setlanguage('en')">en</span></span>
 			</div>
 		</div>
-		
-		
-
 	</body>
 </html>

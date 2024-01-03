@@ -3,8 +3,8 @@
 :root {
 	--font-small: clamp(0.75rem, 0.12rem + 2.88vw, 0.93rem); /* - */
 	--font-regular: clamp(0.75rem, -1.45rem + 11.7vw, 1.085rem); /* 13pt- */
-	--font-medium: clamp(0.9rem, 0.2rem + 3.73333333333333vw, 1.25rem);  /* 15pt-11pt | 450px-300px*/
-	--font-large: clamp(1rem, -0.333333333333334rem + 8.88888888888889vw, 5rem) /* 60-15 vw */
+	--font-large: clamp(0.9rem, -0.0444444444444445rem + 6.04444444444445vw, 2.6rem); /* 43.75-21.875 vw */
+	--font-extreme: clamp(2rem, 0.444444444444444rem + 7.11111111111111vw, 4rem); /* 25pt-50pt | 35px-800px*/
 }
 
 :root {
@@ -179,31 +179,33 @@ a:hover, a:visited, a:link, a:active
 
 /* TEXT */
 h1 {
-	font-family: "Geist";
+	font-family: "Squatina";
 	font-size: 5rem;
-	font-size: var(--font-large);
-	font-weight: 800;
-	line-height: 0.8;
+	font-size: var(--font-extreme);
+	font-weight: 300;
+	line-height: 0.9;
+    letter-spacing: 0.15em;
 	margin:0px;
-	margin-bottom:50px;
+	/* margin-bottom:50px; */
+	/* hyphens:auto; */
 }
 
 h2 {
-	font-family: "Geist";
-	/* white-space:nowrap; */
+	font-size: 5rem;
+	font-size: var(--font-large);
+	font-weight: 800;
+	line-height: 0.9;
+	margin:0px;
+	/* margin-bottom:50px; */
+	/* hyphens:auto; */
+}
+
+h3 {
 	font-size: 3rem;
 	font-size: var(--font-medium);
 	font-weight: 800;
 	line-height: 1.4;
 	margin-bottom:20px;
-}
-
-h3 {
-	font-size: 1.085rem;
-	font-size: var(--font-regular);
-	font-weight: 700;
-	line-height: 1.4;
-	margin:0px;
 }
 
 p {

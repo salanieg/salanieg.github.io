@@ -815,17 +815,27 @@ function openmenu() {
     if(menuopen) {
         document.getElementById("content").style.display = "initial";
         document.getElementById("menu").style.display = "none";
+        document.body.style.gridTemplateAreas = '"header" "main"';
+        document.getElementById("header").style.height = "unset";
         menuopen = false
         
     }
     else {
         document.getElementById("content").style.display = "none";
+        document.body.style.gridTemplateAreas = '"header" "header"';
+        document.getElementById("header").style.height = "100vh";
         document.getElementById("menu").style.display = "grid";
-        document.getElementById("menu").style.width = "100vw";
-        document.getElementById("menu").style.height = 'calc(100vh - ' + document.getElementById("header").offsetHeight + 'px)';
+        document.getElementById("menu").style.height = 'calc(100vh - 2vw - ' + document.getElementById("logo").offsetHeight + 'px)';
         menuopen = true
+
+        window.addEventListener("resize", fit_menu)
     }
 }
+
+function fit_menu() {
+    document.getElementById("menu").style.height = 'calc(100vh - 2vw - ' + document.getElementById("logo").offsetHeight + 'px)'; 
+}
+
 
 
 function safeclosemenu() {
