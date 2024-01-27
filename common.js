@@ -479,7 +479,10 @@ function showcookiecontent() {
     datainfoshown = false;
     cleartpcookies()
 
-    load_frame(document.getElementById(CURRENT_ID).getElementsByTagName("iframe"), 0, slide_current)
+    if(typeof CURRENT_ID !== "undefined") {
+        load_frame(document.getElementById(CURRENT_ID).getElementsByTagName("iframe"), 0, slide_current)
+    }
+
     if(document.getElementById("slides")){load_slide_frames()}
 }
 
