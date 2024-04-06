@@ -304,8 +304,12 @@
 
             /* ESSAY */
 
+            .magazine {
+                margin-top: 20px;
+            }
             .essay-files {
                 margin: 20px;
+                max-width: 100%;
             }
             
 
@@ -427,7 +431,7 @@
 
             
             @media screen and (min-width: 1000px) {
-                .sections, .magazine {
+                .sections {
                     grid-template-rows: auto;
                     grid-template-columns: 1fr 1fr 1fr;
                     grid-template-areas: ". . .";
@@ -439,11 +443,17 @@
                     max-width: 450px;
                 }
 
-                .intro {
+                .intro, .magazine {
                     max-width: 450px;
                     margin-left:auto;
                     margin-right:auto;
                 }
+
+                .magazine {
+                    max-width: 700px;
+                }
+
+                
             }
 
 
@@ -473,6 +483,7 @@
             #intro_hole {
                 display: grid;
                 place-items: center;
+                cursor: pointer;
             }
 
             #intro_hole_inner, #intro_button {
@@ -546,7 +557,7 @@
                     <p lang="en">You have landed in the Nexus! This is the heart of this website: A growing collage of my publications and other content worth reading.</p>    
                 </div>
 		        
-                <div class="cards magazine">
+                <div class="magazine">
                     <div class="essay card" onclick="show_card_content(event)">
                         <h2 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h2>
                         <h2 lang="en">Is man as Nietzsche's predator really self-sufficient?</h2>
