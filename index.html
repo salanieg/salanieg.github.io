@@ -1,726 +1,135 @@
 <!DOCTYPE html>
-<html>
-    <head>        
-        <meta charset="UTF-8">
-        <title>THE DIALECTIC WORMHOLE</title>
-        <meta name="viewport" content="width=device-width, height=device-height, user-scalable=no">
-        
-        <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="images/favicon/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="images/favicon/favicon-16x16.png">
-        <link rel="manifest" href="images/favicon/site.webmanifest">
-        <link rel="mask-icon" href="images/favicon/safari-pinned-tab.svg" color="#1c1c1c">
-        <link rel="shortcut icon" href="images/favicon/favicon.ico">
-        <meta name="msapplication-TileColor" content="#1c1c1c">
-        <meta name="msapplication-config" content="images/favicon/browserconfig.xml">
-        <meta name="theme-color" content="#1c1c1c">
-
-        <link rel="stylesheet" href="styles/fonts.css">
-        <link rel="stylesheet" href="styles/general.css">
-
-        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Geist/Geist-Regular.woff2">
-        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Geist/Geist-Bold.woff2">
-        <link rel="preload" as="font" crossorigin type="font/woff2" href="https://www.dialecticwormhole.page/fonts/Squatina/Squatina-Regular.woff2">
-        <link rel="preload" as="image" crossorigin type="image/svg+xml" href="https://www.dialecticwormhole.page/images/header.svg"/>
-        
-        
-        <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
-
-        <script type="text/javascript" src="common.js"></script>
-        <script>
-
-            // LOADING
-
-            load_components(["header", "footer", "databanner"])
-            
-            const FOOTNOTE_LIST = [
-                {
-                    text_de: "Der Inhalt dieser Website ist daher in der Regel unter einer freien Kulturlizenz (CC BY-SA 4.0) verfügbar. Die Lizenz kann, falls vorhanden, neben dem entsprechenden Inhalt eingesehen werden.",
-                    text_en: "The content of this website is therefore usually available under a Free Culture Licence (CC BY-SA 4.0). The licence, if available, can be viewed next to the corresponding content."
-                },
-                {
-                    text_de: "Vgl. Flusser, Vilém: Ins Universum der technischen Bilder, 7. Aufl., Berlin, Deutschland: Edition Flusser, 2018, S. 73",
-                    text_en: "Cf. Flusser, Vilém: Ins Universum der technischen Bilder, 7th ed., Berlin, Germany: Edition Flusser, 2018, p. 73"
-                },
-                {
-                    text_de: "Friedrich Nietzsche, Jenseits von Gut und Böse",
-                    text_en: "Friedrich Nietzsche, Beyond Good and Evil"
-                },
-                {
-                    text_de: "Hinweis: Die Linie U1 verkehrt derzeit nur von Muggenhof bis Langwasser Süd. Mit freundlichen Grüßen, der U-Bahn-steuernde Roboter!",
-                    text_en: "Note: The U1 line currently only serves from Muggenhof to Langwasser Süd. Best regards, the robotic subway operator!"
-                }
-            ]
-        </script>
-
-        <script>
-            var CURRENT_ID = "foyer"
-            var CURRENT_CARD_ID = ""
-            var RECENT_LIST = []
-            var back_nav = false
-
-            function pre_init() {
-                if(localStorage.getItem("dialecticwormhole_skip") == "true"){
-                    let url = document.URL.split("#")[1]
-
-                    if(url == null) {url = document.URL.split("/")[3]}
-                    if(url == "" || document.URL.includes("5500")) {url = "launchpad"}
-
-                    display_section(url)
-                }
-                else {
-                    document.getElementById("header").style.display = "none"
-                    display_section("foyer");
-                }
-
-                document.body.addEventListener('click', (event) => {reset_cards(event)})
-            }
-
-
-            function reset_cards(event) {
-              
-                if(event) {
-                    
-                    let card = event.target
-                    while(!card.classList.contains("card")) {   
-                        card = card.parentElement
-                        if(!card) {break}
-                    }
-
-                    if(card && card.id == CURRENT_CARD_ID) {
-                        return
-                    }
-                } 
-                
-                let card = document.getElementsByClassName("card")
-
-                for (let i = 0; i < card.length; i++) {
-                    card[i].style.cursor = "pointer"
-                }
-                
-                let card_content = document.getElementsByClassName("card-content")
-
-                for (let i = 0; i < card_content.length; i++) {
-                    card_content[i].style.display = "none"
-                }
-            }
-
-            function show_card_content(event) {   
-
-                let card = event.target
-
-                // when clicking the h3 heading you have to go back up to the main essay div
-
-                while(!card.classList.contains("card")) {
-                    card = card.parentElement
-                }
-
-                let card_content = card.getElementsByClassName("card-content")[0]
-
-
-                reset_cards(null)
-
-                card.style.cursor = "auto"
-                card_content.style.display = "block"
-                CURRENT_CARD_ID = card.id      
-            }
-
-
-
-            function display_and_skip(id) {
-                localStorage.setItem("dialecticwormhole_skip", true);
-                document.getElementById("header").style.display = "block"
-                display_section(id)
-            }
-
-            function display_section(id) {  
-
-                if(back_nav) {
-                    // console.log("BACK NAV: " + RECENT_LIST)
-                    back_nav = false
-                }
-                else {
-                    while(CURRENT_ID == RECENT_LIST[RECENT_LIST.length - 1]) {
-                        RECENT_LIST[RECENT_LIST.length - 1] = null
-                    }
-
-                    // console.log("PUSH RECENT LIST: " + RECENT_LIST + " PUSHED: " + CURRENT_ID)
-                    RECENT_LIST.push(CURRENT_ID);
-                }
-
-                document.getElementById("content").scrollTop = 0;
-                reset_cards(null)
-
-                let page_elements = document.getElementById("content").getElementsByTagName("section");
-
-                for (let i = 0; i < page_elements.length; i++)
-                {
-                    page_elements[i].style.display = "none"
-                }
-                
-                // if(id == "foyer" || id == "launchpad") {
-                //     // document.getElementById("back").style.display = "none"
-                // }
-                // else {
-                //     // document.getElementById("back").style.display = "inline"
-                // }
-
-                let section = document.getElementById(id)
-                section.style.display = "block"
-                
-                load_frame(section.getElementsByTagName("iframe"), 0, slide_current)
-
-                CURRENT_ID = id
-                if(document.URL.includes("5500")) {return}
-                window.history.pushState(id, '', id);
-            }
-
-
-            window.onpopstate = function(event){
-
-                event.preventDefault()
-
-                if(RECENT_LIST.length > 1 && RECENT_LIST[RECENT_LIST.length - 1] != "foyer") {
-                    
-
-                    // if(RECENT_LIST[RECENT_LIST.length - 1] == "foyer") {
-                    //     let inner_pop = RECENT_LIST.pop()
-                    //     console.log("FOYER! RECENT LIST:" + RECENT_LIST + " LENGTH: " + RECENT_LIST.length + " POPPED:" + inner_pop)
-			        //     history.back()
-                    //     return
-                    // }
-                    // let pop = RECENT_LIST.pop()
-
-                    // console.log("POP RECENT LIST: " + RECENT_LIST + " POPPED: " + pop)
-
-                    
-                    back_nav = true
-                    display_section(RECENT_LIST.pop())
-                }
-                else {
-                    history.back()
-                }
-
-            }
-
-            function album_cycle(event, change) {
-                let album_controls = event.target.parentElement
-                let album = album_controls.parentElement.parentElement
-
-                let album_images = album.getElementsByClassName("album-images")[0].getElementsByTagName("img")
-                let current_image = album.getAttribute('data-current')
-                
-                
-                current_image = Number(current_image) + change
-
-                if(current_image < 0) {
-                    current_image = 0
-                }
-                else if (current_image >= album_images.length-1){
-                    current_image = album_images.length-1
-                }
-                
-                for (let i = 0; i < album_images.length; i++)
-                {                  
-                    album_images[i].style.display = "none"
-                }
-                album_images[current_image].style.display = "block"
-                album.setAttribute('data-current', current_image)
-            }
-
-        </script>
-
-        <style>
-
-
-
-            section {
-                display: none;
-            }
-
-
-
-            .cards {
-                /* display: flex; */
-                /* display: grid;
-                grid-template-rows: auto;
-                grid-template-columns: 1fr 1fr 1fr 1fr;
-                grid-template-areas: ". . . ."; */
-                /* place-items: center; */
-                /* justify-content: space-between;
-                flex-wrap: wrap; */
-                /* gap: 30px; */
-                margin-top: 20px;
-                margin-bottom: 40px;
-            }
-
-            /* .select-target {
-                animation: blink 2s linear infinite;
-            }
-
-            @keyframes blink {
-                0% {opacity: 1;}
-                50% {opacity: 0.2;}
-                100% {opacity: 1;}
-            } */
-
-
-
-            .adaptive {width:100%;}
-            
-            .video {
-                display: flex;
-                flex-direction: column;
-                gap: 20px;
-                margin: 60px 0px;
-            }
-
-            .video * {
-                margin: 0px;
-            }
-
-
-            /* CARDS */
-
-            .card {
-                padding: 20px 20px;
-                margin-bottom: 25px;
-                width: 100%;
-
-                border-radius: 20px;
-                border: 0px solid white;
-                box-shadow: 0px 0px 5px white;
-
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-            }
-
-            .card-content {
-                margin-top: 30px;
-                display:none;
-            }
-
-
-
-            /* ESSAY */
-
-            .magazine {
-                margin-top: 20px;
-            }
-            .essay-files {
-                margin: 20px;
-                max-width: 100%;
-            }
-            
-
-            /* ALBUM */
-
-            .album-images {
-                /* height: 500px; */
-                display:grid;
-                place-items: center;
-            }
-
-            .album-images img {
-                max-height:500px;
-                display:none;
-            }
-
-            .album-images > img:first-child {
-                display: block;
-            }
-
-            .album-controls {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 35px;
-                margin-top:30px;
-            }
-
-            .album-controls span {
-                font-size: 26pt;
-                font-weight: 800;
-                cursor: pointer;
-                
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
-
-            #section-overview {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 20px;
-                margin-left: 20px;
-                margin-right: 20px;
-            }
-
-            #section-overview button {
-                width: fit-content;
-            }
-
-            .sections button {
-                width: 140px;
-            }
-
-            .sectionthumbnail {
-                object-fit: cover;
-                width: 100%;
-
-                border-radius: 0px;
-                border: 0px solid white;
-                box-shadow: 0px 0px 5px white;
-                cursor: pointer;
-
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-            }
-
-            .section-option {
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-                justify-content: flex-start;
-        
-            }
-
-            .section-option {
-                width:100%;
-                margin-left: auto;
-	            margin-right: auto;
-            }
-
-
-            .sections, .cards {
-                width: fit-content;
-                display: grid;
-                grid-template-rows: auto;
-                grid-template-columns: 1.5fr 1fr 1fr 1fr;
-                grid-template-areas: ". . . .";
-                place-items: center;
-                margin-left: auto;
-                margin-right: auto;
-                gap: 30px;
-                margin-top: 60px;
-                margin-bottom: 60px;
-            }
-
-
-            .cards {
-                align-items: start;
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-            }
-
-            /* @media screen and (min-width: 1000px) {
-                .sections {
-                    grid-template-columns: 1fr 1fr;
-                    grid-template-rows: 1fr 1fr;
-                    grid-template-areas: 
-                    ". . "
-                    ". . ";
-                    justify-items: start;
-
-                }
-            } */
-
-            
-            @media screen and (min-width: 1000px) {
-                .sections {
-                    grid-template-rows: auto;
-                    grid-template-columns: 1fr 1fr 1fr;
-                    grid-template-areas: ". . .";
-                    justify-items: center;
-                }
-
-                .section-option {
-                    
-                    max-width: 450px;
-                }
-
-                .intro, .magazine {
-                    max-width: 450px;
-                    margin-left:auto;
-                    margin-right:auto;
-                }
-
-                .magazine {
-                    max-width: 700px;
-                }
-
-                
-            }
-
-
-            @media screen and (max-width: 1000px) {
-                .sections, .cards {
-                    display: flex;
-                    place-items: center;
-                    justify-content: space-between;
-                    flex-wrap: wrap;
-                }
-
-
-
-                .cards {
-                    gap: 10px;
-                }
-            }
-
-            #intro_container {
-                height: 80vh;
-                display: grid;
-                place-items: center;
-                align-content: center;
-                gap:30px;
-            }
-
-            #intro_hole {
-                display: grid;
-                place-items: center;
-                cursor: pointer;
-            }
-
-            #intro_hole_inner, #intro_button {
-                grid-column: 1;
-                grid-row: 1;
-            }
-
-            .intro_hole_inner {
-                width: 75vw;
-                max-width: 800px;
-                max-height: 70vh;
-            }
-
-            .intro h1 {
-                text-align: center;
-                margin-bottom: 20px;
-                font-size: var(--font-extreme);
-            }
-
-        </style>
-    </head>
-
-    <body>
-        <header id="header"></header>
-
-        <main id="content">
-
-
-            <section id="foyer">
-                <div id="intro_container">
-                    <!-- <p id="intro_quote">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br><span lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</span><span lang="en">Let no one ignorant of geometry enter.</span></p> -->
-                    <p id="intro_quote"><span lang="de">In Wartung. Betreten auf eigenes Risiko!</span><span lang="en">Under maintenance. Enter at your own risk!</span></p>
-                    <div id="intro_hole" onclick="display_and_skip('launchpad')">
-                        <img lang="de" class="intro_hole_inner" src="images/eintreten.svg" alt="eintreten">
-                        <img lang="en" class="intro_hole_inner" src="images/enter.svg" alt="enter">   
-                        <!-- <button id="intro_button" ><span lang="de">Akzeptieren und fortfahren</span><span lang="en">Accept and continue</span></button> -->
-                    </div>
-                </div>
-            </section>
-
-
-            <section id="launchpad">
-
-                <div class="intro">
-                    <h1>LAUNCHPAD</h1>
-                    <p lang="de">Entropie verwandelt Ordnung in Chaos. Allerdings nicht, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe von Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<span data-footnote="1"></span></p>
-                    <p lang="en">Entropy shifts order into chaos. Not because it is necessary, however, but because it is the most probable outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To arrange what has been destroyed, to synthesise it, is the legacy of Gaía. To force the shattered geometry through a dialectic wormhole, and to reassemble it, that is the desideratum of this website.<span data-footnote="1"></span></p>
-                </div>
-
-                <div class="sections">
-                    <div class="section-option">
-                            <img  onclick="display_section('nexus')" class="sectionthumbnail" src="images/sections_labeled/nexus.webp" alt="nexus thumbnail">
-                            <!-- <button onclick="display_section('nexus')">NEXUS</button>     -->
-                    </div>
-		            <div class="section-option">
-                        <img  onclick="display_section('abyss')" class="sectionthumbnail" src="images/sections_labeled/abyss.webp" alt="abyss thumbnail">
-                        <!-- <button onclick="display_section('abyss')">ABYSS</button> -->
-        	        </div>
-                    <div class="section-option">
-                        <img  onclick="display_section('about')" class="sectionthumbnail" src="images/sections_labeled/about.webp" alt="about thumbnail">
-                        <!-- <button onclick="display_section('about')">ABOUT</button> -->
-                    </div>
-                </div>
-            </section>
-
-
-            <section id="nexus">
-                <div class="intro">
-                    <h1>NEXUS</h1>
-                    <p lang="de">Du bist im Nexus gelandet! Dies ist das Herzstück dieser Website: Eine wachsende Collage aus meinen Publikationen und anderen lesenswerten Inhalten.</p>
-                    <p lang="en">You have landed in the Nexus! This is the heart of this website: A growing collage of my publications and other content worth reading.</p>    
-                </div>
-		        
-                <div class="magazine">
-                    <div class="essay card" onclick="show_card_content(event)">
-                        <h2 lang="de">Ist der Mensch als Nietzsches Raubtier wirklich autark?</h2>
-                        <h2 lang="en">Is man as Nietzsche's predator really self-sufficient?</h2>
-
-                        <div class="card-content">
-                            <p lang="de">In diesem Aufsatz werden die Grenzen der menschlichen Unabhängigkeit im Verhältnis zu ihren Instinkten und ihrer kulturellen Prägung untersucht. Es wird argumentiert, dass die Grenze zwischen dem Menschen als "Raubtier" und als "Haustier" fließend ist, wobei beide den gleichen Prinzipien der Abhängigkeit unterliegen. Anhand von Nietzsches Konzept der "Instrumente der Kultur" wird aufgezeigt, wie der Mensch von institutionalisierten sozialen Strukturen abhängig geworden ist und eine neue Form der Unabhängigkeit geschaffen hat, die in Wirklichkeit eine Fassade für seine Urinstinkte ist.</p>
-                            <p lang="en">This essay explores the limitations of human independence in relation to their instincts and cultural conditioning. It is argued that there is a blurred line between humans as "predators" and as "pets", both of which are subject to the same principles of dependency. Nietzsche's concept of the "instruments of culture" is used to highlight how humans have become dependent on institutionalised social structures, creating a new form of independence that is, in reality, a façade for their primal instincts.</p>
-                        
-                            <div class="essay-files">
-                                <a lang="de" href="files/de/DWNietzschesRaubtier.pdf" target="_blank"><button>öffnen</button></a>
-                                <a lang="en" href="files/en/DWNietzschesRaubtier.pdf" target="_blank"><button>open</button></a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="essay card" onclick="show_card_content(event)">
-                        <h2 lang="de">Massenkultur - Entfremdung durch Imitation?</h2>
-                        <h2 lang="en">Mass culture - alienation through imitation?</h2>
-
-
-                        <div class="card-content">
-                            <p lang="de">In diesem Essay wird die Rolle der Nachahmung in der Massenkultur erörtert, wobei der Schwerpunkt auf den Auswirkungen auf Individualität und Kreativität liegt. Der Autor argumentiert, dass die Fähigkeit zur Nachahmung zwar wichtig ist, um kulturelle Artefakte zu schaffen, die die Massen ansprechen, dass aber die Betonung der Nachahmung in der Massenkultur zu einem Verlust an Originalität und zu einer Konzentration darauf geführt hat, einem möglichst großen Publikum zu gefallen. Letztlich geht es in dem Essay um die Frage, ob die auf Nachahmung ausgerichtete Kultur der Massenkultur die Kreativität unterdrückt oder das kollektive Schaffen fördert.</p>
-                            <p lang="en">This essay discusses the role of imitation in mass culture, with a focus on the impact on individuality and creativity. The author argues that while the ability to imitate is important in creating cultural artifacts that appeal to the masses, the emphasis on imitation in mass culture has led to a loss of originality and a focus on pleasing the largest possible audience. Ultimately, the essay questions whether the imitation-driven culture of mass culture is stifling creativity or fostering collective creation.</p>
-                            
-                            <div class="essay-files">
-                                <a lang="de" href="files/de/DWEntfremdungdurchImitation.pdf" target="_blank"><button>öffnen</button></a>
-                                <a lang="en" href="files/en/DWEntfremdungdurchImitation.pdf" target="_blank"><button>open</button></a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="essay card" onclick="show_card_content(event)">
-                        <h2 lang="de">Philanthrokapitalismus: Solidarität als Ware?</h2>
-                        <h2 lang="en">Philanthrocapitalism: Solidarity as a Commodity?</h2>  
-
-                        <div class="card-content">
-                            <p lang="de">Dieser kurze Aufsatz untersucht das Konzept des Philanthrokapitalismus im Kontext von kontroversen Marketing-Strategien und beleuchtet die Implikationen der Übertragung der philanthropischen Verantwortung und der anschließenden Umverteilung von Reichtum auf die Bourgeoisie. Die Diskussion nimmt eine marxistische Perspektive ein und stellt die Frage, ob das Proletariat ohne Bedenken diese Pflicht an Akteure innerhalb der Bourgeoisie abgeben kann und beleuchtet die potenziellen Risiken, die mit dieser Machtverschiebung verbunden sind. Diese Untersuchung verdeutlicht die komplexen Dynamiken zwischen Kapitalismus, Philanthropie und der gesellschaftlichen Wahrnehmung der Superreichen.</p>
-                            <p lang="en">This short essay investigates the concept of philanthrocapitalism within the context of controversial marketing strategies, examining the implications of entrusting the bourgeoisie with philanthropic responsibility and the subsequent redistribution of wealth. The discussion takes a Marxist perspective, questioning whether the proletariat can, without hesitation, yield this duty to actors within the bourgeoisie, and scrutinizing the potential risks inherent to this shift in power. This exploration elucidates the intricate dynamics between capitalism, philanthropy, and the societal perception of the ultra-wealthy.</p>
-
-                            <div class="essay-files">
-                                <a lang="de" href="files/de/DWPhilanthrokapitalismus.pdf" target="_blank"><button>öffnen</button></a>
-                                <a lang="en" href="files/en/DWPhilanthrokapitalismus.pdf" target="_blank"><button>open</button></a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="essay card" onclick="show_card_content(event)">
-                        <h2 lang="de">Charakterisierung der modernen Wahlkampfkommunikation: Kanäle der politischen Kommunikation</h2>
-                        <h2 lang="en">Characterization of modern election campaign communication: Channels of political communication</h2>  
-
-                        <div class="card-content">
-                            <p lang="de">Diese Semesterarbeit untersucht die Entwicklung der politischen Kommunikation, wobei der Schwerpunkt auf den Kanälen liegt, die die moderne Wahlkampfkommunikation prägen. Sie beginnt mit den Arbeiterbewegungen des 19. Jahrhunderts und erstreckt sich bis in die heutige digitale Ära. Die zentrale Forschungsfrage lautet: „Welche Kanäle der politischen Kommunikation charakterisieren die moderne Wahlkampfkommunikation?“ Durch eine Literaturrecherche verfolgt die Arbeit die Entwicklung der Wahlkampfkommunikation und bewertet die Wirksamkeit verschiedener Kanäle, um Schlüsseltrends in der heutigen politischen Diskussion zu identifizieren.</p>
-                            <p lang="en">This term paper explores the evolution of political communication, focusing on channels shaping modern election campaign communication. It starts from 19th-century labor movements and extends to the current digital era. The key research question is: "Which channels of political communication characterize modern election campaign communication?" Through a literature review, the paper traces the development of election campaign communication and evaluates the efficacy of various channels to identify key trends in today's political discourse.</p>
-
-                            <div class="essay-files">
-                                <a lang="de" href="files/de/DWKanäle_der_politischen_Kommunikation.pdf" target="_blank"><button>öffnen</button></a>
-                                <a lang="en" href="files/en/DWKanäle_der_politischen_Kommunikation.pdf" target="_blank"><button>open</button></a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-		  
-            </section>
-
-
-            <section id="abyss">
-                
-                <div class="intro">
-                    <h1>ABYSS</h1>
-                    <p lang="de">»Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.«<span data-footnote="3"></span><br><br>Willkommen am Rand des Abgrunds, werte Reisende! Erhebt euch aus dem Abgrund, um im Obolodeon-Theater aufzuerstehen, bahnt euch euren Weg durch die Arkaden des Pantheons oder stellt euch dem Schicksal jener, die vom Abgrund verschlungen werden. Setzt eure Reise im Transitbereich fort, um weitere unbekannte Orte zu erkunden. Das Abenteuer erwartet euch!</p>
-                    <p lang="en">»Beware that, when fighting monsters, you yourself do not become a monster... for when you gaze long into the abyss. The abyss gazes also into you.«<span data-footnote="3"></span><br><br>Welcome to the edge of the abyss, dear travelers! Rise from the abyss to resurrect in the obolodeon theatre, make your way through the arcades of the pantheon, or face the fate of those who are consumed by the abyss. To explore new unknown places, start your next journey in the transit area. The adventure awaits!</p>
-                </div>
-                
-                <div class="sections">
-		            <div class="section-option">
-                        <img  onclick="display_section('pantheon')" class="sectionthumbnail" src="images/sections_labeled/pantheon.webp" alt="pantheon thumbnail">
-                        <!-- <button onclick="display_section('pantheon')">PANTHEON</button> -->
-                    </div>
-                    <div class="section-option">
-                        <img  onclick="display_section('obolodeon')" class="sectionthumbnail" src="images/sections_labeled/obolodeon.webp" alt="obolodeon thumbnail">
-                        <!-- <button onclick="display_section('obolodeon')">OBOLODEON</button>     -->
-                    </div>
-                    <div class="section-option">
-                        <img  onclick="display_section('transit')" class="sectionthumbnail" src="images/sections_labeled/transit.webp" alt="transit thumbnail">
-                        <!-- <button onclick="display_section('transit')">TRANSIT</button>     -->
-                    </div>
-                </div>
-            </section>
-
-
-            <section id="pantheon">
-                <div class="intro">
-                    <h1>PANTHEON</h1>
-                    <p lang="de">Willkommen, unerschrockene Reisende, am Rande der Zivilisation! Hier findet ihr eine Galerie von Analog- und Digitalfotografien, die unter anderen Umständen in einem Social-Media-Feed gelandet wäre.</p>
-                    <p lang="en">Welcome, intrepid travelers, to the edge of civilization! Here you will find a gallery of analogue and digital photographs that, under other circumstances, would have ended up in a social media feed.</p>
-		        </div>
-		 <a href="https://www.instagram.com/den.muench/" target="_self"><button style="background-color: nero; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">INSTAGRAM</button></a>
-            </section>
-
-
-            <section id="obolodeon">
-                <div class="intro">
-                    <h1>OBOLODEON</h1>
-                    <p lang="de">Hast du die richtige Wahl getroffen? Dann sei willkommen im kaleidoskopischen Kabinett. Ihr seid dem Abgrund entkommen, aber ihr könnt weder den Grenzen eures Geistes entkommen... noch den Konsequenzen eures Handelns. Willkommen im Obolodeon, einem Ort, um den Kopf frei zu bekommen... um über die Vergangenheit nachzudenken... über die Gegenwart... und über die Zukunft.</p>
-                    <p lang="en">Have you made the right choice? Well then, welcome to the kaleidoscopic cabinet. You escaped the abyss, but you can’t escape the boundaries of your mind... nor the consequences of your actions. Welcome to the Obolodeon, a place to empty the mind... reflect on the past... the present... and the future.</p>
-                
-                    <div class="video">
-                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="Ppa__7ZLAU8" sandbox></iframe>
-                        <p lang="de">arbeit, us-geschichte, ausbeutung</p><p lang="en">work, us-history, exploitation</p>
-                    </div>
-                    <div class="video">
-                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="IFe9wiDfb0E" sandbox></iframe>
-                        <p lang="de">jenseits, recht, kapitalismus</p><p lang="en">afterlife, legal, capitalism</p>
-                    </div>
-                    <div class="video">
-                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="gEyFH-a-XoQ" sandbox></iframe>
-                        <p lang="de">kafka, verwirrung, flughafen</p><p lang="en">kafka, confusion, airport</p>
-                    </div>
-                    <div class="video">
-                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fonsUaFURPI" sandbox></iframe>
-                        <p lang="de">philosophie, vergessen, furcht</p><p lang="en">philosophy, oblivion, fear</p>
-                    </div>
-                    <div class="video">
-                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="2jy3JU-ORpo" sandbox></iframe>
-                        <p lang="de">krieg, simulation, strategie</p><p lang="en">war, simulation, strategy</p>
-                    </div>
-                    <div class="video">
-                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="ubNF9QNEQLA" sandbox></iframe>
-                        <p lang="de">detektiv, rätsel, überraschung</p><p lang="en">detective, brainteaser, surprise</p>
-                    </div>
-                    <div class="video">
-                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="fp2OZRr9jXY" sandbox></iframe>
-                        <p lang="de">studierende, wohnungen, brd-geschichte</p><p lang="en">students, housing, brd-history</p>
-                    </div>
-                    <div class="video">
-                        <iframe class="adaptive" src="about:blank" data-source="youtube" data-id="wO61D9x6lNY" sandbox></iframe>
-                        <p lang="de">mathematik, geometrie, erklärung</p><p lang="en">mathematics, geometry, explanation</p>
-                    </div>
-    
-                </div>
-            </section>
-
-
-            <section id="transit">
-                <div class="intro">
-                    <h1>TRANSIT</h1>
-                    <p lang="de">Willkommen im interdimensionalen Reisebüro. Bitte wähle dein Ziel.</p>
-                    <p lang="en">Welcome to the interdimensional travel agency. Please select your target.</p>
-                </div>
-            </section>
-
-
-            <section id="about">
-                <div class="intro">
-                    <h1>ABOUT</h1>
-                    <p lang="de">Dieses kleine Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln, sodass ich und du keine sozialen Medien nutzen müssen. Ich versuche, regelmäßig eine Vielzahl von Inhalten hochzuladen, einschließlich Philosophie, Politik, Wissenschaft oder einfach nur Unterhaltung.<br><br>Wenn du an neuen Inhalten interessiert bist, dannn besuche von Zeit zu Zeit gerne die Orte (oder Nicht-Orte) innerhalb dieser Website.<br><br>☞ Du kannst das Wurmloch-Symbol nutzen, um zur Startseite zurückzukehren!<br><br>Diese Seite ist keine Plattform. Bitte beachte, dass ich nicht vorhabe und auch nicht in der Lage sein werde, eine Kommentarinfrastruktur zu bieten. Solltest du das Bedürfnis haben, mich zu kontaktieren und einen spezifischen Grund dafür haben, besuche bitte das Impressum für Kontaktinformationen.<br><br>Trotz des unheimlichen Designs gibt es auf dieser Seite keine Schockeffekte. Sei eingeladen, das dialektische Wurmloch zu entdecken und zu teilen, und genieße deinen Besuch!<br><br>Beste Grüße<br>Dennis, V.i.S.d.P., Hüter des Wurmlochs<br><br>Besonderer Dank an:<br>Niki, IT Associate, Hüter der Lorbeeren</p>
-                    <p lang="en">This little website project is dedicated to gather some interesting stuff I want to share in one place, so me and you dont't have to use social media. I try to regularly upload a wide range of content, including philosophy, science, politics or just entertainment.<br><br>If you are interested in new content, you might want to visit the places (or non-places) within this website from time to time.<br><br>☞ Consider using the wormhole icon to navigate back to the launchpad!<br><br>This site is not a platform. Please take into account that I do not plan and will not be able to provide any comment infrastructure. If you find the need to contact me and have an specific reason to do so, please visit the impressum for contact information.<br><br>Despite the eerie design, there are no jumpscares on this site. Feel free to discover and share the dialectic wormhole and enjoy your visit!<br><br>Yours sincerely,<br>Dennis, responsible person according to press law, keeper of the wormhole<br><br>Special thanks to:<br>Niki, IT associate, keeper of the laurels</p>
-                </div>
-            </section>
-        </main>
-
-        <footer id="footer"></footer>
-        
-        <div id="databanner"></div>
-    </body>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dialectic Wormhole</title>
+<style>
+    body { font-family: Arial, sans-serif; color: white; background-color: #212121; margin: 0; padding: 0; }
+    #container { display: none; padding: 20px; text-align: center; }
+    #nav { background: #333; padding: 10px 0; }
+    #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
+    #cookieConsent { background: gray; color: white; position: fixed; bottom: 0; width: 100%; padding: 10px; text-align: center; }
+    .page { display: none; }
+    .show { display: block; }
+    .center { text-align: center; }
+    .content { max-width: 800px; margin: auto; text-align: justify; }
+   	#langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer; z-index: -1; }
+	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: -1; }
+</style>
+<script>
+    function acceptCookies() {
+        document.getElementById('cookieConsent').style.display = 'none';
+        localStorage.setItem('cookiesAccepted', 'true');
+        document.getElementById('container').style.display = 'block';
+    }
+
+    function rejectCookies() {
+        document.getElementById('cookieConsent').style.display = 'none';
+        localStorage.setItem('cookiesRejected', 'true');
+    }
+
+    function checkCookies() {
+        if (!localStorage.getItem('cookiesAccepted')) {
+            document.getElementById('cookieConsent').style.display = 'block';
+            document.getElementById('container').style.display = 'none';
+        } else {
+            document.getElementById('container').style.display = 'block';
+        }
+    }
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+        document.getElementById(pageId).style.display = 'block';
+    }
+
+    function changeLanguage() {
+        var langSwitch = document.getElementById('langSwitch');
+        var currentLang = langSwitch.textContent;
+        if (currentLang === 'English') {
+            langSwitch.textContent = 'Deutsch';
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                el.style.display = el.getAttribute('data-lang') === 'en' ? 'block' : 'none';
+            });
+        } else {
+            langSwitch.textContent = 'English';
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                el.style.display = el.getAttribute('data-lang') === 'de' ? 'block' : 'none';
+            });
+        }
+    }
+
+    window.onload = function() {
+        checkCookies();
+        showPage('welcome');
+        changeLanguage();
+    };
+</script>
+</head>
+<body>
+<div id="cookieConsent">
+    Diese Website verwendet Cookies. <a href="/imprint.html">Impressum</a> | <a href="/privacy.html">Datenschutzerklärung</a> <br>
+    <button onclick="acceptCookies()">Akzeptieren</button> |
+    <button onclick="rejectCookies()">Ablehnen</button>
+</div>
+<div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
+<div id="imprintLink"<a href="/imprint.html"></a><p class="content" data-lang="en">Legal Notice</p>
+        <p class="content" data-lang="de">Impressum</p></div>
+
+<div id="container">
+    <div id="welcome" class="page">
+        <h1>The Dialectic Wormhole</h1>
+        <p id="entryText">Ἀγεωμέτρητος μηδεὶς εἰσίτω.</p>
+        <p id="entryText">Ohne Kenntnis der Geometrie soll keiner eintreten.</p>
+        <button onclick="showPage('launchpad')">Ich habe das verstanden und möchte eintreten</button>
+    </div>
+    <div id="launchpad" class="page">
+        <div id="nav">
+            <a href="#" onclick="showPage('nexus')">Nexus</a>
+            <a href="#" onclick="showPage('abyss')">Abyss</a>
+            <a href="#" onclick="showPage('about')">About</a>
+        </div>
+        <h1 data-lang="en">Launchpad</h1>
+        <h1 data-lang="de">Startrampe</h1>
+        <p class="content" data-lang="en">Entropy shifts order into chaos.</p>
+        <p class="content" data-lang="de">Entropie verwandelt Ordnung in Chaos.</p>
+    </div>
+    <div id="nexus" class="page">
+        <div id="nav">
+            <a href="#" onclick="showPage('launchpad')">Launchpad</a>
+        </div>
+        <h1>Nexus</h1>
+        <p class="content" data-lang="en">Portfolio of my publications.</p>
+        <p class="content" data-lang="de">Portfolio meiner Arbeiten.</p>
+        <!-- PDFs embedded here -->
+    </div>
+    <div id="abyss" class="page">
+        <div id="nav">
+            <a href="#" onclick="showPage('launchpad')">Launchpad</a>
+        </div>
+        <h1>Abyss</h1>
+        <p class="content" data-lang="en">Recommended content will appear here.</p>
+        <p class="content" data-lang="de">Feuilleton mit empfohlenen Inhalten.</p>
+    </div>
+    <div id="about" class="page">
+        <div id="nav">
+            <a href="#" onclick="showPage('launchpad')">Launchpad</a>
+        </div>
+        <h1 data-lang="en">About this project</h1>
+        <h1 data-lang="de">Über dieses Projekt</h1>
+        <p class="content" data-lang="en"><i>A short description of this web project.</i><br><br>Dear fellow travellers,<br><br>
+this website project aims to collect some interesting things that I would like to share in one place. I try to maintain and update the content regularly. <br><br>
+If you are interested in new content, you should visit the places (or non-places) on this website from time to time. This website is primarily based on single-page technology for speed, which is why you can only return to the home page via the "Launchpad" button.<br><br>
+This site is not a platform. Please note that I cannot and will not provide an infrastructure for comments. Contact information for more important matters can be found in the legal notice.<br><br>
+This site is ad-free, subscription-free and donation-free. Adblockers and VPNs are welcome. Get ready to explore the dialectical wormhole!<br><br>
+Dennis, Admin</p>
+        <p class="content" data-lang="de"><i>Eine kurze Beschreibung dieses Webprojekts.</i><br><br>Werte Mitreisende,<br><br>
+dieses Website-Projekt verfolgt das Ziel, einige interessante Dinge zu sammeln, die ich an einem Ort teilen möchte. Ich versuche, die Inhalte regelmäßig zu pflegen und zu aktualisieren.<br><br>
+Wenn du an neuen Inhalten interessiert bist, solltest du von Zeit zu Zeit die Orte (oder Nicht-Orte) auf dieser Website besuchen. Diese Website basiert zur Beschleunigung primär auf Single-Page-Technologie, weshalb nur über den „Launchpad“-Button zur Startseite zurückgekehrt werden kann.<br><br>
+Diese Seite ist keine Plattform. Bitte beachtet, dass ich keine Infrastruktur für Kommentare bereitstellen kann und will. Kontaktinformationen für eher wichtige Anliegen findet ihr im Impressum.<br><br>
+Diese Seite ist werbefrei, abofrei und spendenfrei. Adblocker und VPNs dürfen gerne genutzt werden. Macht euch bereit, das dialektische Wurmloch zu erkunden!<br><br>
+Dennis, Admin</p>
+    </div>
+</div>
+</body>
 </html>
