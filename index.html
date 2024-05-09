@@ -68,17 +68,11 @@
 </head>
 <body>
 <div id="cookieConsent">
-    Diese Website verwendet Cookies. <span id="imprintLink">Impressum | Legal notice<br></span>
+   Diese Website verwendet Cookies. <a href="/impressum.html">Impressum | Legal Notice</a><br>
     <button onclick="acceptCookies()">Akzeptieren</button> |
     <button onclick="rejectCookies()">Ablehnen</button>
 </div>
-
-<script>
-document.getElementById('imprintLink').addEventListener('click', function() {
-    window.location.href = '/impressum.html';
-});
-</script>
-
+	
 <div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
 <div id="imprintLink" onclick="window.location.href='/impressum.html'">
     <p class="content" data-lang="en">Legal Notice</p>
