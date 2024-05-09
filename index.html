@@ -9,13 +9,13 @@
     #container { display: none; padding: 20px; text-align: center; }
     #nav { background: #333; padding: 10px 0; }
     #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
-    #cookieConsent { background: gray; color: white; position: fixed; bottom: 0; width: 100%; padding: 10px; text-align: center; }
+    #cookieConsent { background: gray; color: white; position: fixed; bottom: 0; width: 100%; padding: 10px; text-align: center;  z-index: 5; }
     .page { display: none; }
     .show { display: block; }
     .center { text-align: center; }
     .content { max-width: 800px; margin: auto; text-align: justify; }
-   	#langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer; z-index: -1; }
-	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: -1; }
+   	#langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
 <script>
     function acceptCookies() {
