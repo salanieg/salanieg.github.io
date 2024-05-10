@@ -77,12 +77,6 @@
             });
         }
     }
-
-    function loadPDF(url) {
-        var viewer = '<object type="application/pdf" data="' + url + '" width="500" height="375">No support for PDFs</object>';
-        document.getElementById('pdfViewer').innerHTML = viewer;
-    }
-
     window.onload = function() {
         checkCookies();
         showPage('welcome');
@@ -138,9 +132,9 @@
         <p class="content" data-lang="en"><i>Portfolio of my publications.</i><br/><br/></p>
         <p class="content" data-lang="de"><i>Portfolio meiner Arbeiten.</i><br/><br/></p>
 	<p class="content" data-lang="en">Sisyphos English<br/>
-        <a href="javascript:void(0);" onclick="loadPDF('files/Sisyphos_EN.pdf')">Open English PDF</a><br/><br/></p>
+        <a href="files/Sisyphos_EN.pdf">Load PDF</a><br/><br/></p>
         <p class="content" data-lang="de">Sisyphos Deutsch<br/>
-        <a href="javascript:void(0);" onclick="loadPDF('files/Sisyphos_DE.pdf')">Open German PDF</a><br/><br/></p>
+        <a href="files/Sisyphos_DE.pdf">PDF laden</a><br/><br/></p>
         <div id="pdfViewer"></div>
 	    
         <!-- PDFs embedded here -->
