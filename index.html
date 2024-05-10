@@ -84,6 +84,52 @@
 <div id="container">
     <div id="welcome" class="page">
         <h1>The Dialectic Wormhole</h1><br/><br/>
+
+
+	    
+<style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+        .online-status {
+            font-size: 24px;
+            color: #333;
+        }
+        .circle {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 24px; /* Adjust size of the circle */
+            opacity: 0.5; /* Start with a dimmed circle */
+            animation: blink 1s infinite;
+        }
+        .circle:first-child {
+            animation-delay: 0.5s; /* Delay the animation of the first circle */
+        }
+        @keyframes blink {
+            0%, 100% {
+                color: #333;
+                opacity: 0.5;
+            }
+            50% {
+                color: #0f0; /* Green color */
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="online-status">
+        Now Online! <span class="circle">⬤</span><span class="circle">⬤</span>
+    </div>
+
+
+	
 	<img src="images/logo.webp" alt="Das Logo der Startseite" width="540" height="405"><br/><br/>
         <p id="entryText">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br/></p>
         <p id="entryText" data-lang="en">No one shall enter without knowledge of the geometry.<br/></p>
