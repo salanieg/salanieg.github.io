@@ -84,10 +84,11 @@
 <div id="container">
     <div id="welcome" class="page">
         <h1>The Dialectic Wormhole</h1><br/><br/>
-	<img src="images/dwlogo.webp" alt="Das Logo der Startseite" width="540" height="405"><br/><br/>
+	<img src="images/logo.webp" alt="Das Logo der Startseite" width="540" height="405"><br/><br/>
         <p id="entryText">Ἀγεωμέτρητος μηδεὶς εἰσίτω.</p>
-        <p id="entryText">Ohne Kenntnis der Geometrie soll keiner eintreten.</p>
-        <button onclick="showPage('launchpad')">Ich habe das verstanden und möchte eintreten</button>
+        <p class="content" data-lang="en">No one shall enter without knowledge of the geometry.</p>
+	<p class="content" data-lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.</p>
+        <button onclick="showPage('launchpad')"><p class="content" data-lang="en">I understand and want to enter</p><p class="content" data-lang="de">Ich habe das verstanden und möchte eintreten</p></button>
     </div>
     <div id="launchpad" class="page">
         <div id="nav">
