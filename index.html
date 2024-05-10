@@ -37,19 +37,44 @@
 	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
 <script>
+    function setCookie(name, value, days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    function getCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for(var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
+    function eraseCookie(name) {
+        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+
     function acceptCookies() {
         document.getElementById('cookieConsent').style.display = 'none';
-        localStorage.setItem('cookiesAccepted', 'true');
+        setCookie('cookiesAccepted', 'true', 7);
         document.getElementById('container').style.display = 'block';
     }
 
     function rejectCookies() {
         document.getElementById('cookieConsent').style.display = 'none';
-        localStorage.setItem('cookiesRejected', 'true');
+        setCookie('cookiesRejected', 'true', 7);
     }
 
     function checkCookies() {
-        if (!localStorage.getItem('cookiesAccepted')) {
+        if (!getCookie('cookiesAccepted')) {
             document.getElementById('cookieConsent').style.display = 'block';
             document.getElementById('container').style.display = 'none';
         } else {
@@ -57,30 +82,8 @@
         }
     }
 
-    function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-        document.getElementById(pageId).style.display = 'block';
-    }
-
-    function changeLanguage() {
-        var langSwitch = document.getElementById('langSwitch');
-        var currentLang = langSwitch.textContent;
-        if (currentLang === 'English') {
-            langSwitch.textContent = 'Deutsch';
-            document.querySelectorAll('[data-lang]').forEach(el => {
-                el.style.display = el.getAttribute('data-lang') === 'en' ? 'block' : 'none';
-            });
-        } else {
-            langSwitch.textContent = 'English';
-            document.querySelectorAll('[data-lang]').forEach(el => {
-                el.style.display = el.getAttribute('data-lang') === 'de' ? 'block' : 'none';
-            });
-        }
-    }
     window.onload = function() {
         checkCookies();
-        showPage('welcome');
-        changeLanguage();
     };
 </script>
 </head>
@@ -89,13 +92,6 @@
     Diese Website verwendet Cookies. <span onclick="window.location='/impressum.html';" style="cursor: pointer;">Impressum</span><br>
     <button onclick="acceptCookies()">Akzeptieren</button> |
     <button onclick="rejectCookies()">Ablehnen</button>
-</div>
-
-	
-<div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
-<div id="imprintLink" onclick="window.location.href='/impressum.html'">
-    <p class="content" data-lang="en">Legal Notice</p>
-    <p class="content" data-lang="de">Impressum</p>
 </div>
 <div id="container">
     <div id="welcome" class="page">
