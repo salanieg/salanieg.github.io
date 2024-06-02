@@ -7,12 +7,27 @@
 <title>Panopticon - Dialectic Wormhole</title>
 <style>
     body { font-family: Arial, sans-serif; color: white; background-color: #212121; margin: 0; padding: 0; }
-    #container { padding: 20px; } /* Added container with padding */
-    #nav { background: #333; padding: 10px 0; text-align: center; }
+    #container { display: none; padding: 20px; text-align: center; }
+    #nav { background: #333; padding: 10px 0; }
     #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
-    .center { text-align: center; }
-    .content { max-width: 800px; margin: auto; text-align: justify; padding: 20px; }
+    #langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
+<script>
+    function changeLanguage() {
+        var langSwitch = document.getElementById('langSwitch');
+        var currentLang = langSwitch.textContent;
+        if (currentLang === 'English') {
+            langSwitch.textContent = 'Deutsch';
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                el.style.display = el.getAttribute('data-lang') === 'en' ? 'block' : 'none';
+            });
+        } else {
+            langSwitch.textContent = 'English';
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                el.style.display = el.getAttribute('data-lang') === 'de' ? 'block' : 'none';
+            });
+</script>
 </head>
 <body>
 <div id="container"> <!-- Container added around nav to simulate spacing -->
@@ -20,7 +35,10 @@
         <a href="#" onclick="window.location.href='/';">Home</a> <!-- Zentraler Link zur Startseite in der Navigationsleiste -->
     </div>
 </div>
-
+<div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
+<div id="imprintLink" onclick="window.location.href='/impressum.html'">
+    <p class="content" data-lang="en">Legal Notice</p>
+    <p class="content" data-lang="de">Impressum</p>
 <div class="content">
 <h1>Panopticon</h1>
 <p><i>Eine Sammlung</i></p>
