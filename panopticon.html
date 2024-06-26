@@ -11,16 +11,45 @@
     #nav { background: #333; padding: 10px 0; }
     #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
     .content { max-width: 800px; margin: auto; text-align: justify; }
+    #langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
 
 <!-- Das hier cookies -->
 <script type="text/javascript" src="common.js"></script>
 <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
-<script>load_components(["databanner"])</script>
+<script>
+    load_components(["databanner"])
+function changeLanguage() {
+        var langSwitch = document.getElementById('langSwitch');
+        var currentLang = langSwitch.textContent;
+        if (currentLang === 'English') {
+            langSwitch.textContent = 'Deutsch';
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                el.style.display = el.getAttribute('data-lang') === 'en' ? 'block' : 'none';
+            });
+        } else {
+            langSwitch.textContent = 'English';
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                el.style.display = el.getAttribute('data-lang') === 'de' ? 'block' : 'none';
+            });
+        }
+    }
+    window.onload = function() {
+        showPage('welcome');
+        changeLanguage();
+    };
+
+</script>
 
 
 </head>
 <body>
+<div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
+<div id="imprintLink" onclick="window.location.href='/impressum.html'">
+    <p class="content" data-lang="en">Legal Notice</p>
+    <p class="content" data-lang="de">Impressum</p>
+</div>
 <div id="container">
     <div id="nav" style="text-align: center;">
         <a href="#" onclick="window.location.href='/';">Home</a>
@@ -30,6 +59,8 @@
 
     <div class="content">
         <p><i>Eine Sammlung</i></p>
+         <p class="content" data-lang="en"><i>This is an example. EN</i><br/><br/></p>
+        <p class="content" data-lang="de"><i>Dies ist ein Beispiel. DE</i><br/><br/></p>
     </div>
 </div>
 </body>
