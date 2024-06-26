@@ -476,7 +476,7 @@ function reset_language() {
     }
     
 	// set_language(localStorage.getItem("dw_language"))
-    switch_language()
+    set_language(localStorage.getItem("dw_language"))
 }
 
 function switch_language() {
