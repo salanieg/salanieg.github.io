@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
+<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panopticon - Dialectic Wormhole</title>
 <style>
@@ -11,16 +11,11 @@
     #nav { background: #333; padding: 10px 0; }
     #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
     .content { max-width: 800px; margin: auto; text-align: justify; }
-    #langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
-	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+    #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+    #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
-
-<!-- Das hier cookies -->
-<script type="text/javascript" src="common.js"></script>
-<link rel="preload" as="fetch" crossorigin href="components/databanner.html">
 <script>
-    load_components(["databanner"])
-function changeLanguage() {
+    function changeLanguage() {
         var langSwitch = document.getElementById('langSwitch');
         var currentLang = langSwitch.textContent;
         if (currentLang === 'English') {
@@ -37,12 +32,10 @@ function changeLanguage() {
     }
     window.onload = function() {
         showPage('welcome');
+        // Run language change to set initial language based on button state
         changeLanguage();
     };
-
 </script>
-
-
 </head>
 <body>
 <div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
@@ -51,15 +44,13 @@ function changeLanguage() {
     <p class="content" data-lang="de">Impressum</p>
 </div>
 <div id="container">
-    <div id="nav" style="text-align: center;">
+    <div id="nav">
         <a href="#" onclick="window.location.href='/';">Home</a>
     </div>
-
-    <h1>Panopticon</h1> <!-- Diese Überschrift wird zentriert, da sie ein direktes Kind von #container ist -->
-
+    <h1>Panopticon</h1>
     <div class="content">
         <p><i>Eine Sammlung</i></p>
-         <p class="content" data-lang="en"><i>This is an example. EN</i><br/><br/></p>
+        <p class="content" data-lang="en"><i>This is an example. EN</i><br/><br/></p>
         <p class="content" data-lang="de"><i>Dies ist ein Beispiel. DE</i><br/><br/></p>
     </div>
 </div>
