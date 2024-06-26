@@ -603,7 +603,7 @@ function showcookiecontent() {
 
             thumbnail.src = "https://img.youtube.com/vi/" + frame.getAttribute('data-id') + "/mqdefault.jpg"
             thumbnail.classList.add("thumbnail");
-            thumbnail.classList.add(frame.className);
+            // thumbnail.classList.add(frame.className);
 
             frame.parentNode.insertBefore(thumbnail, frame)
         }
