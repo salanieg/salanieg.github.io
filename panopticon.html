@@ -1,46 +1,50 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="UTF-8">
-<meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panopticon - Dialectic Wormhole</title>
-<style>
-    body { font-family: Arial, sans-serif; color: white; background-color: #212121; margin: 0; padding: 0; }
-    #container { padding: 20px; text-align: center; }
-    #nav { background: #333; padding: 10px 0; }
-    #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
-    .content { max-width: 800px; margin: auto; text-align: justify; }
-    #langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
-	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
-</style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Panopticon - Dialectic Wormhole</title>
+        <style>
+            body { font-family: Arial, sans-serif; color: white; background-color: #212121; margin: 0; padding: 0; }
+            #container { padding: 20px; text-align: center; }
+            #nav { background: #333; padding: 10px 0; }
+            #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
+            .content { max-width: 800px; margin: auto; text-align: justify; }
+            #langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+            #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+        </style>
 
-<!-- Das hier cookies -->
-<script type="text/javascript" src="common.js"></script>
-<link rel="preload" as="fetch" crossorigin href="components/databanner.html">
-<script>load_components(["databanner"])
-</script>
-</head>
-<body>
-<div id="databanner"></div>
-<div id="langSwitch" onclick="switch_language()">Sprache</div>
-<div id="imprintLink" onclick="window.location.href='/impressum.html'">
-    <p class="content" data-lang="en">Legal Notice</p>
-    <p class="content" data-lang="de">Impressum</p>
-</div>
-<div id="container">
-    <div id="nav" style="text-align: center;">
-        <a href="#" onclick="window.location.href='/';">Home</a>
-    </div>
+        <!-- Das hier cookies -->
+        <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
+        <script type="text/javascript" src="common.js"></script>
+        <script>
+            load_components(["databanner"])
+            
 
-    <h1>Panopticon</h1> <!-- Diese Überschrift wird zentriert, da sie ein direktes Kind von #container ist -->
+        </script>
+    </head>
 
-    <div class="content">
-        <p><i>Eine Sammlung</i></p>
-	<iframe src="about:blank" data-source="youtube" data-id="TQCWagPlars" sandbox></iframe>
-        <p class="content" data-lang="en"><i>This is an example. EN</i><br/><br/></p>
-        <p class="content" data-lang="de"><i>Dies ist ein Beispiel. DE</i><br/><br/></p>
-    </div>
-</div>
-</body>
+    <body>
+        <div id="databanner"></div>
+        <div id="langSwitch" onclick="switch_language()">Sprache</div>
+        <div id="imprintLink" onclick="window.location.href='/impressum.html'">
+            <p class="content" lang="en">Legal Notice</p>
+            <p class="content" lang="de">Impressum</p>
+        </div>
+        <div id="container">
+            <div id="nav" style="text-align: center;">
+                <a href="#" onclick="window.location.href='/';">Home</a>
+            </div>
+
+            <h1>Panopticon</h1> <!-- Diese Überschrift wird zentriert, da sie ein direktes Kind von #container ist -->
+
+            <div class="content">
+                <p><i>Eine Sammlung</i></p>
+            <iframe src="about:blank" data-source="youtube" data-id="TQCWagPlars" sandbox></iframe>
+                <p class="content" lang="en"><i>This is an example. EN</i><br/><br/></p>
+                <p class="content" lang="de"><i>Dies ist ein Beispiel. DE</i><br/><br/></p>
+            </div>
+        </div>
+    </body>
 </html>
