@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
@@ -18,32 +18,12 @@
 <!-- Das hier cookies -->
 <script type="text/javascript" src="common.js"></script>
 <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
-<script>
-    function changeLanguage() {
-        var langSwitch = document.getElementById('langSwitch');
-        var currentLang = langSwitch.textContent;
-        if (currentLang === 'English') {
-            langSwitch.textContent = 'Deutsch';
-            document.querySelectorAll('[data-lang]').forEach(el => {
-                el.style.display = el.getAttribute('data-lang') === 'en' ? 'block' : 'none';
-            });
-        } else {
-            langSwitch.textContent = 'English';
-            document.querySelectorAll('[data-lang]').forEach(el => {
-                el.style.display = el.getAttribute('data-lang') === 'de' ? 'block' : 'none';
-            });
-        }
-    }
-
-    window.onload = function() {
-        document.getElementById('langSwitch').textContent = 'English'; // Setze anfänglichen Text auf 'English'
-        changeLanguage(); // Initialer Aufruf, um auf Deutsch zu wechseln
-    };
+<script>load_components(["databanner"])
 </script>
-
 </head>
 <body>
-<div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
+<div id="databanner"></div>
+<div id="langSwitch" onclick="switch_language()">Sprache</div>
 <div id="imprintLink" onclick="window.location.href='/impressum.html'">
     <p class="content" data-lang="en">Legal Notice</p>
     <p class="content" data-lang="de">Impressum</p>
