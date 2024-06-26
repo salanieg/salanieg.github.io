@@ -4,9 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dialectic Wormhole</title>
+<script type="text/javascript" src="common.js"></script>
+<link rel="preload" as="fetch" crossorigin href="components/databanner.html">
 <style>
     body { font-family: Arial, sans-serif; color: white; background-color: #212121; margin: 0; padding: 0; }
-    #container { display: none; padding: 20px; text-align: center; }
+    #container { padding: 20px; text-align: center; }
     #nav { background: #333; padding: 10px 0; }
     #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
     #cookieConsent { background: gray; color: white; position: fixed; bottom: 0; width: 100%; padding: 10px; text-align: center;  z-index: 5; }
@@ -37,25 +39,8 @@
 	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
 <script>
-    function acceptCookies() {
-        document.getElementById('cookieConsent').style.display = 'none';
-        localStorage.setItem('cookiesAccepted', 'true');
-        document.getElementById('container').style.display = 'block';
-    }
 
-    function rejectCookies() {
-        document.getElementById('cookieConsent').style.display = 'none';
-        localStorage.setItem('cookiesRejected', 'true');
-    }
-
-    function checkCookies() {
-        if (!localStorage.getItem('cookiesAccepted')) {
-            document.getElementById('cookieConsent').style.display = 'block';
-            document.getElementById('container').style.display = 'none';
-        } else {
-            document.getElementById('container').style.display = 'block';
-        }
-    }
+    load_components(["databanner"])
 
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
@@ -78,18 +63,12 @@
         }
     }
     window.onload = function() {
-        checkCookies();
         showPage('welcome');
         changeLanguage();
     };
 </script>
 </head>
 <body>
-<div id="cookieConsent">
-    Diese Website verwendet Cookies. <span onclick="window.location='/impressum.html';" style="cursor: pointer;">Impressum</span><br>
-    <button onclick="acceptCookies()">Akzeptieren</button> |
-    <button onclick="rejectCookies()">Ablehnen</button>
-</div>
 
 	
 <div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
