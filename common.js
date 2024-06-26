@@ -472,7 +472,7 @@ function init_language() {
 
 function reset_language() {
     if(localStorage.getItem("dw_language") == null){
-        localStorage.setItem("dw_language", "en")
+        localStorage.setItem("dw_language", "de")
     }
     
 	// set_language(localStorage.getItem("dw_language"))
