@@ -649,7 +649,7 @@ function showcookiecontent() {
     clear_cookies_third_party()
 
     if(document.getElementById("slides")){load_slide_frames()}
-    load_frames(document.getElementsByTagName("iframe"), 0, slide_current)
+    load_frame(document.getElementsByTagName("iframe"), 0, slide_current)
 }
 
 
