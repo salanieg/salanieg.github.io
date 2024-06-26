@@ -479,16 +479,21 @@ function reset_language() {
     set_language(localStorage.getItem("dw_language"))
 }
 
-function switch_language() {
-    
-
-    if(localStorage.getItem("dw_language") == "en") {
-        set_language("de")
+function set_language_display() {
+    if(language == "de") {
         document.getElementById('langSwitch').textContent = 'Englisch';
     }
     else {
-        set_language("en")
         document.getElementById('langSwitch').textContent = 'Deutsch';
+    }
+}
+
+function switch_language() {
+    if(localStorage.getItem("dw_language") == "en") {
+        set_language("de")
+    }
+    else {
+        set_language("en")
     }
 }
 
@@ -505,6 +510,7 @@ function set_language(language) {
     
     // stop_audio()
 	localStorage.setItem("dw_language", language);
+    set_language_display(language)
 }
 
 
