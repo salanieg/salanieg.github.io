@@ -47,33 +47,16 @@
         document.getElementById(pageId).style.display = 'block';
     }
 
-    // function changeLanguage() {
-    //     var langSwitch = document.getElementById('langSwitch');
-    //     var currentLang = langSwitch.textContent;
-    //     if (currentLang === 'English') {
-    //         langSwitch.textContent = 'Deutsch';
-    //         document.querySelectorAll('[lang]').forEach(el => {
-    //             el.style.display = el.getAttribute('lang') === 'en' ? 'block' : 'none';
-    //         });
-    //     } else {
-    //         langSwitch.textContent = 'English';
-    //         document.querySelectorAll('[lang]').forEach(el => {
-    //             el.style.display = el.getAttribute('lang') === 'de' ? 'block' : 'none';
-    //         });
-    //     }
-    // }
     window.onload = function() {
         showPage('welcome');
-        // changeLanguage();
-        // init_language()
+        init_language()
     };
 </script>
 </head>
 <body>
     <div id="databanner"></div>
 	
-<div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
-<span class="option" id="lang-de" onclick="set_language('de')">DE</span> / <span class="option" id="lang-en" onclick="set_language('en')">EN</span><br>
+<div id="langSwitch"><span class="option" id="lang-de" onclick="set_language('de')">DE</span> / <span class="option" id="lang-en" onclick="set_language('en')">EN</span></div>
 <div id="imprintLink" onclick="window.location.href='/impressum.html'">
     <p class="content" lang="en">Legal Notice</p>
     <p class="content" lang="de">Impressum</p>
