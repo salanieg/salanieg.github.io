@@ -479,7 +479,7 @@ function reset_language() {
     set_language(localStorage.getItem("dw_language"))
 }
 
-function set_language_display() {
+function set_language_display(language) {
     if(language == "de") {
         document.getElementById('langSwitch').textContent = 'Englisch';
     }
