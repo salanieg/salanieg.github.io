@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,34 +47,36 @@
         document.getElementById(pageId).style.display = 'block';
     }
 
-    function changeLanguage() {
-        var langSwitch = document.getElementById('langSwitch');
-        var currentLang = langSwitch.textContent;
-        if (currentLang === 'English') {
-            langSwitch.textContent = 'Deutsch';
-            document.querySelectorAll('[data-lang]').forEach(el => {
-                el.style.display = el.getAttribute('data-lang') === 'en' ? 'block' : 'none';
-            });
-        } else {
-            langSwitch.textContent = 'English';
-            document.querySelectorAll('[data-lang]').forEach(el => {
-                el.style.display = el.getAttribute('data-lang') === 'de' ? 'block' : 'none';
-            });
-        }
-    }
+    // function changeLanguage() {
+    //     var langSwitch = document.getElementById('langSwitch');
+    //     var currentLang = langSwitch.textContent;
+    //     if (currentLang === 'English') {
+    //         langSwitch.textContent = 'Deutsch';
+    //         document.querySelectorAll('[lang]').forEach(el => {
+    //             el.style.display = el.getAttribute('lang') === 'en' ? 'block' : 'none';
+    //         });
+    //     } else {
+    //         langSwitch.textContent = 'English';
+    //         document.querySelectorAll('[lang]').forEach(el => {
+    //             el.style.display = el.getAttribute('lang') === 'de' ? 'block' : 'none';
+    //         });
+    //     }
+    // }
     window.onload = function() {
         showPage('welcome');
-        changeLanguage();
+        // changeLanguage();
+        // init_language()
     };
 </script>
 </head>
 <body>
-
+    <div id="databanner"></div>
 	
 <div id="langSwitch" onclick="changeLanguage()">Deutsch</div>
+<span class="option" id="lang-de" onclick="set_language('de')">DE</span> / <span class="option" id="lang-en" onclick="set_language('en')">EN</span><br>
 <div id="imprintLink" onclick="window.location.href='/impressum.html'">
-    <p class="content" data-lang="en">Legal Notice</p>
-    <p class="content" data-lang="de">Impressum</p>
+    <p class="content" lang="en">Legal Notice</p>
+    <p class="content" lang="de">Impressum</p>
 </div>
 <div id="container">
     <div id="welcome" class="page">
@@ -84,9 +86,9 @@
 
 	<img src="images/logo.webp" alt="Das Logo der Startseite" width="136" height="86"><br/><br/>
         <p id="entryText">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br/></p>
-        <p id="entryText" data-lang="en">No one shall enter without knowledge of the geometry.<br/></p>
-	<p id="entryText" data-lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.<br/></p>
-        <button onclick="showPage('launchpad')"><p class="content" data-lang="en">I understand and want to enter</p><p class="content" data-lang="de">Ich habe das verstanden und möchte eintreten</p></button>
+        <p id="entryText" lang="en">No one shall enter without knowledge of the geometry.<br/></p>
+	<p id="entryText" lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.<br/></p>
+        <button onclick="showPage('launchpad')"><p class="content" lang="en">I understand and want to enter</p><p class="content" lang="de">Ich habe das verstanden und möchte eintreten</p></button>
     </div>
     <div id="launchpad" class="page">
         <div id="nav">
@@ -94,12 +96,12 @@
             <a href="#" onclick="showPage('abyss')">Abyss</a>
             <a href="#" onclick="showPage('about')">About</a>
         </div>
-        <h1 data-lang="en">Launchpad</h1>
-        <h1 data-lang="de">Startrampe</h1>
-        <p class="content" data-lang="en"><i>Entropy shifts order into chaos.</i><br><br>Not because this is necessary,
+        <h1 lang="en">Launchpad</h1>
+        <h1 lang="de">Startrampe</h1>
+        <p class="content" lang="en"><i>Entropy shifts order into chaos.</i><br><br>Not because this is necessary,
 		but because it is the most likely outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To order what has been destroyed,
 		synthesizing it, is Gaía's legacy. Forcing the shattered geometry through a dialectical wormhole and reassembling it is the desideratum of this website.<br><br></p>
-        <p class="content" data-lang="de"><i>Entropie verwandelt Ordnung in Chaos.</i><br><br>Nicht etwa, weil dies notwendig ist,
+        <p class="content" lang="de"><i>Entropie verwandelt Ordnung in Chaos.</i><br><br>Nicht etwa, weil dies notwendig ist,
 		sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen,
 		es zu synthetisieren, ist das Erbe der Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<br><br></p>
 	    <br/>
@@ -110,11 +112,11 @@
             <a href="#" onclick="showPage('launchpad')">Launchpad</a>
         </div>
         <h1>Nexus</h1>
-        <p class="content" data-lang="en"><i>Portfolio of my publications.</i><br/><br/></p>
-        <p class="content" data-lang="de"><i>Portfolio meiner Arbeiten.</i><br/><br/></p>
-	<p class="content" data-lang="en">Sisyphos English<br/>
+        <p class="content" lang="en"><i>Portfolio of my publications.</i><br/><br/></p>
+        <p class="content" lang="de"><i>Portfolio meiner Arbeiten.</i><br/><br/></p>
+	<p class="content" lang="en">Sisyphos English<br/>
         <a href="files/Sisyphos_EN.pdf">Load PDF</a><br/><br/></p>
-        <p class="content" data-lang="de">Sisyphos Deutsch<br/>
+        <p class="content" lang="de">Sisyphos Deutsch<br/>
         <a href="files/Sisyphos_DE.pdf">PDF laden</a><br/><br/></p>
 	    
         <!-- PDFs embedded here -->
@@ -124,24 +126,24 @@
             <a href="#" onclick="showPage('launchpad')">Launchpad</a>
         </div>
         <h1>Abyss</h1>
-        <p class="content" data-lang="en"><i>Recommended content will appear here.</i><br><br><span onclick="window.location='/panopticon.html';" style="cursor: pointer;">Speedboat towards the Panopticon.<br><br>
+        <p class="content" lang="en"><i>Recommended content will appear here.</i><br><br><span onclick="window.location='/panopticon.html';" style="cursor: pointer;">Speedboat towards the Panopticon.<br><br>
 	</span></p>
-        <p class="content" data-lang="de"><i>Feuilleton mit empfohlenen Inhalten.</i><br><br><span onclick="window.location='/panopticon.html';" style="cursor: pointer;">Schnellboot zum Panopticon.<br><br>
+        <p class="content" lang="de"><i>Feuilleton mit empfohlenen Inhalten.</i><br><br><span onclick="window.location='/panopticon.html';" style="cursor: pointer;">Schnellboot zum Panopticon.<br><br>
 	</span></p>
     </div>
     <div id="about" class="page">
         <div id="nav">
             <a href="#" onclick="showPage('launchpad')">Launchpad</a>
         </div>
-        <h1 data-lang="en">About this project</h1>
-        <h1 data-lang="de">Über dieses Projekt</h1>
-        <p class="content" data-lang="en"><i>A short description of this web project.</i><br><br>Dear fellow travellers,<br><br>
+        <h1 lang="en">About this project</h1>
+        <h1 lang="de">Über dieses Projekt</h1>
+        <p class="content" lang="en"><i>A short description of this web project.</i><br><br>Dear fellow travellers,<br><br>
 this website project aims to collect some interesting things that I would like to share in one place. I try to maintain and update the content regularly. <br><br>
 If you are interested in new content, you should visit the places (or non-places) on this website from time to time. This website is primarily based on single-page technology for speed, which is why you can only return to the home page via the "Launchpad" button.<br><br>
 This site is not a platform. Please note that I cannot and will not provide an infrastructure for comments. Contact information for more important matters can be found in the legal notice.<br><br>
 This site is ad-free, subscription-free and donation-free. Adblockers and VPNs are welcome. Get ready to explore the dialectical wormhole!<br><br>
 Dennis, Admin</p>
-        <p class="content" data-lang="de"><i>Eine kurze Beschreibung dieses Webprojekts.</i><br><br>Werte Mitreisende,<br><br>
+        <p class="content" lang="de"><i>Eine kurze Beschreibung dieses Webprojekts.</i><br><br>Werte Mitreisende,<br><br>
 dieses Website-Projekt verfolgt das Ziel, einige interessante Dinge zu sammeln, die ich an einem Ort teilen möchte. Ich versuche, die Inhalte regelmäßig zu pflegen und zu aktualisieren.<br><br>
 Wenn du an neuen Inhalten interessiert bist, solltest du von Zeit zu Zeit die Orte (oder Nicht-Orte) auf dieser Website besuchen. Diese Website basiert zur Beschleunigung primär auf Single-Page-Technologie, weshalb nur über den „Launchpad“-Button zur Startseite zurückgekehrt werden kann.<br><br>
 Diese Seite ist keine Plattform. Bitte beachtet, dass ich keine Infrastruktur für Kommentare bereitstellen kann und will. Kontaktinformationen für eher wichtige Anliegen findet ihr im Impressum.<br><br>

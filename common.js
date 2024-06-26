@@ -29,26 +29,18 @@ var LOADED = {              // SEQUENCE MATTERS
     controls: {
         init: false,
         func: init_controls,
-        // tag: "div",
-        // fix: "append"
     },
     databanner: {
         init: false,
         func: init_cookies,
-        // tag: "div",
-        // fix: "append"
     },
     footer: {
         init: false,
         func: init_footer,
-        // tag: "footer",
-        // fix: "append"
     },
     header: {
         init: false,
         func: init_header,
-        // tag: "header",
-        // fix: "prepend"
     }
 }
 
@@ -70,23 +62,12 @@ async function fetchHTML(URL, ID) {
 
 
 function loadElement(ID, HTML) {
-    // console.log(document.readyState)
-    // console.log("load " + ID)
-    
+        
     if (document.readyState == "loading") {
         setTimeout(loadElement, 20, ID, HTML);
     }
     else {
-        // let comp = document.createElement(LOADED[ID].tag)
-        // comp.innerHTML = HTML
-
-        // if(LOADED[ID].fix == "prepend") {
-        //     document.body.prepend(comp)
-        // }
-        // else {
-        //     document.body.append(comp)
-        // }
-
+        console.log(ID)
         document.getElementById(ID).innerHTML = HTML
         LOADED[ID].init = true;
 
@@ -112,31 +93,99 @@ function init() {
         }      
     }
 
-    init_scrollbar()
+    // init_scrollbar()
     init_language()
+    // init_pwa()
+    // init_options()
+    // set_audio_positions()
 
     if(typeof suf_init  === "function") {
         suf_init()
     }
 
+    // history.pushState({}, '', window.location.href)
+    // show_body()
 }
 
 
 function init_header() {
-    // init_abo()
-    // init_highlights()
-    // window.addEventListener("resize", openmenufix)
+    init_abo()
+    init_highlights()
+    window.addEventListener("resize", openmenufix)
 }
 
 
 function init_footer() {
-    // limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
-    // document.getElementById("content").addEventListener("scroll", autosetlayout)
+    create_layout_list()
+    limit_buttons(layoutCurrent, LAYOUT_LIST, "to-top", "to-bottom")
+    document.getElementById("content").addEventListener("scroll", autosetlayout)
     init_footnotes()
-    // init_sharewindow()
 }
 
 
+window.onpopstate = function(event){
+
+    if(fullscreen_menu && window.innerWidth < 800) {
+        event.preventDefault()
+        history.pushState({}, '', window.location.href)
+        history.forward()
+        closemenu()
+    }
+    else if(INDEX_OPEN){
+        event.preventDefault()
+        history.pushState({}, '', window.location.href)
+        history.forward()
+        hide_slide_index()
+    }
+    else {
+        history.back()
+    }
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////// PWA ///////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+var PWA_PROMPT;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    document.getElementById('install-app').style.display = "inline";
+    PWA_PROMPT = e;
+});
+
+function init_pwa() {
+    document.getElementById('install-app').addEventListener('click', async () => {
+        if (PWA_PROMPT !== null) {
+            PWA_PROMPT.prompt();
+            const { outcome } = await PWA_PROMPT.userChoice;
+            if (outcome === 'accepted') {
+                PWA_PROMPT = null;
+                document.getElementById('install-app').style.display = "none";
+            }
+        }
+    });
+
+    // document.getElementById("notifications").addEventListener("click", () => {
+    //     Notification.requestPermission().then((result) => {
+    //         if (result === "granted") {
+    //             issue_notification("ISSUE I", "A new ISSUE has just been released!", "https://dw.org/images/issues/issue-i-illustration.WebP");
+    //         }
+    //     });
+    // });
+}
+
+
+
+// function issue_notification(issue, body, img) {
+//     let options = {
+//       body: body,
+//       icon: img,
+//     };
+//     new Notification(issue, options);
+//     setTimeout(issue_notification, 30000);
+// }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -231,6 +280,22 @@ function enable(element) {
 }
 
 
+// OPTIONS
+
+function init_options() {
+    let options = document.getElementsByClassName("option")
+
+    for (let i = 0; i < options.length; i++)
+    {
+        options[i].addEventListener("click", reset_selection)
+    }
+}
+
+function reset_selection() {
+    window.getSelection().removeAllRanges();
+}
+
+
 // SCROLLING
 
 function smooth_scroll(ID) {
@@ -269,6 +334,19 @@ function pause_videos() {
 
 
 
+// DISPLAY BODY
+
+function show_body() {
+    let bodyelements = document.body.children
+    
+    for (let i = 0; i < bodyelements.length; i++) {
+        bodyelements[i].style.visibility = "visible"
+        console.log(bodyelements[i])
+    }
+}
+
+
+
 // STRING EDITING
 
 const SUPERSCRIPT_LIST = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
@@ -288,6 +366,67 @@ function remove_after(string, character) {
     if(string.includes(character)) {
         string = string.slice(0, string.indexOf(character))
     }
+}
+
+
+
+// SHARE LINK
+
+
+function share(button, index, language) {
+    if ('share' in navigator) {
+        share_api(index, language, button)
+    } 
+    else {
+        copy_link(button, SHARE_DATA[index].url)
+    }
+}
+
+async function share_api(index, language, button) {
+    
+    let share_source = SHARE_DATA[index]
+    let share_object = {}
+    share_object.url = share_source.url
+
+    if(language == "de") {
+        share_object.title = share_source.title_de
+        share_object.text = share_source.abstract_de
+    }
+    else if(language == "en") {
+        share_object.title = share_source.title_en
+        share_object.text = share_source.abstract_en
+    }
+    else {
+        copy_link(button, SHARE_DATA[index].url)
+    }
+
+
+    try {
+        await navigator.share(share_object);
+    } catch (err) {
+        console.log(err)
+    }
+}
+
+function copy_link(button, url) {
+
+    navigator.clipboard.writeText(url);
+
+    if(button.getAttribute("data-text-replaced") == "true") {return}
+    
+    let textOriginal = button.innerHTML
+    let textReplace = '<span lang="de">Link kopiert!</span><span lang="en">Copied link!</span>'
+
+    button.innerHTML = textReplace;
+    button.setAttribute("data-text-replaced", "true")
+
+    setTimeout(function(){
+        button.innerHTML = textOriginal;
+        button.setAttribute("data-text-replaced", "")
+        reset_language()
+    }, 3000);
+
+    reset_language()
 }
 
 
@@ -332,21 +471,27 @@ function init_language() {
 
 
 function reset_language() {
-    if(localStorage.getItem("dialecticwormhole_language") == null){
-        localStorage.setItem("dialecticwormhole_language", "de")
+    if(localStorage.getItem("dw_language") == null){
+        localStorage.setItem("dw_language", "en")
     }
     
-	setlanguage(localStorage.getItem("dialecticwormhole_language"))
+	// set_language(localStorage.getItem("dw_language"))
 }
 
 
-function setlanguage(language) {
+function set_language(language) {
+
 	document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
     document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
 	document.getElementById("lang-" + language).style.textDecoration = "underline"
 	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
-	localStorage.setItem("dialecticwormhole_language", language);
+    // if(META && META[language]) {
+    //     document.title = META[language]
+    // }
+    
+    // stop_audio()
+	localStorage.setItem("dw_language", language);
 }
 
 
@@ -364,7 +509,7 @@ var datainfoshown = false;
 
 function init_cookies() {
     
-    if(localStorage.getItem("dialecticwormhole_cookies") == "true"){
+    if(localStorage.getItem("dw_cookies") == "true"){
         showcookiecontent();
     }
     else {
@@ -377,7 +522,7 @@ function cookies(choice) {
     document.getElementById("databanner").style.display = "none";
 
     if(choice) {
-        localStorage.setItem("dialecticwormhole_cookies", choice);
+        localStorage.setItem("dw_cookies", choice);
     }
 
     init_cookies();
@@ -391,18 +536,18 @@ function show_databanner() {
 
 // CLEARING
 
-window.addEventListener("beforeunload", cleartpcookies);
+window.addEventListener("beforeunload", clear_cookies_third_party);
 
 
-function cleartpcookies() {
+function clear_cookies_third_party() {
 
     let fpcookies = {}
 
     for (let [key, value] of Object.entries(localStorage)) {
-        if(key.includes("dialecticwormhole_")) {fpcookies[key] = value}    
+        if(key.includes("dw_")) {fpcookies[key] = value}    
     }
 
-    clearcookies()
+    clear_cookies()
 
     for (let [key, value] of Object.entries(fpcookies)) {
         localStorage.setItem(key, value)
@@ -410,7 +555,7 @@ function cleartpcookies() {
 }
 
 
-function clearcookies() {
+function clear_cookies() {
     sessionStorage.clear();
     localStorage.clear();
 
@@ -460,6 +605,17 @@ function showcookiecontent() {
             frame.src = "https://open.spotify.com/embed/episode/" + frame.getAttribute('data-id') + "?utm_source=generator&theme=0"
             frame.style.display = "block"
         }
+        else if(frame.getAttribute('data-source') == "spotify-playlist") {
+            frame.removeAttribute("sandbox")
+            frame.width = "700"
+            frame.height = "700"
+            frame.style.borderRadius = "12px"
+            frame.frameborder = "0"
+            frame.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            frame.setAttribute('allowfullScreen', '')
+            frame.src = "https://open.spotify.com/embed/playlist/" + frame.getAttribute('data-id') + "?utm_source=generator&theme=1"
+            frame.style.display = "block"
+        }
         else {
             frame.removeAttribute("sandbox")
             frame.frameborder = "0"
@@ -477,11 +633,7 @@ function showcookiecontent() {
     }
 
     datainfoshown = false;
-    cleartpcookies()
-
-    if(typeof CURRENT_ID !== "undefined") {
-        load_frame(document.getElementById(CURRENT_ID).getElementsByTagName("iframe"), 0, slide_current)
-    }
+    clear_cookies_third_party()
 
     if(document.getElementById("slides")){load_slide_frames()}
 }
@@ -516,7 +668,7 @@ function load_slide_frames() {
 
 
 function load_frame(frames, current, slide) {
-    if(localStorage.getItem("dialecticwormhole_cookies") == "true" && current < frames.length && slide == slide_current) {
+    if(localStorage.getItem("dw_cookies") == "true" && current < frames.length && slide == slide_current) {
 
         if(frames[current].getAttribute('data-source') == "youtube" && frames[current].getAttribute('data-loaded') != "true") {
             let frame = frames[current]
@@ -534,9 +686,7 @@ function load_frame(frames, current, slide) {
                 frame.src = "https://www.youtube-nocookie.com/embed/" + frame.getAttribute('data-id') + "?modestbranding=1&enablejsapi=1"
             }
             
-            // console.log(frames[current])
             frame.onload = function(){
-                console.log("loaded")
                 thumbnail.remove();
                 frame.style.display = "block"
                 frame.setAttribute('data-loaded', 'true')
@@ -554,13 +704,41 @@ function load_frame(frames, current, slide) {
     // else if(slide != slide_current) {
     //     console.log("load aborted")
     // }
-    cleartpcookies()
+    clear_cookies_third_party()
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////// AUDIO //////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
+
+function set_audio_positions() {
+    let audios = document.getElementsByTagName("audio");
+    for (let i = 0; i < audios.length; i++ ) {
+        audios[i].currentTime = localStorage.getItem("dw_audio_" + audios[i].src);
+    }
+}
+
+
+window.addEventListener("beforeunload", save_audio_positions);
+
+function save_audio_positions() {
+    let audios = document.getElementsByTagName("audio");
+    for (let i = 0; i < audios.length; i++ ) {
+        localStorage.setItem("dw_audio_" + audios[i].src, audios[i].currentTime);
+    }
+}
+
+
+function stop_audio() {
+    let audios = document.getElementsByTagName("audio");
+    for (let i = 0; i < audios.length; i++ ) {
+        audios[i].pause();
+    }
+}
 
 
 
@@ -574,21 +752,28 @@ function load_frame(frames, current, slide) {
 const MAIL_MSG = {
     "email-btn": {
         initial: {msg: '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>', disabled: false, func: null},
-        // sending: {msg: '<span lang="de">Sende...</span><span lang="en">Sending...</span>', disabled: false, func: null},
+        success: {msg: '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>', disabled: true, func: reset_emailinfo},
+        error: {msg: '<span lang="de">FEHLER!</span><span lang="en">ERROR!</span>', disabled: false, func: null}
+    },
+    "email-btn-content": {
+        initial: {msg: '<span lang="de">Abonnieren</span><span lang="en">Subscribe</span>', disabled: false, func: null},
         success: {msg: '<span lang="de">Abonniert!</span><span lang="en">Subscribed!</span>', disabled: true, func: reset_emailinfo},
         error: {msg: '<span lang="de">FEHLER!</span><span lang="en">ERROR!</span>', disabled: false, func: null}
     },
     "email-deabo-btn": {
         initial: {msg: '<span lang="de">Deabonnieren</span><span lang="en">Unsubscribe</span>', disabled: false, func: null},
-        // sending: {msg: '<span lang="de">Sende...</span><span lang="en">Sending...</span>', disabled: false, func: null},
         success: {msg: '<span lang="de">Deabonniert.</span><span lang="en">Unsubscribed.</span>', disabled: true, func: null},
         error: {msg: '<span lang="de">FEHLER!</span><span lang="en">ERROR!</span>', disabled: false, func: null}
     },
     "email-confirm-info": {
         initial: {msg: '', disabled: false, func: null},
-        // sending: {msg: '<span lang="de">Sende...</span><span lang="en">Sending...</span>', disabled: false, func: null},
         success: {msg: '<span lang="de">Deine E-mail wurde erfolgreich bestätigt!</span><span lang="en">Your E-Mail has been confirmed successfully!</span>', disabled: true, func: null},
-        error: {msg: '<span lang="de">Etwas ist bei der Bestätigung schiefgelaufen.<br>Bitte versuche es noch einmal, oder schreibe Nachricht an <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span><span lang="en">Something went wrong during the confirmation process.<br>Please try again, or message us at <a href="mailto:GEFAENGNISHEFTE@riseup.net">GEFAENGNISHEFTE@riseup.net</a></span>', disabled: false, func: null}
+        error: {msg: '<span lang="de">Etwas ist bei der Bestätigung schiefgelaufen.<br>Bitte versuche es noch einmal, oder schreibe Nachricht an <a href="mailto:dw@riseup.net">dw@riseup.net</a></span><span lang="en">Something went wrong during the confirmation process.<br>Please try again, or message us at <a href="mailto:dw@riseup.net">dw@riseup.net</a></span>', disabled: false, func: null}
+    },
+    "order": {
+        initial: {msg: '<span lang="de">Bestellen & Bezahlen</span><span lang="en">Order & Pay</span>', disabled: false, func: null},
+        success: {msg: '<span lang="de">Bestellen & Bezahlen</span><span lang="en">Order & Pay</span>', disabled: false, func: null},
+        error: {msg: '<span lang="de">FEHLER!</span><span lang="en">ERROR!</span>', disabled: false, func: null}
     }
 }
 
@@ -647,12 +832,12 @@ function fetch_mail(content, ID) {
 
 // ABO
 
-function submit_email(event) {
+function submit_email(event, ID) {
 	event.preventDefault()
-
+    
     let data = new FormData(event.target)
     data.append('Code', makeid(40));
-    fetch_mail(make_table(data), "email-btn")
+    fetch_mail(make_table(data), ID)
 }
 
 
@@ -673,6 +858,7 @@ function confirm_email() {
     table["Code"] = params.code;
     table["_subject"] = "Bestätigungsmail"
     table["_captcha"] = true
+    table["_template"] = "box"
     
     fetch_mail(table, "email-confirm-info")
 }
@@ -683,9 +869,15 @@ function input_remove_email() {
 }
 
 
-function input_email() {
-    change_text("email-btn", "initial")
-	show_emailinfo()
+function input_email(is_content) {
+    if(is_content) {
+        change_text("email-btn-content", "initial")
+        show_emailinfo_content()
+    }
+    else {
+        change_text("email-btn", "initial")
+        show_emailinfo()
+    }
 }
 
 
@@ -694,56 +886,83 @@ function input_email() {
 function reset_emailinfo() {
 	document.getElementById("email-info").style.display = "none";
 	document.getElementById("email-checkbox").checked = false;
+    if(document.getElementById("email-info-content")) {
+        document.getElementById("email-info-content").style.display = "none";
+        document.getElementById("email-checkbox-content").checked = false;
+    }
 }
 
 function hide_emailinfo() {
 	document.getElementById("email-info").style.display = "none"
+    if(document.getElementById('abo-content')) {
+        document.getElementById("email-info-content").style.display = "none"
+    }
 }
 
 function show_emailinfo() {
 	document.getElementById("email-info").style.display = "block"
 }
 
-
-// FOCUS
-
-// document.getElementById("email-input").addEventListener('focus', (event) => {show_emailinfo()});
+function show_emailinfo_content() {
+    document.getElementById("email-info-content").style.display = "block"
+}
 
 
 
 // SWITCH ABO TYPE
 
 function init_abo() {
-    if(localStorage.getItem("gefaengnishefte_abo") == null) {localStorage.setItem("gefaengnishefte_abo", "email")}
-	setabo(localStorage.getItem("gefaengnishefte_abo"))
+    if(localStorage.getItem("dw_abo") == null) {localStorage.setItem("dw_abo", "email")}
+	setabo(localStorage.getItem("dw_abo"))
 
-
-
-    // // LISTENERS
-	// document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event)})
-    // document.getElementById("email-form").addEventListener('input', input_email)
-    // if(document.getElementById("email-deabo-form")) {
-    //     document.getElementById("email-deabo-form").addEventListener('submit', function(event){remove_email(event)})
-    //     document.getElementById("email-deabo-form").addEventListener('input', input_remove_email);
-    // }
+    // LISTENERS
+	document.getElementById("email-form").addEventListener('submit', function(event){submit_email(event, "email-btn")})
+    document.getElementById("email-form").addEventListener('input',  function(event){input_email(false)})
+    
+    if(document.getElementById('abo-content')) {
+        document.getElementById("email-form-content").addEventListener('submit', function(event){submit_email(event, "email-btn-content")})
+        document.getElementById("email-form-content").addEventListener('input',  function(event){input_email(true)})
+        }
+    
+    if(document.getElementById("email-deabo-form")) {
+        document.getElementById("email-deabo-form").addEventListener('submit', function(event){remove_email(event)})
+        document.getElementById("email-deabo-form").addEventListener('input', input_remove_email);
+    }
 }
 
 function setabo(type) {
 
-	// document.getElementById('email-form').style.display = "none";
-	// document.getElementById('telegram-form').style.display = "none"
+	document.getElementById('email-form').style.display = "none";
+	document.getElementById('telegram-form').style.display = "none"
+	document.getElementById('instagram-form').style.display = "none"
 
-	// document.getElementById("email-opt").style.textDecoration = "none"
-	// document.getElementById("telegram-opt").style.textDecoration = "none"
+	document.getElementById("email-opt").style.textDecoration = "none"
+	document.getElementById("telegram-opt").style.textDecoration = "none"
+	document.getElementById("instagram-opt").style.textDecoration = "none"
 
-	// if(type == "telegram") {
-	// 	hide_emailinfo()
-	// }
+    if(document.getElementById('abo-content')) {
+        document.getElementById('email-form-content').style.display = "none";
+        document.getElementById('telegram-form-content').style.display = "none"
+        document.getElementById('instagram-form-content').style.display = "none"
+    
+        document.getElementById("email-opt-content").style.textDecoration = "none"
+        document.getElementById("telegram-opt-content").style.textDecoration = "none"
+        document.getElementById("instagram-opt-content").style.textDecoration = "none"
+    }
 
-	// document.getElementById(type + '-opt').style.textDecoration = "underline"
-	// document.getElementById(type + '-form').style.display = "flex";
+	if(type == "telegram" || type == "instagram") {
+		hide_emailinfo()
+	}
 
-	localStorage.setItem("gefaengnishefte_abo", type);	
+	document.getElementById(type + '-opt').style.textDecoration = "underline"
+	document.getElementById(type + '-form').style.display = "flex";
+
+    if(document.getElementById('abo-content')) {
+        document.getElementById(type + '-opt-content').style.textDecoration = "underline"
+        document.getElementById(type + '-form-content').style.display = "flex";
+    }
+
+	localStorage.setItem("dw_abo", type);	
 }
 
 
@@ -775,25 +994,26 @@ function setabo(type) {
 
 // DROPMENU
 
-var menuopen = false;
+var menu_open = false;
+var fullscreen_menu = false
 var windowwidth = window.innerWidth;
 
 
-// function openmenufix() {
-	// if (window.innerWidth!=windowwidth) {
+function openmenufix() {
+	if (window.innerWidth!=windowwidth) {
 
-	// 	windowwidth = window.innerWidth;
+		windowwidth = window.innerWidth;
 
-	// closemenu()
+		closemenu()
 
-	// 	if (window.innerWidth <= 800 && !menuopen) {
-	// 		document.getElementById("openmenu").style.display = "inline";
-	// 	}
-	// 	else {
-	// 		document.getElementById("openmenu").style.display = "none";
-	// 	}
-	// }
-// }
+		if (window.innerWidth <= 800 && !menu_open) {
+			document.getElementById("openmenu").style.display = "inline";
+		}
+		else {
+			document.getElementById("openmenu").style.display = "none";
+		}
+	}
+}
 
 
 function check_menu_origin(origin) {
@@ -807,53 +1027,88 @@ function check_menu_origin(origin) {
 }
 
 
-function openmenu() {
+function openmenu(event) {
+    origin = check_menu_origin(event.currentTarget)
     
-    let items = document.getElementById("main-nav").childNodes
+    let anchor = origin.getElementsByClassName("dropanchor")[0]
+    let menu = origin.getElementsByClassName("dropmenu")[0]
 
-    for (let i = 0; i < items.length; i++) {
-        items[i].addEventListener("click", openmenu)
-    }
+	hidedropmenus();
+    menu.style.display = "block"
+	anchor.style.visibility = "visible";
 
-    if(menuopen) {
-        document.getElementById("content").style.display = "initial";
-        document.getElementById("menu").style.display = "none";
-        document.body.style.gridTemplateAreas = '"header" "main"';
-        document.getElementById("header").style.height = "unset";
-        menuopen = false
+	if (window.innerWidth >= 800) {
+
+        if (origin.classList.contains("menu-horizontal") && (event.pointerType === "touch" || event.pointerType === "pen")) {
+            hidedropmenus();
+            return
+        }
+
+		menu.style.width = document.getElementById("navigation").offsetWidth + 201 + 'px'; // og value 30
+        // menu.style.width = "491px";
+        menu.style.height = "initial";
+	}
+	else {
+		menu.style.width = "100vw";
+        // console.log('calc(100vh - ' + document.getElementById("navigation").offsetHeight + 'px)')
+        menu.style.height = 'calc(100vh - ' + document.getElementById("navigation").offsetHeight + 'px)';
+        menu.style.display = "grid"
         
-    }
-    else {
-        document.getElementById("content").style.display = "none";
-        document.body.style.gridTemplateAreas = '"header" "header"';
-        document.getElementById("header").style.height = "100vh";
-        document.getElementById("menu").style.display = "grid";
-        document.getElementById("menu").style.height = 'calc(100vh - 2vw - ' + document.getElementById("logo").offsetHeight + 'px)';
-        menuopen = true
+		document.getElementById("logo").style.display = "none";
+        document.getElementById("navigation").style.width = "100vw";
+        document.getElementById("navigation").style.justifyContent = "flex-end";
+		document.getElementById("openmenu").style.display = "none";
+		document.getElementById("closemenu").style.display = "inline";
 
-        window.addEventListener("resize", fit_menu)
-    }
+        // let animation = [
+        //     { opacity: 0},
+        //     { opacity: 1},
+        // ];
+
+        // menu.animate(animation, {duration: 500, iterations: 1})
+        // menu.addEventListener("animationstart", function(e) {
+        //     console.log("test")
+        //     alert("test")
+        //   });
+        
+        fullscreen_menu = true
+	}
+
+	menu_open = true
 }
-
-function fit_menu() {
-    document.getElementById("menu").style.height = 'calc(100vh - 2vw - ' + document.getElementById("logo").offsetHeight + 'px)'; 
-}
-
 
 
 function safeclosemenu() {
 
-    // for (let value of ["email-input", "email-checkbox", "email-btn"]) {
-    //     if(document.getElementById(value) === document.activeElement) {return}
-    // }
+    for (let value of ["email-input", "email-checkbox", "email-btn"]) {
+        if(document.getElementById(value) === document.activeElement) {return}
+    }
 
-    // if(document.getElementById("email-input").value == "") {
-    //     reset_emailinfo()
-    // }
+    if(document.getElementById("email-input").value == "") {
+        reset_emailinfo()
+    }
 
     closemenu()
 }
 
+
+function closemenu() {
+
+	hidedropmenus();
+
+	if (window.innerWidth < 800) {
+		document.getElementById("logo").style.display = "inline";
+		document.getElementById("closemenu").style.display = "none";
+		document.getElementById("openmenu").style.display = "inline";
+        document.getElementById("navigation").style.width = "fit-content";
+        document.getElementById("navigation").style.justifyContent = "space-between";
+
+        // menu.animate([{ opacity: 1},{ opacity: 0},], {duration: 500, iterations: 1})
+	}
+
+    fullscreen_menu = false
+	menu_open = false
+}
 
 
 function hidedropmenus() {
@@ -865,44 +1120,61 @@ function hidedropmenus() {
 	}
 }
 
-
-
 // NAVIGATION HIGHLIGHT
 
-// const highlights = {
-//     "": ["highlight-issues", "highlight-issues-expanded"],
-//     "/": ["highlight-issues", "highlight-issues-expanded"],
-//     "/issue-i": ["highlight-issues", "highlight-issues-expanded", "info-issue-i"],
-//     "/kanon": ["highlight-kanon", "highlight-kanon-expanded"],
-//     "/deabonnieren": ["etc"],
-//     "/impressum": ["etc", "highlight-impressum"],
-//     "/datenschutz": ["etc", "highlight-datenschutz"],
-// }
+const highlights = {
+    "": ["highlight-issues", "highlight-issues-expanded"],
+    "/": ["highlight-issues", "highlight-issues-expanded"],
+    "/issue-i": ["highlight-issues", "highlight-issues-expanded", "info-issue-i"],
+    "/heft-i": ["highlight-issues", "highlight-issues-expanded", "info-issue-i"],
+    "/kanon": ["highlight-kanon", "highlight-kanon-expanded"],
+    "/deabonnieren": ["etc"],
+    "/impressum": ["etc", "highlight-impressum"],
+    "/datenschutz": ["etc", "highlight-datenschutz"],
+}
 
 
-// function init_highlights() {
+function init_highlights() {
 
-//     let window_url = window.location.href.toLowerCase()
+    let window_url = window.location.href.toLowerCase()
 
-//     remove_after(window_url, "#")
-//     remove_after(window_url, "?")
+    remove_after(window_url, "#")
+    remove_after(window_url, "?")
 
-//     for (let [URLsnippet, IDs] of Object.entries(highlights)) {
-//         if (window_url == ("https://www.dialecticwormhole.page" + URLsnippet).toLowerCase()) {
-//             for (let i = 0; i < IDs.length; i++ ) {
-//                 console.log("window: " + window_url + "   snippet: " + URLsnippet + " -> " + IDs[i])
-//                 document.getElementById(IDs[i]).style.fontWeight = "700";
-//             }
-//             return
-//         }
-//     }
-// }
+    for (let [URLsnippet, IDs] of Object.entries(highlights)) {
+        if (window_url == ("https://www.dw.org" + URLsnippet).toLowerCase()) {
+            for (let i = 0; i < IDs.length; i++ ) {
+                console.log("window: " + window_url + "   snippet: " + URLsnippet + " -> " + IDs[i])
+
+                let element = document.getElementById(IDs[i])
+                // if(element.classList.contains("nav-selectable")) {
+                //     element.classList.add("nav-selected");
+                // }
+                // else {
+                    element.style.fontWeight = "700"
+                // }
+                
+            }
+            return
+        }
+    }
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////// VERTICAL NAVIGATION ///////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+var LAYOUT_LIST = []
+
+function create_layout_list() {
+    let sections = document.getElementById("content").children
+
+    for (let i = 0; i < sections.length; i++ ) {
+        LAYOUT_LIST.push(sections[i].id)
+    }
+}
 
 var layoutCurrent = 0
 
@@ -958,7 +1230,7 @@ var SLIDE_LIST = []
 var slide_current = 0
 
 function init_controls() {
-    slidesList = document.getElementById("slides").children
+    let slidesList = document.getElementById("slides").children
     for (let i = 0; i < slidesList.length; i++) {
         let slideID = 'slide'+ (i+1)
         slidesList.item(i).setAttribute('id', slideID);
@@ -981,7 +1253,20 @@ function init_controls() {
 
     document.querySelectorAll("#slide-index, #slide-current, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseenter", entercontrols)})
     document.querySelectorAll("#slide-index, #slide-current, #letztes, #nächstes").forEach((item) => {item.addEventListener("mouseleave", leavecontrols)})
+
+    update_slide_height()
+    window.addEventListener("resize", update_slide_height)
 }
+
+
+
+function update_slide_height() {
+    let interface_height = document.getElementById("navigation").offsetHeight + document.getElementById("controls").offsetHeight + 30
+    console.log(interface_height)
+    document.documentElement.style.setProperty('--max-slide-height', 'min(55vh, calc(100vh - ' + interface_height + 'px))'); ;
+}
+
+
 
 
 
@@ -991,14 +1276,24 @@ function init_controls() {
 
 function letztes() {
     if(slide_current>=0) {
-        display_slide(slide_current - 1)
+        if(typeof display_combined === "function") {
+            display_combined(null, slide_current - 1)
+        }
+        else {
+            display_slide(slide_current - 1)
+        }
     }
 }
 
 
 function nächstes() {
     if(slide_current<=SLIDE_LIST.length-1) {
-        display_slide(slide_current + 1)
+        if(typeof display_combined === "function") {
+            display_combined(null, slide_current + 1)
+        }
+        else {
+            display_slide(slide_current + 1)
+        }
     }
 }
 
@@ -1059,18 +1354,31 @@ function display_slide(slide_index) {
 
 // SLIDE INDEX
 
+var INDEX_OPEN = false
+
+function toggle_slide_index() {
+    if(INDEX_OPEN) {
+        hide_slide_index()
+    } 
+    else {
+        display_slide_index()
+    }
+}
+
 function display_slide_index() {
     var indexitems = document.getElementsByClassName("indexitem")
     for (let i = 0; i < indexitems.length; i++) {
         indexitems[i].style.fontWeight = "400"
     }
 
-    document.getElementById("slide-current").disabled = true;
+    // document.getElementById("slide-current").disabled = true;
     document.getElementById("index"+slide_current).style.fontWeight = "700"
     document.getElementById("timeline-btns").style.display = "none";
     document.getElementById("slide-title").style.display = "none";
     document.getElementById(SLIDE_LIST[slide_current]).style.display = "none";
     document.getElementById("slide-index").style.display = "block";
+
+    INDEX_OPEN = true
 }
 
 function hide_slide_index() {
@@ -1078,10 +1386,12 @@ function hide_slide_index() {
         document.getElementById("timeline-btns").style.display = "flex";
     }
 
-    document.getElementById("slide-current").disabled = false;
+    // document.getElementById("slide-current").disabled = false;
     document.getElementById("slide-title").style.display = "block";
     document.getElementById("slide-index").style.display = "none";
     document.getElementById(SLIDE_LIST[slide_current]).style.display = "flex";
+    
+    INDEX_OPEN = false
 }
 
 
@@ -1157,13 +1467,13 @@ function init_footnotes() {
         document.querySelectorAll("[data-footnote='" + (i+1) + "']").forEach((footnote) => {
             footnote.className = 'footnote';
             footnote.tabIndex = '0'
-            footnote.innerHTML = "*"
+            footnote.innerHTML = tosuperscript(i+1)
             footnote.addEventListener("mouseenter", selectfootnote)
             footnote.insertAdjacentHTML('beforeend', footnote_template(i));
         })
     }
 
-    if(localStorage.getItem("dialecticwormhole_cookies") != "true"){
+    if(localStorage.getItem("dw_cookies") != "true"){
         hidecookiecontent();
     }
 
@@ -1174,9 +1484,7 @@ function init_footnotes() {
 function footnote_template(i) {
 
     let note_info = FOOTNOTE_LIST[i]
-    let note = '<span lang="de">' + note_info.text_de + '</span><span lang="en">' + note_info.text_en + '</span>'
-
-
+    let note = tosuperscript(i+1) + ' <span lang="de">' + note_info.text_de + '</span><span lang="en">' + note_info.text_en + '</span>'
 
     if(note_info.embed_source == "youtube" || note_info.embed_source == "spotify") {
         note = note + '<br><br><iframe class="footnotevideo" src="about:blank" data-source=' + note_info.embed_source + ' data-id=' + note_info.embed_id + ' sandbox></iframe>'
@@ -1205,7 +1513,6 @@ function focusfootnote(event) {
 }
 
 function selectfootnote(event) {
-    close_sharewindow()
 
     if(footnotefocused != "none") {
         resetfootnote()
@@ -1213,7 +1520,7 @@ function selectfootnote(event) {
 
     footnotefocused = event.target;
 
-    footnotefocused.style.color = "lightblue";
+    footnotefocused.style.color = "#750000";
     
     footnotefocused.childNodes[1].style.zIndex = "19";
     footnotefocused.childNodes[1].style.display = "inline";
@@ -1224,7 +1531,7 @@ function selectfootnote(event) {
 }
 
 function resetfootnote() {
-    footnotefocused.style.color = "white";
+    footnotefocused.style.color = "black";
 
     let note = footnotefocused.childNodes[1]
     note.style.zIndex = "0";
@@ -1270,69 +1577,4 @@ function footnote_horizontal_bounds() {
         note.style.right = noteYoffset + "px"
         // console.log("left")
     }
-}
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////// SHARING ////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// SHARE LINK
-
-var copy_link = ""
-
-function init_sharewindow() {
-    for (let i = 0; i < LINK_LIST.length; i++) {
-        document.getElementById("link-opt").insertAdjacentHTML('beforeend', share_template(i));
-    }
-
-    select_share(0)
-}
-
-function share_template(i) {return '<span onclick="select_share(' + i + ')"><span lang="de">' + LINK_LIST[i].title_de + '</span><span lang="en">' + LINK_LIST[i].title_en + '</span><br></span>'}
-
-
-
-function open_sharewindow() {
-    // document.getElementById("sharewindow").style.display = "block"
-    // document.getElementById("sharewindow").showModal()
-}
-
-function close_sharewindow() {
-    // document.getElementById("sharewindow").style.display = "none"
-    // document.getElementById("sharewindow").close()
-}
-
-
-function select_share(index) {
-
-    let linkopts = document.getElementById("link-opt").children
-
-    for (let i = 0; i < linkopts.length; i++) {
-        linkopts.item(i).style.textDecoration = "none"
-    }
-
-    linkopts.item(index).style.textDecoration = "underline"
-    copy_link = LINK_LIST[index].link
-}
-
-
-function copy_share() {
-
-    navigator.clipboard.writeText(copy_link);
-    
-    let btn = document.getElementById("link-copy-btn")
-    let textOriginal = btn.innerHTML
-    let textReplace = '<span lang="de">Link kopiert!</span><span lang="en">Copied link!</span>'
-    
-    btn.innerHTML = textReplace;
-
-    setTimeout(function(){
-        btn.innerHTML = textOriginal;
-        reset_language()
-    }, 3000);
-
-    reset_language()
 }
