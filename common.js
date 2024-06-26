@@ -123,24 +123,24 @@ function init_footer() {
 }
 
 
-window.onpopstate = function(event){
+// window.onpopstate = function(event){
 
-    if(fullscreen_menu && window.innerWidth < 800) {
-        event.preventDefault()
-        history.pushState({}, '', window.location.href)
-        history.forward()
-        closemenu()
-    }
-    else if(INDEX_OPEN){
-        event.preventDefault()
-        history.pushState({}, '', window.location.href)
-        history.forward()
-        hide_slide_index()
-    }
-    else {
-        history.back()
-    }
-}
+//     if(fullscreen_menu && window.innerWidth < 800) {
+//         event.preventDefault()
+//         history.pushState({}, '', window.location.href)
+//         history.forward()
+//         closemenu()
+//     }
+//     else if(INDEX_OPEN){
+//         event.preventDefault()
+//         history.pushState({}, '', window.location.href)
+//         history.forward()
+//         hide_slide_index()
+//     }
+//     else {
+//         history.back()
+//     }
+// }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -475,7 +475,7 @@ function reset_language() {
         localStorage.setItem("dw_language", "en")
     }
     
-	// set_language(localStorage.getItem("dw_language"))
+	set_language(localStorage.getItem("dw_language"))
 }
 
 
