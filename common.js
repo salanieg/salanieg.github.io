@@ -475,15 +475,28 @@ function reset_language() {
         localStorage.setItem("dw_language", "en")
     }
     
-	set_language(localStorage.getItem("dw_language"))
+	// set_language(localStorage.getItem("dw_language"))
+    switch_language()
 }
 
+function switch_language() {
+    
+
+    if(localStorage.getItem("dw_language") == "en") {
+        set_language("de")
+        document.getElementById('langSwitch').textContent = 'Englisch';
+    }
+    else {
+        set_language("en")
+        document.getElementById('langSwitch').textContent = 'Deutsch';
+    }
+}
 
 function set_language(language) {
 
 	document.querySelectorAll('[lang="de"], [lang="en"]').forEach((item) => {item.hidden = true;})
     document.querySelectorAll('#lang-de, #lang-en').forEach((item) => {item.style.textDecoration = "none";})
-	document.getElementById("lang-" + language).style.textDecoration = "underline"
+	// document.getElementById("lang-" + language).style.textDecoration = "underline"
 	document.querySelectorAll('*:lang(' + language + '):not(br)').forEach((item) => {item.hidden = false;})
 
     // if(META && META[language]) {
