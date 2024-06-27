@@ -34,25 +34,6 @@
     .show { display: block; }
     .center { text-align: center; }
     .content { max-width: 800px; margin: auto; text-align: justify; }
-    .circle {
-        display: inline-block;
-        font-size: 24px; /* Adjust the size of the circles */
-        color: #888; /* Initial color of circles */
-        opacity: 0.5; /* Start with a dimmed circle */
-        animation: blink 1s infinite;
-    }
-    .circle:first-child {
-        animation-delay: 0.5s; /* Delay the animation of the first circle */
-    }
-    @keyframes blink {
-        0%, 100% {
-            opacity: 0.5;
-        }
-        50% {
-            color: #0f0; /* Green color */
-            opacity: 1;
-        }
-    }
    	#langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
 	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
@@ -80,10 +61,7 @@
 </div>
 <div id="container">
     <div id="welcome" class="page">
-        <h1>The Dialectic Wormhole</h1>
-
-<p>Status: Online! <span class="circle">⬤</span><span class="circle">⬤</span><br/></p>
-
+        <h1>The Dialectic Wormhole<br/><br/</h1>
 	<img src="images/logo.webp" alt="Das Logo der Startseite" width="136" height="86"><br/><br/>
         <p id="entryText">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br/></p>
         <p id="entryText" lang="en">No one shall enter without knowledge of the geometry.<br/></p>
