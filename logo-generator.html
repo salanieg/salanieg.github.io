@@ -79,23 +79,23 @@
 
 
       function adjustSVGSize() {
-  var svgs = document.getElementsByClassName("logo_lg");
-  for (let i = 0; i < svgs.length; i++) {
-    let svg = svgs[i];
-    svg.removeAttribute("width");
-    svg.removeAttribute("height");
+        var svgs = document.getElementsByClassName("logo_lg");
+        for (let i = 0; i < svgs.length; i++) {
+          let svg = svgs[i];
+          svg.removeAttribute("width");
+          svg.removeAttribute("height");
 
-    // Get the bounding box of the SVG content
-    let bbox = svg.getBBox();
-    
-    // Adjust the viewBox to fit the content exactly
-    svg.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
-    
-    // Set the SVG dimensions to match the bounding box
-    svg.setAttribute("width", bbox.width);
-    svg.setAttribute("height", bbox.height);
-  }
-}
+          // Get the bounding box of the SVG content
+          let bbox = svg.getBBox();
+          
+          // Adjust the viewBox to fit the content exactly
+          svg.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+          
+          // Set the SVG dimensions to match the bounding box
+          svg.setAttribute("width", bbox.width);
+          svg.setAttribute("height", bbox.height);
+        }
+      }
 
 
       function export_set() {
@@ -139,41 +139,41 @@
         let img = new Image()
 
         img.onload = () => {
-        URL.revokeObjectURL(img.src);
-        canvas.width = img.width;
-        canvas.height = img.height;
-        canvas.getContext('2d').drawImage(img, 0, 0);
+          URL.revokeObjectURL(img.src)
+          canvas.width = img.width
+          canvas.height = img.height
+          canvas.getContext('2d').drawImage(img, 0, 0)
 
-        let imgData = canvas.toDataURL('image/png');
-        let byteString = atob(imgData.split(',')[1]);
-        let ab = new ArrayBuffer(byteString.length);
-        let ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
+          let imgData = canvas.toDataURL('image/png')
+          let byteString = atob(imgData.split(',')[1])
+          let ab = new ArrayBuffer(byteString.length)
+          let ia = new Uint8Array(ab)
+          for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i)
+          }
+
+          let pngBlob = new Blob([ia], { type: "image/png" })
+          zip.file(`${directory}.png`, pngBlob, {binary: true})
+
+          if (--file_counter === 0) {
+              export_zip();
+          }
         }
 
-        let pngBlob = new Blob([ia], { type: "image/png" });
-        zip.file(`${directory}.png`, pngBlob, { binary: true });
+        img.src = url;
+        img.style.visibility = "hidden";
 
-        if (--file_counter === 0) {
-            export_zip();
-        }
-    };
-
-      img.src = url;
-      img.style.visibility = "hidden";
-
-      zip.file(directory + ".svg", svg, {binary: true});
-    }
+        zip.file(directory + ".svg", svg, {binary: true});
+      }
 
 
-    function export_zip() {
-      zip.generateAsync({
-          type: 'blob'
-      }).then(function(content) {
-          saveAs(content, "SDS Material " + document.getElementById('ortsgruppe').value + ".zip")
-      })
-    }
+      function export_zip() {
+        zip.generateAsync({
+            type: 'blob'
+        }).then(function(content) {
+            saveAs(content, "SDS Material " + document.getElementById('ortsgruppe').value + ".zip")
+        })
+      }
     </script>
   </head>
   <body>
