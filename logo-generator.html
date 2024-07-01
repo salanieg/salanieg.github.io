@@ -85,13 +85,9 @@
           svg.removeAttribute("width");
           svg.removeAttribute("height");
 
-          // Get the bounding box of the SVG content
           let bbox = svg.getBBox();
           
-          // Adjust the viewBox to fit the content exactly
           svg.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
-          
-          // Set the SVG dimensions to match the bounding box
           svg.setAttribute("width", bbox.width);
           svg.setAttribute("height", bbox.height);
         }
@@ -118,7 +114,6 @@
               export_svg(logos[i], colors[j])
             }
           }
-
         }
       }
 
