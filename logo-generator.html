@@ -127,7 +127,7 @@
         let directory = logo.getAttribute("data-directory") + " " + color[0]
         let htmlStr = logo.outerHTML.replaceAll(base_color, color[1])
 
-        if (color[0] == "Schwarz") {
+        if (color[0] == "Schwarz" && !logo.getAttribute("data-directory").includes("Profilbild")) {
             htmlStr = htmlStr.replaceAll('<text fill="#FFF2F4"', '<text fill="#' + color[1] + '"')
         }
 
