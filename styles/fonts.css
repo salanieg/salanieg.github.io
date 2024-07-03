@@ -162,6 +162,15 @@
 }
 
 @font-face {
+    font-family: 'Gespenst';
+    src: 
+        url('https://www.dialecticwormhole.page/fonts/Gespenst/Gespenst-UltraBlack.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
     font-family: 'Geist';
     src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-SemiBold.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/fonts/Geist/Geist-SemiBold.woff') format('woff'),
