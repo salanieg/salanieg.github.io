@@ -14,23 +14,27 @@
       }
 
       .logo_lg {
-        max-width: 100%;
-        height: 200px;
+        /* max-width: 100%; */
+        height: auto;
         padding: 20px;
+      }
+
+      #generation_window {
+        visibility: hidden;
+        height: 0px;
       }
 
       .logo_box {
         height: fit-content;
         background-color: #9B62FF;
         border-radius: 25px;
-        /* border:solid #FFF2F4; */
         display: flex;
 
         justify-content: center;
         margin: 20px;
         padding: 100px;
       }
-
+      
       .wortmarken_box {
         flex-direction: column;
         align-items: flex-start;
@@ -107,6 +111,7 @@
 
       window.onload = (event) => {      
         document.getElementById("ortsgruppe").addEventListener('input', change_ortsgruppe)
+        adjustSVGSizeAll()
       };
 
       function change_ortsgruppe() {
@@ -226,6 +231,11 @@
         const svgElement = new DOMParser().parseFromString(htmlStr, 'image/svg+xml').documentElement;
 
         textToPath(svgElement, function(updatedSvg) {
+            console.log(updatedSvg)
+            document.getElementById("generation_window").innerHTML = ""
+            document.getElementById("generation_window").append(updatedSvg)
+
+            adjustSVGSize(updatedSvg)
             // Serialize updated SVG with paths
             let updatedHtmlStr = new XMLSerializer().serializeToString(updatedSvg);
             let svg = new Blob([updatedHtmlStr], { type: "image/svg+xml" });
@@ -279,6 +289,7 @@
     </div>
     <canvas id="canvas" style="display:none;"></canvas>
 
+    <div id="generation_window"></div>
     <p>Logos</p>
     <div class="logo_box">
       <svg class="logo_lg" data-directory="Ortsgruppe/Logo" width="1099" height="511" viewBox="0 0 1099 511" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -364,7 +375,7 @@
       </svg>
 
       <svg class="logo_lg" data-directory="Bundesverband/Wortmarke 2 Zeilen" preserveAspectRatio="xMinYMin meet" width="6521" height="500" viewBox="0 0 6521 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Gespenst" font-size="273.496" font-weight="900"><tspan x="1400" y="210.657">SOZIALISTISCH-DEMOKRATISCHER</tspan><tspan x="1412.72" y="483.657">STUDIERENDENVERBAND</tspan></text>
+        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Gespenst" font-size="273.496" font-weight="900"><tspan x="1400" y="210.657">SOZIALISTISCH-DEMOKRATISCHER</tspan><tspan x="1400" y="483.657">STUDIERENDENVERBAND</tspan></text>
         <path d="M1211.25 500H0.000854492L90.3171 0H1300.26L1211.25 500Z" fill="#FF203B"/>
         <path d="M942.644 407.647C880.055 407.647 840.17 397.138 822.989 376.122C805.808 354.952 800.055 328.413 805.731 296.505H910.89C907.361 316.448 910.276 328.26 919.634 331.942C928.991 335.47 940.573 337.234 954.38 337.234C968.033 337.234 980.075 335.854 990.506 333.092C1000.94 330.178 1006.92 324.425 1008.45 315.834C1010.14 306.17 1003.62 299.803 988.896 296.735C974.322 293.667 954.38 290.139 929.068 286.15C882.28 277.1 852.443 265.748 839.557 252.095C826.671 238.288 821.302 219.726 823.449 196.409C825.137 168.183 839.173 143.791 865.559 123.235C892.098 102.679 935.664 92.4009 996.259 92.4009C1056.7 92.4009 1095.59 103.293 1112.92 125.076C1130.41 146.859 1136.55 172.785 1131.33 202.852H1026.17C1029.55 183.37 1026.4 172.018 1016.74 168.796C1007.23 165.421 996.106 163.734 983.373 163.734C968.953 163.734 956.297 165.038 945.406 167.646C934.667 170.254 928.608 175.546 927.227 183.523C925.386 194.722 931.446 201.778 945.406 204.693C959.519 207.454 980.075 211.213 1007.07 215.968C1055.7 225.172 1086.54 235.45 1099.58 246.802C1112.62 258.154 1117.6 276.179 1114.53 300.877C1111.31 330.331 1097.12 355.489 1071.96 376.352C1046.81 397.215 1003.7 407.647 942.644 407.647Z" fill="#FFF2F4"/>
         <path d="M472.904 405.806L527.67 95.1622H709.684C756.165 95.1622 785.926 107.128 798.965 131.059C812.158 154.99 814.536 194.722 806.098 250.254C797.661 306.707 782.704 346.745 761.228 370.369C739.904 393.994 706.002 405.806 659.521 405.806H472.904ZM590.489 334.933H641.112C657.066 334.933 669.262 331.251 677.699 323.888C686.136 316.371 693.96 291.826 701.17 250.254C708.533 208.988 709.3 184.674 703.471 177.31C697.642 169.793 686.75 166.035 670.796 166.035H620.172L590.489 334.933Z" fill="#FFF2F4"/>
