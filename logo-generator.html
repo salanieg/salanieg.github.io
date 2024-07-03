@@ -79,45 +79,45 @@
       }
 
       function textToPath(svg, callback) {
-    const textElements = svg.querySelectorAll('text');
-    const fontUrl = 'https://www.dialecticwormhole.page/fonts/Geist/Geist-Black.ttf';
+        const textElements = svg.querySelectorAll('text');
+        const fontUrl = 'https://www.dialecticwormhole.page/fonts/Geist/Geist-Black.ttf';
 
-    opentype.load(fontUrl, function(err, font) {
-        if (err) {
-            console.error('Could not load font: ' + err);
-            return;
-        }
+        opentype.load(fontUrl, function(err, font) {
+            if (err) {
+                console.error('Could not load font: ' + err);
+                return;
+            }
 
-        textElements.forEach((textElement) => {
-            const fontSize = parseFloat(textElement.getAttribute('font-size'));
-            const fill = textElement.getAttribute('fill') || '#000000';
-            const x = parseFloat(textElement.getAttribute('x')) || 0;
-            const y = parseFloat(textElement.getAttribute('y')) || 0;
-            const tspanElements = textElement.querySelectorAll('tspan');
+            textElements.forEach((textElement) => {
+                const fontSize = parseFloat(textElement.getAttribute('font-size'));
+                const fill = textElement.getAttribute('fill') || '#000000';
+                const x = parseFloat(textElement.getAttribute('x')) || 0;
+                const y = parseFloat(textElement.getAttribute('y')) || 0;
+                const tspanElements = textElement.querySelectorAll('tspan');
 
-            let combinedPathData = '';
+                let combinedPathData = '';
 
-            tspanElements.forEach((tspanElement) => {
-                const tspanX = parseFloat(tspanElement.getAttribute('x')) || x;
-                const tspanY = parseFloat(tspanElement.getAttribute('y')) || y;
-                const text = tspanElement.textContent;
-                
-                const path = font.getPath(text, tspanX, tspanY, fontSize);
-                combinedPathData += path.toPathData(2);
+                tspanElements.forEach((tspanElement) => {
+                    const tspanX = parseFloat(tspanElement.getAttribute('x')) || x;
+                    const tspanY = parseFloat(tspanElement.getAttribute('y')) || y;
+                    const text = tspanElement.textContent;
+                    
+                    const path = font.getPath(text, tspanX, tspanY, fontSize);
+                    combinedPathData += path.toPathData(2);
+                });
+
+                const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                pathElement.setAttribute('d', combinedPathData);
+                pathElement.setAttribute('fill', fill);
+
+                textElement.parentNode.replaceChild(pathElement, textElement);
             });
 
-            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            pathElement.setAttribute('d', combinedPathData);
-            pathElement.setAttribute('fill', fill);
-
-            textElement.parentNode.replaceChild(pathElement, textElement);
+            if (callback) {
+                callback(svg);
+            }
         });
-
-        if (callback) {
-            callback(svg);
-        }
-    });
-}
+      }
 
 
 
@@ -162,56 +162,52 @@
 
       
       function export_svg(logo, color) {
-    let directory = logo.getAttribute("data-directory") + " " + color[0];
-    let htmlStr = logo.outerHTML.replaceAll(base_color, color[1]);
+        let directory = logo.getAttribute("data-directory") + " " + color[0];
+        let htmlStr = logo.outerHTML.replaceAll(base_color, color[1]);
 
-    if (color[0] == "Schwarz" && !logo.getAttribute("data-directory").includes("Profilbild")) {
-        htmlStr = htmlStr.replaceAll('<text fill="#FFF2F4"', '<text fill="#' + color[1] + '"');
-    }
+        if (color[0] == "Schwarz" && !logo.getAttribute("data-directory").includes("Profilbild")) {
+            htmlStr = htmlStr.replaceAll('<text fill="#FFF2F4"', '<text fill="#' + color[1] + '"');
+        }
 
-    const svgElement = new DOMParser().parseFromString(htmlStr, 'image/svg+xml').documentElement;
+        const svgElement = new DOMParser().parseFromString(htmlStr, 'image/svg+xml').documentElement;
 
-    textToPath(svgElement, function(updatedSvg) {
-        // Serialize updated SVG with paths
-        let updatedHtmlStr = new XMLSerializer().serializeToString(updatedSvg);
-        let svg = new Blob([updatedHtmlStr], { type: "image/svg+xml" });
+        textToPath(svgElement, function(updatedSvg) {
+            // Serialize updated SVG with paths
+            let updatedHtmlStr = new XMLSerializer().serializeToString(updatedSvg);
+            let svg = new Blob([updatedHtmlStr], { type: "image/svg+xml" });
 
-        file_counter++;
-        const url = URL.createObjectURL(svg);
-        let img = new Image();
+            file_counter++;
+            const url = URL.createObjectURL(svg);
+            let img = new Image();
 
-        img.onload = () => {
-            URL.revokeObjectURL(img.src);
-            canvas.width = img.width;
-            canvas.height = img.height;
-            canvas.getContext('2d').drawImage(img, 0, 0);
+            img.onload = () => {
+                URL.revokeObjectURL(img.src);
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0);
 
-            let imgData = canvas.toDataURL('image/png');
-            let byteString = atob(imgData.split(',')[1]);
-            let ab = new ArrayBuffer(byteString.length);
-            let ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
+                let imgData = canvas.toDataURL('image/png');
+                let byteString = atob(imgData.split(',')[1]);
+                let ab = new ArrayBuffer(byteString.length);
+                let ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
 
-            let pngBlob = new Blob([ia], { type: "image/png" });
-            zip.file(`${directory}.png`, pngBlob, {binary: true});
+                let pngBlob = new Blob([ia], { type: "image/png" });
+                zip.file(`${directory}.png`, pngBlob, {binary: true});
 
-            if (--file_counter === 0) {
-                export_zip();
-            }
-        };
+                if (--file_counter === 0) {
+                    export_zip();
+                }
+            };
 
-        img.src = url;
-        img.style.visibility = "hidden";
+            img.src = url;
+            img.style.visibility = "hidden";
 
-        zip.file(directory + ".svg", svg, {binary: true});
-    });
-}
-
-
-
-
+            zip.file(directory + ".svg", svg, {binary: true});
+        });
+      }
 
       function export_zip() {
         zip.generateAsync({
