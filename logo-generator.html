@@ -4,6 +4,7 @@
     <title>Logo Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js" type="text/javascript"> </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.3/opentype.min.js"></script>
     <style>
         body {
             background-color: #666666;
@@ -77,6 +78,48 @@
         adjustSVGSize();
       }
 
+      function textToPath(svg, callback) {
+    const textElements = svg.querySelectorAll('text');
+    const fontUrl = 'https://www.dialecticwormhole.page/fonts/Geist/Geist-Black.ttf';
+
+    opentype.load(fontUrl, function(err, font) {
+        if (err) {
+            console.error('Could not load font: ' + err);
+            return;
+        }
+
+        textElements.forEach((textElement) => {
+            const fontSize = parseFloat(textElement.getAttribute('font-size'));
+            const fill = textElement.getAttribute('fill') || '#000000';
+            const x = parseFloat(textElement.getAttribute('x')) || 0;
+            const y = parseFloat(textElement.getAttribute('y')) || 0;
+            const tspanElements = textElement.querySelectorAll('tspan');
+
+            let combinedPathData = '';
+
+            tspanElements.forEach((tspanElement) => {
+                const tspanX = parseFloat(tspanElement.getAttribute('x')) || x;
+                const tspanY = parseFloat(tspanElement.getAttribute('y')) || y;
+                const text = tspanElement.textContent;
+                
+                const path = font.getPath(text, tspanX, tspanY, fontSize);
+                combinedPathData += path.toPathData(2);
+            });
+
+            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathElement.setAttribute('d', combinedPathData);
+            pathElement.setAttribute('fill', fill);
+
+            textElement.parentNode.replaceChild(pathElement, textElement);
+        });
+
+        if (callback) {
+            callback(svg);
+        }
+    });
+}
+
+
 
       function adjustSVGSize() {
         var svgs = document.getElementsByClassName("logo_lg");
@@ -119,47 +162,55 @@
 
       
       function export_svg(logo, color) {
-        let directory = logo.getAttribute("data-directory") + " " + color[0]
-        let htmlStr = logo.outerHTML.replaceAll(base_color, color[1])
+    let directory = logo.getAttribute("data-directory") + " " + color[0];
+    let htmlStr = logo.outerHTML.replaceAll(base_color, color[1]);
 
-        if (color[0] == "Schwarz" && !logo.getAttribute("data-directory").includes("Profilbild")) {
-            htmlStr = htmlStr.replaceAll('<text fill="#FFF2F4"', '<text fill="#' + color[1] + '"')
-        }
+    if (color[0] == "Schwarz" && !logo.getAttribute("data-directory").includes("Profilbild")) {
+        htmlStr = htmlStr.replaceAll('<text fill="#FFF2F4"', '<text fill="#' + color[1] + '"');
+    }
 
-        let svg = new Blob([htmlStr], { type: "image/svg+xml" })
+    const svgElement = new DOMParser().parseFromString(htmlStr, 'image/svg+xml').documentElement;
 
-        file_counter++
-        const url = URL.createObjectURL(svg)
-        let ctx = canvas.getContext('2d')
-        let img = new Image()
+    textToPath(svgElement, function(updatedSvg) {
+        // Serialize updated SVG with paths
+        let updatedHtmlStr = new XMLSerializer().serializeToString(updatedSvg);
+        let svg = new Blob([updatedHtmlStr], { type: "image/svg+xml" });
+
+        file_counter++;
+        const url = URL.createObjectURL(svg);
+        let img = new Image();
 
         img.onload = () => {
-          URL.revokeObjectURL(img.src)
-          canvas.width = img.width
-          canvas.height = img.height
-          canvas.getContext('2d').drawImage(img, 0, 0)
+            URL.revokeObjectURL(img.src);
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext('2d').drawImage(img, 0, 0);
 
-          let imgData = canvas.toDataURL('image/png')
-          let byteString = atob(imgData.split(',')[1])
-          let ab = new ArrayBuffer(byteString.length)
-          let ia = new Uint8Array(ab)
-          for (let i = 0; i < byteString.length; i++) {
-              ia[i] = byteString.charCodeAt(i)
-          }
+            let imgData = canvas.toDataURL('image/png');
+            let byteString = atob(imgData.split(',')[1]);
+            let ab = new ArrayBuffer(byteString.length);
+            let ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
 
-          let pngBlob = new Blob([ia], { type: "image/png" })
-          zip.file(`${directory}.png`, pngBlob, {binary: true})
+            let pngBlob = new Blob([ia], { type: "image/png" });
+            zip.file(`${directory}.png`, pngBlob, {binary: true});
 
-          if (--file_counter === 0) {
-              export_zip();
-          }
-        }
+            if (--file_counter === 0) {
+                export_zip();
+            }
+        };
 
         img.src = url;
         img.style.visibility = "hidden";
 
         zip.file(directory + ".svg", svg, {binary: true});
-      }
+    });
+}
+
+
+
 
 
       function export_zip() {
@@ -231,7 +282,7 @@
       </svg>
 
       <svg class="logo_lg" data-directory="Ortsgruppe/Wortmarke 2 Zeilen" preserveAspectRatio="xMinYMin meet" width="6521" height="500" viewBox="0 0 6521 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Geist" font-size="273.496" font-weight="900" letter-spacing="-0.05em"><tspan x="1412.72" y="210.657">SOZIALISTISCH-DEMOKRATISCHER&#10;</tspan><tspan x="1412.72" y="483.657">STUDIERENDENVERBAND <tspan class="ortsgruppe_input_uppercase">ORTSGRUPPE</tspan></tspan></text>
+        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Geist" font-size="273.496" font-weight="900" letter-spacing="-0.05em"><tspan x="1412.72" y="210.657">SOZIALISTISCH-DEMOKRATISCHER</tspan><tspan x="1412.72" y="483.657">STUDIERENDENVERBAND <tspan class="ortsgruppe_input_uppercase">ORTSGRUPPE</tspan></tspan></text>
         <path d="M1211.25 500H0.000854492L90.3171 0H1300.26L1211.25 500Z" fill="#FF203B"/>
         <path d="M942.644 407.647C880.055 407.647 840.17 397.138 822.989 376.122C805.808 354.952 800.055 328.413 805.731 296.505H910.89C907.361 316.448 910.276 328.26 919.634 331.942C928.991 335.47 940.573 337.234 954.38 337.234C968.033 337.234 980.075 335.854 990.506 333.092C1000.94 330.178 1006.92 324.425 1008.45 315.834C1010.14 306.17 1003.62 299.803 988.896 296.735C974.322 293.667 954.38 290.139 929.068 286.15C882.28 277.1 852.443 265.748 839.557 252.095C826.671 238.288 821.302 219.726 823.449 196.409C825.137 168.183 839.173 143.791 865.559 123.235C892.098 102.679 935.664 92.4009 996.259 92.4009C1056.7 92.4009 1095.59 103.293 1112.92 125.076C1130.41 146.859 1136.55 172.785 1131.33 202.852H1026.17C1029.55 183.37 1026.4 172.018 1016.74 168.796C1007.23 165.421 996.106 163.734 983.373 163.734C968.953 163.734 956.297 165.038 945.406 167.646C934.667 170.254 928.608 175.546 927.227 183.523C925.386 194.722 931.446 201.778 945.406 204.693C959.519 207.454 980.075 211.213 1007.07 215.968C1055.7 225.172 1086.54 235.45 1099.58 246.802C1112.62 258.154 1117.6 276.179 1114.53 300.877C1111.31 330.331 1097.12 355.489 1071.96 376.352C1046.81 397.215 1003.7 407.647 942.644 407.647Z" fill="#FFF2F4"/>
         <path d="M472.904 405.806L527.67 95.1622H709.684C756.165 95.1622 785.926 107.128 798.965 131.059C812.158 154.99 814.536 194.722 806.098 250.254C797.661 306.707 782.704 346.745 761.228 370.369C739.904 393.994 706.002 405.806 659.521 405.806H472.904ZM590.489 334.933H641.112C657.066 334.933 669.262 331.251 677.699 323.888C686.136 316.371 693.96 291.826 701.17 250.254C708.533 208.988 709.3 184.674 703.471 177.31C697.642 169.793 686.75 166.035 670.796 166.035H620.172L590.489 334.933Z" fill="#FFF2F4"/>
@@ -239,7 +290,7 @@
       </svg>
       
       <svg class="logo_lg" data-directory="Ortsgruppe/Wortmarke 4 Zeilen" preserveAspectRatio="xMinYMin meet" width="2936" height="500" viewBox="0 0 2936 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Geist" font-size="126.275" font-weight="900" letter-spacing="-0.05em"><tspan x="1415.5" y="104.729">SOZIALISTISCH-&#10;</tspan><tspan x="1415.5" y="230.729">DEMOKRATISCHER&#10;</tspan><tspan x="1415.5" y="356.729">STUDIERENDENVERBAND&#10;</tspan><tspan x="1415.5" y="482.729"><tspan class="ortsgruppe_input_uppercase">ORTSGRUPPE</tspan></tspan></text>
+        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Geist" font-size="126.275" font-weight="900" letter-spacing="-0.05em"><tspan x="1415.5" y="104.729">SOZIALISTISCH-</tspan><tspan x="1415.5" y="230.729">DEMOKRATISCHER</tspan><tspan x="1415.5" y="356.729">STUDIERENDENVERBAND</tspan><tspan x="1415.5" y="482.729"><tspan class="ortsgruppe_input_uppercase">ORTSGRUPPE</tspan></tspan></text>
         <path d="M1211.25 499.578H1.02673L91.2667 0.000640869H1300.18L1211.25 499.578Z" fill="#FF203B"/>
         <path d="M942.875 407.302C880.339 407.302 840.487 396.803 823.321 375.804C806.154 354.652 800.406 328.136 806.077 296.254H911.147C907.622 316.18 910.534 327.982 919.883 331.661C929.233 335.186 940.805 336.949 954.6 336.949C968.242 336.949 980.274 335.569 990.696 332.81C1001.12 329.898 1007.1 324.15 1008.63 315.567C1010.32 305.911 1003.8 299.55 989.087 296.484C974.526 293.419 954.6 289.894 929.31 285.908C882.561 276.865 852.749 265.523 839.874 251.882C826.999 238.087 821.635 219.541 823.78 196.243C825.466 168.04 839.491 143.67 865.854 123.131C892.371 102.592 935.901 92.3228 996.444 92.3228C1056.83 92.3228 1095.69 103.205 1113.01 124.97C1130.48 146.735 1136.61 172.639 1131.4 202.68H1026.33C1029.7 183.215 1026.56 171.872 1016.91 168.653C1007.4 165.281 996.291 163.595 983.569 163.595C969.161 163.595 956.516 164.898 945.634 167.504C934.904 170.11 928.85 175.398 927.471 183.368C925.631 194.557 931.686 201.607 945.634 204.52C959.735 207.279 980.274 211.034 1007.25 215.785C1055.84 224.982 1086.65 235.251 1099.67 246.594C1112.7 257.936 1117.68 275.946 1114.62 300.623C1111.4 330.052 1097.22 355.189 1072.09 376.034C1046.95 396.879 1003.88 407.302 942.875 407.302Z" fill="#FFF2F4"/>
         <path d="M473.532 405.463L528.251 95.0818H710.111C756.553 95.0818 786.289 107.037 799.317 130.948C812.499 154.859 814.874 194.557 806.444 250.042C798.014 306.447 783.07 346.452 761.612 370.056C740.306 393.66 706.433 405.463 659.991 405.463H473.532ZM591.017 334.65H641.598C657.538 334.65 669.723 330.971 678.154 323.614C686.584 316.104 694.401 291.58 701.605 250.042C708.962 208.811 709.728 184.517 703.904 177.16C698.079 169.65 687.197 165.895 671.256 165.895H620.676L591.017 334.65Z" fill="#FFF2F4"/>
@@ -259,7 +310,7 @@
       </svg>
 
       <svg class="logo_lg" data-directory="Bundesverband/Wortmarke 2 Zeilen" preserveAspectRatio="xMinYMin meet" width="6521" height="500" viewBox="0 0 6521 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Geist" font-size="273.496" font-weight="900" letter-spacing="-0.05em"><tspan x="1412.72" y="210.657">SOZIALISTISCH-DEMOKRATISCHER&#10;</tspan><tspan x="1412.72" y="483.657">STUDIERENDENVERBAND</tspan></text>
+        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Geist" font-size="273.496" font-weight="900" letter-spacing="-0.05em"><tspan x="1412.72" y="210.657">SOZIALISTISCH-DEMOKRATISCHER</tspan><tspan x="1412.72" y="483.657">STUDIERENDENVERBAND</tspan></text>
         <path d="M1211.25 500H0.000854492L90.3171 0H1300.26L1211.25 500Z" fill="#FF203B"/>
         <path d="M942.644 407.647C880.055 407.647 840.17 397.138 822.989 376.122C805.808 354.952 800.055 328.413 805.731 296.505H910.89C907.361 316.448 910.276 328.26 919.634 331.942C928.991 335.47 940.573 337.234 954.38 337.234C968.033 337.234 980.075 335.854 990.506 333.092C1000.94 330.178 1006.92 324.425 1008.45 315.834C1010.14 306.17 1003.62 299.803 988.896 296.735C974.322 293.667 954.38 290.139 929.068 286.15C882.28 277.1 852.443 265.748 839.557 252.095C826.671 238.288 821.302 219.726 823.449 196.409C825.137 168.183 839.173 143.791 865.559 123.235C892.098 102.679 935.664 92.4009 996.259 92.4009C1056.7 92.4009 1095.59 103.293 1112.92 125.076C1130.41 146.859 1136.55 172.785 1131.33 202.852H1026.17C1029.55 183.37 1026.4 172.018 1016.74 168.796C1007.23 165.421 996.106 163.734 983.373 163.734C968.953 163.734 956.297 165.038 945.406 167.646C934.667 170.254 928.608 175.546 927.227 183.523C925.386 194.722 931.446 201.778 945.406 204.693C959.519 207.454 980.075 211.213 1007.07 215.968C1055.7 225.172 1086.54 235.45 1099.58 246.802C1112.62 258.154 1117.6 276.179 1114.53 300.877C1111.31 330.331 1097.12 355.489 1071.96 376.352C1046.81 397.215 1003.7 407.647 942.644 407.647Z" fill="#FFF2F4"/>
         <path d="M472.904 405.806L527.67 95.1622H709.684C756.165 95.1622 785.926 107.128 798.965 131.059C812.158 154.99 814.536 194.722 806.098 250.254C797.661 306.707 782.704 346.745 761.228 370.369C739.904 393.994 706.002 405.806 659.521 405.806H472.904ZM590.489 334.933H641.112C657.066 334.933 669.262 331.251 677.699 323.888C686.136 316.371 693.96 291.826 701.17 250.254C708.533 208.988 709.3 184.674 703.471 177.31C697.642 169.793 686.75 166.035 670.796 166.035H620.172L590.489 334.933Z" fill="#FFF2F4"/>
@@ -267,7 +318,7 @@
       </svg>
       
       <svg class="logo_lg" data-directory="Bundesverband/Wortmarke 3 Zeilen" preserveAspectRatio="xMinYMin meet" width="3489" height="500" viewBox="0 0 3489 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Geist" font-size="172.226" font-weight="900" letter-spacing="-0.05em"><tspan x="1412.84" y="136.47">SOZIALISTISCH-&#10;</tspan><tspan x="1412.84" y="308.47">DEMOKRATISCHER&#10;</tspan><tspan x="1412.84" y="480.47">STUDIERENDENVERBAND</tspan></text>
+        <text fill="#FFF2F4" xml:space="preserve" style="white-space: pre" font-family="Geist" font-size="172.226" font-weight="900" letter-spacing="-0.05em"><tspan x="1412.84" y="136.47">SOZIALISTISCH-</tspan><tspan x="1412.84" y="308.47">DEMOKRATISCHER</tspan><tspan x="1412.84" y="480.47">STUDIERENDENVERBAND</tspan></text>
         <path d="M1211.25 499.577H1.02661L91.2666 0.000152588H1300.18L1211.25 499.577Z" fill="#FF203B"/>
         <path d="M942.875 407.302C880.339 407.302 840.487 396.803 823.321 375.804C806.154 354.652 800.406 328.136 806.077 296.254H911.147C907.622 316.18 910.534 327.982 919.884 331.661C929.233 335.186 940.806 336.949 954.6 336.949C968.242 336.949 980.274 335.569 990.696 332.81C1001.12 329.898 1007.1 324.15 1008.63 315.567C1010.32 305.911 1003.8 299.55 989.087 296.484C974.526 293.419 954.6 289.894 929.31 285.908C882.561 276.865 852.749 265.523 839.874 251.882C826.999 238.087 821.635 219.541 823.781 196.243C825.467 168.04 839.491 143.67 865.854 123.131C892.371 102.592 935.901 92.3228 996.444 92.3228C1056.83 92.3228 1095.69 103.205 1113.01 124.97C1130.48 146.735 1136.61 172.639 1131.4 202.68H1026.33C1029.7 183.215 1026.56 171.872 1016.91 168.653C1007.4 165.281 996.291 163.595 983.569 163.595C969.161 163.595 956.516 164.898 945.634 167.504C934.904 170.11 928.85 175.398 927.471 183.368C925.631 194.557 931.686 201.607 945.634 204.52C959.735 207.279 980.274 211.034 1007.25 215.785C1055.84 224.982 1086.65 235.251 1099.67 246.594C1112.7 257.936 1117.68 275.946 1114.62 300.623C1111.4 330.052 1097.22 355.189 1072.09 376.034C1046.95 396.879 1003.88 407.302 942.875 407.302Z" fill="#FFF2F4"/>
         <path d="M473.532 405.463L528.251 95.0818H710.111C756.554 95.0818 786.289 107.037 799.317 130.948C812.499 154.859 814.874 194.557 806.444 250.042C798.014 306.447 783.07 346.452 761.612 370.056C740.306 393.66 706.433 405.463 659.991 405.463H473.532ZM591.017 334.65H641.598C657.538 334.65 669.723 330.971 678.154 323.614C686.584 316.104 694.401 291.58 701.605 250.042C708.962 208.811 709.728 184.517 703.904 177.16C698.079 169.65 687.197 165.895 671.256 165.895H620.676L591.017 334.65Z" fill="#FFF2F4"/>
