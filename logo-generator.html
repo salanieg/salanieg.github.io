@@ -6,6 +6,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js" type="text/javascript"> </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.3/opentype.min.js"></script>
     <style>
+
+      @font-face {
+          font-family: 'Gespenst';
+          src: url('https://www.gefaengnishefte.org/fonts/Gespenst/Gespenst-UltraBlack.ttf') format('truetype');
+          font-weight: 900;
+          font-style: normal;
+          font-display: swap;
+      }
+
+
       body {
           background-color: #3D1382;          
           font-family: "Geist";
@@ -14,8 +24,8 @@
       }
 
       .logo_lg {
-        /* max-width: 100%; */
-        height: auto;
+        max-width: 100%;
+        height: 200px;
         padding: 20px;
       }
 
@@ -153,12 +163,27 @@
 
                 let combinedPathData = '';
 
+                let totalWidth = 0;
+                const textAnchor = textElement.getAttribute('text-anchor') || 'start';
+
                 tspanElements.forEach((tspanElement) => {
+                    const text = tspanElement.textContent;
+                    const glyphs = font.stringToGlyphs(text);
                     const tspanX = parseFloat(tspanElement.getAttribute('x')) || x;
                     const tspanY = parseFloat(tspanElement.getAttribute('y')) || y;
-                    const text = tspanElement.textContent;
-                    
-                    const path = font.getPath(text, tspanX, tspanY, fontSize);
+                    let xOffset = 0;
+
+                    glyphs.forEach(glyph => {
+                        totalWidth += glyph.advanceWidth * (fontSize / font.unitsPerEm);
+                    });
+
+                    if (textAnchor === 'middle') {
+                        xOffset = -totalWidth / 2;
+                    } else if (textAnchor === 'end') {
+                        xOffset = -totalWidth;
+                    }
+
+                    const path = font.getPath(text, tspanX + xOffset, tspanY, fontSize);
                     combinedPathData += path.toPathData(2);
                 });
 
@@ -188,7 +213,7 @@
           svg.removeAttribute("width");
           svg.removeAttribute("height");
 
-          let bbox = svg.getBBox();
+          let bbox = svg.getBBox({"stroke": true});
           
           svg.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
           svg.setAttribute("width", bbox.width);
@@ -297,7 +322,11 @@
         <path d="M775.972 335.568C724.45 335.568 691.617 326.917 677.473 309.617C663.33 292.19 658.595 270.344 663.267 244.078H749.832C746.927 260.494 749.327 270.218 757.03 273.248C764.733 276.153 774.267 277.605 785.632 277.605C796.871 277.605 806.784 276.469 815.371 274.196C823.958 271.796 828.883 267.061 830.146 259.989C831.535 252.033 826.168 246.793 814.045 244.267C802.048 241.742 785.632 238.837 764.796 235.554C726.281 228.103 701.719 218.759 691.112 207.52C680.504 196.155 676.084 180.875 677.852 161.68C679.241 138.445 690.796 118.366 712.516 101.445C734.362 84.5233 770.226 76.0625 820.106 76.0625C869.861 76.0625 901.873 85.0284 916.142 102.96C930.538 120.892 935.589 142.233 931.296 166.984H844.731C847.509 150.946 844.92 141.602 836.965 138.95C829.135 136.172 819.98 134.783 809.499 134.783C797.629 134.783 787.211 135.856 778.245 138.003C769.405 140.15 764.417 144.506 763.281 151.073C761.765 160.291 766.753 166.1 778.245 168.499C789.862 170.772 806.784 173.866 829.009 177.781C869.04 185.358 894.422 193.818 905.156 203.163C915.89 212.508 919.994 227.346 917.468 247.677C914.816 271.923 903.135 292.632 882.426 309.806C861.716 326.981 826.231 335.568 775.972 335.568Z" fill="#FFF2F4"/>
         <path d="M389.29 334.052L434.371 78.3356H584.202C622.465 78.3356 646.964 88.1854 657.697 107.885C668.557 127.585 670.515 160.291 663.569 206.004C656.624 252.475 644.312 285.434 626.632 304.882C609.08 324.329 581.172 334.052 542.909 334.052H389.29ZM486.083 275.711H527.755C540.888 275.711 550.928 272.68 557.873 266.619C564.818 260.431 571.259 240.226 577.194 206.004C583.255 172.035 583.887 152.02 579.088 145.958C574.289 139.771 565.324 136.677 552.191 136.677H510.518L486.083 275.711Z" fill="#FFF2F4"/>
         <path d="M251.836 335.568C200.314 335.568 167.481 326.917 153.337 309.617C139.194 292.19 134.459 270.344 139.131 244.078H225.696C222.791 260.494 225.191 270.218 232.894 273.249C240.597 276.153 250.131 277.605 261.496 277.605C272.735 277.605 282.648 276.469 291.235 274.196C299.822 271.796 304.747 267.061 306.01 259.989C307.399 252.033 302.032 246.793 289.909 244.267C277.913 241.742 261.496 238.837 240.66 235.554C202.145 228.103 177.583 218.759 166.976 207.52C156.368 196.155 151.948 180.875 153.716 161.68C155.105 138.445 166.66 118.366 188.38 101.445C210.227 84.5233 246.09 76.0625 295.971 76.0625C345.725 76.0625 377.737 85.0284 392.006 102.96C406.402 120.892 411.453 142.233 407.16 166.984H320.595C323.373 150.946 320.785 141.602 312.829 138.95C305 136.172 295.844 134.783 285.363 134.783C273.493 134.783 263.075 135.856 254.109 138.003C245.269 140.15 240.281 144.506 239.145 151.073C237.629 160.291 242.617 166.1 254.109 168.499C265.727 170.772 282.648 173.866 304.873 177.781C344.904 185.358 370.286 193.818 381.02 203.163C391.754 212.508 395.858 227.346 393.332 247.677C390.68 271.923 379 292.632 358.29 309.807C337.58 326.981 302.095 335.568 251.836 335.568Z" fill="#FFF2F4"/>
-        <path d="M276.345 365.27H271.798L271.034 369.752L248.978 499.094L247.905 505.387H254.289H1064.06H1068.6L1069.37 500.905L1091.42 371.563L1092.5 365.27H1086.11H276.345Z" fill="#FFF2F4" stroke="#FF203B" stroke-width="10.7749"/>
+        <!-- <path d="M276.345 365.27H271.798L271.034 369.752L248.978 499.094L247.905 505.387H254.289H1064.06H1068.6L1069.37 500.905L1091.42 371.563L1092.5 365.27H1086.11H276.345Z" fill="#FFF2F4" stroke="#FF203B" stroke-width="10.7749"/> -->
+        <path d="M276.343 370.658H1086.11L1064.06 500H254.287L276.343 370.658Z" fill="#FFF2F4"/>
+
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M267.25 359.883H1098.88L1073.15 510.775H241.52L267.25 359.883ZM276.343 370.658H1086.11L1064.06 500H254.287L276.343 370.658Z" fill="#FF203B"/>
+
         <text fill="#FF203B" xml:space="preserve" style="white-space: pre" font-family="Gespenst" font-size="85.3664" font-weight="900" text-anchor="middle"><tspan x="679.125" y="465.782" class="ortsgruppe_input">Ortsgruppe</tspan></text>
       </svg>
 
