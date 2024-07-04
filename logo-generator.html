@@ -99,6 +99,31 @@
         margin: 0px;
         color: #FFF2F4;
       }
+
+      #loading_section {
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+      }
+
+      #loading_percentage, #loading_bar {
+        visibility: hidden;
+      }
+
+      #loading_percentage {
+        padding: 0px;
+        padding-left: 30px;
+        width: 60px;
+      }
+
+      #loading_bar {
+        width: 500px;
+        height: 30px;
+        border-radius: 25px;
+        border: solid #9B62FF 4px;
+        background-image: linear-gradient(left, #9B62FF, #9B62FF, 70% transparent,  100% transparent);
+        background-image: -webkit-linear-gradient(left, #9B62FF, #9B62FF 70%, transparent 70%, transparent 100%)  
+      }
     </style>
     <script>
       var zip
@@ -124,7 +149,38 @@
         adjustSVGSizeAll()
       };
 
+
+      function reset_loading_bar() {
+        loaded = 0
+        document.getElementById('loading_bar').style.visibility = "hidden"
+        document.getElementById('loading_bar').style.backgroundImage = "-webkit-linear-gradient(left, #9B62FF, #9B62FF " + 0 + "%, transparent " + 0 + "%, transparent 100%)"
+
+        
+        document.getElementById('loading_percentage').style.visibility = "hidden"
+        document.getElementById('loading_percentage').textContent = ""
+      }
+
+      var loaded = 0
+
+      function increase_loading_bar(amount) {
+        
+        document.getElementById('loading_bar').style.visibility = "visible"
+        
+        document.getElementById('loading_percentage').style.visibility = "visible"
+        loaded = loaded + amount
+
+        if(loaded > 100) {
+          loaded = 100
+        }
+
+        display_loaded = Math.round(loaded)
+
+        document.getElementById('loading_bar').style.backgroundImage = "-webkit-linear-gradient(left, #9B62FF, #9B62FF " + display_loaded + "%, transparent " + display_loaded + "%, transparent 100%)"
+        document.getElementById('loading_percentage').textContent = display_loaded + "%"
+      }
+
       function change_ortsgruppe() {
+        reset_loading_bar()
         let og = document.getElementById('ortsgruppe').value
 
         var og_input = document.getElementsByClassName("ortsgruppe_input")
@@ -231,7 +287,6 @@
             
             for (let j = 0; j < sw_colors.length; j++)
             {
-              
               export_svg(logos[i], sw_colors[j])
             }
           }
@@ -283,6 +338,8 @@
                 }
 
                 let pngBlob = new Blob([ia], { type: "image/png" });
+                
+                increase_loading_bar(0.75)
                 zip.file(`${directory}.png`, pngBlob, {binary: true});
 
                 if (--file_counter === 0) {
@@ -293,6 +350,7 @@
             img.src = url;
             img.style.visibility = "hidden";
 
+            increase_loading_bar(0.75)
             zip.file(directory + ".svg", svg, {binary: true});
         });
       }
@@ -301,6 +359,8 @@
         zip.generateAsync({
             type: 'blob'
         }).then(function(content) {
+          
+            increase_loading_bar(100)
             saveAs(content, "SDS Material " + document.getElementById('ortsgruppe').value + ".zip")
         })
       }
@@ -312,9 +372,14 @@
       <input type="text" id="ortsgruppe" name="Ortsgruppe" required minlength="1" maxlength="20" size="10" />
       <button onclick="export_set()">Herunterladen</button>
     </div>
-    <canvas id="canvas" style="display:none;"></canvas>
 
+    <div id="loading_section">
+      <div id="loading_bar"></div>
+      <p id="loading_percentage"></p>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
     <div id="generation_window"></div>
+
     <p>Logos</p>
     <div class="logo_box">
       <svg class="logo_lg" data-directory="Ortsgruppe/Logo" width="1099" height="511" viewBox="0 0 1099 511" fill="none" xmlns="http://www.w3.org/2000/svg">
