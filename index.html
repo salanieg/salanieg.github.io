@@ -59,16 +59,26 @@
 	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
 <script>
-
-    load_components(["databanner"])
-
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById(pageId).style.display = 'block';
+        history.pushState({ pageId: pageId }, "", `#${pageId}`);
     }
 
+    window.onpopstate = function(event) {
+        if (event.state && event.state.pageId) {
+            showPage(event.state.pageId);
+        } else {
+            showPage('welcome'); // Default page if no state is found
+        }
+    };
+
     window.onload = function() {
-        showPage('welcome');
+        if (window.location.hash) {
+            showPage(window.location.hash.substring(1));
+        } else {
+            showPage('welcome');
+        }
     };
 </script>
 </head>
@@ -91,9 +101,9 @@
     </div>
     <div id="launchpad" class="page">
         <div id="nav">
-            <a href="#" onclick="showPage('nexus')">Nexus</a>
-            <a href="#" onclick="showPage('abyss')">Abyss</a>
-            <a href="#" onclick="showPage('about')">About</a>
+            <a href="javascript:void(0)" onclick="showPage('nexus')">Nexus</a>
+            <a href="javascript:void(0)" onclick="showPage('abyss')">Abyss</a>
+            <a href="javascript:void(0)" onclick="showPage('about')">About</a>
         </div>
         <h1 lang="en">Launchpad</h1>
         <h1 lang="de">Startrampe</h1>
@@ -108,7 +118,7 @@
     </div>
     <div id="nexus" class="page">
         <div id="nav">
-            <a href="#" onclick="showPage('launchpad')">Launchpad</a>
+            <a href="javascript:void(0)" onclick="showPage('launchpad')">Launchpad</a>
         </div>
         <h1>Nexus</h1>
         <p class="content" lang="en"><i>Portfolio of my publications.</i><br/><br/></p>
@@ -132,7 +142,7 @@
     </div>
     <div id="abyss" class="page">
     <div id="nav">
-        <a href="#" onclick="showPage('launchpad')">Launchpad</a>
+        <a href="javascript:void(0)" onclick="showPage('launchpad')">Launchpad</a>
     </div>
     <h1>Abyss</h1>
     <div class="content" lang="en">
@@ -162,7 +172,7 @@
 </div>
     <div id="about" class="page">
         <div id="nav">
-            <a href="#" onclick="showPage('launchpad')">Launchpad</a>
+            <a href="javascript:void(0)" onclick="showPage('launchpad')">Launchpad</a>
         </div>
         <h1 lang="en">About this project</h1>
         <h1 lang="de">Über dieses Projekt</h1>
