@@ -1,23 +1,12 @@
 <!DOCTYPE html>
-<html lang="en"> <!-- Standardmäßig auf Englisch eingestellt -->
+<html class="en"> <!-- Initial ist die Sprache Englisch eingestellt -->
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Dialectic Wormhole</title>
-<script type="text/javascript" src="common.js"></script>
-<link rel="preload" as="fetch" crossorigin href="components/databanner.html">
-
-<link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="images/favicon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="images/favicon/favicon-16x16.png">
-<link rel="manifest" href="images/favicon/site.webmanifest">
-<link rel="mask-icon" href="images/favicon/safari-pinned-tab.svg" color="#1c1c1c">
-<link rel="shortcut icon" href="images/favicon/favicon.ico">
-<meta name="msapplication-TileColor" content="#1c1c1c">
-<meta name="msapplication-config" content="images/favicon/browserconfig.xml">
-<meta name="theme-color" content="#1c1c1c">
 
 <style>
+   /* Bestehendes CSS */
    @font-face {
     font-family: 'Syne';
     src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
@@ -55,55 +44,30 @@
     .center { text-align: center; }
     .content { max-width: 800px; margin: auto; text-align: justify; }
     .image-container { text-align: center; margin-bottom: 20px; }
-   	#langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+   	#langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
 	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 
-    [lang="de"] {
+    /* Neue CSS-Regeln für die Sprachauswahl */
+    html.en [lang="de"] {
         display: none;
     }
 
-    html[lang="de"] [lang="de"] {
-        display: block;
-    }
-
-    html[lang="de"] [lang="en"] {
+    html.de [lang="en"] {
         display: none;
     }
 </style>
-<script>
-    function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-        document.getElementById(pageId).style.display = 'block';
-        history.pushState({ pageId: pageId }, "", `#${pageId}`);
-    }
 
-    window.onpopstate = function(event) {
-        if (event.state && event.state.pageId) {
-            showPage(event.state.pageId);
-        } else {
-            showPage('welcome'); // Default page if no state is found
-        }
-    };
-
-    window.onload = function() {
-        if (window.location.hash) {
-            showPage(window.location.hash.substring(1));
-        } else {
-            showPage('welcome');
-        }
-    };
-</script>
 </head>
 <body>
     <div id="databanner"></div>
 	
-<div id="langSwitch" onclick="switch_language()">Sprache</div>
+<div id="langSwitch" onclick="document.documentElement.classList.toggle('en'); document.documentElement.classList.toggle('de');">Sprache</div>
 <div id="imprintLink" onclick="window.location.href='/impressum.html'">
     <p class="content" lang="en">Legal Notice</p>
     <p class="content" lang="de">Impressum</p>
 </div>
 <div id="container">
-    <div id="welcome" class="page">
+    <div id="welcome" class="page show">
         <h1>The Dialectic Wormhole<br/><br/></h1>
 	<img src="images/logo.webp" alt="Das Logo der Startseite" width="136" height="86"><br/><br/>
         <p id="entryText">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br/></p>
@@ -203,6 +167,9 @@ Dennis, Admin</p><br/>
 <img src="images/portrait.webp" alt="Selbstportrait des Administrators (Friede sei mit Ihm)" width="150" height="150"><br/><br/><br/>
     </div>
 </div>
+</body>
+</html>
+
 </body>
 </html>
 
