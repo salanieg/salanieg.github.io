@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en"> <!-- Standardmäßig auf Englisch eingestellt -->
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,6 +57,18 @@
     .image-container { text-align: center; margin-bottom: 20px; }
    	#langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
 	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+
+    [lang="de"] {
+        display: none;
+    }
+
+    html[lang="de"] [lang="de"] {
+        display: block;
+    }
+
+    html[lang="de"] [lang="en"] {
+        display: none;
+    }
 </style>
 <script>
     function showPage(pageId) {
@@ -193,3 +205,4 @@ Dennis, Admin</p><br/>
 </div>
 </body>
 </html>
+
