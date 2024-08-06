@@ -1,12 +1,23 @@
 <!DOCTYPE html>
-<html class="en"> <!-- Initial ist die Sprache Englisch eingestellt -->
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Dialectic Wormhole</title>
+<script type="text/javascript" src="common.js"></script>
+<link rel="preload" as="fetch" crossorigin href="components/databanner.html">
+
+<link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon/favicon-16x16.png">
+<link rel="manifest" href="images/favicon/site.webmanifest">
+<link rel="mask-icon" href="images/favicon/safari-pinned-tab.svg" color="#1c1c1c">
+<link rel="shortcut icon" href="images/favicon/favicon.ico">
+<meta name="msapplication-TileColor" content="#1c1c1c">
+<meta name="msapplication-config" content="images/favicon/browserconfig.xml">
+<meta name="theme-color" content="#1c1c1c">
 
 <style>
-   /* Bestehendes CSS */
    @font-face {
     font-family: 'Syne';
     src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
@@ -16,7 +27,7 @@
     font-style: italic;
     font-display: swap;
 }   
-	@font-face {
+    @font-face {
     font-family: 'Geist';
     src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
@@ -44,30 +55,63 @@
     .center { text-align: center; }
     .content { max-width: 800px; margin: auto; text-align: justify; }
     .image-container { text-align: center; margin-bottom: 20px; }
-   	#langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
-	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
-
-    /* Neue CSS-Regeln für die Sprachauswahl */
-    html.en [lang="de"] {
-        display: none;
-    }
-
-    html.de [lang="en"] {
-        display: none;
-    }
+    #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+    #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
+<script>
+    function switch_language() {
+        const langSwitch = document.getElementById('langSwitch');
+        const currentLang = langSwitch.innerHTML;
 
+        if (currentLang === "Deutsch") {
+            document.querySelectorAll('[lang="en"]').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('[lang="de"]').forEach(el => el.style.display = 'block');
+            langSwitch.innerHTML = "English";
+        } else {
+            document.querySelectorAll('[lang="de"]').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('[lang="en"]').forEach(el => el.style.display = 'block');
+            langSwitch.innerHTML = "Deutsch";
+        }
+    }
+
+    window.onload = function() {
+        // Set the initial language state
+        const langSwitch = document.getElementById('langSwitch');
+        langSwitch.innerHTML = "Deutsch"; // Set default language on load
+        switch_language(); // Switch to the initial language settings
+
+        if (window.location.hash) {
+            showPage(window.location.hash.substring(1));
+        } else {
+            showPage('welcome');
+        }
+    };
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+        document.getElementById(pageId).style.display = 'block';
+        history.pushState({ pageId: pageId }, "", `#${pageId}`);
+    }
+
+    window.onpopstate = function(event) {
+        if (event.state && event.state.pageId) {
+            showPage(event.state.pageId);
+        } else {
+            showPage('welcome'); // Default page if no state is found
+        }
+    };
+</script>
 </head>
 <body>
     <div id="databanner"></div>
 	
-<div id="langSwitch" onclick="document.documentElement.classList.toggle('en'); document.documentElement.classList.toggle('de');">Sprache</div>
+<div id="langSwitch" onclick="switch_language()">Sprache</div>
 <div id="imprintLink" onclick="window.location.href='/impressum.html'">
     <p class="content" lang="en">Legal Notice</p>
     <p class="content" lang="de">Impressum</p>
 </div>
 <div id="container">
-    <div id="welcome" class="page show">
+    <div id="welcome" class="page">
         <h1>The Dialectic Wormhole<br/><br/></h1>
 	<img src="images/logo.webp" alt="Das Logo der Startseite" width="136" height="86"><br/><br/>
         <p id="entryText">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br/></p>
@@ -167,9 +211,6 @@ Dennis, Admin</p><br/>
 <img src="images/portrait.webp" alt="Selbstportrait des Administrators (Friede sei mit Ihm)" width="150" height="150"><br/><br/><br/>
     </div>
 </div>
-</body>
-</html>
-
 </body>
 </html>
 
