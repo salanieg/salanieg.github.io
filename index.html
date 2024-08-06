@@ -27,7 +27,7 @@
     font-style: italic;
     font-display: swap;
 }   
-    @font-face {
+	@font-face {
     font-family: 'Geist';
     src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
         url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
@@ -55,38 +55,10 @@
     .center { text-align: center; }
     .content { max-width: 800px; margin: auto; text-align: justify; }
     .image-container { text-align: center; margin-bottom: 20px; }
-    #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
-    #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+   	#langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
 </style>
 <script>
-    function switch_language() {
-        const langSwitch = document.getElementById('langSwitch');
-        const currentLang = langSwitch.innerHTML;
-
-        if (currentLang === "Deutsch") {
-            document.querySelectorAll('[lang="en"]').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('[lang="de"]').forEach(el => el.style.display = 'block');
-            langSwitch.innerHTML = "English";
-        } else {
-            document.querySelectorAll('[lang="de"]').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('[lang="en"]').forEach(el => el.style.display = 'block');
-            langSwitch.innerHTML = "Deutsch";
-        }
-    }
-
-    window.onload = function() {
-        // Set the initial language state
-        const langSwitch = document.getElementById('langSwitch');
-        langSwitch.innerHTML = "Deutsch"; // Set default language on load
-        switch_language(); // Switch to the initial language settings
-
-        if (window.location.hash) {
-            showPage(window.location.hash.substring(1));
-        } else {
-            showPage('welcome');
-        }
-    };
-
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById(pageId).style.display = 'block';
@@ -99,6 +71,25 @@
         } else {
             showPage('welcome'); // Default page if no state is found
         }
+    };
+
+    function switch_language() {
+        const currentLang = document.documentElement.lang || 'en';
+        const newLang = currentLang === 'en' ? 'de' : 'en';
+        document.documentElement.lang = newLang;
+        document.querySelectorAll('[lang]').forEach(el => {
+            el.style.display = el.getAttribute('lang') === newLang ? 'block' : 'none';
+        });
+        document.getElementById('langSwitch').innerText = newLang === 'en' ? 'Deutsch' : 'English';
+    }
+
+    window.onload = function() {
+        if (window.location.hash) {
+            showPage(window.location.hash.substring(1));
+        } else {
+            showPage('welcome');
+        }
+        switch_language(); // Set language initially based on lang attribute
     };
 </script>
 </head>
