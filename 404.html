@@ -70,7 +70,6 @@
             #stalemateButton.visible {
                 visibility: visible;
                 opacity: 1;
-                transition: opacity 2s ease-in-out;
             }
         </style>
         <!-- Das hier cookies -->
@@ -85,7 +84,9 @@
                 homeText.removeEventListener("click", disappearText);
 
                 var stalemateButton = document.querySelector("#stalemateButton");
-                stalemateButton.classList.add("visible");
+                setTimeout(function() {
+                    stalemateButton.classList.add("visible");
+                }, 1500); // Verzögerung passend zur Animation des "Home"-Texts
             }
             
             document.addEventListener("DOMContentLoaded", function() {
@@ -119,4 +120,3 @@
         </div>
     </body>
 </html>
-
