@@ -68,11 +68,13 @@
 
             #stalemateButton {
                 opacity: 0;
+                pointer-events: none; /* Verhindert Interaktionen, wenn der Button unsichtbar ist */
                 transition: opacity 2s ease-in-out;
             }
 
             #stalemateButton.visible {
                 opacity: 1;
+                pointer-events: auto; /* Aktiviert Interaktionen, wenn der Button sichtbar ist */
             }
         </style>
         <!-- Das hier cookies -->
