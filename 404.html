@@ -40,7 +40,8 @@
             .content { max-width: 800px; margin: auto; text-align: justify; }
             #langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
             #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
-            button { display: block; margin: 0 auto; }
+            button { display: block; margin: 0 auto; opacity: 0; transition: opacity 1s; }
+            .visible { opacity: 1; }
          @keyframes blink {
                 0% { opacity: 1; }
                 50% { opacity: 0; }
@@ -71,6 +72,12 @@
                 var homeText = document.querySelector("#nav p");
                 homeText.classList.add("disappearing");
                 homeText.removeEventListener("click", disappearText);
+                showButton();
+            }
+
+            function showButton() {
+                var stalemateButton = document.querySelector("#stalemateButton");
+                stalemateButton.classList.add("visible");
             }
             
             document.addEventListener("DOMContentLoaded", function() {
@@ -99,9 +106,12 @@
                 <p class="content" lang="en"><i>There is no content under this page. Gezeichnet, der Schildermaler.</i><br/><br/><br/></p>
                 <p class="content" lang="de"><i>Keine Inhalte unter dieser Seite. Gezeichnet, der Schildermaler.</i><br/><br/><br/></p>
                 
-                <a href="https://www.dialecticwormhole.page" target="_self"><button style="background-color: #1c1c1c; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">Stalemate resolve</button></a>
+                <a href="https://www.dialecticwormhole.page" target="_self">
+                    <button id="stalemateButton" style="background-color: #1c1c1c; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">
+                        STALEMATE RESOLVE
+                    </button>
+                </a>
             </div>
         </div>
     </body>
 </html>
-
