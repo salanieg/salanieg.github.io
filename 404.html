@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>???</title>
         <style>
-             @font-face {
+            @font-face {
                 font-family: 'Syne';
                 src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
                     url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff') format('woff'),
@@ -15,7 +15,7 @@
                 font-style: italic;
                 font-display: swap;
             }   
-             @font-face {
+            @font-face {
                 font-family: 'Geist';
                 src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
                     url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
@@ -36,53 +36,51 @@
             }
             #container { padding: 20px; text-align: center; }
             #nav { background: #333; padding: 10px 0; }
-            #nav p { 
-                color: white; 
-                text-decoration: none; 
-                padding: 10px 20px; 
-                display: inline-block; 
-                cursor: pointer;
-                font-size: 24px;
-                transition: transform 0.5s, opacity 0.5s, filter 0.5s;
-            }
-            #nav p:hover {
-                text-shadow: 0 0 5px red;
-            }
-            #nav p.disappear {
-                opacity: 0;
-                transform: scale(0.1) rotate(360deg);
-                filter: blur(10px);
-            }
+            #nav p { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; cursor: pointer; }
             .content { max-width: 800px; margin: auto; text-align: justify; }
-            #langSwitch { 
-                position: fixed; 
-                left: 50%; 
-                transform: translateX(calc(-50% - 50px)); 
-                bottom: 20px; 
-                cursor: pointer;  
-                z-index: 4; 
+            #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+            #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+
+            @keyframes flicker {
+                0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                    opacity: 1;
+                    transform: scale(1) rotate(0deg);
+                }
+                20%, 24%, 55% {
+                    opacity: 0.5;
+                    transform: scale(1.1) rotate(-3deg);
+                }
+                22% {
+                    opacity: 0.8;
+                    transform: scale(0.9) rotate(3deg);
+                }
             }
-            #imprintLink { 
-                position: fixed; 
-                left: 50%; 
-                transform: translateX(calc(-50% - -50px)); 
-                bottom: 20px; 
-                cursor: pointer; 
-                z-index: 4; 
-            }
-            @keyframes blink {
+
+            @keyframes fadeOut {
                 0% { opacity: 1; }
-                50% { opacity: 0; }
-                100% { opacity: 1; }
+                100% { opacity: 0; }
+            }
+
+            #home-text {
+                animation: flicker 0.6s infinite;
+                display: inline-block;
+            }
+
+            .disappear {
+                animation: fadeOut 2s forwards;
             }
         </style>
+        <!-- Das hier cookies -->
+        <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
+        <script type="text/javascript" src="common.js"></script>
         <script>
-            function disappearEffect() {
-                const homeText = document.getElementById('homeText');
+            function makeDisappear() {
+                var homeText = document.getElementById('home-text');
                 homeText.classList.add('disappear');
             }
         </script>
     </head>
+
     <body>
         <div id="databanner"></div>
         <div id="langSwitch" onclick="switch_language()">Sprache</div>
@@ -92,7 +90,7 @@
         </div>
         <div id="container">
             <div id="nav" style="text-align: center;">
-                <p id="homeText" onclick="disappearEffect()">Home</p>
+                <p id="home-text" onclick="makeDisappear()">Home</p>
             </div>
 
             <h1 lang="en">404 *** Event Horizon *** Evade immediately!</h1>
@@ -102,7 +100,7 @@
                 <p class="content" lang="en"><i>There is no content under this page. Gezeichnet, der Schildermaler.</i><br/><br/><br/></p>
                 <p class="content" lang="de"><i>Keine Inhalte unter dieser Seite. Gezeichnet, der Schildermaler.</i><br/><br/><br/></p>
                 
-                <a href="https://www.dialecticwormhole.page" target="_self"><button style="background-color: #1c1c1c; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">STALEMATE RESOLVE</button></a>
+                <a href="https://www.dialecticwormhole.page" target="_self"><button style="background-color: nero; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">STALEMATE RESOLVE</button></a>
             </div>
         </div>
     </body>
