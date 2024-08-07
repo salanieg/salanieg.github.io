@@ -6,78 +6,62 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>???</title>
         <style>
-            @font-face {
-                font-family: 'Syne';
-                src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
-                    url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff') format('woff'),
-                    url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.ttf') format('truetype');
-                font-weight: 400;
-                font-style: italic;
-                font-display: swap;
-            }   
-            @font-face {
-                font-family: 'Geist';
-                src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
-                    url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
-                    url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.ttf') format('truetype');
-                font-weight: 300;
-                font-style: normal;
-                font-display: swap;
-            }   
-            body { 
-                font-family: 'Geist', Arial, sans-serif; 
-                color: white; 
-                background-color: #212121; 
-                margin: 0; 
-                padding: 0; 
-            }
-            h1 {
-                font-family: 'Syne', Arial, sans-serif;
-            }
+             @font-face {
+    font-family: 'Syne';
+    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}   
+ @font-face {
+    font-family: 'Geist';
+    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
+        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
+        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}   
+    body { 
+        font-family: 'Geist', Arial, sans-serif; 
+        color: white; 
+        background-color: #212121; 
+        margin: 0; 
+        padding: 0; 
+}
+    h1 {
+        font-family: 'Syne', Arial, sans-serif;
+}
             #container { padding: 20px; text-align: center; }
             #nav { background: #333; padding: 10px 0; }
             #nav p { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; cursor: pointer; }
             .content { max-width: 800px; margin: auto; text-align: justify; }
-            #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+            #langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
             #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
-
-            @keyframes flicker {
-                0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-                    opacity: 1;
-                    transform: scale(1) rotate(0deg);
-                }
-                20%, 24%, 55% {
-                    opacity: 0.5;
-                    transform: scale(1.1) rotate(-3deg);
-                }
-                22% {
-                    opacity: 0.8;
-                    transform: scale(0.9) rotate(3deg);
-                }
-            }
-
-            @keyframes fadeOut {
+            button { display: block; margin: 0 auto; }
+         @keyframes blink {
                 0% { opacity: 1; }
-                100% { opacity: 0; }
+                50% { opacity: 0; }
+                100% { opacity: 1; }
             }
 
-            #home-text {
-                animation: flicker 0.6s infinite;
-                display: inline-block;
+            @keyframes creepyFade {
+                0% { opacity: 1; transform: scale(1) rotate(0deg); }
+                50% { opacity: 0.5; transform: scale(1.2) rotate(10deg); }
+                100% { opacity: 0; transform: scale(0.5) rotate(-20deg); }
             }
 
-            .disappear {
-                animation: fadeOut 2s forwards;
+            #nav p:active {
+                animation: creepyFade 1.5s forwards;
             }
         </style>
         <!-- Das hier cookies -->
         <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
         <script type="text/javascript" src="common.js"></script>
         <script>
-            function makeDisappear() {
-                var homeText = document.getElementById('home-text');
-                homeText.classList.add('disappear');
-            }
+            load_components(["databanner"])
         </script>
     </head>
 
@@ -90,19 +74,18 @@
         </div>
         <div id="container">
             <div id="nav" style="text-align: center;">
-                <p id="home-text" onclick="makeDisappear()">Home</p>
+                <p>Home</p>
             </div>
 
-            <h1 lang="en">404 *** Event Horizon *** Evade immediately!</h1>
-            <h1 lang="de">404 *** Ereignishorizont *** Sofort ausweichen!</h1>
+        <h1 lang="en">404 *** Event Horizon *** Evade immediately!</h1>
+        <h1 lang="de">404 *** Ereignishorizont *** Sofort ausweichen!</h1>
 
             <div class="content">
                 <p class="content" lang="en"><i>There is no content under this page. Gezeichnet, der Schildermaler.</i><br/><br/><br/></p>
                 <p class="content" lang="de"><i>Keine Inhalte unter dieser Seite. Gezeichnet, der Schildermaler.</i><br/><br/><br/></p>
                 
-                <a href="https://www.dialecticwormhole.page" target="_self"><button style="background-color: nero; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">STALEMATE RESOLVE</button></a>
+                <a href="https://www.dialecticwormhole.page" target="_self"><button style="background-color: #1c1c1c; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">STALEMATE RESOLVE</button></a>
             </div>
         </div>
     </body>
 </html>
-
