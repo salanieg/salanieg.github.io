@@ -53,6 +53,11 @@
                 100% { opacity: 0; transform: scale(0.5) rotate(-20deg); }
             }
 
+            @keyframes buttonEffect {
+                0% { opacity: 0; transform: scale(0.5); }
+                100% { opacity: 1; transform: scale(1); }
+            }
+
             #nav p {
                 transition: opacity 1.5s, transform 1.5s;
             }
@@ -64,12 +69,13 @@
             #stalemateButton {
                 opacity: 0;
                 visibility: hidden;
-                transition: opacity 2s ease-in-out, visibility 0s linear 2s; /* visibility ändert sich nach 2 Sekunden */
+                transition: opacity 1s ease-in-out, visibility 0s linear 1s; /* visibility ändert sich nach 1 Sekunde */
             }
 
             #stalemateButton.visible {
                 visibility: visible;
                 opacity: 1;
+                animation: buttonEffect 1s ease-in-out;
             }
         </style>
         <!-- Das hier cookies -->
@@ -86,7 +92,7 @@
                 var stalemateButton = document.querySelector("#stalemateButton");
                 setTimeout(function() {
                     stalemateButton.classList.add("visible");
-                }, 1500); // Verzögerung passend zur Animation des "Home"-Texts
+                }, 750); // Verzögerung passend zur kürzeren Animation des "Home"-Texts
             }
             
             document.addEventListener("DOMContentLoaded", function() {
@@ -120,3 +126,4 @@
         </div>
     </body>
 </html>
+
