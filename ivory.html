@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
     <head>
         <meta charset="UTF-8">
         <meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
@@ -48,17 +48,6 @@
         <script>
             load_components(["databanner"])
 
-            function switch_language() {
-                var currentLang = document.documentElement.lang;
-                if (currentLang === 'en') {
-                    document.documentElement.lang = 'de';
-                } else {
-                    document.documentElement.lang = 'en';
-                }
-                // Refresh the quote after language change
-                displayQuoteOfTheWeek();
-            }
-
             function getWeekNumber(d) {
                 d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
                 d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -67,9 +56,9 @@
                 return weekNo;
             }
 
-            function getQuoteOfTheWeek() {
+            function getQuoteOfTheWeek(lang) {
                 const quotes_en = [
-                   "Quote 1 in English",
+                 "Quote 1 in English",
 "Quote 2 in English",
 "Quote 3 in English",
 "Quote 4 in English",
@@ -176,13 +165,10 @@
 "Zitat 50 auf Deutsch",
 "Zitat 51 auf Deutsch",
 "Zitat 52 auf Deutsch"
-
                 ];
 
                 const currentWeek = getWeekNumber(new Date());
                 const quoteIndex = (currentWeek - 1) % quotes_en.length; // Adjust for zero-indexing
-
-                const lang = document.documentElement.lang || 'en';
 
                 if (lang === 'de') {
                     return quotes_de[quoteIndex];
@@ -191,20 +177,38 @@
                 }
             }
 
-            function displayQuoteOfTheWeek() {
+            function updateQuote() {
                 const quoteElementEn = document.querySelector('.quote-en');
                 const quoteElementDe = document.querySelector('.quote-de');
 
-                if (quoteElementEn && quoteElementDe) {
-                    const quote = getQuoteOfTheWeek();
+                const lang = (quoteElementEn.style.display !== 'none') ? 'en' : 'de';
+
+                const quote = getQuoteOfTheWeek(lang);
+                if (lang === 'en') {
                     quoteElementEn.textContent = quote;
+                } else {
                     quoteElementDe.textContent = quote;
                 }
             }
 
             window.addEventListener('DOMContentLoaded', (event) => {
-                displayQuoteOfTheWeek();
+                updateQuote();
             });
+
+            function switch_language() {
+                const quoteElementEn = document.querySelector('.quote-en');
+                const quoteElementDe = document.querySelector('.quote-de');
+
+                if (quoteElementEn.style.display === 'none') {
+                    quoteElementEn.style.display = 'block';
+                    quoteElementDe.style.display = 'none';
+                } else {
+                    quoteElementEn.style.display = 'none';
+                    quoteElementDe.style.display = 'block';
+                }
+
+                updateQuote(); // Aktualisiert das Zitat basierend auf der neuen Sprache
+            }
 
         </script>
     </head>
@@ -229,7 +233,7 @@
                 <p class="content" lang="de"><i>Frische Inhalte, irgendwie mit Aktualitätsbezug oder so.</i><br/><br/></p>
 
                 <p class="quote-en" lang="en"></p>
-                <p class="quote-de" lang="de"></p>
+                <p class="quote-de" lang="de" style="display: none;"></p> <!-- Start with English displayed -->
 
                 <p class="content" lang="en">This site is currently empty, since I'm working on the Nexus. Meanwhile, please consider going for a hike or playing some Minecraft.<br/><br/></p>
                 <p class="content" lang="de">Diese Seite ist derzeit leer, da ich gerade am Nexus arbeite. Denke doch über eine kleine Wanderung nach oder spiele ein bisschen Minecraft.<br/><br/></p>
@@ -237,4 +241,3 @@
         </div>
     </body>
 </html>
-
