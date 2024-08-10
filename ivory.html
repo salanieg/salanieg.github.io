@@ -58,7 +58,7 @@
 
             function getQuoteOfTheWeek(lang) {
                 const quotes_en = [
-                 "Quote 1 in English",
+                   "Quote 1 in English",
 "Quote 2 in English",
 "Quote 3 in English",
 "Quote 4 in English",
@@ -111,7 +111,6 @@
 "Quote 51 in English",
 "Quote 52 in English"
                 ];
-
                 const quotes_de = [
                     "Zitat 1 auf Deutsch",
 "Zitat 2 auf Deutsch",
@@ -178,37 +177,35 @@
             }
 
             function updateQuote() {
+                const lang = document.documentElement.lang || 'en';
+                const quote = getQuoteOfTheWeek(lang);
                 const quoteElementEn = document.querySelector('.quote-en');
                 const quoteElementDe = document.querySelector('.quote-de');
 
-                const lang = (quoteElementEn.style.display !== 'none') ? 'en' : 'de';
-
-                const quote = getQuoteOfTheWeek(lang);
-                if (lang === 'en') {
-                    quoteElementEn.textContent = quote;
-                } else {
-                    quoteElementDe.textContent = quote;
+                if (quoteElementEn && quoteElementDe) {
+                    if (lang === 'de') {
+                        quoteElementDe.textContent = quote;
+                        quoteElementEn.textContent = ""; // Clear English quote
+                    } else {
+                        quoteElementEn.textContent = quote;
+                        quoteElementDe.textContent = ""; // Clear German quote
+                    }
                 }
+            }
+
+            function switch_language() {
+                const lang = document.documentElement.lang;
+                if (lang === 'de') {
+                    document.documentElement.lang = 'en';
+                } else {
+                    document.documentElement.lang = 'de';
+                }
+                updateQuote();
             }
 
             window.addEventListener('DOMContentLoaded', (event) => {
                 updateQuote();
             });
-
-            function switch_language() {
-                const quoteElementEn = document.querySelector('.quote-en');
-                const quoteElementDe = document.querySelector('.quote-de');
-
-                if (quoteElementEn.style.display === 'none') {
-                    quoteElementEn.style.display = 'block';
-                    quoteElementDe.style.display = 'none';
-                } else {
-                    quoteElementEn.style.display = 'none';
-                    quoteElementDe.style.display = 'block';
-                }
-
-                updateQuote(); // Aktualisiert das Zitat basierend auf der neuen Sprache
-            }
 
         </script>
     </head>
@@ -233,7 +230,7 @@
                 <p class="content" lang="de"><i>Frische Inhalte, irgendwie mit Aktualitätsbezug oder so.</i><br/><br/></p>
 
                 <p class="quote-en" lang="en"></p>
-                <p class="quote-de" lang="de" style="display: none;"></p> <!-- Start with English displayed -->
+                <p class="quote-de" lang="de"></p>
 
                 <p class="content" lang="en">This site is currently empty, since I'm working on the Nexus. Meanwhile, please consider going for a hike or playing some Minecraft.<br/><br/></p>
                 <p class="content" lang="de">Diese Seite ist derzeit leer, da ich gerade am Nexus arbeite. Denke doch über eine kleine Wanderung nach oder spiele ein bisschen Minecraft.<br/><br/></p>
