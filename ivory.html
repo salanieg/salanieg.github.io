@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
@@ -48,6 +48,17 @@
         <script>
             load_components(["databanner"])
 
+            function switch_language() {
+                var currentLang = document.documentElement.lang;
+                if (currentLang === 'en') {
+                    document.documentElement.lang = 'de';
+                } else {
+                    document.documentElement.lang = 'en';
+                }
+                // Refresh the quote after language change
+                displayQuoteOfTheWeek();
+            }
+
             function getWeekNumber(d) {
                 d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
                 d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -58,7 +69,7 @@
 
             function getQuoteOfTheWeek() {
                 const quotes_en = [
-                    "Quote 1 in English",
+                   "Quote 1 in English",
 "Quote 2 in English",
 "Quote 3 in English",
 "Quote 4 in English",
@@ -165,6 +176,7 @@
 "Zitat 50 auf Deutsch",
 "Zitat 51 auf Deutsch",
 "Zitat 52 auf Deutsch"
+
                 ];
 
                 const currentWeek = getWeekNumber(new Date());
@@ -179,15 +191,19 @@
                 }
             }
 
-            window.addEventListener('DOMContentLoaded', (event) => {
-                const lang = document.documentElement.lang || 'en';
-                const quote = getQuoteOfTheWeek();
+            function displayQuoteOfTheWeek() {
+                const quoteElementEn = document.querySelector('.quote-en');
+                const quoteElementDe = document.querySelector('.quote-de');
 
-                if (lang === 'de') {
-                    document.querySelector('.quote-de').textContent = quote;
-                } else {
-                    document.querySelector('.quote-en').textContent = quote;
+                if (quoteElementEn && quoteElementDe) {
+                    const quote = getQuoteOfTheWeek();
+                    quoteElementEn.textContent = quote;
+                    quoteElementDe.textContent = quote;
                 }
+            }
+
+            window.addEventListener('DOMContentLoaded', (event) => {
+                displayQuoteOfTheWeek();
             });
 
         </script>
