@@ -58,7 +58,7 @@
 
             function getQuoteOfTheWeek(lang) {
                 const quotes_en = [
-                    "Quote 1 in English",
+                 "Quote 1 in English",
 "Quote 2 in English",
 "Quote 3 in English",
 "Quote 4 in English",
@@ -113,7 +113,7 @@
                 ];
 
                 const quotes_de = [
-                    "Zitat 1 auf Deutsch",
+                   "Zitat 1 auf Deutsch",
 "Zitat 2 auf Deutsch",
 "Zitat 3 auf Deutsch",
 "Zitat 4 auf Deutsch",
@@ -184,9 +184,14 @@
                     const lang = visibleLangElement.getAttribute('lang');
                     const quote = getQuoteOfTheWeek(lang);
 
-                    document.querySelectorAll('.quote-en, .quote-de').forEach(element => {
-                        element.textContent = quote;
-                    });
+                    document.querySelector('.quote-en').style.display = lang === 'en' ? 'block' : 'none';
+                    document.querySelector('.quote-de').style.display = lang === 'de' ? 'block' : 'none';
+                    
+                    if (lang === 'en') {
+                        document.querySelector('.quote-en').textContent = quote;
+                    } else if (lang === 'de') {
+                        document.querySelector('.quote-de').textContent = quote;
+                    }
                 }
             }
 
@@ -225,5 +230,6 @@
         </div>
     </body>
 </html>
+
 
 
