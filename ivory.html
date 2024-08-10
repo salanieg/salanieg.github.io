@@ -1,64 +1,64 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Ivory Tower - Dialectic Wormhole</title>
-        <style>
-             @font-face {
-    font-family: 'Syne';
-    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.ttf') format('truetype');
-    font-weight: 400;
-    font-style: italic;
-    font-display: swap;
-}   
-            @font-face {
-    font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.ttf') format('truetype');
-    font-weight: 300;
-    font-style: normal;
-    font-display: swap;
-}   
-    body { 
-        font-family: 'Geist', Arial, sans-serif; 
-        color: white; 
-        background-color: #212121; 
-        margin: 0; 
-        padding: 0; 
-}
-    h1 {
-        font-family: 'Syne', Arial, sans-serif;
-}
-            #container { padding: 20px; text-align: center; }
-            #nav { background: #333; padding: 10px 0; }
-            #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
-            .content { max-width: 800px; margin: auto; text-align: justify; }
-            #langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
-            #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
-        </style>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ivory Tower - Dialectic Wormhole</title>
+    <style>
+        @font-face {
+            font-family: 'Syne';
+            src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
+                url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff') format('woff'),
+                url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.ttf') format('truetype');
+            font-weight: 400;
+            font-style: italic;
+            font-display: swap;
+        }   
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
+                url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
+                url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.ttf') format('truetype');
+            font-weight: 300;
+            font-style: normal;
+            font-display: swap;
+        }   
+        body { 
+            font-family: 'Geist', Arial, sans-serif; 
+            color: white; 
+            background-color: #212121; 
+            margin: 0; 
+            padding: 0; 
+        }
+        h1 {
+            font-family: 'Syne', Arial, sans-serif;
+        }
+        #container { padding: 20px; text-align: center; }
+        #nav { background: #333; padding: 10px 0; }
+        #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
+        .content { max-width: 800px; margin: auto; text-align: justify; }
+        #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+        #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+    </style>
 
-        <!-- Das hier cookies -->
-        <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
-        <script type="text/javascript" src="common.js"></script>
-        <script>
-            load_components(["databanner"])
+    <!-- Das hier cookies -->
+    <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
+    <script type="text/javascript" src="common.js"></script>
+    <script>
+        load_components(["databanner"]);
 
-            function getWeekNumber(d) {
-                d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-                d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-                var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-                var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-                return weekNo;
-            }
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return weekNo;
+        }
 
-            function getQuoteOfTheWeek(lang) {
-                const quotes_en = [
-                 "Quote 1 in English",
+        function getQuoteOfTheWeek() {
+            const quotes_en = [
+                "Quote 1 in English",
 "Quote 2 in English",
 "Quote 3 in English",
 "Quote 4 in English",
@@ -110,10 +110,10 @@
 "Quote 50 in English",
 "Quote 51 in English",
 "Quote 52 in English"
-                ];
+            ];
 
-                const quotes_de = [
-                   "Zitat 1 auf Deutsch",
+            const quotes_de = [
+                "Zitat 1 auf Deutsch",
 "Zitat 2 auf Deutsch",
 "Zitat 3 auf Deutsch",
 "Zitat 4 auf Deutsch",
@@ -165,71 +165,54 @@
 "Zitat 50 auf Deutsch",
 "Zitat 51 auf Deutsch",
 "Zitat 52 auf Deutsch"
+            ];
 
-                ];
+            const currentWeek = getWeekNumber(new Date());
+            const quoteIndex = (currentWeek - 1) % quotes_en.length; // Adjust for zero-indexing
 
-                const currentWeek = getWeekNumber(new Date());
-                const quoteIndex = (currentWeek - 1) % quotes_en.length; // Adjust for zero-indexing
+            return {
+                en: quotes_en[quoteIndex],
+                de: quotes_de[quoteIndex]
+            };
+        }
 
-                if (lang === 'de') {
-                    return quotes_de[quoteIndex];
-                } else {
-                    return quotes_en[quoteIndex];
-                }
-            }
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const quote = getQuoteOfTheWeek();
+            document.querySelector('.quote-en').innerHTML = `<i>${quote.en}</i>`;
+            document.querySelector('.quote-de').innerHTML = `<i>${quote.de}</i>`;
+        });
+    </script>
+</head>
 
-            function updateQuotes() {
-                const visibleLangElement = document.querySelector('p.content[lang]:not([style*="display:none"])');
-                if (visibleLangElement) {
-                    const lang = visibleLangElement.getAttribute('lang');
-                    const quote = getQuoteOfTheWeek(lang);
-
-                    document.querySelector('.quote-en').style.display = lang === 'en' ? 'block' : 'none';
-                    document.querySelector('.quote-de').style.display = lang === 'de' ? 'block' : 'none';
-                    
-                    if (lang === 'en') {
-                        document.querySelector('.quote-en').textContent = quote;
-                    } else if (lang === 'de') {
-                        document.querySelector('.quote-de').textContent = quote;
-                    }
-                }
-            }
-
-            window.addEventListener('DOMContentLoaded', (event) => {
-                updateQuotes();
-            });
-
-        </script>
-    </head>
-
-    <body>
-        <div id="databanner"></div>
-        <div id="langSwitch" onclick="switch_language(); updateQuotes();">Sprache</div>
-        <div id="imprintLink" onclick="window.location.href='/impressum.html'">
-            <p class="content" lang="en">Legal Notice</p>
-            <p class="content" lang="de">Impressum</p>
+<body>
+    <div id="databanner"></div>
+    <div id="langSwitch" onclick="switch_language()">Sprache</div>
+    <div id="imprintLink" onclick="window.location.href='/impressum.html'">
+        <p class="content" lang="en">Legal Notice</p>
+        <p class="content" lang="de">Impressum</p>
+    </div>
+    <div id="container">
+        <div id="nav" style="text-align: center;">
+            <a href="#" onclick="window.location.href='/';">Home</a>
         </div>
-        <div id="container">
-            <div id="nav" style="text-align: center;">
-                <a href="#" onclick="window.location.href='/';">Home</a>
-            </div>
 
-            <h1 lang="en">Ivory Tower</h1>
-            <h1 lang="de">Elfenbeinturm</h1>
-            
-            <div class="content">
-                <p class="content" lang="en"><i>Fresh content, somehow regarding current affairs or so.</i><br/><br/></p>
-                <p class="content" lang="de"><i>Frische Inhalte, irgendwie mit Aktualitätsbezug oder so.</i><br/><br/></p>
+        <h1 lang="en">Ivory Tower</h1>
+        <h1 lang="de">Elfenbeinturm</h1>
+        
+        <div class="content">
+            <p class="content" lang="en"><i>Fresh content, somehow regarding current affairs or so.</i><br/><br/></p>
+            <p class="content" lang="de"><i>Frische Inhalte, irgendwie mit Aktualitätsbezug oder so.</i><br/><br/></p>
 
-                <p class="quote-en" lang="en"></p>
-                <p class="quote-de" lang="de"></p>
+            <p class="content quote-en" lang="en"></p>
+            <p class="content quote-de" lang="de"></p>
 
-                <p class="content" lang="en">This site is currently empty, since I'm working on the Nexus. Meanwhile, please consider going for a hike or playing some Minecraft.<br/><br/></p>
-                <p class="content" lang="de">Diese Seite ist derzeit leer, da ich gerade am Nexus arbeite. Denke doch über eine kleine Wanderung nach oder spiele ein bisschen Minecraft.<br/><br/></p>
-            </div>
+            <p class="content" lang="en">This site is currently empty, since I'm working on the Nexus. Meanwhile, please consider going for a hike or playing some Minecraft.<br/><br/></p>
+            <p class="content" lang="de">Diese Seite ist derzeit leer, da ich gerade am Nexus arbeite. Denke doch über eine kleine Wanderung nach oder spiele ein bisschen Minecraft.<br/><br/></p>
         </div>
-    </body>
+    </div>
+</body>
 </html>
+
 
 
 
