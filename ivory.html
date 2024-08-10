@@ -2,11 +2,10 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <meta name="robots" content="noindex, nofollow"> <!-- Do not crawl Vermerk, ENTFERNEN! -->
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Ivory Tower - Dialectic Wormhole</title>
         <style>
-             @font-face {
+            @font-face {
                 font-family: 'Syne';
                 src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
                     url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff') format('woff'),
@@ -38,19 +37,24 @@
             #nav { background: #333; padding: 10px 0; }
             #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
             .content { max-width: 800px; margin: auto; text-align: justify; }
-            #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+            #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
             #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
         </style>
 
         <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
         <script type="text/javascript" src="common.js"></script>
         <script>
-            load_components(["databanner"])
+            function getWeekNumber(d) {
+                d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+                var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+                var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                return weekNo;
+            }
 
-            function getQuoteOfTheWeek() {
-                const quotes = {
-                    en: [
-                        "Quote 1 in English",
+            function showWeeklyQuote() {
+                var quotesEn = [
+                   "Quote 1 in English",
 "Quote 2 in English",
 "Quote 3 in English",
 "Quote 4 in English",
@@ -102,10 +106,9 @@
 "Quote 50 in English",
 "Quote 51 in English",
 "Quote 52 in English"
-                    ],
-                    
-                    de: [
-                        "Zitat 1 auf Deutsch",
+                ];
+                var quotesDe = [
+                    "Zitat 1 auf Deutsch",
 "Zitat 2 auf Deutsch",
 "Zitat 3 auf Deutsch",
 "Zitat 4 auf Deutsch",
@@ -157,21 +160,19 @@
 "Zitat 50 auf Deutsch",
 "Zitat 51 auf Deutsch",
 "Zitat 52 auf Deutsch"
-                    ]
-                };
-                const currentDate = new Date();
-                const weekNumber = Math.floor(currentDate.getTime() / (1000 * 60 * 60 * 24 * 7)) % 52;
-                const lang = document.querySelector('html').lang || 'en';
-                return quotes[lang][weekNumber];
+                ];
+                
+                var weekNumber = getWeekNumber(new Date());
+                var quoteEn = quotesEn[weekNumber % quotesEn.length];
+                var quoteDe = quotesDe[weekNumber % quotesDe.length];
+                
+                document.getElementById("quoteEn").textContent = quoteEn;
+                document.getElementById("quoteDe").textContent = quoteDe;
             }
-
+            
             document.addEventListener("DOMContentLoaded", function() {
-                const quoteElementEn = document.querySelector("#quote-en");
-                const quoteElementDe = document.querySelector("#quote-de");
-                quoteElementEn.innerHTML = getQuoteOfTheWeek();
-                quoteElementDe.innerHTML = getQuoteOfTheWeek();
+                showWeeklyQuote();
             });
-
         </script>
     </head>
 
@@ -193,16 +194,16 @@
             <div class="content">
                 <p class="content" lang="en"><i>Fresh content, somehow regarding current affairs or so.</i><br/><br/></p>
                 <p class="content" lang="de"><i>Frische Inhalte, irgendwie mit Aktualitätsbezug oder so.</i><br/><br/></p>
-                
-                <p class="content" lang="en" id="quote-en"></p>
-                <p class="content" lang="de" id="quote-de"></p>
 
                 <p class="content" lang="en">This site is currently empty, since I'm working on the Nexus. Meanwhile, please consider going for a hike or playing some Minecraft.<br/><br/></p>
                 <p class="content" lang="de">Diese Seite ist derzeit leer, da ich gerade am Nexus arbeite. Denke doch über eine kleine Wanderung nach oder spiele ein bisschen Minecraft.<br/><br/></p>
+
+                <!-- Zitat der Woche -->
+                <p id="quoteEn" lang="en"></p>
+                <p id="quoteDe" lang="de"></p>
             </div>
         </div>
     </body>
 </html>
-
 
 
