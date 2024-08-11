@@ -39,12 +39,20 @@
         .content { max-width: 800px; margin: auto; text-align: justify; }
         #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
         #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
-
+  
+        @keyframes blinkEffect {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(0.9);
+            }
         /* Neu hinzugefügt, um die Schriftgröße der Zitate zu ändern */
         #quoteEn, #quoteDe {
-            font-size: 20px; /* Hier kannst du die Schriftgröße nach Wunsch anpassen */
-            line-height: 1.5;
-        }
+    font-size: 20px; /* Hier kannst du die Schriftgröße nach Wunsch anpassen */
+    line-height: 1.5;
+    animation: blinkEffect 2s infinite ease-in-out;
+}
     </style>
 
     <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
