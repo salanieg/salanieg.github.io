@@ -51,7 +51,7 @@
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
             var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            var weekNo = Math.ceil((((d - yearStart) / 86400000)) / 7);
             return weekNo;
         }
 
@@ -209,7 +209,7 @@
             <p class="content" lang="en"><i>Fresh content, somehow regarding current affairs or so.</i><br/><br/></p>
             <p class="content" lang="de"><i>Frische Inhalte, irgendwie mit Aktualitätsbezug oder so.</i><br/><br/></p>
 
-            <p class="content" lang="en"><b>Quote of the week:</b><br/><br/></p>
+            <p class="content" lang="en"><b>Quote of the week:</b><br/></p>
             <p class="content" lang="de"><b>Zitat der Woche:</b><br/><br/></p>
            
             <p id="quoteEn" lang="en"></p>
