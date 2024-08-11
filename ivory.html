@@ -39,31 +39,9 @@
         .content { max-width: 800px; margin: auto; text-align: justify; }
         #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
         #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
-
-        .quote-container {
-            position: relative;
-            display: inline-block;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .quote-container img {
-            display: block;
-            margin: 0 auto;
-        }
-
-        .quote-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 18px;
-            font-family: 'Geist', Arial, sans-serif;
-            width: 100%;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
+        #quoteEn, #quoteDe {
+            font-size: 20px; /* Hier kannst du die Schriftgröße nach Wunsch anpassen */
+            line-height: 1.5;
     </style>
 
     <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
@@ -79,7 +57,7 @@
 
         function showWeeklyQuote() {
             var quotesEn = [
-                 "Quote 1 in English",
+                "Quote 1 in English",
                 "Quote 2 in English",
                 "Quote 3 in English",
                 "Quote 4 in English",
@@ -233,12 +211,9 @@
 
             <p class="content" lang="en"><b>Quote of the week:</b><br/><br/></p>
             <p class="content" lang="de"><b>Zitat der Woche:</b><br/><br/></p>
-
-            <div class="quote-container">
-                <img src="images/quote.gif" alt="Hintergrundbild des Zitats der Woche" width="200" height="150">
-                <div id="quoteEn" class="quote-text" lang="en"></div>
-                <div id="quoteDe" class="quote-text" lang="de"></div>
-            </div>
+           
+            <p id="quoteEn" lang="en"></p>
+            <p id="quoteDe" lang="de"></p>
 
             <p class="content" lang="en"><b>11.08.2024</b><br>This site is currently not being extended, since I'm working on the Nexus. Meanwhile, please consider going for a hike or playing some Minecraft.<br/><br/></p>
             <p class="content" lang="de"><b>11.08.2024</b><br>Diese Seite wird derzeit nicht erweitert, da ich gerade am Nexus arbeite. Denke doch über eine kleine Wanderung nach oder spiele ein bisschen Minecraft.<br/><br/></p>
