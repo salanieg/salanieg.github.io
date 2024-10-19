@@ -6,88 +6,124 @@
     <title>Dennis Luca Münch</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Trebuchet MS', sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
             color: #333;
         }
         header {
-            background-color: #333;
+            background-color: #1f4b99; /* Delftblau */
             color: white;
-            padding: 20px;
+            padding: 30px 20px;
             text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         header h1 {
             margin: 0;
-            font-size: 2.5em;
+            font-size: 2.8em;
+            letter-spacing: 1px;
+        }
+        header p {
+            font-size: 1.2em;
+            margin-top: 10px;
         }
         main {
             max-width: 800px;
             margin: 40px auto;
             padding: 20px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
         h2 {
-            color: #333;
+            color: #1f4b99;
             font-size: 1.8em;
             margin-bottom: 10px;
         }
         p {
             line-height: 1.6;
             font-size: 1.1em;
+            color: #333;
+        }
+        ul {
+            padding-left: 20px;
+            list-style: square;
+        }
+        li {
+            margin-bottom: 10px;
         }
         .section {
-            margin-bottom: 30px;
-        }
-        footer {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
-            width: 100%;
-            bottom: 0;
+            margin-bottom: 40px;
         }
         a {
-            color: #0066cc;
+            color: #7154b8; /* Blasses Violett */
             text-decoration: none;
+            font-weight: bold;
         }
         a:hover {
             text-decoration: underline;
         }
         .button {
             display: inline-block;
-            background-color: #0066cc;
+            background-color: #7154b8;
             color: white;
             padding: 10px 20px;
             text-decoration: none;
             border-radius: 5px;
             font-size: 1.1em;
+            transition: background-color 0.3s ease;
         }
         .button:hover {
-            background-color: #004999;
+            background-color: #563da7;
+        }
+        footer {
+            background-color: #1f4b99;
+            color: white;
+            text-align: center;
+            padding: 5px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+            transition: bottom 0.5s ease;
+            font-size: 0.9em;
+        }
+        .footer-hidden {
+            bottom: -50px;
+        }
+        .language-selector {
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        .language-selector select {
+            padding: 3px;
+            background-color: white;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Dennis Luca Münch</h1>
-        <p>Kommunikationswissenschaftler, Philosoph & Kommunalpolitiker</p>
+        <h1 id="header-title">Dennis Luca Münch</h1>
+        <p id="header-subtitle">Kommunikationswissenschaftler, Philosoph & Kommunalpolitiker</p>
     </header>
 
     <main>
         <section class="section">
-            <h2>Über mich</h2>
-            <p>Hallo, mein Name ist Dennis Luca Münch. Ich bin Kommunikationswissenschaftler, Philosoph und Kommunalpolitiker in Neustadt an der Aisch. In meiner Arbeit konzentriere ich mich auf die Verbindung zwischen effektiver Kommunikation, ethischem Handeln und politischer Partizipation. In meiner Rolle als Kommunalpolitiker strebe ich danach, meine Heimatstadt durch nachhaltige und inklusive Entscheidungen zu stärken.</p>
+            <h2 id="about-title">Über mich</h2>
+            <p id="about-text">Hallo, mein Name ist Dennis Luca Münch. Ich bin Kommunikationswissenschaftler, Philosoph und Kommunalpolitiker in Neustadt an der Aisch. In meiner Arbeit konzentriere ich mich auf die Verbindung zwischen effektiver Kommunikation, ethischem Handeln und politischer Partizipation. In meiner Rolle als Kommunalpolitiker strebe ich danach, meine Heimatstadt durch nachhaltige und inklusive Entscheidungen zu stärken.</p>
         </section>
 
         <section class="section">
-            <h2>Lebenslauf</h2>
-            <p>Hier ist ein kurzer Überblick über meine bisherigen Stationen:</p>
-            <ul>
+            <h2 id="cv-title">Lebenslauf</h2>
+            <p id="cv-text">Hier ist ein kurzer Überblick über meine bisherigen Stationen:</p>
+            <ul id="cv-list">
                 <li><strong>Kommunikationswissenschaft:</strong> Studium der Kommunikationswissenschaften, spezialisiert auf Medienethik und politische Kommunikation.</li>
                 <li><strong>Philosophie:</strong> Schwerpunkt auf politischer Philosophie und Ethik.</li>
                 <li><strong>Kommunalpolitik:</strong> Seit mehreren Jahren als aktiver Politiker in der Lokalpolitik von Neustadt an der Aisch tätig, mit besonderem Fokus auf Nachhaltigkeit und Bürgerbeteiligung.</li>
@@ -95,15 +131,72 @@
         </section>
 
         <section class="section">
-            <h2>Blog</h2>
-            <p>In meinem Blog teile ich regelmäßig meine Gedanken zu aktuellen politischen Themen, ethischen Fragen und kommunikativen Herausforderungen in der modernen Gesellschaft. Besuche meinen Blog, um mehr zu erfahren!</p>
-            <a href="https://denmuen.ch/#welcome" class="button">Zum Blog</a>
+            <h2 id="blog-title">Blog</h2>
+            <p id="blog-text">In meinem Blog teile ich regelmäßig meine Gedanken zu aktuellen politischen Themen, ethischen Fragen und kommunikativen Herausforderungen in der modernen Gesellschaft. Besuche meinen Blog, um mehr zu erfahren!</p>
+            <a id="blog-button" href="https://deinbloglink.com" class="button">Zum Blog</a>
         </section>
     </main>
 
-    <footer>
-        <p>&copy; 2024 Dennis Luca Münch</p>
+    <footer id="footer">
+        <p id="footer-text">&copy; 2024 Dennis Luca Münch</p>
+        <div class="language-selector">
+            <label for="language-select">Sprache: </label>
+            <select id="language-select" onchange="changeLanguage()">
+                <option value="de">Deutsch</option>
+                <option value="en">English</option>
+            </select>
+        </div>
     </footer>
+
+    <script>
+        const footer = document.getElementById('footer');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 150) {
+                footer.classList.add('footer-hidden');
+            } else {
+                footer.classList.remove('footer-hidden');
+            }
+        });
+
+        function changeLanguage() {
+            const language = document.getElementById('language-select').value;
+
+            if (language === 'en') {
+                document.getElementById('header-title').textContent = "Dennis Luca Münch";
+                document.getElementById('header-subtitle').textContent = "Communication Scientist, Philosopher & Local Politician";
+                document.getElementById('about-title').textContent = "About Me";
+                document.getElementById('about-text').textContent = "Hello, my name is Dennis Luca Münch. I am a communication scientist, philosopher, and local politician in Neustadt an der Aisch. My work focuses on the intersection of effective communication, ethical action, and political participation. As a local politician, I strive to strengthen my hometown through sustainable and inclusive decision-making.";
+                document.getElementById('cv-title').textContent = "Resume";
+                document.getElementById('cv-text').textContent = "Here is a brief overview of my previous experiences:";
+                document.getElementById('cv-list').innerHTML = `
+                    <li><strong>Communication Science:</strong> Studied communication sciences with a focus on media ethics and political communication.</li>
+                    <li><strong>Philosophy:</strong> Focus on political philosophy and ethics.</li>
+                    <li><strong>Local Politics:</strong> Active in local politics in Neustadt an der Aisch for several years, with a focus on sustainability and citizen participation.</li>
+                `;
+                document.getElementById('blog-title').textContent = "Blog";
+                document.getElementById('blog-text').textContent = "In my blog, I regularly share my thoughts on current political issues, ethical questions, and communication challenges in modern society. Visit my blog to learn more!";
+                document.getElementById('blog-button').textContent = "Go to Blog";
+                document.getElementById('footer-text').textContent = "© 2024 Dennis Luca Münch";
+            } else {
+                document.getElementById('header-title').textContent = "Dennis Luca Münch";
+                document.getElementById('header-subtitle').textContent = "Kommunikationswissenschaftler, Philosoph & Kommunalpolitiker";
+                document.getElementById('about-title').textContent = "Über mich";
+                document.getElementById('about-text').textContent = "Hallo, mein Name ist Dennis Luca Münch. Ich bin Kommunikationswissenschaftler, Philosoph und Kommunalpolitiker in Neustadt an der Aisch. In meiner Arbeit konzentriere ich mich auf die Verbindung zwischen effektiver Kommunikation, ethischem Handeln und politischer Partizipation. In meiner Rolle als Kommunalpolitiker strebe ich danach, meine Heimatstadt durch nachhaltige und inklusive Entscheidungen zu stärken.";
+                document.getElementById('cv-title').textContent = "Lebenslauf";
+                document.getElementById('cv-text').textContent = "Hier ist ein kurzer Überblick über meine bisherigen Stationen:";
+                document.getElementById('cv-list').innerHTML = `
+                    <li><strong>Kommunikationswissenschaft:</strong> Studium der Kommunikationswissenschaften, spezialisiert auf Medienethik und politische Kommunikation.</li>
+                    <li><strong>Philosophie:</strong> Schwerpunkt auf politischer Philosophie und Ethik.</li>
+                    <li><strong>Kommunalpolitik:</strong> Seit mehreren Jahren als aktiver Politiker in der Lokalpolitik von Neustadt an der Aisch tätig, mit besonderem Fokus auf Nachhaltigkeit und Bürgerbeteiligung.</li>
+                `;
+                document.getElementById('blog-title').textContent = "Blog";
+                document.getElementById('blog-text').textContent = "In meinem Blog teile ich regelmäßig meine Gedanken zu aktuellen politischen Themen, ethischen Fragen und kommunikativen Herausforderungen in der modernen Gesellschaft. Besuche meinen Blog, um mehr zu erfahren!";
+                document.getElementById('blog-button').textContent = "Zum Blog";
+                document.getElementById('footer-text').textContent = "© 2024 Dennis Luca Münch";
+            }
+        }
+    </script>
 
 </body>
 </html>
