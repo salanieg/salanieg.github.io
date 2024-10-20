@@ -3,9 +3,9 @@
 
 /* @font-face {
     font-family: 'Syne';
-    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Regular.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Regular.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Regular.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Syne/Syne-Regular.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Regular.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -13,9 +13,9 @@
 
 @font-face {
     font-family: 'Syne';
-    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Medium.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Medium.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Medium.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Syne/Syne-Medium.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Medium.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Medium.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -23,9 +23,9 @@
 
 @font-face {
     font-family: 'Syne';
-    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-SemiBold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-SemiBold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-SemiBold.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Syne/Syne-SemiBold.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-SemiBold.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -33,9 +33,9 @@
 
 @font-face {
     font-family: 'Syne';
-    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Bold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Bold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Bold.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Syne/Syne-Bold.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Bold.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Bold.ttf') format('truetype');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -43,9 +43,9 @@
 
 @font-face {
     font-family: 'Syne';
-    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-ExtraBold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-ExtraBold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-ExtraBold.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Syne/Syne-ExtraBold.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-ExtraBold.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-ExtraBold.ttf') format('truetype');
     font-weight: 800;
     font-style: normal;
     font-display: swap;
@@ -53,9 +53,9 @@
 
 @font-face {
     font-family: 'Syne';
-    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Italic.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Syne/Syne-Italic.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Italic.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Italic.ttf') format('truetype');
     font-weight: 400;
     font-style: italic;
     font-display: swap;
@@ -63,9 +63,9 @@
 
 @font-face {
     font-family: 'Syne Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Mono.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Mono.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Syne/Syne-Mono.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Syne/Syne-Mono.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Mono.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Syne/Syne-Mono.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -81,9 +81,9 @@
 
 @font-face {
     font-family: 'Squatina';
-    src: url('https://www.dialecticwormhole.page/fonts/Squatina/Squatina-Regular.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Squatina/Squatina-Regular.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Squatina/Squatina-Regular.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Squatina/Squatina-Regular.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Squatina/Squatina-Regular.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Squatina/Squatina-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -101,9 +101,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Black.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Black.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Black.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-Black.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Black.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Black.ttf') format('truetype');
     font-weight: 800;
     font-style: normal;
     font-display: swap;
@@ -111,9 +111,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Bold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Bold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Bold.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-Bold.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Bold.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Bold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -121,9 +121,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Light.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-Light.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Light.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Light.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
     font-display: swap;
@@ -133,9 +133,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Medium.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Medium.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Medium.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-Medium.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Medium.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Medium.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -143,9 +143,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-UltraBlack.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-UltraBlack.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-UltraBlack.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-UltraBlack.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-UltraBlack.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-UltraBlack.ttf') format('truetype');
     font-weight: 900;
     font-style: normal;
     font-display: swap;
@@ -153,9 +153,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-UltraLight.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-UltraLight.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-UltraLight.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-UltraLight.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-UltraLight.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-UltraLight.ttf') format('truetype');
     font-weight: 200;
     font-style: normal;
     font-display: swap;
@@ -163,9 +163,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-SemiBold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-SemiBold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-SemiBold.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-SemiBold.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-SemiBold.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -173,9 +173,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Regular.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Regular.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Regular.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-Regular.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Regular.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Regular.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
     font-display: swap;
@@ -183,9 +183,9 @@
 
 @font-face {
     font-family: 'Geist';
-    src: url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Thin.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Thin.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/Geist/Geist-Thin.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/Geist/Geist-Thin.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Thin.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/Geist/Geist-Thin.ttf') format('truetype');
     font-weight: 100;
     font-style: normal;
     font-display: swap;
@@ -202,9 +202,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-UltraBlack.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-UltraBlack.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-UltraBlack.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-UltraBlack.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-UltraBlack.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-UltraBlack.ttf') format('truetype');
     font-weight: 900;
     font-style: normal;
     font-display: swap;
@@ -212,9 +212,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Thin.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Thin.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Thin.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Thin.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Thin.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Thin.ttf') format('truetype');
     font-weight: 100;
     font-style: normal;
     font-display: swap;
@@ -222,9 +222,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-SemiBold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-SemiBold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-SemiBold.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-SemiBold.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-SemiBold.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -232,9 +232,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Black.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Black.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Black.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Black.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Black.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Black.ttf') format('truetype');
     font-weight: 800;
     font-style: normal;
     font-display: swap;
@@ -242,9 +242,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Medium.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Medium.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Medium.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Medium.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Medium.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Medium.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -252,9 +252,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Bold.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Bold.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Bold.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Bold.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Bold.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Bold.ttf') format('truetype');
     font-weight: bold;
     font-style: normal;
     font-display: swap;
@@ -262,9 +262,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-UltraLight.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-UltraLight.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-UltraLight.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-UltraLight.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-UltraLight.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-UltraLight.ttf') format('truetype');
     font-weight: 200;
     font-style: normal;
     font-display: swap;
@@ -272,9 +272,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Light.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Light.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Light.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Light.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Light.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Light.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
     font-display: swap;
@@ -282,9 +282,9 @@
 
 @font-face {
     font-family: 'Geist Mono';
-    src: url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Regular.woff2') format('woff2'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Regular.woff') format('woff'),
-        url('https://www.dialecticwormhole.page/fonts/GeistMono/GeistMono-Regular.ttf') format('truetype');
+    src: url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Regular.woff2') format('woff2'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Regular.woff') format('woff'),
+        url('https://www.denmuench.ch/fonts/GeistMono/GeistMono-Regular.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
     font-display: swap;
