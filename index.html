@@ -3,198 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Dennis Luca Münch - Geisteswissenschaftler, Stadtrat und Philosoph">
-    <title>Dennis Luca Münch | Geisteswissenschaftler</title>
+    <title>Dennis Luca Münch – Geisteswissenschaftler</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            background-color: #f5f5f5;
             color: #333;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
         header {
-            background-color: #333;
-            color: #fff;
+            text-align: center;
             padding: 20px;
-            text-align: center;
-            border-bottom: 5px solid #999;
+            background-color: #333;
         }
-        h1 {
-            margin: 0;
-            font-size: 2.5rem;
-        }
-        nav {
-            margin: 20px 0;
-            text-align: center;
-        }
-        nav a {
-            text-decoration: none;
-            margin: 0 15px;
-            color: #333;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-bottom: 3px solid transparent;
-        }
-        nav a:hover {
-            border-bottom: 3px solid #999;
+        header img {
+            max-width: 100%;
+            height: auto;
         }
         section {
-            margin: 40px 0;
-            padding: 20px;
-            background-color: #fff;
-            border: 2px solid #333;
+            padding: 40px;
+            max-width: 1200px;
+            margin: auto;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        h1 {
+            font-size: 36px;
         }
         h2 {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #999;
-            padding-bottom: 5px;
+            font-size: 28px;
         }
-        .contact-form {
-            max-width: 600px;
-            margin: 0 auto;
+        p {
+            font-size: 18px;
         }
-        .contact-form label {
-            display: block;
-            margin-bottom: 10px;
+        a {
+            color: #AF6FAB;
+            text-decoration: none;
         }
-        .contact-form input,
-        .contact-form textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 2px solid #333;
-            border-radius: 5px;
-        }
-        .contact-form button {
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .contact-form button:hover {
-            background-color: #555;
+        a:hover {
+            text-decoration: underline;
         }
         footer {
             text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #999;
-        }
-        .lang-switch {
-            float: right;
-        }
-        .lang-switch button {
-            background: #333;
+            padding: 20px;
+            background-color: #333;
             color: white;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            margin-left: 10px;
         }
-        .lang-switch button:hover {
-            background: #555;
+        footer a {
+            color: white;
+        }
+        .contact-buttons {
+            margin-top: 20px;
+        }
+        .contact-buttons button {
+            background-color: #333;
+            color: white;
+            border: 2px solid #AF6FAB;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .language-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .language-switch button {
+            background-color: transparent;
+            color: #AF6FAB;
+            border: 2px solid #AF6FAB;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        @media (max-width: 768px) {
+            section {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
+
+    <div class="language-switch">
+        <button onclick="switchLanguage()">DE/EN</button>
+    </div>
+
     <header>
-        <div class="lang-switch">
-            <button onclick="setLanguage('de')">Deutsch</button>
-            <button onclick="setLanguage('en')">English</button>
-        </div>
-        <h1>Dennis Luca Münch</h1>
-        <p>Geisteswissenschaftler | Stadtrat | Philosoph</p>
+        <img src="images/dmheader.png" alt="Header: Dennis Luca Münch">
     </header>
 
-    <nav>
-        <a href="#about">Über mich</a>
-        <a href="#research">Forschungsinteressen</a>
-        <a href="#cv">Lebenslauf</a>
-        <a href="#blog">Blog</a>
-        <a href="#contact">Kontakt</a>
-    </nav>
-
-    <section id="about">
-        <h2>Über mich</h2>
-        <p>Ich bin Dennis Luca Münch, ein generalistischer Geisteswissenschaftler mit den Schwerpunkten Kommunikationswissenschaft und praktische Philosophie. Aktuell bin ich Stadtratsmitglied in Neustadt an der Aisch und parteilos. Mein Anliegen ist es, gesellschaftliche und philosophische Fragen praxisnah zu erforschen und für die Öffentlichkeit zugänglich zu machen.</p>
-    </section>
-
-    <section id="research">
+    <section id="content-de">
+        <h1>Dennis Luca Münch</h1>
+        <h2>Geisteswissenschaftler | Politiker</h2>
+        <p>
+            Willkommen auf meiner persönlichen Webseite. Ich bin Dennis Luca Münch, ein generalistischer Geisteswissenschaftler mit Schwerpunkten in der Kommunikationswissenschaft und praktischer Philosophie. 
+            Derzeit bin ich parteiloses Mitglied im Stadtrat von Neustadt an der Aisch.
+        </p>
         <h2>Forschungsinteressen</h2>
-        <p>Meine wissenschaftlichen Interessen umfassen Kommunikationsprozesse in der modernen Gesellschaft sowie ethische Fragestellungen der angewandten Philosophie. Ich untersuche, wie wir miteinander in einer digitalen Welt interagieren und welche normativen Konsequenzen sich daraus ergeben.</p>
-    </section>
-
-    <section id="cv">
+        <p>
+            Meine Interessen umfassen die Interaktionen zwischen Medien, Gesellschaft und Philosophie, insbesondere in Bezug auf Kommunikationstheorien und ethische Fragen im digitalen Zeitalter.
+        </p>
         <h2>Lebenslauf</h2>
-        <p>Eine ausführliche Version meines Lebenslaufs ist auf Anfrage verfügbar. Hier sind einige Highlights:</p>
-        <ul>
-            <li>Stadtratsmitglied in Neustadt an der Aisch (seit 2020)</li>
-            <li>M.A. in Kommunikationswissenschaft und Philosophie</li>
-            <li>Verschiedene wissenschaftliche Publikationen zu Kommunikation und Ethik</li>
-        </ul>
-    </section>
-
-    <section id="blog">
+        <p>
+            Um mehr über meinen akademischen und beruflichen Werdegang zu erfahren, besuchen Sie bitte meinen <a href="#">Lebenslauf</a>.
+        </p>
         <h2>Blog</h2>
-        <p>Hier findest du bald Links zu meinen neuesten Beiträgen. Stay tuned!</p>
+        <p>
+            Ich schreibe regelmäßig über Themen aus den Bereichen Philosophie, Gesellschaft und Technologie. Schauen Sie sich meinen <a href="#">Blog</a> an.
+        </p>
+
+        <div class="contact-buttons">
+            <button onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button>
+        </div>
     </section>
 
-    <section id="contact">
-        <h2>Kontakt</h2>
-        <form class="contact-form" method="POST" action="/send_mail.php" onsubmit="return validateForm()">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
+    <section id="content-en" style="display:none;">
+        <h1>Dennis Luca Münch</h1>
+        <h2>Humanities | Politics</h2>
+        <p>
+            Welcome to my personal website. I am Dennis Luca Münch, a generalist humanities scholar specializing in communication studies and practical philosophy. I am currently a non-partisan member of the Neustadt an der Aisch city council.
+        </p>
+        <h2>Research Interests</h2>
+        <p>
+            My interests include the interactions between media, society, and philosophy, with a focus on communication theories and ethical issues in the digital age.
+        </p>
+        <h2>Resume</h2>
+        <p>
+            To learn more about my academic and professional background, please visit my <a href="#">Resume</a>.
+        </p>
+        <h2>Blog</h2>
+        <p>
+            I regularly write about topics in philosophy, society, and technology. Check out my <a href="#">Blog</a>.
+        </p>
 
-            <label for="email">E-Mail:</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="message">Nachricht:</label>
-            <textarea id="message" name="message" rows="5" required></textarea>
-
-            <button type="submit">Nachricht senden</button>
-        </form>
+        <div class="contact-buttons">
+            <button onclick="location.href='mailto:den.muench@gmail.com'">Send Email</button>
+        </div>
     </section>
 
     <footer>
-        <p>&copy; 2024 Dennis Luca Münch</p>
+        <p>© 2024 Dennis Luca Münch</p>
+        <p><a href="#">Datenschutzerklärung</a> | <a href="#">Impressum</a></p>
     </footer>
 
     <script>
-        function validateForm() {
-            var name = document.getElementById("name").value;
-            var email = document.getElementById("email").value;
-            var message = document.getElementById("message").value;
-            if (name === "" || email === "" || message === "") {
-                alert("Alle Felder müssen ausgefüllt werden!");
-                return false;
-            }
-            return true;
-        }
+        function switchLanguage() {
+            var deContent = document.getElementById("content-de");
+            var enContent = document.getElementById("content-en");
 
-        function setLanguage(lang) {
-            if (lang === 'en') {
-                document.querySelector('h1').textContent = "Dennis Luca Münch";
-                document.querySelector('p').textContent = "Humanities Scholar | City Councilman | Philosopher";
-                document.querySelector('#about h2').textContent = "About Me";
-                document.querySelector('#research h2').textContent = "Research Interests";
-                document.querySelector('#cv h2').textContent = "Curriculum Vitae";
-                document.querySelector('#blog h2').textContent = "Blog";
-                document.querySelector('#contact h2').textContent = "Contact";
-                document.querySelector('#about p').textContent = "I am Dennis Luca Münch, a generalist humanities scholar with a focus on communication studies and practical philosophy. Currently, I serve as a non-partisan member of the Neustadt an der Aisch city council. My aim is to make academic and philosophical inquiries accessible to the public.";
-                document.querySelector('#research p').textContent = "My research interests include communication processes in modern society and ethical questions in applied philosophy. I study how we interact in a digital world and the normative consequences of this interaction.";
-                document.querySelector('#cv p').textContent = "A full version of my CV is available upon request. Here are some highlights:";
-                document.querySelector('#cv ul').innerHTML = "<li>City Council Member in Neustadt an der Aisch (since 2020)</li><li>M.A. in Communication Studies and Philosophy</li><li>Various scholarly publications on communication and ethics</li>";
-                document.querySelector('#blog p').textContent = "Here you'll soon find links to my latest posts. Stay tuned!";
-                document.querySelector('#contact button').textContent = "Send Message";
-                document.querySelector('#contact form').action = "/send_mail.php";
+            if (deContent.style.display === "none") {
+                deContent.style.display = "block";
+                enContent.style.display = "none";
             } else {
-                location.reload();
+                deContent.style.display = "none";
+                enContent.style.display = "block";
             }
         }
     </script>
+
 </body>
 </html>
+
