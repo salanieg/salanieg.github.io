@@ -11,17 +11,46 @@
 
         <style>
 
+            #header-text {
+                position: absolute;
+                top:0px;
+                padding: 10px;
+                padding-top: 40px;
+            }
+
+            #header-img {
+                max-width: 1000px;
+                max-height: fit-content;
+                object-fit: cover;
+                margin: 100px;
+            }
+
+            @media (max-width: 1000px) {
+
+                #header-img {                    
+                    margin: 0px;
+                    margin-top: -50px;
+                }
+
+                #header-text {
+                    padding-top: 20px;
+                }
+            }
+
 
         </style>
     </head>
     <body>
 
-        <div class="language-switch">
+        <!-- <div class="language-switch">
             <button onclick="switchLanguage()">DE/EN</button>
-        </div>
+        </div> -->
 
         <header>
-            <img src="images/dmpic.webp" alt="Header: Dennis Luca Münch">
+            <div id="header-text" >
+                <img src="images/dmheader.png" alt="Header: Dennis Luca Münch">
+            </div>
+            <img id="header-img" src="images/dmpic.jpg" alt="Header: Dennis Luca Münch">
         </header>
 
         <section id="content-de">
@@ -84,29 +113,6 @@
             </div>
     <div class="contact-buttons">
                 <button onclick="location.href='https://rathaus.neustadt-aisch.de/adresse/de/cns9a46b942c66d/5868/-/Dennis_Muench.html'">Stadtbezogenes Anliegen mitteilen</button>
-            </div>
-        </section>
-
-        <section id="content-en" style="display:none;">
-            <h1>Humanities | Politics</h1>
-            <p>
-                Welcome to my personal website. I am Dennis Luca Münch, a generalist humanities scholar specializing in communication studies and practical philosophy. I am currently a non-partisan member of the Neustadt an der Aisch city council.
-            </p>
-            <h2>Research Interests</h2>
-            <p>
-                My interests include the interactions between media, society, and philosophy, with a focus on communication theories and ethical issues in the digital age.
-            </p>
-            <h2>Resume</h2>
-            <p>
-                To learn more about my academic and professional background, please visit my <a href="#">Resume</a>.
-            </p>
-            <h2>Blog</h2>
-            <p>
-                I regularly write about topics in philosophy, society, and technology. Check out my <a href="#">Blog</a>.
-            </p>
-
-            <div class="contact-buttons">
-                <button onclick="location.href='mailto:den.muench@gmail.com'">Send Email</button>
             </div>
         </section>
 

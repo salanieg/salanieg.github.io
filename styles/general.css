@@ -1,3 +1,8 @@
+html {
+	box-sizing: border-box;
+}
+
+
 body {
 	font-family: "Geist", sans-serif;
 	background-color: #888888;
@@ -8,8 +13,12 @@ body {
 
 header {
 	text-align: center;
-	padding: 20px;
+	margin: 0;
+	padding: 0;
 	background-color: #333;
+	display: flex;
+	align-items: end;
+	justify-content: center;
 }
 
 header img {
