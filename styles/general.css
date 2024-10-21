@@ -154,6 +154,7 @@ blogheader img {
     padding-left: 100%;
     animation: marquee 20s linear infinite;
     color: rgb(255, 141, 75);
+	font-family: Pixel;
     font-weight: bold;
 }
 
