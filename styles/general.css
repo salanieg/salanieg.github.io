@@ -12,16 +12,21 @@ body {
 }
 
 header {
-	text-align: center;
-	margin: 0;
-	padding: 0;
-	background-image: url('images/dmback.webp');
-	background-size: cover; /* Passt das Bild an, sodass es den gesamten Header ausfüllt */
-	background-position: center; /* Zentriert das Bild */
-	display: flex;
-	align-items: end;
-	justify-content: center;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    background-image: url('dmback.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: end;
+    justify-content: center;
 }
+
+
+
+
 
 header img {
 	max-width: 100%;
