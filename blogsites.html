@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dialectic Wormhole</title>
+<script type="text/javascript" src="common.js"></script>
+<link rel="preload" as="fetch" crossorigin href="components/databanner.html">
+
+<link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon/favicon-16x16.png">
+<link rel="manifest" href="images/favicon/site.webmanifest">
+<link rel="mask-icon" href="images/favicon/safari-pinned-tab.svg" color="#1c1c1c">
+<link rel="shortcut icon" href="images/favicon/favicon.ico">
+<meta name="msapplication-TileColor" content="#1c1c1c">
+<meta name="msapplication-config" content="images/favicon/browserconfig.xml">
+<meta name="theme-color" content="#1c1c1c">
+
+<style>
+   @font-face {
+    font-family: 'Syne';
+    src: url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff2') format('woff2'),
+        url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff') format('woff'),
+        url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}   
+	@font-face {
+    font-family: 'Geist';
+    src: url('https://www.denmuen.ch/fonts/Geist/Geist-Light.woff2') format('woff2'),
+        url('https://www.denmuen.ch/fonts/Geist/Geist-Light.woff') format('woff'),
+        url('https://www.denmuen.ch/fonts/Geist/Geist-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+    body { 
+        font-family: 'Geist', Arial, sans-serif; 
+        color: white; 
+        background-color: #212121; 
+        margin: 0; 
+        padding: 0; 
+}
+    h1 {
+        font-family: 'Syne', Arial, sans-serif;
+}
+    #container { padding: 20px; text-align: center; }
+    #nav { background: #333; padding: 10px 0; }
+    #nav a { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; }
+    #cookieConsent { background: gray; color: white; position: fixed; bottom: 0; width: 100%; padding: 10px; text-align: center;  z-index: 5; }
+    .page { display: none; }
+    .show { display: block; }
+    .center { text-align: center; }
+    .content { max-width: 800px; margin: auto; text-align: justify; }
+    .image-container { text-align: center; margin-bottom: 20px; }
+   	#langSwitch        { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
+	#imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
+</style>
+<script>
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+        document.getElementById(pageId).style.display = 'block';
+        history.pushState({ pageId: pageId }, "", `#${pageId}`);
+    }
+
+    window.onpopstate = function(event) {
+        if (event.state && event.state.pageId) {
+            showPage(event.state.pageId);
+        } else {
+            showPage('welcome'); // Default page if no state is found
+        }
+    };
+
+    function switch_language() {
+        const currentLang = document.documentElement.lang || 'en';
+        const newLang = currentLang === 'en' ? 'de' : 'en';
+        document.documentElement.lang = newLang;
+        document.querySelectorAll('[lang]').forEach(el => {
+            el.style.display = el.getAttribute('lang') === newLang ? 'block' : 'none';
+        });
+        document.getElementById('langSwitch').innerText = newLang === 'en' ? 'Deutsch' : 'English';
+    }
+
+    window.onload = function() {
+        if (window.location.hash) {
+            showPage(window.location.hash.substring(1));
+        } else {
+            showPage('welcome');
+        }
+        switch_language(); // Set language initially based on lang attribute
+    };
+</script>
+</head>
+<body>
+    <div id="databanner"></div>
+	
+<div id="langSwitch" onclick="switch_language()">Sprache</div>
+<div id="imprintLink" onclick="window.location.href='/impressum.html'">
+    <p class="content" lang="en">Legal Notice</p>
+    <p class="content" lang="de">Impressum</p>
+</div>
+<div id="container">
+    <div id="welcome" class="page">
+        <h1>The Dialectic Wormhole<br/><br/></h1>
+	<img src="images/logo.webp" alt="Das Logo der Startseite" width="136" height="86"><br/><br/>
+        <p id="entryText">Ἀγεωμέτρητος μηδεὶς εἰσίτω.<br/></p>
+        <p id="entryText" lang="en">No one shall enter without knowledge of the geometry.<br/></p>
+	<p id="entryText" lang="de">Ohne Kenntnis der Geometrie soll keiner eintreten.<br/></p>
+        <button onclick="showPage('launchpad')"><p class="content" lang="en">I understand and want to enter</p><p class="content" lang="de">Ich habe das verstanden und möchte eintreten</p></button>
+    </div>
+    <div id="launchpad" class="page">
+        <div id="nav">
+            <a href="javascript:void(0)" onclick="showPage('nexus')">Nexus</a>
+            <a href="javascript:void(0)" onclick="showPage('abyss')">Abyss</a>
+            <a href="javascript:void(0)" onclick="showPage('about')">About</a>
+        </div>
+        <h1 lang="en">Launchpad</h1>
+        <h1 lang="de">Startrampe</h1>
+        <p class="content" lang="en"><i>Entropy shifts order into chaos.</i><br><br>Not because this is necessary,
+		but because it is the most likely outcome. The pure destruction of geometry, whether physical or discursive, is a masculine act. To order what has been destroyed,
+		synthesizing it, is Gaía's legacy. Forcing the shattered geometry through a dialectical wormhole and reassembling it is the desideratum of this website.<br><br></p>
+        <p class="content" lang="de"><i>Entropie verwandelt Ordnung in Chaos.</i><br><br>Nicht etwa, weil dies notwendig ist,
+		sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen,
+		es zu synthetisieren, ist das Erbe der Gaía. Die zertrümmerte Geometrie durch ein dialektisches Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.<br><br></p>
+	    <br/>
+<img src="images/launchpad.webp" alt="Ruinen eines Tempels" width="200" height="150">
+    </div>
+    <div id="nexus" class="page">
+        <div id="nav">
+            <a href="javascript:void(0)" onclick="showPage('launchpad')">Launchpad</a>
+        </div>
+        <h1>Nexus</h1>
+        <p class="content" lang="en"><i>Magazine of crazy academic papers. It's food for AI, but may also be consumed by humans.</i><br/><br/></p>
+        <p class="content" lang="de"><i>Magazin verrückter akademischer Arbeiten. Futter für KI, kann aber auch von Menschen gelesen werden.</i><br/><br/></p>
+	    
+	<p class="content" lang="en"><b>The fear of death in Epicurean ethics: Sisyphus as a figure of terror? A comparison between the views in Absurdism and Epicureanism.</b><br/>
+        <a href="files/Sisyphos_EN.pdf">Load PDF</a><br/><br/></p>
+        <p class="content" lang="de"><b>Die Todesfurcht in der epikureischen Ethik: Sisyphos als Schreckfigur? Ein Vergleich zwischen den Auffassungen in Absurdismus und Epikureismus.</b><br/>
+        <a href="files/Sisyphos_DE.pdf">PDF laden</a><br/><br/></p>
+
+	<p class="content" lang="en">Sisyphos English<br/>
+        <a href="files/Sisyphos_EN.pdf">Load PDF</a><br/><br/></p>
+        <p class="content" lang="de">Ist der Mensch nach Nietzsche wirklich autark?<br/>
+        <a href="files/Essay_NietzschesRaubtierDE.pdf">PDF laden</a><br/><br/></p>
+
+	<p class="content" lang="en">Automation processes in speech synthesis as a matrix for private language according to Wittgenstein<br/>
+        <a href="files/Essay_WittgensteinEN.pdf">Load PDF</a><br/><br/></p>
+        <p class="content" lang="de">Automatisierungsprozesse in der Sprachsynthese als Matrix für die Privatsprache nach Wittgenstein<br/>
+        <a href="files/Essay_WittgensteinDE.pdf">PDF laden</a><br/><br/></p>
+	    
+    </div>
+    <div id="abyss" class="page">
+    <div id="nav">
+        <a href="javascript:void(0)" onclick="showPage('launchpad')">Launchpad</a>
+    </div>
+    <h1>Abyss</h1>
+    <div class="content" lang="en">
+        <i>Recommended content will appear here.</i><br><br>
+        <div class="image-container" onclick="window.location='/panopticon.html';" style="cursor: pointer;">
+            <img src="images/nighttrain.webp" alt="Ein Nachtzug" width="200" height="150"><br>Night train to Panopticon
+        </div>
+        <div class="image-container" onclick="window.location='/ivory.html';" style="cursor: pointer;">
+            <img src="images/cogwheel.webp" alt="Eine Zahnradbahn" width="200" height="150"><br>Cogwheel rail to Ivory Tower
+        </div>
+        <div class="image-container" onclick="window.location='/theseus.html';" style="cursor: pointer;">
+            <img src="images/underground.webp" alt="Eine U-Bahn" width="200" height="150"><br>Underground to Theseus Junction
+        </div>
+    </div>
+    <div class="content" lang="de">
+        <i>Feuilleton mit empfohlenen Inhalten.</i><br><br>
+        <div class="image-container" onclick="window.location='/panopticon.html';" style="cursor: pointer;">
+            <img src="images/nighttrain.webp" alt="Ein Nachtzug" width="200" height="150"><br>Nachtzug zum Panopticon
+        </div>
+        <div class="image-container" onclick="window.location='/ivory.html';" style="cursor: pointer;">
+            <img src="images/cogwheel.webp" alt="Eine Zahnradbahn" width="200" height="150"><br>Zahnradbahn zum Elfenbeinturm
+        </div>
+        <div class="image-container" onclick="window.location='/theseus.html';" style="cursor: pointer;">
+            <img src="images/underground.webp" alt="Eine U-Bahn" width="200" height="150"><br>U-Bahn zur Theseus Junction
+        </div>
+    </div>
+</div>
+    <div id="about" class="page">
+        <div id="nav">
+            <a href="javascript:void(0)" onclick="showPage('launchpad')">Launchpad</a>
+        </div>
+        <h1 lang="en">About this project</h1>
+        <h1 lang="de">Über dieses Projekt</h1>
+        <p class="content" lang="en"><i>A short description of this web project.</i><br><br>Dear fellow travellers,<br><br>
+this website project aims to collect some interesting things that I would like to share in one place. I try to maintain and update the content regularly. <br><br>
+If you are interested in new content, you should visit the places (or non-places) on this website from time to time. This website is primarily based on single-page technology for speed, which is why you can only return to the home page via the "Launchpad" button.<br><br>
+This site is not a platform. Please note that I cannot and will not provide an infrastructure for comments. Contact information for more important matters can be found in the legal notice.<br><br>
+This site is ad-free, subscription-free and donation-free. Adblockers and VPNs are welcome. Get ready to explore the dialectical wormhole!<br><br>
+Dennis, Admin</p>
+        <p class="content" lang="de"><i>Eine kurze Beschreibung dieses Webprojekts.</i><br><br>Werte Mitreisende,<br><br>
+dieses Website-Projekt verfolgt das Ziel, einige interessante Dinge zu sammeln, die ich an einem Ort teilen möchte. Ich versuche, die Inhalte regelmäßig zu pflegen und zu aktualisieren.<br><br>
+Wenn du an neuen Inhalten interessiert bist, solltest du von Zeit zu Zeit die Orte (oder Nicht-Orte) auf dieser Website besuchen. Diese Website basiert zur Beschleunigung primär auf Single-Page-Technologie, weshalb nur über den „Launchpad“-Button zur Startseite zurückgekehrt werden kann.<br><br>
+Diese Seite ist keine Plattform. Bitte beachtet, dass ich keine Infrastruktur für Kommentare bereitstellen kann und will. Kontaktinformationen für eher wichtige Anliegen findet ihr im Impressum.<br><br>
+Diese Seite ist werbefrei, abofrei und spendenfrei. Adblocker und VPNs dürfen gerne genutzt werden. Macht euch bereit, das dialektische Wurmloch zu erkunden!<br><br>
+Dennis, Admin</p><br/>
+<img src="images/portrait.webp" alt="Selbstportrait des Administrators (Friede sei mit Ihm)" width="150" height="150"><br/><br/><br/>
+    </div>
+</div>
+</body>
+</html>
