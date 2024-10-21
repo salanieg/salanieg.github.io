@@ -138,12 +138,8 @@ footer a {
     text-align: center;
 }
 
-/* Header */
-blogheader img {
-    width: 100%;
-    max-width: 800px;
-    margin-bottom: 20px;
-}
+
+
 
 /* Fahrender Schriftzug */
 .marquee {
