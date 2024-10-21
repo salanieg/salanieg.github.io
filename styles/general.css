@@ -110,3 +110,103 @@ footer a {
 		padding: 20px;
 	}
 }
+/* Allgemeine Stile */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+/* Hintergrundbild */
+.background {
+    background-image: url('kenoback.webp');
+    background-size: cover;
+    background-position: center;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Header */
+blogheader img {
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 20px;
+}
+
+/* Fahrender Schriftzug */
+.marquee {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-bottom: 20px;
+}
+
+.marquee p {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marquee 20s linear infinite;
+    color: rgb(255, 141, 75);
+    font-weight: bold;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+/* Blindtext */
+.intro-text {
+    max-width: 600px;
+    margin: 20px auto;
+    line-height: 1.5;
+    font-size: 1.2em;
+}
+
+/* Schaltflächenbereich */
+.button-section {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.button-container img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.button-container img:hover {
+    transform: scale(1.1);
+}
+
+.button-text h2 {
+    margin-top: 10px;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.button-text p {
+    font-size: 1em;
+    margin-top: 5px;
+}
