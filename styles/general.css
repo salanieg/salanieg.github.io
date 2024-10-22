@@ -15,7 +15,7 @@ header {
     text-align: center;
     margin: 0;
     padding: 0;
-    background-image: url('dmback.webp');
+    background-image: url('../images/dmback.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -128,7 +128,7 @@ footer a {
 
 /* Hintergrundbild */
 .background {
-    background-image: url('kenoback.webp');
+    background-image: url('../images/kenoback.webp');
     background-size: cover;
     background-position: center;
     height: 100%;
