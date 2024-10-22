@@ -7,67 +7,129 @@
     <link rel="stylesheet" href="styles/fonts.css">
     <link rel="stylesheet" href="styles/general.css">
     <script type="text/javascript" src="common.js"></script>
+    <style>
+
+        body {
+            color: rgb(255, 255, 255);
+            background-image: url('../images/kenoback.webp');
+            background-size: cover;
+
+
+            display: grid;
+            grid-template-columns: 100vw 50px;
+            grid-template-rows: 1fr auto;
+            grid-template-areas: 
+            "content"
+            "footer";
+            justify-content: center;
+        }
+
+        footer {
+            grid-area: footer;
+        }
+
+        main {
+            grid-area: content;
+        }
+
+        h1 {
+            text-align: center;
+        }
+        
+
+        /* Fahrender Schriftzug */
+        .marquee {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            margin-bottom: 0px;
+            margin-top: 0px;
+        }
+
+        .marquee p {
+            display: inline-block;
+            /* Padding entfernt, um den Abstand zu reduzieren */
+            animation: marquee 20s linear infinite;
+            color: rgb(209, 212, 47);
+            font-family: Pixel;
+            font-weight: bold;
+            font-size: 40px;
+            letter-spacing: 2px;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(110%); } /* Start außerhalb des Sichtbereichs rechts */
+            100% { transform: translateX(-160%); } /* Endet außerhalb des Sichtbereichs links */
+        }
+
+        #blogheader {
+            display: block;
+            margin-bottom: 50px;
+            margin-top: 5vw;
+            width: 100%;
+            max-width: 1300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+    </style>
 </head>
-<body class="keno">
-    <!-- Hintergrundbild -->
-    <div class="background">
+<body>
+    <!-- Hauptinhalt -->
+    <main>
+
+        
         <!-- Header mit Bild -->
-        <blogheader>
-            <img src="images/blogheader.png" alt="Blog Header">
-        </blogheader>
 
-        <!-- Hauptinhalt -->
-        <main>
-            <!-- Titel -->
-            <h1 style="margin-bottom: 1px;">THESEUS JUNCTION</h1>
+        <img id="blogheader" src="images/blogheader.png" alt="Blog Header">
+        <!-- Titel -->
+        <h1>THESEUS JUNCTION</h1>
 
-            <!-- Fahrender Schriftzug -->
-            <div class="marquee">
-                <p>+++FAHRGASTINFORMATION: DIE HALTESTELLEN *ELFENBEINTURM*, *ABYSS* UND *LONG DISTANCE TERMINAL* WERDEN DERZEIT NICHT BEDIENT! WIR BITTEN UM IHR VERSTÄNDNIS!+++</p>
+        <!-- Fahrender Schriftzug -->
+        <div class="marquee">
+            <p>+++FAHRGASTINFORMATION: DIE HALTESTELLEN *ELFENBEINTURM*, *ABYSS* UND *LONG DISTANCE TERMINAL* WERDEN DERZEIT NICHT BEDIENT! WIR BITTEN UM IHR VERSTÄNDNIS!+++</p>
+        </div>
+
+        <!-- Blindtext -->
+        <p class="intro-text">
+            Entropie verwandelt Ordnung in Chaos. Nicht etwa, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe der Gaía. Die zertrümmerte Geometrie durch ein Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.
+        </p>
+
+        <!-- Schaltflächen -->
+        <div class="button-section">
+            <div class="button-container">
+                <a href="https://www.elfenbeinturm.placeholder">
+                    <img src="images/cogwheel.webp" alt="Elfenbeinturm">
+                    <div class="button-text">
+                        <h2>ELFENBEINTURM</h2>
+                        <p>Portfolio wissenschaftlicher Arbeiten</p>
+                    </div>
+                </a>
             </div>
-
-            <!-- Blindtext -->
-            <p class="intro-text">
-                
-
-                Entropie verwandelt Ordnung in Chaos. Nicht etwa, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe der Gaía. Die zertrümmerte Geometrie durch ein Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.
-            </p>
-
-            <!-- Schaltflächen -->
-            <div class="button-section">
-                <div class="button-container">
-                    <a href="https://www.elfenbeinturm.placeholder">
-                        <img src="images/cogwheel.webp" alt="Elfenbeinturm">
-                        <div class="button-text">
-                            <h2>ELFENBEINTURM</h2>
-                            <p>Portfolio wissenschaftlicher Arbeiten</p>
-                        </div>
-                    </a>
-                </div>
-                <div class="button-container">
-                    <a href="https://www.abyss.placeholder">
-                        <img src="images/underground.webp" alt="Abyss">
-                        <div class="button-text">
-                            <h2>ABYSS</h2>
-                            <p>Feuilleton</p>
-                        </div>
-                    </a>
-                </div>
-                <div class="button-container">
-                    <a href="https://www.longdistance.placeholder">
-                        <img src="images/nighttrain.webp" alt="Long Distance">
-                        <div class="button-text">
-                            <h2>LONG DISTANCE</h2>
-                            <p>Weitere empfehlenswerte Inhalte</p>
-                        </div>
-                    </a>
-                </div>
+            <div class="button-container">
+                <a href="https://www.abyss.placeholder">
+                    <img src="images/underground.webp" alt="Abyss">
+                    <div class="button-text">
+                        <h2>ABYSS</h2>
+                        <p>Feuilleton</p>
+                    </div>
+                </a>
             </div>
-            <footer>
-                <p>© 2024 Dennis Luca Münch</p>
-                <a href="impressum.html">Impressum</a></p>
-            </footer>
-        </main>
-    </div>
+            <div class="button-container">
+                <a href="https://www.longdistance.placeholder">
+                    <img src="images/nighttrain.webp" alt="Long Distance">
+                    <div class="button-text">
+                        <h2>LONG DISTANCE</h2>
+                        <p>Weitere empfehlenswerte Inhalte</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2024 Dennis Luca Münch</p>
+        <a href="impressum.html">Impressum</a></p>
+    </footer>
 </body>
 </html>

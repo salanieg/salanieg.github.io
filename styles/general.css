@@ -1,3 +1,5 @@
+* {max-width: 100%;}
+
 html {
 	box-sizing: border-box;
 	overflow-x: hidden;
@@ -9,6 +11,9 @@ body {
 	color: #333;
 	margin: 0;
 	padding: 0;
+    
+    height: 100vh;
+    width: 100vw;
 }
 
 header {
@@ -29,12 +34,10 @@ header {
 
 
 header img {
-	max-width: 100%;
 	height: auto;
 }
 
 section img {
-	max-width: 100%;
 	height: auto;
 }
 
@@ -61,7 +64,7 @@ p {
 }
 
 a {
-	color: #ffffff;
+	color: white;
 	text-decoration: none;
 }
 
@@ -73,10 +76,6 @@ footer {
 	text-align: center;
 	padding: 5px;
 	background-color: #333;
-	color: white;
-}
-
-footer a {
 	color: white;
 }
 
@@ -94,80 +93,20 @@ footer a {
 	margin: 5px;
 }
 
-.language-switch {
-	position: absolute;
-	top: 20px;
-	right: 20px;
-}
 
-.language-switch button {
-	background-color: transparent;
-	color: #AF6FAB;
-	border: 2px solid #AF6FAB;
-	padding: 5px 10px;
-	font-size: 14px;
-	cursor: pointer;
-}
 
 @media (max-width: 768px) {
 	section {
 		padding: 20px;
 	}
 }
+
+
 /* Allgemeine Stile */
 .blog * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
-
-.keno, html {
-    height: 100%;
-    color: rgb(255, 255, 255);
-}
-
-/* Hintergrundbild */
-.background {
-    background-image: url('../images/kenoback.webp');
-    background-size: cover;
-    background-position: center;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-
-
-
-/* Fahrender Schriftzug */
-.marquee {
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    margin-bottom: 0px;
-	margin-top: 0px;
-}
-
-.marquee p {
-    display: inline-block;
-    /* Padding entfernt, um den Abstand zu reduzieren */
-    animation: marquee 20s linear infinite;
-    color: rgb(209, 212, 47);
-    font-family: Pixel;
-    font-weight: bold;
-    font-size: 40px;
-	letter-spacing: 2px;
-}
-
-@keyframes marquee {
-    0% { transform: translateX(100%); } /* Start außerhalb des Sichtbereichs rechts */
-    100% { transform: translateX(-100%); } /* Endet außerhalb des Sichtbereichs links */
-}
-
-
 
 
 /* Blindtext */
