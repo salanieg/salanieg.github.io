@@ -130,10 +130,11 @@ footer {
 }
 
 
-/* Blindtext */
+/* Introtext */
 .intro-text {
     max-width: 600px;
     margin: 20px auto;
+    padding: 20px;
     line-height: 1.5;
     font-size: 1.2em;
 }
