@@ -6,6 +6,8 @@ html {
 }
 
 
+
+
 body {
 	background-color: #888888;
 	color: #333;
@@ -14,7 +16,26 @@ body {
     
     height: 100vh;
     width: 100vw;
+
+    display: grid;
+    grid-template-columns: 100vw 50px;
+    grid-template-rows: 1fr auto;
+    grid-template-areas: 
+    "content"
+    "footer";
+    justify-content: center;
 }
+
+footer {
+    grid-area: footer;
+}
+
+
+main {
+    grid-area: content;
+}
+
+
 
 header {
     text-align: center;
