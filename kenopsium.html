@@ -25,49 +25,38 @@
     width: 100%;
     overflow: hidden;
     white-space: nowrap;
-    margin: 5; /* Entfernt Abstände oben und unten */
-    background-color: rgba(0, 0, 0, 0.5); /* Transparent-dunkler Hintergrund */
-    box-sizing: border-box; /* Stellt sicher, dass das Padding keinen Einfluss auf die Breite hat */
-}
-
-.marquee {
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    margin: 0;
-    background-color: rgba(0, 0, 0, 0.7); /* Etwas dunkler und breiterer Hintergrund */
-    padding: 20px 0; /* Breiterer transparenter Streifen durch Padding */
-    box-sizing: border-box;
+    margin: 0; /* Keine Abstände nach oben und unten */
+    background-color: rgba(0, 0, 0, 0.5); /* Transparenter, dunkler Hintergrund */
 }
 
 .marquee p {
     display: inline-block;
-    animation: marquee linear infinite;
-    color: rgba(255, 255, 255, 0.7); /* Sichtbare transparente Schriftfarbe */
+    animation: marquee 20s linear infinite; /* Stetige Bewegung */
+    color: rgba(255, 255, 255, 0.7); /* Halbtransparenter Text */
     font-family: Pixel;
     font-weight: bold;
-    font-size: 40px;
+    font-size: 1.2em;
     letter-spacing: 2px;
-    margin: 0;
-    padding: 0;
-    white-space: nowrap; /* Sicherstellen, dass der Text nicht umbrechen kann */
+    padding: 20px;
+    margin: 0; /* Entfernt alle Abstände */
 }
 
-/* Dynamische Animation basierend auf der Breite des Inhalts */
-.marquee p {
-    animation-duration: calc(20s + 10s * (var(--text-length, 1) - 1));
-}
-
-
-/* Keyframes für das Durchlaufen des Texts */
 @keyframes marquee {
-    0% {
-        transform: translateX(100%);
-    }
-    100% {
-        transform: translateX(-100%);
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+/* Schnelleres Scrollen bei kleineren Bildschirmbreiten */
+@media (max-width: 768px) {
+    .marquee p {
+        
+        animation: marquee 7s linear infinite /* Schnellere Animation */
     }
 }
+
+
+
+
 
         #blogheader {
             display: block;
@@ -138,5 +127,6 @@
         <p>© 2024 Dennis Luca Münch</p>
         <a href="impressum.html">Impressum</a></p>
     </footer>
+
 </body>
 </html>
