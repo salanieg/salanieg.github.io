@@ -1,8 +1,14 @@
-* {max-width: 100%;}
+* {
+    max-width: 100%;
+}
 
 html {
 	box-sizing: border-box;
 	overflow-x: hidden;
+}
+
+*, *:before, *:after {
+	box-sizing: inherit;
 }
 
 
@@ -96,13 +102,10 @@ footer {
 	padding: 5px;
 	background-color: #333;
 	color: white;
+    margin-top: 100px;
 }
 
-.contact-buttons {
-	margin-top: 20px;
-}
-
-.contact-buttons button {
+button {
 	background-color: #4b5e1c;
 	color: white;
 	border: 2px solid #AF6FAB;
@@ -110,6 +113,7 @@ footer {
 	cursor: pointer;
 	font-size: 16px;
 	margin: 5px;
+	margin-top: 20px;
 }
 
 
