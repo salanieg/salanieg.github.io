@@ -54,10 +54,6 @@ header {
     justify-content: center;
 }
 
-
-
-
-
 header img {
 	height: auto;
 }
@@ -70,6 +66,12 @@ section {
 	padding: 40px;
 	max-width: 700px;
 	margin: auto;
+}
+
+@media (max-width: 768px) {
+	section {
+		padding: 20px;
+	}
 }
  
 h1, h2, h3 {
@@ -106,20 +108,23 @@ footer {
 }
 
 button {
-	background-color: #4b5e1c;
+    /* background-color: #4b5e1c;
 	color: white;
-	border: 2px solid #AF6FAB;
+	border: 2px solid #AF6FAB; */
 	padding: 10px 20px;
 	cursor: pointer;
 	font-size: 16px;
 	margin: 5px;
 	margin-top: 20px;
+    font-weight: 900;
+
+    
+    border: 3px solid #333;
+    background-color: #AF6FAB;
+    color: #333;
 }
 
-
-
-@media (max-width: 768px) {
-	section {
-		padding: 20px;
-	}
+button:hover {
+    box-shadow: 5px -5px #22ad40;
+    transform: translate(-5px, 5px);
 }
