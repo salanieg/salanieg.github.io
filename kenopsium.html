@@ -9,55 +9,49 @@
     <script type="text/javascript" src="common.js"></script>
     <style>
 
-        body {
-            color: rgb(255, 255, 255);
-            background-image: url('../images/kenoback.webp');
-            background-size: cover;
-        }
+body {
+    color: rgb(255, 255, 255);
+    background-color: #2e2e2e; /* Dunkles Grau für brutalistische Ästhetik */
+    background-image: none; /* Entfernt das Bild */
+}
         
         h1 {
             text-align: center;
         }
         
+        .indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+}
 
-        /* Fahrender Schriftzug */
-        .marquee {
-            width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            margin: 0; /* Keine Abstände nach oben und unten */
-            background-color: rgba(0, 0, 0, 0.5); /* Transparenter, dunkler Hintergrund */
-        }
+.indicator .circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgb(255, 0, 0);
+    animation: blink 1s infinite alternate;
+    display: inline-block;
+}
 
-        .marquee p {
-            display: inline-block;
-            animation: marquee 20s linear infinite; /* Stetige Bewegung */
-            color: rgba(255, 255, 255, 0.7); /* Halbtransparenter Text */
-            font-family: Pixel;
-            font-weight: bold;
-            font-size: 1.2em;
-            letter-spacing: 2px;
-            padding: 20px;
-            margin: 0; /* Entfernt alle Abstände */
-        }
+.indicator .circle:nth-child(2) {
+    animation-delay: 0.5s;
+}
 
-        @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
+@keyframes blink {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
 
-        /* Schnelleres Scrollen bei kleineren Bildschirmbreiten */
-        @media (max-width: 768px) {
-            .marquee p {
-                
-                animation: marquee 7s linear infinite /* Schnellere Animation */
-            }
-        }
 
         #blogheader {
             display: block;
-            margin-bottom: 50px;
-            margin-top: 5vw;
+            margin-bottom: 60px;
+            margin-top: 0px;
             width: 100%;
             max-width: 700px;
             margin-left: auto;
@@ -116,27 +110,20 @@
     </style>
 </head>
 <body>
-    <!-- Hauptinhalt -->
     <main>
-
-        
-        <!-- Header mit Bild -->
-
         <img id="blogheader" src="images/blogheader.svg" alt="Blog Header">
-        <!-- Titel -->
         <h1>THESEUS JUNCTION</h1>
 
-        <!-- Fahrender Schriftzug -->
-        <div class="marquee">
-            <p>+++DERZEIT KEIN SERVICE++++++DERZEIT KEIN SERVICE++++++DERZEIT KEIN SERVICE++++++DERZEIT KEIN SERVICE++++++DERZEIT KEIN SERVICE++++++DERZEIT KEIN SERVICE+++</p>
+        <div class="indicator">
+            <p>DERZEIT NICHT VERFÜGBAR</p>
+            <div class="circle"></div>
+            <div class="circle"></div>
         </div>
 
-        <!-- Blindtext -->
         <p id="intro-text">
             Entropie verwandelt Ordnung in Chaos. Nicht etwa, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Erbe der Gaía. Die zertrümmerte Geometrie durch ein Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.
         </p>
 
-        <!-- Schaltflächen -->
         <div class="button-section">
             <a href="maintenance.html">
                 <img src="images/cogwheel.webp" alt="Elfenbeinturm">
