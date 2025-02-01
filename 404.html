@@ -4,13 +4,13 @@
         <meta charset="UTF-8">
         <meta name="robots" content="noindex, nofollow">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>???</title>
+        <title>404 *** Ereignishorizont *** Sofort ausweichen!</title>
         <style>
-             @font-face {
+            @font-face {
                 font-family: 'Syne';
                 src: url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff2') format('woff2'),
-                    url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff') format('woff'),
-                    url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.ttf') format('truetype');
+                     url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff') format('woff'),
+                     url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.ttf') format('truetype');
                 font-weight: 400;
                 font-style: italic;
                 font-display: swap;
@@ -18,8 +18,8 @@
             @font-face {
                 font-family: 'Geist';
                 src: url('https://www.denmuen.ch/fonts/Geist/Geist-Light.woff2') format('woff2'),
-                    url('https://www.denmuen.ch/fonts/Geist/Geist-Light.woff') format('woff'),
-                    url('https://www.denmuen.ch/fonts/Geist/Geist-Light.ttf') format('truetype');
+                     url('https://www.denmuen.ch/fonts/Geist/Geist-Light.woff') format('woff'),
+                     url('https://www.denmuen.ch/fonts/Geist/Geist-Light.ttf') format('truetype');
                 font-weight: 300;
                 font-style: normal;
                 font-display: swap;
@@ -30,95 +30,61 @@
                 background-color: #212121; 
                 margin: 0; 
                 padding: 0; 
+                text-align: center;
             }
             h1 {
                 font-family: 'Syne', Arial, sans-serif;
             }
-            #container { padding: 20px; text-align: center; }
-            #nav { background: #333; padding: 10px 0; }
-            #nav p { color: white; text-decoration: none; padding: 10px 20px; display: inline-block; cursor: pointer; }
-            .content { max-width: 800px; margin: auto; text-align: justify; }
-            #langSwitch { position: fixed; left: 50%; transform: translateX(calc(-50% - 50px)); bottom: 20px; cursor: pointer;  z-index: 4; }
-            #imprintLink { position: fixed; left: 50%; transform: translateX(calc(-50% - -50px)); bottom: 20px; cursor: pointer; z-index: 4; }
-            button { display: block; margin: 0 auto; cursor: pointer; }
-            @keyframes blink {
-                0% { opacity: 1; }
-                50% { opacity: 0; }
-                100% { opacity: 1; }
+            #nav p { 
+                color: white; 
+                text-decoration: none; 
+                padding: 10px 20px; 
+                display: inline-block; 
+                cursor: pointer; 
+                transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
             }
-
-            @keyframes creepyFade {
-                0% { opacity: 1; transform: scale(1) rotate(0deg); }
-                50% { opacity: 0.5; transform: scale(1.2) rotate(10deg); }
-                100% { opacity: 0; transform: scale(0.5) rotate(-20deg); }
-            }
-
-            #nav p {
-                transition: opacity 1.5s, transform 1.5s;
-            }
-
             #nav p.disappearing {
-                animation: creepyFade 1.5s forwards;
+                opacity: 0;
+                transform: scale(0.8) rotate(-10deg);
+                pointer-events: none;
             }
-
             #stalemateButton {
                 opacity: 0;
                 visibility: hidden;
-                transition: opacity 1s ease-in-out, visibility 0s linear 0.75s;
+                transition: opacity 1s ease-in-out;
             }
-
             #stalemateButton.visible {
                 visibility: visible;
                 opacity: 1;
             }
         </style>
-        <!-- Das hier cookies -->
-        <link rel="preload" as="fetch" crossorigin href="components/databanner.html">
-        <script type="text/javascript" src="common.js"></script>
         <script>
-            load_components(["databanner"]);
-
             function disappearText() {
                 var homeText = document.querySelector("#nav p");
                 homeText.classList.add("disappearing");
                 homeText.removeEventListener("click", disappearText);
 
-                var stalemateButton = document.querySelector("#stalemateButton");
-                stalemateButton.classList.add("visible");
+                setTimeout(function() {
+                    var stalemateButton = document.querySelector("#stalemateButton");
+                    stalemateButton.classList.add("visible");
+                }, 1500);
             }
-            
             document.addEventListener("DOMContentLoaded", function() {
                 var homeText = document.querySelector("#nav p");
                 homeText.addEventListener("click", disappearText);
             });
         </script>
     </head>
-
     <body>
-        <div id="databanner"></div>
-        <div id="langSwitch" onclick="switch_language()">Sprache</div>
-        <div id="imprintLink" onclick="window.location.href='/impressum.html'">
-            <p class="content" lang="en">Legal Notice</p>
-            <p class="content" lang="de">Impressum</p>
+        <div id="nav">
+            <p>Home</p>
         </div>
-        <div id="container">
-            <div id="nav" style="text-align: center;">
-                <p>Home</p>
-            </div>
-
-            <h1 lang="en">404 *** Event Horizon *** Evade immediately!</h1>
-            <h1 lang="de">404 *** Ereignishorizont *** Sofort ausweichen!</h1>
-
-            <div class="content">
-                <p class="content" lang="en"><i>There is no content under this page. Gezeichnet, der Schildermaler.</i><br/><br/><br/></p>
-                <p class="content" lang="de"><i>Keine Inhalte unter dieser Seite. Gezeichnet, der Schildermaler.</i><br/><br/><br/></p>
-                <a href="https://www.denmuen.ch/#launchpad" target="_self" style="text-decoration: none;">
-    <button id="stalemateButton" style="background-color: #1c1c1c; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red; animation: blink 1s linear infinite;">
-        <h1>Stalemate Resolve<br><b>PRESS HERE</b></h1>
-    </button>
-</a>
-                
-            </div>
-        </div>
+        <h1>404 *** Ereignishorizont *** Sofort ausweichen!</h1>
+        <p><i>Keine Inhalte unter dieser Seite. Gezeichnet, der Schildermaler.</i></p>
+        <a href="https://www.denmuen.ch/#launchpad" target="_self">
+            <button id="stalemateButton" style="background-color: #1c1c1c; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red;">
+                <h1>STALEMATE RESOLVE<br><b>PRESS HERE</b></h1>
+            </button>
+        </a>
     </body>
 </html>
