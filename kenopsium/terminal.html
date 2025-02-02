@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ivory Tower</title>
+    <link rel="stylesheet" href="/styles/fonts.css">
+    <link rel="stylesheet" href="/styles/general.css">
+    <script type="text/javascript" src="common.js"></script>
+    <style>
+
+body {
+    color: rgb(255, 255, 255);
+    background-color: #2e2e2e;
+    background-image: none;
+}
+        
+        h1 {
+            text-align: center;
+        }
+        
+        .indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.indicator .circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgb(255, 0, 0);
+    animation: blink 1s infinite alternate;
+    display: inline-block;
+}
+
+.indicator .circle:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+
+        #blogheader {
+            display: block;
+            margin-bottom: 60px;
+            margin-top: 0px;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+                
+        /* Introtext */
+        #intro-text {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            line-height: 1.5;
+            font-size: 1.2em;
+        }
+
+        /* Schaltflächenbereich */
+        .button-section {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .button-section > * {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .button-section img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .button-section img:hover {
+            transform: scale(1.1);
+        }
+
+        .button-section h2 {
+            margin-top: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .button-section p {
+            font-size: 1em;
+            margin-top: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    <main>
+        <img id="blogheader" src="/images/blogheader.svg" alt="Blog Header">
+        <h1>TERMINAL</h1>
+
+        <div class="button-section">
+            <a href="kenopsium.html">
+                <img src="/images/theseus.webp" alt="Startseite">
+                <h2>THESEUS JUNCTION</h2>
+                <p>Startseite</p>
+            </a>
+            <a href="maintenance.html">
+                <img src="/images/underground.webp" alt="Abyss">
+                <h2>ABYSS</h2>
+                <p>Feuilleton</p>
+            </a>
+            <a href="kenopsium/ivory.html">
+                <img src="/images/cogwheel.webp" alt="Elfenbeinturm">
+                <h2>IVORY TOWER</h2>
+                <p>Magazin meiner Arbeiten</p>
+            </a>
+        </div>
+        
+        <p id="intro-text">
+       Hier sammle ich Links zu anderen interessanten Seiten. Hast du eine Seite, die du gerne verlinken möchtest? Dann <a href="mailto:den.muench@gmail.com"><b>kontaktiere mich gerne</b></a>!
+        </p>
+
+        <div class="indicator">
+            <div class="circle"></div>
+            <p>DERZEIT KEINE INHALTE</p>
+            <div class="circle"></div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>© 2024 Dennis Luca Münch</p>
+        <a href="impressum.html">Impressum</a></p>
+    </footer>
+
+</body>
+</html>
