@@ -13,13 +13,14 @@
     <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="images/favicon/site.webmanifest" />
 
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="styles/general.css" />
+    <link rel="preload" as="image" href="images/headertext.svg" type="image/svg+xml" />
     <link rel="preload" as="image" href="images/dmback.webp" type="image/webp" />
-    <script type="text/javascript" src="common.js"></script>
+    <link rel="preload" as="style" href="styles/fonts.css" />
+    <link rel="stylesheet" href="styles/fonts.css" media="print" onload="this.media='all'" />
+    <link rel="stylesheet" href="styles/general.css" />
+    <script defer src="common.js"></script>
 
     <style>
-  
       #header-text {
         position: absolute;
         top: 0px;
@@ -71,10 +72,9 @@
   </head>
   <body>
     <main>
-
       <header>
         <div id="header-text">
-          <img src="images/headertext.svg" alt="Headerschriftzug" width="800" height="200" />
+          <img src="images/headertext.svg" alt="Headerschriftzug" width="800" height="200" fetchpriority="high" />
         </div>
         <img
           id="header-img"
@@ -82,8 +82,10 @@
           alt="Dennis Luca Münch, Neustadt an der Aisch"
           width="1000"
           height="600"
+          loading="lazy"
         />
       </header>
+      
 
       <section>
         <div>
