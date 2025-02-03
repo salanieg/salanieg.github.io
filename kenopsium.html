@@ -17,35 +17,8 @@ body {
         
         h1 {
             text-align: center;
+            letter-spacing: 3px;
         }
-        
-        .indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 24px;
-    font-weight: bold;
-    color: #ffffff;
-}
-
-.indicator .circle {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: rgb(255, 0, 0);
-    animation: blink 1s infinite alternate;
-    display: inline-block;
-}
-
-.indicator .circle:nth-child(2) {
-    animation-delay: 0.5s;
-}
-
-@keyframes blink {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
-}
 
 
         #blogheader {
@@ -114,28 +87,22 @@ body {
         <img id="blogheader" src="images/blogheader.svg" alt="Blog Header">
         <h1>THESEUS JUNCTION</h1>
 
-        <div class="indicator">
-            <div class="circle"></div>
-            <p>DERZEIT NICHT VERFÜGBAR</p>
-            <div class="circle"></div>
-        </div>
-
         <p id="intro-text">
             Entropie verwandelt Ordnung in Chaos. Nicht etwa, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Vermächtnis der Gaía. Die zertrümmerte Geometrie durch ein Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.
         </p>
 
         <div class="button-section">
-            <a href="kenopsium/ivory.html">
+            <a href="/kenopsium/ivory.html">
                 <img src="images/cogwheel.webp" alt="Elfenbeinturm">
                 <h2>IVORY TOWER</h2>
                 <p>Magazin meiner Arbeiten</p>
             </a>
-            <a href="maintenance.html">
+            <a href="/kenopsium/abyss.html">
                 <img src="images/underground.webp" alt="Abyss">
                 <h2>ABYSS</h2>
                 <p>Feuilleton</p>
             </a>
-            <a href="maintenance.html">
+            <a href="/kenopsium/terminal.html">
                 <img src="images/nighttrain.webp" alt="Long Distance">
                 <h2>TERMINAL</h2>
                 <p>Weitere empfehlenswerte Inhalte</p>
