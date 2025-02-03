@@ -15,13 +15,11 @@
 
     <link rel="stylesheet" href="styles/fonts.css" />
     <link rel="stylesheet" href="styles/general.css" />
+    <link rel="preload" as="image" href="images/dmback.webp" type="image/webp" />
     <script type="text/javascript" src="common.js"></script>
 
     <style>
-      /* The following inline CSS preserves your design while ensuring images reserve space.
-         Option 1: Using HTML attributes (see updated <img> tags below).
-         Option 2: If you prefer CSS-based aspect ratios, uncomment and adjust the aspect-ratio lines. */
-
+  
       #header-text {
         position: absolute;
         top: 0px;
@@ -29,19 +27,8 @@
         padding-top: 60px;
       }
 
-      /* Option 2: CSS aspect-ratio for header image (if not using HTML width/height)
       #header-img {
         max-width: 1000px;
-        aspect-ratio: 1000 / 600;  // Adjust these numbers to match your image's intrinsic ratio.
-        object-fit: cover;
-        margin: 100px;
-      }
-      */
-
-      /* In this example, we’re using HTML width/height for #header-img, so the rest of the rules remain unchanged. */
-      #header-img {
-        max-width: 1000px;
-        /* height will be determined by the intrinsic aspect ratio set by width/height attributes */
         object-fit: cover;
         margin: 100px;
       }
@@ -84,16 +71,11 @@
   </head>
   <body>
     <main>
-      <!-- <div class="language-switch">
-            <button onclick="switchLanguage()">DE/EN</button>
-         </div> -->
 
       <header>
         <div id="header-text">
-          <!-- Assuming the intrinsic size of headertext.svg is, for example, 800x200 -->
           <img src="images/headertext.svg" alt="Headerschriftzug" width="800" height="200" />
         </div>
-        <!-- Assuming the intrinsic size of dmpic.webp is 1000x600 -->
         <img
           id="header-img"
           src="images/dmpic.webp"
@@ -118,7 +100,6 @@
         <div>
           <h2>Kompendium</h2>
           <button onclick="location.href='kenopsium'">
-            <!-- Assuming blogpic.webp has intrinsic size 500x300 -->
             <img id="section" src="images/blogpic.webp" alt="Rolltreppen an einem Bahnhof" width="500" height="300" />
             Blog besuchen
           </button>
