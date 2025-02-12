@@ -45,10 +45,8 @@ header {
     text-align: center;
     margin: 0;
     padding: 0;
-    background-image: url('../images/dmback.webp');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+	background: rgb(203,112,152);
+	background: radial-gradient(circle, rgba(203,112,152,1) 0%, rgba(66,111,163,1) 100%); 
     display: flex;
     align-items: end;
     justify-content: center;
@@ -91,19 +89,21 @@ p {
 }
 
 a {
-	color: #27371A;
+	color: #333;
 	text-decoration: none;
 	font-weight: bold;
 }
 
 a:hover {
+	color: #4400ff;
 	text-decoration: underline;
 }
 
 footer {
 	text-align: center;
 	padding: 5px;
-	background-color: #555555;
+	background: rgb(203,112,152);
+	background: radial-gradient(circle, rgba(203,112,152,1) 0%, rgba(66,111,163,1) 100%); 
 	color: #333;
     margin-top: 100px;
 }
@@ -126,6 +126,6 @@ button {
 }
 
 button:hover {
-    box-shadow: 5px -5px #27371A;
+    box-shadow: 5px -5px #575e1e;
     transform: translate(-5px, 5px);
 }

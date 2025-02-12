@@ -14,7 +14,6 @@
     <link rel="manifest" href="images/favicon/site.webmanifest" />
 
     <link rel="preload" as="image" href="images/headertext.svg" type="image/svg+xml" />
-    <link rel="preload" as="image" href="images/dmback.webp" type="image/webp" />
     <link rel="preload" as="style" href="styles/fonts.css" />
     <link rel="stylesheet" href="styles/fonts.css" media="print" onload="this.media='all'" />
     <link rel="stylesheet" href="styles/general.css" />
@@ -32,25 +31,13 @@
 
       #header-img {
         max-width: 1000px;
-        object-fit: cover;
-        margin: 100px;
+        object-fit: contain;
         width: 1000px;
         height: 600px;
       }
 
       h2 {
         font-size: 36px;
-      }
-
-      @media (max-width: 1000px) {
-        #header-img {
-          margin: 0px;
-          margin-top: -50px;
-        }
-
-        #header-text {
-          padding-top: 20px;
-        }
       }
 
       section {
@@ -108,15 +95,15 @@
             Blog besuchen
           </button>
           <p>
-            In meinem Kompendium-Blog <a href="https://www.denmuen.ch/kompendium">Kenopsium</a> teile ich Einblicke in meine aktuellen Projekte und trage sehenswerte Inhalte
-            anderer Medienschaffender in feuilletonistischer Manier zusammen.
+            In meinem Kompendium-Blog <a href="https://www.denmuen.ch/kompendium">Kenopsium</a> teile ich Einblicke in meine aktuellen
+            Projekte. Dort findest du auch Sammlungen anderer spannender Inhalte in Video- Text- und Hypertextform.
           </p>
         </div>
         <div>
           <h2>Über mich</h2>
           <p>
-            Hallo, ich bin Dennis. Dieses kleine Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln, 
-            sodass ich und du keine sozialen Medien nutzen müssen. Ich versuche, regelmäßig eine Vielzahl von Inhalten hochzuladen, insbesondere 
+            Dieses kleine Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln. Das würde in sozialen Medien nicht funktionieren,
+            ist maßgeblich cooler als werbeverseuchte Plattformen und kostet mich fast nichts. Ich versuche, regelmäßig einzelne Inhalte hochzuladen, insbesondere 
             im Kontext von Philosophie, Politik, Wissenschaft oder einfach nur Unterhaltung. Wenn du an neuen Inhalten interessiert bist, dann 
             besuche von Zeit zu Zeit gerne die Orte (oder Nicht-Orte) innerhalb meines Kompendium-Blogs.
             <br /><br />
@@ -184,8 +171,7 @@
       </section>
     </main>
     <footer>
-      <p>© 2024 Dennis Luca Münch</p>
-      <a href="impressum.html">Impressum</a>
+      <p>© 2024 Dennis Luca Münch<br><a href="impressum.html">Impressum</a></p>
     </footer>
   </body>
 </html>
