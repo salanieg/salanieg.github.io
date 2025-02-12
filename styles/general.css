@@ -13,7 +13,7 @@ html {
 
 
 body {
-	background-color: #888888;
+	background-color: #C2C2C2;
 	color: #333;
 	margin: 0;
 	padding: 0;
@@ -91,8 +91,9 @@ p {
 }
 
 a {
-	color: white;
+	color: #27371A;
 	text-decoration: none;
+	font-weight: bold;
 }
 
 a:hover {
@@ -125,6 +126,6 @@ button {
 }
 
 button:hover {
-    box-shadow: 5px -5px #3c5c1e;
+    box-shadow: 5px -5px #27371A;
     transform: translate(-5px, 5px);
 }
