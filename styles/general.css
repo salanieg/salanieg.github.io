@@ -89,20 +89,19 @@ p {
 }
 
 a {
-	color: #333;
+	color: #C2C2C2;
 	text-decoration: none;
 	font-weight: bold;
 }
 
 a:hover {
-	color: #4400ff;
-	text-decoration: underline;
+	color: #ffffff;
+	text-decoration: none;
 }
 
 footer {
 	text-align: center;
 	padding: 5px;
-	background: rgb(203,112,152);
 	background: radial-gradient(circle, rgba(203,112,152,1) 0%, rgba(66,111,163,1) 100%); 
 	color: #333;
     margin-top: 100px;
