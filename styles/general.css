@@ -118,7 +118,7 @@ button {
 }
 
 button:hover {
-    box-shadow: 5px -5px #575e1e;
+    box-shadow: 5px -5px #24301f;
     transform: translate(-5px, 5px);
 }
 
