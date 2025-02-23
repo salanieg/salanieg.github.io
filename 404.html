@@ -8,22 +8,12 @@
         <style>
             @font-face {
                 font-family: 'Syne';
-                src: url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff2') format('woff2'),
-                     url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff') format('woff'),
-                     url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.ttf') format('truetype');
+                src: url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff2') format('woff2');
                 font-weight: 400;
                 font-style: italic;
                 font-display: swap;
             }   
-            @font-face {
-                font-family: 'Geist';
-                src: url('https://www.denmuen.ch/fonts/Geist/Geist-Light.woff2') format('woff2'),
-                     url('https://www.denmuen.ch/fonts/Geist/Geist-Light.woff') format('woff'),
-                     url('https://www.denmuen.ch/fonts/Geist/Geist-Light.ttf') format('truetype');
-                font-weight: 300;
-                font-style: normal;
-                font-display: swap;
-            }   
+             
             body { 
                 font-family: 'Geist', Arial, sans-serif; 
                 color: white; 
@@ -31,17 +21,30 @@
                 margin: 0; 
                 padding: 0; 
                 text-align: center;
+                overflow: hidden;
             }
             h1 {
                 font-family: 'Syne', Arial, sans-serif;
+                font-size: 50px;
+                margin-top: 0px;
             }
+
+            h2 {
+                font-family: 'Syne', Arial, sans-serif;
+                font-size: 25px;
+            } 
+
             #nav p { 
-                color: white; 
-                text-decoration: none; 
+                color: rgb(70, 121, 189); 
+                font-size: 25px;
+                text-decoration-line: underline; 
                 padding: 10px 20px; 
                 display: inline-block; 
                 cursor: pointer; 
                 transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+            }
+            #nav p:hover {
+                cursor: pointer;
             }
             #nav p.disappearing {
                 opacity: 0;
@@ -52,10 +55,52 @@
                 opacity: 0;
                 visibility: hidden;
                 transition: opacity 1s ease-in-out;
+                animation: blink 0.5s infinite alternate;
+                margin-top: 20px;
+                cursor: pointer;
+                display: inline-block;
+                padding: 0;
+                background-color: #1c1c1c;
+                border-radius: 10px;
+                box-shadow: 0px 0px 10px red;
             }
             #stalemateButton.visible {
                 visibility: visible;
                 opacity: 1;
+            }
+            @keyframes blink {
+                from { box-shadow: 0px 0px 10px red; }
+                to { box-shadow: 0px 0px 30px red; }
+            }
+            #stalemateButton button {
+                background-color: #1c1c1c;
+                color: red;
+                font-size: 30px;
+                padding: 10px 20px;
+                border: 2px solid red;
+                border-radius: 10px;
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            #stalemateButton button:hover {
+                cursor: pointer;
+            }
+            
+            /* Sterne */
+            .star {
+                position: absolute;
+                background-color: white;
+                width: 2px;
+                height: 2px;
+                border-radius: 50%;
+                opacity: 0;
+                animation: twinkle 1.5s infinite alternate ease-in-out;
+            }
+
+            @keyframes twinkle {
+                from { opacity: 0; }
+                to { opacity: 1; }
             }
         </style>
         <script>
@@ -69,22 +114,40 @@
                     stalemateButton.classList.add("visible");
                 }, 1500);
             }
+
             document.addEventListener("DOMContentLoaded", function() {
                 var homeText = document.querySelector("#nav p");
                 homeText.addEventListener("click", disappearText);
+                
+                // Sterne generieren
+                const starCount = 50;
+                const fragment = document.createDocumentFragment();
+                for (let i = 0; i < starCount; i++) {
+                    let star = document.createElement("div");
+                    star.classList.add("star");
+                    star.style.left = Math.random() * window.innerWidth + "px";
+                    star.style.top = Math.random() * window.innerHeight + "px";
+                    star.style.animationDelay = Math.random() * 2 + "s";
+                    fragment.appendChild(star);
+                }
+                document.body.appendChild(fragment);
             });
         </script>
     </head>
     <body>
         <div id="nav">
-            <p>Home</p>
+            <p>zurück zur Startseite</p>
         </div>
-        <h1>404 *** Ereignishorizont *** Sofort ausweichen!</h1>
+        <h1>404</h1>
+        <h2>EREIGNISHORIZONT DES DIALEKTISCHEN WURMLOCHS</h2>
+        <h2>UNVERZÜGLICH AUSWEICHEN!</h2> 
         <p><i>Keine Inhalte unter dieser Seite. Gezeichnet, der Schildermaler.</i></p>
         <a href="https://www.denmuen.ch/#launchpad" target="_self">
-            <button id="stalemateButton" style="background-color: #1c1c1c; color: red; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; box-shadow: 0px 0px 20px red;">
-                <h1>STALEMATE RESOLVE<br><b>PRESS HERE</b></h1>
-            </button>
+            <div id="stalemateButton">
+                <button>
+                    STALEMATE RESOLVE<br><b>PRESS HERE</b>
+                </button>
+            </div>
         </a>
     </body>
 </html>
