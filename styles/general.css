@@ -87,7 +87,7 @@ p {
 }
 
 a {
-	color: #C2C2C2;
+	color: #c2c2c2;
 	text-decoration: none;
 	font-weight: bold;
 }
@@ -104,6 +104,17 @@ footer {
 	color: #c2c2c2;
 	margin-top: 100px;
 	}
+
+footer a {
+	color: #c2c2c2;
+	text-decoration: none;
+	font-weight: bold;
+    }
+
+    footer a:hover {
+	color: #ffffff;
+	text-decoration: none;
+    }
 
 button {
 	padding: 10px 20px;

@@ -19,24 +19,33 @@
             letter-spacing: 3px;
         }
 
+        .content a {
+	    color: #F4E8D2;
+	    text-decoration: none;
+        font-size: 1.5em;
+	    font-weight: bold;
+        }
+
         .collapsible {
-            background-color: #444;
+            background:  radial-gradient(circle, #6b6b6b 0%, #333 100%);
             color: #C2C2C2;
             cursor: pointer;
             padding: 15px;
             width: 600px;
             max-width: 100%;
-            text-align: left;
+            text-align: center;
             border: none;
             outline: none;
-            font-size: 18px;
+            font-size: 1.5em;
             margin: 10px auto;
             display: block;
             border-radius: 5px;
         }
 
         .active, .collapsible:hover {
-            background-color: #555;
+            box-shadow: 0 0 10px #F4E8D2;
+            transform: scale(0.9);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
 
         .content {
@@ -70,7 +79,12 @@
         Willkommen in meinem subjektiven Relevanzkorridor. Klicke auf die Tafeln, um sie auszuklappen. Wenn du mich zu lange anglotzt, glotz' ich in dich zurück, du Lappen! Gezeichnet, der Abgrund.
         </p>
 
-        <!-- Collapsible sections -->
+        <button class="collapsible">Empfohlene Seiten</button>
+        <div class="content">
+            <p><a href="https://atlas.bayern.de/?c=677751,5422939&z=7&r=0&l=vt_standard&t=ba">BayernAtlas</a><br>Online-Kartendienst des Freistaats Bayern mit topografischen Karten, Luftbildern, historischem Kartenmaterial und Geodaten für Bürger:innen, Planer:innen und Behörden</p>
+        </div>
+
+
         <button class="collapsible">Wikipedia Rabbit Holes</button>
         <div class="content">
             <p><a href="https://en.wikipedia.org/wiki/I%27m_not_a_scientist">I'm not a scientist</a></p>
@@ -80,7 +94,12 @@
 
         <button class="collapsible">YouTube Backrooms</button>
         <div class="content">
-            <p><p><a href="https://www.youtube.com/watch?v=3KtDvTbLdCQ">Bambärch - fom Griich fäschoond; vom Schdoddrod ned</a></p></p>
+            <p><a href="https://www.youtube.com/watch?v=3KtDvTbLdCQ">Bambärch - fom Griich fäschoond; vom Schdoddrod ned</a><br>„Während die Stadt die Sanierung als vorbildlich feiert, sehen Denkmalschützer diese Pseudosanierung heute als den größten Kahlschlag in der Bamberger Nachkriegsgeschichte.“</p>
+            <p><a href="https://www.youtube.com/watch?v=TQCWagPlars">Der Knast-Entscheider</a><br>„Fünf Bratpfannen, zwei Pfeffermühlen, wollen Sie ne' Party geben oder was?“</p>
+            <p><a href="https://www.youtube.com/watch?v=64KcjUm9T-o">Günter Wallraff: Ganz unten</a><br>„Und ich will Leute haben... Die Ärmsten der Armen! Und denen noch paar Mark geben.“</p>
+            <p><a href="https://www.youtube.com/watch?v=0MzkVP2N9rw">Das Milgram-Experiment</a><br>„Und jedes Mal wenn Monsieur Rivoli etwas Falsches sagt... müssen Sie Ihn bestrafen.“</p>
+            <p><a href="https://www.youtube.com/watch?v=7NXdY-vq4CQ">Platon und Nietzsche: Un-Zeitgenossen im Gespräch</a><br>„Verzeihung: Nietzsche. Friedrich Nietzsche! Kennen Sie nicht meinen Zarathustra?“</p>
+            <p><a href="https://www.youtube.com/watch?v=gEyFH-a-XoQ">Prague's Kafka International Named Most Alienating Airport</a><br>„And finally, he writes LIAR on the back of my hand and lets me pass!“</p>
         </div>
     </main>
 
