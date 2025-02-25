@@ -19,6 +19,11 @@ body {
             text-align: center;
             letter-spacing: 3px;
         }
+
+        .button-section img {
+	    width: 100px;
+	    height: 100px;
+        }
         
     </style>
 </head>
@@ -30,8 +35,7 @@ body {
         <div class="button-section">
             <a href="/kompendium.html">
                 <img src="/images/theseus.webp" alt="Startseite">
-                <h2>THESEUS JUNCTION</h2>
-                <p>Startseite</p>
+                <p>zurück zur Startseite</p>
             </a>
         </div>
         
@@ -42,11 +46,36 @@ body {
         verwendet werden. Eine kommerzielle Nutzung nach Absprache ist in den meisten Fällen möglich.
         </p>
 
+        <button class="collapsible">Essays (Philosophie)</button>
+        <div class="content">
+            <p><a href="/files/essay_nietzsche_raubtier.pdf">Ist der Mensch nach Nietzsche wirklich autark?</a><br>[KI-Abstract] Der Essay untersucht, inwiefern der Mensch nach
+                 Nietzsche als instinktgesteuertes „Raubtier“ oder domestiziertes „Haustier“ tatsächlich autark ist und argumentiert, dass sowohl der ursprüngliche als auch der 
+                 kulturell geprägte Mensch in Abhängigkeiten verhaftet bleibt.</p>
+        </div>
+        <button class="collapsible">Hausarbeiten (Kommunikationswissenschaft)</button>
+        <div class="content">
+            <p><a href="/files/essay_nietzsche_raubtier.pdf">Charakterisierung der modernen Wahlkampfkommunikation</a><br>[KI-Abstract] Die Hausarbeit analysiert die modernen Kanäle 
+                der Wahlkampfkommunikation und zeigt, dass insbesondere digitale Plattformen („new free media“) eine zentrale Rolle spielen, da sie sowohl eigenständig als auch in
+                 Wechselwirkung mit klassischen Medien die öffentliche Meinung und politische Agenda maßgeblich beeinflussen.</p>
+        </div>
     </main>
-
     <footer>
         <p>© 2024 Dennis Luca Münch<br><a href="impressum.html">Impressum</a></p>
     </footer>
+    <script>
+        // JavaScript to handle collapsible buttons
+        document.querySelectorAll(".collapsible").forEach(function(button) {
+            button.addEventListener("click", function() {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>

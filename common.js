@@ -1,12 +1,11 @@
-function switchLanguage() {
-    var deContent = document.getElementById("content-de");
-    var enContent = document.getElementById("content-en");
-
-    if (deContent.style.display === "none") {
-        deContent.style.display = "block";
-        enContent.style.display = "none";
-    } else {
-        deContent.style.display = "none";
-        enContent.style.display = "block";
-    }
-}
+document.querySelectorAll(".collapsible").forEach(function(button) {
+    button.addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+            content.style.display = "none";
+        } else {
+            content.style.display = "block";
+        }
+    });
+});

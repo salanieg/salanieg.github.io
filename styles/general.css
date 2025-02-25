@@ -133,7 +133,6 @@ button:hover {
     transform: translate(-5px, 5px);
 }
 
-
 #blogheader {
 	display: block;
 	margin-top: 0px;
@@ -188,4 +187,47 @@ button:hover {
 .button-section p {
 	font-size: 1em;
 	margin-top: 5px;
+	margin-bottom: 0px;
+}
+
+
+.content {
+	padding: 0 15px;
+	display: none;
+	overflow: hidden;
+	background-color: #222;
+	border-radius: 5px;
+	color: #C2C2C2;
+	width: 600px;
+	max-width: 100%;
+	margin: 0 auto 10px;
+}
+
+.content a {
+color: #F4E8D2;
+text-decoration: none;
+font-size: 1.5em;
+font-weight: bold;
+}
+
+.collapsible {
+	background:  radial-gradient(circle, #6b6b6b 0%, #333 100%);
+	color: #C2C2C2;
+	cursor: pointer;
+	padding: 15px;
+	width: 600px;
+	max-width: 100%;
+	text-align: center;
+	border: none;
+	outline: none;
+	font-size: 1.5em;
+	margin: 10px auto;
+	display: block;
+	border-radius: 5px;
+}
+
+.active, .collapsible:hover {
+	box-shadow: 0 0 10px #F4E8D2;
+	transform: scale(0.9);
+	transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
