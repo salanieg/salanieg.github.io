@@ -106,7 +106,7 @@ a:hover {
 footer {
 	text-align: center;
 	padding: 5px;
-	background: radial-gradient(circle, #6b6b6b 0%, #333 100%); 
+	background: none; 
 	color: #c2c2c2;
 	margin-top: 100px;
 	}
