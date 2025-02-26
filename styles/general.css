@@ -198,7 +198,7 @@ button:hover {
 	background-color: #222;
 	border-radius: 5px;
 	color: #C2C2C2;
-	width: 600px;
+	width: 540px;
 	max-width: 100%;
 	margin: 0 auto 10px;
 }
@@ -228,6 +228,7 @@ font-weight: bold;
 
 .active, .collapsible:hover {
 	box-shadow: 0 0 10px #F4E8D2;
-	transform: scale(0.9);
-	transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+	width: 540px;
+	transform: unset;
+	transition: transform 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
 }
