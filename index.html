@@ -64,6 +64,16 @@
         max-width: 500px;
       }
 
+      .button-section img {
+	    width: 300px;
+	    height: 300px;
+        }
+
+      .button-section img:hover {
+	    transform: scale(0.9);
+        }
+
+
       #title {
         border: 3px solid #333;
         background-color: #d3a4ea;
@@ -110,12 +120,15 @@
 
         <div>
           <h2>Kenopsium</h2>
-          <button onclick="location.href='kompendium'">
-            <img id="section" src="images/blogpic.webp" alt="Rolltreppen an einem Bahnhof" width="500" height="300" />
-            Blog besuchen
-          </button>
+          <div class="button-section">
+            <a href="https://www.denmuen.ch/kompendium">
+                <img src="images/blogpic.webp" alt="zur Startseite">
+                <p>THESEUS JUNCTION (zum Umsteigen klicken)</p>
+            </a>
+        </div>
+
           <p>
-            In meinem Kompendium-Blog <a href="https://www.denmuen.ch/kompendium">Kenopsium</a> teile ich Einblicke in meine aktuellen
+            In meinem Underground-Blog Kenopsium teile ich Einblicke in meine aktuellen
             Projekte. Dort findest du auch Sammlungen anderer spannender Inhalte in Video- Text- und Hypertextform.
           </p>
         </div>
