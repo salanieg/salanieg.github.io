@@ -45,6 +45,8 @@ header {
     padding: 0;
 	background: rgb(203,112,152);
 	background: radial-gradient(circle, #24301f 30%, #010f0f 100%); 
+	background-image: url("/images/back.webp");
+	background-position: center;
     display: flex;
     align-items: end;
     justify-content: center;
