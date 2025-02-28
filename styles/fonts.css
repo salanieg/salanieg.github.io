@@ -313,4 +313,10 @@
 
 * {
 	font-family: "Anybody";
+    letter-spacing: -0.025em;
+}
+
+p, p a {
+    font-family: "Geist";
+    letter-spacing: -0.05em;
 }
