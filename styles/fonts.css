@@ -109,6 +109,16 @@
     src: url('https://www.denmuen.ch/fonts/Anybody/Anybody-Black.woff2') format('woff2'),
         url('https://www.denmuen.ch/fonts/Anybody/Anybody-Black.woff') format('woff'),
         url('https://www.denmuen.ch/fonts/Anybody/Anybody-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Anybody';
+    src: url('https://www.denmuen.ch/fonts/Anybody/Anybody-Bold.woff2') format('woff2'),
+        url('https://www.denmuen.ch/fonts/Anybody/Anybody-Bold.woff') format('woff'),
+        url('https://www.denmuen.ch/fonts/Anybody/Anybody-Bold.ttf') format('truetype');
     font-weight: 800;
     font-style: normal;
     font-display: swap;
