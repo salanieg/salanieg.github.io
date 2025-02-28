@@ -78,7 +78,7 @@
     src: url('https://www.denmuen.ch/fonts/Anybody/Anybody-Regular.woff2') format('woff2'),
         url('https://www.denmuen.ch/fonts/Anybody/Anybody-Regular.woff') format('woff'),
         url('https://www.denmuen.ch/fonts/Anybody/Anybody-Regular.ttf') format('truetype');
-    font-weight: 200;
+    font-weight: 100;
     font-style: normal;
     font-display: swap;
 }
@@ -88,7 +88,7 @@
     src: url('https://www.denmuen.ch/fonts/Anybody/Anybody-Medium.woff2') format('woff2'),
         url('https://www.denmuen.ch/fonts/Anybody/Anybody-Medium.woff') format('woff'),
         url('https://www.denmuen.ch/fonts/Anybody/Anybody-Medium.ttf') format('truetype');
-    font-weight: 300;
+    font-weight: 500;
     font-style: normal;
     font-display: swap;
 }
@@ -109,7 +109,7 @@
     src: url('https://www.denmuen.ch/fonts/Anybody/Anybody-Black.woff2') format('woff2'),
         url('https://www.denmuen.ch/fonts/Anybody/Anybody-Black.woff') format('woff'),
         url('https://www.denmuen.ch/fonts/Anybody/Anybody-Black.ttf') format('truetype');
-    font-weight: 900;
+    font-weight: 800;
     font-style: normal;
     font-display: swap;
 }
