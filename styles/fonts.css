@@ -312,11 +312,10 @@
 }
 
 * {
-	font-family: "Anybody";
-    letter-spacing: -0.025em;
-}
-
-p, p a {
     font-family: "Geist";
     letter-spacing: -0.05em;
+}
+
+h1, h2, .content a, .collapsible {
+    font-family: "Anybody";
 }
