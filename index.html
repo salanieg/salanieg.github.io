@@ -1,227 +1,207 @@
 <!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <meta name="description" content="Meine Portfolio-Website. Etwas nicht zu können ist kein Grund es nicht zu tun." />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="Meine Portfolio-Website. Etwas nicht zu können ist kein Grund es nicht zu tun.">
 
     <title>Dennis Münch • Willkommen auf meiner Website</title>
 
-    <link rel="icon" type="image/png" href="images/favicon/favicon-48x48.png" sizes="48x48" />
-    <link rel="icon" type="image/svg+xml" href="images/favicon/favicon.svg" />
-    <link rel="shortcut icon" href="images/favicon/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png" />
-    <link rel="manifest" href="images/favicon/site.webmanifest" />
+    <link rel="icon" type="image/png" href="images/favicon/favicon-48x48.png" sizes="48x48">
+    <link rel="icon" type="image/svg+xml" href="images/favicon/favicon.svg">
+    <link rel="shortcut icon" href="images/favicon/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="images/favicon/site.webmanifest">
 
-    <link rel="preload" as="image" href="images/headertext.svg" type="image/svg+xml" />
-    <link rel="preload" as="style" href="styles/fonts.css" />
-    <link rel="stylesheet" href="styles/fonts.css" media="print" onload="this.media='all'" />
-    <link rel="stylesheet" href="styles/general.css" />
+    <link rel="preload" as="image" href="images/headertext.svg" type="image/svg+xml">
+    <link rel="preload" as="style" href="styles/fonts.css">
+    <link rel="stylesheet" href="styles/fonts.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="styles/general.css">
     <script defer src="common.js"></script>
 
     <style>
-      #header-text {
-        position: absolute;
-        top: 0px;
-        padding: 0px;
-        padding-top: 10px;
-        width: 400px;
-        height: 100px;
-      }
-
-      #header-img {
-        max-width: 1000px;
-        object-fit: contain;
-        width: 1000px;
-        height: 600px;
-      }
-
-      @media (max-width: 768px) {
         #header-text {
-          width: 300px;
-          height: 75px;
-          padding-top: 5px;
+            position: absolute;
+            top: 0px;
+            padding: 0px;
+            padding-top: 10px;
+            width: 400px;
+            height: 100px;
         }
 
         #header-img {
-          height: auto;
-          max-width: 600px;
-        }
-      }
-
-   
-      h2 {
-        font-size: 36px;
-      }
-
-      a {
-	    color: #333;
-	    text-decoration: none;
-	    font-weight: bold;
-      }
-
-      a:hover {
-	    color: #0c0c0c;
-	    text-decoration: none;
-      }
-
-      section {
-        display: flex;
-        flex-wrap: wrap;
-        max-width: unset;
-        column-gap: 150px;
-        row-gap: 50px;
-        justify-content: center;
-      }
-
-      section > div {
-        max-width: 500px;
-      }
-
-      .button-section img {
-	    width: 250px;
-	    height: 250px;
+            max-width: 1000px;
+            object-fit: contain;
+            width: 1000px;
+            height: 600px;
         }
 
-      .button-section img:hover {
-	    transform: scale(0.9);
+        @media (max-width: 768px) {
+            #header-text {
+                width: 300px;
+                height: 75px;
+                padding-top: 5px;
+            }
+
+            #header-img {
+                height: auto;
+                max-width: 600px;
+            }
         }
 
+        h1 {
+            text-align: left;
+            hyphens: none;
+        }
 
-      #title {
-        border: 3px solid #333;
-        background-color: #d3a4ea;
-        color: #333;
-        padding: 20px;
-      }
+        h2 {
+            font-size: 36px;
+        }
 
-      footer {
-      color: #3a3a3a;
-    }
-     footer a {
-	    color: #3a3a3a;
-	    text-decoration: none;
-	    font-weight: bold;
-    }
+        a {
+            color: #333;
+            text-decoration: none;
+            font-weight: bold;
+        }
 
-      footer a:hover {
-	    color: #0c0c0c;
-	    text-decoration: none;
-    }
+        a:hover {
+            color: #0c0c0c;
+            text-decoration: none;
+        }
 
-  section > div {
-    max-width: 500px;
-    text-align: justify;
-    hyphens: auto;
-  }
+        li {
+            text-align: left;
+            hyphens: none;
+        }
 
-  h1 {
-    text-align: left;
-    hyphens: none;
-    }
+        section {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: unset;
+            column-gap: 150px;
+            row-gap: 50px;
+            justify-content: center;
+        }
 
+        .button-section img {
+            width: 250px;
+            height: 250px;
+        }
+
+        .button-section img:hover {
+            transform: scale(0.9);
+        }
+
+        #title {
+            border: 3px solid #333;
+            background-color: #d3a4ea;
+            color: #333;
+            padding: 20px;
+        }
+
+        footer {
+            color: #3a3a3a;
+        }
+
+        footer a {
+            color: #3a3a3a;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            color: #0c0c0c;
+            text-decoration: none;
+        }
+
+        section > div {
+            max-width: 500px;
+            text-align: justify;
+            hyphens: auto;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <main>
-      <header>
-        <div id="header-text">
-          <img src="images/headertext.svg" alt="Headerschriftzug" width="800" height="200" fetchpriority="high" decoding="async" />
-        </div>
-        <img
-          id="header-img"
-          src="images/dmpic.webp"
-          alt="Dennis Luca Münch, Neustadt an der Aisch"
-          width="1000"
-          height="600"
-        />
-      </header>
+        <header>
+            <div id="header-text">
+                <img src="images/headertext.svg" alt="Headerschriftzug" width="800" height="200" fetchpriority="high" decoding="async">
+            </div>
+            <img id="header-img" src="images/dmpic.webp" alt="Dennis Luca Münch, Neustadt an der Aisch" width="1000" height="600">
+        </header>
 
-      <section>
-        <div>
-          <div id="title">
-            <h1>Dennis Münch – Etwas nicht zu können ist kein Grund es nicht zu tun.</h1>
-            <p>
-              Willkommen auf meiner Portfolio-Website, auf der ich teilen möchte, was mich aktuell bewegt - als
-              Philosoph:in, Student:in und politisch interessierte Person. Derzeit setze ich mich als parteiloses Mitglied
-              im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten Stadt ein.
-            </p>
-          </div>
-        </div>
+        <section>
+            <div>
+                <div id="title">
+                    <h1>Dennis Münch – Etwas nicht zu können ist kein Grund es nicht zu tun.</h1>
+                    <p>
+                        Willkommen auf meiner Portfolio-Website, auf der ich teilen möchte, was mich aktuell bewegt - als
+                        Philosoph:in, Student:in und politisch interessierte Person. Derzeit setze ich mich als parteiloses Mitglied
+                        im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten Stadt ein.
+                    </p>
+                </div>
+            </div>
 
-        <div>
-          <h2>Kenopsium</h2>
-          <div class="button-section">
-            <a href="https://www.denmuen.ch/kompendium">
-                <img src="images/blogpic.webp" alt="zur Startseite">
-                <h2>THESEUS JUNCTION</h2>
-                <p>zum Umsteigen klicken</p>
-            </a>
-        </div>
+            <div>
+                <h2>Kenopsium</h2>
+                <div class="button-section">
+                    <a href="https://www.denmuen.ch/kompendium">
+                        <img src="images/blogpic.webp" alt="zur Startseite">
+                        <h2>THESEUS JUNCTION</h2>
+                        <p>zum Umsteigen klicken</p>
+                    </a>
+                </div>
+                <p>
+                    In meinem Underground-Blog Kenopsium teile ich Einblicke in meine aktuellen
+                    Projekte. Dort findest du auch Sammlungen anderer spannender Inhalte in Video- Text- und Hypertextform.
+                </p>
+            </div>
 
-          <p>
-            In meinem Underground-Blog Kenopsium teile ich Einblicke in meine aktuellen
-            Projekte. Dort findest du auch Sammlungen anderer spannender Inhalte in Video- Text- und Hypertextform.
-          </p>
-        </div>
-        <div>
-          <h2>Über mich</h2>
-          <p>
-            Meine Laufbahn führte mich seit 1999 vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. 
-            In Vorletzem spiele ich gerade die Geisteswissenschaften Kommunikationswissenschaft, Philosophie, Soziologie und Bildungswissenschaft
-            durch, um mich später im psychosozialen Bereich zu engagieren. In Letzterem setze ich mich in der Tradition von  
-            <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> für eine weiterhin resiliente, 
-            lebenswerte sowie ästhetische fränkische Stadt ein. <br /><br />
-            Dieses Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln. Das würde in sozialen Medien nicht funktionieren,
-            ist maßgeblich cooler als werbeverseuchte Plattformen und kostet mich fast nichts. Diese Seite ist übrigens frei von nicht technisch notwendigen Cookies und
-            hat daher auch kein Banner. Wenn du an neuen Inhalten interessiert bist, dann besuche gerne die Orte (oder Nicht-Orte) innerhalb meines Kompendium-Blogs.
-          </p>
-        </div>
-        <div>
-          <h2>Vita (auszugsweise)</h2>
-          <p>
-            <b>Praktische Erfahrungen</b>
-          </p>
-          <ul>
-            <li>
-              <strong>Seit 05/20:</strong> Mitglied des Stadtrates, Neustadt a. d. Aisch
-            </li>
-            <li>
-              <strong>05/22 – 01/24:</strong> Nightlines in Europe, Bamberg<br />
-              Mitarbeit im Rahmen eines studentischen Zuhörtelefons
-            </li>
-          </ul>
-          <p>
-            <b>Bildungsweg</b>
-          </p>
-          <ul>
-            <li>
-              <strong>Seit 10/23:</strong> FernUniversität in Hagen<br />
-              Studium der Bildungswissenschaft mit Schwerpunkt Erwachsenenbildung. Angestrebter Abschluss: M.A.
-            </li>
-            <li>
-              <strong>10/19 - 09/23:</strong> Otto-Friedrich-Universität, Bamberg<br />
-              Studium der Kommunikationswissenschaft, Philosophie und Soziologie. Abschluss: Bachelor of Arts
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h2>Kontakt aufnehmen</h2>
-          <div class="contact-buttons">
-            <button onclick="location.href='mailto:den.muench@gmail.com'"><h2>E-Mail senden</h2></button>
-          </div>
-          <div class="contact-buttons">
-            <button onclick="location.href='https://www.instagram.com/den.muench/'"><h2>Auf Instagram besuchen</h2></button>
-          </div>
-          <div class="contact-buttons">
-            <button onclick="location.href='https://rathaus.neustadt-aisch.de/rathaus-und-verwaltung/politik/stadtrat'"><h2>Stadtbezogene Anliegen mitteilen</h2>
-            </button>
-          </div>
-        </div>
-      </section>
+            <div>
+                <h2>Über mich</h2>
+                <p>
+                    Meine Laufbahn führte mich seit 1999 vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. 
+                    In Vorletzem spiele ich gerade die Geisteswissenschaften Kommunikationswissenschaft, Philosophie, Soziologie und Bildungswissenschaft
+                    durch, um mich später im psychosozialen Bereich zu engagieren. In Letzterem setze ich mich in der Tradition von  
+                    <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> für eine weiterhin resiliente, 
+                    lebenswerte sowie ästhetische fränkische Stadt ein. <br><br>
+                    Dieses Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln. Das würde in sozialen Medien nicht funktionieren,
+                    ist maßgeblich cooler als werbeverseuchte Plattformen und kostet mich fast nichts. Diese Seite ist übrigens frei von nicht technisch notwendigen Cookies und
+                    hat daher auch kein Banner. Wenn du an neuen Inhalten interessiert bist, dann besuche gerne die Orte (oder Nicht-Orte) innerhalb meines Kompendium-Blogs.
+                </p>
+            </div>
+
+            <div>
+                <h2>Vita (auszugsweise)</h2>
+                <p><b>Praktische Erfahrungen</b></p>
+                <ul>
+                    <li><strong>Seit 05/20:</strong> Mitglied des Stadtrates, Neustadt a. d. Aisch</li>
+                    <li><strong>05/22 - 01/24:</strong> Nightlines in Europe, Bamberg<br>Mitarbeit im Rahmen eines studentischen Zuhörtelefons</li>
+                </ul>
+                <p><b>Bildungsweg</b></p>
+                <ul>
+                    <li><strong>Seit 10/23:</strong> FernUniversität in Hagen<br>Studium der Bildungswissenschaft mit Schwerpunkt Erwachsenenbildung. Angestrebter Abschluss: M.A.</li>
+                    <li><strong>10/19 - 09/23:</strong> Otto-Friedrich-Universität, Bamberg<br>Studium der Kommunikationswissenschaft, Philosophie und Soziologie. Abschluss: Bachelor of Arts</li>
+                </ul>
+            </div>
+
+            <div>
+                <h2>Kontakt aufnehmen</h2>
+                <div class="contact-buttons">
+                    <button onclick="location.href='mailto:den.muench@gmail.com'"><h2>E-Mail senden</h2></button>
+                </div>
+                <div class="contact-buttons">
+                    <button onclick="location.href='https://www.instagram.com/den.muench/'"><h2>Auf Instagram besuchen</h2></button>
+                </div>
+                <div class="contact-buttons">
+                    <button onclick="location.href='https://rathaus.neustadt-aisch.de/rathaus-und-verwaltung/politik/stadtrat'"><h2>Stadtbezogene Anliegen mitteilen</h2></button>
+                </div>
+            </div>
+        </section>
     </main>
+
     <footer>
-      <p>© 2025 Dennis Münch | 🍪 Cookie-freie Seite<br><a href="impressum.html">Impressum</a></p>
+        <p>© 2025 Dennis Münch | 🍪 Cookie-freie Seite<br><a href="impressum.html">Impressum</a></p>
     </footer>
-  </body>
+</body>
 </html>
