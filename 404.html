@@ -18,50 +18,54 @@
             font-family: 'Geist', Arial, sans-serif;
             color: white;
             background: #212121 url("/images/404.webp") no-repeat;
-            background-size: 1920px 1080px;
+            background-size: 400px 300px;
             background-position: center;
             margin: 0;
             padding: 0;
             text-align: center;
             overflow: hidden;
             height: 100vh;
-            animation: shake 0.5s infinite alternate ease-in-out, distort 1s infinite alternate ease-in-out;
-        }
-
-        @keyframes shake {
-            from { background-position: center; }
-            to { background-position: calc(50% + 5px) calc(50% + 5px); }
+            animation: distort 30s infinite ease-in;
         }
 
         @keyframes distort {
-            from { background-size: 1920px 1080px; }
-            to { background-size: 1940px 1100px; }
+            from { background-size: 400px 300px; }
+            to { background-size: 4000px 3000px; }
         }
 
-        h1, h2, p, #nav, #stalemateButton {
+        h1, h2, p, #nav, #stalemateButton, #countdown {
             position: relative;
             z-index: 2;
+            margin: 10px 0; /* Standard-Margin */
+        }
+
+        /* Margin für Mobilgeräte */
+        @media (max-width: 768px) {
+            h1, h2, p, #nav, #stalemateButton, #countdown {
+                margin: 15px 20px; /* Größerer Margin für Mobilgeräte */
+            }
         }
 
         h1 {
             font-family: 'Syne', Arial, sans-serif;
             font-size: 50px;
-            margin-top: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         h2 {
             font-family: 'Syne', Arial, sans-serif;
             font-size: 25px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         #nav p {
             color: rgb(70, 121, 189);
             font-size: 25px;
-            text-decoration: underline;
             padding: 10px 20px;
             display: inline-block;
             cursor: pointer;
             transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         #nav p.disappearing {
@@ -75,8 +79,6 @@
             visibility: hidden;
             transition: opacity 1s ease-in-out;
             animation: blink 0.5s infinite alternate;
-            margin-top: 20px;
-            
             background-color: #1c1c1c;
             border-radius: 10px;
             box-shadow: 0px 0px 10px red;
@@ -103,46 +105,115 @@
             border-radius: 10px;
             width: 100%;
             box-sizing: border-box;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            white-space: normal; /* Erlaubt Wortumbrüche */
+            line-height: 1.2; /* Verbessert Lesbarkeit bei Umbruch */
         }
 
-        /* Sterne */
-        .star {
+        #countdown {
+            font-size: 60px;
+            color: red;
+            display: none;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        #finalMessage {
+            display: none;
+            font-family: 'Syne', Arial, sans-serif;
+            font-size: 30px;
             position: absolute;
-            background-color: white;
-            width: 2px;
-            height: 2px;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 1.5s infinite alternate ease-in-out;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
         }
 
-        @keyframes twinkle {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .word {
+            display: inline-block;
+            white-space: nowrap; /* Verhindert Umbrüche innerhalb von Wörtern */
+        }
+
+        .letter {
+            display: inline-block;
+            position: relative;
+            transform: translate(0, 0); /* Startposition */
+            transition: transform 5s ease-in-out; /* 5 Sekunden Übergang */
+            text-decoration: inherit; /* Erbt die Unterstreichung vom Eltern-Element */
+        }
+
+        /* Unterstreichung für alle Buchstaben und Leerzeichen in #nav p */
+        #nav p .letter {
+            text-decoration: underline;
         }
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             var homeText = document.querySelector("#nav p");
             var stalemateButton = document.querySelector("#stalemateButton");
+            var countdownElement = document.createElement("div");
+            countdownElement.id = "countdown";
+            document.body.appendChild(countdownElement);
             
+            var finalMessage = document.createElement("div");
+            finalMessage.id = "finalMessage";
+            finalMessage.textContent = "Wer von Geometrie nichts versteht, soll nicht eintreten. (Platon)";
+            document.body.appendChild(finalMessage);
+
             homeText.addEventListener("click", function() {
                 this.classList.add("disappearing");
                 setTimeout(() => stalemateButton.classList.add("visible"), 1500);
             });
 
-            // Sterne generieren
-            const starCount = 50;
-            const fragment = document.createDocumentFragment();
-            for (let i = 0; i < starCount; i++) {
-                let star = document.createElement("div");
-                star.classList.add("star");
-                star.style.left = Math.random() * window.innerWidth + "px";
-                star.style.top = Math.random() * window.innerHeight + "px";
-                star.style.animationDelay = Math.random() * 2 + "s";
-                fragment.appendChild(star);
-            }
-            document.body.appendChild(fragment);
+            // Countdown nach 5 Sekunden starten
+            setTimeout(() => {
+                countdownElement.style.display = "block";
+                let timeLeft = 10;
+                countdownElement.textContent = timeLeft;
+
+                let countdown = setInterval(() => {
+                    timeLeft--;
+                    countdownElement.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        countdownElement.style.display = "none";
+                    }
+                }, 1000);
+
+                // Nach 15 Sekunden alles ausblenden und Nachricht zeigen
+                setTimeout(() => {
+                    document.querySelectorAll("body > *").forEach(element => {
+                        if (element.id !== "finalMessage") {
+                            element.style.display = "none";
+                        }
+                    });
+                    document.body.style.background = "#212121";
+                    finalMessage.style.display = "block";
+                }, 10000); // 10 Sekunden nach Countdown-Start = 15 Sekunden gesamt
+            }, 5000); // Countdown startet nach 5 Sekunden
+
+            // Wörter und Buchstaben vorbereiten
+            const elements = document.querySelectorAll("h1, h2, p, #stalemateButton button, #countdown");
+            elements.forEach(element => {
+                const text = element.textContent.trim(); // Entfernt überflüssige Leerzeichen am Anfang/Ende
+                const words = text.split(" ").map(word => {
+                    const letters = word.split("").map(char => {
+                        return `<span class="letter">${char}</span>`;
+                    }).join("");
+                    return `<span class="word">${letters}</span>`;
+                });
+                // Leerzeichen zwischen Wörtern als <span> einfügen
+                element.innerHTML = words.join('<span class="letter"> </span>');
+            });
+
+            // Buchstaben nach 10 Sekunden driften lassen
+            setTimeout(() => {
+                const letters = document.querySelectorAll(".letter");
+                letters.forEach(letter => {
+                    const x = (Math.random() - 0.5) * 200; // Zufällige x-Richtung
+                    const y = (Math.random() - 0.5) * 200; // Zufällige y-Richtung
+                    letter.style.transform = `translate(${x}px, ${y}px)`; // Langsame Bewegung über 5 Sekunden
+                });
+            }, 10000); // Start nach 10 Sekunden
         });
     </script>
 </head>
@@ -157,7 +228,7 @@
     <a href="https://www.denmuen.ch/#launchpad" target="_self">
         <div id="stalemateButton">
             <button>
-                STALEMATE RESOLVE<br><b>PRESS HERE</b>
+                STALEMATE RESOLVE <br><b>PRESS HERE</b>
             </button>
         </div>
     </a>
