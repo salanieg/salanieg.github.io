@@ -156,8 +156,6 @@
     font-display: swap;
 }
 
-
-
 @font-face {
     font-family: 'Geist';
     src: url('https://www.denmuen.ch/fonts/Geist/Geist-Medium.woff2') format('woff2'),
@@ -311,11 +309,27 @@
     font-display: swap;
 }
 
+/* RUDI */
+
+@font-face {
+    font-family: 'Rudi';
+    src: url('https://www.denmuen.ch/fonts/Rudi/Rudi-Regular.woff2') format('woff2'),
+        url('https://www.denmuen.ch/fonts/Rudi/Rudi-Regular.woff') format('woff'),
+        url('https://www.denmuen.ch/fonts/Rudi/Rudi-Regular.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 * {
     font-family: "Geist";
     letter-spacing: -0.05em;
 }
 
-h1, h2, .content a, .collapsible {
+h1, .content a, .collapsible {
     font-family: "Anybody";
+}
+
+h2 {
+    font-family: "Rudi";
 }
