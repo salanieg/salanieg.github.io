@@ -183,7 +183,7 @@ button h2 {
 }
 
 .button-section img:hover {
-    transform: scale(1.1);
+    transform: scale(0.9);
 }
 
 .button-section h2 {

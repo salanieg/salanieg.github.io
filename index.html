@@ -20,6 +20,50 @@
     <script defer src="common.js"></script>
 
     <style>
+       /* Globale/Base-Styles */
+        h1 {
+            text-align: left;
+            hyphens: none;
+        }
+
+        h2 {
+            font-size: 36px;
+        }
+
+        a {
+            color: #333;
+        }
+
+        li {
+            text-align: left;
+            hyphens: none;
+        }
+
+        /* Komponenten-Styles */
+        section {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: unset;
+            column-gap: 150px;
+            row-gap: 50px;
+            justify-content: center;
+        }
+
+        section > div {
+            max-width: 500px;
+            text-align: justify;
+            hyphens: auto;
+        }
+
+        footer {
+            color: #3a3a3a;
+        }
+
+        footer a {
+            color: #3a3a3a;
+        }
+
+        /* ID- und Klassen-Styles */
         #header-text {
             position: absolute;
             top: 0px;
@@ -36,6 +80,28 @@
             height: 600px;
         }
 
+        #title {
+            border: 3px solid #333;
+            background-color: #d3a4ea;
+            color: #333;
+            padding: 20px;
+        }
+
+        .button-section img {
+            width: 250px;
+            height: 250px;
+        }
+
+        /* Interaktive Styles */
+        a:hover {
+            color: #a933e4;
+        }
+
+        footer a:hover {
+            color: #a933e4;
+        }
+
+        /* Medienabfragen */
         @media (max-width: 768px) {
             #header-text {
                 width: 300px;
@@ -47,77 +113,6 @@
                 height: auto;
                 max-width: 600px;
             }
-        }
-
-        h1 {
-            text-align: left;
-            hyphens: none;
-        }
-
-        h2 {
-            font-size: 36px;
-        }
-
-        a {
-            color: #333;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        a:hover {
-            color: #0c0c0c;
-            text-decoration: none;
-        }
-
-        li {
-            text-align: left;
-            hyphens: none;
-        }
-
-        section {
-            display: flex;
-            flex-wrap: wrap;
-            max-width: unset;
-            column-gap: 150px;
-            row-gap: 50px;
-            justify-content: center;
-        }
-
-        .button-section img {
-            width: 250px;
-            height: 250px;
-        }
-
-        .button-section img:hover {
-            transform: scale(0.9);
-        }
-
-        #title {
-            border: 3px solid #333;
-            background-color: #d3a4ea;
-            color: #333;
-            padding: 20px;
-        }
-
-        footer {
-            color: #3a3a3a;
-        }
-
-        footer a {
-            color: #3a3a3a;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        footer a:hover {
-            color: #0c0c0c;
-            text-decoration: none;
-        }
-
-        section > div {
-            max-width: 500px;
-            text-align: justify;
-            hyphens: auto;
         }
     </style>
 </head>
