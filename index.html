@@ -15,14 +15,26 @@
 
     <link rel="preload" as="image" href="images/dennis_münch.webp" type="image/webp">
     <link rel="preload" as="image" href="images/headertext.svg" type="image/svg+xml">
-    <link rel="preload" as="image" href="images/back_main.webp" type="image/webp">
     <link rel="preload" as="style" href="styles/fonts.css">
     <link rel="stylesheet" href="styles/fonts.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="styles/general.css">
     <script defer src="common.js"></script>
 
     <style>
+
        /* Globale/Base-Styles */
+
+       header {
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-position: center;
+            background-size: contain;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+        }       
+
         h1 {
             text-align: left;
             hyphens: none;
@@ -114,7 +126,7 @@
         }
 
         /* Medienabfragen */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             #header-text {
                 width: 230px;
                 height: auto;
@@ -128,6 +140,12 @@
             #title {
             padding: 10px;
             }
+            
+        @media (min-width: 900px) {
+            header {
+            background-image: url("/images/back_main.webp");
+                }
+            }       
         }
     </style>
 </head>
