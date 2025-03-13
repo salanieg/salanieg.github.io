@@ -111,9 +111,9 @@ button h2 {
 /* Spezifische Elemente */
 #blogheader {
     display: block;
-    margin-top: 0px;
-    width: 100%;
-    max-width: 700px;
+    margin-top: 40px;
+    width: 90%;
+    max-width: 560px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -121,9 +121,12 @@ button h2 {
 #intro-text {
     max-width: 600px;
     margin: 20px auto;
-    padding: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
     line-height: 1.5;
-    font-size: 1.2em;
+    font-size: 18px;
+    hyphens: auto;
 }
 
 /* Button-Sektion */
@@ -181,10 +184,14 @@ button h2 {
 }
 
 .content a {
-    color: #F4E8D2;
+    color: #d3a4ea;
     text-decoration: none;
-    font-size: 1.5em;
+    font-size: 24px;
     font-weight: bold;
+}
+
+.content a:hover {
+    color: #a933e4;
 }
 
 .collapsible {
@@ -197,14 +204,14 @@ button h2 {
     text-align: center;
     border: none;
     outline: none;
-    font-size: 1.5em;
+    font-size: 24px;
     margin: 10px auto;
     display: block;
     border-radius: 5px;
 }
 
 .active, .collapsible:hover {
-    box-shadow: 0 0 10px #F4E8D2;
+    box-shadow: 0 0 10px #d3a4ea;
     width: 540px;
     transform: unset;
     transition: transform 0.5s ease-in-out, box-shadow 0.5s ease-in-out;

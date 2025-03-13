@@ -3,21 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <title>Ivory Tower</title>
+
+    <title>Kenopsium • Ivory Tower</title>
+
     <link rel="stylesheet" href="/styles/fonts.css">
     <link rel="stylesheet" href="/styles/general.css">
-    <script type="text/javascript" src="common.js"></script>
-    <style>
+    <script type="text/javascript" src="/common.js"></script>
 
+    <link rel="preload" as="image" href="/images/headertext_keno.svg" type="image/svg+xml">
+    <link rel="preload" as="image" href="/images/kenopsium_IT.webp" type="image/webp">
+    
+    <style>
 body {
         color: #C2C2C2;
         background-color: #333;
-        background-image: url("/images/ivory.webp");
+        background-image: url("/images/kenopsium_IT.webp");
         background-size: cover;
+        background-attachment: fixed;
+        background-position: center;
         }
         
         h1 {
             text-align: center;
+            margin-bottom: 30px;
         }
 
         .button-section img {
@@ -30,7 +38,7 @@ body {
 </head>
 <body>
     <main>
-        <img id="blogheader" src="/images/blogheader.svg" alt="Blog Header" width="700" height="auto" fetchpriority="high" decoding="async">
+        <img id="blogheader" src="/images/headertext_keno.svg" alt="Blog Header" width="700" height="auto" fetchpriority="high" decoding="async">
         <h1>IVORY TOWER</h1>
         
         <p id="intro-text">
@@ -73,7 +81,7 @@ body {
         </div>
         <div class="button-section">
             <a href="/kompendium.html">
-                <img src="/images/theseus.webp" alt="Startseite">
+                <img src="/images/kenopsium_butTJ.webp" alt="Startseite">
                 <h2>LAUNCHPAD</h2>
                 <p>zurück zur Startseite</p>
             </a>
