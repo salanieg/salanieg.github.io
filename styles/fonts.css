@@ -247,6 +247,18 @@
     font-display: swap;
 }
 
+/* ARCANE NINE */
+
+@font-face {
+    font-family: 'Arcane Nine';
+    src: url('https://www.denmuen.ch/fonts/Arcane Nine/Arcane Nine.woff2') format('woff2'),
+        url('https://www.denmuen.ch/fonts/Arcane Nine/Arcane Nine.woff') format('woff'),
+        url('https://www.denmuen.ch/fonts/Arcane Nine/Arcane Nine.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 * {
     font-family: "Geist";
     letter-spacing: -0.05em;
@@ -261,9 +273,9 @@ h2 {
     letter-spacing: 0.0em;
 }
 
-#button-section h2 {
-    font-family: "Anybody";
-    letter-spacing: 0.0em;
+.button-section h2 {
+    font-family: "Arcane Nine";
+    letter-spacing: -0.05em;
 }
 
 #title h1 {
