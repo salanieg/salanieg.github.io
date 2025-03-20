@@ -1,0 +1,235 @@
+/* Grundlegende Struktur und Box-Sizing */
+html {
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+    max-width: 100%;
+}
+
+/* Globale Base-Styles */
+body {
+    background-color: #C2C2C2;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    display: grid;
+    grid-template-columns: 100vw;
+    grid-template-rows: 1fr auto;
+    grid-template-areas: 
+        "content"
+        "footer";
+    justify-content: center;
+}
+
+main {
+    grid-area: content;
+}
+
+/* Typografie */
+h1 {
+    margin-top: 0;
+    font-size: 36px;
+    text-align: left;
+    hyphens: none;
+    font-weight: 300;
+}
+
+h2 {
+    margin-top: 0;
+    font-size: 36px;
+}
+
+p {
+    font-size: 18px;
+}
+
+li {
+    text-align: left;
+    hyphens: none;
+}
+
+/* Links */
+a {
+    color: #333;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    color: #a933e4;
+}
+
+/* Header */
+header {
+    text-align: center;
+    background-size: contain;
+    background-attachment: fixed;
+    background-position: top center;
+    height: auto;
+    line-height: 0;
+}
+
+header img {
+    height: auto;
+}
+
+/* Sektionen */
+section {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 40px;
+    column-gap: 150px;
+    row-gap: 50px;
+    margin: auto;
+    justify-content: center;
+}
+
+section img {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    display: block;
+    object-fit: cover;
+}
+
+section > div {
+    max-width: 500px;
+    text-align: justify;
+    hyphens: auto;
+}
+
+/* Buttons */
+button {
+    padding: 10px 5px;
+    cursor: pointer;
+    margin: 10px;
+    margin-top: 0;
+    font-weight: 800;
+    border: 3px solid #333;
+    background-color: #d3a4ea;
+    color: #333;
+}
+
+button:hover {
+    transform: scale(0.95);
+    box-shadow: 0 0 15px rgba(211, 164, 234, 0.8);
+}
+
+button h2 {
+    margin: 0;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* Button-Sektion */
+.button-section {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+.button-section > * {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.button-section img {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.button-section img:hover {
+    transform: scale(0.95);
+}
+
+.button-section h2 {
+    margin: 10px 0 0;
+    font-size: 2em;
+}
+
+.button-section p {
+    margin: 0;
+    font-size: 1em;
+}
+
+/* Footer */
+footer {
+    grid-area: footer;
+    text-align: center;
+    padding: 5px;
+    background: none;
+    color: #3a3a3a;
+    margin-top: 100px;
+}
+
+footer a {
+    color: #3a3a3a;
+}
+
+footer a:hover {
+    color: #a933e4;
+}
+
+/* ID-Styles */
+#header-text {
+    width: 400px;
+    height: 135px;
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#title {
+    border: 2px solid #333;
+    background-color: #d3a4ea;
+    color: #333;
+    padding: 20px;
+}
+
+/* Media Queries */
+@media (min-width: 900px) {
+    header {
+        background-image: url("/images/back_main.webp");
+    }
+}
+
+@media (max-width: 900px) {
+    #header-text {
+        width: 230px;
+        height: auto;
+        top: 0;
+    }
+
+    #header-img {
+        width: 900px;
+        height: 600px;
+        max-width: 100%;
+        height: auto;
+    }
+
+    #title {
+        padding: 10px;
+    }
+    
+    #title h1 i {
+        font-size: 26px;
+    }
+}
+
+@media (max-width: 768px) {
+    section {
+        padding: 20px;
+    }
+}
