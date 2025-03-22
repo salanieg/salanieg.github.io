@@ -37,11 +37,18 @@ h1 {
     text-align: left;
     hyphens: none;
     font-weight: 300;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideIn 0.6s ease-out forwards;
 }
 
 h2 {
     margin-top: 0;
     font-size: 36px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideIn 0.6s ease-out forwards;
+    animation-delay: 0.2s;
 }
 
 p {
@@ -72,6 +79,7 @@ header {
     background-position: top center;
     height: auto;
     line-height: 0;
+    position: relative; /* Für die absolute Positionierung des Headertexts */
 }
 
 header img {
@@ -106,11 +114,11 @@ section > div {
 /* Buttons */
 button {
     padding: 10px 5px;
+    border: 3px outset #a933e4;
     cursor: pointer;
     margin: 10px;
     margin-top: 0;
     font-weight: 800;
-    border: 3px solid #333;
     background-color: #d3a4ea;
     color: #333;
 }
@@ -186,16 +194,60 @@ footer a:hover {
     width: 400px;
     height: 135px;
     position: absolute;
-    top: 5px;
+    top: 0; /* Geändert von 5px auf 0 für exakte Ausrichtung */
     left: 50%;
     transform: translateX(-50%);
+    z-index: 1; /* Über dem Bild */
+}
+
+#header-text img {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideIn 0.8s ease-out forwards;
+    animation-delay: 0.1s;
+    width: 400px;
+    height: 135px;
+}
+
+#header-img {
+    opacity: 0;
+    animation: fadeIn 1s ease-in forwards;
+    width: 900px;
+    height: 600px;
+    max-width: 100%;
+    height: auto;
 }
 
 #title {
-    border: 2px solid #333;
     background-color: #d3a4ea;
     color: #333;
     padding: 20px;
+}
+
+/* Animationen */
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Scroll-Animation für section-heading */
+.section-heading {
+    opacity: 0;
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    transform: translateY(20px);
+}
+
+.section-heading.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* Media Queries */
@@ -207,15 +259,13 @@ footer a:hover {
 
 @media (max-width: 900px) {
     #header-text {
-        width: 230px;
+        width: 300px; /* Angepasst von 230px auf 300px wie in meinen Änderungen */
         height: auto;
         top: 0;
     }
 
     #header-img {
-        width: 900px;
-        height: 600px;
-        max-width: 100%;
+        width: 100%; /* Angepasst für Responsive Design */
         height: auto;
     }
 
@@ -231,5 +281,12 @@ footer a:hover {
 @media (max-width: 768px) {
     section {
         padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    #header-text img {
+        width: 200px;
+        height: auto;
     }
 }
