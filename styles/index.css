@@ -58,6 +58,15 @@ p {
 li {
     text-align: left;
     hyphens: none;
+    margin-bottom: 15px;
+    padding-left: 10px;
+    line-height: 1.4;
+    list-style-type: disc;
+}
+
+li::marker {
+    font-size: 0.6em;
+    color: #a933e4;
 }
 
 /* Links */
@@ -118,7 +127,7 @@ button {
     margin: 10px;
     margin-top: 0;
     font-weight: 800;
-    border: 3px solid #333;
+    border: 2px solid #a933e4;
     background-color: #d3a4ea;
     color: #333;
 }
@@ -219,7 +228,7 @@ footer a:hover {
 }
 
 #title {
-    border: 2px solid #333;
+    border: 2px solid #a933e4;
     background-color: #d3a4ea;
     color: #333;
     padding: 20px;
