@@ -19,10 +19,25 @@
     <link rel="stylesheet" href="/styles/index.css">
     <link rel="preload" as="image" href="images/headertext.svg" type="image/svg+xml">
     <script defer src="common.js"></script>
-
 </head>
 <body>
     <main>
+        <div class="burger-menu">
+            <input type="checkbox" id="burger-toggle">
+            <label for="burger-toggle" class="burger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </label>
+            <nav class="nav-menu">
+                <a href="#title">Start</a>
+                <a href="#kenopsium">Kenopsium</a>
+                <a href="#about">Über mich</a>
+                <a href="#cv">Curriculum Vitae</a>
+                <a href="#contact">Kontakt</a>
+            </nav>
+        </div>
+
         <header>
             <div id="header-text">
                 <img src="images/headertext.svg" alt="Headerschriftzug" width="400" height="135">
@@ -31,18 +46,16 @@
         </header>
 
         <section>
-            <div>
-                <div id="title">
-                    <h1>Etwas nicht zu können ist kein Grund es nicht zu tun.</h1>
-                    <p>
-                        Willkommen auf meiner Portfolio-Website, auf der ich teilen möchte, was mich aktuell bewegt – als
-                        Philosoph:in, Student:in und politisch interessierte Person. Derzeit setze ich mich als parteiloses Mitglied
-                        im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten Stadt ein.
-                    </p>
-                </div>
+            <div id="title">
+                <h1>Etwas nicht zu können ist kein Grund es nicht zu tun.</h1>
+                <p>
+                    Ich bin Dennis Münch, Philosoph:in, Student:in und politisch interessierte Person. Willkommen auf meiner Portfolio-Website,
+                    auf der ich teilen möchte, was mich aktuell bewegt. Derzeit setze ich mich als parteiloses Mitglied
+                    im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten Stadt ein.
+                </p>
             </div>
 
-            <div>
+            <div id="kenopsium">
                 <h2>KENOPSIUM</h2>
                 <div class="button-section">
                     <a href="https://www.denmuen.ch/kompendium">
@@ -56,7 +69,7 @@
                 </p>
             </div>
 
-            <div>
+            <div id="about">
                 <h2>ÜBER MICH</h2>
                 <p>
                     Meine Laufbahn führte mich seit 1999 vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. 
@@ -69,7 +82,7 @@
                 </p>
             </div>
 
-            <div>
+            <div id="cv">
                 <h2>Curriculum Vitae</h2>
                 <p><b>Praktische Erfahrungen</b></p>
                 <ul>
@@ -86,7 +99,7 @@
                 <p>Die hier aufgeführten Informationen sind ein Auszug aus meinem vollständigen Lebenslauf.</p>
             </div>
 
-            <div>
+            <div id="contact">
                 <h2>KONTAKT AUFNEHMEN</h2>
                 <div>
                     <button onclick="location.href='mailto:den.muench@gmail.com'"><h2>E-Mail senden</h2></button>
