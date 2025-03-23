@@ -260,8 +260,8 @@
 }
 
 * {
-    font-family: "Geist";
-    letter-spacing: -0.05em;
+    font-family: "Anybody";
+    letter-spacing: 0.00em;
 }
 
 h1, .content a, .collapsible {
@@ -270,17 +270,12 @@ h1, .content a, .collapsible {
 
 h2 {
     font-family: "Rudi";
-    letter-spacing: 0.0em;
-}
-
-.button-section h2 {
-    font-family: "Arcane Nine";
-    letter-spacing: 0.0em;
+    letter-spacing: 0.05em;
 }
 
 #title h1 {
     font-family: "Rudi";
-    letter-spacing: 0.0em;
+    letter-spacing: 0.05em;
     line-height: 0.9
 }
 

@@ -36,7 +36,7 @@ h1 {
     font-size: 36px;
     text-align: left;
     hyphens: none;
-    font-weight: 300;
+    color: #a933e4;
     opacity: 0;
     transform: translateY(20px);
     animation: slideIn 0.6s ease-out forwards;
@@ -45,11 +45,14 @@ h1 {
 h2 {
     margin-top: 0;
     font-size: 36px;
+    text-align: left;
+    hyphens: none;
+    color: #a933e4;
     opacity: 0;
     transform: translateY(20px);
     animation: slideIn 0.6s ease-out forwards;
-    animation-delay: 0.2s;
 }
+
 
 p {
     font-size: 18px;
@@ -116,8 +119,8 @@ section img {
 
 section > div {
     max-width: 500px;
-    text-align: justify;
-    hyphens: auto;
+    text-align: left;
+    hyphens: none;
 }
 
 /* Buttons */
@@ -140,7 +143,7 @@ button:hover {
 button h2 {
     margin: 0;
     font-size: 1.5em;
-    font-weight: bold;
+    color: #333;
 }
 
 /* Button-Sektion */
@@ -172,7 +175,8 @@ button h2 {
 
 .button-section h2 {
     margin: 10px 0 0;
-    font-size: 2em;
+    font-size: 1.5em;
+    color: #333;
 }
 
 .button-section p {
