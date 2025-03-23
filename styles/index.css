@@ -18,7 +18,7 @@ body {
     height: 100vh;
     width: 100vw;
     display: grid;
-    font-weight: 100;
+    font-weight: 500;
     grid-template-columns: 100vw;
     grid-template-rows: 1fr auto;
     grid-template-areas: 
@@ -77,7 +77,7 @@ li::marker {
 a {
     color: #333;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 a:hover {
@@ -140,6 +140,7 @@ button h2 {
     color: #333;
 }
 
+
 /* Button-Sektion */
 .button-section {
     display: flex;
@@ -171,6 +172,10 @@ button h2 {
     margin: 10px 0 0;
     font-size: 1.5em;
     color: #333;
+}
+
+.button-section h2:hover {
+    color: #a933e4;
 }
 
 .button-section p {
