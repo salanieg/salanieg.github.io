@@ -37,7 +37,7 @@ h1 {
     font-size: 36px;
     text-align: left;
     hyphens: none;
-    color: #a933e4;
+    color: #333;
     opacity: 0;
     transform: translateY(20px);
     animation: slideIn 0.6s ease-out forwards;
@@ -84,7 +84,7 @@ a:hover {
     color: #a933e4;
 }
 
-/* Header */
+/* Layout-Komponenten */
 header {
     text-align: center;
     background-size: contain;
@@ -101,13 +101,12 @@ header img {
     height: auto;
 }
 
-/* Sektionen */
 section {
     display: flex;
     flex-wrap: wrap;
     padding: 40px;
     column-gap: 150px;
-    row-gap: 100px;
+    row-gap: 150px;
     margin: auto;
     justify-content: center;
 }
@@ -118,20 +117,38 @@ section > div {
     hyphens: none;
 }
 
+footer {
+    grid-area: footer;
+    text-align: center;
+    padding: 5px;
+    background: none;
+    color: #3a3a3a;
+    margin-top: 100px;
+}
+
+footer a {
+    color: #3a3a3a;
+}
+
+footer a:hover {
+    color: #a933e4;
+}
+
 /* Buttons */
 button {
     padding: 10px 5px;
     cursor: pointer;
-    margin: 10px;
+    margin: 20px;
     margin-top: 0;
     font-weight: 800;
-    border: 2px solid #a933e4;
+    border: 2px dotted #a933e4;
     background-color: #d3a4ea;
     color: #333;
 }
 
 button:hover {
     transform: scale(0.95);
+    border: 2px solid #a933e4;
 }
 
 button h2 {
@@ -139,7 +156,6 @@ button h2 {
     font-size: 1.5em;
     color: #333;
 }
-
 
 /* Button-Sektion */
 .button-section {
@@ -162,20 +178,15 @@ button h2 {
     height: 250px;
     object-fit: cover;
     border-radius: 50%;
-}
-
-.button-section img:hover {
-    transform: scale(0.95);
+    border: 2px dotted #a933e4;
+    transition: transform 0.3s ease, border 0.3s ease;
 }
 
 .button-section h2 {
     margin: 10px 0 0;
     font-size: 1.5em;
     color: #333;
-}
-
-.button-section h2:hover {
-    color: #a933e4;
+    transition: color 0.3s ease;
 }
 
 .button-section p {
@@ -183,21 +194,12 @@ button h2 {
     font-size: 1em;
 }
 
-/* Footer */
-footer {
-    grid-area: footer;
-    text-align: center;
-    padding: 5px;
-    background: none;
-    color: #3a3a3a;
-    margin-top: 100px;
+.button-section > *:hover img {
+    transform: scale(0.95);
+    border: 2px solid #a933e4;
 }
 
-footer a {
-    color: #3a3a3a;
-}
-
-footer a:hover {
+.button-section > *:hover h2 {
     color: #a933e4;
 }
 
@@ -223,35 +225,10 @@ footer a:hover {
 }
 
 #title {
-    border: 2px solid #a933e4;
+    border: 2px dotted #a933e4;
     background-color: #d3a4ea;
     color: #333;
     padding: 20px;
-}
-
-/* Animationen */
-@keyframes slideIn {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeIn {
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slideFadeIn {
-    0% {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-100px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
 }
 
 /* Burger-Menü */
@@ -319,6 +296,31 @@ footer a:hover {
     opacity: 1;
 }
 
+/* Animationen */
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-100px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
 /* Media Queries */
 @media (min-width: 900px) {
     header {
@@ -345,12 +347,10 @@ footer a:hover {
     #title {
         padding: 10px;
     }
-
-    
 }
 
 @media (max-width: 1230px) {
-   .burger-menu {
+    .burger-menu {
         display: block;
     }
 }
