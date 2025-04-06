@@ -18,7 +18,7 @@ body {
     height: 100vh;
     width: 100vw;
     display: grid;
-    font-weight: 500;
+    font-weight: 300;
     grid-template-columns: 100vw;
     grid-template-rows: 1fr auto;
     grid-template-areas: 
@@ -55,8 +55,12 @@ h2 {
 }
 
 p {
-    font-size: 1.05em;
+    font-size: 1.2em;
     line-height: 1.4;
+}
+
+b {
+    font-weight: 600;
 }
 
 li {
@@ -179,14 +183,12 @@ button h2 {
     object-fit: cover;
     border-radius: 50%;
     border: 2px dotted #a933e4;
-    transition: transform 0.3s ease, border 0.3s ease;
 }
 
 .button-section h2 {
     margin: 10px 0 0;
     font-size: 1.5em;
     color: #333;
-    transition: color 0.3s ease;
 }
 
 .button-section p {
@@ -205,8 +207,8 @@ button h2 {
 
 /* ID-Styles */
 #header-text {
-    width: 400px;
-    height: 135px;
+    width: 300px;
+    height: 101.25px;
     position: absolute;
     top: 10px;
     left: 50%;
@@ -218,8 +220,8 @@ button h2 {
 #header-img {
     opacity: 0;
     animation: fadeIn 0.5s ease-in forwards;
-    width: 600px;
-    height: 400px;
+    width: 640px;
+    height: 427px;
     max-width: 100%;
     height: auto;
 }
@@ -322,17 +324,16 @@ button h2 {
 }
 
 /* Media Queries */
-@media (min-width: 900px) {
+@media (min-width: 640px) {
     header {
         background-image: url("/images/back_main.webp");
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 640px) {
     #header-text {
-        width: 300px;
+        width: 200px;
         height: auto;
-        top: 0;
     }
 
     #header-img {
