@@ -57,6 +57,7 @@ h2 {
 p {
     font-size: 1.1em;
     line-height: 1.4;
+    margin: 0;
 }
 
 b {
@@ -91,18 +92,17 @@ a:hover {
 /* Layout-Komponenten */
 header {
     text-align: center;
+    font-size: 1.4em;
+    color: #333;
+    background: linear-gradient(to right, #213828, #E0E0E0, #213828);
     background-size: contain;
     background-attachment: fixed;
     background-position: top center;
     height: auto;
     line-height: 0;
     position: relative;
-    padding: 0;
+    padding: 20px 0;
     margin: 0;
-}
-
-header img {
-    height: auto;
 }
 
 section {
@@ -208,16 +208,15 @@ button h2 {
 /* ID-Styles */
 #header-text {
     width: 300px;
-    height: 101.25px;
-    position: absolute;
-    top: 10px;
+    height: 65px;
+    position: relative;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1;
     animation: slideFadeIn 0.5s ease-out forwards;
 }
 
-#header-img {
+#contact-img {
     opacity: 0;
     animation: fadeIn 0.5s ease-in forwards;
     width: 640px;
@@ -324,21 +323,11 @@ button h2 {
 }
 
 /* Media Queries */
-@media (min-width: 640px) {
-    header {
-        background-image: url("/images/back_main.webp");
-    }
-}
 
 @media (max-width: 640px) {
     #header-text {
         width: 200px;
-        height: auto;
-    }
-
-    #header-img {
-        width: 100%;
-        height: auto;
+        
     }
 
     section {
