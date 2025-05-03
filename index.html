@@ -18,26 +18,137 @@
     <link rel="stylesheet" href="styles/fonts.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="/styles/index.css">
     <link rel="preload" as="image" href="images/headertext.svg" type="image/svg+xml">
+    <style>
+        /* Burger Menu Styles */
+        .nav-toggle {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 1000;
+            padding: 0;
+        }
+
+        .nav-toggle span {
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: #E0E0E0;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.3s ease;
+        }
+
+        .nav-toggle span:nth-child(1) {
+            top: 10px;
+        }
+
+        .nav-toggle span:nth-child(2) {
+            top: 18px;
+        }
+
+        .nav-toggle span:nth-child(3) {
+            top: 26px;
+        }
+
+        .nav-toggle.active span:nth-child(1) {
+            transform: translate(-50%, 8px) rotate(45deg);
+        }
+
+        .nav-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav-toggle.active span:nth-child(3) {
+            transform: translate(-50%, -8px) rotate(-45deg);
+        }
+
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 300px;
+            height: 100%;
+            background: #333;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            transition: right 0.3s ease;
+            z-index: 999;
+            padding: 80px 20px 20px;
+        }
+
+        .nav-menu.active {
+            right: 0;
+        }
+
+        .nav-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-menu ul li {
+            margin: 20px 0;
+        }
+
+        .nav-menu ul li a {
+            text-decoration: none;
+            color: #E0E0E0;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* Overlay for better UX */
+        .nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+            z-index: 998;
+        }
+
+        .nav-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+    </style>
     <script defer src="common.js"></script>
 </head>
 <body>
-    <main>
-        <div class="burger-menu">
-            <input type="checkbox" id="burger-toggle">
-            <label for="burger-toggle" class="burger-icon">
-                <span></span>
-                <span></span>
-                <span></span>
-            </label>
-            <nav class="nav-menu">
-                <a href="#title">Start</a>
-                <a href="#kenopsium">Kenopsium</a>
-                <a href="#about">Über mich</a>
-                <a href="#cv">Curriculum Vitae</a>
-                <a href="#contact">Kontakt</a>
-            </nav>
-        </div>
+    <button class="nav-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <nav class="nav-menu">
+        <ul>
+            <li><a href="#title">Home</a></li>
+            <li><a href="#kenopsium">Kenopsium</a></li>
+            <li><a href="#about">Über mich</a></li>
+            <li><a href="#cv">Curriculum Vitae</a></li>
+            <li><a href="#contact">Kontakt</a></li>
+            <li><a href="impressum.html">Impressum</a></li>
+            <hr>
+            <h2>KENOPSIUM</h2>
+            <li><a href="https://www.denmuen.ch/kompendium">Launchpad</a></li>
+            <li><a href="https://www.denmuen.ch/kompendium/magazin">Portfolio</a></li>
+            <li><a href="https://www.denmuen.ch/kompendium/kanon">Feuilleton</a></li>
 
+        </ul>
+    </nav>
+    <div class="nav-overlay"></div>
+
+    <main>
         <header>
             <div id="header-text">
                 <img src="images/headertext.svg" alt="Headerschriftzug" width="300" height="65">
@@ -73,10 +184,10 @@
                 <p>
                     Meine Laufbahn führt mich seit 1999 vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. 
                     Im Uni-Kontext spiele ich gerade die Geisteswissenschaften durch, um mich später im psychosozialen Bereich zu engagieren. Politisch setze ich mich,
-                    inspieriert von  <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> für eine weiterhin resiliente, 
+                    inspiriert von  <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> für eine weiterhin resiliente, 
                     lebenswerte und ästhetische fränkische Stadt ein.<br><br>
-                    Dieses Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln. Das würde in sozialen Medien nicht funktionieren,
-                    ist maßgeblich cooler als werbeverseuchte Plattformen und noch dazu sehr preiswert. Diese Seite ist frei von nicht technisch notwendigen Cookies und
+                    Dieses Webprojekt dient dazu, interessante Dinge, die ich teilen möchte, an einem Ort zu sammeln. Das würde in sozialen Medien so nicht funktionieren.
+                    Diese Seite ist frei von nicht technisch notwendigen Cookies und
                     hat daher auch kein Banner. Wenn du an neuen Inhalten interessiert bist, dann besuche gerne die Orte (oder Nicht-Orte) innerhalb meines Kompendium-Blogs.
                 </p>
             </div>
@@ -118,5 +229,34 @@
     <footer>
         <p>© 2025 | powered by GitHub<br><a href="impressum.html">Impressum</a></p>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navToggle = document.querySelector('.nav-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            const navOverlay = document.querySelector('.nav-overlay');
+
+            navToggle.addEventListener('click', () => {
+                navToggle.classList.toggle('active');
+                navMenu.classList.toggle('active');
+                navOverlay.classList.toggle('active');
+            });
+
+            navOverlay.addEventListener('click', () => {
+                navToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+                navOverlay.classList.remove('active');
+            });
+
+            // Close menu when clicking a link
+            navMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                    navOverlay.classList.remove('active');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
