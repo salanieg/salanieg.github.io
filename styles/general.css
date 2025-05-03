@@ -101,7 +101,6 @@ button {
 button:hover {
     background-color: #4a4a4a;
     border-color: #4a4a4a;
-    transform: translateY(-2px);
 }
 
 button h2 {
@@ -157,7 +156,7 @@ button h2 {
 }
 
 .button-section img:hover {
-    transform: translateY(-5px);
+    transform: scale(1.1);
     border-color: #4a4a4a;
 }
 
@@ -224,7 +223,7 @@ button h2 {
     font-size: 18px;
     position: absolute;
     right: 15px;
-    top: 50%; 
+    top: 50%;
     transform: translateY(-50%);
 }
 
@@ -236,7 +235,6 @@ button h2 {
     background: linear-gradient(90deg, #4a4a4a 0%, #2a2a2a 100%);
     border-color: #4a4a4a;
     width: 540px;
-    transform: translateY(-2px);
 }
 /* Media Queries */
 @media (max-width: 768px) {
