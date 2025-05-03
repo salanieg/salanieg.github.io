@@ -11,8 +11,8 @@ html {
 
 /* Globale Base-Styles */
 body {
-    background-color: #B5B5B5;
-    color: #333;
+    background-color: #333;
+    color: #E0E0E0;
     margin: 0;
     padding: 0;
     height: 100vh;
@@ -34,7 +34,7 @@ main {
 /* Typografie */
 h1 {
     margin-top: 0;
-    font-size: 36px;
+    font-size: 2em;
     text-align: left;
     hyphens: none;
     color: #333;
@@ -45,7 +45,7 @@ h1 {
 
 h2 {
     margin-top: 0;
-    font-size: 36px;
+    font-size: 2em;
     text-align: left;
     hyphens: none;
     color: #a933e4;
@@ -55,7 +55,7 @@ h2 {
 }
 
 p {
-    font-size: 1.2em;
+    font-size: 1.1em;
     line-height: 1.4;
 }
 
@@ -79,7 +79,7 @@ li::marker {
 
 /* Links */
 a {
-    color: #333;
+    color: #E0E0E0;
     text-decoration: none;
     font-weight: 600;
 }
@@ -126,12 +126,12 @@ footer {
     text-align: center;
     padding: 5px;
     background: none;
-    color: #3a3a3a;
+    color: #E0E0E0;
     margin-top: 100px;
 }
 
 footer a {
-    color: #3a3a3a;
+    color: #E0E0E0;
 }
 
 footer a:hover {
@@ -188,7 +188,7 @@ button h2 {
 .button-section h2 {
     margin: 10px 0 0;
     font-size: 1.5em;
-    color: #333;
+    color: #E0E0E0;
 }
 
 .button-section p {
