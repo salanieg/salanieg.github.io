@@ -14,8 +14,8 @@ html {
 
 /* Body und Grid-Layout */
 body {
-    background-color: #C2C2C2;
-    color: #333;
+    background-color: #333;
+    color: #C2C2C2;
     margin: 0;
     padding: 0;
     height: 100vh;
@@ -54,6 +54,8 @@ h1 {
 
 h2 {
     font-size: 28px;
+    font-family: "Anybody";
+    letter-spacing: -0.05em;
 }
 
 p {
@@ -85,20 +87,21 @@ footer a:hover {
 
 /* Buttons */
 button {
-    padding: 10px 5px;
+    padding: 12px 20px;
     cursor: pointer;
     margin: 10px;
     margin-top: 0px;
-    font-weight: 800;
-    border: 3px solid #333;
-    background-color: #d3a4ea;
-    color: #333;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    font-family: "Anybody";
+    font-weight: 900;
+    border: 4px solid #1a1a1a;
+    background-color: #2a2a2a;
+    color: #ffffff;
 }
 
 button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 15px rgba(211, 164, 234, 0.8);
+    background-color: #4a4a4a;
+    border-color: #4a4a4a;
+    transform: translateY(-2px);
 }
 
 button h2 {
@@ -150,11 +153,12 @@ button h2 {
     height: 150px;
     object-fit: cover;
     border-radius: 50%;
-    transition: transform 0.3s;
+    border: 3px solid #1a1a1a;
 }
 
 .button-section img:hover {
-    transform: scale(0.9);
+    transform: translateY(-5px);
+    border-color: #4a4a4a;
 }
 
 .button-section h2 {
@@ -183,41 +187,57 @@ button h2 {
 }
 
 .content a {
-    color: #d3a4ea;
+    color: #ffffff;
     text-decoration: none;
+    background-color: #a933e4;
     font-size: 24px;
     font-weight: bold;
 }
 
 .content a:hover {
-    color: #a933e4;
+    color: #cccccc;
 }
 
+/* Collapsible Buttons */
 .collapsible {
-    background: radial-gradient(circle, #6b6b6b 0%, #333 100%);
-    color: #C2C2C2;
+    background: linear-gradient(90deg, #2a2a2a 0%, #1a1a1a 100%);
+    color: #ffffff;
     cursor: pointer;
     padding: 15px;
-    width: 600px;
+    width: 540px;
     max-width: 100%;
     text-align: center;
-    border: none;
+    border: 3px solid #d3a4ea;
     outline: none;
     font-size: 24px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.0em;
     margin: 10px auto;
     display: block;
-    border-radius: 5px;
+    border-radius: 3px;
+    position: relative;
+}
+
+.collapsible::after {
+    content: '\25BC';
+    color: #ffffff;
+    font-size: 18px;
+    position: absolute;
+    right: 15px;
+    top: 50%; 
+    transform: translateY(-50%);
+}
+
+.collapsible.active::after {
+    content: '\25B2'; 
 }
 
 .active, .collapsible:hover {
-    box-shadow: 0 0 10px #d3a4ea;
+    background: linear-gradient(90deg, #4a4a4a 0%, #2a2a2a 100%);
+    border-color: #4a4a4a;
     width: 540px;
-    transform: unset;
-    transition: transform 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+    transform: translateY(-2px);
 }
-
 /* Media Queries */
 @media (max-width: 768px) {
     section {
