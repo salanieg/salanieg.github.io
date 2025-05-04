@@ -186,9 +186,8 @@ button h2 {
 }
 
 .content a {
-    color: #ffffff;
+    color: #d3a4ea;
     text-decoration: none;
-    background-color: #a933e4;
     font-size: 24px;
     font-weight: bold;
 }
@@ -223,11 +222,16 @@ button h2 {
     font-size: 18px;
     position: absolute;
     right: 15px;
-    top: 50%;
+    top: 40%;
 }
 
 .collapsible.active::after {
-    content: '\25B2'; 
+    content: '\25B2';
+    color: #ffffff;
+    font-size: 18px;
+    position: absolute;
+    right: 15px;
+    top: 40%;
 }
 
 .active, .collapsible:hover {
