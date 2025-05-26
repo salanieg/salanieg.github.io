@@ -102,6 +102,10 @@
             font-weight: 500;
         }
 
+        .nav-toggle.fixed-when-open {
+        position: fixed;
+}
+
         /* Overlay for better UX */
         .nav-overlay {
             position: fixed;
@@ -153,37 +157,38 @@
             <div id="header-text">
                 <img src="images/headertext.svg" alt="Headerschriftzug" width="300" height="65">
             </div>
-            <p><b>― Philosopher ―</b></p>
+            <p><b>Digital Essayist</b></p>
         </header>
 
         <section>
             <div id="title">
                 <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
+                <img id="contact-img" src="images/portrait_dennis_muench.webp" alt="Profilbild Dennis Münch" aria-label="Profilbild Dennis Münch" title="Dennis Münch">
                 <p>
                     Hi, ich bin Dennis. Als Philosopher, Scientist und Politican beschäftige ich mich mit sozialen und ethischen Fragestellungen.
                     Derzeit setze ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten Stadt ein.<br><br>
                 </p>
-                <img id="contact-img" src="images/portrait_dennis_muench.webp" alt="Profilbild Dennis Münch" aria-label="Profilbild Dennis Münch" title="Dennis Münch">
+                
             </div>
 
             <div id="kenopsium">
                 <h2>KENOPSIUM</h2>
+                <p>
+                    Mein Underground-Blog Kenopsium umfasst zwei Stationen: Im Elfenbeinturm, meinem Portfolio, teile ich Einblicke in meine aktuellen
+                    Projekte. Im Abyss-Bereich, dem Feuilleton, trage ich auch andere coole Inhalte in Video- Text- und Hypertextform zusammen.
+                </p>
                 <div class="button-section">
                     <a href="https://www.denmuen.ch/kompendium">
                         <img src="images/blogpic.webp" alt="zur Startseite">
                         <h2>HIER UMSTEIGEN</h2>
                     </a>
                 </div>
-                <p>
-                    Mein Underground-Blog Kenopsium umfasst zwei Stationen: Im Elfenbeinturm teile ich Einblicke in meine aktuellen
-                    Projekte. Im Abyss-Bereich sind auch andere Inhalte in Video- Text- und Hypertextform zu finden.
-                </p>
             </div>
 
             <div id="about">
                 <h2>ÜBER MICH</h2>
                 <p>
-                    Meine Laufbahn führte mich seit der Jahrtausendwende vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. 
+                    Seit der Jahrtausendwende führt mich meine Laufbahn vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. 
                     An der Uni spiele ich gerade die Geisteswissenschaften durch, und vertiefe dabei meine Kenntnisse im psychosozialen Bereich. Eine meiner Herzensangelegenheiten
                     ist die Gestaltung lebenswerter urbaner Räume. Politisch setze ich mich daher, inspiriert von 
                     <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> für eine weiterhin resilientes, 
@@ -239,28 +244,31 @@
             const navToggle = document.querySelector('.nav-toggle');
             const navMenu = document.querySelector('.nav-menu');
             const navOverlay = document.querySelector('.nav-overlay');
-
+    
             navToggle.addEventListener('click', () => {
-                navToggle.classList.toggle('active');
+                const isActive = navToggle.classList.toggle('active');
                 navMenu.classList.toggle('active');
                 navOverlay.classList.toggle('active');
+                navToggle.classList.toggle('fixed-when-open', isActive);
             });
-
+    
             navOverlay.addEventListener('click', () => {
                 navToggle.classList.remove('active');
+                navToggle.classList.remove('fixed-when-open');
                 navMenu.classList.remove('active');
                 navOverlay.classList.remove('active');
             });
-
-            // Close menu when clicking a link
+    
             navMenu.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', () => {
                     navToggle.classList.remove('active');
+                    navToggle.classList.remove('fixed-when-open');
                     navMenu.classList.remove('active');
                     navOverlay.classList.remove('active');
                 });
             });
         });
     </script>
+    
 </body>
 </html>
