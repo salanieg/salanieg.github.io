@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hinterzimmer Podcast</title>
+  <link rel="stylesheet" href="/styles/fonts.css">
+  <style>
+
+    p {
+    font-size: 1.1em;
+    line-height: 1.5;
+    margin: 0;
+}
+    body {
+      margin: 0;
+      background-image: url("/images/backroom.jpg");
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+      color: #ccc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .neon-container {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem 3rem;
+      border: 2px solid #F5F9FF;
+      border-radius: 10px;
+      box-shadow:
+        0 0 20px rgba(0, 255, 255, 0.5),
+        inset 0 0 10px rgba(0, 255, 255, 0.3);
+      background-color: #000000cc;
+      user-select: none;
+      max-width: 100%;
+    }
+
+    .neon-text {
+      font-family: monospace;
+      font-size: 4rem;
+      font-weight: bold;
+      color: #F5F9FF;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      text-shadow:
+        0 0 5px #F5F9FF,
+        0 0 10px #F5F9FF,
+        0 0 20px #F5F9FF,
+        0 0 40px #F5F9FF;
+      animation: flicker 3s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        text-shadow:
+          0 0 5px #F5F9FF,
+          0 0 10px #F5F9FF,
+          0 0 20px #F5F9FF,
+          0 0 40px #F5F9FF;
+        color: #F5F9FF;
+        opacity: 1;
+      }
+      20%, 22%, 24%, 55% {
+        text-shadow:
+          0 0 2px #F5F9FF,
+          0 0 4px #F5F9FF,
+          0 0 8px #F5F9FF;
+        color: #7c7c75;
+        opacity: 0.85;
+      }
+    }
+
+    .motto {
+      font-style: sans-serif;
+      font-size: 1.25rem;
+      color: rgba(51, 255, 255, 0.7);
+      margin-top: 0.5rem;
+    }
+
+    .listen-button {
+      margin-top: 2rem;
+      text-align: center;
+      width: 100%;
+    }
+
+    .neon-button {
+      background-color: transparent;
+      color: #00ffff;
+      border: 2px solid #00ffff;
+      padding: 0.75rem 2rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 8px;
+      box-shadow:
+        0 0 5px #00ffff,
+        0 0 10px #00ffff,
+        0 0 20px #00ffff,
+        0 0 40px #00ffff;
+      transition: background-color 0.3s, color 0.3s;
+      background-color: #00000075;
+      display: inline-block;
+      max-width: 90%;
+    }
+
+    .neon-button:hover {
+      background-color: #00ffff;
+      color: #000;
+      cursor: pointer;
+    }
+
+    .hosts {
+      margin-top: 3rem;
+      font-size: 1.2rem;
+      color: rgba(102, 255, 255, 0.8);
+      text-align: center;
+      padding: 0 1rem;
+      background-color: #000000cc;
+    }
+
+    /* Responsive Anpassung */
+    @media (max-width: 600px) {
+      .neon-text {
+        font-size: 2.5rem;
+      }
+
+      .motto {
+        font-size: 1rem;
+      }
+
+      .neon-button {
+        padding: 0.5rem 1.5rem;
+        font-size: 1rem;
+      }
+
+      .hosts {
+        font-size: 1rem;
+      }
+
+      body {
+        padding: 1rem;
+      }
+
+      .neon-container {
+        padding: 1.5rem;
+      }
+    }
+
+    footer {
+    grid-area: footer;
+    text-align: center;
+    padding: 5px;
+    background: none;
+    color: #c2c2c2;
+    margin-top: 100px;
+    background-color: #000000cc;
+}
+
+footer a {
+    color: #E0E0E0;
+    text-decoration: none;
+}
+
+footer a:hover {
+    color: #a933e4;
+    text-decoration: none;
+}
+
+  </style>
+</head>
+<body>
+  <div class="neon-container">
+    <h1 class="neon-text">Hinterzimmer</h1>
+    <p class="motto">Wilde Geschichten, Nischenfakten und politische Kuriositäten</p>
+  </div>
+
+  <div class="hosts">
+    <p>mindestens jeden Monat<br>mit Gizem und Dennis</p>
+  </div>
+  <div class="listen-button">
+    <a href="https://www.denmuen.ch/impressum" class="neon-button">Jetzt reinhören</a>
+  </div>
+  <footer>
+        <p>© 2025 Hinterzimmer-Podcast | 💚 Öko-optimiert und cookiefrei<br><a href="https://www.denmuen.ch/impressum">Impressum</a></p>
+    </footer>
+</body>
+</html>
