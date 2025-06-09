@@ -18,114 +18,7 @@
     <link rel="stylesheet" href="styles/fonts.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="/styles/index.css">
     <link rel="preload" as="image" href="images/headertext.svg" type="image/svg+xml">
-    <style>
-        /* Burger Menu Styles */
-        .nav-toggle {
-            position: absolute;
-            top: 30px;
-            right: 20px;
-            width: 30px;
-            height: 30px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            z-index: 1000;
-            padding: 0;
-        }
-
-        .nav-toggle span {
-            display: block;
-            width: 60px;
-            height: 3px;
-            background: #E0E0E0;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            transition: all 0.3s ease;
-        }
-
-        .nav-toggle span:nth-child(1) {
-            top: 10px;
-        }
-
-        .nav-toggle span:nth-child(2) {
-            top: 18px;
-        }
-
-        .nav-toggle span:nth-child(3) {
-            top: 26px;
-        }
-
-        .nav-toggle.active span:nth-child(1) {
-            transform: translate(-50%, 8px) rotate(45deg);
-        }
-
-        .nav-toggle.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .nav-toggle.active span:nth-child(3) {
-            transform: translate(-50%, -8px) rotate(-45deg);
-        }
-
-        .nav-menu {
-            position: fixed;
-            top: 0;
-            right: -100%;
-            width: 300px;
-            height: 100%;
-            background: #333;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-            transition: right 0.3s ease;
-            z-index: 999;
-            padding: 80px 20px 20px;
-        }
-
-        .nav-menu.active {
-            right: 0;
-        }
-
-        .nav-menu ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .nav-menu ul li {
-            margin: 20px 0;
-        }
-
-        .nav-menu ul li a {
-            text-decoration: none;
-            color: #E0E0E0;
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
-
-        .nav-toggle.fixed-when-open {
-        position: fixed;
-}
-
-        /* Overlay for better UX */
-        .nav-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease;
-            z-index: 998;
-        }
-
-        .nav-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-    </style>
+    
     <script defer src="common.js"></script>
 </head>
 <body>
@@ -162,9 +55,9 @@
         <section>
             <div id="title">
                 <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
-                <img id="contact-img" src="images/portrait_dennis_muench.webp" alt="Profilbild Dennis Münch" aria-label="Profilbild Dennis Münch" title="Dennis Münch">
+                <img id="header-img" src="images/portrait_dennis_muench.webp" alt="Profilbild Dennis Münch" aria-label="Profilbild Dennis Münch" title="Dennis Münch">
                 <p>
-                    Hi, ich bin Dennis. Als Philosopher, Scientist und Politican beschäftige ich mich mit sozialen und ethischen Fragestellungen.
+                    Hi, ich bin Dennis. Als medienschaffende, forschende und politisch aktive Person beschäftige ich mich mit sozialen und ethischen Fragestellungen.
                     Derzeit setze ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten Stadt ein.<br><br>
                 </p>
                 
