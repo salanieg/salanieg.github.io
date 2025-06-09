@@ -100,18 +100,20 @@ a:hover {
 
 /* Layout-Komponenten */
 header {
-    
     text-align: center;
     font-size: 1.4em;
-    background:
-        repeating-linear-gradient(
-            -90deg,
-            #333 0px,
-            #1a7c9ea8 20px,
-            #42a198a8 40px,
-            #769f2ea8 120px
-        );
-    background-size: 200% 200%;
+    background: repeating-linear-gradient(
+        to left,
+        #2b5c3d 0px 118px,
+        #333 118px 120px,
+        #1a7c9e 120px 238px,
+        #333 238px 240px,
+        #42a198 240px 358px,
+        #333 358px 360px,
+        #769f2e 360px 478px,
+        #333 478px 480px
+    );
+    background-size: 100% 100%;
     background-attachment: fixed;
     background-position: top center;
     height: auto;
@@ -120,6 +122,7 @@ header {
     padding: 20px 0;
     margin: 0;
 }
+
 
 section {
     display: flex;
@@ -140,14 +143,38 @@ section > div {
 footer {
     grid-area: footer;
     text-align: center;
-    padding: 5px;
-    background: none;
-    color: #E0E0E0;
+    padding: 20px;
+    background: repeating-linear-gradient(
+        to left,
+        #dbcabe 0px 118px,
+        #333 118px 120px,
+        #4d4b4c 120px 238px,
+        #333 238px 240px,
+        #dbcabe 240px 358px,
+        #333 358px 360px,
+        #4d4b4c 360px 478px,
+        #333 478px 480px
+    );
+    color: #a933e4;
+    background-size: 100% 100%;
+    background-attachment: fixed;
+    background-position: top center;
+    height: auto;
+    line-height: 0;
+    position: relative;
+    padding: 20px 0;
+    margin: 0;
     margin-top: 100px;
 }
 
+footer b {
+    color: #d3a4ea;
+    background-color: #4d4b4c;
+}
+
 footer a {
-    color: #E0E0E0;
+    color: #d3a4ea;
+    background-color:#4d4b4c;
 }
 
 footer a:hover {
