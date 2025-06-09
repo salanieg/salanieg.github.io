@@ -100,17 +100,16 @@ a:hover {
 
 /* Layout-Komponenten */
 header {
+    
     text-align: center;
     font-size: 1.4em;
-    color: #333;
     background:
         repeating-linear-gradient(
-            -45deg,
-            #a7c860a8 0px,
-            #1a7c9ea8 80px,
+            -90deg,
+            #333 0px,
+            #1a7c9ea8 20px,
             #42a198a8 40px,
-            #1a7c9ea8 80px,
-            #769f2ea8  120px
+            #769f2ea8 120px
         );
     background-size: 200% 200%;
     background-attachment: fixed;
@@ -121,7 +120,6 @@ header {
     padding: 20px 0;
     margin: 0;
 }
-
 
 section {
     display: flex;
