@@ -167,14 +167,13 @@ footer {
     margin-top: 100px;
 }
 
-footer b {
+footer p {
     color: #d3a4ea;
-    background-color: #4d4b4c;
+    text-shadow: -1px -1px 0 #a933e4, 1px -1px 0 #a933e4, -1px 1px 0 #a933e4, 1px 1px 0 #a933e4;
 }
 
 footer a {
     color: #d3a4ea;
-    background-color:#4d4b4c;
 }
 
 footer a:hover {
