@@ -102,26 +102,11 @@ a:hover {
 header {
     text-align: center;
     font-size: 1.4em;
-    background: repeating-linear-gradient(
-        to left,
-        #2b5c3d 0px 118px,
-        #333 118px 120px,
-        #1a7c9e 120px 238px,
-        #333 238px 240px,
-        #42a198 240px 358px,
-        #333 358px 360px,
-        #769f2e 360px 478px,
-        #333 478px 480px
-    );
-    background-size: 100% 100%;
-    background-attachment: fixed;
-    background-position: top center;
-    height: auto;
-    line-height: 0;
-    position: relative;
+    background: #333;
     padding: 20px 0;
     margin: 0;
 }
+
 
 
 section {
