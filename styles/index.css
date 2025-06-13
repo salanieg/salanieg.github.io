@@ -103,7 +103,7 @@ header {
     text-align: center;
     font-size: 1.4em;
     background: #333;
-    padding: 20px 0;
+    padding: 0px 0;
     margin: 0;
 }
 
@@ -128,33 +128,10 @@ section > div {
 footer {
     grid-area: footer;
     text-align: center;
-    padding: 20px;
-    background: repeating-linear-gradient(
-        to left,
-        #dbcabe 0px 118px,
-        #333 118px 120px,
-        #4d4b4c 120px 238px,
-        #333 238px 240px,
-        #dbcabe 240px 358px,
-        #333 358px 360px,
-        #4d4b4c 360px 478px,
-        #333 478px 480px
-    );
-    color: #a933e4;
-    background-size: 100% 100%;
-    background-attachment: fixed;
-    background-position: top center;
-    height: auto;
-    line-height: 0;
-    position: relative;
-    padding: 20px 0;
-    margin: 0;
-    margin-top: 100px;
-}
-
-footer p {
+    background-color: #333;
     color: #d3a4ea;
-    text-shadow: -1px -1px 0 #a933e4, 1px -1px 0 #a933e4, -1px 1px 0 #a933e4, 1px 1px 0 #a933e4;
+    padding: 20px 0;
+    margin-top: 100px;
 }
 
 footer a {
@@ -345,13 +322,28 @@ button h2 {
 
 /* ID-Styles */
 #header-text {
-    width: 300px;
-    height: 65px;
-    position: relative;
+    position: absolute;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1;
+    color: white;
+    text-align: center;
     animation: slideFadeIn 0.5s ease-out forwards;
+    padding: 10px 20px;
+    border-radius: 6px;
+}
+
+#header-banner {
+    position: relative;
+    width: 100vw;
+    height: 105px; /* feste Höhe */
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-in forwards;
+    z-index: 0;
+    overflow: hidden;
 }
 
 #header-img {
