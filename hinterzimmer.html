@@ -4,144 +4,165 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hinterzimmer Podcast</title>
-  <link rel="stylesheet" href="/styles/fonts.css" />
   <style>
+    @font-face {
+    font-family: 'Montserrat';
+    src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff2') format('woff2'),
+        url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff') format('woff'),
+        url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+
     html, body {
-  min-height: 100%;
-  color: #eaeaea;
-  background: black;
-  overflow-x: hidden;
-  font-family: Verdana, Geneva, Tahoma, sans-serif;
-}
+      min-height: 100%;
+      color: #eaeaea;
+      background: black;
+      overflow-x: hidden;
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
 
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 150%;
-  height: 150%;
-  background: radial-gradient(circle at 20% 30%, #a497f2 0%, transparent 25%),
-              radial-gradient(circle at 70% 60%, #a497f2 0%, transparent 30%),
-              radial-gradient(circle at 40% 80%, #a497f2 0%, transparent 20%);
-  animation: lava 20s infinite linear;
-  z-index: 0;
-}
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 150%;
+      height: 150%;
+      background: radial-gradient(circle at 20% 30%, #CA7842 0%, transparent 25%),
+                  radial-gradient(circle at 70% 60%, #CA7842 0%, transparent 30%),
+                  radial-gradient(circle at 40% 80%, #CA7842 0%, transparent 20%);
+      animation: lava 20s infinite linear;
+      z-index: 0;
+    }
 
-@keyframes lava {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(-10%, -5%); }
-  100% { transform: translate(0, 0); }
-}
+    @keyframes lava {
+      0% { transform: translate(0, 0); }
+      50% { transform: translate(-10%, -5%); }
+      100% { transform: translate(0, 0); }
+    }
 
-.block {
-  position: relative;
-  z-index: 1;
-  background: #000;
-  padding: 3rem 2rem;
-  max-width: 800px;
-  margin: 5vh auto;
-  border: 3px solid #a497f2;
-  text-align: center;
-}
+    .block {
+      position: relative;
+      z-index: 1;
+      background: #4B352A;
+      padding: 3rem 2rem;
+      max-width: 800px;
+      margin: 5vh auto;
+      border: 3px solid #CA7842;
+      text-align: center;
+    }
 
-.neon {
-  font-family: monospace;
-  font-size: clamp(2rem, 8vw, 4rem);
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #F5F9FF;
-  text-shadow:
-    0 0 5px #F5F9FF,
-    0 0 10px #F5F9FF,
-    0 0 20px #F5F9FF,
-    0 0 40px #F5F9FF;
-  animation: flicker 3s infinite alternate;
-  word-break: break-word;
-  white-space: normal;
-}
+    .block p {
+      text-align: justify;
+      hyphens: auto;
+    }
 
-@keyframes flicker {
-  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-    text-shadow:
-      0 0 5px #F5F9FF,
-      0 0 10px #F5F9FF,
-      0 0 20px #F5F9FF,
-      0 0 40px #F5F9FF;
-    color: #F5F9FF;
-    opacity: 1;
-  }
-  20%, 22%, 24%, 55% {
-    text-shadow:
-      0 0 2px #F5F9FF,
-      0 0 4px #F5F9FF,
-      0 0 8px #F5F9FF;
-    color: #7c7c75;
-    opacity: 0.85;
-  }
-}
+    .neon {
+      font-family: monospace;
+      font-size: clamp(2rem, 8vw, 4rem);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #F5F9FF;
+      text-shadow:
+        0 0 5px #F5F9FF,
+        0 0 10px #F5F9FF,
+        0 0 20px #F5F9FF,
+        0 0 40px #F5F9FF;
+      animation: flicker 3s infinite alternate;
+      word-break: break-word;
+      white-space: normal;
+    }
 
-.motto {
-  color: #a497f2;
-  font-weight: bold;
-  font-size: 1.2rem;
-  margin-top: 1.5rem;
-}
+    @keyframes flicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        text-shadow:
+          0 0 5px #F5F9FF,
+          0 0 10px #F5F9FF,
+          0 0 20px #F5F9FF,
+          0 0 40px #F5F9FF;
+        color: #F5F9FF;
+        opacity: 1;
+      }
+      20%, 22%, 24%, 55% {
+        text-shadow:
+          0 0 2px #F5F9FF,
+          0 0 4px #F5F9FF,
+          0 0 8px #F5F9FF;
+        color: #7c7c75;
+        opacity: 0.85;
+      }
+    }
 
-p {
-  font-size: 1em;
-  margin: 1rem 0;
-}
+    .motto {
+      color: #F0F2BD;
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-top: 1.5rem;
+      font-family: 'Montserrat', sans-serif;
+    }
 
-.listen {
-  margin-top: 2rem;
-}
+    p {
+      font-size: 1em;
+      margin: 1rem 0;
+    }
 
-.listen a {
-  display: inline-block;
-  padding: 1rem 2rem;
-  border: 3px solid #a497f2;
-  color: #a497f2;
-  text-decoration: none;
-  font-size: 1rem;
-  font-weight: bold;
-  background: transparent;
-  transition: all 0.2s;
-}
+    b {
+      font-size: 1em;
+      margin: 1rem 0;
+      font-variant: normal;
+      color: #B2CD9C;
+    }
 
-.listen a:hover {
-  background: #a497f2;
-  color: #000;
-  cursor: pointer;
-}
+    .listen {
+      margin-top: 2rem;
+    }
 
-footer {
-  font-size: 1.1em;
-  color: #ccc;
-  border-top: 1px solid #444;
-  padding-top: 1rem;
-  margin-top: 2rem;
-}
+    .listen a {
+      display: inline-block;
+      padding: 1rem 2rem;
+      border: 3px solid #B2CD9C;
+      color: #B2CD9C;
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: bold;
+      background: transparent;
+      transition: all 0.2s;
+    }
 
-footer a {
-  color: #e0e0e0;
-  text-decoration: none;
-}
+    .listen a:hover {
+      background: #F0F2BD;
+      color: #000;
+      cursor: pointer;
+    }
 
-footer a:hover {
-  color: #a933e4;
-}
+    footer {
+      font-size: 1.1em;
+      color: #ccc;
+      border-top: 1px solid #BE7B72;
+      padding-top: 1rem;
+      margin-top: 2rem;
+    }
 
+    footer a {
+      color: #e0e0e0;
+      text-decoration: none;
+    }
 
-
+    footer a:hover {
+      color: #a933e4;
+    }
   </style>
 </head>
 <body>
   <div class="block">
     <p class="motto">Der Podcast über politische Kuriositäten und vergessene Nachrichten</p>
-    <p><b>kompakte Folgen, monatlich erscheinend</b></p>
-    <p>Welcher Mann machte über Nacht tausende Frauen zu Raucherinnen? Wie viele Schaben passen in ein Roach Motel? Und was hat Bayerns größter Flughafen mit einer Sekte in Chile zu tun? Vielleicht verwundern diese seltsamen Fragen. Oft sind es nur</p>
-    <h1 class="neon">Hinterzimmer</h1><p>in denen die Themen besprochen werden, die uns irgendwie doch alle betreffen. Gizem und Dennis werfen einen Blick hinter die Tür und klären entspannt sowie faktenbasiert über Ereignisse auf, die für Gesprächsstoff beim nächsten Philosophiestammtisch sorgen. Ideal auch beim Kochen, für unterwegs oder als Inspiration für die Hausarbeit.</p>
+    <p><b>KOMPAKTE FOLGEN, IMMER AM MONATSENDE</b></p>
+    <p>Welcher Mann machte über Nacht tausende Frauen zu Raucherinnen? Wie viele Schaben passen in ein Roach Motel? Und was hat Bayerns größter Flughafen mit einer Sekte in Chile zu tun? Vielleicht verwundern diese seltsamen Fragen. Oft werden die Themen, die uns irgendwie doch alle betreffen, in der</p>
+    <h1 class="neon">Hinterstube</h1>
+    <p>besprochen. Gizem und Dennis werfen einen Blick hinter die Tür und klären entspannt sowie faktenbasiert über Ereignisse auf, die für Gesprächsstoff beim nächsten Philosophiestammtisch sorgen. Ideal auch beim Kochen, für unterwegs oder als Inspiration für die Hausarbeit.</p>
     <div class="listen">
       <a href="https://www.denmuen.ch/impressum">Jetzt reinhören</a>
     </div>
