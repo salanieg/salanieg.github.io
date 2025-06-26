@@ -3,71 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hinterzimmer Podcast</title>
+  <title>HINTERSTUBE</title>
   <style>
     @font-face {
-    font-family: 'Montserrat';
-    src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff2') format('woff2'),
-        url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff') format('woff'),
-        url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.ttf') format('truetype');
-    font-weight: 300;
-    font-style: normal;
-    font-display: swap;
-}
+      font-family: 'Montserrat';
+      src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff2') format('woff2'),
+           url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff') format('woff'),
+           url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.ttf') format('truetype');
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
 
-@font-face {
-    font-family: 'Montserrat';
-    src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.woff2') format('woff2'),
-        url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.woff') format('woff'),
-        url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.ttf') format('truetype');
-    font-weight: 600;
-    font-style: normal;
-    font-display: swap;
-}
-
+    @font-face {
+      font-family: 'Montserrat';
+      src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.woff2') format('woff2'),
+           url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.woff') format('woff'),
+           url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.ttf') format('truetype');
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
 
     html, body {
       min-height: 100%;
       color: #eaeaea;
-      background: black;
+      background: #AB885B;
       overflow-x: hidden;
       font-family: Verdana, Geneva, Tahoma, sans-serif;
-    }
-
-    body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(ellipse at left center, rgba(255, 255, 255, 0.05) 0%, transparent 60%),
-    radial-gradient(ellipse at right center, rgba(0, 0, 0, 0.2) 0%, transparent 70%),
-    repeating-linear-gradient(
-      to right,
-      #26355D 0px,
-      #486e45 20px,
-      #26355D 40px
-    );
-  background-blend-mode: overlay;
-  opacity: 0.95;
-  z-index: 0;
-}
-    @keyframes lava {
-      0% { transform: translate(0, 0); }
-      50% { transform: translate(-10%, -5%); }
-      100% { transform: translate(0, 0); }
     }
 
     .block {
       position: relative;
       z-index: 1;
-      background: #26355D;
+      background: #4B352A;
       padding: 3rem 2rem;
       max-width: 800px;
       margin: 5vh auto;
-      border: 3px solid #486e45;
+      border: 3px solid #F0F2BD;
       text-align: center;
     }
 
@@ -114,8 +87,7 @@
 
     .motto {
       color: #eaeaea;
-      font-size: 1.2rem;
-      margin-top: 0.5rem;
+      font-size: 1.1rem;
       font-family: 'Montserrat', sans-serif;
     }
 
@@ -129,7 +101,7 @@
       font-size: 1.6rem;
       margin: 1rem 0;
       font-weight: 600;
-      color: #ffdb9a
+      color: #F0F2BD;
     }
 
     .listen {
@@ -139,8 +111,8 @@
     .listen a {
       display: inline-block;
       padding: 1rem 2rem;
-      border: 3px solid #ffdb9a;
-      color: #ffdb9a;
+      border: 3px solid #F0F2BD;
+      color: #F0F2BD;
       text-decoration: none;
       font-size: 1rem;
       font-weight: bold;
@@ -157,7 +129,7 @@
     footer {
       font-size: 1.1em;
       color: #ccc;
-      border-top: 1px solid #ffdb9a;
+      border-top: 1px solid #F0F2BD;
       padding-top: 1rem;
       margin-top: 2rem;
     }
@@ -176,14 +148,14 @@
   <div class="block">
     <p class="motto">Der Podcast über<br><b>politische Kuriositäten<br>& vergessene Nachrichten</b></p>
     <p>Kompakte Folgen, immer am Monatsende!</p>
-    <p>Welcher Mann machte über Nacht tausende Frauen zu Raucherinnen? Wie viele Schaben passen in ein Roach Motel? Und was hat Bayerns größter Flughafen mit einer Sekte in Chile zu tun? Vielleicht verwundern diese seltsamen Fragen. Oft werden die Themen, die uns irgendwie doch alle betreffen, in der</p>
+    <p>Welcher Mann machte über Nacht tausende Frauen zu Raucherinnen? Wie viele Schaben passen in ein Roach Motel? Und was hat Bayerns größter Flughafen mit einer Sekte in Chile zu tun? Vielleicht verwundern diese seltsamen Fragen. Oft werden die Themen, die uns irgendwie doch alle betreffen, in einer</p>
     <h1 class="neon">Hinterstube</h1>
     <p>besprochen. Gizem und Dennis werfen einen Blick hinter die Tür und klären entspannt sowie faktenbasiert über Ereignisse auf, die für Gesprächsstoff beim nächsten Philosophiestammtisch sorgen. Ideal auch beim Kochen, für unterwegs oder als Inspiration für die Hausarbeit.</p>
     <div class="listen">
       <a href="https://www.denmuen.ch/impressum">Jetzt reinhören</a>
     </div>
     <footer>
-      © 2025 Hinterzimmer-Team | Öko-optimiert & cookiefrei<br>
+      © 2025 Hinterstube | Öko-optimiert & cookiefrei<br>
       <a href="https://www.denmuen.ch/impressum">Impressum</a>
     </footer>
   </div>
