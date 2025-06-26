@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <meta name="description" content="Meine Portfolio-Website. Etwas nicht zu können ist kein Grund es nicht zu tun.">
 
     <title>Startseite | Dennis Münch</title>
@@ -26,7 +26,7 @@
     <script defer src="common.js"></script>
 </head>
 <body>
-    <button class="nav-toggle">
+    <button class="nav-toggle" type="button" aria-label="Navigation umschalten">
         <span></span>
         <span></span>
         <span></span>
@@ -39,18 +39,21 @@
             <li><a href="#cv">Curriculum Vitae</a></li>
             <li><a href="#contact">Kontakt</a></li>
             <li><a href="impressum.html">Impressum</a></li>
-            <hr>
-            <h2>KENOPSIUM</h2>
-            <li><a href="https://www.denmuen.ch/kompendium">Launchpad</a></li>
-            <li><a href="https://www.denmuen.ch/kompendium/magazin">Portfolio</a></li>
-            <li><a href="https://www.denmuen.ch/kompendium/kanon">Feuilleton</a></li>
-
         </ul>
+        <hr aria-hidden="true">
+        <div aria-label="Untermenü Kenopsium">
+            <h2 class="visually-hidden">KENOPSIUM</h2>
+            <ul>
+                <li><a href="https://www.denmuen.ch/kompendium">Launchpad</a></li>
+                <li><a href="https://www.denmuen.ch/kompendium/magazin">Portfolio</a></li>
+                <li><a href="https://www.denmuen.ch/kompendium/kanon">Feuilleton</a></li>
+            </ul>
+        </div>
     </nav>
     <div class="nav-overlay"></div>
 
     <main>
-        <header title="Eine Hommage auf den Münchener U-Bahnhof Josephsburg, Eröffnung: 29. Mai 1999. Die Station der U-Bahnlinie U2 wurde benannt nach dem Schloss Josephsburg, das 1693 unter Erzbischof und Kurfürst Joseph Clemens von Köln, einem Bruder des bayerischen Kurfürsten Max Emanuel erbaut wurde. (Quelle: MVV München)">
+        <header>
             <div id="header-text">
                 <img src="images/headertext.svg" alt="Headerschriftzug" width="300" height="65">
             </div>
@@ -65,7 +68,6 @@
                     Hi, ich bin Dennis. Als medienschaffende, forschende und politisch aktive Person beschäftige ich mich mit sozialen und ethischen Fragestellungen.
                     Derzeit setze ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten Stadt ein.<br><br>
                 </p>
-                
             </div>
 
             <div id="kenopsium">
@@ -166,6 +168,5 @@
             });
         });
     </script>
-    
 </body>
 </html>
