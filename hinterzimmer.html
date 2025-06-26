@@ -35,19 +35,25 @@
     }
 
     body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 150%;
-      height: 150%;
-      background: radial-gradient(circle at 20% 30%, #AF47D2 0%, transparent 25%),
-                  radial-gradient(circle at 70% 60%, #AF47D2 0%, transparent 30%),
-                  radial-gradient(circle at 40% 80%, #AF47D2 0%, transparent 20%);
-      animation: lava 20s infinite linear;
-      z-index: 0;
-    }
-
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(ellipse at left center, rgba(255, 255, 255, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at right center, rgba(0, 0, 0, 0.2) 0%, transparent 70%),
+    repeating-linear-gradient(
+      to right,
+      #26355D 0px,
+      #486e45 20px,
+      #26355D 40px
+    );
+  background-blend-mode: overlay;
+  opacity: 0.95;
+  z-index: 0;
+}
     @keyframes lava {
       0% { transform: translate(0, 0); }
       50% { transform: translate(-10%, -5%); }
@@ -61,7 +67,7 @@
       padding: 3rem 2rem;
       max-width: 800px;
       margin: 5vh auto;
-      border: 3px solid #AF47D2;
+      border: 3px solid #486e45;
       text-align: center;
     }
 
@@ -107,7 +113,7 @@
     }
 
     .motto {
-      color: #FFDB00;
+      color: #eaeaea;
       font-size: 1.2rem;
       margin-top: 0.5rem;
       font-family: 'Montserrat', sans-serif;
@@ -123,6 +129,7 @@
       font-size: 1.6rem;
       margin: 1rem 0;
       font-weight: 600;
+      color: #ffdb9a
     }
 
     .listen {
@@ -132,8 +139,8 @@
     .listen a {
       display: inline-block;
       padding: 1rem 2rem;
-      border: 3px solid #FFDB00;
-      color: #FFDB00;
+      border: 3px solid #ffdb9a;
+      color: #ffdb9a;
       text-decoration: none;
       font-size: 1rem;
       font-weight: bold;
@@ -150,7 +157,7 @@
     footer {
       font-size: 1.1em;
       color: #ccc;
-      border-top: 1px solid #AF47D2;
+      border-top: 1px solid #ffdb9a;
       padding-top: 1rem;
       margin-top: 2rem;
     }
@@ -161,7 +168,7 @@
     }
 
     footer a:hover {
-      color: #a933e4;
+      color: #AF47D2;
     }
   </style>
 </head>
