@@ -28,7 +28,7 @@
     html, body {
       min-height: 100%;
       color: #eaeaea;
-      background: #AB885B;
+      background: #3d4a3d;
       overflow-x: hidden;
       font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
@@ -36,7 +36,7 @@
     .block {
       position: relative;
       z-index: 1;
-      background: #4B352A;
+      background: #2e3a50;
       padding: 3rem 2rem;
       max-width: 800px;
       margin: 5vh auto;
@@ -50,20 +50,25 @@
     }
 
     .neon {
-      font-family: monospace;
-      font-size: clamp(2rem, 8vw, 4rem);
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: #F5F9FF;
-      text-shadow:
-        0 0 5px #F5F9FF,
-        0 0 10px #F5F9FF,
-        0 0 20px #F5F9FF,
-        0 0 40px #F5F9FF;
-      animation: flicker 3s infinite alternate;
-      word-break: break-word;
-      white-space: normal;
-    }
+  font-family: monospace;
+  font-size: clamp(2rem, 10vw, 6rem);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #F5F9FF;
+  text-shadow:
+    0 0 5px #F5F9FF,
+    0 0 10px #F5F9FF,
+    0 0 20px #F5F9FF,
+    0 0 40px #F5F9FF;
+  animation: flicker 3s infinite alternate;
+  word-break: break-word;
+  white-space: normal;
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  text-align: center;
+  margin: 1rem 0;
+}
 
     @keyframes flicker {
       0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
@@ -86,10 +91,11 @@
     }
 
     .motto {
-      color: #eaeaea;
-      font-size: 1.1rem;
-      font-family: 'Montserrat', sans-serif;
-    }
+  color: #F0F2BD;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-family: 'Montserrat', sans-serif;
+  line-height: 1.4;
+}
 
     p {
       font-size: 1em;
@@ -97,12 +103,13 @@
       font-weight: 300;
     }
 
-    b {
-      font-size: 1.6rem;
-      margin: 1rem 0;
-      font-weight: 600;
-      color: #F0F2BD;
-    }
+    .motto b {
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  font-weight: 600;
+  color: #F0F2BD;
+  display: inline-block;
+  margin-top: 0rem;
+}
 
     .listen {
       margin-top: 2rem;
