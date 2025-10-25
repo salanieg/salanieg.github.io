@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Camus Game — HTML</title>
+
+  <!-- Tailwind Play CDN (für die Tailwind-Klassen im Original) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React / ReactDOM / Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Three.js -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+  <style>
+    html,body,#root { height: 100%; margin: 0; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+  const { useState, useEffect, useRef } = React;
+
+  const CamusGame = () => {
+    const [gameState, setGameState] = useState('dialog');
+    const [dialogStep, setDialogStep] = useState(0);
+    const [speedLevel, setSpeedLevel] = useState(0);
+    const [drivingDialogIndex, setDrivingDialogIndex] = useState(0);
+    const [showGasButton, setShowGasButton] = useState(false);
+    const [displayedText, setDisplayedText] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+    const mountRef = useRef(null);
+    const sceneRef = useRef(null);
+    const animationRef = useRef(null);
+
+    const dialogLines = [
+      {
+        speaker: 'Michel',
+        text: 'Albert, ich fahre nach Paris zurück. Möchtest du in meinem Facel Vega mitfahren?',
+        otherSpeaker: 'Camus'
+      },
+      {
+        speaker: 'Camus',
+        text: 'Ich weiß nicht, Michel. Ich habe bereits eine Zugkarte.',
+        otherSpeaker: 'Camus'
+      },
+      {
+        speaker: 'Michel',
+        text: 'Janine und Anne werden auch dabei sein. Es wird eine angenehme Fahrt.',
+        otherSpeaker: 'Janine'
+      },
+      {
+        speaker: 'Janine',
+        text: 'Es wäre doch schön, gemeinsam zu fahren, Albert.',
+        otherSpeaker: 'Janine'
+      },
+      {
+        speaker: 'Michel',
+        text: 'Anne freut sich schon auf die Reise.',
+        otherSpeaker: 'Anne'
+      },
+      {
+        speaker: 'Anne',
+        text: 'Wir haben genug Platz im Auto, Monsieur Camus.',
+        otherSpeaker: 'Anne'
+      },
+      {
+        speaker: 'Michel',
+        text: 'Komm schon! Der Wagen fährt wunderbar. Du wirst es nicht bereuen.',
+        otherSpeaker: 'Camus'
+      },
+      {
+        speaker: 'Camus',
+        text: 'Nun gut... Ihr habt mich überzeugt. Ich komme mit.',
+        otherSpeaker: 'Camus'
+      }
+    ];
+
+    const drivingDialogs = [
+      { speaker: 'Michel', text: 'Es ist ein schöner Tag für eine Fahrt nach Paris.', showGas: false },
+      { speaker: 'Camus', text: 'Ja, die Landschaft ist wirklich beeindruckend.', showGas: false },
+      { speaker: 'Michel', text: 'Wir machen ausgezeichnete Zeit.', showGas: false },
+      { speaker: 'Camus', text: 'Der Wagen fährt sehr komfortabel.', showGas: true },
+      { speaker: 'Michel', text: 'Der Facel Vega ist ein Meisterwerk französischer Ingenieurskunst.', showGas: false },
+      { speaker: 'Camus', text: 'Die Straße wird schmaler hier...', showGas: false },
+      { speaker: 'Michel', text: 'Keine Sorge, ich kenne diese Strecke gut.', showGas: false },
+      { speaker: 'Camus', text: 'Wie lange noch bis Paris?', showGas: false },
+      { speaker: 'Michel', text: 'Noch etwa zwei Stunden. Wir können schneller fahren.', showGas: true },
+      { speaker: 'Camus', text: 'Das Wetter verschlechtert sich...', showGas: false },
+      { speaker: 'Michel', text: 'Ein bisschen Nebel macht nichts.', showGas: false },
+      { speaker: 'Camus', text: 'Die Bäume ziehen so schnell vorbei...', showGas: false },
+      { speaker: 'Michel', text: 'Der Motor läuft perfekt. Spürst du die Kraft?', showGas: false },
+      { speaker: 'Camus', text: 'Michel, vielleicht sollten wir langsamer...', showGas: true },
+      { speaker: 'Michel', text: 'Vertrau mir, ich habe alles unter Kontrolle.', showGas: false },
+      { speaker: 'Camus', text: 'Die Kurve da vorne... Michel!', showGas: false },
+      { speaker: 'Michel', text: 'Ich sehe sie, ich—', showGas: false }
+    ];
+
+    useEffect(() => {
+      const currentText = gameState === 'dialog' 
+        ? dialogLines[dialogStep].text 
+        : drivingDialogs[drivingDialogIndex]?.text || '';
+
+      setDisplayedText('');
+      setIsTyping(true);
+
+      let currentIndex = 0;
+      const typingInterval = setInterval(() => {
+        if (currentIndex < currentText.length) {
+          setDisplayedText(currentText.substring(0, currentIndex + 1));
+          currentIndex++;
+        } else {
+          setIsTyping(false);
+          clearInterval(typingInterval);
+        }
+      }, 30);
+
+      return () => clearInterval(typingInterval);
+    }, [dialogStep, drivingDialogIndex, gameState]);
+
+    useEffect(() => {
+      if (gameState === 'driving' && drivingDialogIndex < drivingDialogs.length) {
+        setShowGasButton(drivingDialogs[drivingDialogIndex].showGas && speedLevel < 3);
+      }
+    }, [drivingDialogIndex, gameState, speedLevel]);
+
+    useEffect(() => {
+      if (gameState !== 'driving' || !mountRef.current) return;
+
+      while (mountRef.current.firstChild) {
+        mountRef.current.removeChild(mountRef.current.firstChild);
+      }
+
+      const scene = new THREE.Scene();
+      // leicht hellere Fog/Background
+      scene.fog = new THREE.Fog(0x28344A, 10, 80);
+      scene.background = new THREE.Color(0x17314A);
+
+      const camera = new THREE.PerspectiveCamera(75, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 1000);
+      camera.position.set(0, 4, 10);
+      camera.lookAt(0, 1, -10);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+      mountRef.current.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0x666666, 0.6);
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0x888888, 0.8);
+      directionalLight.position.set(5, 15, 5);
+      scene.add(directionalLight);
+
+      const carGroup = new THREE.Group();
+
+      const bodyGeometry = new THREE.BoxGeometry(2.2, 1, 4.5);
+      const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 80 });
+      const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+      body.position.y = 0.5;
+      carGroup.add(body);
+
+      const roofGeometry = new THREE.BoxGeometry(1.7, 0.8, 2.8);
+      const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 60 });
+      const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+      roof.position.set(0, 1.35, -0.4);
+      carGroup.add(roof);
+
+      const hoodGeometry = new THREE.BoxGeometry(2, 0.5, 1.5);
+      const hood = new THREE.Mesh(hoodGeometry, bodyMaterial);
+      hood.position.set(0, 0.8, 1.8);
+      carGroup.add(hood);
+
+      const grillGeometry = new THREE.BoxGeometry(1.8, 0.4, 0.2);
+      const grillMaterial = new THREE.MeshPhongMaterial({ color: 0x2a2a2a });
+      const grill = new THREE.Mesh(grillGeometry, grillMaterial);
+      grill.position.set(0, 0.4, 2.6);
+      carGroup.add(grill);
+
+      const wheelGeometry = new THREE.CylinderGeometry(0.45, 0.45, 0.35, 16);
+      const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x2b2b2b });
+      const tireMaterial = new THREE.MeshPhongMaterial({ color: 0x3a3a3a });
+
+      const wheels = [];
+      const wheelPositions = [
+        [-1.1, 0, 1.5],
+        [1.1, 0, 1.5],
+        [-1.1, 0, -1.5],
+        [1.1, 0, -1.5]
+      ];
+
+      wheelPositions.forEach(pos => {
+        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(pos[0], pos[1], pos[2]);
+
+        const tireGeometry = new THREE.TorusGeometry(0.45, 0.15, 8, 16);
+        const tire = new THREE.Mesh(tireGeometry, tireMaterial);
+        tire.rotation.y = Math.PI / 2;
+        tire.position.set(pos[0], pos[1], pos[2]);
+
+        carGroup.add(wheel);
+        carGroup.add(tire);
+        wheels.push(wheel);
+      });
+
+      carGroup.position.y = 0.45;
+      scene.add(carGroup);
+
+      const roadGeometry = new THREE.PlaneGeometry(10, 300);
+      const roadMaterial = new THREE.MeshPhongMaterial({ color: 0x2b2b2b, side: THREE.DoubleSide });
+      const road = new THREE.Mesh(roadGeometry, roadMaterial);
+      road.rotation.x = -Math.PI / 2;
+      road.position.z = -100;
+      scene.add(road);
+
+      // Hellere Wiesen links und rechts
+      const grassLeft = new THREE.Mesh(
+        new THREE.PlaneGeometry(50, 300),
+        new THREE.MeshPhongMaterial({ color: 0x3a2b20, side: THREE.DoubleSide })
+      );
+      grassLeft.rotation.x = -Math.PI / 2;
+      grassLeft.position.set(-30, -0.01, -100);
+      scene.add(grassLeft);
+
+      const grassRight = new THREE.Mesh(
+        new THREE.PlaneGeometry(50, 300),
+        new THREE.MeshPhongMaterial({ color: 0x3a2b20, side: THREE.DoubleSide })
+      );
+      grassRight.rotation.x = -Math.PI / 2;
+      grassRight.position.set(30, -0.01, -100);
+      scene.add(grassRight);
+
+      const roadLines = [];
+      for (let i = 0; i < 50; i++) {
+        const lineGeometry = new THREE.PlaneGeometry(0.4, 3);
+        const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x7a7a33 });
+        const line = new THREE.Mesh(lineGeometry, lineMaterial);
+        line.rotation.x = -Math.PI / 2;
+        line.position.set(0, 0.02, -6 * i);
+        scene.add(line);
+        roadLines.push(line);
+      }
+
+      const trees = [];
+      for (let i = 0; i < 40; i++) {
+        const trunkGeometry = new THREE.CylinderGeometry(0.35, 0.45, 4, 8);
+        const trunkMaterial = new THREE.MeshPhongMaterial({ color: 0x2b1f1a });
+        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+
+        const foliageGeometry = new THREE.SphereGeometry(1.8, 8, 8);
+        const foliageMaterial = new THREE.MeshPhongMaterial({ color: 0x1a3a1a });
+        const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+        foliage.position.y = 3;
+
+        const tree = new THREE.Group();
+        tree.add(trunk);
+        tree.add(foliage);
+
+        const side = (i % 2 === 0) ? 7 : -7;
+        tree.position.set(side + (Math.random() - 0.5) * 2, 2, -10 * i);
+        scene.add(tree);
+        trees.push(tree);
+      }
+
+      sceneRef.current = {
+        scene,
+        camera,
+        renderer,
+        carGroup,
+        wheels,
+        trees,
+        road,
+        roadLines
+      };
+
+      let roadOffset = 0;
+      let wheelRotation = 0;
+      let sidewaysMotion = 0;
+
+      const animate = () => {
+        const speed = (speedLevel + 1) * 0.15;
+        roadOffset += speed;
+        wheelRotation += speed * 3;
+
+        if (speedLevel >= 2) {
+          sidewaysMotion += 0.04;
+          carGroup.position.x = Math.sin(sidewaysMotion) * 2.5;
+          carGroup.rotation.y = Math.sin(sidewaysMotion) * 0.2;
+          carGroup.rotation.z = Math.cos(sidewaysMotion) * 0.15;
+        } else {
+          carGroup.position.x = Math.sin(roadOffset * 0.3) * 0.1 * speedLevel;
+          carGroup.rotation.y = 0;
+          carGroup.rotation.z = Math.sin(roadOffset * 0.5) * 0.03 * (speedLevel + 1);
+        }
+
+        carGroup.rotation.x = -speed * 0.2;
+
+        wheels.forEach(wheel => {
+          wheel.rotation.x = wheelRotation;
+        });
+
+        roadLines.forEach(line => {
+          line.position.z += speed;
+          if (line.position.z > 15) {
+            line.position.z -= 300;
+          }
+        });
+
+        trees.forEach(tree => {
+          tree.position.z += speed;
+          if (tree.position.z > 15) {
+            tree.position.z -= 400;
+          }
+        });
+
+        renderer.render(scene, camera);
+        animationRef.current = requestAnimationFrame(animate);
+      };
+
+      animate();
+
+      return () => {
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+        }
+        if (mountRef.current && renderer.domElement && mountRef.current.contains(renderer.domElement)) {
+          mountRef.current.removeChild(renderer.domElement);
+        }
+        renderer.dispose();
+        scene.clear();
+      };
+    }, [gameState, speedLevel]);
+
+    const handleDialogNext = () => {
+      if (isTyping) return;
+      if (dialogStep < dialogLines.length - 1) {
+        setDialogStep(dialogStep + 1);
+      } else {
+        setGameState('driving');
+      }
+    };
+
+    const handleAccelerate = () => {
+      if (speedLevel < 2) {
+        setSpeedLevel(speedLevel + 1);
+        setShowGasButton(false);
+        if (drivingDialogIndex < drivingDialogs.length - 1) {
+          setDrivingDialogIndex(drivingDialogIndex + 1);
+        }
+      } else {
+        setGameState('crash');
+      }
+    };
+
+    const handleDrivingDialogNext = () => {
+      if (isTyping) return;
+      if (drivingDialogIndex < drivingDialogs.length - 1) {
+        setDrivingDialogIndex(drivingDialogIndex + 1);
+      } else {
+        setGameState('crash');
+      }
+    };
+
+    const resetGame = () => {
+      setGameState('dialog');
+      setDialogStep(0);
+      setSpeedLevel(0);
+      setDrivingDialogIndex(0);
+      setShowGasButton(false);
+      setDisplayedText('');
+      setIsTyping(false);
+    };
+
+    const getCharacterAvatar = (name) => {
+      const avatars = {
+        'Michel': { icon: <img src="images/blogpic.webp" alt="Michel" className="w-10 h-10" />, bg: 'from-amber-900 to-amber-950', border: 'border-amber-800' },
+        'Camus': { icon: '🚬', bg: 'from-gray-800 to-gray-900', border: 'border-gray-700' },
+        'Janine': { icon: '👩', bg: 'from-purple-900 to-purple-950', border: 'border-purple-800' },
+        'Anne': { icon: '👧', bg: 'from-pink-900 to-pink-950', border: 'border-pink-800' }
+      };
+      return avatars[name] || avatars['Michel'];
+    };
+
+    if (gameState === 'dialog') {
+      const currentLine = dialogLines[dialogStep];
+      const leftChar = 'Michel';
+      const rightChar = currentLine.otherSpeaker;
+      const leftAvatar = getCharacterAvatar(leftChar);
+      const rightAvatar = getCharacterAvatar(rightChar);
+
+      return (
+        <div className="min-h-screen bg-gray-900 relative overflow-hidden" style={{ fontFamily: "'Courier New', monospace" }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-900 opacity-90"></div>
+          <div className="absolute inset-0" style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                             repeating-linear-gradient(90deg, rgba(139,115,85,0.1) 0px, transparent 2px, transparent 40px),
+                             repeating-linear-gradient(0deg, rgba(101,67,33,0.1) 0px, transparent 2px, transparent 30px)`
+          }}></div>
+
+          <div className="absolute bottom-0 left-0 right-0 h-48 opacity-30">
+            <div className="absolute bottom-0 left-20 w-32 h-40 bg-black"></div>
+            <div className="absolute bottom-0 left-60 w-24 h-32 bg-black"></div>
+            <div className="absolute bottom-0 right-40 w-28 h-36 bg-black"></div>
+            <div className="absolute bottom-0 right-80 w-20 h-28 bg-black"></div>
+          </div>
+
+          <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-300 mb-2">Lourmarin</h1>
+              <p className="text-gray-500 text-lg">4. Januar 1960</p>
+            </div>
+
+            <div className="flex gap-16 mb-12">
+              <div className={`transition-all duration-500 ${currentLine.speaker === leftChar ? 'scale-105' : 'opacity-60'}`}>
+                <div className="w-48 h-64 bg-gradient-to-b from-gray-700 to-gray-800 border-4 border-gray-600 flex flex-col items-center justify-center shadow-2xl">
+                  <div className={`w-24 h-24 bg-gradient-to-br ${leftAvatar.bg} mb-4 border-4 ${leftAvatar.border} flex items-center justify-center`}>
+                    <div className="text-5xl">{leftAvatar.icon}</div>
+                  </div>
+                  <div className="text-gray-300 font-bold text-xl">{leftChar}</div>
+                  {leftChar !== 'Camus' && <div className="text-gray-500 text-sm">Gallimard</div>}
+                </div>
+              </div>
+
+              <div className={`transition-all duration-500 ${currentLine.speaker === rightChar ? 'scale-105' : 'opacity-60'}`}>
+                <div className="w-48 h-64 bg-gradient-to-b from-gray-700 to-gray-800 rounded-lg border-4 border-gray-600 flex flex-col items-center justify-center shadow-2xl">
+                  <div className={`w-24 h-24 bg-gradient-to-br ${rightAvatar.bg} mb-4 border-4 ${rightAvatar.border} flex items-center justify-center`}>
+                    <div className="text-5xl">{rightAvatar.icon}</div>
+                  </div>
+                  <div className="text-gray-300 font-bold text-xl">{rightChar}</div>
+                  {rightChar !== 'Camus' && <div className="text-gray-500 text-sm">Gallimard</div>}
+                </div>
+              </div>
+            </div>
+
+            <div className="max-w-3xl w-full bg-black bg-opacity-80 border-2 border-gray-700 shadow-2xl p-8" style={{ minHeight: '200px' }}>
+              <div className="font-bold text-2xl mb-4 text-gray-400">
+                {currentLine.speaker}:
+              </div>
+              <div className="text-gray-200 text-xl mb-6 leading-relaxed" style={{ minHeight: '80px' }}>
+                {displayedText}
+                {isTyping && <span className="animate-pulse">|</span>}
+              </div>
+              <button
+                onClick={handleDialogNext}
+                disabled={isTyping}
+                className={`w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-4 px-6 border-2 border-gray-600 transition-colors text-lg ${isTyping ? 'opacity-50' : ''}`}
+                style={{ cursor: 'default' }}
+              >
+                {dialogStep < dialogLines.length - 1 ? '▶ Weiter' : '🚗 Losfahren'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (gameState === 'driving') {
+      const currentDialog = drivingDialogs[drivingDialogIndex];
+      const leftChar = 'Michel';
+      const rightChar = 'Camus';
+      const leftAvatar = getCharacterAvatar(leftChar);
+      const rightAvatar = getCharacterAvatar(rightChar);
+
+      return (
+        <div className="h-screen bg-gray-900 relative flex flex-col overflow-hidden" style={{ fontFamily: "'Courier New', monospace" }}>
+          <div ref={mountRef} className="w-full flex-1"></div>
+
+          <div className="w-full bg-gray-900 relative p-4 flex items-center justify-center" style={{ height: '280px', flexShrink: 0 }}>
+            <div className="max-w-5xl w-full flex gap-8 items-end">
+              <div className={`transition-all duration-500 ${currentDialog.speaker === leftChar ? 'scale-105' : 'opacity-60'}`}>
+                <div className="w-32 h-44 bg-gradient-to-b from-gray-700 to-gray-800 border-4 border-gray-600 flex flex-col items-center justify-center shadow-2xl">
+                  <div className={`w-16 h-16 bg-gradient-to-br ${leftAvatar.bg} mb-2 border-4 ${leftAvatar.border} flex items-center justify-center`}>
+                    <div className="text-3xl">{leftAvatar.icon}</div>
+                  </div>
+                  <div className="text-gray-300 font-bold text-sm">{leftChar}</div>
+                  <div className="text-gray-500 text-xs">Gallimard</div>
+                </div>
+              </div>
+
+              <div className="flex-1 bg-black bg-opacity-80 border-2 border-gray-700 shadow-2xl p-6" style={{ height: '220px' }}>
+                <div className="font-bold text-xl mb-3 text-gray-400">
+                  {currentDialog.speaker}:
+                </div>
+                <div className="text-gray-200 text-lg mb-4 leading-relaxed" style={{ minHeight: '60px' }}>
+                  {displayedText}
+                  {isTyping && <span className="animate-pulse">|</span>}
+                </div>
+
+                <div style={{ height: '52px' }}>
+                  {!showGasButton && drivingDialogIndex < drivingDialogs.length - 1 && (
+                    <button
+                      onClick={handleDrivingDialogNext}
+                      disabled={isTyping}
+                      className={`w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-3 px-6 border-2 border-gray-600 transition-colors ${isTyping ? 'opacity-50' : ''}`}
+                      style={{ cursor: 'default' }}
+                    >
+                      ▶ Weiter
+                    </button>
+                  )}
+
+                  {showGasButton && (
+                    <button
+                      onClick={handleAccelerate}
+                      className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-3 px-6 border-2 border-gray-600 transition-colors"
+                      style={{ cursor: 'default' }}
+                    >
+                      ⚡ Mehr Gas geben ({speedLevel + 1}/3)
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className={`transition-all duration-500 ${currentDialog.speaker === rightChar ? 'scale-105' : 'opacity-60'}`}>
+                <div className="w-32 h-44 bg-gradient-to-b from-gray-700 to-gray-800 rounded-lg border-4 border-gray-600 flex flex-col items-center justify-center shadow-2xl">
+                  <div className={`w-16 h-16 bg-gradient-to-br ${rightAvatar.bg} mb-2 border-4 ${rightAvatar.border} flex items-center justify-center`}>
+                    <div className="text-3xl">{rightAvatar.icon}</div>
+                  </div>
+                  <div className="text-gray-300 font-bold text-sm">{rightChar}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (gameState === 'crash') {
+      return (
+        <div className="min-h-screen bg-black flex items-center justify-center p-8 relative overflow-hidden" style={{ fontFamily: "'Courier New', monospace" }}>
+          <div className="absolute inset-0 bg-red-950 opacity-30 animate-pulse"></div>
+
+          <div className="max-w-3xl w-full text-center relative z-10">
+            <div className="text-red-600 text-9xl mb-8 animate-pulse">💥</div>
+            <h1 className="text-7xl font-bold text-red-500 mb-8 drop-shadow-lg">GAME OVER</h1>
+            <div className="bg-black bg-opacity-80 border-4 border-red-900 p-8 mb-8">
+              <p className="text-gray-200 text-2xl mb-6 leading-relaxed">
+                Das Auto kam von der Fahrbahn ab und prallte gegen einen Baum.
+              </p>
+              <p className="text-gray-500 text-xl mb-4">
+                📍 Villeblevin, Frankreich
+              </p>
+              <p className="text-gray-600 text-lg">
+                4. Januar 1960 - 13:55 Uhr
+              </p>
+            </div>
+            <button
+              onClick={resetGame}
+              className="bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-5 px-10 border-2 border-gray-600 transition-colors text-xl shadow-2xl"
+              style={{ cursor: 'default' }}
+            >
+              Erneut spielen
+            </button>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<CamusGame />);
+  </script>
+</body>
+</html>
