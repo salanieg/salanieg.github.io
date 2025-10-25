@@ -210,14 +210,6 @@ button h2 {
     color: #a933e4;
 }
 
-/* Responsive: Bei schmalen Bildschirmen untereinander */
-@media (max-width: 600px) {
-    .button-section {
-        flex-direction: column;
-        align-items: center;
-    }
-}
-
 /* Burger Menu Styles */
         .nav-toggle {
             position: absolute;

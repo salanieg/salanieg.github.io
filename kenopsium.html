@@ -75,5 +75,19 @@
     <footer>
         <p>© 2025 Dennis Münch | 💚 Öko-optimiert und cookiefrei<br><a href="https://www.denmuen.ch/impressum">Impressum</a></p>
     </footer>
+<script>
+        // JavaScript to handle collapsible buttons
+        document.querySelectorAll(".collapsible").forEach(function(button) {
+            button.addEventListener("click", function() {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        });
+    </script>  
 </body>
 </html>
