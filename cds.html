@@ -53,34 +53,6 @@
     .vignette {
       box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
     }
-    
-    @keyframes grain {
-      0%, 100% { transform: translate(0, 0); }
-      10% { transform: translate(-5%, -5%); }
-      20% { transform: translate(-10%, 5%); }
-      30% { transform: translate(5%, -10%); }
-      40% { transform: translate(-5%, 15%); }
-      50% { transform: translate(-10%, 5%); }
-      60% { transform: translate(15%, 0); }
-      70% { transform: translate(0, 10%); }
-      80% { transform: translate(-15%, 0); }
-      90% { transform: translate(10%, 5%); }
-    }
-    
-    .film-grain {
-      position: fixed;
-      top: -50%;
-      left: -50%;
-      right: -50%;
-      bottom: -50%;
-      width: 200%;
-      height: 200%;
-      background: repeating-radial-gradient(circle at 17% 32%, transparent 0, rgba(255,255,255,.03) 1px, transparent 2px);
-      animation: grain 8s steps(10) infinite;
-      pointer-events: none;
-      opacity: 0.4;
-      z-index: 1;
-    }
   </style>
 </head>
 <body>
@@ -93,47 +65,53 @@
     const [gameState, setGameState] = useState('intro');
     const [dialogStep, setDialogStep] = useState(0);
     const [speedLevel, setSpeedLevel] = useState(0);
+    const speedLevelRef = useRef(0);
     const [drivingDialogIndex, setDrivingDialogIndex] = useState(0);
     const [showGasButton, setShowGasButton] = useState(false);
     const [displayedText, setDisplayedText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [currentFullText, setCurrentFullText] = useState('');
+    const typingIntervalRef = useRef(null);
     const [showCrashEffect, setShowCrashEffect] = useState(false);
+    const [crashAnimationTime, setCrashAnimationTime] = useState(0);
     const mountRef = useRef(null);
+    const crashMountRef = useRef(null);
     const sceneRef = useRef(null);
     const animationRef = useRef(null);
+    const crashAnimationRef = useRef(null);
     const audioContextRef = useRef(null);
 
     const dialogLines = [
-      { speaker: 'Michel', text: 'Albert, ich fahre nach Paris zurück. Möchtest du in meinem Facel Vega mitfahren?', otherSpeaker: 'Camus' },
-      { speaker: 'Camus', text: 'Ich weiß nicht, Michel. Ich habe bereits eine Zugkarte.', otherSpeaker: 'Camus' },
-      { speaker: 'Michel', text: 'Janine und Anne werden auch dabei sein. Es wird eine angenehme Fahrt.', otherSpeaker: 'Janine' },
-      { speaker: 'Janine', text: 'Es wäre doch schön, gemeinsam zu fahren, Albert.', otherSpeaker: 'Janine' },
-      { speaker: 'Michel', text: 'Anne freut sich schon auf die Reise.', otherSpeaker: 'Anne' },
-      { speaker: 'Anne', text: 'Wir haben genug Platz im Auto, Monsieur Camus.', otherSpeaker: 'Anne' },
-      { speaker: 'Anne', text: 'Mami, wieso sieht der Reifen so komisch aus?', otherSpeaker: 'Anne' },
-      { speaker: 'Janine', text: 'Sei still und steig ein.', otherSpeaker: 'Janine' },
-      { speaker: 'Michel', text: 'Komm schon, Albert! Der Wagen fährt wunderbar. Du wirst es nicht bereuen.', otherSpeaker: 'Camus' },
-      { speaker: 'Camus', text: 'Nun gut... Ihr habt mich überzeugt. Ich komme mit.', otherSpeaker: 'Camus' }
+      { speaker: 'Michel Gallimard', text: 'Albert, ich fahre nach Paris zurück. Möchtest du in meinem Facel Vega mitfahren?', otherSpeaker: 'Albert Camus' },
+      { speaker: 'Albert Camus', text: 'Ich weiß nicht, Michel. Ich habe bereits eine Zugkarte.', otherSpeaker: 'Albert Camus' },
+      { speaker: 'Michel Gallimard', text: 'Janine und Anne werden auch dabei sein. Es wird eine angenehme Fahrt.', otherSpeaker: 'Janine Gallimard' },
+      { speaker: 'Janine Gallimard', text: 'Es wäre doch schön, gemeinsam zu fahren, Albert.', otherSpeaker: 'Janine Gallimard' },
+      { speaker: 'Michel Gallimard', text: 'Anne freut sich schon auf die Reise.', otherSpeaker: 'Anne Gallimard' },
+      { speaker: 'Anne Gallimard', text: 'Wir haben genug Platz im Auto, Monsieur Camus.', otherSpeaker: 'Anne Gallimard' },
+      { speaker: 'Anne Gallimard', text: 'Mami, wieso sieht der Reifen so komisch aus?', otherSpeaker: 'Anne Gallimard' },
+      { speaker: 'Janine Gallimard', text: 'Sei still und steig ein.', otherSpeaker: 'Janine Gallimard' },
+      { speaker: 'Michel Gallimard', text: 'Komm schon, Albert! Der Wagen fährt wunderbar. Du wirst es nicht bereuen.', otherSpeaker: 'Albert Camus' },
+      { speaker: 'Albert Camus', text: 'Nun gut... Ihr habt mich überzeugt. Ich komme mit.', otherSpeaker: 'Albert Camus' }
     ];
 
     const drivingDialogs = [
-      { speaker: 'Michel', text: 'Es ist ein schöner Tag für eine Fahrt nach Paris.', showGas: false },
-      { speaker: 'Camus', text: 'Ja, die Landschaft ist wirklich beeindruckend.', showGas: false },
-      { speaker: 'Michel', text: 'Wir machen ausgezeichnete Zeit.', showGas: false },
-      { speaker: 'Camus', text: 'Der Wagen fährt sehr komfortabel.', showGas: true },
-      { speaker: 'Michel', text: 'Der Facel Vega ist ein Meisterwerk französischer Ingenieurskunst.', showGas: false },
-      { speaker: 'Camus', text: 'Die Straße wird schmaler hier...', showGas: false },
-      { speaker: 'Michel', text: 'Keine Sorge, ich kenne diese Strecke gut.', showGas: false },
-      { speaker: 'Camus', text: 'Wie lange noch bis Paris?', showGas: false },
-      { speaker: 'Michel', text: 'Noch etwa zwei Stunden. Wir können schneller fahren.', showGas: true },
-      { speaker: 'Camus', text: 'Das Wetter verschlechtert sich...', showGas: false },
-      { speaker: 'Michel', text: 'Ein bisschen Nebel macht nichts.', showGas: false },
-      { speaker: 'Camus', text: 'Die Bäume ziehen so schnell vorbei...', showGas: false },
-      { speaker: 'Michel', text: 'Der Motor läuft perfekt. Spürst du die Kraft?', showGas: false },
-      { speaker: 'Camus', text: 'Michel, vielleicht sollten wir langsamer...', showGas: true },
-      { speaker: 'Michel', text: 'Vertrau mir, ich habe alles unter Kontrolle.', showGas: false },
-      { speaker: 'Camus', text: 'Die Kurve da vorne... Michel!', showGas: false },
-      { speaker: 'Michel', text: 'Ich sehe sie, ich—', showGas: false }
+      { speaker: 'Michel Gallimard', text: 'Es ist ein schöner Tag für eine Fahrt nach Paris.', showGas: false },
+      { speaker: 'Albert Camus', text: 'Ja, die Landschaft ist wirklich beeindruckend.', showGas: false },
+      { speaker: 'Michel Gallimard', text: 'Wir machen ausgezeichnete Zeit.', showGas: false },
+      { speaker: 'Albert Camus', text: 'Der Wagen fährt sehr komfortabel.', showGas: true },
+      { speaker: 'Michel Gallimard', text: 'Der Facel Vega ist ein Meisterwerk französischer Ingenieurskunst.', showGas: false },
+      { speaker: 'Albert Camus', text: 'Die Straße wird schmaler hier...', showGas: false },
+      { speaker: 'Michel Gallimard', text: 'Keine Sorge, ich kenne diese Strecke gut.', showGas: false },
+      { speaker: 'Albert Camus', text: 'Wie lange noch bis Paris?', showGas: false },
+      { speaker: 'Michel Gallimard', text: 'Noch etwa zwei Stunden. Wir können schneller fahren.', showGas: true },
+      { speaker: 'Albert Camus', text: 'Das Wetter verschlechtert sich...', showGas: false },
+      { speaker: 'Michel Gallimard', text: 'Ein bisschen Nebel macht nichts.', showGas: false },
+      { speaker: 'Albert Camus', text: 'Die Bäume ziehen so schnell vorbei...', showGas: false },
+      { speaker: 'Michel Gallimard', text: 'Der Motor läuft perfekt. Spürst du die Kraft?', showGas: false },
+      { speaker: 'Albert Camus', text: 'Michel, vielleicht sollten wir langsamer...', showGas: true },
+      { speaker: 'Michel Gallimard', text: 'Vertrau mir, ich habe alles unter Kontrolle.', showGas: false },
+      { speaker: 'Albert Camus', text: 'Die Kurve da vorne... Michel!', showGas: false },
+      { speaker: 'Michel Gallimard', text: 'Ich sehe sie, ich—', showGas: false }
     ];
 
     const playTypingSound = (speaker) => {
@@ -146,10 +124,10 @@
       const gainNode = ctx.createGain();
       
       const pitches = {
-        'Michel': 180,
-        'Camus': 160,
-        'Janine': 280,
-        'Anne': 320
+        'Michel Gallimard': 180,
+        'Albert Camus': 160,
+        'Janine Gallimard': 280,
+        'Anne Gallimard': 320
       };
       
       oscillator.type = 'square';
@@ -165,36 +143,306 @@
     };
 
     useEffect(() => {
+      if (gameState !== 'dialog' && gameState !== 'driving') return;
+      
       const currentText = gameState === 'dialog' 
         ? dialogLines[dialogStep].text 
-        : gameState === 'driving' && drivingDialogs[drivingDialogIndex]
-          ? drivingDialogs[drivingDialogIndex].text 
-          : '';
+        : drivingDialogs[drivingDialogIndex]?.text || '';
 
       const currentSpeaker = gameState === 'dialog'
         ? dialogLines[dialogStep].speaker
-        : gameState === 'driving' && drivingDialogs[drivingDialogIndex]
-          ? drivingDialogs[drivingDialogIndex].speaker
-          : '';
+        : drivingDialogs[drivingDialogIndex]?.speaker || '';
 
+      setCurrentFullText(currentText);
       setDisplayedText('');
       setIsTyping(true);
 
       let currentIndex = 0;
       const typingSpeed = gameState === 'driving' ? 25 : 30;
-      const typingInterval = setInterval(() => {
+      
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+      }
+      
+      typingIntervalRef.current = setInterval(() => {
         if (currentIndex < currentText.length) {
           setDisplayedText(currentText.substring(0, currentIndex + 1));
           playTypingSound(currentSpeaker);
           currentIndex++;
         } else {
           setIsTyping(false);
-          clearInterval(typingInterval);
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
         }
       }, typingSpeed);
 
-      return () => clearInterval(typingInterval);
+      return () => {
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
+      };
     }, [dialogStep, drivingDialogIndex, gameState]);
+
+    // Crash Animation useEffect
+    useEffect(() => {
+      if (!showCrashEffect) {
+        if (crashAnimationRef.current) {
+          cancelAnimationFrame(crashAnimationRef.current);
+          crashAnimationRef.current = null;
+        }
+        if (crashMountRef.current) {
+          while (crashMountRef.current.firstChild) {
+            crashMountRef.current.removeChild(crashMountRef.current.firstChild);
+          }
+        }
+        return;
+      }
+      
+      if (!crashMountRef.current) return;
+
+      while (crashMountRef.current.firstChild) {
+        crashMountRef.current.removeChild(crashMountRef.current.firstChild);
+      }
+
+      const width = crashMountRef.current.clientWidth;
+      const height = crashMountRef.current.clientHeight;
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x2a3544, 5, 50);
+      
+      // Sky gradient
+      const skyGeometry = new THREE.SphereGeometry(200, 32, 15);
+      const skyMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          topColor: { value: new THREE.Color(0x88bbdd) },
+          bottomColor: { value: new THREE.Color(0x5a6a7a) },
+          offset: { value: 33 },
+          exponent: { value: 0.6 }
+        },
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 topColor;
+          uniform vec3 bottomColor;
+          uniform float offset;
+          uniform float exponent;
+          varying vec3 vWorldPosition;
+          void main() {
+            float h = normalize(vWorldPosition + offset).y;
+            gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
+          }
+        `,
+        side: THREE.BackSide
+      });
+      const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+      scene.add(sky);
+
+      // Sun
+      const sunGeometry = new THREE.SphereGeometry(3, 32, 32);
+      const sunMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xffffdd,
+        fog: false
+      });
+      const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+      const angle = 20 * Math.PI / 180;
+      const distance = 80;
+      sun.position.set(
+        distance * Math.cos(angle) * 0.3,
+        distance * Math.sin(angle),
+        -distance * Math.cos(angle)
+      );
+      scene.add(sun);
+
+      const camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 1000);
+      camera.position.set(-15, 3, 5);
+      camera.lookAt(0, 1, 0);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(width, height);
+      renderer.shadowMap.enabled = true;
+      renderer.toneMappingExposure = 0.8;
+      crashMountRef.current.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0x556677, 0.6);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffeedd, 0.4);
+      directionalLight.position.set(5, 20, 5);
+      scene.add(directionalLight);
+
+      // Ground
+      const groundGeometry = new THREE.PlaneGeometry(100, 100);
+      const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x2d3a1f, roughness: 1 });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
+
+      // Tree
+      const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.6, 5, 8);
+      const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9 });
+      const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+      trunk.position.set(0, 2.5, 0);
+      scene.add(trunk);
+
+      const foliageGeometry = new THREE.SphereGeometry(2.5, 8, 8);
+      const foliageMaterial = new THREE.MeshStandardMaterial({ color: 0x1a4a1a, roughness: 1 });
+      const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+      foliage.position.set(0, 6, 0);
+      scene.add(foliage);
+
+      // Car
+      const carGroup = new THREE.Group();
+      
+      const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x0a0a0a, shininess: 100 });
+      
+      const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1, 4.5), bodyMaterial);
+      body.position.y = 0.5;
+      carGroup.add(body);
+
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.8, 2.8), bodyMaterial);
+      roof.position.set(0, 1.35, 0.6);
+      carGroup.add(roof);
+
+      // Front (lighter)
+      const frontMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 100 });
+      const front = new THREE.Mesh(new THREE.BoxGeometry(2, 0.7, 1.8), frontMaterial);
+      front.position.set(0, 0.8, -2.4);
+      carGroup.add(front);
+
+      // Rear (longer)
+      const rear = new THREE.Mesh(new THREE.BoxGeometry(2, 0.7, 2.2), bodyMaterial);
+      rear.position.set(0, 0.8, 2.6);
+      carGroup.add(rear);
+
+      // Dolphin fins
+      const finMaterial = new THREE.MeshPhongMaterial({ color: 0x000000, shininess: 120 });
+      
+      const finLeft = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.4), finMaterial);
+      finLeft.position.set(-1.0, 1.1, 2.8);
+      carGroup.add(finLeft);
+      
+      const finRight = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.4), finMaterial);
+      finRight.position.set(1.0, 1.1, 2.8);
+      carGroup.add(finRight);
+
+      // Bumpers
+      const bumperMaterial = new THREE.MeshPhongMaterial({ color: 0x555555, shininess: 60 });
+      
+      const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.25, 0.3), bumperMaterial);
+      frontBumper.position.set(0, 0.15, -3.3);
+      carGroup.add(frontBumper);
+
+      const rearBumper = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.25, 0.3), bumperMaterial);
+      rearBumper.position.set(0, 0.15, 3.6);
+      carGroup.add(rearBumper);
+
+      const leftBumper = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 6.6), bumperMaterial);
+      leftBumper.position.set(-1.1, 0.15, 0.15);
+      carGroup.add(leftBumper);
+
+      const rightBumper = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 6.6), bumperMaterial);
+      rightBumper.position.set(1.1, 0.15, 0.15);
+      carGroup.add(rightBumper);
+
+      // Wheels
+      const wheelGeometry = new THREE.CylinderGeometry(0.45, 0.45, 0.35, 16);
+      const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x2b2b2b, shininess: 40 });
+      
+      const wheelFL = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      wheelFL.rotation.z = Math.PI / 2;
+      wheelFL.position.set(-1.1, 0.45, 1.5);
+      carGroup.add(wheelFL);
+
+      const wheelFR = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      wheelFR.rotation.z = Math.PI / 2;
+      wheelFR.position.set(1.1, 0.45, 1.5);
+      carGroup.add(wheelFR);
+
+      const wheelRL = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      wheelRL.rotation.z = Math.PI / 2;
+      wheelRL.position.set(-1.1, 0.45, -1.5);
+      carGroup.add(wheelRL);
+
+      const wheelRR = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      wheelRR.rotation.z = Math.PI / 2;
+      wheelRR.position.set(1.1, 0.45, -1.5);
+      carGroup.add(wheelRR);
+
+      // Detached wheel
+      const detachedWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      detachedWheel.rotation.z = Math.PI / 2;
+      scene.add(detachedWheel);
+
+      carGroup.position.set(-20, 0.45, 0);
+      scene.add(carGroup);
+
+      let time = 0;
+      const animate = () => {
+        time += 0.016;
+        
+        if (time < 1.5) {
+          carGroup.position.x = -20 + time * 13;
+        } else if (time < 2.0) {
+          const impactProgress = (time - 1.5) / 0.5;
+          // Stop before tree, not inside it
+          carGroup.position.x = -0.5 + impactProgress * 0.3;
+          carGroup.rotation.y = impactProgress * 0.3;
+          carGroup.rotation.z = impactProgress * -0.2;
+          
+          front.scale.z = 1 - impactProgress * 0.5;
+          front.position.z = -2.4 + impactProgress * 0.4; // Front crashes inward
+          
+          if (impactProgress > 0.3) {
+            wheelFR.visible = false;
+            detachedWheel.visible = true;
+            const wheelProgress = (impactProgress - 0.3) / 0.7;
+            detachedWheel.position.set(
+              1.1 + wheelProgress * 5,
+              0.45 - wheelProgress * 0.3,
+              1.5 + wheelProgress * 2
+            );
+            detachedWheel.rotation.x = wheelProgress * 8;
+            detachedWheel.rotation.y = wheelProgress * 3;
+          }
+        } else if (time < 4.0) {
+          const rollProgress = (time - 2.0) / 2.0;
+          detachedWheel.position.set(
+            6.1 + rollProgress * 8,
+            0.45,
+            3.5 + rollProgress * 1
+          );
+          detachedWheel.rotation.x = 8 + rollProgress * 15;
+          
+          carGroup.rotation.y = 0.3 + Math.sin(time * 3) * 0.05;
+          carGroup.rotation.z = -0.2 + Math.sin(time * 2) * 0.03;
+        }
+
+        renderer.render(scene, camera);
+        crashAnimationRef.current = requestAnimationFrame(animate);
+      };
+
+      animate();
+
+      return () => {
+        if (crashAnimationRef.current) {
+          cancelAnimationFrame(crashAnimationRef.current);
+        }
+        if (crashMountRef.current) {
+          while (crashMountRef.current.firstChild) {
+            crashMountRef.current.removeChild(crashMountRef.current.firstChild);
+          }
+        }
+        renderer.dispose();
+        scene.clear();
+      };
+    }, [showCrashEffect]);
 
     useEffect(() => {
       if (gameState === 'driving' && drivingDialogIndex < drivingDialogs.length) {
@@ -203,35 +451,125 @@
     }, [drivingDialogIndex, gameState, speedLevel]);
 
     useEffect(() => {
-      if (gameState !== 'driving' || !mountRef.current) return;
+      // Always cleanup when not in driving state
+      if (gameState !== 'driving') {
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
+        if (sceneRef.current) {
+          const { renderer, scene } = sceneRef.current;
+          if (renderer) {
+            renderer.dispose();
+            if (renderer.domElement && renderer.domElement.parentNode) {
+              renderer.domElement.parentNode.removeChild(renderer.domElement);
+            }
+          }
+          if (scene) {
+            scene.clear();
+          }
+          sceneRef.current = null;
+        }
+        // Clear mount ref completely
+        if (mountRef.current) {
+          while (mountRef.current.firstChild) {
+            mountRef.current.removeChild(mountRef.current.firstChild);
+          }
+        }
+        return;
+      }
+      
+      if (!mountRef.current) return;
 
+      // Clear any existing content
       while (mountRef.current.firstChild) {
         mountRef.current.removeChild(mountRef.current.firstChild);
       }
 
-      const scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0x1a2332, 10, 100);
-      scene.background = new THREE.Color(0x0f1419);
+      const width = mountRef.current.clientWidth;
+      const height = mountRef.current.clientHeight;
 
-      const camera = new THREE.PerspectiveCamera(75, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 1000);
+      if (width === 0 || height === 0) {
+        console.error('Mount element has no dimensions');
+        return;
+      }
+
+      // Initialize speedLevelRef
+      speedLevelRef.current = speedLevel;
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x2a3544, 15, 80);
+      
+      // Sky gradient with THREE.js
+      const skyGeometry = new THREE.SphereGeometry(200, 32, 15);
+      const skyMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          topColor: { value: new THREE.Color(0x88bbdd) },
+          bottomColor: { value: new THREE.Color(0x5a6a7a) },
+          offset: { value: 33 },
+          exponent: { value: 0.6 }
+        },
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 topColor;
+          uniform vec3 bottomColor;
+          uniform float offset;
+          uniform float exponent;
+          varying vec3 vWorldPosition;
+          void main() {
+            float h = normalize(vWorldPosition + offset).y;
+            gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
+          }
+        `,
+        side: THREE.BackSide
+      });
+      const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+      scene.add(sky);
+
+      // Sun
+      const sunGeometry = new THREE.SphereGeometry(3, 32, 32);
+      const sunMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xffffdd,
+        fog: false
+      });
+      const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+      // 20 degrees above horizon
+      const angle = 20 * Math.PI / 180;
+      const distance = 80;
+      sun.position.set(
+        distance * Math.cos(angle) * 0.3,
+        distance * Math.sin(angle),
+        -distance * Math.cos(angle)
+      );
+      scene.add(sun);
+
+      const camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 1000);
       camera.position.set(0, 4.5, 12);
       camera.lookAt(0, 1, -10);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+      renderer.setSize(width, height);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMappingExposure = 0.8;
       mountRef.current.appendChild(renderer.domElement);
 
-      const ambientLight = new THREE.AmbientLight(0x445566, 0.4);
+      const ambientLight = new THREE.AmbientLight(0x556677, 0.6);
       scene.add(ambientLight);
       
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      const directionalLight = new THREE.DirectionalLight(0xffeedd, 0.4);
       directionalLight.position.set(5, 20, 5);
       directionalLight.castShadow = true;
       scene.add(directionalLight);
 
-      const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x362310, 0.5);
+      const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x4a3520, 0.4);
       scene.add(hemisphereLight);
 
       const carGroup = new THREE.Group();
@@ -249,15 +587,66 @@
 
       const roofGeometry = new THREE.BoxGeometry(1.7, 0.8, 2.8);
       const roof = new THREE.Mesh(roofGeometry, bodyMaterial);
-      roof.position.set(0, 1.35, -0.4);
+      roof.position.set(0, 1.35, 0.6); // Adjusted for longer rear
       roof.castShadow = true;
       carGroup.add(roof);
 
-      const hoodGeometry = new THREE.BoxGeometry(2, 0.5, 1.5);
-      const hood = new THREE.Mesh(hoodGeometry, bodyMaterial);
-      hood.position.set(0, 0.8, 1.8);
-      hood.castShadow = true;
-      carGroup.add(hood);
+      // Front section (same color as body, flush with bottom)
+      const frontGeometry = new THREE.BoxGeometry(2, 0.7, 1.8);
+      const front = new THREE.Mesh(frontGeometry, bodyMaterial); // Same material as body
+      front.position.set(0, 0.85, -2.4); // Adjusted height to be flush
+      front.castShadow = true;
+      carGroup.add(front);
+
+      // Rear section (longer, flush with bottom)
+      const rearGeometry = new THREE.BoxGeometry(2, 0.7, 2.2); // Longer: 2.2 instead of 1.8
+      const rear = new THREE.Mesh(rearGeometry, bodyMaterial);
+      rear.position.set(0, 0.85, 2.6); // Adjusted height to be flush, moved back
+      rear.castShadow = true;
+      carGroup.add(rear);
+
+      // Dolphin fins at rear
+      const finGeometry = new THREE.BoxGeometry(0.15, 0.6, 0.4);
+      const finMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x000000, 
+        shininess: 120
+      });
+      
+      const finLeft = new THREE.Mesh(finGeometry, finMaterial);
+      finLeft.position.set(-1.0, 1.1, 2.8); // Further back
+      finLeft.castShadow = true;
+      carGroup.add(finLeft);
+      
+      const finRight = new THREE.Mesh(finGeometry, finMaterial);
+      finRight.position.set(1.0, 1.1, 2.8); // Further back
+      finRight.castShadow = true;
+      carGroup.add(finRight);
+
+      // Bumpers (gray)
+      const bumperMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x555555,
+        shininess: 60
+      });
+
+      // Front bumper
+      const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.25, 0.3), bumperMaterial);
+      frontBumper.position.set(0, 0.15, -3.3);
+      carGroup.add(frontBumper);
+
+      // Rear bumper
+      const rearBumper = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.25, 0.3), bumperMaterial);
+      rearBumper.position.set(0, 0.15, 3.6);
+      carGroup.add(rearBumper);
+
+      // Side bumpers (left and right)
+      const sideBumperGeometry = new THREE.BoxGeometry(0.25, 0.25, 6.6); // Length covers front to back
+      const leftBumper = new THREE.Mesh(sideBumperGeometry, bumperMaterial);
+      leftBumper.position.set(-1.1, 0.15, 0.15);
+      carGroup.add(leftBumper);
+
+      const rightBumper = new THREE.Mesh(sideBumperGeometry, bumperMaterial);
+      rightBumper.position.set(1.1, 0.15, 0.15);
+      carGroup.add(rightBumper);
 
       const grillGeometry = new THREE.BoxGeometry(1.8, 0.4, 0.2);
       const grillMaterial = new THREE.MeshPhongMaterial({ 
@@ -266,25 +655,25 @@
         specular: 0xffffff
       });
       const grill = new THREE.Mesh(grillGeometry, grillMaterial);
-      grill.position.set(0, 0.4, 2.6);
+      grill.position.set(0, 0.4, -3.35);
       carGroup.add(grill);
 
       const headlightGeometry = new THREE.SphereGeometry(0.2, 8, 8);
-      const headlightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffcc });
+      const headlightMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.8 });
       const headlightLeft = new THREE.Mesh(headlightGeometry, headlightMaterial);
-      headlightLeft.position.set(-0.7, 0.5, 2.7);
+      headlightLeft.position.set(-0.7, 0.5, -3.4);
       carGroup.add(headlightLeft);
       const headlightRight = new THREE.Mesh(headlightGeometry, headlightMaterial);
-      headlightRight.position.set(0.7, 0.5, 2.7);
+      headlightRight.position.set(0.7, 0.5, -3.4);
       carGroup.add(headlightRight);
 
       const taillightGeometry = new THREE.SphereGeometry(0.15, 8, 8);
       const taillightMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.8 });
       const taillightLeft = new THREE.Mesh(taillightGeometry, taillightMaterial);
-      taillightLeft.position.set(-0.8, 0.6, -2.3);
+      taillightLeft.position.set(-0.8, 0.6, 3.65);
       carGroup.add(taillightLeft);
       const taillightRight = new THREE.Mesh(taillightGeometry, taillightMaterial);
-      taillightRight.position.set(0.8, 0.6, -2.3);
+      taillightRight.position.set(0.8, 0.6, 3.65);
       carGroup.add(taillightRight);
 
       const windowMaterial = new THREE.MeshPhongMaterial({ 
@@ -382,7 +771,6 @@
           roughness: 0.9
         });
         const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
-        trunk.castShadow = true;
 
         const foliageGeometry = new THREE.SphereGeometry(1.8, 8, 8);
         const foliageMaterial = new THREE.MeshStandardMaterial({ 
@@ -391,7 +779,6 @@
         });
         const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
         foliage.position.y = 3;
-        foliage.castShadow = true;
 
         const tree = new THREE.Group();
         tree.add(trunk);
@@ -410,27 +797,44 @@
       let roadOffset = 0;
       let wheelRotation = 0;
       let sidewaysMotion = 0;
+      let driftOffset = 0; // For smooth drift away from center
+      let accelerationSmoothing = 0; // For smooth speed transitions
 
       const animate = () => {
-        const baseSpeed = (speedLevel + 1) * 0.15;
-        const speed = baseSpeed * (1 + Math.random() * 0.1);
+        // Read current speed from ref - always up to date!
+        const currentSpeed = speedLevelRef.current;
+        
+        // Smooth acceleration transition
+        const targetSpeed = (currentSpeed + 1) * 0.18;
+        accelerationSmoothing += (targetSpeed - accelerationSmoothing) * 0.05; // Smooth lerp
+        const speed = accelerationSmoothing * (1 + Math.random() * 0.1);
         
         roadOffset += speed;
         wheelRotation += speed * 3;
 
-        if (speedLevel >= 2) {
+        if (currentSpeed >= 2) {
+          // Smooth drift away from center before wobbling
+          if (driftOffset < 1.0) {
+            driftOffset += 0.01; // Gradual drift
+          }
+          
           sidewaysMotion += 0.05;
           const wobble = Math.sin(sidewaysMotion);
-          carGroup.position.x = wobble * 3;
-          carGroup.rotation.y = wobble * 0.25;
-          carGroup.rotation.z = Math.cos(sidewaysMotion) * 0.18;
+          const driftAmount = Math.min(driftOffset, 1.0); // Cap at 1.0
           
-          camera.position.x = wobble * 0.5;
-          camera.rotation.z = wobble * 0.02;
+          // Combine drift and wobble
+          carGroup.position.x = driftAmount * 2 + wobble * 2.5 * driftAmount;
+          carGroup.rotation.y = wobble * 0.2 * driftAmount;
+          carGroup.rotation.z = Math.cos(sidewaysMotion) * 0.15 * driftAmount;
+          
+          camera.position.x = wobble * 0.4 * driftAmount;
+          camera.rotation.z = wobble * 0.02 * driftAmount;
         } else {
-          carGroup.position.x = Math.sin(roadOffset * 0.3) * 0.15 * speedLevel;
+          // Reset drift when slowing down (shouldn't happen in game, but good practice)
+          driftOffset = 0;
+          carGroup.position.x = Math.sin(roadOffset * 0.3) * 0.15 * currentSpeed;
           carGroup.rotation.y = 0;
-          carGroup.rotation.z = Math.sin(roadOffset * 0.5) * 0.04 * (speedLevel + 1);
+          carGroup.rotation.z = Math.sin(roadOffset * 0.5) * 0.04 * (currentSpeed + 1);
           camera.position.x = 0;
           camera.rotation.z = 0;
         }
@@ -465,16 +869,38 @@
         if (animationRef.current) {
           cancelAnimationFrame(animationRef.current);
         }
-        if (mountRef.current && renderer.domElement && mountRef.current.contains(renderer.domElement)) {
-          mountRef.current.removeChild(renderer.domElement);
+        if (sceneRef.current) {
+          const { renderer, scene } = sceneRef.current;
+          if (renderer) {
+            if (renderer.domElement && renderer.domElement.parentNode) {
+              renderer.domElement.parentNode.removeChild(renderer.domElement);
+            }
+            renderer.dispose();
+          }
+          if (scene) {
+            scene.clear();
+          }
         }
-        renderer.dispose();
-        scene.clear();
+        if (mountRef.current) {
+          while (mountRef.current.firstChild) {
+            mountRef.current.removeChild(mountRef.current.firstChild);
+          }
+        }
       };
-    }, [gameState, speedLevel]);
+    }, [gameState]);
 
     const handleDialogNext = () => {
-      if (isTyping) return;
+      if (isTyping) {
+        // Complete the current text immediately
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
+        setDisplayedText(currentFullText);
+        setIsTyping(false);
+        return;
+      }
+      
       if (dialogStep < dialogLines.length - 1) {
         setDialogStep(dialogStep + 1);
       } else {
@@ -484,30 +910,45 @@
 
     const handleAccelerate = () => {
       if (speedLevel < 2) {
-        setSpeedLevel(speedLevel + 1);
+        const newSpeed = speedLevel + 1;
+        setSpeedLevel(newSpeed);
+        speedLevelRef.current = newSpeed;
+        console.log('Speed increased to:', newSpeed, 'Ref:', speedLevelRef.current);
         setShowGasButton(false);
         if (drivingDialogIndex < drivingDialogs.length - 1) {
           setDrivingDialogIndex(drivingDialogIndex + 1);
         }
       } else {
         setShowCrashEffect(true);
+        setCrashAnimationTime(0);
         setTimeout(() => {
           setGameState('crash');
           setShowCrashEffect(false);
-        }, 2000);
+        }, 4000);
       }
     };
 
     const handleDrivingDialogNext = () => {
-      if (isTyping) return;
+      if (isTyping) {
+        // Complete the current text immediately
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
+        setDisplayedText(currentFullText);
+        setIsTyping(false);
+        return;
+      }
+      
       if (drivingDialogIndex < drivingDialogs.length - 1) {
         setDrivingDialogIndex(drivingDialogIndex + 1);
       } else {
         setShowCrashEffect(true);
+        setCrashAnimationTime(0);
         setTimeout(() => {
           setGameState('crash');
           setShowCrashEffect(false);
-        }, 2000);
+        }, 4000);
       }
     };
 
@@ -527,34 +968,25 @@
 
     const getCharacterAvatar = (name) => {
       const avatars = {
-        'Michel': { 
-          image: 'images/cds/gallimard.jpeg',
-          border: 'border-gray-600',
-          shadow: 'shadow-gray-900/50'
+        'Michel Gallimard': { 
+          image: 'images/cds/gallimard.jpeg'
         },
-        'Camus': { 
-          image: 'images/cds/camus.jpeg',
-          border: 'border-gray-600',
-          shadow: 'shadow-gray-900/50'
+        'Albert Camus': { 
+          image: 'images/cds/camus.jpeg'
         },
-        'Janine': { 
-          image: 'images/cds/janine.jpeg',
-          border: 'border-gray-600',
-          shadow: 'shadow-gray-900/50'
+        'Janine Gallimard': { 
+          image: 'images/cds/janine.jpeg'
         },
-        'Anne': { 
-          image: 'images/cds/anne.jpeg',
-          border: 'border-gray-600',
-          shadow: 'shadow-gray-900/50'
+        'Anne Gallimard': { 
+          image: 'images/cds/anne.jpeg'
         }
       };
-      return avatars[name] || avatars['Michel'];
+      return avatars[name] || avatars['Michel Gallimard'];
     };
 
     if (gameState === 'intro') {
       return (
         <div className="min-h-screen bg-black relative overflow-hidden">
-          <div className="film-grain"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-slate-800 to-black"></div>
           
           <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-8 fade-in-up">
@@ -583,7 +1015,7 @@
               onClick={startGame}
               className="cinzel bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-gray-200 font-bold py-5 px-12 border-2 border-gray-600 transition-all duration-300 text-xl shadow-2xl hover:shadow-gray-700/50 hover:scale-105"
             >
-              ▶ BEGINNEN
+              BEGINNEN
             </button>
           </div>
         </div>
@@ -592,23 +1024,22 @@
 
     if (gameState === 'dialog') {
       const currentLine = dialogLines[dialogStep];
-      const leftChar = 'Michel';
+      const leftChar = 'Michel Gallimard';
       const rightChar = currentLine.otherSpeaker;
       const leftAvatar = getCharacterAvatar(leftChar);
       const rightAvatar = getCharacterAvatar(rightChar);
 
       return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-900 via-gray-800 to-slate-900 relative overflow-hidden">
-          <div className="film-grain"></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-amber-950/20 via-transparent to-slate-950/40"></div>
-          <div className="absolute inset-0 vignette"></div>
-
-          <div className="absolute bottom-0 left-0 right-0 h-56 opacity-20">
-            <div className="absolute bottom-0 left-20 w-32 h-40 bg-black rounded-t-lg"></div>
-            <div className="absolute bottom-0 left-60 w-24 h-32 bg-black rounded-t-lg"></div>
-            <div className="absolute bottom-0 right-40 w-28 h-36 bg-black rounded-t-lg"></div>
-            <div className="absolute bottom-0 right-80 w-20 h-28 bg-black rounded-t-lg"></div>
+        <div className="min-h-screen bg-black relative overflow-hidden">
+          <div className="absolute inset-0">
+            <img 
+              src="images/cds/lourmarin.jpeg" 
+              alt="Lourmarin" 
+              className="w-full h-full object-cover opacity-40"
+            />
           </div>
+          <div className="absolute inset-0 bg-black/40"></div>
+          <div className="absolute inset-0 vignette"></div>
 
           <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-8">
             <div className="text-center mb-12 fade-in-up">
@@ -617,43 +1048,38 @@
             </div>
 
             <div className="flex gap-20 mb-12">
-              <div className={`transition-all duration-700 ${currentLine.speaker === leftChar ? 'scale-110 brightness-110' : 'opacity-50 scale-95'}`}>
-                <div className="w-52 h-72 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 border-4 border-gray-600 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
-                  <div className={`relative w-40 h-40 mb-4 border-4 ${leftAvatar.border} flex items-center justify-center shadow-xl ${leftAvatar.shadow} overflow-hidden bg-gray-800`}>
-                    <img src={leftAvatar.image} alt={leftChar} className="w-full h-full object-cover" />
+              <div className={`transition-all duration-700 relative ${currentLine.speaker === leftChar ? 'scale-110 brightness-110' : 'opacity-50 scale-95'}`}>
+                <div className="w-48 h-72 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 shadow-2xl relative overflow-hidden">
+                  <img src={leftAvatar.image} alt={leftChar} className="w-full h-full object-cover" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/90 py-2 px-3">
+                    <div className="cinzel text-gray-100 font-semibold text-base text-center">{leftChar}</div>
                   </div>
-                  <div className="cinzel relative text-gray-200 font-bold text-2xl mb-1">{leftChar}</div>
-                  {leftChar !== 'Camus' && <div className="garamond relative text-gray-400 text-sm italic">Gallimard</div>}
                 </div>
               </div>
 
-              <div className={`transition-all duration-700 ${currentLine.speaker === rightChar ? 'scale-110 brightness-110' : 'opacity-50 scale-95'}`}>
-                <div className="w-52 h-72 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 rounded-lg border-4 border-gray-600 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
-                  <div className={`relative w-40 h-40 mb-4 border-4 ${rightAvatar.border} flex items-center justify-center shadow-xl ${rightAvatar.shadow} overflow-hidden bg-gray-800`}>
-                    <img src={rightAvatar.image} alt={rightChar} className="w-full h-full object-cover" />
+              <div className={`transition-all duration-700 relative ${currentLine.speaker === rightChar ? 'scale-110 brightness-110' : 'opacity-50 scale-95'}`}>
+                <div className="w-48 h-72 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 shadow-2xl relative overflow-hidden">
+                  <img src={rightAvatar.image} alt={rightChar} className="w-full h-full object-cover" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/90 py-2 px-3">
+                    <div className="cinzel text-gray-100 font-semibold text-base text-center">{rightChar}</div>
                   </div>
-                  <div className="cinzel relative text-gray-200 font-bold text-2xl mb-1">{rightChar}</div>
-                  {rightChar !== 'Camus' && <div className="garamond relative text-gray-400 text-sm italic">Gallimard</div>}
                 </div>
               </div>
             </div>
 
-            <div className="max-w-4xl w-full bg-black/80 backdrop-blur-sm border-2 border-gray-700 shadow-2xl p-10 vignette" style={{ minHeight: '220px' }}>
-              <div className="cinzel font-bold text-3xl mb-6 text-amber-400 tracking-wide">
+            <div className="max-w-4xl w-full bg-black/80 backdrop-blur-sm border-2 border-gray-700 shadow-2xl p-8 vignette">
+              <div className="cinzel font-bold text-3xl mb-5 text-gray-100 tracking-wide">
                 {currentLine.speaker}:
               </div>
-              <div className="garamond text-gray-100 text-2xl mb-8 leading-relaxed" style={{ minHeight: '90px' }}>
+              <div className="garamond text-gray-100 text-2xl mb-6 leading-relaxed" style={{ minHeight: '80px' }}>
                 {displayedText}
-                {isTyping && <span className="animate-pulse text-amber-400">│</span>}
+                {isTyping && <span className="animate-pulse text-gray-100">│</span>}
               </div>
               <button
                 onClick={handleDialogNext}
-                disabled={isTyping}
-                className={`cinzel w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-gray-200 font-bold py-5 px-8 border-2 border-gray-600 transition-all duration-300 text-xl shadow-xl ${isTyping ? 'opacity-50' : 'hover:scale-[1.02]'}`}
+                className={`cinzel w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-gray-200 font-bold py-4 px-8 border-2 border-gray-600 transition-all duration-300 text-xl shadow-xl hover:scale-[1.02]`}
               >
-                {dialogStep < dialogLines.length - 1 ? '▶ Weiter' : '🚗 LOSFAHREN'}
+                {dialogStep < dialogLines.length - 1 ? 'Weiter' : 'LOSFAHREN'}
               </button>
             </div>
           </div>
@@ -663,73 +1089,67 @@
 
     if (gameState === 'driving') {
       const currentDialog = drivingDialogs[drivingDialogIndex];
-      const leftChar = 'Michel';
-      const rightChar = 'Camus';
+      const leftChar = 'Michel Gallimard';
+      const rightChar = 'Albert Camus';
       const leftAvatar = getCharacterAvatar(leftChar);
       const rightAvatar = getCharacterAvatar(rightChar);
 
       return (
         <div className="h-screen bg-gray-900 relative flex flex-col overflow-hidden">
+          <div ref={mountRef} className="w-full" style={{ height: 'calc(100vh - 240px)', visibility: showCrashEffect ? 'hidden' : 'visible' }}></div>
+          
           {showCrashEffect && (
-            <div className="absolute inset-0 bg-red-900 z-50 animate-pulse" style={{ animation: 'shake 0.5s infinite' }}>
-              <div className="absolute inset-0 bg-black opacity-50"></div>
+            <div className="absolute inset-0 z-50 bg-black">
+              <div ref={crashMountRef} className="w-full h-full"></div>
             </div>
           )}
-          <div className="film-grain"></div>
-          <div ref={mountRef} className="w-full flex-1"></div>
 
-          <div className="w-full bg-gradient-to-t from-black via-gray-900 to-transparent relative p-6 flex items-center justify-center vignette" style={{ height: '280px', flexShrink: 0 }}>
-            <div className="max-w-6xl w-full flex gap-6 items-end">
-              <div className={`transition-all duration-500 ${currentDialog.speaker === leftChar ? 'scale-105 brightness-110' : 'opacity-60 scale-95'}`}>
-                <div className="w-36 h-48 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 border-4 border-gray-600 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
-                  <div className={`relative w-28 h-28 mb-2 border-4 ${leftAvatar.border} flex items-center justify-center shadow-lg overflow-hidden bg-gray-800`}>
-                    <img src={leftAvatar.image} alt={leftChar} className="w-full h-full object-cover" />
+          <div className="w-full bg-gradient-to-t from-black via-gray-900 to-transparent relative p-4 flex items-center justify-center vignette" style={{ height: '240px', flexShrink: 0, opacity: showCrashEffect ? 0 : 1, transition: 'opacity 0.3s' }}>
+            <div className="max-w-6xl w-full flex gap-4 items-end">
+              <div className={`transition-all duration-500 relative ${currentDialog.speaker === leftChar ? 'scale-105 brightness-110' : 'opacity-60 scale-95'}`}>
+                <div className="w-32 h-48 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 shadow-2xl relative overflow-hidden">
+                  <img src={leftAvatar.image} alt={leftChar} className="w-full h-full object-cover" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/90 py-1 px-2">
+                    <div className="cinzel text-gray-100 font-semibold text-xs text-center">{leftChar}</div>
                   </div>
-                  <div className="cinzel relative text-gray-200 font-bold text-lg">{leftChar}</div>
-                  <div className="garamond relative text-gray-400 text-xs italic">Gallimard</div>
                 </div>
               </div>
 
-              <div className="flex-1 bg-black/90 backdrop-blur-sm border-2 border-gray-700 shadow-2xl p-8" style={{ height: '220px' }}>
-                <div className="cinzel font-bold text-2xl mb-4 text-amber-400">
+              <div className="flex-1 bg-black/90 backdrop-blur-sm border-2 border-gray-700 shadow-2xl p-4">
+                <div className="cinzel font-bold text-xl mb-2 text-gray-100">
                   {currentDialog.speaker}:
                 </div>
-                <div className="garamond text-gray-100 text-xl mb-6 leading-relaxed" style={{ minHeight: '70px' }}>
+                <div className="garamond text-gray-100 text-lg mb-3 leading-relaxed" style={{ minHeight: '50px' }}>
                   {displayedText}
-                  {isTyping && <span className="animate-pulse text-amber-400">│</span>}
+                  {isTyping && <span className="animate-pulse text-gray-100">│</span>}
                 </div>
 
-                <div style={{ height: '52px' }}>
-                  {!showGasButton && drivingDialogIndex < drivingDialogs.length - 1 && (
+                <div>
+                  {showGasButton ? (
+                    <button
+                      onClick={handleAccelerate}
+                      className="cinzel w-full bg-gradient-to-r from-red-900 to-red-950 hover:from-red-800 hover:to-red-900 text-red-100 font-bold py-2 px-4 border-2 border-red-700 transition-all duration-300 shadow-lg shadow-red-900/50 hover:shadow-red-800/70 hover:scale-[1.01] text-base"
+                      style={{ animation: 'flicker 2s infinite' }}
+                    >
+                      MEHR GAS GEBEN
+                    </button>
+                  ) : (
                     <button
                       onClick={handleDrivingDialogNext}
-                      disabled={isTyping}
-                      className={`cinzel w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-gray-200 font-bold py-3 px-6 border-2 border-gray-600 transition-all duration-300 ${isTyping ? 'opacity-50' : 'hover:scale-[1.01]'}`}
+                      className={`cinzel w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-gray-200 font-bold py-2 px-4 border-2 border-gray-600 transition-all duration-300 text-base hover:scale-[1.01]`}
                     >
                       ▶ Weiter
                     </button>
                   )}
-
-                  {showGasButton && (
-                    <button
-                      onClick={handleAccelerate}
-                      className="cinzel w-full bg-gradient-to-r from-red-900 to-red-950 hover:from-red-800 hover:to-red-900 text-red-100 font-bold py-3 px-6 border-2 border-red-700 transition-all duration-300 shadow-lg shadow-red-900/50 hover:shadow-red-800/70 hover:scale-[1.01]"
-                      style={{ animation: 'flicker 2s infinite' }}
-                    >
-                      ⚡ MEHR GAS GEBEN
-                    </button>
-                  )}
                 </div>
               </div>
 
-              <div className={`transition-all duration-500 ${currentDialog.speaker === rightChar ? 'scale-105 brightness-110' : 'opacity-60 scale-95'}`}>
-                <div className="w-36 h-48 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 rounded-lg border-4 border-gray-600 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
-                  <div className={`relative w-28 h-28 mb-2 border-4 ${rightAvatar.border} flex items-center justify-center shadow-lg overflow-hidden bg-gray-800`}>
-                    <img src={rightAvatar.image} alt={rightChar} className="w-full h-full object-cover" />
+              <div className={`transition-all duration-500 relative ${currentDialog.speaker === rightChar ? 'scale-105 brightness-110' : 'opacity-60 scale-95'}`}>
+                <div className="w-32 h-48 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 shadow-2xl relative overflow-hidden">
+                  <img src={rightAvatar.image} alt={rightChar} className="w-full h-full object-cover" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/90 py-1 px-2">
+                    <div className="cinzel text-gray-100 font-semibold text-xs text-center">{rightChar}</div>
                   </div>
-                  <div className="cinzel relative text-gray-200 font-bold text-lg">{rightChar}</div>
                 </div>
               </div>
             </div>
@@ -741,23 +1161,26 @@
     if (gameState === 'crash') {
       return (
         <div className="min-h-screen bg-black flex items-center justify-center p-8 relative overflow-hidden">
-          <div className="film-grain"></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-red-950/40 via-black to-black"></div>
-          <div className="absolute inset-0" style={{ animation: 'flicker 3s infinite' }}>
-            <div className="absolute inset-0 bg-red-950 opacity-20"></div>
+          <div className="absolute inset-0">
+            <img 
+              src="images/cds/pines.jpeg" 
+              alt="Pines" 
+              className="w-full h-full object-cover opacity-30"
+            />
           </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80"></div>
+          <div className="absolute inset-0 vignette"></div>
 
           <div className="max-w-4xl w-full text-center relative z-10 fade-in-up">
             <div className="mb-12">
-              <div className="text-9xl mb-6">💀</div>
-              <h1 className="cinzel text-8xl font-bold text-red-600 mb-8 drop-shadow-2xl tracking-wider" style={{ textShadow: '0 0 40px rgba(220, 38, 38, 0.5)' }}>
+              <h1 className="cinzel text-7xl font-bold text-gray-300 mb-8 drop-shadow-2xl tracking-wider">
                 GAME OVER
               </h1>
-              <div className="h-1 w-96 mx-auto bg-gradient-to-r from-transparent via-red-600 to-transparent mb-12"></div>
+              <div className="h-1 w-96 mx-auto bg-gradient-to-r from-transparent via-gray-500 to-transparent mb-12"></div>
             </div>
 
-            <div className="bg-black/90 backdrop-blur-sm border-4 border-red-950 p-12 mb-12 vignette">
-              <p className="garamond text-gray-100 text-3xl mb-8 leading-relaxed italic">
+            <div className="bg-black/80 backdrop-blur-sm border-2 border-gray-700 p-12 mb-12 vignette">
+              <p className="garamond text-gray-200 text-3xl mb-8 leading-relaxed italic">
                 »Das Absurdeste ist, in einem Autounfall zu sterben.«
               </p>
               <div className="h-px w-64 mx-auto bg-gradient-to-r from-transparent via-gray-600 to-transparent my-8"></div>
@@ -765,7 +1188,7 @@
                 ALBERT CAMUS
               </p>
               <p className="garamond text-gray-400 text-xl mb-4">
-                1913 — 1960
+                1913 – 1960
               </p>
               <div className="h-px w-48 mx-auto bg-gradient-to-r from-transparent via-gray-700 to-transparent my-6"></div>
               <p className="garamond text-gray-500 text-lg mb-2">
@@ -781,7 +1204,7 @@
                 onClick={resetGame}
                 className="cinzel w-full max-w-md mx-auto block bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-gray-200 font-bold py-6 px-12 border-2 border-gray-600 transition-all duration-300 text-2xl shadow-2xl hover:shadow-gray-700/50 hover:scale-105"
               >
-                ↻ Noch einmal spielen
+                Noch einmal spielen
               </button>
               <p className="garamond text-gray-600 text-sm italic">
                 Das Schicksal lässt sich nicht ändern, nur wiederholen
