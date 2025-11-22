@@ -247,6 +247,18 @@
     font-display: swap;
 }
 
+/* DonGraffiti */
+
+@font-face {
+    font-family: 'DonGraffiti';
+    src: url('https://www.denmuen.ch/fonts/DonGraffiti/DonGraffiti.woff2') format('woff2'),
+        url('https://www.denmuen.ch/fonts/DonGraffiti/DonGraffiti.woff') format('woff'),
+        url('https://www.denmuen.ch/fonts/DonGraffiti/DonGraffiti.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 * {
     font-family: "Geist";
     letter-spacing: -0.05em;
@@ -257,12 +269,12 @@ h1, .content a, .collapsible {
 }
 
 h2 {
-    font-family: "Rudi";
+    font-family: "DonGraffiti";
     letter-spacing: 0.05em;
 }
 
 #title h1 {
-    font-family: "Rudi";
+    font-family: "DonGraffiti";
     letter-spacing: 0.05em;
     line-height: 0.9
 }

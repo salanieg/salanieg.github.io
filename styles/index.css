@@ -12,6 +12,8 @@ html {
 /* Globale Base-Styles */
 body {
     background-color: #333;
+    background-image: 
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
     color: #E0E0E0;
     margin: 0;
     padding: 0;
@@ -26,7 +28,6 @@ body {
         "footer";
     justify-content: center;
 }
-
 main {
     grid-area: content;
 }
@@ -90,12 +91,21 @@ background: #a933e4;
 /* Links */
 a {
     color: #E0E0E0;
-    text-decoration: none;
-    font-weight: 600;
+    text-decoration: underline;
 }
 
 a:hover {
     color: #a933e4;
+}
+
+/* Button-Links ohne Unterstreichung */
+.button-section a {
+    text-decoration: none;
+}
+
+#contact button a,
+button a {
+    text-decoration: none;
 }
 
 /* Layout-Komponenten */
@@ -357,6 +367,95 @@ button h2 {
     background-color: #d3a4ea;
     color: #333;
     padding: 20px;
+}
+
+/* CV Timeline Styles */
+#cv {
+    line-height: 1.6;
+}
+
+#cv > h2 {
+    font-size: 2rem;
+    font-weight: 300;
+    margin-bottom: 1.5rem;
+    color: #a933e4;
+}
+
+#cv .section-title {
+    font-size: 1.3rem;
+    font-weight: 400;
+    margin: 1.5rem 0 1rem 0;
+    color: #fff;
+    border-bottom: 1px solid #555;
+    padding-bottom: 0.5rem;
+}
+
+#cv .timeline {
+    position: relative;
+    padding-left: 0;
+    list-style: none;
+}
+
+#cv .timeline-item {
+    position: relative;
+    padding-left: 3rem;
+    padding-bottom: 1.5rem;
+    border-left: 2px solid #555;
+}
+
+#cv .timeline-item:last-child {
+    border-left: 2px solid transparent;
+}
+
+#cv .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #888;
+    border: 2px solid #333;
+}
+
+#cv .timeline-item::marker {
+    content: none;
+}
+
+#cv .timeline-date {
+    color: #aaa;
+    font-size: 0.9rem;
+    font-weight: 400;
+    margin-bottom: 0.3rem;
+}
+
+#cv .timeline-title {
+    color: #fff;
+    font-weight: 500;
+    font-size: 1.05rem;
+    margin-bottom: 0.2rem;
+}
+
+#cv .timeline-org {
+    color: #bbb;
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+}
+
+#cv .timeline-desc {
+    color: #999;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+#cv .footer-note {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #444;
+    color: #888;
+    font-size: 0.9rem;
+    font-style: italic;
 }
 
 /* Animationen */
