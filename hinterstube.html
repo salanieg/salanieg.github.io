@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="robots" content="noindex, nofollow">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>HINTERSTUBE</title>
+  
+  <!-- DNS Prefetch für schnelleres Laden -->
+  <link rel="dns-prefetch" href="https://www.denmuen.ch">
+  <link rel="dns-prefetch" href="https://open.spotify.com">
+  
+  <!-- Preconnect für Fonts -->
+  <link rel="preconnect" href="https://www.denmuen.ch" crossorigin>
+  
   <style>
     @font-face {
       font-family: 'Montserrat';
-      src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff2') format('woff2'),
-           url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff') format('woff'),
-           url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.ttf') format('truetype');
+      src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Regular.woff2') format('woff2');
       font-weight: 300;
       font-style: normal;
       font-display: swap;
@@ -18,35 +24,43 @@
 
     @font-face {
       font-family: 'Montserrat';
-      src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.woff2') format('woff2'),
-           url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.woff') format('woff'),
-           url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.ttf') format('truetype');
+      src: url('https://www.denmuen.ch/fonts/Montserrat/MontserratAlternates-Bold.woff2') format('woff2');
       font-weight: 600;
       font-style: normal;
       font-display: swap;
     }
 
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     html, body {
       min-height: 100%;
-      color: #eaeaea;
-      background: #000000;
+      color: #e5e7eb;
+      background: #0a0a0f;
       overflow-x: hidden;
-      font-family: Verdana, Geneva, Tahoma, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .block {
       position: relative;
       z-index: 1;
-      background: linear-gradient(135deg, #2e3a50 0%, #1f2937 100%);
-      padding: 3rem 2rem;
-      max-width: 800px;
-      margin: 5vh auto;
-      border: 3px solid #F0F2BD;
+      background: linear-gradient(180deg, #1a1d28 0%, #22263a 100%);
+      padding: 2rem 2rem;
+      max-width: 900px;
+      margin: 3vh auto;
+      border: 1px solid rgba(167, 139, 250, 0.4);
       text-align: center;
       box-shadow: 
-        0 0 30px rgba(240, 242, 189, 0.3),
-        0 20px 60px rgba(0, 0, 0, 0.5);
+        0 0 80px rgba(167, 139, 250, 0.2),
+        0 20px 60px rgba(0, 0, 0, 0.6);
       animation: fadeIn 0.8s ease-out;
+      border-radius: 2px;
+      will-change: opacity, transform;
     }
 
     @keyframes fadeIn {
@@ -59,125 +73,142 @@
         transform: translateY(0);
       }
     }
+    
+    @media (prefers-reduced-motion: reduce) {
+      .block {
+        animation: none;
+      }
+      .neon {
+        animation: none;
+      }
+      .cookie-banner {
+        animation: none;
+      }
+    }
 
     .block p {
       text-align: justify;
       hyphens: auto;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .neon {
       font-family: monospace;
-      font-size: clamp(0.5rem, 10vw, 6rem);
+      font-size: clamp(1.8rem, 10vw, 4rem);
       text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: #F5F9FF;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: #ffffff;
       text-shadow:
-        0 0 7px #F5F9FF,
-        0 0 15px #F5F9FF,
-        0 0 30px #F5F9FF,
-        0 0 50px #F5F9FF,
-        0 0 70px #6eb5ff;
-      animation: flicker 3s infinite alternate;
+        0 0 10px rgba(167, 139, 250, 0.7),
+        0 0 20px rgba(167, 139, 250, 0.5),
+        0 0 40px rgba(167, 139, 250, 0.3);
+      animation: subtleGlow 4s ease-in-out infinite alternate;
       word-break: nowrap;
       white-space: normal;
       width: 100%;
       max-width: 100%;
       display: block;
       text-align: center;
-      margin: 2rem 0;
-      padding: 1rem 0;
+      margin: 1.5rem 0;
+      padding: 0.5rem 0;
+      will-change: text-shadow, opacity;
     }
 
-    @keyframes flicker {
-      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    @keyframes subtleGlow {
+      0%, 100% {
         text-shadow:
-          0 0 7px #F5F9FF,
-          0 0 15px #F5F9FF,
-          0 0 30px #F5F9FF,
-          0 0 50px #F5F9FF,
-          0 0 70px #6eb5ff;
-        color: #F5F9FF;
+          0 0 10px rgba(167, 139, 250, 0.7),
+          0 0 20px rgba(167, 139, 250, 0.5),
+          0 0 40px rgba(167, 139, 250, 0.3);
         opacity: 1;
       }
-      20%, 22%, 24%, 55% {
+      50% {
         text-shadow:
-          0 0 3px #F5F9FF,
-          0 0 7px #F5F9FF,
-          0 0 12px #F5F9FF;
-        color: #a8b8c8;
-        opacity: 0.9;
+          0 0 15px rgba(167, 139, 250, 0.9),
+          0 0 30px rgba(167, 139, 250, 0.6),
+          0 0 50px rgba(167, 139, 250, 0.4);
+        opacity: 0.95;
       }
     }
 
     .motto {
-      color: #F0F2BD;
-      font-size: clamp(1rem, 2.5vw, 1.4rem);
-      font-family: 'Montserrat', sans-serif;
+      color: #e8eaf0;
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
       line-height: 1.6;
-      margin-bottom: 1.5rem;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      margin-bottom: 1rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
     }
 
     p {
-      font-size: 1em;
-      margin: 1rem 0;
-      font-weight: 300;
-      line-height: 1.7;
-      color: #e8e8e8;
+      font-size: 1rem;
+      margin: 0.8rem 0;
+      font-weight: 400;
+      line-height: 1.6;
+      color: #e0e3eb;
+      letter-spacing: 0.01em;
     }
 
     .motto b {
-      font-size: clamp(1.4rem, 5vw, 2rem);
-      font-weight: 600;
-      color: #F0F2BD;
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       display: inline-block;
-      margin-top: 0.3rem;
-      text-shadow: 
-        0 0 20px rgba(240, 242, 189, 0.4),
-        0 2px 10px rgba(0, 0, 0, 0.5);
+      margin-top: 0.5rem;
+      letter-spacing: 0.02em;
     }
 
     .listen {
-      margin-top: 2rem;
-      min-height: 232px;
+      margin-top: 1.5rem;
+      min-height: 152px;
     }
 
     .spotify-placeholder {
-      padding: 3rem 2rem;
-      border: 2px dashed rgba(240, 242, 189, 0.5);
-      background: linear-gradient(135deg, rgba(240, 242, 189, 0.05) 0%, rgba(110, 181, 255, 0.05) 100%);
-      color: #F0F2BD;
-      font-size: 1.1rem;
+      padding: 2rem 1.5rem;
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.08) 0%, rgba(196, 181, 253, 0.08) 100%);
+      color: #e8eaf0;
+      font-size: 1rem;
       line-height: 1.6;
-      border-radius: 12px;
-      transition: all 0.3s ease;
+      border-radius: 8px;
+      transition: all 0.4s ease;
+      backdrop-filter: blur(10px);
     }
 
     .spotify-placeholder:hover {
-      border-color: rgba(240, 242, 189, 0.8);
-      background: linear-gradient(135deg, rgba(240, 242, 189, 0.08) 0%, rgba(110, 181, 255, 0.08) 100%);
+      border-color: rgba(167, 139, 250, 0.6);
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.12) 0%, rgba(196, 181, 253, 0.12) 100%);
+      box-shadow: 0 8px 32px rgba(167, 139, 250, 0.2);
     }
 
     .spotify-placeholder button {
       margin-top: 1rem;
-      padding: 0.8rem 2rem;
-      border: 3px solid #F0F2BD;
-      color: #F0F2BD;
-      background: transparent;
-      font-size: 1rem;
-      font-weight: bold;
+      padding: 0.75rem 2rem;
+      border: 1px solid rgba(167, 139, 250, 0.7);
+      color: #ffffff;
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.25) 0%, rgba(196, 181, 253, 0.25) 100%);
+      font-size: 0.9rem;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      border-radius: 4px;
-      text-transform: uppercase;
+      border-radius: 6px;
       letter-spacing: 0.05em;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .spotify-placeholder button:hover {
-      background: #F0F2BD;
-      color: #1f2937;
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.45) 0%, rgba(196, 181, 253, 0.45) 100%);
+      border-color: rgba(167, 139, 250, 0.9);
       transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(240, 242, 189, 0.4);
+      box-shadow: 0 8px 24px rgba(167, 139, 250, 0.35);
+      will-change: transform;
     }
 
     .spotify-embed {
@@ -194,13 +225,15 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
-      border-top: 3px solid #F0F2BD;
-      padding: 2rem;
+      background: linear-gradient(180deg, #15161d 0%, #0a0a0f 100%);
+      border-top: 1px solid rgba(167, 139, 250, 0.4);
+      padding: 1.5rem 1.5rem;
       z-index: 1000;
       display: none;
-      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
-      animation: slideUp 0.4s ease-out;
+      box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.7);
+      animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      will-change: transform, opacity;
     }
 
     @keyframes slideUp {
@@ -219,22 +252,25 @@
     }
 
     .cookie-content {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       text-align: center;
     }
 
     .cookie-content h3 {
-      color: #F0F2BD;
-      margin-bottom: 1rem;
-      font-family: 'Montserrat', sans-serif;
-      font-size: 1.5rem;
-      text-shadow: 0 2px 10px rgba(240, 242, 189, 0.3);
+      color: #ffffff;
+      margin-bottom: 0.75rem;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
     }
 
     .cookie-content p {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       text-align: center;
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
     .cookie-buttons {
@@ -245,66 +281,152 @@
     }
 
     .cookie-buttons button {
-      padding: 0.8rem 2rem;
-      border: 3px solid #F0F2BD;
-      font-size: 1rem;
-      font-weight: bold;
+      padding: 0.75rem 2rem;
+      border: 1px solid rgba(167, 139, 250, 0.7);
+      font-size: 0.9rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
-      background: transparent;
-      color: #F0F2BD;
-      border-radius: 4px;
-      text-transform: uppercase;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(196, 181, 253, 0.2) 100%);
+      color: #ffffff;
+      border-radius: 6px;
       letter-spacing: 0.05em;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .cookie-buttons button:hover {
-      background: rgba(240, 242, 189, 0.15);
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.35) 0%, rgba(196, 181, 253, 0.35) 100%);
+      border-color: rgba(167, 139, 250, 0.9);
       transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(240, 242, 189, 0.3);
+      box-shadow: 0 8px 24px rgba(167, 139, 250, 0.35);
+      will-change: transform;
     }
 
     footer {
-      font-size: 1.1em;
-      color: #aaa;
-      border-top: 1px solid rgba(240, 242, 189, 0.3);
+      font-size: 0.85rem;
+      color: #a8adb8;
+      border-top: 1px solid rgba(167, 139, 250, 0.25);
       padding-top: 1.5rem;
-      margin-top: 3rem;
+      margin-top: 2rem;
       opacity: 0.9;
+      font-weight: 400;
+      letter-spacing: 0.01em;
     }
 
     footer a {
-      color: #d0d0d0;
+      color: #a78bfa;
       text-decoration: none;
       transition: color 0.3s ease;
+      font-weight: 500;
     }
 
     footer a:hover {
-      color: #F0F2BD;
+      color: #c4b5fd;
     }
 
     /* Responsive Design */
     @media (max-width: 768px) {
       .block {
-        margin: 2vh auto;
-        padding: 2rem 1.5rem;
+        margin: 2vh 1rem;
+        padding: 1.5rem 1.25rem;
+      }
+
+      .neon {
+        font-size: clamp(1.5rem, 8vw, 2.5rem);
+        margin: 1rem 0;
+      }
+
+      .motto {
+        font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+        margin-bottom: 0.75rem;
+      }
+
+      .motto b {
+        font-size: clamp(1.3rem, 4vw, 1.8rem);
+      }
+
+      p {
+        font-size: 0.95rem;
+        margin: 0.6rem 0;
+      }
+
+      .listen {
+        margin-top: 1rem;
+      }
+
+      .spotify-placeholder {
+        padding: 1.5rem 1rem;
+      }
+
+      .spotify-placeholder button {
+        padding: 0.7rem 1.5rem;
+        font-size: 0.85rem;
+        width: 100%;
+        max-width: 280px;
       }
 
       .cookie-banner {
-        padding: 1.5rem 1rem;
+        padding: 1.25rem 1rem;
+      }
+
+      .cookie-content h3 {
+        font-size: 1.1rem;
+      }
+
+      .cookie-content p {
+        font-size: 0.9rem;
+        line-height: 1.4;
       }
 
       .cookie-buttons {
         flex-direction: column;
         width: 100%;
+        gap: 0.75rem;
       }
 
       .cookie-buttons button {
         width: 100%;
+        padding: 0.8rem 1.5rem;
+      }
+
+      footer {
+        font-size: 0.8rem;
+        padding-top: 1.25rem;
+        margin-top: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .block {
+        padding: 1.25rem 1rem;
+        margin: 1.5vh 0.75rem;
+      }
+
+      .neon {
+        font-size: clamp(1.3rem, 7vw, 2rem);
+      }
+
+      .motto {
+        font-size: 0.9rem;
+      }
+
+      .motto b {
+        font-size: 1.2rem;
+      }
+
+      p {
+        font-size: 0.9rem;
       }
 
       .spotify-placeholder {
-        padding: 2rem 1rem;
+        padding: 1.25rem 0.85rem;
+      }
+    }
+
+    /* Touch-optimized */
+    @media (hover: none) and (pointer: coarse) {
+      button {
+        min-height: 44px;
       }
     }
 
@@ -315,8 +437,17 @@
 
     /* Spotify Embed Styling */
     iframe {
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(167, 139, 250, 0.15);
+    }
+
+    /* Accessibility */
+    button:focus-visible,
+    a:focus-visible {
+      outline: 2px solid rgba(167, 139, 250, 0.9);
+      outline-offset: 2px;
     }
   </style>
 </head>
@@ -330,21 +461,22 @@
     
     <div class="listen">
       <div id="spotify-placeholder" class="spotify-placeholder">
-        <p>🎧 Aktuelle Folge anhören</p>
+        <p>Aktuelle Folge anhören</p>
         <p style="font-size: 0.9rem; opacity: 0.9;">Dieser Inhalt erfordert die Zustimmung zu Cookies.</p>
         <button onclick="showCookieBanner()">Cookie-Einstellungen anzeigen</button>
       </div>
       
       <div id="spotify-embed" class="spotify-embed">
         <iframe 
-          style="border-radius:12px" 
+          style="border-radius:8px" 
           src="https://open.spotify.com/embed/show/1zXhf2GZYsxu4nladix3um?utm_source=generator&theme=0" 
           width="100%" 
-          height="232" 
+          height="152" 
           frameBorder="0" 
           allowfullscreen="" 
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-          loading="lazy">
+          loading="lazy"
+          importance="low">
         </iframe>
       </div>
     </div>
@@ -358,7 +490,7 @@
   <!-- Cookie Banner -->
   <div id="cookie-banner" class="cookie-banner">
     <div class="cookie-content">
-      <h3>🍪 Cookie-Einstellungen</h3>
+      <h3>Cookie-Einstellungen</h3>
       <p>Um Spotify-Inhalte anzuzeigen, benötigen wir Ihre Zustimmung zur Verwendung von Cookies. Spotify setzt Cookies ein, um Inhalte zu personalisieren und die Nutzung zu analysieren.</p>
       <div class="cookie-buttons">
         <button class="cookie-accept" onclick="acceptCookies()">Akzeptieren</button>
@@ -368,48 +500,40 @@
   </div>
 
   <script>
-    // Cookie-Verwaltung
-    function getCookieConsent() {
-      return localStorage.getItem('cookieConsent');
-    }
-
-    function setCookieConsent(value) {
-      localStorage.setItem('cookieConsent', value);
-    }
-
-    function showCookieBanner() {
-      document.getElementById('cookie-banner').classList.add('visible');
-    }
-
-    function hideCookieBanner() {
-      document.getElementById('cookie-banner').classList.remove('visible');
-    }
-
-    function acceptCookies() {
+    // Cookie-Verwaltung - optimiert
+    const getCookieConsent=()=>localStorage.getItem('cookieConsent');
+    const setCookieConsent=v=>localStorage.setItem('cookieConsent',v);
+    const showCookieBanner=()=>document.getElementById('cookie-banner').classList.add('visible');
+    const hideCookieBanner=()=>document.getElementById('cookie-banner').classList.remove('visible');
+    
+    function acceptCookies(){
       setCookieConsent('accepted');
       hideCookieBanner();
       showSpotifyEmbed();
     }
-
-    function declineCookies() {
+    
+    function declineCookies(){
       setCookieConsent('declined');
       hideCookieBanner();
     }
-
-    function showSpotifyEmbed() {
-      document.getElementById('spotify-placeholder').style.display = 'none';
+    
+    function showSpotifyEmbed(){
+      document.getElementById('spotify-placeholder').style.display='none';
       document.getElementById('spotify-embed').classList.add('visible');
     }
-
-    // Beim Laden der Seite prüfen
-    window.addEventListener('DOMContentLoaded', function() {
-      const consent = getCookieConsent();
-      
-      if (consent === 'accepted') {
+    
+    // Beim Laden prüfen - optimiert mit requestIdleCallback
+    window.addEventListener('DOMContentLoaded',()=>{
+      const consent=getCookieConsent();
+      if(consent==='accepted'){
         showSpotifyEmbed();
-      } else if (consent === null) {
-        // Beim ersten Besuch: Banner nach 1 Sekunde anzeigen
-        setTimeout(showCookieBanner, 1000);
+      }else if(consent===null){
+        // Banner verzögert anzeigen für bessere Performance
+        if('requestIdleCallback' in window){
+          requestIdleCallback(()=>setTimeout(showCookieBanner,1000));
+        }else{
+          setTimeout(showCookieBanner,1000);
+        }
       }
     });
   </script>
