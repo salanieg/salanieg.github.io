@@ -29,7 +29,7 @@
     html, body {
       min-height: 100%;
       color: #eaeaea;
-      background: #3d4a3d;
+      background: #000000;
       overflow-x: hidden;
       font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
@@ -37,12 +37,27 @@
     .block {
       position: relative;
       z-index: 1;
-      background: #2e3a50;
+      background: linear-gradient(135deg, #2e3a50 0%, #1f2937 100%);
       padding: 3rem 2rem;
       max-width: 800px;
       margin: 5vh auto;
       border: 3px solid #F0F2BD;
       text-align: center;
+      box-shadow: 
+        0 0 30px rgba(240, 242, 189, 0.3),
+        0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .block p {
@@ -51,104 +66,257 @@
     }
 
     .neon {
-  font-family: monospace;
-  font-size: clamp(0.5rem, 10vw, 6rem);
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #F5F9FF;
-  text-shadow:
-    0 0 5px #F5F9FF,
-    0 0 10px #F5F9FF,
-    0 0 20px #F5F9FF,
-    0 0 40px #F5F9FF;
-  animation: flicker 3s infinite alternate;
-  word-break: nowrap;
-  white-space: normal;
-  width: 100%;
-  max-width: 100%;
-  display: block;
-  text-align: center;
-  margin: 1rem 0;
-}
+      font-family: monospace;
+      font-size: clamp(0.5rem, 10vw, 6rem);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #F5F9FF;
+      text-shadow:
+        0 0 7px #F5F9FF,
+        0 0 15px #F5F9FF,
+        0 0 30px #F5F9FF,
+        0 0 50px #F5F9FF,
+        0 0 70px #6eb5ff;
+      animation: flicker 3s infinite alternate;
+      word-break: nowrap;
+      white-space: normal;
+      width: 100%;
+      max-width: 100%;
+      display: block;
+      text-align: center;
+      margin: 2rem 0;
+      padding: 1rem 0;
+    }
 
     @keyframes flicker {
       0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
         text-shadow:
-          0 0 5px #F5F9FF,
-          0 0 10px #F5F9FF,
-          0 0 20px #F5F9FF,
-          0 0 40px #F5F9FF;
+          0 0 7px #F5F9FF,
+          0 0 15px #F5F9FF,
+          0 0 30px #F5F9FF,
+          0 0 50px #F5F9FF,
+          0 0 70px #6eb5ff;
         color: #F5F9FF;
         opacity: 1;
       }
       20%, 22%, 24%, 55% {
         text-shadow:
-          0 0 2px #F5F9FF,
-          0 0 4px #F5F9FF,
-          0 0 8px #F5F9FF;
-        color: #7c7c75;
-        opacity: 0.85;
+          0 0 3px #F5F9FF,
+          0 0 7px #F5F9FF,
+          0 0 12px #F5F9FF;
+        color: #a8b8c8;
+        opacity: 0.9;
       }
     }
 
     .motto {
-  color: #F0F2BD;
-  font-size: clamp(1rem, 2.5vw, 1.4rem);
-  font-family: 'Montserrat', sans-serif;
-  line-height: 1.4;
-}
+      color: #F0F2BD;
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      font-family: 'Montserrat', sans-serif;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
 
     p {
       font-size: 1em;
       margin: 1rem 0;
       font-weight: 300;
+      line-height: 1.7;
+      color: #e8e8e8;
     }
 
     .motto b {
-  font-size: clamp(1.4rem, 5vw, 2rem);
-  font-weight: 600;
-  color: #F0F2BD;
-  display: inline-block;
-  margin-top: 0rem;
-}
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-weight: 600;
+      color: #F0F2BD;
+      display: inline-block;
+      margin-top: 0.3rem;
+      text-shadow: 
+        0 0 20px rgba(240, 242, 189, 0.4),
+        0 2px 10px rgba(0, 0, 0, 0.5);
+    }
 
     .listen {
       margin-top: 2rem;
+      min-height: 232px;
     }
 
-    .listen a {
-      display: inline-block;
-      padding: 1rem 2rem;
+    .spotify-placeholder {
+      padding: 3rem 2rem;
+      border: 2px dashed rgba(240, 242, 189, 0.5);
+      background: linear-gradient(135deg, rgba(240, 242, 189, 0.05) 0%, rgba(110, 181, 255, 0.05) 100%);
+      color: #F0F2BD;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .spotify-placeholder:hover {
+      border-color: rgba(240, 242, 189, 0.8);
+      background: linear-gradient(135deg, rgba(240, 242, 189, 0.08) 0%, rgba(110, 181, 255, 0.08) 100%);
+    }
+
+    .spotify-placeholder button {
+      margin-top: 1rem;
+      padding: 0.8rem 2rem;
       border: 3px solid #F0F2BD;
       color: #F0F2BD;
-      text-decoration: none;
+      background: transparent;
       font-size: 1rem;
       font-weight: bold;
-      background: transparent;
-      transition: all 0.2s;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    .listen a:hover {
-      background: #FF8F00;
-      color: #000;
+    .spotify-placeholder button:hover {
+      background: #F0F2BD;
+      color: #1f2937;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(240, 242, 189, 0.4);
+    }
+
+    .spotify-embed {
+      display: none;
+    }
+
+    .spotify-embed.visible {
+      display: block;
+    }
+
+    /* Cookie Banner Styles */
+    .cookie-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+      border-top: 3px solid #F0F2BD;
+      padding: 2rem;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
+      animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .cookie-banner.visible {
+      display: block;
+    }
+
+    .cookie-content {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .cookie-content h3 {
+      color: #F0F2BD;
+      margin-bottom: 1rem;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.5rem;
+      text-shadow: 0 2px 10px rgba(240, 242, 189, 0.3);
+    }
+
+    .cookie-content p {
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .cookie-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .cookie-buttons button {
+      padding: 0.8rem 2rem;
+      border: 3px solid #F0F2BD;
+      font-size: 1rem;
+      font-weight: bold;
       cursor: pointer;
+      transition: all 0.3s ease;
+      background: transparent;
+      color: #F0F2BD;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .cookie-buttons button:hover {
+      background: rgba(240, 242, 189, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(240, 242, 189, 0.3);
     }
 
     footer {
       font-size: 1.1em;
-      color: #ccc;
-      border-top: 1px solid #F0F2BD;
-      padding-top: 1rem;
-      margin-top: 2rem;
+      color: #aaa;
+      border-top: 1px solid rgba(240, 242, 189, 0.3);
+      padding-top: 1.5rem;
+      margin-top: 3rem;
+      opacity: 0.9;
     }
 
     footer a {
-      color: #e0e0e0;
+      color: #d0d0d0;
       text-decoration: none;
+      transition: color 0.3s ease;
     }
 
     footer a:hover {
-      color: #AF47D2;
+      color: #F0F2BD;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .block {
+        margin: 2vh auto;
+        padding: 2rem 1.5rem;
+      }
+
+      .cookie-banner {
+        padding: 1.5rem 1rem;
+      }
+
+      .cookie-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .cookie-buttons button {
+        width: 100%;
+      }
+
+      .spotify-placeholder {
+        padding: 2rem 1rem;
+      }
+    }
+
+    /* Smooth Scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Spotify Embed Styling */
+    iframe {
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
   </style>
 </head>
@@ -159,13 +327,91 @@
     <p>Welcher Mann machte über Nacht tausende Frauen zu Raucherinnen? Wie viele Schaben passen in ein Roach Motel? Und was hat Bayerns größter Flughafen mit einer Sekte in Chile zu tun? Vielleicht verwundern diese seltsamen Fragen. Oft werden die Themen, die uns irgendwie doch alle betreffen, in einer</p>
     <h1 class="neon">Hinterstube</h1>
     <p>besprochen. Gizem und Dennis werfen einen Blick hinter die Tür und sprechen entspannt sowie faktenbasiert über Ereignisse, die für Gesprächsstoff beim nächsten Philosophiestammtisch sorgen. Ideal auch beim Kochen, für unterwegs oder als Inspiration für die Hausarbeit.</p>
+    
     <div class="listen">
-      <a href="https://open.spotify.com/show/1zXhf2GZYsxu4nladix3um?si=e70f75c6f4f34311">Jetzt reinhören</a>
+      <div id="spotify-placeholder" class="spotify-placeholder">
+        <p>🎧 Aktuelle Folge anhören</p>
+        <p style="font-size: 0.9rem; opacity: 0.9;">Dieser Inhalt erfordert die Zustimmung zu Cookies.</p>
+        <button onclick="showCookieBanner()">Cookie-Einstellungen anzeigen</button>
+      </div>
+      
+      <div id="spotify-embed" class="spotify-embed">
+        <iframe 
+          style="border-radius:12px" 
+          src="https://open.spotify.com/embed/show/1zXhf2GZYsxu4nladix3um?utm_source=generator&theme=0" 
+          width="100%" 
+          height="232" 
+          frameBorder="0" 
+          allowfullscreen="" 
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+          loading="lazy">
+        </iframe>
+      </div>
     </div>
+    
     <footer>
       © 2025 Hinterstube | Öko-optimiert & cookiefrei<br>
       <a href="https://www.denmuen.ch/impressum">Impressum</a>
     </footer>
   </div>
+
+  <!-- Cookie Banner -->
+  <div id="cookie-banner" class="cookie-banner">
+    <div class="cookie-content">
+      <h3>🍪 Cookie-Einstellungen</h3>
+      <p>Um Spotify-Inhalte anzuzeigen, benötigen wir Ihre Zustimmung zur Verwendung von Cookies. Spotify setzt Cookies ein, um Inhalte zu personalisieren und die Nutzung zu analysieren.</p>
+      <div class="cookie-buttons">
+        <button class="cookie-accept" onclick="acceptCookies()">Akzeptieren</button>
+        <button class="cookie-decline" onclick="declineCookies()">Ablehnen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Cookie-Verwaltung
+    function getCookieConsent() {
+      return localStorage.getItem('cookieConsent');
+    }
+
+    function setCookieConsent(value) {
+      localStorage.setItem('cookieConsent', value);
+    }
+
+    function showCookieBanner() {
+      document.getElementById('cookie-banner').classList.add('visible');
+    }
+
+    function hideCookieBanner() {
+      document.getElementById('cookie-banner').classList.remove('visible');
+    }
+
+    function acceptCookies() {
+      setCookieConsent('accepted');
+      hideCookieBanner();
+      showSpotifyEmbed();
+    }
+
+    function declineCookies() {
+      setCookieConsent('declined');
+      hideCookieBanner();
+    }
+
+    function showSpotifyEmbed() {
+      document.getElementById('spotify-placeholder').style.display = 'none';
+      document.getElementById('spotify-embed').classList.add('visible');
+    }
+
+    // Beim Laden der Seite prüfen
+    window.addEventListener('DOMContentLoaded', function() {
+      const consent = getCookieConsent();
+      
+      if (consent === 'accepted') {
+        showSpotifyEmbed();
+      } else if (consent === null) {
+        // Beim ersten Besuch: Banner nach 1 Sekunde anzeigen
+        setTimeout(showCookieBanner, 1000);
+      }
+    });
+  </script>
 </body>
 </html>
