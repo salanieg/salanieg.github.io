@@ -4,7 +4,9 @@ html {
     overflow-x: hidden;
 }
 
-*, *:before, *:after {
+*,
+*:before,
+*:after {
     box-sizing: inherit;
     max-width: 100%;
 }
@@ -12,7 +14,7 @@ html {
 /* Globale Base-Styles */
 body {
     background-color: #333;
-    background-image: 
+    background-image:
         url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
     color: #E0E0E0;
     margin: 0;
@@ -23,11 +25,12 @@ body {
     font-weight: 300;
     grid-template-columns: 100vw;
     grid-template-rows: 1fr auto;
-    grid-template-areas: 
+    grid-template-areas:
         "content"
         "footer";
     justify-content: center;
 }
+
 main {
     grid-area: content;
 }
@@ -84,7 +87,7 @@ li::marker {
 }
 
 .nav-menu ul li a:hover {
-background: #a933e4;
+    background: #a933e4;
 }
 
 
@@ -129,7 +132,7 @@ section {
     justify-content: center;
 }
 
-section > div {
+section>div {
     max-width: 500px;
     text-align: left;
     hyphens: none;
@@ -187,10 +190,12 @@ button h2 {
     flex-wrap: wrap;
     font-weight: 800;
     font-size: 1.2rem;
-    gap: 30px 20px; /* vertikal 30px, horizontal 20px */
+    gap: 30px 20px;
+    /* vertikal 30px, horizontal 20px */
     margin-top: 40px;
 }
-.button-section > * {
+
+.button-section>* {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -198,6 +203,7 @@ button h2 {
     max-width: 200px;
     flex: 0 0 auto;
 }
+
 .button-section img {
     width: 200px;
     height: 200px;
@@ -205,108 +211,112 @@ button h2 {
     border-radius: 50%;
     border: 2px dotted #a933e4;
 }
+
 .button-section h2 {
     margin: 10px 0 0;
     font-size: 1.2em;
     color: #E0E0E0;
 }
+
 .button-section p {
     margin: 0;
     font-size: 0.9em;
 }
-.button-section > *:hover img {
+
+.button-section>*:hover img {
     transform: scale(0.95);
     border: 2px solid #a933e4;
 }
-.button-section > *:hover h2 {
+
+.button-section>*:hover h2 {
     color: #a933e4;
 }
 
 /* Burger Menu Styles */
-        .nav-toggle {
-            position: absolute;
-            top: 30px;
-            right: 20px;
-            width: 30px;
-            height: 30px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            z-index: 1000;
-            padding: 0;
-        }
+.nav-toggle {
+    position: absolute;
+    top: 30px;
+    right: 20px;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 1000;
+    padding: 0;
+}
 
-        .nav-toggle span {
-            display: block;
-            width: 60px;
-            height: 3px;
-            background: #a933e4;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            transition: all 0.3s ease;
-        }
+.nav-toggle span {
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: #a933e4;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: all 0.3s ease;
+}
 
-        .nav-toggle span:nth-child(1) {
-            top: 10px;
-        }
+.nav-toggle span:nth-child(1) {
+    top: 10px;
+}
 
-        .nav-toggle span:nth-child(2) {
-            top: 18px;
-        }
+.nav-toggle span:nth-child(2) {
+    top: 18px;
+}
 
-        .nav-toggle span:nth-child(3) {
-            top: 26px;
-        }
+.nav-toggle span:nth-child(3) {
+    top: 26px;
+}
 
-        .nav-toggle.active span:nth-child(1) {
-            transform: translate(-50%, 8px) rotate(45deg);
-        }
+.nav-toggle.active span:nth-child(1) {
+    transform: translate(-50%, 8px) rotate(45deg);
+}
 
-        .nav-toggle.active span:nth-child(2) {
-            opacity: 0;
-        }
+.nav-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
 
-        .nav-toggle.active span:nth-child(3) {
-            transform: translate(-50%, -8px) rotate(-45deg);
-        }
+.nav-toggle.active span:nth-child(3) {
+    transform: translate(-50%, -8px) rotate(-45deg);
+}
 
-        .nav-menu {
-            position: fixed;
-            top: 0;
-            right: -100%;
-            width: 300px;
-            height: 100%;
-            background: #333;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-            transition: right 0.3s ease;
-            z-index: 999;
-            padding: 80px 20px 20px;
-        }
+.nav-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 300px;
+    height: 100%;
+    background: #333;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s ease;
+    z-index: 999;
+    padding: 80px 20px 20px;
+}
 
-        .nav-menu.active {
-            right: 0;
-        }
+.nav-menu.active {
+    right: 0;
+}
 
-        .nav-menu ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+.nav-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
 
-        .nav-menu ul li {
-            margin: 20px 0;
-        }
+.nav-menu ul li {
+    margin: 20px 0;
+}
 
-        .nav-menu ul li a {
-            text-decoration: none;
-            color: #E0E0E0;
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
+.nav-menu ul li a {
+    text-decoration: none;
+    color: #E0E0E0;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
 
-        .nav-toggle.fixed-when-open {
-        position: fixed;
+.nav-toggle.fixed-when-open {
+    position: fixed;
 }
 
 /* Overlay for better UX */
@@ -316,17 +326,17 @@ button h2 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease;
     z-index: 998;
-        }
+}
 
 .nav-overlay.active {
     opacity: 1;
     visibility: visible;
-        }
+}
 
 /* ID-Styles */
 #header-text {
@@ -344,7 +354,8 @@ button h2 {
 #header-banner {
     position: relative;
     width: 100vw;
-    height: 105px; /* feste Höhe */
+    height: 105px;
+    /* feste Höhe */
     object-fit: cover;
     object-position: center;
     display: block;
@@ -376,7 +387,7 @@ button h2 {
     line-height: 1.6;
 }
 
-#cv > h2 {
+#cv>h2 {
     font-size: 2rem;
     font-weight: 300;
     margin-bottom: 1.5rem;
@@ -479,6 +490,7 @@ button h2 {
         opacity: 0;
         transform: translateX(-50%) translateY(-100px);
     }
+
     100% {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
