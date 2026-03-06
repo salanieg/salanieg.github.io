@@ -1,22 +1,53 @@
-/* Grundlegende Struktur und Box-Sizing */
+/* ============================================================
+   INDEX.CSS – Dennis Münch Portfolio
+   Ladereihenfolge:
+   1. Reset & Box-Sizing
+   2. Custom Properties (CSS-Variablen)
+   3. Base / Typografie
+   4. Layout (body, main, header, section, footer)
+   5. Navigations-Komponenten (Burger, Nav-Menu, Overlay)
+   6. Wiederverwendbare Komponenten (button, button-section)
+   7. ID-spezifische Styles (#header-text, #header-banner, #title, #cv …)
+   8. Animationen (@keyframes)
+   9. Media Queries
+   ============================================================ */
+
+
+/* ----------------------------------------------------------
+   1. RESET & BOX-SIZING
+   ---------------------------------------------------------- */
 html {
     box-sizing: border-box;
     overflow-x: hidden;
 }
 
 *,
-*:before,
-*:after {
+*::before,
+*::after {
     box-sizing: inherit;
     max-width: 100%;
 }
 
-/* Globale Base-Styles */
+
+/* ----------------------------------------------------------
+   2. CUSTOM PROPERTIES
+   ---------------------------------------------------------- */
+:root {
+    --color-bg:        #333;
+    --color-text:      #E0E0E0;
+    --color-accent:    #a933e4;
+    --color-accent-lt: #d3a4ea;
+    --color-dark:      #333;
+}
+
+
+/* ----------------------------------------------------------
+   3. BASE / TYPOGRAFIE
+   ---------------------------------------------------------- */
 body {
-    background-color: #333;
-    background-image:
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-    color: #E0E0E0;
+    background-color: var(--color-bg);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+    color: var(--color-text);
     margin: 0;
     padding: 0;
     height: 100vh;
@@ -31,17 +62,12 @@ body {
     justify-content: center;
 }
 
-main {
-    grid-area: content;
-}
-
-/* Typografie */
 h1 {
     margin-top: 0;
     font-size: 2em;
     text-align: left;
     hyphens: none;
-    color: #333;
+    color: var(--color-dark);
     opacity: 0;
     transform: translateY(20px);
     animation: slideIn 0.6s ease-out forwards;
@@ -52,7 +78,7 @@ h2 {
     font-size: 2em;
     text-align: left;
     hyphens: none;
-    color: #a933e4;
+    color: var(--color-accent);
     opacity: 0;
     transform: translateY(20px);
     animation: slideIn 0.6s ease-out forwards;
@@ -79,48 +105,33 @@ li {
 
 li::marker {
     font-size: 0.6em;
-    color: #a933e4;
+    color: var(--color-accent);
 }
 
-.nav-menu ul li::marker {
-    content: "://"
-}
-
-.nav-menu ul li a:hover {
-    background: #a933e4;
-}
-
-
-/* Links */
 a {
-    color: #E0E0E0;
+    color: var(--color-text);
     text-decoration: underline;
 }
 
 a:hover {
-    color: #a933e4;
+    color: var(--color-accent);
 }
 
-/* Button-Links ohne Unterstreichung */
-.button-section a {
-    text-decoration: none;
+
+/* ----------------------------------------------------------
+   4. LAYOUT  (body-Bereiche, übergeordnete Container)
+   ---------------------------------------------------------- */
+main {
+    grid-area: content;
 }
 
-#contact button a,
-button a {
-    text-decoration: none;
-}
-
-/* Layout-Komponenten */
 header {
     text-align: center;
     font-size: 1.4em;
-    background: #333;
-    padding: 0px 0;
+    background: var(--color-bg);
+    padding: 0;
     margin: 0;
 }
-
-
 
 section {
     display: flex;
@@ -132,7 +143,7 @@ section {
     justify-content: center;
 }
 
-section>div {
+section > div {
     max-width: 500px;
     text-align: left;
     hyphens: none;
@@ -141,98 +152,25 @@ section>div {
 footer {
     grid-area: footer;
     text-align: center;
-    color: #d3a4ea;
+    color: var(--color-accent-lt);
     padding: 20px 0;
     margin-top: 100px;
 }
 
 footer a {
-    color: #d3a4ea;
+    color: var(--color-accent-lt);
 }
 
 footer a:hover {
-    color: #a933e4;
+    color: var(--color-accent);
 }
 
-/* Buttons */
-button {
-    padding: 10px 5px;
-    cursor: pointer;
-    margin: 20px;
-    margin-top: 0;
-    font-weight: 400;
-    font-size: 1.05rem;
-    border: 2px dotted #a933e4;
-    background-color: #d3a4ea;
-    color: #333;
-}
 
-button:hover {
-    transform: scale(0.95);
-    border: 2px solid #a933e4;
-}
+/* ----------------------------------------------------------
+   5. NAVIGATIONS-KOMPONENTEN
+   ---------------------------------------------------------- */
 
-button.nav-toggle:hover {
-    transform: none;
-    border: none;
-}
-
-button h2 {
-    margin: 0;
-    font-size: 1.5em;
-    color: #333;
-}
-
-/* Button-Sektion */
-.button-section {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    font-weight: 800;
-    font-size: 1.2rem;
-    gap: 30px 20px;
-    /* vertikal 30px, horizontal 20px */
-    margin-top: 40px;
-}
-
-.button-section>* {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    max-width: 200px;
-    flex: 0 0 auto;
-}
-
-.button-section img {
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 2px dotted #a933e4;
-}
-
-.button-section h2 {
-    margin: 10px 0 0;
-    font-size: 1.2em;
-    color: #E0E0E0;
-}
-
-.button-section p {
-    margin: 0;
-    font-size: 0.9em;
-}
-
-.button-section>*:hover img {
-    transform: scale(0.95);
-    border: 2px solid #a933e4;
-}
-
-.button-section>*:hover h2 {
-    color: #a933e4;
-}
-
-/* Burger Menu Styles */
+/* Burger-Button */
 .nav-toggle {
     position: absolute;
     top: 30px;
@@ -246,28 +184,25 @@ button h2 {
     padding: 0;
 }
 
+.nav-toggle:hover {
+    transform: none;
+    border: none;
+}
+
 .nav-toggle span {
     display: block;
     width: 60px;
     height: 3px;
-    background: #a933e4;
+    background: var(--color-accent);
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     transition: all 0.3s ease;
 }
 
-.nav-toggle span:nth-child(1) {
-    top: 10px;
-}
-
-.nav-toggle span:nth-child(2) {
-    top: 18px;
-}
-
-.nav-toggle span:nth-child(3) {
-    top: 26px;
-}
+.nav-toggle span:nth-child(1) { top: 10px; }
+.nav-toggle span:nth-child(2) { top: 18px; }
+.nav-toggle span:nth-child(3) { top: 26px; }
 
 .nav-toggle.active span:nth-child(1) {
     transform: translate(-50%, 8px) rotate(45deg);
@@ -281,13 +216,18 @@ button h2 {
     transform: translate(-50%, -8px) rotate(-45deg);
 }
 
+.nav-toggle.fixed-when-open {
+    position: fixed;
+}
+
+/* Nav-Menü (Slide-in) */
 .nav-menu {
     position: fixed;
     top: 0;
     right: -100%;
     width: 300px;
     height: 100%;
-    background: #333;
+    background: var(--color-bg);
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
     transition: right 0.3s ease;
     z-index: 999;
@@ -308,18 +248,22 @@ button h2 {
     margin: 20px 0;
 }
 
+.nav-menu ul li::marker {
+    content: "://";
+}
+
 .nav-menu ul li a {
     text-decoration: none;
-    color: #E0E0E0;
+    color: var(--color-text);
     font-size: 1.2rem;
     font-weight: 500;
 }
 
-.nav-toggle.fixed-when-open {
-    position: fixed;
+.nav-menu ul li a:hover {
+    background: var(--color-accent);
 }
 
-/* Overlay for better UX */
+/* Overlay */
 .nav-overlay {
     position: fixed;
     top: 0;
@@ -338,7 +282,96 @@ button h2 {
     visibility: visible;
 }
 
-/* ID-Styles */
+
+/* ----------------------------------------------------------
+   6. WIEDERVERWENDBARE KOMPONENTEN
+   ---------------------------------------------------------- */
+
+/* Buttons */
+button {
+    padding: 10px 5px;
+    cursor: pointer;
+    margin: 20px;
+    margin-top: 0;
+    font-weight: 400;
+    font-size: 1.05rem;
+    border: 2px dotted var(--color-accent);
+    background-color: var(--color-accent-lt);
+    color: var(--color-dark);
+}
+
+button:hover {
+    transform: scale(0.95);
+    border: 2px solid var(--color-accent);
+}
+
+button h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: var(--color-dark);
+}
+
+/* Links innerhalb von Buttons: keine Unterstreichung */
+.button-section a,
+#contact button a,
+button a {
+    text-decoration: none;
+}
+
+/* Button-Sektion (Projekt-Grid) */
+.button-section {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-weight: 800;
+    font-size: 1.2rem;
+    gap: 30px 20px;
+    margin-top: 40px;
+}
+
+.button-section > * {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 200px;
+    flex: 0 0 auto;
+}
+
+.button-section img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px dotted var(--color-accent);
+}
+
+.button-section h2 {
+    margin: 10px 0 0;
+    font-size: 1.2em;
+    color: var(--color-text);
+}
+
+.button-section p {
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.button-section > *:hover img {
+    transform: scale(0.95);
+    border: 2px solid var(--color-accent);
+}
+
+.button-section > *:hover h2 {
+    color: var(--color-accent);
+}
+
+
+/* ----------------------------------------------------------
+   7. ID-SPEZIFISCHE STYLES
+   ---------------------------------------------------------- */
+
+/* Header-Bereich */
 #header-text {
     position: absolute;
     left: 50%;
@@ -355,7 +388,6 @@ button h2 {
     position: relative;
     width: 100vw;
     height: 105px;
-    /* feste Höhe */
     object-fit: cover;
     object-position: center;
     display: block;
@@ -375,29 +407,30 @@ button h2 {
     height: auto;
 }
 
+/* Title-Box */
 #title {
-    border: 2px dotted #a933e4;
-    background-color: #d3a4ea;
-    color: #333;
+    border: 2px dotted var(--color-accent);
+    background-color: var(--color-accent-lt);
+    color: var(--color-dark);
     padding: 20px;
 }
 
-/* CV Timeline Styles */
+/* CV / Timeline */
 #cv {
     line-height: 1.6;
 }
 
-#cv>h2 {
+#cv > h2 {
     font-size: 2rem;
     font-weight: 300;
     margin-bottom: 1.5rem;
-    color: #a933e4;
+    color: var(--color-accent);
 }
 
 #cv .section-title {
     font-size: 1.3rem;
     font-weight: 400;
-    margin: 1.5rem 0 1rem 0;
+    margin: 1.5rem 0 1rem;
     color: #fff;
     border-bottom: 1px solid #555;
     padding-bottom: 0.5rem;
@@ -429,7 +462,7 @@ button h2 {
     height: 10px;
     border-radius: 50%;
     background-color: #888;
-    border: 2px solid #333;
+    border: 2px solid var(--color-bg);
 }
 
 #cv .timeline-item::marker {
@@ -471,7 +504,10 @@ button h2 {
     font-style: italic;
 }
 
-/* Animationen */
+
+/* ----------------------------------------------------------
+   8. ANIMATIONEN
+   ---------------------------------------------------------- */
 @keyframes slideIn {
     to {
         opacity: 1;
@@ -490,14 +526,16 @@ button h2 {
         opacity: 0;
         transform: translateX(-50%) translateY(-100px);
     }
-
     100% {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
     }
 }
 
-/* Media Queries */
+
+/* ----------------------------------------------------------
+   9. MEDIA QUERIES
+   ---------------------------------------------------------- */
 @media (max-width: 640px) {
     #header-text {
         width: 200px;
