@@ -23,6 +23,92 @@
     
     <script defer src="common.js"></script>
 </head>
+<!-- Lichtstrahlen-Hintergrund: diesen Block direkt vor </body> einfügen -->
+
+<canvas id="bg-canvas" style="
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    pointer-events: none;
+"></canvas>
+
+<script>
+(function () {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let scrollBoost = 0;
+    let lastScrollY = window.scrollY;
+    let lastFrame = 0;
+    const FPS = 30;
+    const INTERVAL = 1000 / FPS;
+
+    const BASE_SPEED = 0.3;
+
+    const rays = Array.from({ length: 6 }, (_, i) => ({
+        x:         0.08 + i * 0.17,
+        angle:    -0.15 + Math.random() * 0.3,
+        width:     60   + Math.random() * 80,
+        speedMult: 0.5  + Math.random() * 0.6,
+        opacity:   0.012 + Math.random() * 0.015,
+        pos:       Math.random() * 2000,
+    }));
+
+    function resize() {
+        width  = canvas.width  = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(0, 0, width, height);
+
+        rays.forEach(ray => {
+            const x = ray.x * width;
+            const yPos = ray.pos % (height * 2) - height;
+
+            ctx.save();
+            ctx.translate(x, 0);
+            ctx.rotate(ray.angle);
+
+            const grad = ctx.createLinearGradient(0, yPos, 0, yPos + height * 1.8);
+            grad.addColorStop(0,    `rgba(255,255,255,0)`);
+            grad.addColorStop(0.35, `rgba(255,255,255,${ray.opacity})`);
+            grad.addColorStop(0.65, `rgba(255,255,255,${ray.opacity})`);
+            grad.addColorStop(1,    `rgba(255,255,255,0)`);
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(-ray.width / 2, yPos, ray.width, height * 1.8);
+            ctx.restore();
+        });
+    }
+
+    function animate(ts) {
+        requestAnimationFrame(animate);
+        if (ts - lastFrame < INTERVAL) return;
+        lastFrame = ts;
+
+        const currentScrollY = window.scrollY;
+        const delta = currentScrollY - lastScrollY;
+        lastScrollY = currentScrollY;
+
+        scrollBoost += delta * 0.4;
+        scrollBoost *= 0.90;
+
+        const speed = BASE_SPEED + Math.abs(scrollBoost) * 0.08;
+
+        rays.forEach(ray => { ray.pos += speed * ray.speedMult; });
+        draw();
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(animate);
+})();
+</script>
 <body>
     <button class="nav-toggle" type="button" aria-label="Navigation umschalten">
         <span></span>
@@ -63,15 +149,16 @@
                 <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
                 <img id="header-img" src="images/Dennis-Münch-Portrait.jpg" alt="Portrait von Dennis Münch, forschende Person und Stadtratsmitglied in Neustadt" aria-label="Profilbild Dennis Münch" title="Dennis Münch - Forschende Person und Stadtratsmitglied in Neustadt">
                 <p>
-                    Dennis Münch begrüßt Sie auf dieser Website. Als medienschaffende, forschende und politisch aktive Person beschäftigt sich Dennis mit sozialen, didaktischen und ethischen Fragestellungen.
-                    Derzeit setzt sich Dennis als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten Stadt ein.<br><br>
+                    Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was. Aber so eine eigene Website, pah, ziemlich eingebildet, oder?
+                    Als medienschaffende, forschende und politisch aktive Person beschäftige ich mich jedenfalls mit sozialen, didaktischen und ethischen Fragestellungen.
+                    Derzeit setze ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten und vor Allem fränkischen Stadt ein. <br>Godspeed und danke für Ihren Besuch, Ihr Dennis Münch<br><br>
                 </p>
             </div>
 
             <div id="kenopsium">
                 <h2>Meine Projekte</h2>
                 <p>
-                    Im Rahmen des Self-Publishings erscheinen regelmäßig einzelne Arbeiten auf ResearchGate.
+                    Im Rahmen meines Self-Publishings erscheinen regelmäßig einzelne wissenschaftliche Arbeiten auf ResearchGate.
                     Ebenso erscheint in unregelmäßigen Abständen der Podcast Hinterstube über politische Kuriositäten und vergessene Nachrichten.
                     Der Underground-Blog Kenopsium umfasst ein Feuilleton, in dem sehenswerte Inhalte in Video- Text- und Hypertextform gesammelt sind.
                     
@@ -96,11 +183,11 @@
             <div id="about">
                 <h2>ÜBER MICH</h2>
                 <p>
-                    Seit der Jahrtausendwende führte Dennis Münchs Laufbahn vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. 
-                    An der Uni spielt Dennis gerade die Geisteswissenschaften durch, und vertieft dabei die eigenen Kenntnisse im psychosozialen Bereich. Eine Herzensangelegenheit
-                    von Dennis ist die Gestaltung lebenswerter urbaner Räume. Politisch setze ich mich daher, inspiriert von 
+                    Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. 
+                    An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats), und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich. Politisch
+                    liegt mir die Gestaltung lebenswerter und schöner Orte am Herzen. Politisch setze ich mich daher, inspiriert von 
                     <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> für eine weiterhin resilientes, 
-                    lebenswertes und ästhetisches fränkisches Neustadt ein.<br><br>
+                    lebenswertes und ästhetisches fränkisches Neustadt ein. Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.<br><br>
                     Dieses kleine Webprojekt soll all das, was ich gerne öffentlich teilen möchte, an einem Ort zusammenfassen.
                     Meine Seite ist frei von nicht technisch notwendigen Cookies und
                     hat daher kein Cookiebanner. Wenn du an neuen Inhalten interessiert bist, dann besuche gerne die Orte (oder Nicht-Orte) innerhalb meines Kompendium-Blogs.

@@ -264,11 +264,11 @@
     letter-spacing: -0.05em;
 }
 
-h1, .content a, .collapsible {
+h1, .collapsible {
     font-family: "Anybody";
 }
 
-h2 {
+h2, .content a{
     font-family: "DonGraffiti";
     letter-spacing: 0.05em;
 }
