@@ -1,204 +1,496 @@
-/* RESET */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* ============================================================
+   DENNIS MÜNCH – 1999 FLASH / CYBERPUNK STYLESHEET
+   ============================================================ */
+
+@import url('fonts.css');
+
+/* ── Reset & Base ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #000000;
+  --fg:        #ffffff;
+  --accent:    #a933e4;
+  --accent2:   #d3a4ea;
+  --metal1:    #8a8a8a;
+  --metal2:    #d4d4d4;
+  --metal3:    #3a3a3a;
+  --panel-bg:  #0a0a0a;
+  --border:    #333333;
+  --glow:      0 0 8px #a933e488, 0 0 20px #a933e444;
+  --glow2:     0 0 8px #d3a4ea88, 0 0 20px #d3a4ea44;
+  --font-main: 'Geist', 'Courier New', monospace;
 }
 
-html, body {
-    background: #000;
-    color: #fff;
-    font-family: monospace;
-    line-height: 1.4;
+html {
+  scroll-behavior: smooth;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-main);
+  font-size: 17px;
+  line-height: 1.7;
 }
 
-/* HEADER */
-header {
-    background: #000;
-    padding: 20px;
-    text-align: center;
-    border-bottom: 1px solid #fff;
+body {
+  background: var(--bg);
+  overflow-x: hidden;
 }
 
-#header-text img {
-    filter: invert(1);
-}
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: var(--accent); box-shadow: var(--glow); }
 
-/* BANNER (Titelbild direkt unter Header) */
-#header-banner {
-    width: 100%;
-    display: block;
-    border-top: 1px solid #fff;
-    border-bottom: 1px solid #fff;
+/* ── Nav Toggle (hamburger) ──────────────────────────────── */
+.nav-toggle {
+  position: fixed;
+  top: 16px; left: 16px;
+  z-index: 1000;
+  background: linear-gradient(160deg, #2e2e2e, #111);
+  border: 1px solid var(--metal1);
+  border-radius: 3px;
+  width: 44px; height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px #555 inset, 2px 2px 6px #000;
+  transition: box-shadow .2s;
 }
+.nav-toggle span {
+  display: block;
+  width: 22px; height: 2px;
+  background: var(--fg);
+  transition: transform .25s, opacity .25s;
+}
+.nav-toggle.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-toggle.active span:nth-child(2) { opacity: 0; }
+.nav-toggle.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.nav-toggle:hover { box-shadow: var(--glow), 0 0 0 1px var(--accent) inset; }
 
-/* MAIN */
+/* ── Nav Menu ────────────────────────────────────────────── */
+.nav-menu {
+  position: fixed;
+  top: 0; left: -280px;
+  width: 260px; height: 100vh;
+  background: linear-gradient(180deg, #080808 0%, #111 100%);
+  border-right: 1px solid var(--accent);
+  box-shadow: 4px 0 24px #ff2d7822;
+  z-index: 900;
+  padding: 72px 0 32px;
+  transition: left .3s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+}
+.nav-menu.active { left: 0; }
+
+.nav-menu ul { list-style: none; padding: 0 0 8px; }
+.nav-menu ul li a {
+  display: block;
+  padding: 10px 28px;
+  color: var(--metal2);
+  text-decoration: none;
+  font-size: .9rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  border-left: 2px solid transparent;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.nav-menu ul li a:hover {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(255,45,120,.05);
+  text-shadow: var(--glow);
+}
+.nav-menu hr {
+  border: none;
+  border-top: 1px solid #222;
+  margin: 12px 20px;
+}
+.nav-menu h2 { padding: 8px 28px; font-size: .7rem; color: #444; letter-spacing: .2em; }
+
+.nav-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 800;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.nav-overlay.active { opacity: 1; pointer-events: all; }
+
+/* ── Main Layout ─────────────────────────────────────────── */
 main {
-    max-width: 1100px;
-    margin: auto;
-    padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px 64px;
 }
 
-/* TYPO */
+/* ── Header ──────────────────────────────────────────────── */
+header {
+  background: #000;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  border-bottom: 2px solid var(--accent);
+}
+
+#header-text {
+  padding: 22px 0 18px;
+  display: flex;
+  justify-content: center;
+}
+#header-text img {
+  max-width: 260px;
+  width: 60%;
+  filter: invert(1) drop-shadow(0 0 8px #ff2d78cc);
+}
+
+/* Banner: thin white top/bottom border, no glow */
+#header-banner {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-top: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  filter: grayscale(40%) contrast(1.1);
+}
+
+/* ── Sections ────────────────────────────────────────────── */
+section { display: flex; flex-direction: column; gap: 64px; padding-top: 64px; }
+
+section > div {
+  background: var(--panel-bg);
+  border: 1px solid #1e1e1e;
+  border-left: 2px solid var(--accent);
+  padding: 36px 28px 32px;
+  position: relative;
+}
+section > div::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+/* ── Headings ────────────────────────────────────────────── */
 h2 {
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+  font-size: 1.05rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-shadow: var(--glow);
+  margin-bottom: 20px;
+  position: relative;
+}
+h2::after {
+  content: '';
+  display: block;
+  margin-top: 8px;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--accent), transparent);
 }
 
 p {
-    font-size: 0.9rem;
-    opacity: 0.9;
+  color: #d8d8d8;
+  font-size: 1rem;
+  line-height: 1.75;
+  margin-bottom: 14px;
 }
+p:last-child { margin-bottom: 0; }
 
-/* SECTIONS */
-section > div {
-    margin-bottom: 40px;
-}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-shadow: var(--glow); }
 
-/* PORTRAIT */
+/* ── Portrait img — no glow, simple border ───────────────── */
 #header-img {
-    width: 160px;
-    display: block;
-    margin: 20px auto;
-    border: 1px solid #fff;
+  float: right;
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  margin: 0 0 16px 20px;
+  border: 1px solid #444;
+  filter: grayscale(20%);
+  shape-outside: margin-box;
 }
 
-/* BUTTON GRID */
+/* ── Button section (Projekte) ───────────────────────────── */
 .button-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 24px;
 }
-
-/* CYBERPUNK BUTTON */
-.button-section a,
-#contact button {
-    display: block;
-    text-align: center;
-    text-decoration: none;
-    color: #fff;
-    padding: 12px;
-    border: 1px solid #aaa;
-    background: linear-gradient(145deg, #111, #222);
-    box-shadow:
-        inset 0 0 4px #fff2,
-        0 0 6px #000;
-    transition: all 0.15s ease;
-    cursor: pointer;
-    position: relative;
+.button-section a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex: 1 1 140px;
+  max-width: 180px;
 }
-
-/* metallic edge */
-.button-section a::before,
-#contact button::before {
-    content: "";
-    position: absolute;
-    inset: 2px;
-    border: 1px solid #444;
-}
-
-/* hover */
-.button-section a:hover,
-#contact button:hover {
-    background: linear-gradient(145deg, #222, #111);
-    box-shadow:
-        inset 0 0 6px #fff4,
-        0 0 10px #fff2;
-}
-
-/* active click */
-.button-section a:active,
-#contact button:active {
-    transform: translateY(2px);
-    box-shadow:
-        inset 0 0 10px #000,
-        0 0 4px #000;
-}
-
-/* BUTTON IMAGES */
 .button-section img {
-    width: 100%;
-    max-height: 80px;
-    object-fit: cover;
-    margin-bottom: 8px;
-    filter: grayscale(100%) contrast(1.2);
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid #333;
+  filter: grayscale(60%) contrast(1.1);
+  transition: filter .3s;
 }
+.button-section a:hover img {
+  filter: grayscale(0) contrast(1.2);
+  box-shadow: var(--glow);
+}
+.button-section p {
+  font-size: .82rem;
+  letter-spacing: .2em;
+  color: var(--metal2);
+  text-align: center;
+  margin: 0;
+  transition: color .2s;
+}
+.button-section a:hover p { color: var(--accent); text-shadow: var(--glow); }
 
-/* NAV */
-.nav-menu {
-    background: #000;
-    border-right: 1px solid #fff;
+/* ── Timeline / CV ───────────────────────────────────────── */
+.section-title {
+  font-size: .82rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  text-shadow: var(--glow2);
+  margin: 28px 0 14px;
+  border-left: 3px solid var(--accent2);
+  padding-left: 12px;
 }
+.section-title:first-of-type { margin-top: 0; }
 
-.nav-menu a {
-    color: #fff;
-    text-decoration: none;
-    display: block;
-    padding: 10px;
-    border-bottom: 1px solid #111;
-}
-
-.nav-menu a:hover {
-    background: #111;
-}
-
-/* TOGGLE BUTTON */
-.nav-toggle span {
-    background: #fff;
-}
-
-/* TIMELINE minimal */
-.timeline {
-    list-style: none;
-    margin-top: 10px;
-}
+.timeline { list-style: none; }
 
 .timeline-item {
-    border-left: 1px solid #fff;
-    padding-left: 10px;
-    margin-bottom: 15px;
+  position: relative;
+  padding: 14px 0 14px 28px;
+  border-left: 1px solid #222;
+}
+.timeline-item::before {
+  content: '▶';
+  position: absolute;
+  left: -9px; top: 16px;
+  font-size: .55rem;
+  color: var(--accent);
+  text-shadow: var(--glow);
+  background: var(--bg);
+  line-height: 1;
 }
 
 .timeline-date {
-    font-size: 0.7rem;
-    opacity: 0.6;
+  font-size: .8rem;
+  letter-spacing: .1em;
+  color: #666;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.timeline-title {
+  font-size: .97rem;
+  color: var(--fg);
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+.timeline-org {
+  font-size: .9rem;
+  color: var(--accent);
+  margin: 2px 0;
+}
+.timeline-desc {
+  font-size: .86rem;
+  color: #888;
 }
 
-/* CONTACT */
-#contact div {
-    margin-bottom: 10px;
+.footer-note {
+  font-size: .76rem;
+  color: #444;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-top: 28px;
+  border-top: 1px solid #1a1a1a;
+  padding-top: 14px;
 }
 
-/* FOOTER */
+/* ── CYBERPUNK METAL BUTTONS ─────────────────────────────── */
+#contact div { margin-bottom: 14px; }
+#contact div:last-child { margin-bottom: 0; }
+
+#contact button, button {
+  --btn-h: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 240px;
+  height: var(--btn-h);
+  padding: 0 32px;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  position: relative;
+  font-family: var(--font-main);
+  font-size: .84rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+
+  background:
+    linear-gradient(180deg,
+      #5a5a5a 0%,
+      #3c3c3c 18%,
+      #1e1e1e 36%,
+      #2a2a2a 50%,
+      #1e1e1e 64%,
+      #3c3c3c 82%,
+      #5a5a5a 100%
+    );
+  box-shadow:
+    0 1px 0 #888 inset,
+    0 -1px 0 #111 inset,
+    1px 0 0 #666 inset,
+    -1px 0 0 #333 inset,
+    0 4px 12px #000,
+    0 0 0 1px #444;
+
+  clip-path: polygon(
+    6px 0%, calc(100% - 6px) 0%,
+    100% 6px, 100% calc(100% - 6px),
+    calc(100% - 6px) 100%, 6px 100%,
+    0% calc(100% - 6px), 0% 6px
+  );
+
+  transition: background .12s, box-shadow .12s, transform .08s, color .12s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#contact button::before, button::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,.08) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+#contact button::after, button::after {
+  content: '';
+  position: absolute;
+  top: 1px; left: 14px; right: 14px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: .7;
+  pointer-events: none;
+}
+
+#contact button p, button p {
+  position: relative;
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: 1;
+  letter-spacing: inherit;
+}
+
+/* Hover */
+#contact button:hover, button:hover {
+  background:
+    linear-gradient(180deg,
+      #777 0%,
+      #555 18%,
+      #2e2e2e 36%,
+      #3a3a3a 50%,
+      #2e2e2e 64%,
+      #555 82%,
+      #777 100%
+    );
+  box-shadow:
+    0 1px 0 #aaa inset,
+    0 -1px 0 #000 inset,
+    1px 0 0 #888 inset,
+    -1px 0 0 #444 inset,
+    0 4px 18px #000,
+    0 0 0 1px var(--accent),
+    var(--glow);
+  color: var(--accent);
+  text-shadow: var(--glow);
+}
+
+/* Active / pressed */
+#contact button:active, button:active {
+  transform: translateY(2px);
+  background:
+    linear-gradient(180deg,
+      #1e1e1e 0%,
+      #2a2a2a 40%,
+      #3c3c3c 100%
+    );
+  box-shadow:
+    0 -1px 0 #888 inset,
+    0 1px 0 #111 inset,
+    0 2px 6px #000,
+    0 0 0 1px var(--accent2),
+    var(--glow2);
+  color: var(--accent2);
+  text-shadow: var(--glow2);
+}
+
+/* ── visually-hidden ─────────────────────────────────────── */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
 footer {
-    text-align: center;
-    padding: 20px;
-    border-top: 1px solid #fff;
-    font-size: 0.8rem;
-    opacity: 0.7;
+  text-align: center;
+  padding: 32px 16px;
+  border-top: 1px solid #111;
+  color: #444;
+  font-size: .78rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
+footer a { color: #555; }
+footer a:hover { color: var(--accent); text-shadow: var(--glow); }
 
-/* MOBILE */
+/* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 600px) {
-    h2 {
-        font-size: 1rem;
-    }
+  main { padding: 0 10px 48px; }
+  section { gap: 40px; padding-top: 40px; }
+  section > div { padding: 24px 16px 20px; }
 
-    p {
-        font-size: 0.85rem;
-    }
+  #header-img {
+    float: none;
+    display: block;
+    margin: 0 auto 16px;
+    width: 90px; height: 90px;
+  }
 
-    main {
-        padding: 15px;
-    }
+  #contact button, button {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .button-section { gap: 12px; }
+  .button-section a { flex: 1 1 100px; }
 }
 
-/* WIDE SCREENS */
 @media (min-width: 1400px) {
-    main {
-        max-width: 1300px;
-    }
+  main { max-width: 1100px; }
+  #header-banner { max-height: 380px; }
 }
