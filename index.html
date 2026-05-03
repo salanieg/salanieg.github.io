@@ -15,52 +15,53 @@
     <script defer src="common.js"></script>
 
     <style>
-        /* ================================================
-           CYBERPUNK MINIMAL — Dennis Münch
-           ================================================ */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
             --bg: #00524a;
             --fg: #fff;
-            --accent: #c8c8c8;
             --dim: #3d3d3d;
-            --line: 1px solid #222;
+            /* wipe bar thickness */
+            --bar: 3px;
         }
 
-        html {
+        html, body {
+            height: 100%;
             background: var(--bg);
             color: var(--fg);
             font-family: 'Geist', Arial, sans-serif;
             font-size: 1rem;
             line-height: 1.7;
-            scroll-behavior: smooth;
+            overflow: hidden;
         }
 
-        body {
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 0 1.5rem;
+        ::selection { background: #fff; color: #000; }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
 
-        ::selection {
-            background: #fff;
-            color: #000;
+        /* ── HEADER ──────────────────────────────────── */
+        #site-header {
+            text-align: center;
+            padding: 1.2rem 0 0;
+            flex-shrink: 0;
         }
 
-        /* METALLIC HEADER TEXT */
+        #site-header img.logo {
+            max-width: 220px;
+            width: 55%;
+            height: auto;
+        }
+
         .header-subtitle {
             font-family: 'Alien', Courier, sans-serif;
-            font-size: 1.2rem;
+            font-size: 1rem;
             letter-spacing: 0.25em;
             text-transform: uppercase;
-            color: #aaa;
-            text-align: center;
-            margin-top: 0.8rem;
+            margin-top: 0.4rem;
             font-weight: 700;
             background: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
             -webkit-background-clip: text;
@@ -68,92 +69,120 @@
             background-clip: text;
         }
 
-        /* HEADER */
-        header {
-            text-align: center;
-            padding: 2.5rem 0 1.5rem;
+        /* ── TILE NAV BAR ────────────────────────────── */
+        #tilenav {
+            display: flex;
+            flex-shrink: 0;
+            margin-top: 0.7rem;
+            border-top: 2px solid #b8b8b8;
+            border-bottom: 2px solid #555;
+            background: linear-gradient(180deg,
+                #ebebeb 0%, #c4c4c4 18%, #a2a2a2 42%,
+                #b6b6b6 62%, #d9d9d9 82%, #f0f0f0 100%);
         }
 
-        #header-text img {
-            max-width: 260px;
-            width: 60%;
-            height: auto;
-        }
-
-        #header-banner {
-            width: 100%;
-            max-height: 220px;
-            object-fit: cover;
-            border-top: 2px solid #ffffff;
-            border-bottom: 2px solid #ffffff;
-            border-radius: 5%;
-            margin: 1.5rem 0;
-        }
-
-        /* NAV */
-        .nav-toggle {
-            position: fixed;
-            top: 1rem; left: 1rem;
-            z-index: 999;
-            background: #000;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 8px 12px;
+        .tile {
+            flex: 1;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #888;
             cursor: pointer;
-            font-size: 0.7rem;
+            font-family: 'Alien', Courier, sans-serif;
+            font-size: 0.52rem;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            font-weight: 700;
+            text-shadow: 0 1px 0 #f2f2f2, 0 -1px 0 #888;
+            user-select: none;
+            transition: background 0.12s;
         }
 
-        .nav-menu {
-            position: fixed;
-            top: 0; left: -100%;
-            width: min(280px, 80vw);
-            height: 100vh;
-            background: #050505;
-            border-right: 1px solid #222;
-            z-index: 998;
-            padding: 5rem 1.8rem 2rem;
-            transition: left .3s ease;
+        .tile:last-child { border-right: none; }
+        .tile:hover, .tile.hovered { background: rgba(0,0,0,0.07); }
+        .tile.active {
+            background: rgba(0,0,0,0.14);
+            box-shadow: inset 0 -3px 0 #333;
         }
 
-        .nav-menu.active { left: 0; }
-
-        .nav-menu ul li a {
-            display: block;
-            padding: 0.75rem 0;
-            color: var(--accent);
-            text-decoration: none;
-            font-size: 0.7rem;
-            letter-spacing: 0.1em;
+        /* ── STAGE ───────────────────────────────────── */
+        #stage {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
         }
 
-        .nav-menu ul li a:hover {
-            color: #fff;
+        /* ── SECTION PANES ───────────────────────────── */
+        .section-pane {
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            padding: 2.2rem max(1.5rem, calc((100% - 680px) / 2));
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
         }
 
-        .nav-overlay {
-            display: none;
-            position: fixed; inset: 0;
-            z-index: 997;
-            background: rgba(0,0,0,0.7);
+        .section-pane.visible {
+            opacity: 1;
+            pointer-events: auto;
         }
-        .nav-overlay.active { display: block; }
 
-        /* CONTENT */
-        main { padding-top: 1rem; }
-
-        section > div {
-            padding: 3rem 0;
-            border-bottom: var(--line);
+        /* ── WIPE BARS ───────────────────────────────── */
+        /*
+         * Two thin white bars, each var(--bar) wide, anchored at the horizontal
+         * centre of the stage. Left bar: right edge at centre. Right bar: left
+         * edge at centre.  Both start off-screen (left bar far left, right bar
+         * far right) and travel INWARD to meet at the centre, then EXIT outward.
+         *
+         * translateX controls position:
+         *   bar-left:   0 = at centre,  -100vw = hidden left
+         *   bar-right:  0 = at centre,  +100vw = hidden right
+         */
+        .wipe-bar {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: var(--bar);
+            background: #fff;
+            z-index: 20;
+            pointer-events: none;
         }
-        section > div:last-child { border-bottom: none; }
 
+        #wipe-left  {
+            /* right edge sits at 50% of stage */
+            left: calc(50% - var(--bar));
+            transform: translateX(-100vw); /* hidden off-left */
+        }
+
+        #wipe-right {
+            /* left edge sits at 50% of stage */
+            left: 50%;
+            transform: translateX(100vw);  /* hidden off-right */
+        }
+
+        /* STATE: bars travel inward → meet at centre */
+        .wipe-bar.enter {
+            transition: transform 0.32s cubic-bezier(0.4, 0, 0.6, 1);
+        }
+        #wipe-left.enter  { transform: translateX(0); }
+        #wipe-right.enter { transform: translateX(0); }
+
+        /* STATE: bars travel outward → exit the stage */
+        .wipe-bar.exit {
+            transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #wipe-left.exit  { transform: translateX(-100vw); }
+        #wipe-right.exit { transform: translateX(100vw); }
+
+        /* ── TYPOGRAPHY ──────────────────────────────── */
         h2 {
             font-family: 'Alien', Courier, sans-serif;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: #ffffff;
-            margin-bottom: 1.6rem;
+            margin-bottom: 1.4rem;
             background: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -161,10 +190,10 @@
         }
 
         p {
-            color: #ffffff;
+            color: #fff;
             max-width: 65ch;
             margin-bottom: 1rem;
-             text-align: justify;
+            text-align: justify;
             hyphens: auto;
             -webkit-hyphens: auto;
             letter-spacing: 0.02em;
@@ -173,29 +202,37 @@
         a { color: #ddd; }
         a:hover { color: #fff; }
 
-        /* PORTRAIT */
+        /* ── PORTRAIT ────────────────────────────────── */
         #header-img {
-            width: 15rem;
-            height: 15rem;
+            width: 11rem;
+            height: 11rem;
             object-fit: cover;
-            border: 2px solid #ffffff;
-            border-radius: 100%;
-            margin: 2rem auto;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            margin: 1.2rem auto;
             display: block;
         }
 
-        /* PROJECTS */
+        /* ── BANNER ──────────────────────────────────── */
+        #header-banner {
+            width: 100%;
+            max-height: 160px;
+            object-fit: cover;
+            border-top: 2px solid #fff;
+            border-bottom: 2px solid #fff;
+            border-radius: 5%;
+            margin: 0 0 1.2rem;
+        }
+
+        /* ── PROJECTS ────────────────────────────────── */
         .button-section {
             display: flex;
             gap: 1.5rem;
             flex-wrap: wrap;
-            margin-top: 1.8rem;
+            margin-top: 1.6rem;
         }
 
-        .button-section a {
-            text-decoration: none;
-            flex: 1 1 130px;
-        }
+        .button-section a { text-decoration: none; flex: 1 1 130px; }
 
         .button-section a img {
             width: 100%;
@@ -212,288 +249,373 @@
         }
 
         .button-section a p {
-            margin-top: 0.7rem;
-            font-size: 0.7rem;
+            margin-top: 0.6rem;
+            font-size: 0.68rem;
             letter-spacing: 0.15em;
             text-transform: uppercase;
             color: var(--dim);
             text-align: center;
         }
 
-        /* TIMELINE */
-        .section-title {
-            font-size: 0.7rem;
-            letter-spacing: 0.25em;
+        /* ── CV (minimal) ────────────────────────────── */
+        .cv-group {
+            margin-bottom: 1.8rem;
+        }
+
+        .cv-group-label {
+            font-size: 0.62rem;
+            letter-spacing: 0.28em;
             text-transform: uppercase;
             color: #555;
-            margin: 2.2rem 0 0.8rem;
-            padding-bottom: 0.4rem;
-            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid #1c1c1c;
+            margin-bottom: 0.6rem;
         }
 
-        .timeline-item {
-            padding: 1rem 0 1rem 1.4rem;
-            border-left: 1px solid #222;
-            position: relative;
+        .cv-row {
+            display: grid;
+            grid-template-columns: 7rem 1fr;
+            gap: 0 1rem;
+            padding: 0.45rem 0;
+            border-bottom: 1px solid #111;
+            font-size: 0.82rem;
         }
 
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -4px;
-            top: 1.3rem;
-            width: 6px;
-            height: 6px;
-            background: #111;
-            border: 1px solid #444;
+        .cv-row:last-child { border-bottom: none; }
+
+        .cv-date { color: #555; }
+
+        .cv-body { color: #bbb; }
+
+        .cv-body em {
+            display: block;
+            font-style: normal;
+            color: #666;
+            font-size: 0.76rem;
         }
 
-        .timeline-date { font-size: 0.75rem; color: #666; }
-        .timeline-title { color: #ccc; font-size: 0.95rem; }
-        .timeline-org, .timeline-desc { color: #777; font-size: 0.85rem; }
-
-        /* CONTACT BUTTONS */
-        #contact button {
+        /* ── CONTACT BUTTONS ─────────────────────────── */
+        .contact-btn {
             background: linear-gradient(180deg, #2a2a2a, #111);
             color: #ddd;
             border: 1px solid #444;
             padding: 0.9rem 2rem;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             letter-spacing: 0.12em;
             text-transform: uppercase;
             width: 100%;
             max-width: 340px;
             cursor: pointer;
-            margin-bottom: 1rem;
+            margin-bottom: 0.9rem;
             transition: all 0.2s;
+            display: block;
         }
 
-        #contact button:hover {
+        .contact-btn:hover {
             background: linear-gradient(180deg, #444, #222);
             color: #fff;
             border-color: #666;
         }
 
-        /* FOOTER */
+        /* ── FOOTER ──────────────────────────────────── */
         footer {
-            padding: 3rem 0 2rem;
-            border-top: var(--line);
-            margin-top: 2rem;
-            font-size: 0.75rem;
+            flex-shrink: 0;
+            padding: 0.65rem 0;
+            border-top: 1px solid #1a1a1a;
+            font-size: 0.7rem;
             color: #444;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        footer a { color: #555; }
+        footer a:hover { color: #888; }
+
+        /* ── RESPONSIVE ──────────────────────────────── */
         @media (max-width: 520px) {
-            body { padding: 0 1rem; }
-            .button-section a { flex: 1 1 110px; }
+            .tile { font-size: 0.44rem; letter-spacing: 0.06em; }
+            .section-pane { padding: 1.4rem 1rem; }
+            .cv-row { grid-template-columns: 5.5rem 1fr; }
         }
 
+        /* ── FONTS ───────────────────────────────────── */
         @font-face {
-        font-family: "Alien";
-        src: url("fonts/Alien/Alien\ Edifice\ Bold\ 10\ 20\ .ttf") format("truetype");
+            font-family: "Alien";
+            src: url("fonts/Alien/Alien Edifice Bold 10 20 .ttf") format("truetype");
         }
-
         @font-face {
-        font-family: "Geist";
-        src: url("fonts/Geist/Geist-Light.ttf") format("truetype");
+            font-family: "Geist";
+            src: url("fonts/Geist/Geist-Light.ttf") format("truetype");
         }
     </style>
 </head>
-
 <body>
-    <button class="nav-toggle" type="button" aria-label="Navigation umschalten">
-        MENU
-    </button>
 
-    <nav class="nav-menu">
-        <ul>
-            <li><a href="#title">Home</a></li>
-            <li><a href="#kenopsium">Kenopsium</a></li>
-            <li><a href="#about">Über mich</a></li>
-            <li><a href="#cv">Curriculum Vitae</a></li>
-            <li><a href="#contact">Kontakt</a></li>
-            <li><a href="impressum.html">Impressum</a></li>
-        </ul>
-        <hr style="border:none; border-top:1px solid #222; margin:1.8rem 0;">
-        <div>
-            <ul>
-                <li><a href="https://www.denmuen.ch/kenopsium">Launchpad</a></li>
-                <li><a href="https://www.researchgate.net/profile/Dennis-Muench-3">Publikationen</a></li>
-                <li><a href="https://www.denmuen.ch/kenopsium/kanon">Feuilleton</a></li>
-            </ul>
-        </div>
+<div id="app">
+
+    <header id="site-header">
+        <img class="logo" src="images/headertext.svg" alt="Dennis Münch" width="300" height="65">
+        <div class="header-subtitle">Die Website</div>
+    </header>
+
+    <nav id="tilenav">
+        <div class="tile active" data-target="home"      tabindex="0" role="button">Home</div>
+        <div class="tile"        data-target="kenopsium" tabindex="0" role="button">Projekte</div>
+        <div class="tile"        data-target="about"     tabindex="0" role="button">Über mich</div>
+        <div class="tile"        data-target="cv"        tabindex="0" role="button">CV</div>
+        <div class="tile"        data-target="contact"   tabindex="0" role="button">Kontakt</div>
+        <div class="tile"        data-target="mehr"      tabindex="0" role="button">Mehr</div>
     </nav>
-    <div class="nav-overlay"></div>
 
-    <main>
-        <header>
-            <div id="header-text">
-                <img src="images/headertext.svg" alt="Headerschriftzug" width="300" height="65">
-                <div class="header-subtitle">Die Website</div>
-            </div>
+    <div id="stage">
+
+        <div class="wipe-bar" id="wipe-left"></div>
+        <div class="wipe-bar" id="wipe-right"></div>
+
+        <!-- HOME -->
+        <div class="section-pane visible" id="pane-home">
             <img id="header-banner" src="images/banner2.webp" alt="Headerbanner">
-        </header>
+            <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
+            <img id="header-img" src="images/Dennis-Münch-Portrait.jpg" alt="Portrait von Dennis Münch">
+            <p>Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was. Aber so eine eigene Website, pah, ziemlich eingebildet, oder? Als medienschaffende, forschende und politisch aktive Person beschäftige ich mich mit sozialen, didaktischen und ethischen Fragestellungen. Zwischen 2020 und 2026 setzte ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten und fränkischen Stadt ein.</p>
+            <p>So long,<br>Dennis Münch</p>
+        </div>
 
-        <section>
-            <div id="title">
-                <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
-                <img id="header-img" src="images/Dennis-Münch-Portrait.jpg" alt="Portrait von Dennis Münch" title="Dennis Münch">
-                <p>
-                    Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was.
-                    Aber so eine eigene Website, pah, ziemlich eingebildet, oder?
-                    Als medienschaffende, forschende und politisch aktive Person beschäftige ich mich mit sozialen, didaktischen und ethischen Fragestellungen.
-                    Zwischen 2020 und 2026 setzte ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten und fränkischen Stadt ein.
-                </p>
-                <p>So long,<br>Dennis Münch</p>
+        <!-- PROJEKTE -->
+        <div class="section-pane" id="pane-kenopsium">
+            <h2>Meine Projekte</h2>
+            <p>Im Rahmen meines Self-Publishings erscheinen regelmäßig einzelne wissenschaftliche Arbeiten auf ResearchGate. Ebenso erscheint in unregelmäßigen Abständen der Podcast Hinterstube über politische Kuriositäten und vergessene Nachrichten. Der Underground-Blog Kenopsium umfasst ein Feuilleton mit sehenswerten Inhalten in Video- Text- und Hypertextform.</p>
+            <div class="button-section">
+                <a href="https://www.researchgate.net/profile/Dennis-Muench-3">
+                    <img src="images/cogwheel.webp" alt="Arbeiten auf ResearchGate">
+                    <p>SELF-PUBLISHING</p>
+                </a>
+                <a href="https://www.denmuen.ch/hinterstube.html">
+                    <img src="images/nighttrain.webp" alt="Podcast Hinterstube">
+                    <p>PODCAST</p>
+                </a>
+                <a href="https://www.denmuen.ch/kenopsium">
+                    <img src="images/blogpic.webp" alt="Kenopsium Blog">
+                    <p>KENOPSIUM</p>
+                </a>
             </div>
+        </div>
 
-            <!-- Rest des Inhalts bleibt unverändert -->
-            <div id="kenopsium">
-                <h2>Meine Projekte</h2>
-                <p>
-                    Im Rahmen meines Self-Publishings erscheinen regelmäßig einzelne wissenschaftliche Arbeiten auf ResearchGate.
-                    Ebenso erscheint in unregelmäßigen Abständen der Podcast Hinterstube über politische Kuriositäten und vergessene Nachrichten.
-                    Der Underground-Blog Kenopsium umfasst ein Feuilleton mit sehenswerten Inhalten in Video- Text- und Hypertextform.
-                </p>
-                <div class="button-section">
-                    <a href="https://www.researchgate.net/profile/Dennis-Muench-3">
-                        <img src="images/cogwheel.webp" alt="Arbeiten auf ResearchGate">
-                        <p>SELF-PUBLISHING</p>
-                    </a>
-                    <a href="https://www.denmuen.ch/hinterstube.html">
-                        <img src="images/nighttrain.webp" alt="Podcast Hinterstube">
-                        <p>PODCAST</p>
-                    </a>
-                    <a href="https://www.denmuen.ch/kenopsium">
-                        <img src="images/blogpic.webp" alt="Kenopsium Blog">
-                        <p>KENOPSIUM</p>
-                    </a>
+        <!-- ÜBER MICH -->
+        <div class="section-pane" id="pane-about">
+            <h2>Über mich</h2>
+            <p>Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats), und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich. Inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> setze ich mich für ein resilientes, lebenswertes und ästhetisches fränkisches Neustadt ein. Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.</p>
+            <p>Diese Seite ist frei von nicht technisch notwendigen Cookies und hat daher kein Cookiebanner. Wenn Sie an neuen Inhalten interessiert sind, besuchen Sie gerne die Orte innerhalb meines Kompendium-Blogs.</p>
+        </div>
+
+        <!-- CV (minimalistisch) -->
+        <div class="section-pane" id="pane-cv">
+            <h2>Curriculum Vitae</h2>
+
+            <div class="cv-group">
+                <div class="cv-group-label">Studium</div>
+                <div class="cv-row">
+                    <span class="cv-date">Seit 10/2023</span>
+                    <span class="cv-body">M.A. Bildungswissenschaft <em>FernUniversität Hagen · Erwachsenenbildung</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">2019 – 2023</span>
+                    <span class="cv-body">B.A. Kommunikationswissenschaft <em>Universität Bamberg · Philosophie · Soziologie</em></span>
                 </div>
             </div>
 
-            <div id="about">
-                <h2>Über mich</h2>
-                <p>
-                    Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch.
-                    An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats), und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich.
-                    Inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> setze ich mich für ein resilientes, lebenswertes und ästhetisches fränkisches Neustadt ein.
-                    Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.
-                </p>
-                <p>
-                    Diese Seite ist frei von nicht technisch notwendigen Cookies und hat daher kein Cookiebanner.
-                    Wenn Sie an neuen Inhalten interessiert sind, besuchen Sie gerne die Orte innerhalb meines Kompendium-Blogs.
-                </p>
+            <div class="cv-group">
+                <div class="cv-group-label">Weiterbildung</div>
+                <div class="cv-row">
+                    <span class="cv-date">2021</span>
+                    <span class="cv-body">Projektmanagement <em>FernUniversität Hagen</em></span>
+                </div>
             </div>
 
-            <div id="cv">
-                <h2>Kurzlebenslauf</h2>
-                <!-- Timeline-Inhalt bleibt identisch -->
-                <div class="section-title">Akademische Laufbahn</div>
-                <ul class="timeline">
-                    <li class="timeline-item">
-                        <div class="timeline-date">Seit 10/2023</div>
-                        <div class="timeline-title">Master of Arts (laufend)</div>
-                        <div class="timeline-org">FernUniversität in Hagen</div>
-                        <div class="timeline-desc">Bildungswissenschaft · Schwerpunkt Erwachsenenbildung</div>
-                    </li>
-                    <li class="timeline-item">
-                        <div class="timeline-date">10/2019 – 09/2023</div>
-                        <div class="timeline-title">Bachelor of Arts</div>
-                        <div class="timeline-org">Otto-Friedrich-Universität, Bamberg</div>
-                        <div class="timeline-desc">Kommunikationswissenschaft · Philosophie · Soziologie</div>
-                    </li>
-                </ul>
-
-                <div class="section-title">Weiterbildung</div>
-                <ul class="timeline">
-                    <li class="timeline-item">
-                        <div class="timeline-date">2021</div>
-                        <div class="timeline-title">Zertifizierung zur Projektmanager:in</div>
-                        <div class="timeline-org">FernUniversität in Hagen</div>
-                        <div class="timeline-desc">Weiterbildungslehrgang Projektmanagement</div>
-                    </li>
-                </ul>
-
-                <div class="section-title">Nebentätigkeiten</div>
-                <ul class="timeline">
-                    <li class="timeline-item">
-                        <div class="timeline-date">03/2025 – 04/2025</div>
-                        <div class="timeline-title">Praktikum · Betreuung von Jugendlichen</div>
-                        <div class="timeline-org">Kinder- und Jugendhilfezentrum gGmbH, Fürth</div>
-                        <div class="timeline-desc">Teilzeitwohngruppe</div>
-                    </li>
-                    <li class="timeline-item">
-                        <div class="timeline-date">08/2022</div>
-                        <div class="timeline-title">Ferien-Betreuung</div>
-                        <div class="timeline-org">SJD - Die Falken, Nürnberg</div>
-                        <div class="timeline-desc">Jugendbildungsmaßnahme</div>
-                    </li>
-                    <li class="timeline-item">
-                        <div class="timeline-date">05/2022 – 01/2024</div>
-                        <div class="timeline-title">Mitarbeit im Zuhörtelefon</div>
-                        <div class="timeline-org">Nightlines in Europe, Bamberg</div>
-                        <div class="timeline-desc">Studentisches Zuhörtelefon</div>
-                    </li>
-                    <li class="timeline-item">
-                        <div class="timeline-date">11/2020 – 03/2021</div>
-                        <div class="timeline-title">Radiomoderation</div>
-                        <div class="timeline-org">Uniradio FriedaFM, Bamberg</div>
-                        <div class="timeline-desc">Wöchentliche 2-stündige Sendung</div>
-                    </li>
-                    <li class="timeline-item">
-                        <div class="timeline-date">05/2020 – heute</div>
-                        <div class="timeline-title">Mitglied des Stadtrates</div>
-                        <div class="timeline-org">Stadt Neustadt an der Aisch</div>
-                    </li>
-                    <li class="timeline-item">
-                        <div class="timeline-date">07/2018 – 08/2018</div>
-                        <div class="timeline-title">Warehouse Helper</div>
-                        <div class="timeline-org">PUMA Distribution Center, Elsendorf</div>
-                        <div class="timeline-desc">Zeitarbeit ahead personal management GmbH & Co. KG</div>
-                    </li>
-                </ul>
-
-                <div class="footer-note">Die aufgeführten Informationen sind ein Auszug aus meinem Lebenslauf.</div>
+            <div class="cv-group">
+                <div class="cv-group-label">Tätigkeiten</div>
+                <div class="cv-row">
+                    <span class="cv-date">03 – 04/2025</span>
+                    <span class="cv-body">Praktikum Jugendbetreuung <em>KJH gGmbH, Fürth</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">05/2022 – 01/2024</span>
+                    <span class="cv-body">Zuhörtelefon <em>Nightlines in Europe, Bamberg</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">11/2020 – 03/2021</span>
+                    <span class="cv-body">Radiomoderation <em>Uniradio FriedaFM, Bamberg</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">Seit 05/2020</span>
+                    <span class="cv-body">Stadtratsmitglied <em>Stadt Neustadt an der Aisch</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">08/2022</span>
+                    <span class="cv-body">Ferienbetreuung <em>SJD – Die Falken, Nürnberg</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">07 – 08/2018</span>
+                    <span class="cv-body">Warehouse Helper <em>PUMA, Elsendorf</em></span>
+                </div>
             </div>
 
-            <div id="contact">
-                <h2>Kontakt aufnehmen</h2>
-                <div><button onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button></div>
-                <div><button onclick="location.href='https://www.instagram.com/den.muench/'">Auf Instagram besuchen</button></div>
-                <div><button onclick="location.href='https://rathaus.neustadt-aisch.de/rathaus-und-verwaltung/politik/stadtrat'">Stadtbezogenes Anliegen</button></div>
-            </div>
-        </section>
-    </main>
+            <p style="font-size:0.72rem;color:#444;margin-top:0.5rem;">Auszug aus dem Lebenslauf.</p>
+        </div>
+
+        <!-- KONTAKT -->
+        <div class="section-pane" id="pane-contact">
+            <h2>Kontakt</h2>
+            <button class="contact-btn" onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button>
+            <button class="contact-btn" onclick="location.href='https://www.instagram.com/den.muench/'">Auf Instagram besuchen</button>
+            <button class="contact-btn" onclick="location.href='https://rathaus.neustadt-aisch.de/rathaus-und-verwaltung/politik/stadtrat'">Stadtbezogenes Anliegen</button>
+        </div>
+
+        <!-- MEHR -->
+        <div class="section-pane" id="pane-mehr">
+            <h2>Mehr</h2>
+            <p><a href="https://www.denmuen.ch/kenopsium">Kenopsium Launchpad</a></p>
+            <p><a href="https://www.researchgate.net/profile/Dennis-Muench-3">Publikationen auf ResearchGate</a></p>
+            <p><a href="https://www.denmuen.ch/kenopsium/kanon">Feuilleton</a></p>
+            <p><a href="impressum.html">Impressum</a></p>
+        </div>
+
+    </div><!-- /stage -->
 
     <footer>
-        <p>© 2025 Dennis Münch | Eco-optimized and cookie-free. &nbsp;<a href="impressum.html">Impressum</a></p>
+        <span>© 2025 Dennis Münch &nbsp;·&nbsp; Eco-optimized and cookie-free &nbsp;·&nbsp; <a href="impressum.html">Impressum</a></span>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const navToggle = document.querySelector('.nav-toggle');
-            const navMenu = document.querySelector('.nav-menu');
-            const navOverlay = document.querySelector('.nav-overlay');
+</div>
 
-            navToggle.addEventListener('click', () => {
-                navToggle.classList.toggle('active');
-                navMenu.classList.toggle('active');
-                navOverlay.classList.toggle('active');
-            });
+<script>
+(function () {
+    var tiles     = document.querySelectorAll('.tile');
+    var panes     = document.querySelectorAll('.section-pane');
+    var barL      = document.getElementById('wipe-left');
+    var barR      = document.getElementById('wipe-right');
 
-            navOverlay.addEventListener('click', () => {
-                navMenu.classList.remove('active');
-                navOverlay.classList.remove('active');
-            });
+    var current   = 'home';
+    var pending   = null;   // target queued on hover
+    var animating = false;
 
-            navMenu.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', () => {
-                    navMenu.classList.remove('active');
-                    navOverlay.classList.remove('active');
-                });
-            });
+    /* ── helpers ── */
+    function showPane(id) {
+        panes.forEach(function (p) {
+            var on = p.id === 'pane-' + id;
+            p.classList.toggle('visible', on);
+            if (on) p.scrollTop = 0;
         });
-    </script>
+    }
+
+    function setActive(id) {
+        tiles.forEach(function (t) {
+            t.classList.toggle('active', t.dataset.target === id);
+        });
+    }
+
+    /* reset bars to their off-screen resting position (no transition) */
+    function resetBars() {
+        [barL, barR].forEach(function (b) {
+            b.classList.remove('enter', 'exit');
+            b.style.transition = 'none';
+        });
+        barL.style.transform = 'translateX(-100vw)';
+        barR.style.transform = 'translateX(100vw)';
+        /* re-enable transitions on next frame */
+        requestAnimationFrame(function () {
+            [barL, barR].forEach(function (b) { b.style.transition = ''; });
+        });
+    }
+
+    /* ── main animation ── */
+    function navigate(targetId) {
+        if (animating || targetId === current) return;
+        animating = true;
+        pending   = null;
+
+        resetBars();
+
+        /* slight delay so the reset paint lands first */
+        setTimeout(function () {
+
+            /* Phase 1 — bars enter (fly inward to centre) */
+            [barL, barR].forEach(function (b) { b.classList.add('enter'); });
+
+            setTimeout(function () {
+                /* swap content while bars are at centre */
+                current = targetId;
+                showPane(targetId);
+                setActive(targetId);
+
+                /* Phase 2 — bars exit (fly outward) */
+                [barL, barR].forEach(function (b) {
+                    b.classList.remove('enter');
+                    b.classList.add('exit');
+                });
+
+                setTimeout(function () {
+                    animating = false;
+                    /* if user hovered a different tile while we were busy */
+                    if (pending && pending !== current) {
+                        navigate(pending);
+                    }
+                }, 420);
+
+            }, 360); /* bars finish entering */
+
+        }, 20);
+    }
+
+    /* ── wire tiles ── */
+    tiles.forEach(function (tile) {
+        var id = tile.dataset.target;
+
+        /* hover: pre-load intent */
+        tile.addEventListener('mouseenter', function () {
+            if (id !== current) pending = id;
+        });
+
+        tile.addEventListener('mouseleave', function () {
+            if (pending === id) pending = null;
+        });
+
+        /* click: commit navigation */
+        tile.addEventListener('click', function () {
+            navigate(id);
+        });
+
+        tile.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate(id);
+            }
+        });
+    });
+
+    /* ── hover-intent: fire after 180 ms on same tile ── */
+    var hoverTimer = null;
+
+    tiles.forEach(function (tile) {
+        var id = tile.dataset.target;
+
+        tile.addEventListener('mouseenter', function () {
+            hoverTimer = setTimeout(function () {
+                if (id !== current) navigate(id);
+            }, 180);
+        });
+
+        tile.addEventListener('mouseleave', function () {
+            clearTimeout(hoverTimer);
+        });
+    });
+
+    /* initial state */
+    showPane('home');
+    setActive('home');
+})();
+</script>
 </body>
 </html>
