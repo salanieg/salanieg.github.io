@@ -12,349 +12,298 @@
     <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
     <link rel="manifest" href="images/favicon/site.webmanifest">
 
-    <link rel="stylesheet" href="styles/index.css">
     <script defer src="common.js"></script>
 
     <style>
-    /* ============================================================
-       DENNIS MÜNCH — 1999 FLASH / CYBERPUNK MINIMAL
-       ============================================================ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        /* ================================================
+           CYBERPUNK MINIMAL — Dennis Münch
+           ================================================ */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    :root {
-      --bg:        #000;
-      --fg:        #fff;
-      --accent:    #c8c8c8;
-      --dim:       #555;
-      --line:      1px solid #222;
-      --max:       860px;
-      --mono:      'Courier New', Courier, monospace;
-    }
+        :root {
+            --bg: #00524a;
+            --fg: #fff;
+            --accent: #c8c8c8;
+            --dim: #3d3d3d;
+            --line: 1px solid #222;
+        }
 
-    html {
-      scroll-behavior: smooth;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: var(--mono);
-      font-size: 14px;
-      line-height: 1.7;
-    }
+        html {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Geist', Arial, sans-serif;
+            font-size: 1rem;
+            line-height: 1.7;
+            scroll-behavior: smooth;
+        }
 
-    body {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 0 1.5rem;
-    }
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
 
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #000; }
-    ::-webkit-scrollbar-thumb { background: #333; }
-    ::selection { background: #fff; color: #000; }
+        ::selection {
+            background: #fff;
+            color: #000;
+        }
 
-    /* HEADER */
-    header {
-      background: #000;
-      padding: 2rem 0 0;
-      text-align: center;
-    }
+        /* METALLIC HEADER TEXT */
+        .header-subtitle {
+            font-family: 'Alien', Courier, sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #aaa;
+            text-align: center;
+            margin-top: 0.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    #header-text { margin-bottom: 1.2rem; }
+        /* HEADER */
+        header {
+            text-align: center;
+            padding: 2.5rem 0 1.5rem;
+        }
 
-    #header-text img {
-      max-width: 220px;
-      width: 55%;
-      height: auto;
-      filter: invert(1);
-      opacity: .85;
-    }
+        #header-text img {
+            max-width: 260px;
+            width: 60%;
+            height: auto;
+        }
 
-    #header-banner {
-      display: block;
-      width: 100%;
-      max-height: 240px;
-      object-fit: cover;
-      border-top: 1px solid #fff;
-      border-bottom: 1px solid #fff;
-      filter: grayscale(100%) contrast(1.1);
-    }
+        #header-banner {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            border-top: 2px solid #ffffff;
+            border-bottom: 2px solid #ffffff;
+            border-radius: 5%;
+            margin: 1.5rem 0;
+        }
 
-    /* NAV TOGGLE */
-    .nav-toggle {
-      position: fixed;
-      top: 1rem; left: 1rem;
-      z-index: 999;
-      background: none;
-      border: 1px solid #333;
-      padding: 7px 8px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+        /* NAV */
+        .nav-toggle {
+            position: fixed;
+            top: 1rem; left: 1rem;
+            z-index: 999;
+            background: #000;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
 
-    .nav-toggle span {
-      display: block;
-      width: 18px; height: 1px;
-      background: #fff;
-      transition: transform .2s, opacity .2s;
-    }
+        .nav-menu {
+            position: fixed;
+            top: 0; left: -100%;
+            width: min(280px, 80vw);
+            height: 100vh;
+            background: #050505;
+            border-right: 1px solid #222;
+            z-index: 998;
+            padding: 5rem 1.8rem 2rem;
+            transition: left .3s ease;
+        }
 
-    .nav-toggle.active span:nth-child(1) { transform: translateY(5px) rotate(45deg); }
-    .nav-toggle.active span:nth-child(2) { opacity: 0; }
-    .nav-toggle.active span:nth-child(3) { transform: translateY(-5px) rotate(-45deg); }
+        .nav-menu.active { left: 0; }
 
-    /* NAV MENU */
-    .nav-menu {
-      position: fixed;
-      top: 0; left: -100%;
-      width: min(260px, 78vw);
-      height: 100vh;
-      background: #060606;
-      border-right: 1px solid #1a1a1a;
-      z-index: 998;
-      padding: 4rem 1.5rem 2rem;
-      transition: left .28s ease;
-      overflow-y: auto;
-    }
+        .nav-menu ul li a {
+            display: block;
+            padding: 0.75rem 0;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+        }
 
-    .nav-menu.active { left: 0; }
-    .nav-menu ul { list-style: none; }
-    .nav-menu ul li { border-bottom: 1px solid #111; }
+        .nav-menu ul li a:hover {
+            color: #fff;
+        }
 
-    .nav-menu ul li a {
-      display: block;
-      padding: .52rem 0;
-      color: var(--accent);
-      text-decoration: none;
-      text-transform: uppercase;
-      letter-spacing: .14em;
-      font-size: .68rem;
-      transition: color .12s;
-    }
+        .nav-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            z-index: 997;
+            background: rgba(0,0,0,0.7);
+        }
+        .nav-overlay.active { display: block; }
 
-    .nav-menu ul li a:hover { color: #fff; }
+        /* CONTENT */
+        main { padding-top: 1rem; }
 
-    .nav-menu hr { border: none; border-top: 1px solid #1a1a1a; margin: 1.2rem 0; }
+        section > div {
+            padding: 3rem 0;
+            border-bottom: var(--line);
+        }
+        section > div:last-child { border-bottom: none; }
 
-    .nav-menu h2.visually-hidden {
-      position: absolute; width: 1px; height: 1px;
-      overflow: hidden; clip: rect(0,0,0,0);
-    }
+        h2 {
+            font-family: 'Alien', Courier, sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #ffffff;
+            margin-bottom: 1.6rem;
+            background: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    .nav-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      z-index: 997;
-      background: rgba(0,0,0,.65);
-    }
-    .nav-overlay.active { display: block; }
+        p {
+            color: #ffffff;
+            max-width: 65ch;
+            margin-bottom: 1rem;
+             text-align: justify;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            letter-spacing: 0.02em;
+        }
 
-    /* MAIN */
-    main { padding-top: 2.5rem; }
+        a { color: #ddd; }
+        a:hover { color: #fff; }
 
-    section > div {
-      padding: 2.8rem 0;
-      border-bottom: var(--line);
-    }
-    section > div:last-child { border-bottom: none; }
+        /* PORTRAIT */
+        #header-img {
+            width: 15rem;
+            height: 15rem;
+            object-fit: cover;
+            border: 2px solid #ffffff;
+            border-radius: 100%;
+            margin: 2rem auto;
+            display: block;
+        }
 
-    h2 {
-      font-family: var(--mono);
-      font-size: .6rem;
-      letter-spacing: .35em;
-      text-transform: uppercase;
-      color: var(--dim);
-      margin-bottom: 1.4rem;
-    }
+        /* PROJECTS */
+        .button-section {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 1.8rem;
+        }
 
-    p {
-      color: var(--accent);
-      font-size: .82rem;
-      margin-bottom: .75rem;
-      max-width: 62ch;
-    }
+        .button-section a {
+            text-decoration: none;
+            flex: 1 1 130px;
+        }
 
-    a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
-    a:hover { color: var(--accent); }
+        .button-section a img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border: 1px solid #222;
+            filter: grayscale(70%) brightness(0.8);
+            transition: all 0.3s;
+        }
 
-    /* PORTRAIT */
-    #header-img {
-      display: block;
-      width: 110px; height: 110px;
-      object-fit: cover;
-      border: 1px solid #222;
-      margin: 1.2rem 0;
-      filter: grayscale(100%);
-    }
+        .button-section a:hover img {
+            filter: grayscale(30%) brightness(1.1);
+            border-color: #555;
+        }
 
-    /* PROJECTS */
-    .button-section {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-top: 1.2rem;
-    }
+        .button-section a p {
+            margin-top: 0.7rem;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--dim);
+            text-align: center;
+        }
 
-    .button-section a {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: .5rem;
-      text-decoration: none;
-      width: 110px;
-    }
+        /* TIMELINE */
+        .section-title {
+            font-size: 0.7rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #555;
+            margin: 2.2rem 0 0.8rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid #1a1a1a;
+        }
 
-    .button-section a img {
-      width: 100%; aspect-ratio: 1;
-      object-fit: cover;
-      filter: grayscale(100%) brightness(.65);
-      border: 1px solid #1a1a1a;
-      transition: filter .2s, border-color .2s;
-    }
+        .timeline-item {
+            padding: 1rem 0 1rem 1.4rem;
+            border-left: 1px solid #222;
+            position: relative;
+        }
 
-    .button-section a:hover img {
-      filter: grayscale(40%) brightness(.85);
-      border-color: #444;
-    }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -4px;
+            top: 1.3rem;
+            width: 6px;
+            height: 6px;
+            background: #111;
+            border: 1px solid #444;
+        }
 
-    .button-section a p {
-      font-size: .58rem;
-      letter-spacing: .22em;
-      text-transform: uppercase;
-      color: var(--dim);
-      margin: 0; max-width: none;
-      transition: color .12s;
-    }
+        .timeline-date { font-size: 0.75rem; color: #666; }
+        .timeline-title { color: #ccc; font-size: 0.95rem; }
+        .timeline-org, .timeline-desc { color: #777; font-size: 0.85rem; }
 
-    .button-section a:hover p { color: var(--accent); }
+        /* CONTACT BUTTONS */
+        #contact button {
+            background: linear-gradient(180deg, #2a2a2a, #111);
+            color: #ddd;
+            border: 1px solid #444;
+            padding: 0.9rem 2rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            width: 100%;
+            max-width: 340px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
 
-    /* TIMELINE */
-    .section-title {
-      font-size: .58rem;
-      letter-spacing: .32em;
-      text-transform: uppercase;
-      color: #333;
-      margin: 2rem 0 .7rem;
-      padding-bottom: .35rem;
-      border-bottom: 1px solid #111;
-    }
+        #contact button:hover {
+            background: linear-gradient(180deg, #444, #222);
+            color: #fff;
+            border-color: #666;
+        }
 
-    .timeline { list-style: none; }
+        /* FOOTER */
+        footer {
+            padding: 3rem 0 2rem;
+            border-top: var(--line);
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: #444;
+            text-align: center;
+        }
 
-    .timeline-item {
-      padding: .8rem 0 .8rem 1.1rem;
-      border-left: 1px solid #1a1a1a;
-      margin-bottom: .15rem;
-      position: relative;
-    }
+        @media (max-width: 520px) {
+            body { padding: 0 1rem; }
+            .button-section a { flex: 1 1 110px; }
+        }
 
-    .timeline-item::before {
-      content: '';
-      position: absolute;
-      left: -3px; top: 1rem;
-      width: 5px; height: 5px;
-      background: #111;
-      border: 1px solid #333;
-    }
+        @font-face {
+        font-family: "Alien";
+        src: url("fonts/Alien/Alien\ Edifice\ Bold\ 10\ 20\ .ttf") format("truetype");
+        }
 
-    .timeline-date { font-size: .6rem; color: #444; letter-spacing: .08em; margin-bottom: .12rem; }
-    .timeline-title { font-size: .76rem; color: #bbb; letter-spacing: .04em; }
-    .timeline-org { font-size: .65rem; color: #444; margin-top: .1rem; }
-    .timeline-desc { font-size: .65rem; color: #333; margin-top: .12rem; }
-    .footer-note { font-size: .58rem; color: #2a2a2a; margin-top: 1.4rem; letter-spacing: .1em; }
-
-    /* CYBERPUNK METAL BUTTONS */
-    #contact div { margin-bottom: .65rem; }
-
-    #contact button {
-      position: relative;
-      display: inline-block;
-      padding: .5rem 1.8rem;
-      font-family: var(--mono);
-      font-size: .65rem;
-      letter-spacing: .24em;
-      text-transform: uppercase;
-      color: #ccc;
-      cursor: pointer;
-      border: none; outline: none;
-      min-width: 220px;
-      background: linear-gradient(
-        180deg,
-        #3c3c3c 0%, #222 30%, #0e0e0e 50%, #222 70%, #3c3c3c 100%
-      );
-      box-shadow:
-        0 1px 0 #666 inset,
-        0 -1px 0 #000 inset,
-        1px 0 0 #4a4a4a inset,
-        -1px 0 0 #4a4a4a inset,
-        0 3px 8px rgba(0,0,0,.9),
-        0 0 0 1px #0a0a0a;
-      clip-path: polygon(
-        0 3px, 3px 0, calc(100% - 3px) 0, 100% 3px,
-        100% calc(100% - 3px), calc(100% - 3px) 100%,
-        3px 100%, 0 calc(100% - 3px)
-      );
-      transition: background .08s, color .08s;
-    }
-
-    #contact button::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 40%;
-      background: linear-gradient(180deg, rgba(255,255,255,.04) 0%, transparent 100%);
-      pointer-events: none;
-    }
-
-    #contact button:hover {
-      color: #fff;
-      background: linear-gradient(
-        180deg,
-        #4e4e4e 0%, #2e2e2e 30%, #181818 50%, #2e2e2e 70%, #4e4e4e 100%
-      );
-    }
-
-    #contact button:active {
-      transform: translateY(1px);
-      background: linear-gradient(180deg, #0e0e0e 0%, #1a1a1a 40%, #2a2a2a 100%);
-      box-shadow:
-        0 0 0 #666 inset, 0 -1px 0 #000 inset,
-        1px 0 0 #333 inset, -1px 0 0 #333 inset,
-        0 1px 4px rgba(0,0,0,.95), 0 0 0 1px #0a0a0a;
-    }
-
-    #contact button p { margin: 0; color: inherit; font-size: inherit; max-width: none; }
-
-    /* FOOTER */
-    footer {
-      padding: 2rem 0 3rem;
-      border-top: var(--line);
-      margin-top: 1.5rem;
-    }
-
-    footer p { font-size: .58rem; color: #2a2a2a; letter-spacing: .1em; }
-    footer a { color: #333; text-decoration: none; }
-    footer a:hover { color: #666; }
-
-    /* RESPONSIVE */
-    @media (max-width: 500px) {
-      body { padding: 0 1rem; }
-      #header-text img { width: 48%; }
-      .button-section a { width: 85px; }
-      #contact button { min-width: 0; width: 100%; max-width: 280px; }
-    }
-
-    @media (min-width: 1200px) {
-      html { font-size: 15px; }
-    }
+        @font-face {
+        font-family: "Geist";
+        src: url("fonts/Geist/Geist-Light.ttf") format("truetype");
+        }
     </style>
 </head>
 
 <body>
     <button class="nav-toggle" type="button" aria-label="Navigation umschalten">
-        <span></span>
-        <span></span>
-        <span></span>
+        MENU
     </button>
 
     <nav class="nav-menu">
@@ -366,12 +315,11 @@
             <li><a href="#contact">Kontakt</a></li>
             <li><a href="impressum.html">Impressum</a></li>
         </ul>
-        <hr aria-hidden="true">
-        <div aria-label="Untermenü Kenopsium">
-            <h2 class="visually-hidden">KENOPSIUM</h2>
+        <hr style="border:none; border-top:1px solid #222; margin:1.8rem 0;">
+        <div>
             <ul>
                 <li><a href="https://www.denmuen.ch/kenopsium">Launchpad</a></li>
-                <li><a href="https://www.researchgate.net/profile/Dennis-Muench-3">Publikationen (ResearchGate)</a></li>
+                <li><a href="https://www.researchgate.net/profile/Dennis-Muench-3">Publikationen</a></li>
                 <li><a href="https://www.denmuen.ch/kenopsium/kanon">Feuilleton</a></li>
             </ul>
         </div>
@@ -382,25 +330,27 @@
         <header>
             <div id="header-text">
                 <img src="images/headertext.svg" alt="Headerschriftzug" width="300" height="65">
+                <div class="header-subtitle">Die Website</div>
             </div>
             <img id="header-banner" src="images/banner2.webp" alt="Headerbanner">
         </header>
 
         <section>
             <div id="title">
-                <h2>// Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
-                <img id="header-img" src="images/Dennis-Münch-Portrait.jpg" alt="Portrait von Dennis Münch, forschende Person und Stadtratsmitglied in Neustadt" title="Dennis Münch">
+                <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
+                <img id="header-img" src="images/Dennis-Münch-Portrait.jpg" alt="Portrait von Dennis Münch" title="Dennis Münch">
                 <p>
                     Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was.
                     Aber so eine eigene Website, pah, ziemlich eingebildet, oder?
                     Als medienschaffende, forschende und politisch aktive Person beschäftige ich mich mit sozialen, didaktischen und ethischen Fragestellungen.
-                    Derzeit setze ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten und vor Allem fränkischen Stadt ein.
+                    Zwischen 2020 und 2026 setzte ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten und fränkischen Stadt ein.
                 </p>
-                <p>Godspeed und danke für Ihren Besuch, Ihr Dennis Münch</p>
+                <p>So long,<br>Dennis Münch</p>
             </div>
 
+            <!-- Rest des Inhalts bleibt unverändert -->
             <div id="kenopsium">
-                <h2>// Meine Projekte</h2>
+                <h2>Meine Projekte</h2>
                 <p>
                     Im Rahmen meines Self-Publishings erscheinen regelmäßig einzelne wissenschaftliche Arbeiten auf ResearchGate.
                     Ebenso erscheint in unregelmäßigen Abständen der Podcast Hinterstube über politische Kuriositäten und vergessene Nachrichten.
@@ -423,7 +373,7 @@
             </div>
 
             <div id="about">
-                <h2>// Über mich</h2>
+                <h2>Über mich</h2>
                 <p>
                     Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch.
                     An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats), und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich.
@@ -437,8 +387,8 @@
             </div>
 
             <div id="cv">
-                <h2>// Kurzlebenslauf</h2>
-
+                <h2>Kurzlebenslauf</h2>
+                <!-- Timeline-Inhalt bleibt identisch -->
                 <div class="section-title">Akademische Laufbahn</div>
                 <ul class="timeline">
                     <li class="timeline-item">
@@ -508,16 +458,10 @@
             </div>
 
             <div id="contact">
-                <h2>// Kontakt aufnehmen</h2>
-                <div>
-                    <button onclick="location.href='mailto:den.muench@gmail.com'"><p>E-Mail senden</p></button>
-                </div>
-                <div>
-                    <button onclick="location.href='https://www.instagram.com/den.muench/'"><p>Auf Instagram besuchen</p></button>
-                </div>
-                <div>
-                    <button onclick="location.href='https://rathaus.neustadt-aisch.de/rathaus-und-verwaltung/politik/stadtrat'"><p>Stadtbezogenes Anliegen</p></button>
-                </div>
+                <h2>Kontakt aufnehmen</h2>
+                <div><button onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button></div>
+                <div><button onclick="location.href='https://www.instagram.com/den.muench/'">Auf Instagram besuchen</button></div>
+                <div><button onclick="location.href='https://rathaus.neustadt-aisch.de/rathaus-und-verwaltung/politik/stadtrat'">Stadtbezogenes Anliegen</button></div>
             </div>
         </section>
     </main>
@@ -528,26 +472,23 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const navToggle  = document.querySelector('.nav-toggle');
-            const navMenu    = document.querySelector('.nav-menu');
+            const navToggle = document.querySelector('.nav-toggle');
+            const navMenu = document.querySelector('.nav-menu');
             const navOverlay = document.querySelector('.nav-overlay');
 
             navToggle.addEventListener('click', () => {
-                const isActive = navToggle.classList.toggle('active');
+                navToggle.classList.toggle('active');
                 navMenu.classList.toggle('active');
                 navOverlay.classList.toggle('active');
-                navToggle.classList.toggle('fixed-when-open', isActive);
             });
 
             navOverlay.addEventListener('click', () => {
-                navToggle.classList.remove('active', 'fixed-when-open');
                 navMenu.classList.remove('active');
                 navOverlay.classList.remove('active');
             });
 
             navMenu.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', () => {
-                    navToggle.classList.remove('active', 'fixed-when-open');
                     navMenu.classList.remove('active');
                     navOverlay.classList.remove('active');
                 });
