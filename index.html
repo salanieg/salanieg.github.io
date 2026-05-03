@@ -15,12 +15,21 @@
     <script defer src="common.js"></script>
 
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         :root {
             --bg: #00524a;
             --fg: #fff;
-            --dim: #3d3d3d;
+            --silver: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
+            --chrome: linear-gradient(180deg, #ebebeb 0%, #c4c4c4 18%, #a2a2a2 42%, #b6b6b6 62%, #d9d9d9 82%, #f0f0f0 100%);
+            --chrome-border-top: 2px solid #b8b8b8;
+            --chrome-border-bottom: 2px solid #555;
+            --chrome-border-side: 1px solid #888;
+            --chrome-text-shadow: 0 1px 0 #f2f2f2, 0 -1px 0 #888;
         }
 
         html, body {
@@ -33,7 +42,10 @@
             overflow: hidden;
         }
 
-        ::selection { background: #fff; color: #000; }
+        ::selection {
+            background: #fff;
+            color: #000;
+        }
 
         #app {
             display: flex;
@@ -41,7 +53,7 @@
             height: 100vh;
         }
 
-        /* ── HEADER ──────────────────────────────────── */
+        /* ── HEADER ── */
         #site-header {
             text-align: center;
             padding: 1.2rem 0 0;
@@ -61,77 +73,69 @@
             text-transform: uppercase;
             margin-top: 0.4rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
+            background: var(--silver);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        /* ── TILE NAV BAR ────────────────────────────── */
+        /* ── TILE NAV ── */
         #tilenav {
             display: flex;
             flex-shrink: 0;
             margin-top: 0.7rem;
-            border-top: 2px solid #b8b8b8;
-            border-bottom: 2px solid #555;
-            background: linear-gradient(180deg,
-                #ebebeb 0%, #c4c4c4 18%, #a2a2a2 42%,
-                #b6b6b6 62%, #d9d9d9 82%, #f0f0f0 100%);
+            border-top: var(--chrome-border-top);
+            border-bottom: var(--chrome-border-bottom);
+            background: var(--chrome);
         }
 
         .tile {
             flex: 1;
+            min-width: 0;
             height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-right: 1px solid #888;
+            border-right: var(--chrome-border-side);
             cursor: pointer;
             font-family: 'Alien', Courier, sans-serif;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             letter-spacing: 0.13em;
             text-transform: uppercase;
             color: #1a1a1a;
             font-weight: 700;
-            text-shadow: 0 1px 0 #f2f2f2, 0 -1px 0 #888;
+            text-shadow: var(--chrome-text-shadow);
             user-select: none;
             transition: background 0.12s;
         }
 
         .tile:last-child { border-right: none; }
-        .tile:hover { background: rgba(0,0,0,0.07); }
+        .tile:hover { background: rgba(0, 0, 0, 0.07); }
         .tile.active {
-            background: rgba(0,0,0,0.14);
+            background: rgba(0, 0, 0, 0.14);
             box-shadow: inset 0 -3px 0 #333;
         }
 
-        /* ── STAGE ───────────────────────────────────── */
+        /* ── STAGE ── */
         #stage {
             flex: 1;
             position: relative;
             overflow: hidden;
         }
 
-        /* ── SECTION PANES ───────────────────────────── */
+        /* ── SECTION PANES ── */
         .section-pane {
             position: absolute;
             inset: 0;
             overflow-y: auto;
             padding: 2.2rem max(1.5rem, calc((100% - 680px) / 2));
-
-            /* Zoom-Ursprung: wird per JS gesetzt */
             transform-origin: top center;
-
-            /* Ausgangszustand: unsichtbar, klein */
             opacity: 0;
             transform: scale(0.04);
             pointer-events: none;
-
-            /* Kein Übergang im Ruhezustand */
             transition: none;
         }
 
-        /* Hereinzoomen */
         .section-pane.zoom-in {
             transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
                         opacity   0.22s ease-out;
@@ -140,7 +144,6 @@
             pointer-events: auto;
         }
 
-        /* Herauszoomen (beim Verlassen) */
         .section-pane.zoom-out {
             transition: transform 0.22s cubic-bezier(0.4, 0, 1, 1),
                         opacity   0.18s ease-in;
@@ -149,55 +152,54 @@
             pointer-events: none;
         }
 
-        /* ── TYPOGRAPHY ──────────────────────────────── */
+        /* ── TYPOGRAPHY ── */
         h2 {
             font-family: 'Alien', Courier, sans-serif;
             font-size: 1.4rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
             margin-bottom: 1.4rem;
-            background: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
+            background: var(--silver);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
         p {
-            color: #fff;
+            color: var(--fg);
             max-width: 65ch;
             margin-bottom: 1rem;
             text-align: justify;
             hyphens: auto;
-            -webkit-hyphens: auto;
             letter-spacing: 0.02em;
         }
 
         a { color: #ddd; }
         a:hover { color: #fff; }
 
-        /* ── PORTRAIT ────────────────────────────────── */
+        /* ── PORTRAIT ── */
         #header-img {
             width: 11rem;
             height: 11rem;
             object-fit: cover;
-            border: 2px solid #fff;
+            border: 2px solid var(--fg);
             border-radius: 50%;
             margin: 1.2rem auto;
             display: block;
         }
 
-        /* ── BANNER ──────────────────────────────────── */
+        /* ── BANNER ── */
         #header-banner {
             width: 100%;
             max-height: 160px;
             object-fit: cover;
-            border-top: 2px solid #fff;
-            border-bottom: 2px solid #fff;
+            border-top: 2px solid var(--fg);
+            border-bottom: 2px solid var(--fg);
             border-radius: 5%;
-            margin: 0 0 1.2rem;
+            margin-bottom: 1.2rem;
         }
 
-        /* ── PROJECTS ────────────────────────────────── */
+        /* ── PROJECTS ── */
         .button-section {
             display: flex;
             gap: 1.5rem;
@@ -205,15 +207,18 @@
             margin-top: 1.6rem;
         }
 
-        .button-section a { text-decoration: none; flex: 1 1 130px; }
+        .button-section a {
+            text-decoration: none;
+            flex: 1 1 130px;
+        }
 
         .button-section a img {
             width: 100%;
             aspect-ratio: 1;
             object-fit: cover;
-            border: 1px solid #222;
-            filter: grayscale(70%) brightness(0.8);
-            transition: all 0.3s;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            transition: filter 0.3s, border-color 0.3s;
         }
 
         .button-section a:hover img {
@@ -222,24 +227,23 @@
         }
 
         .button-section a p {
+            font-family: 'Alien', Courier, sans-serif;
             margin-top: 0.6rem;
-            font-size: 0.68rem;
+            font-size: 0.9rem;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            color: #ffffff;
             text-align: center;
         }
 
-        /* ── CV ──────────────────────────────────────── */
+        /* ── CV ── */
         .cv-group { margin-bottom: 1.8rem; }
 
         .cv-group-label {
             font-size: 0.9rem;
             letter-spacing: 0.28em;
             text-transform: uppercase;
-            color: #ffffff;
             padding-bottom: 0.35rem;
-            border-bottom: 1px solid #ffffff;
+            border-bottom: 1px solid var(--fg);
             margin-bottom: 0.6rem;
         }
 
@@ -248,74 +252,81 @@
             grid-template-columns: 7rem 1fr;
             gap: 0 1rem;
             padding: 0.45rem 0;
-            border-bottom: 1px solid #ffffff;
+            border-bottom: 1px solid var(--fg);
             font-size: 0.82rem;
         }
 
         .cv-row:last-child { border-bottom: none; }
-        .cv-date { color: #ffffff; }
-        .cv-body { color: #ffffff; }
+
         .cv-body em {
             display: block;
             font-style: normal;
-            color: #ffffff;
             font-size: 0.76rem;
         }
 
-        /* ── CONTACT BUTTONS ─────────────────────────── */
+        /* ── CONTACT BUTTONS ── */
+        #pane-contact .btn-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .contact-btn {
-            background: linear-gradient(180deg, #2a2a2a, #111);
-            color: #ddd;
-            border: 1px solid #444;
+            background: var(--chrome);
+            color: #1a1a1a;
+            border-top: var(--chrome-border-top);
+            border-bottom: var(--chrome-border-bottom);
+            border-left: var(--chrome-border-side);
+            border-right: var(--chrome-border-side);
+            text-shadow: var(--chrome-text-shadow);
             padding: 0.9rem 2rem;
-            font-size: 0.82rem;
-            letter-spacing: 0.12em;
+            font-family: 'Alien', Courier, sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.13em;
             text-transform: uppercase;
+            font-weight: 700;
             width: 100%;
             max-width: 340px;
             cursor: pointer;
             margin-bottom: 0.9rem;
-            transition: all 0.2s;
+            transition: filter 0.12s;
             display: block;
         }
 
-        .contact-btn:hover {
-            background: linear-gradient(180deg, #444, #222);
-            color: #fff;
-            border-color: #666;
+        .contact-btn:hover { filter: brightness(1.07); }
+
+        .contact-btn:active {
+            background: linear-gradient(180deg, #a2a2a2 0%, #b6b6b6 38%, #c4c4c4 62%, #ebebeb 100%);
+            box-shadow: inset 0 -3px 0 #333;
         }
 
-        /* ── FOOTER ──────────────────────────────────── */
+        /* ── FOOTER ── */
         footer {
             flex-shrink: 0;
             padding: 0.65rem 0;
-            border-top: 1px solid #ffffff;
+            border-top: 1px solid var(--fg);
             font-size: 0.7rem;
-            color: #ffffff;
             text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        footer a { color: #ffffff; }
+        footer a { color: var(--fg); }
         footer a:hover { color: #888; }
 
-        /* ── RESPONSIVE ──────────────────────────────── */
+        /* ── RESPONSIVE ── */
         @media (max-width: 520px) {
-            .tile { font-size: 0.75rem; letter-spacing: 0.06em; }
+            .tile { font-size: 0.62rem; letter-spacing: 0.04em; }
             .section-pane { padding: 1.4rem 1rem; }
             .cv-row { grid-template-columns: 5.5rem 1fr; }
         }
 
-        /* ── FONTS ───────────────────────────────────── */
+        /* ── FONTS ── */
         @font-face {
-            font-family: "Alien";
-            src: url("fonts/Alien/Alien Edifice Bold 10 20 .ttf") format("truetype");
+            font-family: 'Alien';
+            src: url('fonts/Alien/Alien Edifice Bold 10 20 .ttf') format('truetype');
         }
         @font-face {
-            font-family: "Geist";
-            src: url("fonts/Geist/Geist-Light.ttf") format("truetype");
+            font-family: 'Geist';
+            src: url('fonts/Geist/Geist-Light.ttf') format('truetype');
         }
     </style>
 </head>
@@ -331,7 +342,7 @@
     <nav id="tilenav">
         <div class="tile active" data-target="home"      tabindex="0" role="button">Home</div>
         <div class="tile"        data-target="kenopsium" tabindex="0" role="button">Projekte</div>
-        <div class="tile"        data-target="about"     tabindex="0" role="button">About</div>
+        <div class="tile"        data-target="about"     tabindex="0" role="button">Über mich</div>
         <div class="tile"        data-target="cv"        tabindex="0" role="button">CV</div>
         <div class="tile"        data-target="contact"   tabindex="0" role="button">Kontakt</div>
         <div class="tile"        data-target="mehr"      tabindex="0" role="button">Mehr</div>
@@ -351,28 +362,28 @@
         <!-- PROJEKTE -->
         <div class="section-pane" id="pane-kenopsium">
             <h2>Meine Projekte</h2>
-            <p>Im Rahmen meines Self-Publishings erscheinen regelmäßig einzelne wissenschaftliche Arbeiten auf ResearchGate. Ebenso erscheint in unregelmäßigen Abständen der Podcast Hinterstube über politische Kuriositäten und vergessene Nachrichten. Der Underground-Blog Kenopsium umfasst ein Feuilleton mit sehenswerten Inhalten in Video- Text- und Hypertextform.</p>
+            <p>Im Rahmen meines Self-Publishings erscheinen regelmäßig einzelne wissenschaftliche Arbeiten auf ResearchGate. Ebenso erscheint in unregelmäßigen Abständen der Podcast Hinterstube über politische Kuriositäten und vergessene Nachrichten. Der Underground-Blog Kenopsium umfasst ein Feuilleton mit sehenswerten Inhalten in Video-, Text- und Hypertextform.</p>
             <div class="button-section">
                 <a href="https://www.researchgate.net/profile/Dennis-Muench-3">
                     <img src="images/cogwheel.webp" alt="Arbeiten auf ResearchGate">
-                    <p>SELF-PUBLISHING</p>
+                    <p>Self-Publishing</p>
                 </a>
                 <a href="https://www.denmuen.ch/hinterstube.html">
                     <img src="images/nighttrain.webp" alt="Podcast Hinterstube">
-                    <p>PODCAST</p>
+                    <p>Podcast</p>
                 </a>
                 <a href="https://www.denmuen.ch/kenopsium">
                     <img src="images/blogpic.webp" alt="Kenopsium Blog">
-                    <p>KENOPSIUM</p>
+                    <p>Kenopsium</p>
                 </a>
             </div>
         </div>
 
         <!-- ÜBER MICH -->
         <div class="section-pane" id="pane-about">
-            <h2>About</h2>
-            <p>Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats), und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich. Inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> setze ich mich für ein resilientes, lebenswertes und ästhetisches fränkisches Neustadt ein. Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.</p>
-            <p>Diese Seite ist frei von nicht technisch notwendigen Cookies und hat daher kein Cookiebanner. Wenn Sie an neuen Inhalten interessiert sind, besuchen Sie gerne die Orte innerhalb meines Kompendium-Blogs.</p>
+            <h2>Über mich</h2>
+            <p>Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats) und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich. Inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> setze ich mich für ein resilientes, lebenswertes und ästhetisches fränkisches Neustadt ein. Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.</p>
+            <p>Diese Seite ist frei von nicht technisch notwendigen Cookies und hat daher kein Cookie-Banner. Wenn Sie an neuen Inhalten interessiert sind, besuchen Sie gerne die Orte innerhalb meines Kompendium-Blogs.</p>
         </div>
 
         <!-- CV -->
@@ -402,7 +413,7 @@
             <div class="cv-group">
                 <div class="cv-group-label">Tätigkeiten</div>
                 <div class="cv-row">
-                    <span class="cv-date">05/2020 - 04/2026</span>
+                    <span class="cv-date">05/2020 – 04/2026</span>
                     <span class="cv-body">Ehrenamtliches Stadtratsmitglied <em>Stadt Neustadt an der Aisch</em></span>
                 </div>
                 <div class="cv-row">
@@ -431,9 +442,10 @@
         <!-- KONTAKT -->
         <div class="section-pane" id="pane-contact">
             <h2>Kontakt</h2>
-            <button class="contact-btn" onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button>
-            <button class="contact-btn" onclick="location.href='https://www.instagram.com/den.muench/'">Auf Instagram besuchen</button>
-            <button class="contact-btn" onclick="location.href='https://rathaus.neustadt-aisch.de/rathaus-und-verwaltung/politik/stadtrat'">Stadtbezogenes Anliegen</button>
+            <div class="btn-group">
+                <button class="contact-btn" onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button>
+                <button class="contact-btn" onclick="location.href='https://www.instagram.com/den.muench/'">Auf Instagram besuchen</button>
+            </div>
         </div>
 
         <!-- MEHR -->
@@ -455,96 +467,71 @@
 
 <script>
 (function () {
-    var tiles     = document.querySelectorAll('.tile');
-    var panes     = document.querySelectorAll('.section-pane');
-    var stage     = document.getElementById('stage');
-    var tilenav   = document.getElementById('tilenav');
+    const tiles     = document.querySelectorAll('.tile');
+    const stage     = document.getElementById('stage');
 
-    var current   = null;
-    var animating = false;
-    var hoverTimer = null;
+    let current   = null;
+    let animating = false;
+    let hoverTimer;
 
-    /* Berechnet den transform-origin relativ zum Stage,
-       ausgehend von der Mitte des angeklickten Tiles */
     function originForTile(tile) {
-        var tileRect  = tile.getBoundingClientRect();
-        var stageRect = stage.getBoundingClientRect();
-        var x = (tileRect.left + tileRect.width  / 2) - stageRect.left;
-        var y = (tileRect.top  + tileRect.height / 2) - stageRect.top;
-        return x + 'px ' + y + 'px';
+        const tr = tile.getBoundingClientRect();
+        const sr = stage.getBoundingClientRect();
+        return `${tr.left + tr.width / 2 - sr.left}px ${tr.top + tr.height / 2 - sr.top}px`;
     }
 
     function setActive(id) {
-        tiles.forEach(function (t) {
-            t.classList.toggle('active', t.dataset.target === id);
-        });
+        tiles.forEach(t => t.classList.toggle('active', t.dataset.target === id));
     }
 
     function navigate(targetId, tile) {
-        if (animating || targetId === current) return;
+        if (targetId === current || animating) return;
         animating = true;
 
-        var origin = originForTile(tile);
-        var incoming = document.getElementById('pane-' + targetId);
-        var outgoing = current ? document.getElementById('pane-' + current) : null;
+        const origin   = originForTile(tile);
+        const incoming = document.getElementById('pane-' + targetId);
+        const outgoing = current ? document.getElementById('pane-' + current) : null;
 
-        /* Ausgehende Sektion wegzoomen */
         if (outgoing) {
             outgoing.style.transformOrigin = origin;
-            outgoing.classList.remove('zoom-in');
-            outgoing.classList.add('zoom-out');
+            outgoing.classList.replace('zoom-in', 'zoom-out');
         }
 
-        /* Eingehende Sektion vorbereiten: Origin setzen, dann reinzoomen */
         incoming.style.transformOrigin = origin;
         incoming.classList.remove('zoom-out');
 
-        /* Einen Frame warten damit der Browser den Ausgangszustand rendern kann */
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () {
-                incoming.classList.add('zoom-in');
-                incoming.scrollTop = 0;
-
-                current = targetId;
-                setActive(targetId);
-
-                setTimeout(function () {
-                    animating = false;
-                }, 420);
-            });
-        });
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            incoming.classList.add('zoom-in');
+            incoming.scrollTop = 0;
+            current = targetId;
+            setActive(targetId);
+            setTimeout(() => { animating = false; }, 420);
+        }));
     }
 
-    /* Startzustand: Home direkt anzeigen ohne Animation */
-    (function initHome() {
-        var homePane = document.getElementById('pane-home');
-        var homeTile = document.querySelector('[data-target="home"]');
-        homePane.style.transformOrigin = originForTile(homeTile);
-        homePane.classList.add('zoom-in');
-        current = 'home';
-        setActive('home');
-    })();
+    // Init home pane
+    const homeTile = document.querySelector('[data-target="home"]');
+    const homePane = document.getElementById('pane-home');
+    homePane.style.transformOrigin = originForTile(homeTile);
+    homePane.classList.add('zoom-in');
+    current = 'home';
+    setActive('home');
 
-    /* Tiles verdrahten */
-    tiles.forEach(function (tile) {
-        var id = tile.dataset.target;
+    tiles.forEach(tile => {
+        const id = tile.dataset.target;
 
-        tile.addEventListener('click', function () {
+        tile.addEventListener('click', () => {
             clearTimeout(hoverTimer);
             navigate(id, tile);
         });
 
-        tile.addEventListener('mouseenter', function () {
-            hoverTimer = setTimeout(function () {
-                navigate(id, tile);
-            }, 180);
+        tile.addEventListener('mouseenter', () => {
+            hoverTimer = setTimeout(() => { if (!animating) navigate(id, tile); }, 180);
         });
 
-        tile.addEventListener('mouseleave', function () {
-            clearTimeout(hoverTimer);
-        });
+        tile.addEventListener('mouseleave', () => clearTimeout(hoverTimer));
 
-        tile.addEventListener('keydown', function (e) {
+        tile.addEventListener('keydown', e => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 navigate(id, tile);
