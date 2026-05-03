@@ -21,8 +21,6 @@
             --bg: #00524a;
             --fg: #fff;
             --dim: #3d3d3d;
-            /* wipe bar thickness */
-            --bar: 3px;
         }
 
         html, body {
@@ -90,7 +88,7 @@
             border-right: 1px solid #888;
             cursor: pointer;
             font-family: 'Alien', Courier, sans-serif;
-            font-size: 0.52rem;
+            font-size: 0.8rem;
             letter-spacing: 0.13em;
             text-transform: uppercase;
             color: #1a1a1a;
@@ -101,7 +99,7 @@
         }
 
         .tile:last-child { border-right: none; }
-        .tile:hover, .tile.hovered { background: rgba(0,0,0,0.07); }
+        .tile:hover { background: rgba(0,0,0,0.07); }
         .tile.active {
             background: rgba(0,0,0,0.14);
             box-shadow: inset 0 -3px 0 #333;
@@ -120,61 +118,36 @@
             inset: 0;
             overflow-y: auto;
             padding: 2.2rem max(1.5rem, calc((100% - 680px) / 2));
+
+            /* Zoom-Ursprung: wird per JS gesetzt */
+            transform-origin: top center;
+
+            /* Ausgangszustand: unsichtbar, klein */
             opacity: 0;
+            transform: scale(0.04);
             pointer-events: none;
-            transition: opacity 0.15s ease;
+
+            /* Kein Übergang im Ruhezustand */
+            transition: none;
         }
 
-        .section-pane.visible {
+        /* Hereinzoomen */
+        .section-pane.zoom-in {
+            transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+                        opacity   0.22s ease-out;
             opacity: 1;
+            transform: scale(1);
             pointer-events: auto;
         }
 
-        /* ── WIPE BARS ───────────────────────────────── */
-        /*
-         * Two thin white bars, each var(--bar) wide, anchored at the horizontal
-         * centre of the stage. Left bar: right edge at centre. Right bar: left
-         * edge at centre.  Both start off-screen (left bar far left, right bar
-         * far right) and travel INWARD to meet at the centre, then EXIT outward.
-         *
-         * translateX controls position:
-         *   bar-left:   0 = at centre,  -100vw = hidden left
-         *   bar-right:  0 = at centre,  +100vw = hidden right
-         */
-        .wipe-bar {
-            position: absolute;
-            top: 0; bottom: 0;
-            width: var(--bar);
-            background: #fff;
-            z-index: 20;
+        /* Herauszoomen (beim Verlassen) */
+        .section-pane.zoom-out {
+            transition: transform 0.22s cubic-bezier(0.4, 0, 1, 1),
+                        opacity   0.18s ease-in;
+            opacity: 0;
+            transform: scale(0.04);
             pointer-events: none;
         }
-
-        #wipe-left  {
-            /* right edge sits at 50% of stage */
-            left: calc(50% - var(--bar));
-            transform: translateX(-100vw); /* hidden off-left */
-        }
-
-        #wipe-right {
-            /* left edge sits at 50% of stage */
-            left: 50%;
-            transform: translateX(100vw);  /* hidden off-right */
-        }
-
-        /* STATE: bars travel inward → meet at centre */
-        .wipe-bar.enter {
-            transition: transform 0.32s cubic-bezier(0.4, 0, 0.6, 1);
-        }
-        #wipe-left.enter  { transform: translateX(0); }
-        #wipe-right.enter { transform: translateX(0); }
-
-        /* STATE: bars travel outward → exit the stage */
-        .wipe-bar.exit {
-            transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #wipe-left.exit  { transform: translateX(-100vw); }
-        #wipe-right.exit { transform: translateX(100vw); }
 
         /* ── TYPOGRAPHY ──────────────────────────────── */
         h2 {
@@ -257,10 +230,8 @@
             text-align: center;
         }
 
-        /* ── CV (minimal) ────────────────────────────── */
-        .cv-group {
-            margin-bottom: 1.8rem;
-        }
+        /* ── CV ──────────────────────────────────────── */
+        .cv-group { margin-bottom: 1.8rem; }
 
         .cv-group-label {
             font-size: 0.9rem;
@@ -282,11 +253,8 @@
         }
 
         .cv-row:last-child { border-bottom: none; }
-
         .cv-date { color: #ffffff; }
-
         .cv-body { color: #ffffff; }
-
         .cv-body em {
             display: block;
             font-style: normal;
@@ -335,7 +303,7 @@
 
         /* ── RESPONSIVE ──────────────────────────────── */
         @media (max-width: 520px) {
-            .tile { font-size: 0.44rem; letter-spacing: 0.06em; }
+            .tile { font-size: 0.75rem; letter-spacing: 0.06em; }
             .section-pane { padding: 1.4rem 1rem; }
             .cv-row { grid-template-columns: 5.5rem 1fr; }
         }
@@ -363,7 +331,7 @@
     <nav id="tilenav">
         <div class="tile active" data-target="home"      tabindex="0" role="button">Home</div>
         <div class="tile"        data-target="kenopsium" tabindex="0" role="button">Projekte</div>
-        <div class="tile"        data-target="about"     tabindex="0" role="button">Über mich</div>
+        <div class="tile"        data-target="about"     tabindex="0" role="button">About</div>
         <div class="tile"        data-target="cv"        tabindex="0" role="button">CV</div>
         <div class="tile"        data-target="contact"   tabindex="0" role="button">Kontakt</div>
         <div class="tile"        data-target="mehr"      tabindex="0" role="button">Mehr</div>
@@ -371,11 +339,8 @@
 
     <div id="stage">
 
-        <div class="wipe-bar" id="wipe-left"></div>
-        <div class="wipe-bar" id="wipe-right"></div>
-
         <!-- HOME -->
-        <div class="section-pane visible" id="pane-home">
+        <div class="section-pane" id="pane-home">
             <img id="header-banner" src="images/banner2.webp" alt="Headerbanner">
             <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
             <img id="header-img" src="images/Dennis-Münch-Portrait.jpg" alt="Portrait von Dennis Münch">
@@ -405,12 +370,12 @@
 
         <!-- ÜBER MICH -->
         <div class="section-pane" id="pane-about">
-            <h2>Über mich</h2>
+            <h2>About</h2>
             <p>Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal, und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats), und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich. Inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> setze ich mich für ein resilientes, lebenswertes und ästhetisches fränkisches Neustadt ein. Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.</p>
             <p>Diese Seite ist frei von nicht technisch notwendigen Cookies und hat daher kein Cookiebanner. Wenn Sie an neuen Inhalten interessiert sind, besuchen Sie gerne die Orte innerhalb meines Kompendium-Blogs.</p>
         </div>
 
-        <!-- CV (minimalistisch) -->
+        <!-- CV -->
         <div class="section-pane" id="pane-cv">
             <h2>Curriculum Vitae</h2>
 
@@ -492,20 +457,21 @@
 (function () {
     var tiles     = document.querySelectorAll('.tile');
     var panes     = document.querySelectorAll('.section-pane');
-    var barL      = document.getElementById('wipe-left');
-    var barR      = document.getElementById('wipe-right');
+    var stage     = document.getElementById('stage');
+    var tilenav   = document.getElementById('tilenav');
 
-    var current   = 'home';
-    var pending   = null;   // target queued on hover
+    var current   = null;
     var animating = false;
+    var hoverTimer = null;
 
-    /* ── helpers ── */
-    function showPane(id) {
-        panes.forEach(function (p) {
-            var on = p.id === 'pane-' + id;
-            p.classList.toggle('visible', on);
-            if (on) p.scrollTop = 0;
-        });
+    /* Berechnet den transform-origin relativ zum Stage,
+       ausgehend von der Mitte des angeklickten Tiles */
+    function originForTile(tile) {
+        var tileRect  = tile.getBoundingClientRect();
+        var stageRect = stage.getBoundingClientRect();
+        var x = (tileRect.left + tileRect.width  / 2) - stageRect.left;
+        var y = (tileRect.top  + tileRect.height / 2) - stageRect.top;
+        return x + 'px ' + y + 'px';
     }
 
     function setActive(id) {
@@ -514,105 +480,77 @@
         });
     }
 
-    /* reset bars to their off-screen resting position (no transition) */
-    function resetBars() {
-        [barL, barR].forEach(function (b) {
-            b.classList.remove('enter', 'exit');
-            b.style.transition = 'none';
-        });
-        barL.style.transform = 'translateX(-100vw)';
-        barR.style.transform = 'translateX(100vw)';
-        /* re-enable transitions on next frame */
-        requestAnimationFrame(function () {
-            [barL, barR].forEach(function (b) { b.style.transition = ''; });
-        });
-    }
-
-    /* ── main animation ── */
-    function navigate(targetId) {
+    function navigate(targetId, tile) {
         if (animating || targetId === current) return;
         animating = true;
-        pending   = null;
 
-        resetBars();
+        var origin = originForTile(tile);
+        var incoming = document.getElementById('pane-' + targetId);
+        var outgoing = current ? document.getElementById('pane-' + current) : null;
 
-        /* slight delay so the reset paint lands first */
-        setTimeout(function () {
+        /* Ausgehende Sektion wegzoomen */
+        if (outgoing) {
+            outgoing.style.transformOrigin = origin;
+            outgoing.classList.remove('zoom-in');
+            outgoing.classList.add('zoom-out');
+        }
 
-            /* Phase 1 — bars enter (fly inward to centre) */
-            [barL, barR].forEach(function (b) { b.classList.add('enter'); });
+        /* Eingehende Sektion vorbereiten: Origin setzen, dann reinzoomen */
+        incoming.style.transformOrigin = origin;
+        incoming.classList.remove('zoom-out');
 
-            setTimeout(function () {
-                /* swap content while bars are at centre */
+        /* Einen Frame warten damit der Browser den Ausgangszustand rendern kann */
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                incoming.classList.add('zoom-in');
+                incoming.scrollTop = 0;
+
                 current = targetId;
-                showPane(targetId);
                 setActive(targetId);
-
-                /* Phase 2 — bars exit (fly outward) */
-                [barL, barR].forEach(function (b) {
-                    b.classList.remove('enter');
-                    b.classList.add('exit');
-                });
 
                 setTimeout(function () {
                     animating = false;
-                    /* if user hovered a different tile while we were busy */
-                    if (pending && pending !== current) {
-                        navigate(pending);
-                    }
                 }, 420);
-
-            }, 360); /* bars finish entering */
-
-        }, 20);
+            });
+        });
     }
 
-    /* ── wire tiles ── */
+    /* Startzustand: Home direkt anzeigen ohne Animation */
+    (function initHome() {
+        var homePane = document.getElementById('pane-home');
+        var homeTile = document.querySelector('[data-target="home"]');
+        homePane.style.transformOrigin = originForTile(homeTile);
+        homePane.classList.add('zoom-in');
+        current = 'home';
+        setActive('home');
+    })();
+
+    /* Tiles verdrahten */
     tiles.forEach(function (tile) {
         var id = tile.dataset.target;
 
-        /* hover: pre-load intent */
-        tile.addEventListener('mouseenter', function () {
-            if (id !== current) pending = id;
-        });
-
-        tile.addEventListener('mouseleave', function () {
-            if (pending === id) pending = null;
-        });
-
-        /* click: commit navigation */
         tile.addEventListener('click', function () {
-            navigate(id);
+            clearTimeout(hoverTimer);
+            navigate(id, tile);
         });
-
-        tile.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                navigate(id);
-            }
-        });
-    });
-
-    /* ── hover-intent: fire after 180 ms on same tile ── */
-    var hoverTimer = null;
-
-    tiles.forEach(function (tile) {
-        var id = tile.dataset.target;
 
         tile.addEventListener('mouseenter', function () {
             hoverTimer = setTimeout(function () {
-                if (id !== current) navigate(id);
+                navigate(id, tile);
             }, 180);
         });
 
         tile.addEventListener('mouseleave', function () {
             clearTimeout(hoverTimer);
         });
-    });
 
-    /* initial state */
-    showPane('home');
-    setActive('home');
+        tile.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate(id, tile);
+            }
+        });
+    });
 })();
 </script>
 </body>
