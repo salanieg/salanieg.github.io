@@ -2,38 +2,24 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <meta name="description" content="Willkommen auf der Startseite meines Kompendium-Blogs KENOPSIUM. Magazin oder Kanon? Du hast die Wahl.">
 
     <title>Kenopsium | Dennis Münch</title>
 
     <link rel="stylesheet" href="/styles/fonts.css">
-    <link rel="stylesheet" href="/styles/general.css">
-    <script type="text/javascript" src="/common.js"></script>
+    <link rel="stylesheet" href="/styles/theme.css">
+    <script defer src="/common.js"></script>
 
     <link rel="preload" as="image" href="/images/headertext_keno.svg" type="image/svg+xml">
-    <link rel="preload" as="image" href="/images/kenopsium_TJ.webp" type="image/webp">
-
-    <style>
-        body {
-            color: #C2C2C2;
-            background-color: #333;
-            background-image: url("/images/kenopsium_TJ.webp");
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-    </style>
 </head>
 <body>
+    <nav class="chrome-nav">
+        <a href="/">Startseite</a>
+        <a href="/kenopsium.html" class="active">Kenopsium</a>
+    </nav>
     <main>
-        <img id="blogheader" src="/images/headertext_keno.svg" alt="Blog Header" width="700" height="auto" fetchpriority="high" decoding="async">
+        <img id="blogheader" src="/images/headertext_keno.svg" alt="Blog Header" width="700" fetchpriority="high" decoding="async">
         <h1>THESEUS JUNCTION</h1>
         <p id="intro-text">
             Entropie verwandelt Ordnung in Chaos. Nicht etwa, weil dies notwendig ist, sondern weil es das wahrscheinlichste Ergebnis ist. Das reine Zerstören der Geometrie, ob physisch oder diskursiv, ist ein männlicher Akt. Das Zerstörte zu ordnen, es zu synthetisieren, ist das Vermächtnis der Gaía. Die zertrümmerte Geometrie durch ein Wurmloch zu zwingen und sie wieder zusammenzusetzen, das ist das Desiderat dieser Website.
@@ -64,7 +50,7 @@
             <p><a href="https://www.denmuen.ch/404">404 (Achtung: Spoiler)</a><br>Nur empfohlen, wenn du meine 404-Seite schonmal gesehen hast. Andernfalls: Viel Glück!</p>
         </div>
         <div class="button-section">
-            <a href="https://www.denmuen.ch/#launchpad">
+            <a href="https://www.denmuen.ch/">
                 <img src="/images/underground.webp" alt="zur Startseite">
                 <h2>Return to base</h2>
                 <p>ZURÜCK ZUR HAUPTSEITE</p>
@@ -73,21 +59,7 @@
     </main>
 
     <footer>
-        <p>© 2025 Dennis Münch | 💚 Öko-optimiert und cookiefrei<br><a href="https://www.denmuen.ch/impressum">Impressum</a></p>
+        <p>© 2026 Dennis Münch | Öko-optimiert und cookiefrei<br><a href="https://www.denmuen.ch/impressum">Impressum</a></p>
     </footer>
-<script>
-        // JavaScript to handle collapsible buttons
-        document.querySelectorAll(".collapsible").forEach(function(button) {
-            button.addEventListener("click", function() {
-                this.classList.toggle("active");
-                var content = this.nextElementSibling;
-                if (content.style.display === "block") {
-                    content.style.display = "none";
-                } else {
-                    content.style.display = "block";
-                }
-            });
-        });
-    </script>  
 </body>
 </html>

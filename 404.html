@@ -3,9 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <title>404 not found</title>
     <style>
+        @font-face {
+            font-family: 'Alien';
+            src: url('fonts/Alien/Alien Edifice Bold 10 20 .ttf') format('truetype');
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Geist';
+            src: url('fonts/Geist/Geist-Light.woff2') format('woff2'),
+                 url('fonts/Geist/Geist-Light.ttf') format('truetype');
+            font-display: swap;
+        }
         @font-face {
             font-family: 'Syne';
             src: url('https://www.denmuen.ch/fonts/Syne/Syne-Italic.woff2') format('woff2');
@@ -13,11 +24,11 @@
             font-style: italic;
             font-display: swap;
         }
-        
+
         body {
             font-family: 'Geist', Arial, sans-serif;
             color: white;
-            background: #212121 url("/images/404.webp") no-repeat;
+            background: #00524a url("/images/404.webp") no-repeat;
             background-size: 400px 300px;
             background-position: center;
             margin: 0;
@@ -59,7 +70,7 @@
         }
 
         #nav p {
-            color: rgb(70, 121, 189);
+            color: #ddd;
             font-size: 25px;
             padding: 10px 20px;
             display: inline-block;
@@ -186,7 +197,7 @@
                             element.style.display = "none";
                         }
                     });
-                    document.body.style.background = "#212121";
+                    document.body.style.background = "#00524a";
                     finalMessage.style.display = "block";
                 }, 10000); // 10 Sekunden nach Countdown-Start = 15 Sekunden gesamt
             }, 5000); // Countdown startet nach 5 Sekunden
@@ -225,7 +236,7 @@
     <h2>EREIGNISHORIZONT DES DIALEKTISCHEN WURMLOCHS</h2>
     <h2>UNVERZÜGLICH AUSWEICHEN!</h2>
     <p><i>Keine Inhalte unter dieser Seite. Gezeichnet, der Schildermaler.</i></p>
-    <a href="https://www.denmuen.ch/#launchpad" target="_self">
+    <a href="/" target="_self">
         <div id="stalemateButton">
             <button>
                 STALEMATE RESOLVE <br><b>PRESS HERE</b>

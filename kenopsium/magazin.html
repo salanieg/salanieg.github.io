@@ -2,44 +2,25 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <meta name="description" content="Kenopsium, Elfenbeinturm: Spähe meine Essays und Hausarbeiten zu Philosophie, Zeitgeist und Ethik aus. Vorbehaltliche Lizenz: CC BY-NC 4.0">
 
     <title>Portfolio | Dennis Münch</title>
 
     <link rel="stylesheet" href="/styles/fonts.css">
-    <link rel="stylesheet" href="/styles/general.css">
-    <script type="text/javascript" src="/common.js"></script>
+    <link rel="stylesheet" href="/styles/theme.css">
+    <script defer src="/common.js"></script>
 
     <link rel="preload" as="image" href="/images/headertext_keno.svg" type="image/svg+xml">
-    <link rel="preload" as="image" href="/images/kenopsium_IT.webp" type="image/webp">
-    
-    <style>
-body {
-        color: #C2C2C2;
-        background-color: #333;
-        background-image: url("/images/kenopsium_IT.webp");
-        background-size: cover;
-        background-attachment: fixed;
-        background-position: center;
-        }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .button-section img {
-	    width: 100px;
-	    height: 100px;
-        margin-top: 100px;
-        }
-        
-    </style>
 </head>
 <body>
+    <nav class="chrome-nav">
+        <a href="/">Startseite</a>
+        <a href="/kenopsium.html">Kenopsium</a>
+        <a href="/kenopsium/magazin.html" class="active">Portfolio</a>
+    </nav>
     <main>
-        <img id="blogheader" src="/images/headertext_keno.svg" alt="Blog Header" width="700" height="auto" fetchpriority="high" decoding="async">
+        <img id="blogheader" src="/images/headertext_keno.svg" alt="Blog Header" width="700" fetchpriority="high" decoding="async">
         <h1>ELFENBEINTURM</h1>
         
         <p id="intro-text">
@@ -81,7 +62,7 @@ body {
             <p><a href="/404">Wird überarbeitet</a><br>In Bearbeitung.</p>
         </div>
         <div class="button-section">
-            <a href="/kompendium.html">
+            <a href="/kenopsium.html">
                 <img src="/images/kenopsium_butTJ.webp" alt="Startseite">
                 <h2>Launchpad</h2>
                 <p>ZURÜCK ZUR ZIELAUSWAHL</p>
@@ -89,22 +70,8 @@ body {
         </div>
     </main>
     <footer>
-        <p>© 2025 Dennis Münch | 💚 Öko-optimiert und cookiefrei<br><a href="https://www.denmuen.ch/impressum">Impressum</a></p>
+        <p>© 2026 Dennis Münch | Öko-optimiert und cookiefrei<br><a href="https://www.denmuen.ch/impressum">Impressum</a></p>
     </footer>
-    <script>
-        // JavaScript to handle collapsible buttons
-        document.querySelectorAll(".collapsible").forEach(function(button) {
-            button.addEventListener("click", function() {
-                this.classList.toggle("active");
-                var content = this.nextElementSibling;
-                if (content.style.display === "block") {
-                    content.style.display = "none";
-                } else {
-                    content.style.display = "block";
-                }
-            });
-        });
-    </script>
 
 </body>
 </html>
