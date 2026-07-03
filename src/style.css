@@ -935,6 +935,92 @@ footer {
     transform: scale(0.95);
 }
 
+/* Mobile Touch Controls (Bottom Left) - only shown on touch devices, see body.is-mobile */
+.mobile-controls {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    align-items: flex-end;
+    gap: 14px;
+    z-index: 5;
+    pointer-events: auto;
+}
+
+body.is-mobile .mobile-controls {
+    display: flex;
+}
+
+.mobile-throttle-wrap {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.mobile-throttle-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mobile-throttle-slider {
+    -webkit-appearance: slider-vertical;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 36px;
+    height: 140px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    cursor: pointer;
+}
+
+.mobile-throttle-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 34px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--nuremberg-red);
+    border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+}
+
+.mobile-throttle-slider::-moz-range-thumb {
+    width: 34px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--nuremberg-red);
+    border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+}
+
+.mobile-doors-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    transition: all 0.2s;
+}
+
+.mobile-doors-btn:active {
+    transform: scale(0.92);
+    background: var(--nuremberg-red);
+}
+
 .volume-icon {
     font-size: 14px;
     cursor: pointer;

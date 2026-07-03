@@ -238,6 +238,9 @@ class App {
         // Setup HUD Event Bindings
         this.bindEvents();
 
+        // Setup Mobile Touch Controls
+        this.setupMobileControls();
+
         // Start rendering loop immediately (renders static scene behind splash overlay)
         requestAnimationFrame(this.animate.bind(this));
     }
@@ -326,6 +329,36 @@ class App {
                 this.audio.stopHorn();
             }
         });
+    }
+
+    setupMobileControls() {
+        // Detect touch/smartphone usage: coarse pointer + touch support
+        const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+            && window.matchMedia('(pointer: coarse)').matches;
+
+        if (isMobile) {
+            document.body.classList.add('is-mobile');
+        }
+
+        const throttleSlider = document.getElementById('mobile-throttle-slider');
+        if (throttleSlider) {
+            throttleSlider.addEventListener('input', (e) => {
+                if (!this.isRunning) return;
+                this.sim.resetSifa();
+                if (!this.sim.atoMode) {
+                    this.sim.throttle = parseFloat(e.target.value) / 100;
+                }
+            });
+        }
+
+        const doorsBtn = document.getElementById('btn-mobile-doors');
+        if (doorsBtn) {
+            doorsBtn.addEventListener('click', () => {
+                if (!this.isRunning) return;
+                this.sim.resetSifa();
+                this.handleDoors();
+            });
+        }
     }
 
     triggerCamBtn(type) {

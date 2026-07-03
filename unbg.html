@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>U-Bahn Simulator U1 Nürnberg - Web3D</title>
     <meta name="description" content="Technisch korrekter und optisch ansprechender 3D-U-Bahn-Simulator der U-Bahn-Linie 1 in Nürnberg mit Three.js, WebGL und physikalischer Fahrsimulation.">
-    <link rel="stylesheet" href="./src/style.css?v=39">
+    <link rel="stylesheet" href="./src/style.css?v=40">
     
     <!-- ES Module Importmap for Three.js via CDN -->
     <script type="importmap">
@@ -88,6 +88,16 @@
                 </div>
             </div>
 
+            <!-- Mobile Touch Controls (Bottom Left) - shown only on touch devices -->
+            <div id="mobile-controls" class="mobile-controls">
+                <div class="mobile-throttle-wrap">
+                    <span class="mobile-throttle-label">Zug</span>
+                    <input type="range" id="mobile-throttle-slider" class="mobile-throttle-slider" min="-100" max="100" step="1" value="0">
+                    <span class="mobile-throttle-label">Bremse</span>
+                </div>
+                <button id="btn-mobile-doors" class="mobile-doors-btn" title="Türen freigeben / schließen">🚪</button>
+            </div>
+
             <!-- Radio Popup Menu -->
             <div id="radio-popup" class="radio-overlay" style="display: none;">
                 <div class="radio-content">
@@ -106,6 +116,6 @@
     </div>
 
     <!-- Main Logic script -->
-    <script type="module" src="./src/main.js?v=77"></script>
+    <script type="module" src="./src/main.js?v=78"></script>
 </body>
 </html>
