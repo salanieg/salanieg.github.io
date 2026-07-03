@@ -7,12 +7,12 @@
     <meta name="description" content="Technisch korrekter und optisch ansprechender 3D-U-Bahn-Simulator der U-Bahn-Linie 1 in Nürnberg mit Three.js, WebGL und physikalischer Fahrsimulation.">
     <link rel="stylesheet" href="./src/style.css?v=40">
     
-    <!-- ES Module Importmap for Three.js via CDN -->
+    <!-- ES Module Importmap for Three.js (self-hosted, no external CDN) -->
     <script type="importmap">
       {
         "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+          "three": "./src/vendor/three/three.module.min.js",
+          "three/addons/": "./src/vendor/three/addons/"
         }
       }
     </script>
