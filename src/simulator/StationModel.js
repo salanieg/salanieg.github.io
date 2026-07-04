@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { StationBuilder } from './stations/StationBuilder.js?v=42';
-import { RathausBuilder } from './stations/RathausBuilder.js?v=42';
-import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=42';
+import { StationBuilder } from './stations/StationBuilder.js?v=67';
+import { RathausBuilder } from './stations/RathausBuilder.js?v=43';
+import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=43';
 
 export class StationModel {
     constructor(scene, simulation) {
@@ -193,11 +193,24 @@ export class StationModel {
         }
         const pos = [], uv = [];
         const tri = (a, b, c, ua, ub, uc) => { pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); uv.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]); };
+        // The wall sits at a lateral offset to one side of the track; offFn's sign tells us
+        // which side. Both sides reuse the same winding order below, which only faces the
+        // correct (readable) side outward for a positive offset — for the negative-offset
+        // side that "front" ends up facing back in towards the track instead of out towards
+        // its own platform, so viewers there were seeing the ribbon's back, i.e. the station
+        // name stripe mirrored left-right. Swap the winding (keeping each vertex's own UV) so
+        // the readable face points outward on that side too, without touching the UV mapping.
+        const flip = offFn((sStart + sEnd) / 2) < 0;
         for (let r = 0; r < nSeg; r++) {
             const bl = bots[r], tl = tops[r], br = bots[r + 1], tr = tops[r + 1];
             const uL = us[r], uR = us[r + 1];
-            tri(bl, br, tr, [uL, vBot], [uR, vBot], [uR, vTop]);
-            tri(bl, tr, tl, [uL, vBot], [uR, vTop], [uL, vTop]);
+            if (flip) {
+                tri(bl, tr, br, [uL, vBot], [uR, vTop], [uR, vBot]);
+                tri(bl, tl, tr, [uL, vBot], [uL, vTop], [uR, vTop]);
+            } else {
+                tri(bl, br, tr, [uL, vBot], [uR, vBot], [uR, vTop]);
+                tri(bl, tr, tl, [uL, vBot], [uR, vTop], [uL, vTop]);
+            }
         }
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -2461,7 +2474,7 @@ export class StationModel {
         }
 
         // --- APPLY NEW STANDARD STAIRS TO LEGACY STATIONS ---
-        import('./stations/StationBuilder.js').then(({ StationBuilder }) => {
+        import('./stations/StationBuilder.js?v=67').then(({ StationBuilder }) => {
             const builder = new StationBuilder(this, station);
             builder.group = stationGroup;
             builder.buildStairs();

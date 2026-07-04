@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { StationBuilder } from './StationBuilder.js?v=39';
+import { StationBuilder } from './StationBuilder.js?v=67';
 
 export class RathausBuilder extends StationBuilder {
     setupMaterials() {

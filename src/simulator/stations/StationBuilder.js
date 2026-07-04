@@ -164,7 +164,6 @@ export class StationBuilder {
         const glassMat = new THREE.MeshBasicMaterial({ color: '#94a3b8', transparent: true, opacity: 0.6 });
 
         this.doorWidth = 0.8; // "Zutritt nur für Personal" doors, outer edge flush with the platform edge
-        const stairHalfWidth = 2.3; // Half-width of the stair/escalator envelope (matches glass balustrade extent)
 
         // Transverse Walls at the ends
         const transWallDepth = 0.4;
@@ -173,37 +172,46 @@ export class StationBuilder {
 
         const transWallGeom = new THREE.BoxGeometry(transWallWidth, transWallHeight, transWallDepth);
 
-        // Each end of the platform can sit at a different local track spacing (the two ends
-        // are not mirror images of each other — they curve independently towards their own
-        // tunnel portal), so every end-specific construction (wall cutouts, doors) must use the
-        // spacing sampled AT THAT END, not the station-center spacing used for the platform deck.
-        const s_neg = station.position - this.platLength / 2;
-        const s_pos = station.position + this.platLength / 2;
-        const spacing_neg = this.sim.getTrackSpacing(s_neg);
-        const spacing_pos = this.sim.getTrackSpacing(s_pos);
-        const trackX_neg = spacing_neg / 2;
-        const trackX_pos = spacing_pos / 2;
+        // For Rathaus/Lorenzkirche (bespoke, built entirely from this.platLength — a 5 m-
+        // rounded value) the stairs must dock to that same rounded length. Every other,
+        // "legacy" station's actual deck is a single continuous swept mesh built in
+        // StationModel.buildStation spanning the true, UNROUNDED station.halfLength — so
+        // anchoring stairs to this.platLength/2 there was off by up to ~2.5 m, leaving a
+        // visible gap between the platform edge and the end wall/stairs.
+        const endHalfLength = isRound ? (this.platLength / 2) : station.halfLength;
+
+        const getEndAnchor = (zDir) => {
+            const s = station.position + zDir * endHalfLength;
+            const edgePos = this.sim.getTrackPosition(s);
+            const tangent = this.sim.getTrackTangent(s);
+            const rotY = Math.atan2(tangent.x, tangent.z) - centerAngle;
+            const spacing = this.sim.getTrackSpacing(s);
+            return { edgePos, rotY, spacing };
+        };
+
+        const anchorNeg = getEndAnchor(-1);
+        const anchorPos = getEndAnchor(1);
+
+        const trackX_neg = anchorNeg.spacing / 2;
+        const trackX_pos = anchorPos.spacing / 2;
         const platEdgeX_neg = trackX_neg - 1.54;
         const platEdgeX_pos = trackX_pos - 1.54;
 
-        // Calculate curvature for both ends of the station
-        // Negative Z end (Langwasser Süd direction)
-        const pos_neg = this.sim.getTrackPosition(s_neg);
+        // Calculate curvature for both ends of the station, anchored at the same point the
+        // walls/stairs are placed at, so the cutout shape lines up with the actual geometry.
         const dummyNeg = new THREE.Object3D();
         dummyNeg.position.copy(centerPos);
         dummyNeg.rotation.y = centerAngle;
         dummyNeg.updateMatrixWorld();
-        const localPos_neg = dummyNeg.worldToLocal(pos_neg.clone());
+        const localPos_neg = dummyNeg.worldToLocal(anchorNeg.edgePos.clone());
         let curvatureA_neg = localPos_neg.x / (localPos_neg.z * localPos_neg.z);
         if (isNaN(curvatureA_neg) || !isFinite(curvatureA_neg)) curvatureA_neg = 0;
 
-        // Positive Z end (Hardhöhe direction)
-        const pos_pos = this.sim.getTrackPosition(s_pos);
         const dummyPos = new THREE.Object3D();
         dummyPos.position.copy(centerPos);
         dummyPos.rotation.y = centerAngle;
         dummyPos.updateMatrixWorld();
-        const localPos_pos = dummyPos.worldToLocal(pos_pos.clone());
+        const localPos_pos = dummyPos.worldToLocal(anchorPos.edgePos.clone());
         let curvatureA_pos = localPos_pos.x / (localPos_pos.z * localPos_pos.z);
         if (isNaN(curvatureA_pos) || !isFinite(curvatureA_pos)) curvatureA_pos = 0;
 
@@ -255,18 +263,38 @@ export class StationBuilder {
                     float localY = offset.y;
                     float absX = abs(localX);
                     
-                    // 1. Train Cutout (only on track side of platform edge)
+                    // Train Cutout (only on track side of platform edge). Rathaus/Lorenzkirche
+                    // keep their round bespoke tunnel mouth; every other, generic station gets a
+                    // flat-topped opening instead.
                     if (absX >= ${platEdgeXVal.toFixed(3)}) {
                         float dx = absX - uTrackX;
-                        float dy = localY - 1.13; // center of generous tunnel circle
-                        if (dx*dx + dy*dy < 2.6*2.6 && localY > 1.13) discard;
-                        if (abs(dx) < 2.6 && localY <= 1.13) discard;
+                        ${isRound ? `
+                        float dy = localY - 1.4; // center of generous tunnel circle
+                        if (dx*dx + dy*dy < 2.6*2.6 && localY > 1.4) discard;
+                        if (abs(dx) < 2.6 && localY <= 1.4) discard;
+                        ` : `
+                        if (abs(dx) < 2.6 && localY < 4.0) discard;
+                        `}
                     }
 
-                    // 2. Door Cutout
-                    float doorX1 = ${platEdgeXVal.toFixed(3)} - ${this.doorWidth.toFixed(3)};
-                    float doorX2 = ${platEdgeXVal.toFixed(3)};
-                    if (absX > doorX1 && absX < doorX2 && localY > 0.80 && localY < 2.55) discard;
+                    // Gate recess: the trackside wall mesh is 0.4m thick and would otherwise bury
+                    // the barrier gate (which sits only 0.05m proud of it) entirely inside solid
+                    // concrete. Cut the wall away across the gate's exact footprint so the gate is
+                    // actually visible instead of hidden inside the wall.
+                    //
+                    // Root cause of the recurring "Lücke": this recess was left unbounded in
+                    // height, while the train cutout right next to it (absX >= platEdgeXVal) is
+                    // capped at a fixed height (the tunnel arch/flat lintel). Two regions sharing
+                    // an edge but with different height caps produces a vertical step exactly at
+                    // that shared edge — solid wall floating above the cap on one side, open sky
+                    // on the other. No amount of moving *where* that edge sits fixes it, since the
+                    // step just relocates with it; the caps themselves have to match. So the gate
+                    // recess is now capped at the exact same height the train cutout reaches at
+                    // that boundary (x = platEdgeXVal), for both the round arch and the flat top.
+                    float gateX1 = ${platEdgeXVal.toFixed(3)} - ${this.doorWidth.toFixed(3)};
+                    float gateX2 = ${platEdgeXVal.toFixed(3)};
+                    float gateCapY = ${(isRound ? (1.4 + Math.sqrt(2.6 * 2.6 - 1.54 * 1.54)) : 4.0).toFixed(3)};
+                    if (absX > gateX1 && absX < gateX2 && localY > 0.80 && localY < gateCapY) discard;
                     `
                 );
             };
@@ -279,9 +307,39 @@ export class StationBuilder {
         compileTransWallMaterial(transWallMatNeg, curvatureA_neg, "Neg", trackX_neg, platEdgeX_neg);
         compileTransWallMaterial(transWallMatPos, curvatureA_pos, "Pos", trackX_pos, platEdgeX_pos);
 
-        const createStairsAndEscalator = (zStart, zDir) => {
+        // Stair enclosure wall geometry: identical for both platform ends (no zDir/anchor
+        // dependence), so build + UV-fix it once here instead of once per end inside
+        // createStairsAndEscalator below.
+        const stairWallDepth = 28 * 0.3; // numSteps * stepDepth
+        const stairWallHeight = 7.0; // Reach ceiling
+        // The transverse (end) wall is 0.4m thick, centered on this same anchor (Z=0), so it
+        // extends transWallDepth/2 past Z=0 towards the platform. The stair enclosure wall used
+        // to stop exactly at Z=0 (the transverse wall's centre), only overlapping half its
+        // thickness — leaving a half-thickness step where the two should be flush. Extend the
+        // enclosure wall past Z=0 by that same half-thickness so it fully spans through to the
+        // transverse wall's far face.
+        const stairWallOverlap = transWallDepth / 2;
+        const stairWallGeom = new THREE.BoxGeometry(0.4, stairWallHeight, stairWallDepth + stairWallOverlap);
+        // BoxGeometry lays its 24 UV-mapped vertices out per face in a fixed order: px(0-3),
+        // nx(4-7), py(8-11), ny(12-15), pz(16-19), nz(20-23).
+        const stairWallUv = stairWallGeom.attributes.uv;
+        // ±X faces (px/nx, indices 0-7): the wall's visible long sides, height x depth. U maps to
+        // depth/Z here, so rescale it to match the original stairWallDepth's texel density instead
+        // of the concrete grain looking very slightly zoomed on the lengthened wall.
+        const stairWallUScale = (stairWallDepth + stairWallOverlap) / stairWallDepth;
+        for (let i = 0; i < 8; i++) stairWallUv.setX(i, stairWallUv.getX(i) * stairWallUScale);
+        // ±Z faces (pz/nz, indices 16-23): the thin end caps, width x height — one of which now
+        // faces the platform since the wall was extended flush against the transverse wall. U maps
+        // to width (only 0.4m) here; left at the default 0..1 range it stretches a full square
+        // texture across a razor-thin face, looking badly squished. Shrink U to match the real
+        // width/height aspect ratio so the grain size matches the surrounding walls.
+        const stairWallCapUScale = 0.4 / stairWallHeight;
+        for (let i = 16; i < 24; i++) stairWallUv.setX(i, stairWallUv.getX(i) * stairWallCapUScale);
+        stairWallUv.needsUpdate = true;
+
+        const createStairsAndEscalator = (zDir, anchor) => {
             const stairGroup = new THREE.Group();
-            
+
             const stepDepth = 0.3;
             const stepHeight = 0.16;
             const numSteps = 28; // height = 4.48m
@@ -293,16 +351,15 @@ export class StationBuilder {
             const midZ = zDir * (numSteps * stepDepth / 2);
             const midY = (numSteps * stepHeight / 2);
 
-            // 1. Enclosing Light Gray Concrete Walls
-            const wallDepth = numSteps * stepDepth;
-            const wallHeight = 7.0; // Reach ceiling
-            const wallGeom = new THREE.BoxGeometry(0.4, wallHeight, wallDepth);
-            
-            const lWall = new THREE.Mesh(wallGeom, wallMat);
-            lWall.position.set(-2.3, wallHeight/2, midZ);
-            
-            const rWall = new THREE.Mesh(wallGeom, wallMat);
-            rWall.position.set(2.3, wallHeight/2, midZ);
+            // 1. Enclosing Light Gray Concrete Walls (geometry built once above; only its
+            // per-end Z position depends on zDir)
+            const wallMidZ = midZ - zDir * stairWallOverlap / 2;
+
+            const lWall = new THREE.Mesh(stairWallGeom, wallMat);
+            lWall.position.set(-2.3, stairWallHeight/2, wallMidZ);
+
+            const rWall = new THREE.Mesh(stairWallGeom, wallMat);
+            rWall.position.set(2.3, stairWallHeight/2, wallMidZ);
             stairGroup.add(lWall, rWall);
 
             // 2. Stairs in the middle
@@ -397,110 +454,289 @@ export class StationBuilder {
             railR2.rotation.x = rotX;
             
             stairGroup.add(railL1, railL2, railR1, railR2);
-            
-            const s_start = station.position + zStart;
-            const pos = this.sim.getTrackPosition(s_start);
-            const tangent = this.sim.getTrackTangent(s_start);
-            const rotY = Math.atan2(tangent.x, tangent.z) - this.centerAngle;
-            const localPos = this.group.worldToLocal(pos.clone());
-            
+
+            const localPos = this.group.worldToLocal(anchor.edgePos.clone());
+
             stairGroup.position.copy(localPos);
             stairGroup.position.y = 0.865;
-            stairGroup.rotation.y = rotY;
-            
+            stairGroup.rotation.y = anchor.rotY;
+
             this.group.add(stairGroup);
         };
         
-        // Create Canvas Texture for Glass Door
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 1024;
-        const ctx = canvas.getContext('2d');
-        
-        ctx.fillStyle = 'rgba(150, 180, 200, 0.4)';
-        ctx.fillRect(0, 0, 512, 1024);
-        
-        ctx.strokeStyle = '#333333';
-        ctx.lineWidth = 20;
-        ctx.strokeRect(10, 10, 492, 1004);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(56, 400, 400, 120);
-        
-        ctx.fillStyle = '#cc0000';
-        ctx.font = 'bold 40px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Zutritt nur', 256, 440);
-        ctx.fillText('für Personal!', 256, 480);
-        
-        const doorTex = new THREE.CanvasTexture(canvas);
-        const doorMat = new THREE.MeshBasicMaterial({ 
-            map: doorTex, 
-            transparent: true,
-            side: THREE.DoubleSide
-        });
-        
-        const doorGeom = new THREE.PlaneGeometry(this.doorWidth, 2.0);
+        // "Durchgang verboten" plaque mounted on the gate barrier (see createGateInstance below).
+        const plaqueTex = this.createDurchgangVerbotenTexture();
+        const plaqueMat = new THREE.MeshBasicMaterial({ map: plaqueTex, side: THREE.DoubleSide });
+        const plaqueGeom = new THREE.PlaneGeometry(0.5, 0.5);
 
-        const placeTransverseWalls = (zStart, zDir, mat, platEdgeXVal) => {
-            const twGroup = new THREE.Group();
+        // Barrier gate: 80cm wide x 80cm tall railing with a mid-height crossbar and a second
+        // one along the top, replacing the old glass door in the wall opening.
+        const gateHeight = 0.8;
+        const postThickness = 0.05;
+        const postGeom = new THREE.BoxGeometry(postThickness, gateHeight, postThickness);
+        const crossbarGeom = new THREE.BoxGeometry(this.doorWidth, 0.06, postThickness);
+        const gateMat = new THREE.MeshStandardMaterial({ color: '#3f4448', metalness: 0.6, roughness: 0.4 });
 
-            // Door's inner edge (towards the stairs); its outer edge sits flush on the platform edge.
-            const doorInnerX = platEdgeXVal - this.doorWidth;
-            // The big shader-cut wall must never reach past the stair envelope, so clamp its inner
-            // edge outward if the door doesn't leave enough room.
-            const bigWallInnerX = Math.max(doorInnerX, stairHalfWidth);
-            // Plain filler wall exactly closing the gap between the stairs and the door's inner edge.
-            const fillerWidth = Math.max(0, bigWallInnerX - stairHalfWidth);
+        const createGateInstance = () => {
+            const gateGroup = new THREE.Group();
 
-            const tWallL = new THREE.Mesh(transWallGeom, mat);
-            tWallL.position.set(-bigWallInnerX - transWallWidth/2, transWallHeight/2 + 0.865, 0); // 0 in twGroup is Z=45
+            const postL = new THREE.Mesh(postGeom, gateMat);
+            postL.position.set(-this.doorWidth / 2 + postThickness / 2, gateHeight / 2, 0);
+            const postR = new THREE.Mesh(postGeom, gateMat);
+            postR.position.set(this.doorWidth / 2 - postThickness / 2, gateHeight / 2, 0);
 
-            const tWallR = new THREE.Mesh(transWallGeom, mat);
-            tWallR.position.set(bigWallInnerX + transWallWidth/2, transWallHeight/2 + 0.865, 0);
+            const crossbarMid = new THREE.Mesh(crossbarGeom, gateMat);
+            crossbarMid.position.set(0, gateHeight / 2, 0);
 
-            const doorXCenter = platEdgeXVal - this.doorWidth / 2;
-            const doorL = new THREE.Mesh(doorGeom, doorMat);
-            doorL.position.set(-doorXCenter, 0.865 + 1.0, zDir * 0.05); // slight Z offset to prevent z-fighting
+            const crossbarTop = new THREE.Mesh(crossbarGeom, gateMat);
+            crossbarTop.position.set(0, gateHeight - 0.03, 0);
 
-            const doorR = new THREE.Mesh(doorGeom, doorMat);
-            doorR.position.set(doorXCenter, 0.865 + 1.0, zDir * 0.05);
+            const plaque = new THREE.Mesh(plaqueGeom, plaqueMat);
+            plaque.position.set(0, gateHeight / 2, postThickness / 2 + 0.02);
 
-            if (zDir === 1) {
-                doorL.rotation.y = Math.PI;
-                doorR.rotation.y = Math.PI;
+            gateGroup.add(postL, postR, crossbarMid, crossbarTop, plaque);
+            return gateGroup;
+        };
+
+        // U-Bahn signal: 3 stacked lamps on a wall-mounted bracket arm. The lamp facing the
+        // direction of travel (i.e. the side a train actually approaches the platform from at
+        // that end) shows green on top; the other side shows red on the bottom lamp instead, each
+        // with a matching glow halo. Every lamp is shaded by a small visor hood.
+        const signalLampRadius = 0.06;
+        const signalLampSpacing = 0.18;
+        const signalArmLength = 0.15;
+        const signalArmGeom = new THREE.BoxGeometry(0.08, 0.08, signalArmLength);
+        const signalBackGeom = new THREE.BoxGeometry(0.2, signalLampSpacing * 2 + 0.24, 0.06);
+        const signalBackMat = new THREE.MeshStandardMaterial({ color: '#1a1a1a', roughness: 0.6 });
+        const signalLampGeom = new THREE.SphereGeometry(signalLampRadius, 12, 8);
+        const signalOffMat = new THREE.MeshStandardMaterial({ color: '#2a2a2a' });
+        const signalGreenMat = new THREE.MeshStandardMaterial({ color: '#0aff5a', emissive: '#0aff5a', emissiveIntensity: 1.8 });
+        const signalRedMat = new THREE.MeshStandardMaterial({ color: '#ff2020', emissive: '#ff2020', emissiveIntensity: 1.8 });
+        const signalVisorGeom = new THREE.BoxGeometry(0.18, 0.02, 0.12);
+        const signalGlowGeom = new THREE.SphereGeometry(signalLampRadius * 2.4, 12, 8);
+        const signalGlowMatGreen = new THREE.MeshBasicMaterial({ color: '#0aff5a', transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide });
+        const signalGlowMatRed = new THREE.MeshBasicMaterial({ color: '#ff2020', transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide });
+
+        // zDir is baked in directly (rather than relying on a 180° group flip like the gate does)
+        // so the mounting arm reliably extends the same way on both ends. mountDir = -zDir points
+        // back towards the platform side of the wall (zDir itself points away from the platform,
+        // into the tunnel — mounting the fixture that way made it hang facing away from the
+        // platform, on the wrong face of the wall). The arm starts flush on the wall's actual
+        // platform-facing surface (transWallDepth/2 from centre) instead of the wall's centre
+        // line, so the fixture isn't half-buried inside the solid wall.
+        const createSignalInstance = (zDir, isGreen) => {
+            const mountDir = -zDir;
+            const wallFaceZ = mountDir * (transWallDepth / 2);
+            const sigGroup = new THREE.Group();
+
+            // Mounting arm: bolts the signal box to the wall face instead of leaving it floating.
+            const arm = new THREE.Mesh(signalArmGeom, signalBackMat);
+            arm.position.set(0, 0, wallFaceZ + mountDir * signalArmLength / 2);
+            sigGroup.add(arm);
+
+            const boxZ = wallFaceZ + mountDir * signalArmLength;
+            const back = new THREE.Mesh(signalBackGeom, signalBackMat);
+            back.position.set(0, 0, boxZ);
+            sigGroup.add(back);
+
+            const litIndex = isGreen ? 0 : 2; // top lamp for green (direction of travel), bottom for red
+            const litMat = isGreen ? signalGreenMat : signalRedMat;
+            const glowMat = isGreen ? signalGlowMatGreen : signalGlowMatRed;
+
+            for (let i = 0; i < 3; i++) {
+                const y = (1 - i) * signalLampSpacing; // i=0 is the top lamp
+                const lampMat = i === litIndex ? litMat : signalOffMat;
+                const lamp = new THREE.Mesh(signalLampGeom, lampMat);
+                lamp.position.set(0, y, boxZ + mountDir * 0.04);
+                sigGroup.add(lamp);
+
+                const visor = new THREE.Mesh(signalVisorGeom, signalBackMat);
+                visor.position.set(0, y + signalLampRadius + 0.01, boxZ + mountDir * 0.07);
+                sigGroup.add(visor);
+
+                if (i === litIndex) {
+                    const glow = new THREE.Mesh(signalGlowGeom, glowMat);
+                    glow.position.set(0, y, boxZ + mountDir * 0.04);
+                    sigGroup.add(glow);
+                }
             }
 
-            twGroup.add(tWallL, tWallR, doorL, doorR);
+            return sigGroup;
+        };
 
+        // Outer face of the stair enclosure's own side wall (centered at x=±2.3, 0.4m thick —
+        // see lWall/rWall in createStairsAndEscalator), i.e. the point the filler wall below
+        // must butt flush against.
+        const stairWallOuterX = 2.3 + 0.2;
+
+        const placeTransverseWalls = (zDir, mat, platEdgeXVal, anchor) => {
+            const twGroup = new THREE.Group();
+
+            // Gate stays exactly where it was: outer edge flush on the platform edge. The
+            // trackside wall and the filler both butt against the gate's escalator-side strut
+            // (doorInnerX) — the gate itself sits strictly between doorInnerX and platEdgeXVal,
+            // never overlapped by either wall piece.
+            const doorInnerX = platEdgeXVal - this.doorWidth;
+
+            const tWallL = new THREE.Mesh(transWallGeom, mat);
+            tWallL.position.set(-doorInnerX - transWallWidth/2, transWallHeight/2 + 0.865, 0); // 0 in twGroup is Z=45
+
+            const tWallR = new THREE.Mesh(transWallGeom, mat);
+            tWallR.position.set(doorInnerX + transWallWidth/2, transWallHeight/2 + 0.865, 0);
+
+            const doorXCenter = platEdgeXVal - this.doorWidth / 2;
+            const gateL = createGateInstance();
+            gateL.position.set(-doorXCenter, 0.865, zDir * 0.05); // slight Z offset to prevent z-fighting
+
+            const gateR = createGateInstance();
+            gateR.position.set(doorXCenter, 0.865, zDir * 0.05);
+
+            if (zDir === 1) {
+                gateL.rotation.y = Math.PI;
+                gateR.rotation.y = Math.PI;
+            }
+
+            // U-Bahn signal, 1.7m above the gate's top edge (gate top = 0.865 + gateHeight 0.8),
+            // wall-mounted at the portal wall's edge (the trackside wall's inner boundary,
+            // doorInnerX — solid filler wall sits right behind it there, unlike further out at
+            // platEdgeXVal where the wall is cut away for the train/gate openings).
+            //
+            // Which side shows green depends on which end this is: getTrackXOffset() puts a
+            // forward-travelling (non-reversing) train on the +X side and a reversing train on
+            // -X, so a train ARRIVING at the "Neg" end (zDir=-1) is travelling forward (+X, right
+            // side green), while a train arriving at the "Pos" end (zDir=1) is reversing (-X,
+            // left side green). The other side shows red on the bottom lamp instead.
+            const signalY = 0.865 + gateHeight + 1.7;
+            const isGreenR = zDir === -1;
+            const signalL = createSignalInstance(zDir, !isGreenR);
+            signalL.position.set(-doorInnerX, signalY, 0);
+            const signalR = createSignalInstance(zDir, isGreenR);
+            signalR.position.set(doorInnerX, signalY, 0);
+
+            twGroup.add(tWallL, tWallR, gateL, gateR, signalL, signalR);
+
+            // Flush filler wall between the stair enclosure's outer wall face and the gate's
+            // escalator-side strut — closes exactly that gap, never touching the gate itself.
+            const fillerWidth = Math.max(0, doorInnerX - stairWallOuterX);
             if (fillerWidth > 0) {
                 const fillerGeom = new THREE.BoxGeometry(fillerWidth, transWallHeight, transWallDepth);
-                const fillerCenterX = (stairHalfWidth + bigWallInnerX) / 2;
+                // Rescale U so the texel density matches transWallGeom's fixed-width texture
+                // instead of stretching the same canvas over a station-dependent width.
+                const uv = fillerGeom.attributes.uv;
+                const uScale = fillerWidth / transWallWidth;
+                for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * uScale);
+                uv.needsUpdate = true;
+                const fillerCenterX = (stairWallOuterX + doorInnerX) / 2;
                 const fillerL = new THREE.Mesh(fillerGeom, wallMat);
                 fillerL.position.set(-fillerCenterX, transWallHeight/2 + 0.865, 0);
                 const fillerR = new THREE.Mesh(fillerGeom, wallMat);
                 fillerR.position.set(fillerCenterX, transWallHeight/2 + 0.865, 0);
                 twGroup.add(fillerL, fillerR);
             }
-            
-            const s_start = station.position + zStart;
-            const pos = this.sim.getTrackPosition(s_start);
-            const tangent = this.sim.getTrackTangent(s_start);
-            const rotY = Math.atan2(tangent.x, tangent.z) - this.centerAngle;
-            const localPos = this.group.worldToLocal(pos.clone());
-            
+
+            const localPos = this.group.worldToLocal(anchor.edgePos.clone());
+
             twGroup.position.copy(localPos);
-            twGroup.rotation.y = rotY;
-            
+            twGroup.rotation.y = anchor.rotY;
+
             this.group.add(twGroup);
         };
-        
-        createStairsAndEscalator(-this.platLength / 2, -1);
-        createStairsAndEscalator(this.platLength / 2, 1);
 
-        placeTransverseWalls(-this.platLength / 2, -1, transWallMatNeg, platEdgeX_neg);
-        placeTransverseWalls(this.platLength / 2, 1, transWallMatPos, platEdgeX_pos);
+        createStairsAndEscalator(-1, anchorNeg);
+        createStairsAndEscalator(1, anchorPos);
+
+        placeTransverseWalls(-1, transWallMatNeg, platEdgeX_neg, anchorNeg);
+        placeTransverseWalls(1, transWallMatPos, platEdgeX_pos, anchorPos);
+    }
+
+    createDurchgangVerbotenTexture() {
+        // 50x50cm square plaque: the "Verbot der Einfahrt" no-entry sign (red circle, white
+        // horizontal bar) with a black pedestrian silhouette standing in front of it, and
+        // "Durchgang verboten" underneath.
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // Plaque background
+        ctx.fillStyle = '#f4f4f5';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.strokeStyle = '#222222';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(5, 5, 502, 502);
+
+        // No-entry sign: red circle, white ring, white horizontal bar
+        const signCx = 256, signCy = 150, signR = 130;
+        ctx.fillStyle = '#c8102e';
+        ctx.beginPath();
+        ctx.arc(signCx, signCy, signR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.arc(signCx, signCy, signR - 10, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(signCx - 90, signCy - 26, 180, 52);
+
+        // Black human silhouette standing in front of the sign
+        ctx.fillStyle = '#000000';
+        const hx = 256, hy = 230;
+        // head
+        ctx.beginPath();
+        ctx.arc(hx, hy - 60, 28, 0, Math.PI * 2);
+        ctx.fill();
+        // body
+        ctx.beginPath();
+        ctx.moveTo(hx - 34, hy + 20);
+        ctx.lineTo(hx - 22, hy - 30);
+        ctx.lineTo(hx + 22, hy - 30);
+        ctx.lineTo(hx + 34, hy + 20);
+        ctx.closePath();
+        ctx.fill();
+        // arms
+        ctx.beginPath();
+        ctx.moveTo(hx - 22, hy - 25);
+        ctx.lineTo(hx - 46, hy + 10);
+        ctx.lineTo(hx - 36, hy + 16);
+        ctx.lineTo(hx - 14, hy - 15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(hx + 22, hy - 25);
+        ctx.lineTo(hx + 46, hy + 10);
+        ctx.lineTo(hx + 36, hy + 16);
+        ctx.lineTo(hx + 14, hy - 15);
+        ctx.closePath();
+        ctx.fill();
+        // legs
+        ctx.beginPath();
+        ctx.moveTo(hx - 20, hy + 20);
+        ctx.lineTo(hx - 30, hy + 90);
+        ctx.lineTo(hx - 10, hy + 90);
+        ctx.lineTo(hx - 4, hy + 20);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(hx + 20, hy + 20);
+        ctx.lineTo(hx + 30, hy + 90);
+        ctx.lineTo(hx + 10, hy + 90);
+        ctx.lineTo(hx + 4, hy + 20);
+        ctx.closePath();
+        ctx.fill();
+
+        // Text
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 46px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Durchgang', 256, 400);
+        ctx.fillText('verboten', 256, 452);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return texture;
     }
 
     createStairTexture() {

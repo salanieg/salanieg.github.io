@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { StationBuilder } from './stations/StationBuilder.js?v=42';
+import { StationBuilder } from './stations/StationBuilder.js?v=67';
 
 export class TrackManager {
     constructor(scene, simulation) {
