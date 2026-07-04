@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=50';
 import { WorldManager } from './simulator/WorldManager.js?v=42';
 import { TrackManager } from './simulator/TrackManager.js?v=48';
-import { StationModel } from './simulator/StationModel.js?v=46';
+import { StationModel } from './simulator/StationModel.js?v=48';
 import { TrainModel } from './simulator/TrainModel.js?v=65';
 import { AudioManager } from './audio/AudioManager.js?v=39';
 import { RadioManager } from './audio/RadioManager.js';

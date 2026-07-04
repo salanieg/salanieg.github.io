@@ -191,26 +191,25 @@ export class StationModel {
             tops.push(group.worldToLocal(new THREE.Vector3(wp.x + nX * off, yTopW, wp.z + nZ * off)));
             us.push(cum / tileU);
         }
+        // The two side walls have viewers standing on opposite sides of the track (facing each
+        // other), so a single "u increases with distance along s" rule reads correctly for only
+        // one of them — the other's viewer is looking the opposite way down the platform, so to
+        // them it reads backwards. This is a viewing-direction effect, not a face-winding one
+        // (the material is DoubleSide, so winding never changes what's visible — only which
+        // world position maps to which u does). Mirror u for the negative-offset side (the
+        // Langwasser-Süd-direction side, same sign convention as the destination boards) so its
+        // text reads the right way round too.
+        if (offFn((sStart + sEnd) / 2) > 0) {
+            const totalU = cum / tileU;
+            for (let i = 0; i < us.length; i++) us[i] = totalU - us[i];
+        }
         const pos = [], uv = [];
         const tri = (a, b, c, ua, ub, uc) => { pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); uv.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]); };
-        // The wall sits at a lateral offset to one side of the track; offFn's sign tells us
-        // which side. Both sides reuse the same winding order below, which only faces the
-        // correct (readable) side outward for a positive offset — for the negative-offset
-        // side that "front" ends up facing back in towards the track instead of out towards
-        // its own platform, so viewers there were seeing the ribbon's back, i.e. the station
-        // name stripe mirrored left-right. Swap the winding (keeping each vertex's own UV) so
-        // the readable face points outward on that side too, without touching the UV mapping.
-        const flip = offFn((sStart + sEnd) / 2) < 0;
         for (let r = 0; r < nSeg; r++) {
             const bl = bots[r], tl = tops[r], br = bots[r + 1], tr = tops[r + 1];
             const uL = us[r], uR = us[r + 1];
-            if (flip) {
-                tri(bl, tr, br, [uL, vBot], [uR, vTop], [uR, vBot]);
-                tri(bl, tl, tr, [uL, vBot], [uL, vTop], [uR, vTop]);
-            } else {
-                tri(bl, br, tr, [uL, vBot], [uR, vBot], [uR, vTop]);
-                tri(bl, tr, tl, [uL, vBot], [uR, vTop], [uL, vTop]);
-            }
+            tri(bl, br, tr, [uL, vBot], [uR, vBot], [uR, vTop]);
+            tri(bl, tr, tl, [uL, vBot], [uR, vTop], [uL, vTop]);
         }
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
