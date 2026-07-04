@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=50';
-import { WorldManager } from './simulator/WorldManager.js?v=41';
+import { WorldManager } from './simulator/WorldManager.js?v=42';
 import { TrackManager } from './simulator/TrackManager.js?v=48';
 import { StationModel } from './simulator/StationModel.js?v=45';
 import { TrainModel } from './simulator/TrainModel.js?v=65';
@@ -248,7 +248,11 @@ class App {
     startSimulation() {
         // Hide splash screen
         this.dom.splash.style.display = 'none';
-            
+
+            // Try to enter fullscreen (best-effort; requires this user gesture,
+            // and some browsers like iOS Safari don't support it at all)
+            this.requestFullscreen();
+
             // Initialize Audio Context (requires user gesture)
             this.audio.init();
 
@@ -329,6 +333,16 @@ class App {
                 this.audio.stopHorn();
             }
         });
+    }
+
+    requestFullscreen() {
+        const el = document.documentElement;
+        const request = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        if (request) {
+            try {
+                Promise.resolve(request.call(el)).catch(() => { /* ignored: user/browser may deny fullscreen */ });
+            } catch (err) { /* ignored: some browsers don't support the Fullscreen API at all */ }
+        }
     }
 
     setupMobileControls() {

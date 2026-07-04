@@ -33,13 +33,30 @@ body {
     font-family: 'Outfit', sans-serif;
     overflow: hidden;
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
 }
 
 /* Screen Shell — fullscreen viewport */
 #app {
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
+}
+
+/* On phones held horizontally, use the dynamic viewport height so the
+   3D view fills the screen exactly instead of being cropped/zoomed by
+   the browser chrome (address bar) showing/hiding, and pad around any
+   notch/rounded corners so HUD buttons stay reachable. */
+@media (orientation: landscape) {
+    html, body, #app, #viewport-container, #canvas3d {
+        height: 100dvh;
+    }
+
+    body {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
 }
 
 /* 3D Canvas Viewport */

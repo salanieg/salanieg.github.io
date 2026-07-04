@@ -121,83 +121,78 @@ export class WorldManager {
         // Resize Listener
         window.addEventListener('resize', this.onWindowResize.bind(this));
 
-        // Setup mouse listeners for passenger, cockpit, & platform look-around
-        this.onMouseDown = (e) => {
-            if (e.button === 0) {
-                // Raycasting for radio interaction (only in cab view)
-                if (this.activeCameraType === 'cab') {
-                    this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-                    this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-                    this.raycaster.setFromCamera(this.mouse, this.activeCamera);
-                    const intersects = this.raycaster.intersectObjects(this.scene.children, true);
-                    for (let intersect of intersects) {
-                        if (intersect.object.userData.isRadio) {
-                            this.sim.radioMenuOpen = true;
-                            if (!this.sim.radioActive) {
-                                this.sim.wantsRadioPlay = true;
-                            }
-                            break;
+        // Setup mouse & touch listeners for passenger, cockpit, platform & orbit look-around
+        this.startLook = (clientX, clientY) => {
+            // Raycasting for radio interaction (only in cab view)
+            if (this.activeCameraType === 'cab') {
+                this.mouse.x = (clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+                this.raycaster.setFromCamera(this.mouse, this.activeCamera);
+                const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+                for (let intersect of intersects) {
+                    if (intersect.object.userData.isRadio) {
+                        this.sim.radioMenuOpen = true;
+                        if (!this.sim.radioActive) {
+                            this.sim.wantsRadioPlay = true;
                         }
+                        break;
                     }
                 }
-
-                if (this.activeCameraType === 'passenger') {
-                    this.isDraggingPassenger = true;
-                    this.previousMousePosition = { x: e.clientX, y: e.clientY };
-                } else if (this.activeCameraType === 'cab') {
-                    this.isDraggingCab = true;
-                    this.previousMousePosition = { x: e.clientX, y: e.clientY };
-                } else if (this.activeCameraType === 'platform') {
-                    this.isDraggingPlatform = true;
-                    this.previousMousePosition = { x: e.clientX, y: e.clientY };
-                } else if (this.activeCameraType === 'orbit') {
-                    this.isDraggingOrbit = true;
-                    this.previousMousePosition = { x: e.clientX, y: e.clientY };
-                }
             }
+
+            if (this.activeCameraType === 'passenger') {
+                this.isDraggingPassenger = true;
+            } else if (this.activeCameraType === 'cab') {
+                this.isDraggingCab = true;
+            } else if (this.activeCameraType === 'platform') {
+                this.isDraggingPlatform = true;
+            } else if (this.activeCameraType === 'orbit') {
+                this.isDraggingOrbit = true;
+            }
+            this.previousMousePosition = { x: clientX, y: clientY };
         };
 
-        this.onMouseMove = (e) => {
+        this.moveLook = (clientX, clientY) => {
             const sens = 0.003;
             if (this.isDraggingPassenger && this.activeCameraType === 'passenger') {
-                const deltaX = e.clientX - this.previousMousePosition.x;
-                const deltaY = e.clientY - this.previousMousePosition.y;
-                
+                const deltaX = clientX - this.previousMousePosition.x;
+                const deltaY = clientY - this.previousMousePosition.y;
+
                 this.passengerRotation.yaw -= deltaX * sens;
                 this.passengerRotation.pitch -= deltaY * sens;
-                
+
                 // Clamp pitch to look up/down without flipping (-85deg to +85deg)
                 const limit = Math.PI / 2 - 0.05;
                 this.passengerRotation.pitch = Math.max(-limit, Math.min(limit, this.passengerRotation.pitch));
-                
-                this.previousMousePosition = { x: e.clientX, y: e.clientY };
+
+                this.previousMousePosition = { x: clientX, y: clientY };
             } else if (this.isDraggingCab && this.activeCameraType === 'cab') {
-                const deltaX = e.clientX - this.previousMousePosition.x;
-                const deltaY = e.clientY - this.previousMousePosition.y;
-                
+                const deltaX = clientX - this.previousMousePosition.x;
+                const deltaY = clientY - this.previousMousePosition.y;
+
                 this.cabRotation.yaw -= deltaX * sens;
                 this.cabRotation.pitch -= deltaY * sens;
-                
+
                 // Clamp pitch to look up/down without flipping (-85deg to +85deg)
                 const limit = Math.PI / 2 - 0.05;
                 this.cabRotation.pitch = Math.max(-limit, Math.min(limit, this.cabRotation.pitch));
-                
-                this.previousMousePosition = { x: e.clientX, y: e.clientY };
+
+                this.previousMousePosition = { x: clientX, y: clientY };
             } else if (this.isDraggingPlatform && this.activeCameraType === 'platform') {
-                const deltaX = e.clientX - this.previousMousePosition.x;
-                const deltaY = e.clientY - this.previousMousePosition.y;
-                
+                const deltaX = clientX - this.previousMousePosition.x;
+                const deltaY = clientY - this.previousMousePosition.y;
+
                 this.platformRotation.yaw -= deltaX * sens;
                 this.platformRotation.pitch -= deltaY * sens;
-                
+
                 // Clamp pitch to look up/down without flipping (-85deg to +85deg)
                 const limit = Math.PI / 2 - 0.05;
                 this.platformRotation.pitch = Math.max(-limit, Math.min(limit, this.platformRotation.pitch));
 
-                this.previousMousePosition = { x: e.clientX, y: e.clientY };
+                this.previousMousePosition = { x: clientX, y: clientY };
             } else if (this.isDraggingOrbit && this.activeCameraType === 'orbit') {
-                const deltaX = e.clientX - this.previousMousePosition.x;
-                const deltaY = e.clientY - this.previousMousePosition.y;
+                const deltaX = clientX - this.previousMousePosition.x;
+                const deltaY = clientY - this.previousMousePosition.y;
 
                 this.orbitRotation.yaw -= deltaX * sens;
                 this.orbitRotation.pitch += deltaY * sens; // inverted Y for orbit feels more natural
@@ -206,17 +201,47 @@ export class WorldManager {
                 const limit = Math.PI / 2 - 0.05;
                 this.orbitRotation.pitch = Math.max(-limit, Math.min(limit, this.orbitRotation.pitch));
 
-                this.previousMousePosition = { x: e.clientX, y: e.clientY };
+                this.previousMousePosition = { x: clientX, y: clientY };
             }
         };
 
+        this.endLook = () => {
+            this.isDraggingPassenger = false;
+            this.isDraggingCab = false;
+            this.isDraggingPlatform = false;
+            this.isDraggingOrbit = false;
+        };
+
+        this.onMouseDown = (e) => {
+            if (e.button === 0) this.startLook(e.clientX, e.clientY);
+        };
+
+        this.onMouseMove = (e) => {
+            this.moveLook(e.clientX, e.clientY);
+        };
+
         this.onMouseUp = (e) => {
-            if (e.button === 0) {
-                this.isDraggingPassenger = false;
-                this.isDraggingCab = false;
-                this.isDraggingPlatform = false;
-                this.isDraggingOrbit = false;
+            if (e.button === 0) this.endLook();
+        };
+
+        // Touch equivalents (single-finger look-around on smartphones/tablets)
+        this.onTouchStart = (e) => {
+            if (e.touches.length === 1) {
+                const t = e.touches[0];
+                this.startLook(t.clientX, t.clientY);
             }
+        };
+
+        this.onTouchMove = (e) => {
+            if (e.touches.length === 1 && (this.isDraggingPassenger || this.isDraggingCab || this.isDraggingPlatform || this.isDraggingOrbit)) {
+                e.preventDefault(); // avoid page scroll/rubber-banding while looking around
+                const t = e.touches[0];
+                this.moveLook(t.clientX, t.clientY);
+            }
+        };
+
+        this.onTouchEnd = () => {
+            this.endLook();
         };
 
         this.onWheel = (e) => {
@@ -246,6 +271,10 @@ export class WorldManager {
         this.container.addEventListener('mousedown', this.onMouseDown);
         window.addEventListener('mousemove', this.onMouseMove);
         window.addEventListener('mouseup', this.onMouseUp);
+        this.container.addEventListener('touchstart', this.onTouchStart, { passive: true });
+        window.addEventListener('touchmove', this.onTouchMove, { passive: false });
+        window.addEventListener('touchend', this.onTouchEnd);
+        window.addEventListener('touchcancel', this.onTouchEnd);
         window.addEventListener('wheel', this.onWheel, { passive: true });
         window.addEventListener('keydown', this.onKeyDown);
         window.addEventListener('keyup', this.onKeyUp);
