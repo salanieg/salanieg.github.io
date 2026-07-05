@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TRACK_DATA as TD } from './TrackData.js?v=48';
+import { TRACK_DATA as TD } from './TrackData.js?v=55';
 
 // Reusable temporary vectors to prevent runtime allocations/garbage collection in path queries
 const _tempP0 = new THREE.Vector3();
@@ -182,13 +182,13 @@ export class Simulation {
     }
 
     getTrackPosition(dist, target = new THREE.Vector3()) {
-        const res = this.getTrackPositionAndTangent(dist);
-        return target.copy(res.position);
+        this._sampleTrack(dist, target, null);
+        return target;
     }
 
     getTrackTangent(dist, target = new THREE.Vector3()) {
-        const res = this.getTrackPositionAndTangent(dist);
-        return target.copy(res.tangent);
+        this._sampleTrack(dist, null, target);
+        return target;
     }
 
     // Vertical offset of the LOWER Plärrer level relative to the base elevation, as a
@@ -306,9 +306,12 @@ export class Simulation {
         return 'underground';
     }
 
-    getTrackPositionAndTangent(dist) {
-        // Smooth Catmull-Rom interpolation of the precomputed geojson centerline
-        // (TrackData.cx / cz, sampled every TrackData.step metres of arc length).
+    // Core track sampler: smooth Catmull-Rom interpolation of the precomputed geojson
+    // centerline (TrackData.cx / cz, sampled every TrackData.step metres of arc length).
+    // Writes into the provided out-vectors (either may be null) and allocates nothing,
+    // so it is safe to call from the per-frame hot path. Position and tangent are only
+    // computed when their out-vector is requested.
+    _sampleTrack(dist, outPos, outTan) {
         const TD = this.track;
         if (dist < 0) dist = 0;
         if (dist > TD.total) dist = TD.total;
@@ -326,21 +329,27 @@ export class Simulation {
         const i2 = Math.min(n - 1, i + 1);
         const i3 = Math.min(n - 1, i + 2);
 
-        const t2 = t * t, t3 = t2 * t;
-        const cr = (p0, p1, p2, p3) =>
-            0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
-        const crDeriv = (p0, p1, p2, p3) =>
-            0.5 * ((-p0 + p2) + 2 * (2 * p0 - 5 * p1 + 4 * p2 - p3) * t + 3 * (-p0 + 3 * p1 - 3 * p2 + p3) * t2);
+        const x0 = cx[i0], x1 = cx[i1], x2 = cx[i2], x3 = cx[i3];
+        const z0 = cz[i0], z1 = cz[i1], z2 = cz[i2], z3 = cz[i3];
+        const t2 = t * t;
 
-        const x = cr(cx[i0], cx[i1], cx[i2], cx[i3]);
-        const z = cr(cz[i0], cz[i1], cz[i2], cz[i3]);
-        const dx = crDeriv(cx[i0], cx[i1], cx[i2], cx[i3]);
-        const dz = crDeriv(cz[i0], cz[i1], cz[i2], cz[i3]);
-        const len = Math.sqrt(dx * dx + dz * dz) || 1;
+        if (outPos) {
+            const t3 = t2 * t;
+            const x = 0.5 * ((2 * x1) + (-x0 + x2) * t + (2 * x0 - 5 * x1 + 4 * x2 - x3) * t2 + (-x0 + 3 * x1 - 3 * x2 + x3) * t3);
+            const z = 0.5 * ((2 * z1) + (-z0 + z2) * t + (2 * z0 - 5 * z1 + 4 * z2 - z3) * t2 + (-z0 + 3 * z1 - 3 * z2 + z3) * t3);
+            outPos.set(x, this.getTrackY(dist), z);
+        }
+        if (outTan) {
+            const dx = 0.5 * ((-x0 + x2) + 2 * (2 * x0 - 5 * x1 + 4 * x2 - x3) * t + 3 * (-x0 + 3 * x1 - 3 * x2 + x3) * t2);
+            const dz = 0.5 * ((-z0 + z2) + 2 * (2 * z0 - 5 * z1 + 4 * z2 - z3) * t + 3 * (-z0 + 3 * z1 - 3 * z2 + z3) * t2);
+            const len = Math.sqrt(dx * dx + dz * dz) || 1;
+            outTan.set(dx / len, 0, dz / len);
+        }
+    }
 
-        const tangent = new THREE.Vector3(dx / len, 0, dz / len);
-        const position = new THREE.Vector3(x, this.getTrackY(dist), z);
-        return { position, tangent };
+    getTrackPositionAndTangent(dist, outPos = new THREE.Vector3(), outTan = new THREE.Vector3()) {
+        this._sampleTrack(dist, outPos, outTan);
+        return { position: outPos, tangent: outTan };
     }
 
     sampleLocalSpacing(dist) {
@@ -674,7 +683,7 @@ export class Simulation {
 
         // Nuremberg U1 rules (from the perspective of travel towards Langwasser Süd / Reverse):
         // 1. Scharfreiterring uses outer tracks -> Right exit.
-        // 2. Side platforms (Messe, Bauernfeindstraße, Muggenhof, Stadtgrenze) -> Right exit.
+        // 2. Side platforms (Bauernfeindstraße, Muggenhof, Stadtgrenze) -> Right exit.
         // 3. Island platforms (all others) -> Left exit.
         const isRightExit = station.side || station.name === "Scharfreiterring";
         const side = isRightExit ? 'right' : 'left';

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>U-Bahn Simulator U1 Nürnberg - Web3D</title>
     <meta name="description" content="Technisch korrekter und optisch ansprechender 3D-U-Bahn-Simulator der U-Bahn-Linie 1 in Nürnberg mit Three.js, WebGL und physikalischer Fahrsimulation.">
-    <link rel="stylesheet" href="./src/style.css?v=41">
+    <link rel="stylesheet" href="./src/style.css?v=43">
     
     <!-- ES Module Importmap for Three.js (self-hosted, no external CDN) -->
     <script type="importmap">
@@ -37,6 +37,12 @@
             </div>
             
             <button id="btn-start" class="start-btn">Simulation starten</button>
+            <div id="loading-container">
+                <span id="loading-status">3D-Stadtmodell wird geladen...</span>
+                <div class="loading-bar-wrap">
+                    <div id="loading-bar"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -67,6 +73,9 @@
                 <button id="btn-menu" class="menu-btn">Menü</button>
             </div>
 
+            <!-- Performance Debug HUD (Taste P) -->
+            <div id="perf-hud" class="perf-hud" style="display: none;"></div>
+
             <!-- Menu Overlay: Wenden / Steuerung / Zugmodell / Lautstärke -->
             <div id="menu-overlay" class="menu-overlay" style="display: none;">
                 <div class="menu-content">
@@ -78,6 +87,7 @@
                         <button id="btn-reverse" class="menu-option-btn" title="Fahrtrichtung wenden (nur im Stillstand bei geschlossenen Türen)">Wenden</button>
                         <button id="btn-controls" class="menu-option-btn" title="Steuerungstastaturbelegung anzeigen">Steuerung</button>
                         <button id="btn-model" class="menu-option-btn" title="Zugmodell wechseln (G1 / DT1)">Zugmodell: G1</button>
+                        <button id="btn-resolution" class="menu-option-btn" title="Renderauflösung ändern (niedriger = flüssiger, aber unschärfer)">Auflösung: 100 %</button>
                         <div class="menu-volume-row">
                             <span class="volume-icon" title="Stummschalten/Aktivieren">🔊</span>
                             <label for="volume-slider">Lautstärke:</label>
@@ -116,6 +126,6 @@
     </div>
 
     <!-- Main Logic script -->
-    <script type="module" src="./src/main.js?v=80"></script>
+    <script type="module" src="./src/main.js?v=93"></script>
 </body>
 </html>

@@ -1,6 +1,12 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+// Reusable temp vectors for per-frame camera math (avoid GC churn)
+const _wmPos = new THREE.Vector3();
+const _wmTan = new THREE.Vector3();
+const _wmTarget = new THREE.Vector3();
+const _wmOffset = new THREE.Vector3();
+
 export class WorldManager {
     constructor(containerEl, simulation) {
         this.container = containerEl;
@@ -27,8 +33,9 @@ export class WorldManager {
         this.headlight = null;
         
         // Sky & Env
-        this.skyColor = new THREE.Color('#93d5f8'); // Day sky blue
+        this.skyColor = new THREE.Color('#93d5f8'); // Day sky blue (fog tint; background uses skyTexture)
         this.tunnelColor = new THREE.Color('#050505'); // Dark tunnel
+        this._isOpenAirBackground = null; // tracks which background is active (avoids Color/Texture .equals())
         
         // Eye adaptation effect
         this.adaptationTimer = 0;
@@ -67,6 +74,7 @@ export class WorldManager {
         // Raycasting for interaction
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
+        this.train3D = null; // set each frame in update(); source of radio raycast targets
 
         this.init();
     }
@@ -80,9 +88,19 @@ export class WorldManager {
         // Renderer setup
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.resolutionScale = 1.0; // user quality setting, applied via setResolutionScale
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = false;
         this.container.appendChild(this.renderer.domElement);
+
+        // Open-air sky: an equirectangular photo used directly as scene.background.
+        // Three.js renders this as a full-screen shader (EquirectangularReflectionMapping),
+        // so it costs no extra draw call or geometry — cheaper than the old per-chunk cloud
+        // planes it replaces, and no more expensive than the flat sky color it also replaces.
+        const skyUrl = new URL('../assets/sky.jpg', import.meta.url).href;
+        this.skyTexture = new THREE.TextureLoader().load(skyUrl);
+        this.skyTexture.mapping = THREE.EquirectangularReflectionMapping;
+        this.skyTexture.colorSpace = THREE.SRGBColorSpace;
 
         // Cameras Setup
         const aspect = this.container.clientWidth / this.container.clientHeight;
@@ -97,7 +115,7 @@ export class WorldManager {
         this.cameras.platform = new THREE.PerspectiveCamera(55, aspect, 0.1, 1000);
         
         // 4. Orbit Camera (general view)
-        this.cameras.orbit = new THREE.PerspectiveCamera(60, aspect, 0.1, 2000);
+        this.cameras.orbit = new THREE.PerspectiveCamera(60, aspect, 0.1, 15000);
         
         // Orbit Controls
         this.controls = new OrbitControls(this.cameras.orbit, this.renderer.domElement);
@@ -105,7 +123,7 @@ export class WorldManager {
         this.controls.dampingFactor = 0.05;
         this.controls.maxPolarAngle = Math.PI / 2 - 0.05; // don't go below ground
         this.controls.minDistance = 5;
-        this.controls.maxDistance = 150;
+        this.controls.maxDistance = 5000;
         
         // Set orbit camera initial position relative to train
         this.cameras.orbit.position.set(20, 15, 30);
@@ -118,24 +136,25 @@ export class WorldManager {
         // Lighting
         this.setupLights();
 
+
+
         // Resize Listener
         window.addEventListener('resize', this.onWindowResize.bind(this));
 
         // Setup mouse & touch listeners for passenger, cockpit, platform & orbit look-around
         this.startLook = (clientX, clientY) => {
-            // Raycasting for radio interaction (only in cab view)
-            if (this.activeCameraType === 'cab') {
+            // Raycasting for radio interaction (only in cab view). Only test the few
+            // radio meshes instead of the whole scene graph — a full recursive scene
+            // raycast caused a noticeable hitch on every click/touch.
+            if (this.activeCameraType === 'cab' && this.train3D && this.train3D.radioMeshes.length > 0) {
                 this.mouse.x = (clientX / window.innerWidth) * 2 - 1;
                 this.mouse.y = -(clientY / window.innerHeight) * 2 + 1;
                 this.raycaster.setFromCamera(this.mouse, this.activeCamera);
-                const intersects = this.raycaster.intersectObjects(this.scene.children, true);
-                for (let intersect of intersects) {
-                    if (intersect.object.userData.isRadio) {
-                        this.sim.radioMenuOpen = true;
-                        if (!this.sim.radioActive) {
-                            this.sim.wantsRadioPlay = true;
-                        }
-                        break;
+                const intersects = this.raycaster.intersectObjects(this.train3D.radioMeshes, false);
+                if (intersects.length > 0) {
+                    this.sim.radioMenuOpen = true;
+                    if (!this.sim.radioActive) {
+                        this.sim.wantsRadioPlay = true;
                     }
                 }
             }
@@ -247,7 +266,7 @@ export class WorldManager {
         this.onWheel = (e) => {
             if (this.activeCameraType === 'orbit') {
                 this.orbitDistance += e.deltaY * 0.05;
-                this.orbitDistance = Math.max(5, Math.min(150, this.orbitDistance));
+                this.orbitDistance = Math.max(5, Math.min(5000, this.orbitDistance));
             }
         };
 
@@ -310,6 +329,14 @@ export class WorldManager {
         }
     }
 
+    // Render-resolution quality setting: scales the device pixel ratio (1.0 / 0.75 / 0.5).
+    // Lower scales render far fewer fragments — the biggest GPU lever on high-DPI screens.
+    setResolutionScale(scale) {
+        this.resolutionScale = scale;
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2) * scale);
+        this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+    }
+
     onWindowResize() {
         const width = this.container.clientWidth;
         const height = this.container.clientHeight;
@@ -325,6 +352,7 @@ export class WorldManager {
 
     update(dt, train3D) {
         if (!train3D) return;
+        this.train3D = train3D;
 
         // Get train coordinates
         const trainZ = this.sim.position;
@@ -515,7 +543,7 @@ export class WorldManager {
                 
                 // Ensure Y stays at exactly platform eye level relative to the station track elevation
                 const plLevelY = (targetStation.name === "Plärrer" && this.sim.isReversing) ? -this.sim.plaerrerDrop : 0;
-                const stationY = this.sim.getTrackPosition(targetStation.position).y;
+                const stationY = this.sim.getTrackPosition(targetStation.position, _wmPos).y;
                 this.cameras.platform.position.y = stationY + plLevelY + 2.575;
                 
                 // Compute look direction from yaw/pitch
@@ -534,29 +562,29 @@ export class WorldManager {
                 // Fixed chase camera focusing on the center of the train, following its rotation
                 const direction = this.sim.isReversing ? -1 : 1;
                 const centerZ = trainZ - direction * (this.sim.trainHalfLength);
-                const { position: centerPos, tangent: centerTangent } = this.sim.getTrackPositionAndTangent(centerZ);
+                this.sim._sampleTrack(centerZ, _wmPos, _wmTan);
 
                 // Target slightly above track level
-                const targetPos = centerPos.clone();
+                const targetPos = _wmTarget.copy(_wmPos);
                 targetPos.y += 1.8;
 
                 // Train yaw from track tangent
-                const trainYaw = Math.atan2(centerTangent.x, centerTangent.z);
+                const trainYaw = Math.atan2(_wmTan.x, _wmTan.z);
 
                 // Calculate camera position relative to train center and orientation
                 const yaw = trainYaw + this.orbitRotation.yaw;
                 const pitch = this.orbitRotation.pitch;
 
-                const offset = new THREE.Vector3(
+                const offset = _wmOffset.set(
                     Math.sin(yaw) * Math.cos(pitch),
                     Math.sin(pitch),
                     Math.cos(yaw) * Math.cos(pitch)
                 ).multiplyScalar(this.orbitDistance);
 
                 this.cameras.orbit.position.copy(targetPos).add(offset);
-                
+
                 // Prevent camera from falling below track level
-                const groundY = centerPos.y + 0.5;
+                const groundY = _wmPos.y + 0.5;
                 if (this.cameras.orbit.position.y < groundY) {
                     this.cameras.orbit.position.y = groundY;
                 }
@@ -588,19 +616,20 @@ export class WorldManager {
         const isPlatform = this.isInsideStationPlatform(cameraTrackZ);
 
         // Handle eye adaptation effect when transitioning
-        if (isOpenAir && this.scene.background.equals(this.tunnelColor)) {
+        if (isOpenAir && this._isOpenAirBackground === false) {
             // Emerging from tunnel: trigger eye flash adaptation
             this.adaptationActive = true;
             this.adaptationTimer = 1.0; // 1 second flash
-        } else if (!isOpenAir && this.scene.background.equals(this.skyColor)) {
+        } else if (!isOpenAir && this._isOpenAirBackground === true) {
             // Entering tunnel: quick dark adaptation
             this.adaptationActive = true;
             this.adaptationTimer = 0.5;
         }
+        this._isOpenAirBackground = isOpenAir;
 
         if (isOpenAir) {
-            // Day environment
-            this.scene.background = this.skyColor;
+            // Day environment: real sky photo (equirectangular background, no extra draw call)
+            this.scene.background = this.skyTexture;
             this.scene.fog.color = this.skyColor;
             this.scene.fog.density = 0.0015; // very light fog for distance depth
             
@@ -611,7 +640,7 @@ export class WorldManager {
             // Tunnel environment
             this.scene.background = this.tunnelColor;
             this.scene.fog.color = this.tunnelColor;
-            
+
             if (isPlatform) {
                 // Brightly lit station (clear view, no thick black fog)
                 this.scene.fog.density = 0.0;
@@ -625,6 +654,10 @@ export class WorldManager {
                 this.sunLight.intensity = 0.0; // no sun inside tunnel
                 this.headlight.intensity = 8.0; // powerful headlight in dark
             }
+        }
+
+        if (this.scene.fog && this.scene.fog.densityOverride !== undefined) {
+            this.scene.fog.density = this.scene.fog.densityOverride;
         }
 
         // Apply eye adaptation flash (boost exposure briefly)

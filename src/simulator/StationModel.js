@@ -10,7 +10,7 @@ export class StationModel {
         
         // Culling configuration
         this.loadedStations = new Map(); // stationIndex -> boolean (is in scene)
-        this.cullingDistance = 600; // load station if within 600m
+        this.cullingDistance = 2000; // load station if within 2000m
         this.platformMaterialsCache = new Map();
         
         // Shared materials

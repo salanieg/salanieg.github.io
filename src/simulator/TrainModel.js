@@ -10,12 +10,25 @@ const _carLocalPos = new THREE.Vector3();
 const _tempTangent = new THREE.Vector3();
 const _tempNormal = new THREE.Vector3();
 const _tempTangent2 = new THREE.Vector3();
+const _tempPos = new THREE.Vector3();
 
 // Längsmaßstab des Zugmodells: 1 Einheit = 1 Meter (zuvor 0.7075-Stauchung, jetzt 1:1 zur Welt).
 const TRAIN_SCALE = 1.0;
 
 // G1: real Faltenbalg (gangway bellows) length per car end, 401mm.
 const G1_BELLOWS_LEN = 0.401;
+
+// Cheap stand-in for MeshStandardMaterial: the scene has no environment map, so the PBR
+// shader only adds per-pixel cost without a visual payoff. Maps the PBR metalness /
+// roughness inputs onto a Phong specular so glossy parts (front mask, chrome) keep
+// their highlights. All other constructor params (color, map, side, ...) pass through.
+function cheapMaterial(params) {
+    const { metalness = 0, roughness = 1, ...rest } = params;
+    const mat = new THREE.MeshPhongMaterial(rest);
+    mat.shininess = Math.max(2, (1 - roughness) * 120);
+    mat.specular = new THREE.Color(0x111111).lerp(new THREE.Color(0x999999), metalness);
+    return mat;
+}
 
 export class TrainModel {
     constructor(scene, simulation) {
@@ -48,6 +61,9 @@ export class TrainModel {
         this.dashboardScreens = [];
         this.screenUpdateTimer = 0;
 
+        // Clickable cab radio meshes (raycast targets for the radio menu)
+        this.radioMeshes = [];
+
         // Front and rear headlights/taillights refs for toggling
         this.lights = {
             frontWhite: [],
@@ -64,25 +80,25 @@ export class TrainModel {
         
         // Shared materials
         this.materials = {
-            bodyRedG1: new THREE.MeshStandardMaterial({ color: '#c21d2c', metalness: 0.1, roughness: 0.3, side: THREE.DoubleSide }), // Nuremberg G1 Red; DoubleSide so the side bevels read from inside the cab too
-            bodyRedDT1: new THREE.MeshStandardMaterial({ color: '#ac3333', metalness: 0.1, roughness: 0.3, side: THREE.DoubleSide }), // Nuremberg DT1 Red; DoubleSide so the twisted nose corner reads from inside the cab too
-            bodyWhite: new THREE.MeshStandardMaterial({ color: '#e6e8eb', metalness: 0.1, roughness: 0.4, side: THREE.DoubleSide }), // Off-white middle stripe; DoubleSide so the twisted nose corner reads from inside the cab too
-            bodyDarkGrey: new THREE.MeshStandardMaterial({ color: '#1c1e22', metalness: 0.2, roughness: 0.6 }), // Window band and roof
-            bodyGlossBlack: new THREE.MeshStandardMaterial({ color: '#0b0d10', metalness: 0.4, roughness: 0.25 }), // G1 glossy black front mask
-            bodyGrey: new THREE.MeshStandardMaterial({ color: '#2e3033', metalness: 0.3, roughness: 0.5 }), // Underframe
-            bodyBumperGrey: new THREE.MeshStandardMaterial({ color: '#43474d', metalness: 0.35, roughness: 0.55 }), // G1 front skirt block
-            cabDoorGrey: new THREE.MeshStandardMaterial({ color: '#1a1c20', metalness: 0.3, roughness: 0.35 }), // G1 cab door on the black flank
-            cockpitTrim: new THREE.MeshStandardMaterial({ color: '#9aa0a8', roughness: 0.85, side: THREE.DoubleSide }), // G1 interior A-pillar trim
+            bodyRedG1: cheapMaterial({ color: '#c21d2c', metalness: 0.1, roughness: 0.3, side: THREE.DoubleSide }), // Nuremberg G1 Red; DoubleSide so the side bevels read from inside the cab too
+            bodyRedDT1: cheapMaterial({ color: '#ac3333', metalness: 0.1, roughness: 0.3, side: THREE.DoubleSide }), // Nuremberg DT1 Red; DoubleSide so the twisted nose corner reads from inside the cab too
+            bodyWhite: cheapMaterial({ color: '#e6e8eb', metalness: 0.1, roughness: 0.4, side: THREE.DoubleSide }), // Off-white middle stripe; DoubleSide so the twisted nose corner reads from inside the cab too
+            bodyDarkGrey: cheapMaterial({ color: '#1c1e22', metalness: 0.2, roughness: 0.6 }), // Window band and roof
+            bodyGlossBlack: cheapMaterial({ color: '#0b0d10', metalness: 0.4, roughness: 0.25 }), // G1 glossy black front mask
+            bodyGrey: cheapMaterial({ color: '#2e3033', metalness: 0.3, roughness: 0.5 }), // Underframe
+            bodyBumperGrey: cheapMaterial({ color: '#43474d', metalness: 0.35, roughness: 0.55 }), // G1 front skirt block
+            cabDoorGrey: cheapMaterial({ color: '#1a1c20', metalness: 0.3, roughness: 0.35 }), // G1 cab door on the black flank
+            cockpitTrim: cheapMaterial({ color: '#9aa0a8', roughness: 0.85, side: THREE.DoubleSide }), // G1 interior A-pillar trim
             floorGrey: this.createFloorMaterial(),
             fabricRed: this.createFabricMaterial(),
-            cockpitFloor: new THREE.MeshStandardMaterial({ color: '#bcbcbc', metalness: 0.1, roughness: 0.8 }),
+            cockpitFloor: cheapMaterial({ color: '#bcbcbc', metalness: 0.1, roughness: 0.8 }),
             windowGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }),
             cabWindowGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }), // match standard window transparency
             windshieldGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }),
-            wheel: new THREE.MeshStandardMaterial({ color: '#111111', metalness: 0.8, roughness: 0.6 }),
+            wheel: cheapMaterial({ color: '#111111', metalness: 0.8, roughness: 0.6 }),
             lightGlowWhite: new THREE.MeshBasicMaterial({ color: 0xffffff }),
             lightGlowRed: new THREE.MeshBasicMaterial({ color: 0xcc0000 }),
-            chromeMetal: new THREE.MeshStandardMaterial({ color: '#cccccc', metalness: 0.95, roughness: 0.1 }), // Chrome logo & coupler
+            chromeMetal: cheapMaterial({ color: '#cccccc', metalness: 0.95, roughness: 0.1 }), // Chrome logo & coupler
             // Additive billboard glow for headlights (no depth write = no sorting issues)
             glowSpriteWhite: new THREE.SpriteMaterial({
                 map: this.createGlowTexture(),
@@ -155,6 +171,7 @@ export class TrainModel {
         this.brakeNeedles = []; // { hbl, bz, hblSmoothed, bzSmoothed }
         this.throttleLevers = [];
         this.dashboardScreens = [];
+        this.radioMeshes = [];
         this.lights = {
             frontWhite: [],
             frontRed: [],
@@ -921,8 +938,8 @@ export class TrainModel {
         // Cockpit is now lit by the SpotLight headlights – no dome PointLight needed
 
         // Materials matching Cockpit.jpg
-        const consoleDarkGrey = new THREE.MeshStandardMaterial({ color: '#2b2e35', roughness: 0.8, metalness: 0.2 }); // console desk body
-        const panelMediumGrey = new THREE.MeshStandardMaterial({ color: '#383c44', roughness: 0.7 });
+        const consoleDarkGrey = cheapMaterial({ color: '#2b2e35', roughness: 0.8, metalness: 0.2 }); // console desk body
+        const panelMediumGrey = cheapMaterial({ color: '#383c44', roughness: 0.7 });
         const transparentGlass = new THREE.MeshBasicMaterial({ color: '#aabbcc', transparent: true, opacity: 0.08, depthWrite: false });
 
         // 1. Create Dynamic Canvases for Screens
@@ -977,7 +994,7 @@ export class TrainModel {
         const panelThickness = 0.133;
 
         const panelGeom = new THREE.BoxGeometry(panelWidth, panelHeight, panelThickness);
-        const panelMat = new THREE.MeshStandardMaterial({ color: '#2c303a', roughness: 0.7, metalness: 0.2 }); // Slate grey casing
+        const panelMat = cheapMaterial({ color: '#2c303a', roughness: 0.7, metalness: 0.2 }); // Slate grey casing
 
         // Mathematical curved screen alignment centered at driver's eye.
         // Dashboard pulled forward so the center panel's own front face sits
@@ -1007,7 +1024,7 @@ export class TrainModel {
         // under them instead of trailing behind), minus a small 3cm pullback
         // since the full shift poked it out past the front plate.
         const deskGeom = new THREE.BoxGeometry(2.81, 0.02, 0.45);
-        const deskMat = new THREE.MeshStandardMaterial({ color: '#1e222b', roughness: 0.8 });
+        const deskMat = cheapMaterial({ color: '#1e222b', roughness: 0.8 });
         const deskPlate = new THREE.Mesh(deskGeom, deskMat);
         deskPlate.position.set(0, 1.35, noseZ - cabDir * (0.425 - dashShift + 0.03));
         cockpitGroup.add(deskPlate);
@@ -1476,7 +1493,7 @@ export class TrainModel {
             side: THREE.DoubleSide,
             depthWrite: false
         });
-        const partitionWallMat = new THREE.MeshStandardMaterial({ color: '#cfd8dc', roughness: 0.9 });
+        const partitionWallMat = cheapMaterial({ color: '#cfd8dc', roughness: 0.9 });
         const interiorWidth = unscaledWidth - 0.12; // 2.78m for G1, stays strictly inside the interior walls
         const partitionH = (this.trainType === 'G1') ? 2.075 : 1.60;
         const partitionY = (this.trainType === 'G1') ? 1.4125 : 1.20;
@@ -1503,7 +1520,7 @@ export class TrainModel {
 
         // Add a light grey handle (Klinke) on the left side of the door
         const handleGeom = new THREE.BoxGeometry(0.04, 0.02, 0.12);
-        const handleMat = new THREE.MeshStandardMaterial({ color: '#cccccc', metalness: 0.5, roughness: 0.5 });
+        const handleMat = cheapMaterial({ color: '#cccccc', metalness: 0.5, roughness: 0.5 });
         const handle = new THREE.Mesh(handleGeom, handleMat);
         handle.position.set(-0.37, partitionY + 0.05, noseZ - cabDir * (1.90 - 0.03));
 
@@ -1579,18 +1596,18 @@ export class TrainModel {
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;
         tex.repeat.set(2, 2);
-        // No separate "color" tint here: MeshStandardMaterial multiplies map
+        // No separate "color" tint here: the material multiplies map
         // by color, and the previous dark grey color (#43474d) over the
         // already-dark canvas (#33363b) multiplied down to near-black,
         // hiding the stitch pattern almost entirely. Leaving color at the
         // material's white default lets the texture's own tones show.
-        this._g1SeatCushionMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0.05 });
+        this._g1SeatCushionMat = cheapMaterial({ map: tex, roughness: 0.85, metalness: 0.05 });
         return this._g1SeatCushionMat;
     }
 
     buildG1DriverSeat(cockpitGroup, noseZ, cabDir) {
         const cushionMat = this.getG1SeatCushionMaterial();
-        const frameMat = new THREE.MeshStandardMaterial({ color: '#2b2e33', roughness: 0.6, metalness: 0.4 });
+        const frameMat = cheapMaterial({ color: '#2b2e33', roughness: 0.6, metalness: 0.4 });
 
         const seatGroup = new THREE.Group();
         // Centered (x=0, was -0.28) and a bit further from the dashboard/desk
@@ -1671,9 +1688,10 @@ export class TrainModel {
 
         // Body: Orange as requested
         const bodyGeom = new THREE.BoxGeometry(0.20, 0.14, 0.10);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: '#ffa500', roughness: 0.6, metalness: 0.1 });
+        const bodyMat = cheapMaterial({ color: '#ffa500', roughness: 0.6, metalness: 0.1 });
         const body = new THREE.Mesh(bodyGeom, bodyMat);
         body.userData.isRadio = true; // Tag for raycasting
+        this.radioMeshes.push(body);
         radioGroup.add(body);
 
         // Antenna: Thin and longer as requested
@@ -1685,7 +1703,7 @@ export class TrainModel {
 
         // Handle (Black bar above buttons)
         const handleGeom = new THREE.BoxGeometry(0.12, 0.01, 0.02);
-        const handleMat = new THREE.MeshStandardMaterial({ color: '#222222' });
+        const handleMat = cheapMaterial({ color: '#222222' });
         const handle = new THREE.Mesh(handleGeom, handleMat);
         handle.position.set(0, 0.075, 0);
         radioGroup.add(handle);
@@ -1693,7 +1711,7 @@ export class TrainModel {
         // Buttons (3 small cylinders)
         const buttonGeom = new THREE.CylinderGeometry(0.012, 0.012, 0.02, 8);
         buttonGeom.rotateX(Math.PI / 2);
-        const buttonMat = new THREE.MeshStandardMaterial({ color: '#222222' });
+        const buttonMat = cheapMaterial({ color: '#222222' });
         for (let i = 0; i < 3; i++) {
             const btn = new THREE.Mesh(buttonGeom, buttonMat);
             btn.position.set(-0.05 + i * 0.05, 0.03, 0.051);
@@ -1717,17 +1735,17 @@ export class TrainModel {
         panel.add(controlsGroup);
 
         // Helper materials
-        const matRed = new THREE.MeshStandardMaterial({ color: '#d00000', roughness: 0.5 });
+        const matRed = cheapMaterial({ color: '#d00000', roughness: 0.5 });
         const matRedGlow = new THREE.MeshBasicMaterial({ color: '#ff4444' });
-        const matYellow = new THREE.MeshStandardMaterial({ color: '#e0a000', roughness: 0.5 });
+        const matYellow = cheapMaterial({ color: '#e0a000', roughness: 0.5 });
         const matYellowGlow = new THREE.MeshBasicMaterial({ color: '#ffcc00' });
-        const matWhite = new THREE.MeshStandardMaterial({ color: '#f0f0f0', roughness: 0.5 });
+        const matWhite = cheapMaterial({ color: '#f0f0f0', roughness: 0.5 });
         const matWhiteGlow = new THREE.MeshBasicMaterial({ color: '#ffffff' });
-        const matGreen = new THREE.MeshStandardMaterial({ color: '#00a000', roughness: 0.5 });
+        const matGreen = cheapMaterial({ color: '#00a000', roughness: 0.5 });
         const matGreenGlow = new THREE.MeshBasicMaterial({ color: '#44ff44' });
-        const matBlack = new THREE.MeshStandardMaterial({ color: '#101010', roughness: 0.8 });
-        const matGrey = new THREE.MeshStandardMaterial({ color: '#808080', roughness: 0.6, metalness: 0.4 });
-        const matSilver = new THREE.MeshStandardMaterial({ color: '#aaaaaa', roughness: 0.3, metalness: 0.7 });
+        const matBlack = cheapMaterial({ color: '#101010', roughness: 0.8 });
+        const matGrey = cheapMaterial({ color: '#808080', roughness: 0.6, metalness: 0.4 });
+        const matSilver = cheapMaterial({ color: '#aaaaaa', roughness: 0.3, metalness: 0.7 });
 
         // Helper functions
         const buildLight = (color, isActive, size = 0.02) => {
@@ -2483,7 +2501,7 @@ export class TrainModel {
         // Use identity repeat and handle scaling via UVs for consistency on edges
         texture.repeat.set(1, 1);
 
-        return new THREE.MeshStandardMaterial({
+        return cheapMaterial({
             map: texture,
             roughness: 0.8
         });
@@ -2553,7 +2571,7 @@ export class TrainModel {
         // Scaling now handled via applyBoxUVs for carriage-length independence
         texture.repeat.set(1, 1);
 
-        return new THREE.MeshStandardMaterial({
+        return cheapMaterial({
             map: texture,
             metalness: 0.1,
             roughness: 0.8
@@ -2790,7 +2808,7 @@ export class TrainModel {
         const S = TRAIN_SCALE;
         const carLength = (isG1 ? 19.270 : 18.575) * S;
 
-        const pos = this.sim.getTrackPosition(trainDist);
+        const pos = this.sim.getTrackPosition(trainDist, _tempPos);
         pos.y += this.sim.getTrackElevationOffset(trainDist, reversing); // stacked Plärrer level
         const tangent = this.sim.getTrackTangent(trainDist, _tempTangent);
         const angle = Math.atan2(tangent.x, tangent.z);
@@ -3786,8 +3804,8 @@ export class TrainModel {
         carGroup.add(cockpitGroup);
         const unscaledWidth = 2.82;
 
-        const consoleDarkGrey = new THREE.MeshStandardMaterial({ color: '#2b2e35', roughness: 0.8, metalness: 0.2 });
-        const deskMat = new THREE.MeshStandardMaterial({ color: '#5d879b', roughness: 0.8 });
+        const consoleDarkGrey = cheapMaterial({ color: '#2b2e35', roughness: 0.8, metalness: 0.2 });
+        const deskMat = cheapMaterial({ color: '#5d879b', roughness: 0.8 });
 
         // 1. Create Dynamic Canvases for retro analogue dashboard
         const leftCanvas = document.createElement('canvas');
@@ -3825,7 +3843,7 @@ export class TrainModel {
 
         // Vertical back wall bulkhead (grey)
         // Width narrowed to 2.81m to fit inside; Height reduced to 0.85m and lifted to start at Y=0.40 (floor)
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(2.81, 0.85, 0.02), new THREE.MeshStandardMaterial({ color: '#7a8086', roughness: 0.9 }));
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(2.81, 0.85, 0.02), cheapMaterial({ color: '#7a8086', roughness: 0.9 }));
         backWall.position.set(0, 0.825, noseZ - cabDir * 0.01);
         cockpitGroup.add(backWall);
 
@@ -3851,7 +3869,7 @@ export class TrainModel {
         const panelHeight = 0.22;
         const panelThickness = 0.08;
         const panelGeom = new THREE.BoxGeometry(panelWidth, panelHeight, panelThickness);
-        const panelMat = new THREE.MeshStandardMaterial({ color: '#5d879b', roughness: 0.7, metalness: 0.2 });
+        const panelMat = cheapMaterial({ color: '#5d879b', roughness: 0.7, metalness: 0.2 });
 
         const cameraZ = noseZ - cabDir * 1.2;
         const R = 1.0; // pushed to the far end of the desk (near the windshield), away from the driver's seat at cabDir*0.72 further back
@@ -3996,7 +4014,7 @@ export class TrainModel {
         handleRod.geometry.translate(0, 0.08, 0);
         handleRod.rotation.z = 0.3;
         
-        const handleBall = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 12), new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.9 }));
+        const handleBall = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 12), cheapMaterial({ color: '#111111', roughness: 0.9 }));
         handleBall.position.set(-0.024, 0.16, 0);
         
         const rodGroup = new THREE.Group();

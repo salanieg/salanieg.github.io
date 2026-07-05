@@ -8,23 +8,31 @@ export class TrackManager {
         
         // Chunk configuration
         this.chunkSize = 50; // meters per track segment
-        this.visibleChunksCount = 10; // load +/- 10 chunks (1km total window)
-        this.loadedChunks = new Map(); // chunkIndex -> THREE.Group
+        this.visibleChunksCount = 40; // load +/- 40 chunks (4km total window)
+        this.tunnelChunksCount = 4; // reduced window when fully underground (darkness hides the distance)
+        this.chunkCache = new Map(); // chunkIndex -> THREE.Group, built once and kept forever
+        this.activeChunks = new Map(); // chunkIndex -> THREE.Group currently in the scene
         
         const ballastTex = this.createBallastTexture();
         this.materials = {
             rail: new THREE.MeshLambertMaterial({ color: '#8b4513' }),
             sleeper: new THREE.MeshLambertMaterial({ color: '#cccccc' }), // light grey concrete sleepers
+            // side: DoubleSide on ballast/tunnelBallast/viaduct because they are swept into
+            // continuous curved beds/fences (buildSweptTrackBox) that bend both left and
+            // right along the route; DoubleSide sidesteps any winding-order ambiguity from
+            // the curl direction instead of needing to special-case it (these 3 materials
+            // are used exclusively for that swept geometry, so this is safe to set globally).
             ballast: new THREE.MeshLambertMaterial({
-                map: ballastTex
+                map: ballastTex,
+                side: THREE.DoubleSide
             }),
             thirdRail: new THREE.MeshLambertMaterial({ color: '#cccccc' }), // light grey matte metal power rail
             tunnelWall: new THREE.MeshLambertMaterial({ map: this.createTunnelConcreteTexture(), color: 0xffffff, side: THREE.DoubleSide }),
-            tunnelBallast: new THREE.MeshLambertMaterial({ map: ballastTex, color: '#888888' }),
+            tunnelBallast: new THREE.MeshLambertMaterial({ map: ballastTex, color: '#888888', side: THREE.DoubleSide }),
             tunnelRail: new THREE.MeshLambertMaterial({ color: '#5d2e0d' }),
             tunnelSleeper: new THREE.MeshLambertMaterial({ color: '#777777' }),
             tunnelThirdRail: new THREE.MeshLambertMaterial({ color: '#bbbbbb' }),
-            viaduct: new THREE.MeshLambertMaterial({ color: '#4a4a4a' }),
+            viaduct: new THREE.MeshLambertMaterial({ color: '#4a4a4a', side: THREE.DoubleSide }),
             wall: new THREE.MeshLambertMaterial({ color: '#333333' }),
             portal: new THREE.MeshLambertMaterial({ color: '#2c3e50' }),
             // Neon lights materials
@@ -48,18 +56,12 @@ export class TrackManager {
             treeTrunk: new THREE.MeshLambertMaterial({ color: '#4a2f13' }),
             treeLeaves: new THREE.MeshLambertMaterial({ color: '#2d6a4f' }),
 
-            // Ground & Clouds
-            ground: new THREE.MeshLambertMaterial({ 
-                map: this.createGrassTexture() 
+            // Ground (clouds are now part of WorldManager's sky-photo background)
+            ground: new THREE.MeshLambertMaterial({
+                color: '#4a9c70' // solid mint green
             }),
-            bgGround: new THREE.MeshLambertMaterial({ 
-                color: '#1e3b12' 
-            }),
-            cloud: new THREE.MeshBasicMaterial({ 
-                map: this.createCloudTexture(), 
-                transparent: true, 
-                depthWrite: false, 
-                side: THREE.DoubleSide 
+            bgGround: new THREE.MeshLambertMaterial({
+                color: '#4a9c70' // unified color to prevent brightness seams
             })
         };
         
@@ -98,10 +100,9 @@ export class TrackManager {
             treeLeaves: new THREE.SphereGeometry(1.6, 6, 5),
             street: new THREE.PlaneGeometry(6, 5.0), // 5m street sub-segments
  
-            // Ground & Clouds
-            ground: new THREE.PlaneGeometry(120, 5.0), // 5m ground sub-segments
-            bgGround: new THREE.PlaneGeometry(450, 5.0),
-            cloud: new THREE.PlaneGeometry(50, 50)
+            // Ground (clouds are now part of WorldManager's sky-photo background)
+            ground: new THREE.PlaneGeometry(120, 10.0), // Overlapped to prevent curve seams (10m instead of 5m)
+            bgGround: new THREE.PlaneGeometry(450, 25.0) // Overlapped to prevent curve seams (25m instead of 5m)
         };
  
         // Correct UVs for ballast geometries to ensure 1:1 world scaling (1 repeat per meter)
@@ -123,8 +124,7 @@ export class TrackManager {
         this.geometries.street.rotateX(-Math.PI / 2);
         this.geometries.ground.rotateX(-Math.PI / 2);
         this.geometries.bgGround.rotateX(-Math.PI / 2);
-        this.geometries.cloud.rotateX(-Math.PI / 2);
- 
+
         // Pre-create the portal extrude geometry
         this.geometries.portal = this.createPortalGeometry();
  
@@ -133,8 +133,9 @@ export class TrackManager {
         this.sleepersPerChunk = 25; // 25 sleepers per chunk for perfect curves
         this._sleeperMatrix = new THREE.Matrix4();
 
-        // Decorative side tracks (sidings / depot leads) from the geojson – purely cosmetic.
-        this.createSideTracks();
+        // Decorative side tracks (sidings / depot leads) were removed for performance:
+        // they were never drivable and their InstancedMeshes (frustumCulled = false)
+        // were rendered from everywhere on the line.
 
         // Plärrer: the bespoke stacked station (lower Langwasser platform + upper Hardhöhe
         // hall + diverging tubes) is built from main.js AFTER the StationModel exists, so it
@@ -151,7 +152,7 @@ export class TrackManager {
         const zoneHalf = hold + ramp;
         const platHalf = p.halfLength;
         const up = new THREE.Vector3(0, 1, 0);
-        const GAUGE = 0.5076, POWER = 1.1;
+        const GAUGE = 0.7175, POWER = 1.1; // match the mainline rail gauge (createChunk's ±0.7175 offsets)
         const group = new THREE.Group();
 
         // ---------- instanced track helper ----------
@@ -212,10 +213,7 @@ export class TrackManager {
         renderTrack(samplePath(d => sp(d) / 2, () => 0, P - zoneHalf, P + zoneHalf));
         // Gleis 2 (reverse / Langwasser, LOWER) at -spacing/2, dives – directly under Gleis 1.
         renderTrack(samplePath(d => -sp(d) / 2, dive, P - zoneHalf, P + zoneHalf));
-        // Cosmetic deco track running parallel on the outer side of each island platform.
-        const DECO_OFF = -18.7;
-        renderTrack(samplePath(() => DECO_OFF, () => 0, P - platHalf, P + platHalf));
-        renderTrack(samplePath(() => DECO_OFF, dive, P - platHalf, P + platHalf));
+        // (The cosmetic outer deco tracks were removed for performance.)
 
         const bedGeom = new THREE.BoxGeometry(3.6, 0.15, 1.0);
         const addI = (geom, mat, arr) => {
@@ -526,106 +524,6 @@ export class TrackManager {
         this.plaerrerGroup = group;
     }
 
-    // Build all decorative tracks once. They carry no traffic, but they must look and
-    // behave EXACTLY like real running track: full ballast bed, concrete sleepers, two
-    // running rails at gauge, and a covered third (power) rail. Built from the geojson
-    // side-track polylines plus any registered extra polylines (e.g. Plärrer's outer
-    // decks). Everything is batched into a handful of InstancedMeshes for efficiency.
-    // Each polyline is a flat [x,z,x,z,...] array in world metres.
-    createSideTracks() {
-        const data = this.sim.track;
-        const polylines = [].concat(data.sideTracks || [], this.extraDecoTracks || []);
-        if (polylines.length === 0) return;
-
-        const cx = data.cx, cz = data.cz, step = data.step;
-        const nearestY = (x, z) => {
-            let best = Infinity, bi = 0;
-            for (let k = 0; k < cx.length; k++) {
-                const d = (cx[k] - x) * (cx[k] - x) + (cz[k] - z) * (cz[k] - z);
-                if (d < best) { best = d; bi = k; }
-            }
-            return this.sim.getTrackY(bi * step);
-        };
-
-        const up = new THREE.Vector3(0, 1, 0);
-        const bedM = [], sleeperM = [], railM = [], powerM = [], coverM = [];
-
-        // Matrix for a unit-length-along-Z element placed between A and B, offset sideways
-        // by `lateral` and vertically by `yOff`, and stretched in Z to the segment length.
-        const segMatrix = (A, B, lateral, yOff) => {
-            const dir = new THREE.Vector3().subVectors(B, A);
-            const length = dir.length();
-            if (length < 0.01) return null;
-            dir.normalize();
-            const right = new THREE.Vector3().crossVectors(up, dir).normalize();
-            const actualUp = new THREE.Vector3().crossVectors(dir, right).normalize();
-            const mid = new THREE.Vector3().addVectors(A, B).multiplyScalar(0.5).addScaledVector(right, lateral);
-            mid.y += yOff;
-            const m = new THREE.Matrix4().makeBasis(right, actualUp, dir);
-            m.setPosition(mid);
-            m.multiply(new THREE.Matrix4().makeScale(1, 1, length));
-            return m;
-        };
-
-        const GAUGE = 0.5076; // running-rail half-gauge, matching the main track
-        const POWER = 1.1;    // third-rail offset, matching the main track
-
-        polylines.forEach(poly => {
-            for (let i = 0; i + 3 < poly.length; i += 2) {
-                const ax = poly[i], az = poly[i + 1];
-                const bx = poly[i + 2], bz = poly[i + 3];
-                const ay = nearestY(ax, az);
-                const by = nearestY(bx, bz);
-                const A = new THREE.Vector3(ax, ay, az);
-                const B = new THREE.Vector3(bx, by, bz);
-                const dir = new THREE.Vector3().subVectors(B, A);
-                const length = dir.length();
-                if (length < 0.01) continue;
-
-                // Ballast bed
-                const bed = segMatrix(A, B, 0, -0.375); if (bed) bedM.push(bed);
-                // Two running rails
-                const rL = segMatrix(A, B, -GAUGE, -0.21); if (rL) railM.push(rL);
-                const rR = segMatrix(A, B, GAUGE, -0.21); if (rR) railM.push(rR);
-                // Third (power) rail + cover
-                const p = segMatrix(A, B, POWER, -0.05); if (p) powerM.push(p);
-                const c = segMatrix(A, B, POWER, 0.03); if (c) coverM.push(c);
-
-                // Sleepers every ~2 m (as on the main track)
-                const nSleep = Math.max(1, Math.round(length / 2));
-                const angle = Math.atan2(dir.x, dir.z);
-                for (let s = 0; s < nSleep; s++) {
-                    const t = (s + 0.5) / nSleep;
-                    const px = ax + (bx - ax) * t;
-                    const py = ay + (by - ay) * t - 0.25;
-                    const pz = az + (bz - az) * t;
-                    const m = new THREE.Matrix4().makeRotationY(angle);
-                    m.setPosition(px, py, pz);
-                    sleeperM.push(m);
-                }
-            }
-        });
-
-        const group = new THREE.Group();
-        const bedGeom = new THREE.BoxGeometry(3.6, 0.15, 1.0); // single-track ballast, unit length
-        const addInstanced = (geom, mat, mats) => {
-            if (!mats.length) return;
-            const im = new THREE.InstancedMesh(geom, mat, mats.length);
-            mats.forEach((m, i) => im.setMatrixAt(i, m));
-            im.instanceMatrix.needsUpdate = true;
-            im.frustumCulled = false;
-            group.add(im);
-        };
-        addInstanced(bedGeom, this.materials.ballast, bedM);
-        addInstanced(this.geometries.sleeper, this.materials.sleeper, sleeperM);
-        addInstanced(this.geometries.rail, this.materials.rail, railM);
-        addInstanced(this.geometries.thirdRail, this.materials.thirdRail, powerM);
-        addInstanced(this.geometries.thirdRailCover, this.materials.thirdRail, coverM);
-
-        this.scene.add(group);
-        this.sideTrackGroup = group;
-    }
-
     createPortalGeometry() {
         const archShape = new THREE.Shape();
         archShape.moveTo(-7.5, -2.8);
@@ -651,92 +549,188 @@ export class TrackManager {
         return geom;
     }
 
-    createTunnelWallMesh(s_start, s_end, chunkGroup) {
-        const numSub = 1;
+    // Builds ONE merged tunnel-wall mesh for a whole chunk from a list of [s_start, s_end]
+    // arc-length segments (typically the 5 m sub-segments). Merging all ring pairs into a
+    // single BufferGeometry replaces the former one-mesh-per-5m approach (10 draw calls and
+    // 10 geometries per underground chunk -> 1).
+    createTunnelWallMesh(segments, chunkGroup) {
         const radialSegments = 16; // 16 for a rounder, premium look
-        
+
         const vertices = [];
         const indices = [];
         const uvs = [];
-        
-        // We will sample 2 rings of vertices (from j = 0 to 1)
-        for (let j = 0; j <= numSub; j++) {
-            const s = s_start + j * (s_end - s_start) / numSub;
-            const pos = this.sim.getTrackPosition(s);
-            const tangent = this.sim.getTrackTangent(s);
-            const spacing = this.sim.getTrackSpacing(s);
-            
-            const radius = spacing / 2 + 3.1;
-            
-            // Perpendicular vectors
-            const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-            const up = new THREE.Vector3(0, 1, 0); // vertical up
-            
-            // Ring center (y is offset by 0.8)
-            const center = pos.clone();
-            center.y += 0.8;
-            
-            for (let k = 0; k <= radialSegments; k++) {
-                const theta = (k / radialSegments) * Math.PI * 2;
-                const cos = Math.cos(theta);
-                const sin = Math.sin(theta);
-                
-                const worldVertex = center.clone()
-                    .addScaledVector(normal, cos * radius)
-                    .addScaledVector(up, sin * radius);
-                    
-                const localVertex = chunkGroup.worldToLocal(worldVertex);
-                vertices.push(localVertex.x, localVertex.y, localVertex.z);
-                
-                // UV coordinates: u goes around the circle, v goes along the length of the track
-                const u = k / radialSegments;
-                const v = j / numSub;
-                uvs.push(u, v);
+        let ringBase = 0;
+
+        const up = new THREE.Vector3(0, 1, 0); // vertical up
+        const normal = new THREE.Vector3();
+        const center = new THREE.Vector3();
+        const tangent = new THREE.Vector3();
+        const worldVertex = new THREE.Vector3();
+
+        for (const [s_start, s_end] of segments) {
+            // Two rings of vertices per segment (j = 0 and 1)
+            for (let j = 0; j <= 1; j++) {
+                const s = j === 0 ? s_start : s_end;
+                this.sim.getTrackPosition(s, center);
+                this.sim.getTrackTangent(s, tangent);
+                const spacing = this.sim.getTrackSpacing(s);
+
+                const radius = spacing / 2 + 3.1;
+                normal.set(-tangent.z, 0, tangent.x).normalize();
+
+                // Ring center (y is offset by 0.8)
+                center.y += 0.8;
+
+                for (let k = 0; k <= radialSegments; k++) {
+                    const theta = (k / radialSegments) * Math.PI * 2;
+                    const cos = Math.cos(theta);
+                    const sin = Math.sin(theta);
+
+                    worldVertex.copy(center)
+                        .addScaledVector(normal, cos * radius)
+                        .addScaledVector(up, sin * radius);
+
+                    const localVertex = chunkGroup.worldToLocal(worldVertex);
+                    vertices.push(localVertex.x, localVertex.y, localVertex.z);
+
+                    // UV coordinates: u goes around the circle, v goes along the length of the track
+                    uvs.push(k / radialSegments, j);
+                }
             }
-        }
-        
-        // Generate indices for faces (inward-facing normals)
-        for (let j = 0; j < numSub; j++) {
+
+            // Generate indices for faces (inward-facing normals)
             for (let k = 0; k < radialSegments; k++) {
-                const a = j * (radialSegments + 1) + k;
-                const b = j * (radialSegments + 1) + (k + 1);
-                const c = (j + 1) * (radialSegments + 1) + k;
-                const d = (j + 1) * (radialSegments + 1) + (k + 1);
-                
+                const a = ringBase + k;
+                const b = ringBase + (k + 1);
+                const c = ringBase + (radialSegments + 1) + k;
+                const d = ringBase + (radialSegments + 1) + (k + 1);
+
                 // Two triangles per quad (front faces facing inside)
                 indices.push(a, b, c);
                 indices.push(b, d, c);
             }
+            ringBase += 2 * (radialSegments + 1);
         }
-        
+
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
         geometry.setIndex(indices);
         geometry.computeVertexNormals();
-        
+
         return new THREE.Mesh(geometry, this.materials.tunnelWall);
     }
 
-    update(trainZ) {
-        const currentChunkIdx = Math.floor(trainZ / this.chunkSize);
-        const minChunk = Math.max(0, currentChunkIdx - this.visibleChunksCount);
-        const maxChunk = Math.min(Math.floor(this.sim.totalLength / this.chunkSize), currentChunkIdx + this.visibleChunksCount);
+    // Sweeps a solid rectangular BOX cross-section along the track spline between sStart..sEnd
+    // as ONE continuous BufferGeometry, instead of a chain of straight 5m boxes each only
+    // yaw-rotated to face the curve. Used for track beds AND fences/retaining walls alike —
+    // both are just boxes at different width/offset/height, so one helper covers both.
+    //
+    // This is what fixes the "staircase" look on ramps: the old code centred each flat,
+    // perfectly HORIZONTAL box at a different height per 5m sub-segment (no pitch), which
+    // visually stacks like steps. Here every ring samples its own true elevation
+    // (yBotFn/yTopFn return ABSOLUTE world Y, typically this.sim.getTrackY(s) + offset), so
+    // the quad connecting two rings is itself a tilted plane that follows the true slope —
+    // exact wherever the elevation profile is linear (which it is, between breakpoints),
+    // and it also lets width/offset vary continuously with the local track spacing instead
+    // of stepping per 5m sub-segment.
+    //
+    // centerOffFn(s): lateral offset of the box's centre from the track centreline.
+    // halfWidthFn(s): half-width of the box.
+    // yBotFn(s)/yTopFn(s): ABSOLUTE world Y of the box's bottom/top face at that ring.
+    // UV is baked in real metres (matches the existing scaleUVs() convention), so the shared
+    // RepeatWrapping ballast/viaduct materials can be reused directly — no cloning needed.
+    buildSweptTrackBox(chunkGroup, sStart, sEnd, centerOffFn, halfWidthFn, yBotFn, yTopFn, material, resStep = 2) {
+        const length = sEnd - sStart;
+        if (length <= 0) return null;
+        const nSeg = Math.max(1, Math.ceil(length / resStep));
+        const rings = [];
+        let cum = 0;
+        const wp = new THREE.Vector3(), tan = new THREE.Vector3(), prevWp = new THREE.Vector3();
+        for (let r = 0; r <= nSeg; r++) {
+            const s = sStart + length * r / nSeg;
+            this.sim.getTrackPosition(s, wp);
+            this.sim.getTrackTangent(s, tan);
+            const nlen = Math.hypot(-tan.z, tan.x) || 1;
+            const nX = -tan.z / nlen, nZ = tan.x / nlen;
+            const off = centerOffFn ? centerOffFn(s) : 0;
+            const hw = halfWidthFn(s);
+            const yTop = yTopFn(s), yBot = yBotFn(s);
+            if (r > 0) cum += wp.distanceTo(prevWp);
+            prevWp.copy(wp);
+            const mk = (lat, y) => chunkGroup.worldToLocal(new THREE.Vector3(wp.x + nX * lat, y, wp.z + nZ * lat));
+            rings.push({ bl: mk(off - hw, yBot), br: mk(off + hw, yBot), tr: mk(off + hw, yTop), tl: mk(off - hw, yTop), cum, w2: hw * 2 });
+        }
+        const pos = [], uv = [];
+        const tri = (a, b, c, ua, ub, uc) => { pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); uv.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]); };
+        const quad = (p0, p1, p2, p3, u0, u1, u2, u3) => { tri(p0, p1, p2, u0, u1, u2); tri(p0, p2, p3, u0, u2, u3); };
+        for (let r = 0; r < nSeg; r++) {
+            const A = rings[r], B = rings[r + 1];
+            quad(A.tl, A.tr, B.tr, B.tl, [0, A.cum], [A.w2, A.cum], [B.w2, B.cum], [0, B.cum]); // top
+            quad(A.br, A.bl, B.bl, B.br, [0, A.cum], [A.w2, A.cum], [B.w2, B.cum], [0, B.cum]); // bottom
+            quad(A.bl, A.tl, B.tl, B.bl, [0, A.cum], [0, A.cum], [0, B.cum], [0, B.cum]); // left side
+            quad(A.tr, A.br, B.br, B.tr, [0, A.cum], [0, A.cum], [0, B.cum], [0, B.cum]); // right side
+        }
+        const c0 = rings[0], cN = rings[nSeg];
+        quad(c0.bl, c0.br, c0.tr, c0.tl, [0, 0], [1, 0], [1, 1], [0, 1]); // start cap
+        quad(cN.tl, cN.tr, cN.br, cN.bl, [0, 0], [1, 0], [1, 1], [0, 1]); // end cap
 
-        // Load new visible chunks
-        for (let i = minChunk; i <= maxChunk; i++) {
-            if (!this.loadedChunks.has(i)) {
-                const chunk = this.createChunk(i);
-                this.scene.add(chunk);
-                this.loadedChunks.set(i, chunk);
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+        geom.computeVertexNormals();
+        const mesh = new THREE.Mesh(geom, material);
+        chunkGroup.add(mesh);
+        return mesh;
+    }
+
+    update(trainZ) {
+        // Distance-culling for the bespoke Plärrer complex: its hundreds of meshes are
+        // only worth traversing/rendering when the train is anywhere near the zone.
+        if (this.plaerrerGroup && this.sim.plaerrer) {
+            const plaerrerVisibleDist = this.sim.plStackHalf + this.sim.plRamp + 600;
+            this.plaerrerGroup.visible = Math.abs(trainZ - this.sim.plaerrer.position) < plaerrerVisibleDist;
+        }
+
+        const currentChunkIdx = Math.floor(trainZ / this.chunkSize);
+
+        // Deep underground the tunnel is pitch black beyond ~200 m, so a smaller streaming
+        // window suffices. Only shrink it when the FULL default window is underground —
+        // near portals the daylight world must already be streamed in before it gets visible.
+        let windowChunks = this.tunnelChunksCount;
+        for (let i = currentChunkIdx - this.visibleChunksCount; i <= currentChunkIdx + this.visibleChunksCount; i++) {
+            const z = (i + 0.5) * this.chunkSize;
+            if (z < 0 || z > this.sim.totalLength) continue;
+            if (this.sim.getChunkType(z) !== 'underground') {
+                windowChunks = this.visibleChunksCount;
+                break;
             }
         }
 
-        // Unload far away chunks
-        for (const [idx, chunk] of this.loadedChunks.entries()) {
+        const minChunk = Math.max(0, currentChunkIdx - windowChunks);
+        const maxChunk = Math.min(Math.floor(this.sim.totalLength / this.chunkSize), currentChunkIdx + windowChunks);
+
+        // Ensure all chunks in the window are in the scene. Chunks are built once and then
+        // cached forever: re-entering an area re-adds the cached group instead of rebuilding
+        // geometry mid-frame (this removes the 50m-interval hitches and the old GPU-memory
+        // churn from never-disposed geometries).
+        for (let i = minChunk; i <= maxChunk; i++) {
+            if (!this.activeChunks.has(i)) {
+                let chunk = this.chunkCache.get(i);
+                if (!chunk) {
+                    chunk = this.createChunk(i);
+                    this.chunkCache.set(i, chunk);
+                }
+                this.scene.add(chunk);
+                this.activeChunks.set(i, chunk);
+            }
+        }
+
+        // Detach far away chunks from the scene (they stay cached)
+        for (const [idx, chunk] of this.activeChunks.entries()) {
             if (idx < minChunk || idx > maxChunk) {
                 this.scene.remove(chunk);
-                this.loadedChunks.delete(idx);
+                this.activeChunks.delete(idx);
             }
         }
     }
@@ -776,9 +770,79 @@ export class TrackManager {
             thirdRailMat = this.materials.tunnelThirdRail;
         }
 
+        // --- Batching collectors ------------------------------------------------------
+        // All small static per-sub-segment meshes (beds, walls, ground, streets, lamps ...)
+        // are gathered per (geometry, material) pair and emitted as ONE InstancedMesh each
+        // at the end of createChunk, instead of ~50-80 individual meshes per chunk.
+        const batches = new Map();
+        const _bq = new THREE.Quaternion();
+        const _be = new THREE.Euler();
+        const _bp = new THREE.Vector3();
+        const _bs = new THREE.Vector3();
+        const addBatchedMatrix = (key, geom, mat, matrix) => {
+            let b = batches.get(key);
+            if (!b) { b = { geom, mat, mats: [] }; batches.set(key, b); }
+            b.mats.push(matrix);
+        };
+        const addBatched = (key, geom, mat, x, y, z, rotYVal, sx = 1, sy = 1, sz = 1) => {
+            _be.set(0, rotYVal, 0);
+            _bq.setFromEuler(_be);
+            const m = new THREE.Matrix4().compose(_bp.set(x, y, z), _bq, _bs.set(sx, sy, sz));
+            addBatchedMatrix(key, geom, mat, m);
+        };
+        // Tunnel-wall arc segments, merged into a single geometry after the loop
+        const tunnelWallSegs = [];
+
         // Subdivide chunk into 10 sub-segments of length 5 meters for beds/walls and rails
         const numSub = 10;
         const subLen = this.chunkSize / numSub;
+
+        // Track bed / fence kind (see classifyBedKind below) is tracked across sub-segments
+        // and flushed as ONE continuous swept mesh per contiguous run, instead of one flat
+        // box per 5m sub-segment (buildSweptTrackBox — see its comment for why this also
+        // fixes the "staircase" look on ramps). A run only ends where the kind actually
+        // changes (or at a Plärrer gap / the end of the chunk), so a run can span the whole
+        // chunk on straight, unbroken track.
+        let bedRun = null; // { kind, sStart, sEnd }
+        const flushBedRun = () => {
+            if (!bedRun) return;
+            const { kind, sStart, sEnd } = bedRun;
+            const gTY = (s) => this.sim.getTrackY(s);
+            const gSp = (s) => this.sim.getTrackSpacing(s);
+            if (kind === 'viaduct') {
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.80, (s) => gTY(s) - 0.30, this.materials.viaduct);
+                for (const sign of [1, -1]) {
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, (s) => sign * (gSp(s) / 2 + 2.15),
+                        () => 0.1, (s) => gTY(s) - 0.25, (s) => gTY(s) + 0.75, this.materials.viaduct);
+                }
+            } else if (kind === 'atgrade-split') {
+                for (const sign of [1, -1]) {
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, (s) => sign * gSp(s) / 2,
+                        () => 1.6, (s) => gTY(s) - 0.45, (s) => gTY(s) - 0.30, ballastMat);
+                }
+            } else if (kind === 'atgrade-normal') {
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => (gSp(s) + 3.8) / 2, (s) => gTY(s) - 0.45, (s) => gTY(s) - 0.30, ballastMat);
+            } else if (kind === 'shaft') {
+                const wShaft = (s) => gSp(s) + 4.5;
+                const wallCenterY = (s) => (gTY(s) - 0.85) / 2;
+                const wallHalfH = (s) => (0.15 - gTY(s)) / 2;
+                for (const sign of [1, -1]) {
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, (s) => sign * wShaft(s) / 2,
+                        () => 0.1, (s) => wallCenterY(s) - wallHalfH(s), (s) => wallCenterY(s) + wallHalfH(s), this.materials.viaduct);
+                }
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => wShaft(s) / 2, (s) => gTY(s) - 0.65, (s) => gTY(s) - 0.45, this.materials.viaduct);
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => (gSp(s) + 4.2) / 2, (s) => gTY(s) - 0.695, (s) => gTY(s) - 0.295, ballastMat);
+            } else if (kind === 'tunnel' || kind === 'tunnel-platform') {
+                const yOff = kind === 'tunnel-platform' ? 0.52 : 0.50;
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => (gSp(s) + 4.2) / 2, (s) => gTY(s) - yOff - 0.2, (s) => gTY(s) - yOff + 0.2, ballastMat);
+            }
+            bedRun = null;
+        };
 
         for (let j = 0; j < numSub; j++) {
             const s_start = startZ + j * subLen;
@@ -787,7 +851,7 @@ export class TrackManager {
 
             // Plärrer is built bespoke (stacked levels + hall + diverging tubes); skip all
             // generic beds / ground / tunnel walls there.
-            if (this.sim.isPlaerrerZone(s_mid)) continue;
+            if (this.sim.isPlaerrerZone(s_mid)) { flushBedRun(); continue; }
 
             const pos = this.sim.getTrackPosition(s_mid);
             const tangent = this.sim.getTrackTangent(s_mid);
@@ -813,8 +877,7 @@ export class TrackManager {
                     // so suppress the generic circular tube there (it is too small to reach
                     // the lower level anyway).
                     if (this.sim.isPlaerrerZone((intersectStart + intersectEnd) / 2)) return;
-                    const subTunnelMesh = this.createTunnelWallMesh(intersectStart, intersectEnd, chunkGroup);
-                    chunkGroup.add(subTunnelMesh);
+                    tunnelWallSegs.push([intersectStart, intersectEnd]);
                 }
             });
 
@@ -822,55 +885,31 @@ export class TrackManager {
             const isViaduct = (subChunkType === 'elevated' || subChunkType === 'ramp');
 
             if (isViaduct) {
-                const bedMesh = new THREE.Mesh(this.geometries.viaductBed, this.materials.viaduct);
-                bedMesh.position.copy(localPos);
-                bedMesh.position.y = localPos.y - 0.55;
-                bedMesh.rotation.y = rotY;
-                bedMesh.scale.x = (spacing + 4.3) / 10.5;
-                chunkGroup.add(bedMesh);
+                addBatched('viaductBed', this.geometries.viaductBed, this.materials.viaduct,
+                    localPos.x, localPos.y - 0.55, localPos.z, rotY, (spacing + 4.3) / 10.5, 1, 1);
 
                 const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-                const posL = pos.clone().addScaledVector(normal, -(spacing / 2 + 2.15));
-                const posR = pos.clone().addScaledVector(normal, (spacing / 2 + 2.15));
-
-                const wallL = new THREE.Mesh(this.geometries.viaductWall, this.materials.viaduct);
-                wallL.position.copy(chunkGroup.worldToLocal(posL));
-                wallL.position.y = localPos.y + 0.25;
-                wallL.rotation.y = rotY;
-
-                const wallR = new THREE.Mesh(this.geometries.viaductWall, this.materials.viaduct);
-                wallR.position.copy(chunkGroup.worldToLocal(posR));
-                wallR.position.y = localPos.y + 0.25;
-                wallR.rotation.y = rotY;
-
-                chunkGroup.add(wallL, wallR);
+                const posL = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -(spacing / 2 + 2.15)));
+                addBatched('viaductWall', this.geometries.viaductWall, this.materials.viaduct,
+                    posL.x, localPos.y + 0.25, posL.z, rotY);
+                const posR = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, (spacing / 2 + 2.15)));
+                addBatched('viaductWall', this.geometries.viaductWall, this.materials.viaduct,
+                    posR.x, localPos.y + 0.25, posR.z, rotY);
 
             } else if (subChunkType === 'at-grade') {
                 if (isPlatform && spacing > 15.0) {
                     const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-                    
-                    const bedL = new THREE.Mesh(this.geometries.ballastBed, ballastMat);
-                    const posL = pos.clone().addScaledVector(normal, -spacing / 2);
-                    bedL.position.copy(chunkGroup.worldToLocal(posL));
-                    bedL.position.y = localPos.y - 0.375;
-                    bedL.rotation.y = rotY;
-                    bedL.scale.x = 3.2 / 10.0; // 3.2m wide
 
-                    const bedR = new THREE.Mesh(this.geometries.ballastBed, ballastMat);
-                    const posR = pos.clone().addScaledVector(normal, spacing / 2);
-                    bedR.position.copy(chunkGroup.worldToLocal(posR));
-                    bedR.position.y = localPos.y - 0.375;
-                    bedR.rotation.y = rotY;
-                    bedR.scale.x = 3.2 / 10.0; // 3.2m wide
+                    const posL = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -spacing / 2));
+                    addBatched('ballastBed', this.geometries.ballastBed, ballastMat,
+                        posL.x, localPos.y - 0.375, posL.z, rotY, 3.2 / 10.0, 1, 1); // 3.2m wide
 
-                    chunkGroup.add(bedL, bedR);
+                    const posR = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, spacing / 2));
+                    addBatched('ballastBed', this.geometries.ballastBed, ballastMat,
+                        posR.x, localPos.y - 0.375, posR.z, rotY, 3.2 / 10.0, 1, 1); // 3.2m wide
                 } else {
-                    const bedMesh = new THREE.Mesh(this.geometries.ballastBed, ballastMat);
-                    bedMesh.position.copy(localPos);
-                    bedMesh.position.y = localPos.y - 0.375;
-                    bedMesh.rotation.y = rotY;
-                    bedMesh.scale.x = (spacing + 3.8) / 10.0;
-                    chunkGroup.add(bedMesh);
+                    addBatched('ballastBed', this.geometries.ballastBed, ballastMat,
+                        localPos.x, localPos.y - 0.375, localPos.z, rotY, (spacing + 3.8) / 10.0, 1, 1);
                 }
 
             } else if (subChunkType === 'shaft') {
@@ -879,47 +918,28 @@ export class TrackManager {
                 const wallY = (pos.y - 0.85) / 2 - chunkGroupY; // vertical center of retaining wall relative to chunk
                 const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
 
-                // Left Retaining Wall
-                const wallL = new THREE.Mesh(this.geometries.viaductWall, this.materials.viaduct);
-                const posL_wall = pos.clone().addScaledVector(normal, -W_shaft / 2);
-                wallL.position.copy(chunkGroup.worldToLocal(posL_wall));
-                wallL.position.y = wallY;
-                wallL.rotation.y = rotY;
-                wallL.scale.set(1.0, H_wall, 1.0);
-
-                // Right Retaining Wall
-                const wallR = new THREE.Mesh(this.geometries.viaductWall, this.materials.viaduct);
-                const posR_wall = pos.clone().addScaledVector(normal, W_shaft / 2);
-                wallR.position.copy(chunkGroup.worldToLocal(posR_wall));
-                wallR.position.y = wallY;
-                wallR.rotation.y = rotY;
-                wallR.scale.set(1.0, H_wall, 1.0);
+                // Left / Right Retaining Walls
+                const posL_wall = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -W_shaft / 2));
+                addBatched('viaductWall', this.geometries.viaductWall, this.materials.viaduct,
+                    posL_wall.x, wallY, posL_wall.z, rotY, 1.0, H_wall, 1.0);
+                const posR_wall = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, W_shaft / 2));
+                addBatched('viaductWall', this.geometries.viaductWall, this.materials.viaduct,
+                    posR_wall.x, wallY, posR_wall.z, rotY, 1.0, H_wall, 1.0);
 
                 // Concrete Floor
-                const floor = new THREE.Mesh(this.geometries.viaductBed, this.materials.viaduct);
-                floor.position.copy(localPos);
-                floor.position.y = localPos.y - 0.55;
-                floor.rotation.y = rotY;
-                floor.scale.set(W_shaft / 10.5, 0.2 / 0.5, 1.0);
+                addBatched('viaductBed', this.geometries.viaductBed, this.materials.viaduct,
+                    localPos.x, localPos.y - 0.55, localPos.z, rotY, W_shaft / 10.5, 0.2 / 0.5, 1.0);
 
-                // Ballast Bed (inside the concrete floor)
-                const ballastMesh = new THREE.Mesh(this.geometries.tunnelBallast, ballastMat);
-                ballastMesh.position.copy(localPos);
-                ballastMesh.position.y = localPos.y - 0.495; // Slightly higher than floor (which is at -0.55 top -0.30) to avoid z-fighting
-                ballastMesh.rotation.y = rotY;
-                ballastMesh.scale.x = (spacing + 4.2) / 10.4;
-
-                chunkGroup.add(wallL, wallR, floor, ballastMesh);
+                // Ballast Bed (inside the concrete floor); slightly higher than floor
+                // (which is at -0.55 top -0.30) to avoid z-fighting
+                addBatched('tunnelBallast', this.geometries.tunnelBallast, ballastMat,
+                    localPos.x, localPos.y - 0.495, localPos.z, rotY, (spacing + 4.2) / 10.4, 1, 1);
 
             } else {
-                // Underground tunnel ballast
-                const ballastMesh = new THREE.Mesh(this.geometries.tunnelBallast, ballastMat);
-                ballastMesh.position.copy(localPos);
-                // Lower slightly in platform areas to avoid z-fighting with platform floor bottom (at -0.30)
-                ballastMesh.position.y = localPos.y - (isPlatform ? 0.52 : 0.50);
-                ballastMesh.rotation.y = rotY;
-                ballastMesh.scale.x = (spacing + 4.2) / 10.4;
-                chunkGroup.add(ballastMesh);
+                // Underground tunnel ballast. Lower slightly in platform areas to avoid
+                // z-fighting with platform floor bottom (at -0.30)
+                addBatched('tunnelBallast', this.geometries.tunnelBallast, ballastMat,
+                    localPos.x, localPos.y - (isPlatform ? 0.52 : 0.50), localPos.z, rotY, (spacing + 4.2) / 10.4, 1, 1);
             }
 
             // Build Ground & Streets for open-air sub-segments
@@ -928,63 +948,37 @@ export class TrackManager {
                 const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
 
                 // Left background ground (width 450m, offset -280m, covers -505m to -55m)
-                const posBgL = pos.clone().addScaledVector(normal, -280);
-                const bgMeshL = new THREE.Mesh(this.geometries.bgGround, this.materials.bgGround);
-                bgMeshL.position.copy(chunkGroup.worldToLocal(posBgL));
-                bgMeshL.position.y = (groundY - 0.15) - chunkGroupY; // keep world Y flat at -0.5m
-                bgMeshL.rotation.y = rotY;
+                const posBgL = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -280));
+                addBatched('bgGround', this.geometries.bgGround, this.materials.bgGround,
+                    posBgL.x, (groundY - 0.15) - chunkGroupY, posBgL.z, rotY); // keep world Y flat at -0.5m
 
                 // Right background ground (width 450m, offset 280m, covers 55m to 505m)
-                const posBgR = pos.clone().addScaledVector(normal, 280);
-                const bgMeshR = new THREE.Mesh(this.geometries.bgGround, this.materials.bgGround);
-                bgMeshR.position.copy(chunkGroup.worldToLocal(posBgR));
-                bgMeshR.position.y = (groundY - 0.15) - chunkGroupY;
-                bgMeshR.rotation.y = rotY;
-
-                chunkGroup.add(bgMeshL, bgMeshR);
+                const posBgR = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, 280));
+                addBatched('bgGround', this.geometries.bgGround, this.materials.bgGround,
+                    posBgR.x, (groundY - 0.15) - chunkGroupY, posBgR.z, rotY);
 
                 // Open-cut shaft has split grass terrain to expose retaining walls
                 if (subChunkType === 'shaft') {
                     const W_shaft = spacing + 4.5;
                     const W_ground = 60 - W_shaft / 2;
 
-                    const posL = pos.clone().addScaledVector(normal, -(W_shaft / 2 + W_ground / 2));
-                    const leftGround = new THREE.Mesh(this.geometries.ground, this.materials.ground);
-                    leftGround.position.copy(chunkGroup.worldToLocal(posL));
-                    leftGround.position.y = (groundY - 0.05) - chunkGroupY; // keep world Y flat at -0.4m
-                    leftGround.rotation.y = rotY;
-                    leftGround.scale.x = W_ground / 120;
+                    const posL = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -(W_shaft / 2 + W_ground / 2)));
+                    addBatched('ground', this.geometries.ground, this.materials.ground,
+                        posL.x, (groundY - 0.05) - chunkGroupY, posL.z, rotY, W_ground / 120, 1, 1); // keep world Y flat at -0.4m
 
-                    const posR = pos.clone().addScaledVector(normal, (W_shaft / 2 + W_ground / 2));
-                    const rightGround = new THREE.Mesh(this.geometries.ground, this.materials.ground);
-                    rightGround.position.copy(chunkGroup.worldToLocal(posR));
-                    rightGround.position.y = (groundY - 0.05) - chunkGroupY;
-                    rightGround.rotation.y = rotY;
-                    rightGround.scale.x = W_ground / 120;
-
-                    chunkGroup.add(leftGround, rightGround);
+                    const posR = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, (W_shaft / 2 + W_ground / 2)));
+                    addBatched('ground', this.geometries.ground, this.materials.ground,
+                        posR.x, (groundY - 0.05) - chunkGroupY, posR.z, rotY, W_ground / 120, 1, 1);
                 } else {
-                    const groundMesh = new THREE.Mesh(this.geometries.ground, this.materials.ground);
-                    groundMesh.position.copy(localPos);
-                    groundMesh.position.y = (groundY - 0.05) - chunkGroupY;
-                    groundMesh.rotation.y = rotY;
-                    chunkGroup.add(groundMesh);
+                    addBatched('ground', this.geometries.ground, this.materials.ground,
+                        localPos.x, (groundY - 0.05) - chunkGroupY, localPos.z, rotY);
                 }
-
-                const posL = pos.clone().addScaledVector(normal, -18);
-                const streetL = new THREE.Mesh(this.geometries.street, this.materials.street);
-                streetL.position.copy(chunkGroup.worldToLocal(posL));
-                streetL.position.y = groundY - chunkGroupY; // keep world Y flat at -0.35m
-                streetL.rotation.y = rotY;
-
-                const posR = pos.clone().addScaledVector(normal, 18);
-                const streetR = new THREE.Mesh(this.geometries.street, this.materials.street);
-                streetR.position.copy(chunkGroup.worldToLocal(posR));
-                streetR.position.y = groundY - chunkGroupY;
-                streetR.rotation.y = rotY;
-
-                chunkGroup.add(streetL, streetR);
             }
+        }
+
+        // Merged tunnel wall: one geometry + one draw call for the whole chunk
+        if (tunnelWallSegs.length > 0) {
+            chunkGroup.add(this.createTunnelWallMesh(tunnelWallSegs, chunkGroup));
         }
 
         // Add elevated pillars underneath the tracks
@@ -992,12 +986,14 @@ export class TrackManager {
             this.createPillars(chunkGroup, startZ);
         }
 
-        // Add tunnel lights (the bespoke Plärrer tubes carry their own lamps)
+        // Add tunnel lights (the bespoke Plärrer tubes carry their own lamps).
+        // The fixtures/tubes/halos are collected into the chunk batches (3 InstancedMeshes)
+        // instead of 24 individual meshes per chunk.
         if (chunkType === 'underground') {
             const lightSpacings = [6.25, 18.75, 31.25, 43.75];
             lightSpacings.forEach(ls => {
                 if (this.sim.isPlaerrerZone(startZ + ls)) return;
-                this.createTunnelLights(chunkGroup, startZ + ls);
+                this.createTunnelLights(chunkGroup, startZ + ls, addBatchedMatrix);
             });
         }
 
@@ -1158,9 +1154,24 @@ export class TrackManager {
         });
 
         // 6. Build procedural city environment for open-air chunks
-        if (chunkType !== 'underground') {
-            this.createCityEnvironment(chunkGroup, 0, chunkType, idx);
-        }
+        // if (chunkType !== 'underground') {
+        //     this.createCityEnvironment(chunkGroup, 0, chunkType, idx);
+        // }
+
+        // 7. Emit the collected batches: one InstancedMesh per (geometry, material) pair
+        // (a lone instance becomes a plain Mesh).
+        batches.forEach(b => {
+            if (b.mats.length === 1) {
+                const mesh = new THREE.Mesh(b.geom, b.mat);
+                mesh.applyMatrix4(b.mats[0]);
+                chunkGroup.add(mesh);
+            } else {
+                const im = new THREE.InstancedMesh(b.geom, b.mat, b.mats.length);
+                for (let i = 0; i < b.mats.length; i++) im.setMatrixAt(i, b.mats[i]);
+                im.instanceMatrix.needsUpdate = true;
+                chunkGroup.add(im);
+            }
+        });
 
         return chunkGroup;
     }
@@ -1192,7 +1203,7 @@ export class TrackManager {
         }
     }
 
-    createTunnelLights(chunkGroup, s) {
+    createTunnelLights(chunkGroup, s, addBatchedMatrix) {
         const pos = this.sim.getTrackPosition(s);
         const tangent = this.sim.getTrackTangent(s);
         const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
@@ -1215,37 +1226,22 @@ export class TrackManager {
         const localR = chunkGroup.worldToLocal(posR);
         const angle = Math.atan2(tangent.x, tangent.z) - chunkGroup.rotation.y;
 
-        // Left Wall Lamp
-        const fixtureL = new THREE.Mesh(this.geometries.tunnelFixture, this.materials.tunnelFixtureMat);
-        fixtureL.position.copy(localL);
-        fixtureL.position.y = localL.y + Y_lamp;
-        fixtureL.rotation.set(0, angle, rotZ_L, 'YXZ');
+        const one = new THREE.Vector3(1, 1, 1);
+        const addLamp = (local, rotZ) => {
+            // Fixture casing at the wall, then the glow tube and the halo plane as
+            // fixed local +Y offsets of the fixture (formerly child meshes).
+            const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, rotZ, 'YXZ'));
+            const fm = new THREE.Matrix4().compose(new THREE.Vector3(local.x, local.y + Y_lamp, local.z), q, one);
+            addBatchedMatrix('tunnelFixture', this.geometries.tunnelFixture, this.materials.tunnelFixtureMat, fm);
+            const gm = fm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.041, 0));
+            addBatchedMatrix('tunnelGlow', this.geometries.tunnelGlow, this.materials.tunnelGlow, gm);
+            // halo slightly offset from the casing in local +Y (towards center of tunnel)
+            const hm = fm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.005, 0));
+            addBatchedMatrix('tunnelHalo', this.geometries.tunnelHalo, this.materials.neonHaloMat, hm);
+        };
 
-        const glowL = new THREE.Mesh(this.geometries.tunnelGlow, this.materials.tunnelGlow);
-        glowL.position.set(0, 0.041, 0);
-        fixtureL.add(glowL);
-
-        const haloL = new THREE.Mesh(this.geometries.tunnelHalo, this.materials.neonHaloMat);
-        haloL.position.set(0, 0.005, 0); // slightly offset from the casing in local +Y (towards center of tunnel)
-        fixtureL.add(haloL);
-
-        chunkGroup.add(fixtureL);
-
-        // Right Wall Lamp
-        const fixtureR = new THREE.Mesh(this.geometries.tunnelFixture, this.materials.tunnelFixtureMat);
-        fixtureR.position.copy(localR);
-        fixtureR.position.y = localR.y + Y_lamp;
-        fixtureR.rotation.set(0, angle, rotZ_R, 'YXZ');
-
-        const glowR = new THREE.Mesh(this.geometries.tunnelGlow, this.materials.tunnelGlow);
-        glowR.position.set(0, 0.041, 0);
-        fixtureR.add(glowR);
-
-        const haloR = new THREE.Mesh(this.geometries.tunnelHalo, this.materials.neonHaloMat);
-        haloR.position.set(0, 0.005, 0); // slightly offset from the casing in local +Y (towards center of tunnel)
-        fixtureR.add(haloR);
-
-        chunkGroup.add(fixtureR);
+        addLamp(localL, rotZ_L); // Left Wall Lamp
+        addLamp(localR, rotZ_R); // Right Wall Lamp
     }
 
     createPortalArch(localPortalZ, group, centerX = 0, scale = 1.0) {
@@ -1373,53 +1369,10 @@ export class TrackManager {
             group.add(treeTrunkIM, treeLeavesIM);
         }
 
-        // 3. Create Cloud Planes
-        for (let c = 0; c < 3; c++) {
-            const seed = idx * 37 + c * 53;
-            const rand1 = seedRandom(seed);
-            const rand2 = seedRandom(seed + 1);
-            const rand3 = seedRandom(seed + 2);
-
-            const cloudWidth = 50 + rand1 * 40;
-            const cloudLength = 30 + rand2 * 30;
-            const cloudX = (rand1 - 0.5) * 120;
-            const cloudY = 40 + rand2 * 15; // height between 40m and 55m
-            const cloudZ = (rand3 - 0.5) * 50;
-
-            const cloudMesh = new THREE.Mesh(this.geometries.cloud, this.materials.cloud);
-            cloudMesh.position.set(cloudX, cloudY - chunkGroupY, cloudZ); // keep world Y flat
-            cloudMesh.scale.set(cloudWidth / 50, cloudLength / 50, 1.0);
-            cloudMesh.rotation.y = rand3 * Math.PI * 2;
-            group.add(cloudMesh);
-        }
+        // Clouds are no longer separate per-chunk meshes: they are baked into the
+        // equirectangular sky photo used as scene.background (see WorldManager.init).
     }
 
-    createGrassTexture() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#2e5c1e';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < 2000; i++) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            const len = 2 + Math.random() * 3;
-            const colorVal = Math.random();
-            if (colorVal < 0.3) ctx.strokeStyle = '#244b16';
-            else if (colorVal < 0.6) ctx.strokeStyle = '#3b7527';
-            else ctx.strokeStyle = '#478f2f';
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + (Math.random() - 0.5) * 1.5, y - len);
-            ctx.stroke();
-        }
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(24, 2);
-        return texture;
-    }
 
     createStreetTexture() {
         const canvas = document.createElement('canvas');
@@ -1523,29 +1476,4 @@ export class TrackManager {
         return tex;
     }
 
-    createCloudTexture() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const numCircles = 12;
-        for (let i = 0; i < numCircles; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.random() * 40;
-            const x = canvas.width / 2 + Math.cos(angle) * dist;
-            const y = canvas.height / 2 + Math.sin(angle) * dist;
-            const radius = 25 + Math.random() * 25;
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
-            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.12)');
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        const texture = new THREE.CanvasTexture(canvas);
-        return texture;
-    }
 }

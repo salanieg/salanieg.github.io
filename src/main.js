@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import { Simulation } from './simulator/Simulation.js?v=50';
-import { WorldManager } from './simulator/WorldManager.js?v=42';
-import { TrackManager } from './simulator/TrackManager.js?v=48';
-import { StationModel } from './simulator/StationModel.js?v=48';
-import { TrainModel } from './simulator/TrainModel.js?v=65';
+import { Simulation } from './simulator/Simulation.js?v=58';
+import { WorldManager } from './simulator/WorldManager.js?v=47';
+import { TrackManager } from './simulator/TrackManager.js?v=52';
+import { StationModel } from './simulator/StationModel.js?v=49';
+import { TrainModel } from './simulator/TrainModel.js?v=66';
 import { AudioManager } from './audio/AudioManager.js?v=39';
 import { RadioManager } from './audio/RadioManager.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 class App {
     constructor() {
@@ -23,6 +24,11 @@ class App {
         // Announcement state
         this.announcedNextStation = false;
         this.lastDoorState = 0;
+
+        // Performance HUD state (toggled with P)
+        this.perfHudVisible = false;
+        this.perfFrames = 0;
+        this.perfTimer = 0;
         
         this.dom = {
             splash: document.getElementById('splash'),
@@ -44,6 +50,9 @@ class App {
 
         // Plärrer reuses the StationModel's floor/stair textures, so build it now.
         this.trackManager.buildPlaerrer(this.stationModel);
+
+        // Load the 3D City model (3Dcity.glb)
+        this.loadCityModel();
 
         // Bind Footsteps from WorldManager to AudioManager
         this.world.onFootstep = (vol) => {
@@ -151,6 +160,24 @@ class App {
             e.target.blur();
         });
 
+        // Auflösungs-Button: schaltet die Renderauflösung 100 % -> 75 % -> 50 % durch
+        const resBtn = document.getElementById('btn-resolution');
+        const resSteps = [1.0, 0.75, 0.5];
+        let savedRes = parseFloat(localStorage.getItem('ubahnsim_resscale'));
+        if (!resSteps.includes(savedRes)) savedRes = 1.0;
+        this.world.setResolutionScale(savedRes);
+        const resLabel = (s) => `Auflösung: ${Math.round(s * 100)} %`;
+        if (resBtn) {
+            resBtn.textContent = resLabel(savedRes);
+            resBtn.addEventListener('click', (e) => {
+                const next = resSteps[(resSteps.indexOf(this.world.resolutionScale) + 1) % resSteps.length];
+                this.world.setResolutionScale(next);
+                localStorage.setItem('ubahnsim_resscale', String(next));
+                resBtn.textContent = resLabel(next);
+                e.target.blur();
+            });
+        }
+
         // Setup Volume Slider
         const volumeSlider = document.getElementById('volume-slider');
         const volumeValue = document.getElementById('volume-value');
@@ -245,6 +272,92 @@ class App {
         requestAnimationFrame(this.animate.bind(this));
     }
 
+    loadCityModel() {
+        const btnStart = this.dom.btnStart;
+        btnStart.disabled = true;
+        btnStart.textContent = 'Modell wird geladen...';
+
+        const loadingStatus = document.getElementById('loading-status');
+        const loadingBar = document.getElementById('loading-bar');
+        const loadingContainer = document.getElementById('loading-container');
+
+        const loader = new GLTFLoader();
+        
+        loader.load(
+            './citynew2.glb',
+            (gltf) => {
+                const model = gltf.scene;
+                
+                // Apply the exact position and orientation values determined via debugger
+                model.position.set(-5679.00, 0.0, -3779.00);
+                model.rotation.set(0, 0, 0);
+                model.scale.set(1.0, 1.0, 1.0);
+                
+                this.world.scene.add(model);
+                
+                model.traverse(child => {
+                    if (child.isMesh) {
+                        child.frustumCulled = true;
+                        child.castShadow = false;
+                        child.receiveShadow = false;
+                        if (child.material) {
+                            child.material.shadowSide = null;
+                        }
+                    }
+                });
+
+                this.cityModel = model;
+
+                if (loadingContainer) {
+                    loadingContainer.style.display = 'none';
+                }
+                btnStart.disabled = false;
+                btnStart.textContent = 'Simulation starten';
+                console.log('City model loaded successfully.');
+            },
+            (xhr) => {
+                if (xhr.lengthComputable) {
+                    const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
+                    if (loadingStatus) {
+                        loadingStatus.textContent = `3D-Stadtmodell wird geladen: ${percentComplete}% (${(xhr.loaded / (1024 * 1024)).toFixed(1)} MB von ${(xhr.total / (1024 * 1024)).toFixed(1)} MB)`;
+                    }
+                    if (loadingBar) {
+                        loadingBar.style.width = percentComplete + '%';
+                    }
+                } else {
+                    const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
+                    if (loadingStatus) {
+                        loadingStatus.textContent = `3D-Stadtmodell wird geladen: ${loadedMB} MB geladen...`;
+                    }
+                    if (loadingBar) {
+                        loadingBar.style.width = '50%';
+                    }
+                }
+            },
+            (error) => {
+                console.error('Error loading city model:', error);
+                let errorMsg = 'Netzwerkfehler (404, CORS oder Mime-Type?)';
+                if (error && error.message) {
+                    errorMsg = error.message;
+                } else if (error && error.target && error.target.status) {
+                    errorMsg = `HTTP-Fehler ${error.target.status}: ${error.target.statusText || 'Nicht gefunden'}`;
+                }
+                
+                // Check if running directly via file:// protocol
+                if (window.location.protocol === 'file:') {
+                    errorMsg = 'Browser blockiert lokale Dateien unter file:// (CORS). Bitte nutze einen lokalen Webserver (z.B. Live Server)!';
+                }
+
+                if (loadingStatus) {
+                    loadingStatus.textContent = `Fehler beim Laden des 3D-Stadtmodells! (${errorMsg})`;
+                    loadingStatus.style.color = '#ef4444';
+                }
+                btnStart.disabled = false;
+                btnStart.textContent = 'Simulation starten (ohne Stadt)';
+            }
+        );
+    }
+
     startSimulation() {
         // Hide splash screen
         this.dom.splash.style.display = 'none';
@@ -274,6 +387,15 @@ class App {
 
         // 2. Keyboard bindings
         document.addEventListener('keydown', (e) => {
+            // Performance HUD toggle (works regardless of simulation state)
+            if (e.key.toLowerCase() === 'p') {
+                this.perfHudVisible = !this.perfHudVisible;
+                const hud = document.getElementById('perf-hud');
+                if (hud) hud.style.display = this.perfHudVisible ? 'block' : 'none';
+                this.perfFrames = 0;
+                this.perfTimer = 0;
+            }
+
             if (!this.isRunning) return;
 
             const key = e.key.toLowerCase();
@@ -453,6 +575,26 @@ class App {
         this.stationModel.update(this.sim.position);
         this.trainModel.update(dt);
         this.world.update(dt, this.trainModel);
+
+        // Performance HUD (Taste P): FPS + Renderer-Statistiken, 2x pro Sekunde aktualisiert
+        if (this.perfHudVisible) {
+            this.perfFrames++;
+            this.perfTimer += dt;
+            if (this.perfTimer >= 0.5) {
+                const fps = this.perfFrames / this.perfTimer;
+                const info = this.world.renderer.info;
+                const hud = document.getElementById('perf-hud');
+                if (hud) {
+                    hud.textContent =
+                        `FPS:        ${fps.toFixed(0)} (${(1000 / fps).toFixed(1)} ms)\n` +
+                        `Draw Calls: ${info.render.calls}\n` +
+                        `Dreiecke:   ${info.render.triangles.toLocaleString('de-DE')}\n` +
+                        `Geometrien: ${info.memory.geometries}  Texturen: ${info.memory.textures}`;
+                }
+                this.perfFrames = 0;
+                this.perfTimer = 0;
+            }
+        }
     }
 
     handleAnnouncements() {
