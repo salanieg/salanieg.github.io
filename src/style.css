@@ -857,11 +857,13 @@ footer {
 }
 
 .start-btn {
+    position: relative;
+    overflow: hidden;
     width: 100%;
     background: #d32f2f;
     color: #ffffff;
     border: none;
-    padding: 12px 24px;
+    padding: 14px 24px;
     font-size: 14px;
     font-weight: 700;
     text-transform: uppercase;
@@ -870,18 +872,42 @@ footer {
     cursor: pointer;
     transition: all 0.2s;
     font-family: 'Outfit', sans-serif;
-    box-shadow: none;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
 }
 
 .start-btn:hover {
     background: #b71c1c;
     color: #ffffff;
-    box-shadow: none;
-    transform: none;
+    box-shadow: 0 6px 16px rgba(211, 47, 47, 0.4);
 }
 
 .start-btn:active {
     transform: scale(0.98);
+}
+
+#btn-loading-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 0%;
+    background: #c21d2c; /* Nuremberg G1 red loading bar */
+    z-index: 1;
+    transition: width 0.1s ease-out, opacity 0.3s ease;
+}
+
+.start-btn.loaded #btn-loading-bar {
+    opacity: 0;
+}
+
+#btn-text {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 /* Teleport HUD Overlay (Bottom Right) */
@@ -1182,45 +1208,11 @@ body.is-mobile .mobile-controls {
     pointer-events: none;
 }
 
-/* Loading container for 3D City model */
-#loading-container {
-    margin-top: 24px;
-    width: 100%;
-    text-align: center;
-    font-family: 'Outfit', sans-serif;
-}
-
-#loading-status {
-    font-size: 14px;
-    font-weight: 500;
-    color: #ffcc44;
-    display: block;
-    margin-bottom: 8px;
-}
-
-.loading-bar-wrap {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-#loading-bar {
-    width: 0%;
-    height: 100%;
-    background: #ffcc44;
-    transition: width 0.1s ease-out;
-    border-radius: 4px;
-    box-shadow: 0 0 8px #ffcc44;
-}
-
 .start-btn:disabled {
-    background: #475569;
-    color: #94a3b8;
+    background: #334155; /* dark grey slate background for disabled */
+    color: #cbd5e1;      /* light grey text */
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
-    opacity: 0.6;
+    opacity: 1;          /* keep fully opaque so loading bar reads clearly */
 }

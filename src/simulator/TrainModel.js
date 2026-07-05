@@ -92,6 +92,9 @@ export class TrainModel {
             floorGrey: this.createFloorMaterial(),
             fabricRed: this.createFabricMaterial(),
             cockpitFloor: cheapMaterial({ color: '#bcbcbc', metalness: 0.1, roughness: 0.8 }),
+            currentCollectorYellow: cheapMaterial({ color: '#ffcc00', metalness: 0.1, roughness: 0.5 }), // Stromabnehmer yellow
+            skirtGrey: cheapMaterial({ color: '#53565f', metalness: 0.1, roughness: 0.5 }), // G1 dark grey skirt stripe
+            underbodyOrange: cheapMaterial({ color: '#d35400', metalness: 0.1, roughness: 0.6 }), // DT1 orange box
             windowGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }),
             cabWindowGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }), // match standard window transparency
             windshieldGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }),
@@ -361,6 +364,12 @@ export class TrainModel {
                     const bottomRed = new THREE.Mesh(bottomRedGeom, wallMaterial);
                     bottomRed.position.set(xSign * 1.43, 0.50, zCenter);
                     carGroup.add(bottomRed);
+
+                    // Grey bottom skirt: Y = 0.00 to 0.40 (height 0.40, centered Y = 0.20, color #53565f)
+                    const bottomGreyGeom = new THREE.BoxGeometry(0.04, 0.40, zLength);
+                    const bottomGrey = new THREE.Mesh(bottomGreyGeom, this.materials.skirtGrey);
+                    bottomGrey.position.set(xSign * 1.43, 0.20, zCenter);
+                    carGroup.add(bottomGrey);
  
                     // Middle white stripe: Y = 0.60 to 1.20 (height 0.60, centered Y = 0.90)
                     const midWhiteGeom = new THREE.BoxGeometry(0.04, 0.60, zLength);
@@ -598,8 +607,12 @@ export class TrainModel {
             }
  
             // 4. Wheels/Bogies (2 bogies per car, symmetrically spaced 12.0m apart)
-            this.buildBogie(carGroup, -carLength / 2 + 6.0);
-            this.buildBogie(carGroup, -carLength / 2 - 6.0);
+            // Bogies 1, 4, 5, 8 have yellow current collectors (i.e. Car 0 Front, Car 1 Rear, Car 2 Front, Car 3 Rear)
+            this.buildBogie(carGroup, -carLength / 2 + 6.0, (i === 0 || i === 2));
+            this.buildBogie(carGroup, -carLength / 2 - 6.0, (i === 1 || i === 3));
+
+            // Underbody installations (equipment boxes and air reservoirs)
+            this.buildG1Underbody(carGroup, i, carLength);
  
             // 5. Build passenger doors (3 doors per side)
             const doorPositionsZ = this.getG1DoorPositions(i);
@@ -607,7 +620,7 @@ export class TrainModel {
                 this.createDoorPair(carGroup, -1.44, dz, i, 'left');
                 this.createDoorPair(carGroup, 1.44, dz, i, 'right');
  
-                // Fill the gap above doors (Y = 2.45 to 2.85)
+                // Fill the gap above doors (Y = 2.45 to 2.85) and add grey skirt below doors
                 for (let xSign of [-1, 1]) {
                     const posX = xSign * 1.43;
                     // Gloss black band above door: Y = 2.45 to 2.55 (height 0.10)
@@ -617,6 +630,11 @@ export class TrainModel {
                     const doorTopRed = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.30, 1.636), this.materials.bodyRedG1);
                     doorTopRed.position.set(posX, 2.70, dz);
                     carGroup.add(doorTopGrey, doorTopRed);
+
+                    // Grey bottom skirt under door: Y = 0.00 to 0.40 (height 0.40, centered Y = 0.20, color #53565f)
+                    const doorBottomGrey = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.40, 1.636), this.materials.skirtGrey);
+                    doorBottomGrey.position.set(posX, 0.20, dz);
+                    carGroup.add(doorBottomGrey);
 
                     // Thin white lining panel on the inside above door: Y = 2.45 to 2.85 (height 0.40)
                     const doorTopWhite = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.40, 1.636), this.materials.bodyWhite);
@@ -1419,10 +1437,11 @@ export class TrainModel {
             const flank = new THREE.Mesh(sign < 0 ? G.g1CabSideL : G.g1CabSideR, this.materials.bodyGlossBlack);
             const flankGlass = new THREE.Mesh(sign < 0 ? G.g1CabGlassL : G.g1CabGlassR, this.materials.cabWindowGlass);
             const redStripe = new THREE.Mesh(sign < 0 ? G.g1CabRedStripeL : G.g1CabRedStripeR, this.materials.bodyRedG1);
+            const skirtStripe = new THREE.Mesh(sign < 0 ? G.g1CabSkirtStripeL : G.g1CabSkirtStripeR, this.materials.skirtGrey);
             const redWedge = new THREE.Mesh(sign < 0 ? G.g1CabRedWedgeL : G.g1CabRedWedgeR, this.materials.bodyRedG1);
             const whiteTri = new THREE.Mesh(sign < 0 ? G.g1CabWhiteTriL : G.g1CabWhiteTriR, this.materials.bodyWhite);
             const topStrip = new THREE.Mesh(sign < 0 ? G.g1CabTopStripL : G.g1CabTopStripR, this.materials.bodyRedG1);
-            sideGroup.add(flank, flankGlass, redStripe, redWedge, whiteTri, topStrip);
+            sideGroup.add(flank, flankGlass, redStripe, skirtStripe, redWedge, whiteTri, topStrip);
 
             // Doorway reveal: jambs, header and sill lining the flank cutout so
             // the opening has visible depth when the door swings out
@@ -1927,9 +1946,10 @@ export class TrainModel {
         });
     }
 
-    buildBogie(carGroup, zOffset) {
+    buildBogie(carGroup, zOffset, hasCollector = false, redFrameDirection = 0) {
         const S = TRAIN_SCALE;
         const isG1 = (this.trainType === 'G1');
+        const isDT1 = (this.trainType === 'DT1');
         const axleOffset = 1.05 * S; // 2.1m Radstand für beide Züge
         const bogieFrameWidth = isG1 ? 2.5 * S : 2.5 * S;
         const wheelX = 0.7175;
@@ -1938,6 +1958,12 @@ export class TrainModel {
         const frame = new THREE.Mesh(bogieFrameGeom, this.materials.bodyGrey);
         frame.position.set(0, -0.2494, zOffset);
         carGroup.add(frame);
+
+        // Bolster/Suspension connecting the bogie to the chassis (Wiege / Drehzapfen)
+        const bolsterGeom = new THREE.BoxGeometry(1.2 * S, 0.50 * S, 0.8 * S);
+        const bolster = new THREE.Mesh(bolsterGeom, this.materials.bodyGrey);
+        bolster.position.set(0, 0.05 * S, zOffset);
+        carGroup.add(bolster);
  
         const axleZ = [zOffset - axleOffset, zOffset + axleOffset];
         axleZ.forEach(az => {
@@ -1957,6 +1983,236 @@ export class TrainModel {
             
             carGroup.add(wheelL, wheelR);
         });
+
+        if ((isG1 && hasCollector) || isDT1) {
+            // Build yellow side current collector (Stromabnehmer) on both sides (X = ±1.0)
+            const collectorXOffsets = [-1.0, 1.0];
+            collectorXOffsets.forEach(cx => {
+                const xSign = cx > 0 ? 1 : -1;
+                
+                // 1. Horizontal mounting bar/bracket (Yellow)
+                const bracketGeom = new THREE.BoxGeometry(0.08 * S, 0.08 * S, 0.6 * S);
+                const bracket = new THREE.Mesh(bracketGeom, this.materials.currentCollectorYellow);
+                bracket.position.set(cx * S, -0.25 * S, zOffset);
+                carGroup.add(bracket);
+
+                // 2. Vertical support arm going down (Yellow)
+                const armGeom = new THREE.BoxGeometry(0.06 * S, 0.12 * S, 0.1 * S);
+                const arm = new THREE.Mesh(armGeom, this.materials.currentCollectorYellow);
+                arm.position.set(cx * S, -0.32 * S, zOffset);
+                carGroup.add(arm);
+
+                // 3. Current collector shoe (Stromabnehmerschuh) (Dark Grey/Black)
+                const shoeGeom = new THREE.BoxGeometry(0.12 * S, 0.03 * S, 0.35 * S);
+                const shoe = new THREE.Mesh(shoeGeom, this.materials.bodyDarkGrey);
+                shoe.position.set((cx + xSign * 0.02) * S, -0.38 * S, zOffset);
+                carGroup.add(shoe);
+            });
+        }
+
+        if (isDT1 && redFrameDirection !== 0) {
+            // Build red vertical protective frame on both sides (X = ±1.0)
+            const frameZ = zOffset + redFrameDirection * (axleOffset + 0.40 * S);
+            const frameXOffsets = [-1.0, 1.0];
+            frameXOffsets.forEach(cx => {
+                const frameGeom = new THREE.BoxGeometry(0.06 * S, 0.35 * S, 0.16 * S);
+                const frameMesh = new THREE.Mesh(frameGeom, this.materials.bodyRedDT1);
+                frameMesh.position.set(cx * S, -0.42 * S, frameZ);
+                carGroup.add(frameMesh);
+            });
+        }
+    }
+
+    createUnderbodyBox(carGroup, xCenter, yCenter, zCenter, sizeX, sizeY, sizeZ, material, hasDetails = false) {
+        const S = TRAIN_SCALE;
+        const geom = new THREE.BoxGeometry(sizeX * S, sizeY * S, sizeZ * S);
+        const box = new THREE.Mesh(geom, material);
+        box.position.set(xCenter * S, yCenter * S, zCenter * S);
+        carGroup.add(box);
+
+        if (hasDetails) {
+            // Add access panel details on left/right sides
+            const panelMat = this.materials.bodyDarkGrey;
+            const detailMat = this.materials.bodyGlossBlack;
+            const numPanels = Math.max(2, Math.floor(sizeZ / 0.5));
+            const panelLength = (sizeZ - 0.1) / numPanels;
+            
+            for (let side of [-1, 1]) {
+                const px = xCenter + side * (sizeX / 2 + 0.005);
+                for (let pIdx = 0; pIdx < numPanels; pIdx++) {
+                    const pz = zCenter - sizeZ / 2 + 0.05 + pIdx * panelLength + panelLength / 2;
+                    const panelGeom = new THREE.BoxGeometry(0.01 * S, (sizeY - 0.06) * S, (panelLength - 0.04) * S);
+                    const panel = new THREE.Mesh(panelGeom, detailMat);
+                    panel.position.set(px * S, yCenter * S, pz * S);
+                    carGroup.add(panel);
+                }
+            }
+        }
+    }
+
+    createUnderbodyCylinder(carGroup, xCenter, yCenter, zCenter, radius, length, material) {
+        const S = TRAIN_SCALE;
+        const geom = new THREE.CylinderGeometry(radius * S, radius * S, length * S, 12);
+        geom.rotateX(Math.PI / 2); // Rotate to lie horizontally along Z axis
+        const cyl = new THREE.Mesh(geom, material);
+        cyl.position.set(xCenter * S, yCenter * S, zCenter * S);
+        carGroup.add(cyl);
+
+        // Add mounting brackets / straps holding the cylinder
+        const strapMat = this.materials.bodyDarkGrey;
+        for (let zSign of [-1, 1]) {
+            const strapGeom = new THREE.BoxGeometry((radius * 2 + 0.03) * S, 0.02 * S, 0.03 * S);
+            const strap = new THREE.Mesh(strapGeom, strapMat);
+            strap.position.set(xCenter * S, (yCenter + radius + 0.01) * S, (zCenter + zSign * (length / 3)) * S);
+            carGroup.add(strap);
+        }
+    }
+
+    buildG1Underbody(carGroup, carIdx, carLength) {
+        const boxMaterial = this.materials.bodyGrey; // grey box
+        const cylinderMaterial = this.materials.bodyBumperGrey; // slightly different grey/silver for air reservoirs
+
+        // Chassis bottom is at Y = 0.30. Top of running gear rail is at Y = -0.7414.
+        // Underbody box height: 0.52m (stretched downward).
+        // Y center of boxes: Y = 0.30 - 0.52 / 2 = 0.04m.
+        const yCenter = 0.04;
+        const sizeY = 0.52;
+        const sizeX = 2.4; // width
+
+        if (carIdx === 0) {
+            // Car 0: Cab car 1 (19.270m)
+            // Bogies at -3.635 and -15.635. Space: -14.735 to -4.535 (length ~10.2m)
+            
+            // 1. Auxiliary Converter (Hilfsbetriebeumrichter)
+            this.createUnderbodyBox(carGroup, 0, yCenter, -6.2, sizeX, sizeY, 2.2, boxMaterial, true);
+            
+            // 2. Battery Box (Batteriekasten)
+            this.createUnderbodyBox(carGroup, 0, yCenter, -8.7, sizeX, sizeY, 1.8, boxMaterial, true);
+            
+            // 3. Air Reservoirs (Hauptluftbehälter) - Cylinder group side-by-side
+            const cylRadius = 0.20;
+            const cylY = 0.30 - cylRadius;
+            this.createUnderbodyCylinder(carGroup, -0.45, cylY, -11.2, cylRadius, 1.8, cylinderMaterial);
+            this.createUnderbodyCylinder(carGroup, 0.45, cylY, -11.2, cylRadius, 1.8, cylinderMaterial);
+            
+            // 4. Brake Control Unit Box (Bremsgerätetafel)
+            this.createUnderbodyBox(carGroup, 0, yCenter, -13.7, sizeX, sizeY, 1.6, boxMaterial, true);
+
+        } else if (carIdx === 1) {
+            // Car 1: Middle car 1 (18.815m)
+            // Bogies at -3.4075 and -15.4075. Space: -14.5075 to -4.3075 (length ~10.2m)
+            
+            // 1. Line Reactor (Netzdrossel)
+            this.createUnderbodyBox(carGroup, 0, yCenter, -6.0, sizeX, sizeY, 1.6, boxMaterial, false);
+            
+            // 2. Traction Inverter (Antriebsstromrichter) - Very large box with details
+            this.createUnderbodyBox(carGroup, 0, yCenter, -9.4, sizeX, sizeY, 3.8, boxMaterial, true);
+            
+            // 3. Auxiliary Box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -12.9, sizeX, sizeY, 1.8, boxMaterial, true);
+
+        } else if (carIdx === 2) {
+            // Car 2: Middle car 2 (18.815m) - Symmetrical mirror of Car 1 relative to center
+            // Center of car: -9.4075.
+            // Mirroring the Z positions of Car 1:
+            // Box 1 (Line Reactor): Z = -6.0 -> mirror distance from center (-9.4075) is 3.4075. Mirror position: -9.4075 - 3.4075 = -12.815 (approx -12.8)
+            // Box 2 (Traction Inverter): Z = -9.4 -> mirror distance is 0.0075. Mirror position: -9.4 - 0.0075 = -9.4075 (approx -9.4)
+            // Box 3 (Aux Box): Z = -12.9 -> mirror distance is -3.4925. Mirror position: -9.4075 + 3.4925 = -5.915 (approx -6.0)
+            
+            // 1. Auxiliary Box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -6.0, sizeX, sizeY, 1.8, boxMaterial, true);
+            
+            // 2. Traction Inverter (Antriebsstromrichter)
+            this.createUnderbodyBox(carGroup, 0, yCenter, -9.4, sizeX, sizeY, 3.8, boxMaterial, true);
+            
+            // 3. Line Reactor (Netzdrossel)
+            this.createUnderbodyBox(carGroup, 0, yCenter, -12.8, sizeX, sizeY, 1.6, boxMaterial, false);
+
+        } else if (carIdx === 3) {
+            // Car 3: Cab car 2 (19.270m) - Symmetrical mirror of Car 0 relative to center
+            // Center of car: -9.635.
+            // Box 1 (Aux Converter): Z = -6.2 -> mirror: -9.635 - 3.435 = -13.07 (approx -13.1)
+            // Box 2 (Battery Box): Z = -8.7 -> mirror: -9.635 - 0.935 = -10.57 (approx -10.6)
+            // Cylinders: Z = -11.2 -> mirror: -9.635 + 1.565 = -8.07 (approx -8.1)
+            // Box 4 (Brake Box): Z = -13.7 -> mirror: -9.635 + 4.065 = -5.57 (approx -5.6)
+            
+            // 1. Brake Control Unit Box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -5.6, sizeX, sizeY, 1.6, boxMaterial, true);
+            
+            // 2. Air Reservoirs - Cylinder group side-by-side
+            const cylRadius = 0.20;
+            const cylY = 0.30 - cylRadius;
+            this.createUnderbodyCylinder(carGroup, -0.45, cylY, -8.1, cylRadius, 1.8, cylinderMaterial);
+            this.createUnderbodyCylinder(carGroup, 0.45, cylY, -8.1, cylRadius, 1.8, cylinderMaterial);
+            
+            // 3. Battery Box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -10.6, sizeX, sizeY, 1.8, boxMaterial, true);
+            
+            // 4. Auxiliary Converter
+            this.createUnderbodyBox(carGroup, 0, yCenter, -13.1, sizeX, sizeY, 2.2, boxMaterial, true);
+        }
+    }
+
+    buildDT1Underbody(carGroup, carIdx) {
+        const S = TRAIN_SCALE;
+        const boxMaterial = this.materials.bodyGrey; // grey box
+        const orangeMaterial = this.materials.underbodyOrange; // orange box
+
+        // Chassis bottom is at Y = 0.30. Top of running gear rail is at Y = -0.7414.
+        // Underbody box height for DT1: 0.45m.
+        // Y center of boxes: Y = 0.30 - 0.45 / 2 = 0.075m.
+        const yCenter = 0.075;
+        const sizeY = 0.45;
+        const sizeX = 2.4; // width
+
+        // Carriage has driving cab if it's even index at front, odd index at rear
+        const hasFrontCab = (carIdx % 2 === 0);
+
+        if (hasFrontCab) {
+            // A-Cars (Car 0, Car 2): Cab at front (Z = 0)
+            // Bogies are at -3.95 and -15.91. Space between bogie frames: -14.66 to -5.20
+            
+            // 1. Small grey box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -5.7, sizeX, sizeY, 0.6, boxMaterial, false);
+            
+            // 2. Orange block (characteristic battery/switch box)
+            this.createUnderbodyBox(carGroup, 0, yCenter, -6.6, sizeX, sizeY, 0.8, orangeMaterial, false);
+            
+            // 3. Medium grey box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -7.9, sizeX, sizeY, 1.4, boxMaterial, true);
+            
+            // 4. Large traction container (Antriebscontainer)
+            this.createUnderbodyBox(carGroup, 0, yCenter, -10.4, sizeX, sizeY, 2.8, boxMaterial, true);
+            
+            // 5. Medium auxiliary box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -12.4, sizeX, sizeY, 1.0, boxMaterial, true);
+            
+            // 6. Small auxiliary box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -13.8, sizeX, sizeY, 1.0, boxMaterial, true);
+
+        } else {
+            // B-Cars (Car 1, Car 3): Cab at rear (Z = -18.575)
+            // Bogies are at -2.66 and -14.62. Space between bogie frames: -13.37 to -3.91
+            
+            // Layout is mirrored from A-car (front-to-rear bogie reference)
+            // 1. Small auxiliary box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -4.77, sizeX, sizeY, 1.0, boxMaterial, true);
+            
+            // 2. Medium auxiliary box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -6.17, sizeX, sizeY, 1.0, boxMaterial, true);
+            
+            // 3. Large traction container
+            this.createUnderbodyBox(carGroup, 0, yCenter, -8.17, sizeX, sizeY, 2.8, boxMaterial, true);
+            
+            // 4. Medium grey box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -10.67, sizeX, sizeY, 1.4, boxMaterial, true);
+            
+            // 5. Orange block
+            this.createUnderbodyBox(carGroup, 0, yCenter, -11.97, sizeX, sizeY, 0.8, orangeMaterial, false);
+            
+            // 6. Small grey box
+            this.createUnderbodyBox(carGroup, 0, yCenter, -12.87, sizeX, sizeY, 0.6, boxMaterial, false);
+        }
     }
 
     createDoorPair(carGroup, xOffset, zOffset, carIdx, side) {
@@ -3299,8 +3555,11 @@ export class TrainModel {
                 this.buildDT1Cockpit(carGroup, -carLength, -1, i);
             }
 
-            this.buildBogie(carGroup, doorPositionsZ[0] + 0.425);
-            this.buildBogie(carGroup, doorPositionsZ[2] - 0.425);
+            this.buildBogie(carGroup, doorPositionsZ[0] + 0.425, true, hasFrontCab ? -1 : 0);
+            this.buildBogie(carGroup, doorPositionsZ[2] - 0.425, true, hasRearCab ? 1 : 0);
+
+            // DT1 Underbody installations (equipment boxes and orange container)
+            this.buildDT1Underbody(carGroup, i);
 
             doorPositionsZ.forEach(dz => {
                 this.createDT1DoorPair(carGroup, -1.44, dz, i, 'left');
@@ -5006,6 +5265,11 @@ export class TrainModel {
         const redStripePts = [[0.0995, 0.60], [0.033, 0.40], [-1.90, 0.40], [-1.90, 0.60]];
         G.g1CabRedStripeL = this.createG1SidePlateGeometry(redStripePts, -1, 0.052, 1.402);
         G.g1CabRedStripeR = this.createG1SidePlateGeometry(redStripePts, 1, 0.052, 1.402);
+
+        // Skirt stripe under the red stripe on the cab: Y = 0.00 to 0.40 (color #53565f)
+        const skirtStripePts = [[0.033, 0.40], [-0.10, 0.00], [-1.90, 0.00], [-1.90, 0.40]];
+        G.g1CabSkirtStripeL = this.createG1SidePlateGeometry(skirtStripePts, -1, 0.052, 1.402);
+        G.g1CabSkirtStripeR = this.createG1SidePlateGeometry(skirtStripePts, 1, 0.052, 1.402);
 
         const redWedgePts = [[-1.81, 1.20], [-1.81, 0.60], [-2.41, 0.60]];
         G.g1CabRedWedgeL = this.createG1SidePlateGeometry(redWedgePts, -1, 0.052, 1.402);

@@ -36,13 +36,10 @@
                 </ul>
             </div>
             
-            <button id="btn-start" class="start-btn">Simulation starten</button>
-            <div id="loading-container">
-                <span id="loading-status">3D-Stadtmodell wird geladen...</span>
-                <div class="loading-bar-wrap">
-                    <div id="loading-bar"></div>
-                </div>
-            </div>
+            <button id="btn-start" class="start-btn" disabled>
+                <div id="btn-loading-bar"></div>
+                <span id="btn-text">LADE TEXTUREN</span>
+            </button>
         </div>
     </div>
 
@@ -126,6 +123,6 @@
     </div>
 
     <!-- Main Logic script -->
-    <script type="module" src="./src/main.js?v=93"></script>
+    <script type="module" src="./src/main.js?v=94"></script>
 </body>
 </html>

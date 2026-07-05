@@ -57,8 +57,12 @@ export class TrackManager {
             treeLeaves: new THREE.MeshLambertMaterial({ color: '#2d6a4f' }),
 
             // Ground (clouds are now part of WorldManager's sky-photo background)
+            // side: DoubleSide because the shaft cutout strips are now swept continuously
+            // (buildSweptTrackBox) along curves in both directions; harmless for the flat
+            // plane usage elsewhere.
             ground: new THREE.MeshLambertMaterial({
-                color: '#4a9c70' // solid mint green
+                color: '#4a9c70', // solid mint green
+                side: THREE.DoubleSide
             }),
             bgGround: new THREE.MeshLambertMaterial({
                 color: '#4a9c70' // unified color to prevent brightness seams
@@ -75,7 +79,6 @@ export class TrackManager {
             
             // Tunnel Elements (Double track width, 5m sub-segments)
             tunnelWall: new THREE.CylinderGeometry(6.2, 6.2, 5.0, 8, 1, true),
-            tunnelBallast: new THREE.BoxGeometry(10.4, 0.4, 5.0),
             tunnelFixture: new THREE.BoxGeometry(0.12, 0.08, 1.2), // thin casing along Z
             tunnelGlow: new THREE.BoxGeometry(0.08, 0.04, 1.0), // neon tube along Z
             tunnelHalo: (() => {
@@ -84,13 +87,8 @@ export class TrackManager {
                 return g;
             })(),
             
-            // Viaduct Bridge Elements (Double track width, 5m sub-segments)
-            viaductBed: new THREE.BoxGeometry(10.5, 0.5, 5.0),
-            viaductWall: new THREE.BoxGeometry(0.2, 1.0, 5.0),
+            // Viaduct Bridge Elements
             viaductPillar: new THREE.CylinderGeometry(1.5, 1.8, 20, 8),
-            
-            // At-grade Cutting Elements (Double track width, 5m sub-segments)
-            ballastBed: new THREE.BoxGeometry(10.0, 0.15, 5.0),
             embankmentBase: new THREE.BoxGeometry(10.0, 1.0, 5.0),
   
             // City Elements
@@ -105,18 +103,6 @@ export class TrackManager {
             bgGround: new THREE.PlaneGeometry(450, 25.0) // Overlapped to prevent curve seams (25m instead of 5m)
         };
  
-        // Correct UVs for ballast geometries to ensure 1:1 world scaling (1 repeat per meter)
-        const scaleUVs = (geom, sx, sy) => {
-            const uv = geom.attributes.uv;
-            for (let i = 0; i < uv.count; i++) {
-                uv.setXY(i, uv.getX(i) * sx, uv.getY(i) * sy);
-            }
-            uv.needsUpdate = true;
-        };
-        scaleUVs(this.geometries.ballastBed, 10.0, 5.0);
-        scaleUVs(this.geometries.tunnelBallast, 10.4, 5.0);
-        scaleUVs(this.geometries.viaductBed, 10.5, 5.0);
-
         // Align geometries
         this.geometries.tunnelWall.rotateX(Math.PI / 2);
         
@@ -638,7 +624,7 @@ export class TrackManager {
     // centerOffFn(s): lateral offset of the box's centre from the track centreline.
     // halfWidthFn(s): half-width of the box.
     // yBotFn(s)/yTopFn(s): ABSOLUTE world Y of the box's bottom/top face at that ring.
-    // UV is baked in real metres (matches the existing scaleUVs() convention), so the shared
+    // UV is baked in real metres (1 repeat per meter, same convention the old boxes used), so the shared
     // RepeatWrapping ballast/viaduct materials can be reused directly — no cloning needed.
     buildSweptTrackBox(chunkGroup, sStart, sEnd, centerOffFn, halfWidthFn, yBotFn, yTopFn, material, resStep = 2) {
         const length = sEnd - sStart;
@@ -797,7 +783,7 @@ export class TrackManager {
         const numSub = 10;
         const subLen = this.chunkSize / numSub;
 
-        // Track bed / fence kind (see classifyBedKind below) is tracked across sub-segments
+        // Track bed / fence "kind" (classified per sub-segment below) is tracked across runs
         // and flushed as ONE continuous swept mesh per contiguous run, instead of one flat
         // box per 5m sub-segment (buildSweptTrackBox — see its comment for why this also
         // fixes the "staircase" look on ramps). A run only ends where the kind actually
@@ -836,6 +822,18 @@ export class TrackManager {
                     (s) => wShaft(s) / 2, (s) => gTY(s) - 0.65, (s) => gTY(s) - 0.45, this.materials.viaduct);
                 this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
                     (s) => (gSp(s) + 4.2) / 2, (s) => gTY(s) - 0.695, (s) => gTY(s) - 0.295, ballastMat);
+                // Grass cutout either side of the shaft, exposing the retaining walls. The
+                // INNER edge (the visible cutout boundary) tracks wShaft(s)/2 continuously —
+                // same run, same function as the retaining walls above — instead of the old
+                // per-5m step, which is what made the opening look jagged on curves. The
+                // OUTER edge stays fixed at 60m, matching the normal open-air ground width.
+                for (const sign of [1, -1]) {
+                    const outer = 60;
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd,
+                        (s) => sign * (wShaft(s) / 2 + outer) / 2,
+                        (s) => (outer - wShaft(s) / 2) / 2,
+                        () => -0.425, () => -0.375, this.materials.ground);
+                }
             } else if (kind === 'tunnel' || kind === 'tunnel-platform') {
                 const yOff = kind === 'tunnel-platform' ? 0.52 : 0.50;
                 this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
@@ -881,66 +879,21 @@ export class TrackManager {
                 }
             });
 
-            // 1. Build Ballast Bed / Track foundation
+            // 1. Track bed / fence: classify this sub-segment's "kind" and extend the current
+            // run, or flush it and start a new one if the kind just changed. The actual
+            // geometry is built once per contiguous run in flushBedRun() above, as one
+            // continuous swept mesh (see buildSweptTrackBox for why that fixes ramp "steps").
             const isViaduct = (subChunkType === 'elevated' || subChunkType === 'ramp');
+            const isPlatformHere = this.isInsideStationPlatform(s_mid);
+            let kind;
+            if (isViaduct) kind = 'viaduct';
+            else if (subChunkType === 'at-grade') kind = (isPlatformHere && spacing > 15.0) ? 'atgrade-split' : 'atgrade-normal';
+            else if (subChunkType === 'shaft') kind = 'shaft';
+            else kind = isPlatformHere ? 'tunnel-platform' : 'tunnel';
 
-            if (isViaduct) {
-                addBatched('viaductBed', this.geometries.viaductBed, this.materials.viaduct,
-                    localPos.x, localPos.y - 0.55, localPos.z, rotY, (spacing + 4.3) / 10.5, 1, 1);
-
-                const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-                const posL = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -(spacing / 2 + 2.15)));
-                addBatched('viaductWall', this.geometries.viaductWall, this.materials.viaduct,
-                    posL.x, localPos.y + 0.25, posL.z, rotY);
-                const posR = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, (spacing / 2 + 2.15)));
-                addBatched('viaductWall', this.geometries.viaductWall, this.materials.viaduct,
-                    posR.x, localPos.y + 0.25, posR.z, rotY);
-
-            } else if (subChunkType === 'at-grade') {
-                if (isPlatform && spacing > 15.0) {
-                    const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-
-                    const posL = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -spacing / 2));
-                    addBatched('ballastBed', this.geometries.ballastBed, ballastMat,
-                        posL.x, localPos.y - 0.375, posL.z, rotY, 3.2 / 10.0, 1, 1); // 3.2m wide
-
-                    const posR = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, spacing / 2));
-                    addBatched('ballastBed', this.geometries.ballastBed, ballastMat,
-                        posR.x, localPos.y - 0.375, posR.z, rotY, 3.2 / 10.0, 1, 1); // 3.2m wide
-                } else {
-                    addBatched('ballastBed', this.geometries.ballastBed, ballastMat,
-                        localPos.x, localPos.y - 0.375, localPos.z, rotY, (spacing + 3.8) / 10.0, 1, 1);
-                }
-
-            } else if (subChunkType === 'shaft') {
-                const W_shaft = spacing + 4.5;
-                const H_wall = 0.15 - pos.y; // height of retaining wall
-                const wallY = (pos.y - 0.85) / 2 - chunkGroupY; // vertical center of retaining wall relative to chunk
-                const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-
-                // Left / Right Retaining Walls
-                const posL_wall = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -W_shaft / 2));
-                addBatched('viaductWall', this.geometries.viaductWall, this.materials.viaduct,
-                    posL_wall.x, wallY, posL_wall.z, rotY, 1.0, H_wall, 1.0);
-                const posR_wall = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, W_shaft / 2));
-                addBatched('viaductWall', this.geometries.viaductWall, this.materials.viaduct,
-                    posR_wall.x, wallY, posR_wall.z, rotY, 1.0, H_wall, 1.0);
-
-                // Concrete Floor
-                addBatched('viaductBed', this.geometries.viaductBed, this.materials.viaduct,
-                    localPos.x, localPos.y - 0.55, localPos.z, rotY, W_shaft / 10.5, 0.2 / 0.5, 1.0);
-
-                // Ballast Bed (inside the concrete floor); slightly higher than floor
-                // (which is at -0.55 top -0.30) to avoid z-fighting
-                addBatched('tunnelBallast', this.geometries.tunnelBallast, ballastMat,
-                    localPos.x, localPos.y - 0.495, localPos.z, rotY, (spacing + 4.2) / 10.4, 1, 1);
-
-            } else {
-                // Underground tunnel ballast. Lower slightly in platform areas to avoid
-                // z-fighting with platform floor bottom (at -0.30)
-                addBatched('tunnelBallast', this.geometries.tunnelBallast, ballastMat,
-                    localPos.x, localPos.y - (isPlatform ? 0.52 : 0.50), localPos.z, rotY, (spacing + 4.2) / 10.4, 1, 1);
-            }
+            if (!bedRun) bedRun = { kind, sStart: s_start, sEnd: s_end };
+            else if (bedRun.kind !== kind) { flushBedRun(); bedRun = { kind, sStart: s_start, sEnd: s_end }; }
+            else bedRun.sEnd = s_end;
 
             // Build Ground & Streets for open-air sub-segments
             if (subChunkType !== 'underground') {
@@ -957,24 +910,16 @@ export class TrackManager {
                 addBatched('bgGround', this.geometries.bgGround, this.materials.bgGround,
                     posBgR.x, (groundY - 0.15) - chunkGroupY, posBgR.z, rotY);
 
-                // Open-cut shaft has split grass terrain to expose retaining walls
-                if (subChunkType === 'shaft') {
-                    const W_shaft = spacing + 4.5;
-                    const W_ground = 60 - W_shaft / 2;
-
-                    const posL = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -(W_shaft / 2 + W_ground / 2)));
-                    addBatched('ground', this.geometries.ground, this.materials.ground,
-                        posL.x, (groundY - 0.05) - chunkGroupY, posL.z, rotY, W_ground / 120, 1, 1); // keep world Y flat at -0.4m
-
-                    const posR = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, (W_shaft / 2 + W_ground / 2)));
-                    addBatched('ground', this.geometries.ground, this.materials.ground,
-                        posR.x, (groundY - 0.05) - chunkGroupY, posR.z, rotY, W_ground / 120, 1, 1);
-                } else {
+                // Open-cut shaft has split grass terrain to expose retaining walls; that split
+                // is now built as one continuous swept pair per run in flushBedRun() (kind
+                // 'shaft'), alongside the retaining walls it must line up with, so skip it here.
+                if (subChunkType !== 'shaft') {
                     addBatched('ground', this.geometries.ground, this.materials.ground,
                         localPos.x, (groundY - 0.05) - chunkGroupY, localPos.z, rotY);
                 }
             }
         }
+        flushBedRun(); // build the last open run (nothing left to change its kind)
 
         // Merged tunnel wall: one geometry + one draw call for the whole chunk
         if (tunnelWallSegs.length > 0) {

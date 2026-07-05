@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=58';
 import { WorldManager } from './simulator/WorldManager.js?v=47';
-import { TrackManager } from './simulator/TrackManager.js?v=52';
-import { StationModel } from './simulator/StationModel.js?v=49';
+import { TrackManager } from './simulator/TrackManager.js?v=54';
+import { StationModel } from './simulator/StationModel.js?v=50';
 import { TrainModel } from './simulator/TrainModel.js?v=66';
 import { AudioManager } from './audio/AudioManager.js?v=39';
 import { RadioManager } from './audio/RadioManager.js';
@@ -51,8 +51,8 @@ class App {
         // Plärrer reuses the StationModel's floor/stair textures, so build it now.
         this.trackManager.buildPlaerrer(this.stationModel);
 
-        // Load the 3D City model (3Dcity.glb)
-        this.loadCityModel();
+        // Load textures first (with a progress bar), then the city model
+        this.loadTexturesPhase();
 
         // Bind Footsteps from WorldManager to AudioManager
         this.world.onFootstep = (vol) => {
@@ -272,14 +272,47 @@ class App {
         requestAnimationFrame(this.animate.bind(this));
     }
 
+    loadTexturesPhase() {
+        const btnText = document.getElementById('btn-text');
+        const btnLoadingBar = document.getElementById('btn-loading-bar');
+        
+        if (btnText) btnText.textContent = 'LADE TEXTUREN';
+        if (btnLoadingBar) btnLoadingBar.style.width = '0%';
+
+        let progress = 0;
+        const duration = 1000; // 1.0 second smooth texture loading bar
+        const startTime = performance.now();
+
+        const animateProgress = (now) => {
+            const elapsed = now - startTime;
+            progress = Math.min(1, elapsed / duration);
+            
+            const percent = Math.round(progress * 100);
+            if (btnLoadingBar) {
+                btnLoadingBar.style.width = percent + '%';
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(animateProgress);
+            } else {
+                setTimeout(() => {
+                    this.loadCityModel();
+                }, 100);
+            }
+        };
+
+        requestAnimationFrame(animateProgress);
+    }
+
     loadCityModel() {
         const btnStart = this.dom.btnStart;
         btnStart.disabled = true;
-        btnStart.textContent = 'Modell wird geladen...';
 
-        const loadingStatus = document.getElementById('loading-status');
-        const loadingBar = document.getElementById('loading-bar');
-        const loadingContainer = document.getElementById('loading-container');
+        const btnText = document.getElementById('btn-text');
+        const btnLoadingBar = document.getElementById('btn-loading-bar');
+
+        if (btnText) btnText.textContent = 'LADE STADTMODELL';
+        if (btnLoadingBar) btnLoadingBar.style.width = '0%';
 
         const loader = new GLTFLoader();
         
@@ -308,29 +341,33 @@ class App {
 
                 this.cityModel = model;
 
-                if (loadingContainer) {
-                    loadingContainer.style.display = 'none';
+                if (btnLoadingBar) {
+                    btnLoadingBar.style.width = '100%';
                 }
+                btnStart.classList.add('loaded');
                 btnStart.disabled = false;
-                btnStart.textContent = 'Simulation starten';
+                if (btnText) {
+                    btnText.textContent = 'Simulation starten';
+                }
                 console.log('City model loaded successfully.');
             },
             (xhr) => {
+                const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
                 if (xhr.lengthComputable) {
                     const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
-                    if (loadingStatus) {
-                        loadingStatus.textContent = `3D-Stadtmodell wird geladen: ${percentComplete}% (${(xhr.loaded / (1024 * 1024)).toFixed(1)} MB von ${(xhr.total / (1024 * 1024)).toFixed(1)} MB)`;
+                    const totalMB = (xhr.total / (1024 * 1024)).toFixed(1);
+                    if (btnText) {
+                        btnText.textContent = `LADE STADTMODELL (${totalMB} MB)`;
                     }
-                    if (loadingBar) {
-                        loadingBar.style.width = percentComplete + '%';
+                    if (btnLoadingBar) {
+                        btnLoadingBar.style.width = percentComplete + '%';
                     }
                 } else {
-                    const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
-                    if (loadingStatus) {
-                        loadingStatus.textContent = `3D-Stadtmodell wird geladen: ${loadedMB} MB geladen...`;
+                    if (btnText) {
+                        btnText.textContent = `LADE STADTMODELL (${loadedMB} MB)`;
                     }
-                    if (loadingBar) {
-                        loadingBar.style.width = '50%';
+                    if (btnLoadingBar) {
+                        btnLoadingBar.style.width = '50%';
                     }
                 }
             },
@@ -345,15 +382,18 @@ class App {
                 
                 // Check if running directly via file:// protocol
                 if (window.location.protocol === 'file:') {
-                    errorMsg = 'Browser blockiert lokale Dateien unter file:// (CORS). Bitte nutze einen lokalen Webserver (z.B. Live Server)!';
+                    errorMsg = 'Browser blockiert lokale Dateien (CORS).';
                 }
 
-                if (loadingStatus) {
-                    loadingStatus.textContent = `Fehler beim Laden des 3D-Stadtmodells! (${errorMsg})`;
-                    loadingStatus.style.color = '#ef4444';
+                if (btnLoadingBar) {
+                    btnLoadingBar.style.width = '100%';
+                    btnLoadingBar.style.backgroundColor = '#ef4444';
                 }
+                btnStart.classList.add('loaded');
                 btnStart.disabled = false;
-                btnStart.textContent = 'Simulation starten (ohne Stadt)';
+                if (btnText) {
+                    btnText.textContent = `Simulation starten (Fehler: ${errorMsg})`;
+                }
             }
         );
     }

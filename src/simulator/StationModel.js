@@ -1349,28 +1349,20 @@ export class StationModel {
                 const localPL = stationGroup.worldToLocal(pL.clone());
                 const localPR = stationGroup.worldToLocal(pR.clone());
 
-                const leftConcreteWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.5, subLen), this.materials.pillar);
-                leftConcreteWall.position.copy(localPL);
-                leftConcreteWall.position.y = 0.75;
-                leftConcreteWall.rotation.y = rotY;
-                stationGroup.add(leftConcreteWall);
-
-                const rail1a = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, subLen), this.materials.boardHanger);
-                rail1a.position.copy(localPL);
-                rail1a.position.y = 1.95;
-                rail1a.rotation.y = rotY;
-
-                const rail1b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, subLen), this.materials.boardHanger);
-                rail1b.position.copy(localPL);
-                rail1b.position.y = 2.4;
-                rail1b.rotation.y = rotY;
-                stationGroup.add(rail1a, rail1b);
-
-                const fenceRail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, subLen), this.materials.boardHanger);
-                fenceRail.position.copy(localPR);
-                fenceRail.position.y = 1.2;
-                fenceRail.rotation.y = rotY;
-                stationGroup.add(fenceRail);
+                // Low concrete wall + its 2-bar handrail (left side), and the single-bar fence
+                // (right side), as continuous swept bars, built once. The lateral offset tracks
+                // the inter-track gap exactly like the rest of the station. Only the vertical
+                // support posts below stay discrete (real fence posts are periodic fixtures).
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const pillarMats = [this.materials.pillar, this.materials.pillar];
+                    const railMats = [this.materials.boardHanger, this.materials.boardHanger];
+                    this.buildSweptBar(stationGroup, sA, sB, () => 0.1, centerPos.y + 1.5, centerPos.y, pillarMats, 1.2, (s) => -offW(s));
+                    this.buildSweptBar(stationGroup, sA, sB, () => 0.025, centerPos.y + 1.975, centerPos.y + 1.925, railMats, 1.2, (s) => -offW(s));
+                    this.buildSweptBar(stationGroup, sA, sB, () => 0.025, centerPos.y + 2.425, centerPos.y + 2.375, railMats, 1.2, (s) => -offW(s));
+                    this.buildSweptBar(stationGroup, sA, sB, () => 0.025, centerPos.y + 1.225, centerPos.y + 1.175, railMats, 1.2, (s) => offW(s));
+                }
 
                 // Vertical posts centered in each sub-segment
                 const postL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, 0.04), this.materials.boardHanger);
