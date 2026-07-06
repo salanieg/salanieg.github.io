@@ -63,6 +63,9 @@ export class TrainModel {
 
         // Clickable cab radio meshes (raycast targets for the radio menu)
         this.radioMeshes = [];
+        // Canvas/texture handles for the in-cab radio display screens (one per cab),
+        // kept so updateRadioDisplay() can redraw station/song name onto them live.
+        this.radioDisplays = [];
 
         // Front and rear headlights/taillights refs for toggling
         this.lights = {
@@ -83,6 +86,7 @@ export class TrainModel {
             bodyRedG1: cheapMaterial({ color: '#c21d2c', metalness: 0.1, roughness: 0.3, side: THREE.DoubleSide }), // Nuremberg G1 Red; DoubleSide so the side bevels read from inside the cab too
             bodyRedDT1: cheapMaterial({ color: '#ac3333', metalness: 0.1, roughness: 0.3, side: THREE.DoubleSide }), // Nuremberg DT1 Red; DoubleSide so the twisted nose corner reads from inside the cab too
             bodyWhite: cheapMaterial({ color: '#e6e8eb', metalness: 0.1, roughness: 0.4, side: THREE.DoubleSide }), // Off-white middle stripe; DoubleSide so the twisted nose corner reads from inside the cab too
+            bellowsLightGrey: cheapMaterial({ color: '#b0b3b8', metalness: 0.1, roughness: 0.7 }),
             bodyDarkGrey: cheapMaterial({ color: '#1c1e22', metalness: 0.2, roughness: 0.6 }), // Window band and roof
             bodyGlossBlack: cheapMaterial({ color: '#0b0d10', metalness: 0.4, roughness: 0.25 }), // G1 glossy black front mask
             bodyGrey: cheapMaterial({ color: '#2e3033', metalness: 0.3, roughness: 0.5 }), // Underframe
@@ -175,6 +179,7 @@ export class TrainModel {
         this.throttleLevers = [];
         this.dashboardScreens = [];
         this.radioMeshes = [];
+        this.radioDisplays = [];
         this.lights = {
             frontWhite: [],
             frontRed: [],
@@ -1095,6 +1100,44 @@ export class TrainModel {
 
         if (this.trainType === 'G1') {
             this.populateG1Panel2(panelMeshes.panel2, cabDir);
+
+            // Extra standalone panel, upper-right corner of the cab (normal panel size,
+            // reusing the same box geometry/material as the 5 dash panels below it).
+            // Mounted directly above panel5 (the rightmost dash panel) so it lines up
+            // with free ceiling space and can't overlap anything, then tilted down
+            // further than the dash (it sits ~0.5m higher) so its screen still faces
+            // the driver's eye. Doubles as the radio: this panel replaces the old
+            // physical radio prop (see buildRadio, removed) - clicking it (raycast
+            // tags the panel body isRadio, same as the old prop) zaps to a random
+            // station+song. The screen itself is the radio's whole interface now
+            // (station + currently playing song), kept live via updateRadioDisplay().
+            const cornerCanvas = document.createElement('canvas');
+            cornerCanvas.width = 384;
+            cornerCanvas.height = 256;
+            const cornerCtx = cornerCanvas.getContext('2d');
+            const cornerTexture = new THREE.CanvasTexture(cornerCanvas);
+            cornerTexture.colorSpace = THREE.SRGBColorSpace;
+            const cornerScreenMat = new THREE.MeshBasicMaterial({ map: cornerTexture });
+            this.radioDisplays.push({ ctx: cornerCtx, canvas: cornerCanvas, texture: cornerTexture });
+            this.drawRadioDisplay(cornerCtx, cornerCanvas, null, null, false);
+
+            const cornerPanel = new THREE.Mesh(panelGeom, panelMat);
+            cornerPanel.position.set(panelMeshes.panel5.position.x, 2.35, panelMeshes.panel5.position.z);
+            cornerPanel.rotation.order = 'YXZ';
+            cornerPanel.rotation.y = panelMeshes.panel5.rotation.y; // same yaw: already proven to face the driver
+            cornerPanel.rotation.x = -cabDir * Math.PI / 12; // gentle ~15° downward tilt toward the driver
+            cornerPanel.scale.set(panelScale, panelScale, panelScale);
+            cockpitGroup.add(cornerPanel);
+
+            const cornerScreen = new THREE.Mesh(new THREE.PlaneGeometry(panelWidth * 0.85, panelHeight * 0.85), cornerScreenMat);
+            cornerScreen.position.set(0, 0, -cabDir * (panelThickness / 2 + 0.002));
+            cornerScreen.rotation.y = (cabDir === 1) ? Math.PI : 0;
+            // Raycast target is the screen plane itself (not the panel box) so the hit's
+            // uv lines up directly with the canvas pixels drawn in drawRadioDisplay -
+            // needed to tell the "Aus" button zone apart from the rest of the screen.
+            cornerScreen.userData.isRadio = true;
+            this.radioMeshes.push(cornerScreen);
+            cornerPanel.add(cornerScreen);
         }
 
         // 3. Setup Panel 1 Screen (Fahrplan / Next Station)
@@ -1438,19 +1481,20 @@ export class TrainModel {
             const flankGlass = new THREE.Mesh(sign < 0 ? G.g1CabGlassL : G.g1CabGlassR, this.materials.cabWindowGlass);
             const redStripe = new THREE.Mesh(sign < 0 ? G.g1CabRedStripeL : G.g1CabRedStripeR, this.materials.bodyRedG1);
             const skirtStripe = new THREE.Mesh(sign < 0 ? G.g1CabSkirtStripeL : G.g1CabSkirtStripeR, this.materials.skirtGrey);
-            const redWedge = new THREE.Mesh(sign < 0 ? G.g1CabRedWedgeL : G.g1CabRedWedgeR, this.materials.bodyRedG1);
+            const whiteRear = new THREE.Mesh(sign < 0 ? G.g1CabWhiteRearL : G.g1CabWhiteRearR, this.materials.bodyWhite);
+            const redWedge = new THREE.Mesh(sign < 0 ? G.g1CabRedWedgeL : G.g1CabRedWedgeR, this.materials.bodyGlossBlack);
             const whiteTri = new THREE.Mesh(sign < 0 ? G.g1CabWhiteTriL : G.g1CabWhiteTriR, this.materials.bodyWhite);
             const topStrip = new THREE.Mesh(sign < 0 ? G.g1CabTopStripL : G.g1CabTopStripR, this.materials.bodyRedG1);
-            sideGroup.add(flank, flankGlass, redStripe, skirtStripe, redWedge, whiteTri, topStrip);
+            sideGroup.add(flank, flankGlass, redStripe, skirtStripe, whiteRear, redWedge, whiteTri, topStrip);
 
             // Doorway reveal: jambs, header and sill lining the flank cutout so
             // the opening has visible depth when the door swings out
-            const jambF = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.80, 0.03), this.materials.cockpitTrim);
-            jambF.position.set(sign * 1.425, 1.50, -1.125);
-            const jambR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.80, 0.03), this.materials.cockpitTrim);
-            jambR.position.set(sign * 1.425, 1.50, -1.795);
+            const jambF = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.95, 0.03), this.materials.cockpitTrim);
+            jambF.position.set(sign * 1.425, 1.575, -1.125);
+            const jambR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.95, 0.03), this.materials.cockpitTrim);
+            jambR.position.set(sign * 1.425, 1.575, -1.795);
             const header = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.67), this.materials.cockpitTrim);
-            header.position.set(sign * 1.425, 2.385, -1.46);
+            header.position.set(sign * 1.425, 2.535, -1.46);
             const sill = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.67), this.materials.cabDoorGrey);
             sill.position.set(sign * 1.425, 0.615, -1.46);
             sideGroup.add(jambF, jambR, header, sill);
@@ -1461,27 +1505,28 @@ export class TrainModel {
             // Hinged at the front edge, swinging outwards (animated via this.cabDoors).
             const doorW = 0.70; // real driver door width: 700mm
             const winZ0 = -0.08, winZ1 = -(doorW - 0.07); // hinge/latch margins
-            const winY0 = 1.14, winY1 = 2.30; // top/bottom margins
+            const winY0 = 1.248, winY1 = 2.452; // top/bottom margins (aligned with passenger windows)
             const doorPivot = new THREE.Group();
             doorPivot.position.set(sign * 1.428, 0, -1.11);
 
-            const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 2.39 - winY1, doorW), this.materials.bodyGlossBlack);
-            topRail.position.set(0, (2.39 + winY1) / 2, -doorW / 2);
-            const lowerPanel = new THREE.Mesh(new THREE.BoxGeometry(0.04, winY0 - 0.61, doorW), this.materials.bodyGlossBlack);
-            lowerPanel.position.set(0, (0.61 + winY0) / 2, -doorW / 2);
+            const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 2.54 - winY1, doorW), this.materials.bodyGlossBlack);
+            topRail.position.set(0, (2.54 + winY1) / 2, -doorW / 2);
+            // Split lowerPanel into white livery stripe (Y = 0.61 to 1.20) and black frame (Y = 1.20 to winY0)
+            const lowerPanelWhite = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.20 - 0.61, doorW), this.materials.bodyWhite);
+            lowerPanelWhite.position.set(0, (0.61 + 1.20) / 2, -doorW / 2);
+            const lowerPanelBlack = new THREE.Mesh(new THREE.BoxGeometry(0.04, winY0 - 1.20, doorW), this.materials.bodyGlossBlack);
+            lowerPanelBlack.position.set(0, (1.20 + winY0) / 2, -doorW / 2);
             const hingeStile = new THREE.Mesh(new THREE.BoxGeometry(0.04, winY1 - winY0, -winZ0), this.materials.bodyGlossBlack);
             hingeStile.position.set(0, (winY0 + winY1) / 2, winZ0 / 2);
             const latchStile = new THREE.Mesh(new THREE.BoxGeometry(0.04, winY1 - winY0, doorW + winZ1), this.materials.bodyGlossBlack);
             latchStile.position.set(0, (winY0 + winY1) / 2, (winZ1 - doorW) / 2);
             const doorGlass = new THREE.Mesh(new THREE.BoxGeometry(0.03, winY1 - winY0, winZ0 - winZ1), this.materials.cabWindowGlass);
             doorGlass.position.set(0, (winY0 + winY1) / 2, (winZ0 + winZ1) / 2);
-            const whiteAccent = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.10, doorW - 0.06), this.materials.bodyWhite);
-            whiteAccent.position.set(sign * 0.026, winY0 - 0.15, -doorW / 2);
             const handleOut = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.035), this.materials.chromeMetal);
             handleOut.position.set(sign * 0.026, 1.10, winZ1 + 0.04);
             const handleIn = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.035), this.materials.chromeMetal);
             handleIn.position.set(-sign * 0.036, 1.10, winZ1 + 0.04);
-            doorPivot.add(topRail, lowerPanel, hingeStile, latchStile, doorGlass, whiteAccent, handleOut, handleIn);
+            doorPivot.add(topRail, lowerPanelWhite, lowerPanelBlack, hingeStile, latchStile, doorGlass, handleOut, handleIn);
             sideGroup.add(doorPivot);
             const side = ((cabDir === 1) === (sign < 0)) ? 'left' : 'right';
             this.cabDoors.push({ pivot: doorPivot, sign, side, carIdx });
@@ -1566,13 +1611,65 @@ export class TrainModel {
         cockpitGroup.add(displayScreen);
         this.interiorDisplays.push(displayScreen);
 
-        // 12. Add Radio to cockpit floor (bottom right)
-        this.buildRadio(cockpitGroup, noseZ, cabDir, carIdx);
-
         // 13. Driver's seat: dark grey ergonomic chair with a padded/quilted
         // cushion texture and a tall backrest (with a separate headrest lobe),
         // sitting far enough behind the dashboard/desk for legroom.
         this.buildG1DriverSeat(cockpitGroup, noseZ, cabDir);
+
+        // 14. Aircraft-style throttle/brake lever, mounted on a metal pedestal
+        // block to the front-left of the seat.
+        this.buildG1ThrottleLever(cockpitGroup, noseZ, cabDir);
+    }
+
+    // Pedestal block (metal, floor-mounted, topped at driver-seat armrest
+    // height) carrying a single aircraft-throttle-style lever: centered when
+    // idle, tilted forward for traction and back for braking (driven by the
+    // shared this.throttleLevers update loop, same as the DT1's handle).
+    // Positioned front-left of the seat (blockX clears the seat's armrests by
+    // ~0.12m in X; blockZ sits ahead of the seat cushion but well behind the
+    // desk, whose deepest point only reaches ~0.28m out from the nose here)
+    // so it never intersects the seat or the dashboard/desk.
+    buildG1ThrottleLever(cockpitGroup, noseZ, cabDir) {
+        const frameMat = cheapMaterial({ color: '#c9cdd2', roughness: 0.6, metalness: 0.3 });
+        const gripMat = cheapMaterial({ color: '#161616', roughness: 0.7 });
+        const rodMat = cheapMaterial({ color: '#3a3d42', roughness: 0.5, metalness: 0.4 });
+
+        const floorY = 0.40;
+        const blockTopY = 1.08; // matches the driver seat's armrest height
+        const blockHeight = blockTopY - floorY;
+        const blockW = 0.20, blockD = 0.24;
+
+        const leftSign = cabDir; // +X is "left" for cabDir=1, -X for cabDir=-1
+        const blockX = leftSign * 0.55;
+        const blockZ = noseZ - cabDir * 0.75;
+
+        const block = new THREE.Mesh(new THREE.BoxGeometry(blockW, blockHeight, blockD), frameMat);
+        block.position.set(blockX, floorY + blockHeight / 2, blockZ);
+        cockpitGroup.add(block);
+
+        // Pivot base plate on top of the block
+        const pivotBase = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.025, 12), frameMat);
+        pivotBase.position.set(blockX, blockTopY + 0.0125, blockZ);
+        cockpitGroup.add(pivotBase);
+
+        // Lever: pivots fore/aft about its base like an aircraft throttle,
+        // driven by the shared this.throttleLevers update (rotation.x).
+        const leverGroup = new THREE.Group();
+        leverGroup.position.set(blockX, blockTopY + 0.025, blockZ);
+        cockpitGroup.add(leverGroup);
+
+        const rodLength = 0.10;
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, rodLength, 8), rodMat);
+        rod.geometry.translate(0, rodLength / 2, 0);
+        leverGroup.add(rod);
+
+        // Grip: a horizontal knob (long axis along X) at the top of the rod
+        const gripGeom = this.createRoundedBoxGeometry(0.09, 0.05, 0.03, 0.012);
+        const grip = new THREE.Mesh(gripGeom, gripMat);
+        grip.position.set(0, rodLength + 0.02, 0);
+        leverGroup.add(grip);
+
+        this.throttleLevers.push({ mesh: leverGroup, cabDir: cabDir, invert: true });
     }
 
     // Canvas-based quilted/padded upholstery texture (dark grey diamond
@@ -1673,68 +1770,6 @@ export class TrainModel {
             const armPad = new THREE.Mesh(armGeom, frameMat);
             armPad.position.set(ax * 0.265, 0.68, -0.05);
             seatGroup.add(armSupport, armPad);
-        }
-    }
-
-    buildRadio(cockpitGroup, noseZ, cabDir, carIdx) {
-        const isG1 = (this.trainType === 'G1');
-        const unscaledWidth = isG1 ? 2.90 : 2.20;
-
-        const radioGroup = new THREE.Group();
-        // Position: Bottom Right floor of cockpit from driver's perspective
-        // Driver looks towards noseZ.
-        // For cabDir=1 (forward), driver looks towards +Z, right is -X.
-        // For cabDir=-1 (reverse), driver looks towards -Z, right is +X.
-        const radioX = (cabDir === 1) ? -0.8 : 0.8;
-        const radioZ = noseZ - cabDir * 1.0; // Place it under the dashboard area
-        radioGroup.position.set(radioX, 0.45, radioZ);
-
-        // Rotation: 45 degrees towards the driver
-        // Driver is at approx Z = noseZ - cabDir * 1.45 (behind the radio)
-        // We want the front (+Z in local radio space) to face the driver.
-        if (cabDir === 1) {
-            // Forward cab: Radio is at Z=1.0, Driver is at Z=1.45.
-            // Rotating by PI/4 faces it back-right.
-            // Adding PI makes it face mostly back (towards driver).
-            radioGroup.rotation.y = Math.PI - Math.PI / 4;
-        } else {
-            // Reverse cab: Radio is at Z=-1.0, Driver is at Z=-1.45.
-            // Facing forward-left towards the driver.
-            radioGroup.rotation.y = Math.PI / 4;
-        }
-
-        cockpitGroup.add(radioGroup);
-
-        // Body: Orange as requested
-        const bodyGeom = new THREE.BoxGeometry(0.20, 0.14, 0.10);
-        const bodyMat = cheapMaterial({ color: '#ffa500', roughness: 0.6, metalness: 0.1 });
-        const body = new THREE.Mesh(bodyGeom, bodyMat);
-        body.userData.isRadio = true; // Tag for raycasting
-        this.radioMeshes.push(body);
-        radioGroup.add(body);
-
-        // Antenna: Thin and longer as requested
-        const antennaGeom = new THREE.CylinderGeometry(0.003, 0.003, 0.45, 8);
-        const antenna = new THREE.Mesh(antennaGeom, this.materials.chromeMetal);
-        antenna.position.set(-0.08, 0.25, 0);
-        antenna.rotation.z = -0.15;
-        radioGroup.add(antenna);
-
-        // Handle (Black bar above buttons)
-        const handleGeom = new THREE.BoxGeometry(0.12, 0.01, 0.02);
-        const handleMat = cheapMaterial({ color: '#222222' });
-        const handle = new THREE.Mesh(handleGeom, handleMat);
-        handle.position.set(0, 0.075, 0);
-        radioGroup.add(handle);
-
-        // Buttons (3 small cylinders)
-        const buttonGeom = new THREE.CylinderGeometry(0.012, 0.012, 0.02, 8);
-        buttonGeom.rotateX(Math.PI / 2);
-        const buttonMat = cheapMaterial({ color: '#222222' });
-        for (let i = 0; i < 3; i++) {
-            const btn = new THREE.Mesh(buttonGeom, buttonMat);
-            btn.position.set(-0.05 + i * 0.05, 0.03, 0.051);
-            radioGroup.add(btn);
         }
     }
 
@@ -2239,41 +2274,72 @@ export class TrainModel {
             const horizontalWidth = leafWidth - 0.20;
             const halfH = doorHeight / 2;
             const quarterH = doorHeight / 4;
- 
+
+            // Define centers and heights for the window frames and glass
+            let lowFrameCenterY = -quarterH;
+            let lowFrameHeight = halfH;
+            let lowGlassCenterY = -quarterH;
+            let lowGlassHeight = halfH - 0.20;
+            let lowFrameTCenterY = 0.00;
+
+            let upFrameCenterY = quarterH;
+            let upFrameHeight = halfH;
+            let upGlassCenterY = quarterH;
+            let upGlassHeight = halfH - 0.20;
+            let upFrameBCenterY = 0.10;
+
+            if (isG1) {
+                // Shifted for G1 to align lower edge of strut (lowerFrameT bottom) with 1.20 absolute height.
+                // 1.20 absolute corresponds to 1.20 - 1.4125 = -0.2125 relative.
+                // Since lowerFrameT has height 0.10, its bottom is at centerY - 0.05.
+                // Thus, centerY - 0.05 = -0.2125 => centerY = -0.1625.
+                lowFrameTCenterY = -0.1625;
+                lowFrameCenterY = -0.575;
+                lowFrameHeight = 0.925;
+                lowGlassCenterY = -0.575;
+                lowGlassHeight = 0.725;
+
+                upFrameBCenterY = -0.0625;
+                upFrameCenterY = 0.4625;
+                upFrameHeight = 1.15;
+                upGlassCenterY = 0.4625;
+                upGlassHeight = 0.95;
+            }
+
             // 1. Lower window:
-            const lowerFrameL = new THREE.Mesh(new THREE.BoxGeometry(0.02, halfH, 0.10), darkGreyMaterial);
-            lowerFrameL.position.set(0, -quarterH, -frameEdgeOffset);
-            
-            const lowerFrameR = new THREE.Mesh(new THREE.BoxGeometry(0.02, halfH, 0.10), darkGreyMaterial);
-            lowerFrameR.position.set(0, -quarterH, frameEdgeOffset);
- 
+            const lowerFrameL = new THREE.Mesh(new THREE.BoxGeometry(0.02, lowFrameHeight, 0.10), darkGreyMaterial);
+            lowerFrameL.position.set(0, lowFrameCenterY, -frameEdgeOffset);
+
+            const lowerFrameR = new THREE.Mesh(new THREE.BoxGeometry(0.02, lowFrameHeight, 0.10), darkGreyMaterial);
+            lowerFrameR.position.set(0, lowFrameCenterY, frameEdgeOffset);
+
             const lowerFrameB = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.10, horizontalWidth), darkGreyMaterial);
             lowerFrameB.position.set(0, -halfH + 0.05, 0);
- 
+
             const lowerFrameT = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.10, horizontalWidth), darkGreyMaterial);
-            lowerFrameT.position.set(0, 0.00, 0);
- 
-            const lowerGlass = new THREE.Mesh(new THREE.BoxGeometry(0.01, halfH - 0.20, horizontalWidth), glassMaterial);
-            lowerGlass.position.set(0, -quarterH, 0);
- 
+            lowerFrameT.position.set(0, lowFrameTCenterY, 0);
+
+            const lowerGlass = new THREE.Mesh(new THREE.BoxGeometry(0.01, lowGlassHeight, horizontalWidth), glassMaterial);
+            lowerGlass.position.set(0, lowGlassCenterY, 0);
+
             leafGroup.add(lowerFrameL, lowerFrameR, lowerFrameB, lowerFrameT, lowerGlass);
- 
+
             // 2. Upper window:
-            const upperFrameL = new THREE.Mesh(new THREE.BoxGeometry(0.02, halfH, 0.10), darkGreyMaterial);
-            upperFrameL.position.set(0, quarterH, -frameEdgeOffset);
-            
-            const upperFrameR = new THREE.Mesh(new THREE.BoxGeometry(0.02, halfH, 0.10), darkGreyMaterial);
-            upperFrameR.position.set(0, quarterH, frameEdgeOffset);
- 
+            const upperFrameL = new THREE.Mesh(new THREE.BoxGeometry(0.02, upFrameHeight, 0.10), darkGreyMaterial);
+            upperFrameL.position.set(0, upFrameCenterY, -frameEdgeOffset);
+
+            const upperFrameR = new THREE.Mesh(new THREE.BoxGeometry(0.02, upFrameHeight, 0.10), darkGreyMaterial);
+            upperFrameR.position.set(0, upFrameCenterY, frameEdgeOffset);
+
             const upperFrameB = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.10, horizontalWidth), darkGreyMaterial);
-            upperFrameB.position.set(0, 0.10, 0);
- 
+            upperFrameB.position.set(0, upFrameBCenterY, 0);
+
             const upperFrameT = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.10, horizontalWidth), darkGreyMaterial);
             upperFrameT.position.set(0, halfH - 0.05, 0);
- 
-            const upperGlass = new THREE.Mesh(new THREE.BoxGeometry(0.01, halfH - 0.20, horizontalWidth), glassMaterial);
-            upperGlass.position.set(0, quarterH, 0);
- 
+
+            const upperGlass = new THREE.Mesh(new THREE.BoxGeometry(0.01, upGlassHeight, horizontalWidth), glassMaterial);
+            upperGlass.position.set(0, upGlassCenterY, 0);
+
             leafGroup.add(upperFrameL, upperFrameR, upperFrameB, upperFrameT, upperGlass);
  
             // 3. Illuminated door strip on the meeting edge (outside face)
@@ -2308,104 +2374,341 @@ export class TrainModel {
 
     drawLeftScreen(screen) {
         const ctx = screen.leftCtx;
-        const width = screen.leftCanvas.width;
-        const height = screen.leftCanvas.height;
+        const width = screen.leftCanvas.width;   // 512
+        const height = screen.leftCanvas.height; // 256
 
-        // Clear background
-        ctx.fillStyle = '#0c0f12';
+        const bgDark = '#14171d';
+        const bgField = '#0c0f12';
+        const bgLight = '#d7dae0';
+        const textDark = '#101216';
+        const textLight = '#eef0f3';
+        const textMuted = '#8b93a1';
+        const blueActive = '#2f6fd1';
+        const borderCol = '#4b5563';
+
+        ctx.fillStyle = bgDark;
         ctx.fillRect(0, 0, width, height);
 
-        // Draw border
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(2, 2, width - 4, height - 4);
+        const headerH = 28;
+        const footerH = 26;
+        const sidebarW = 46;
+        const mainW = width - sidebarW;
 
-        // Header
-        ctx.fillStyle = '#00ff66';
-        ctx.font = 'bold 13px monospace';
-        ctx.fillText('SYSTEM', 15, 20);
+        // ---- Kopfzeile (Statusleiste) ----
+        ctx.fillStyle = bgLight;
+        ctx.fillRect(0, 0, width, headerH);
+        ctx.textBaseline = 'middle';
 
-        // Line separator
-        ctx.strokeStyle = '#00ff66';
-        ctx.lineWidth = 1;
+        ctx.fillStyle = textDark;
+        ctx.font = 'bold 15px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('601   0s   KT 24h', 10, headerH / 2 + 1);
+
+        ctx.textAlign = 'center';
+        ctx.fillText('TÜREN', width / 2, headerH / 2 + 1);
+
+        const now = new Date();
+        const days = ['So.', 'Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.'];
+        const y = now.getFullYear();
+        const mo = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mi = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${days[now.getDay()]} ${y}-${mo}-${d}   ${hh}:${mi}:${ss}`, width - 10, headerH / 2 + 1);
+
+        // ---- Bereich 1: Fahrzeugschema ----
+        const carX0 = 14, carX1 = 410, carTipX = 452, carY0 = 38, carY1 = 86;
         ctx.beginPath();
-        ctx.moveTo(15, 25);
-        ctx.lineTo(240, 25);
+        ctx.moveTo(carX0 + 8, carY0);
+        ctx.lineTo(carX1, carY0);
+        ctx.lineTo(carTipX, (carY0 + carY1) / 2);
+        ctx.lineTo(carX1, carY1);
+        ctx.lineTo(carX0 + 8, carY1);
+        ctx.quadraticCurveTo(carX0, carY1, carX0, carY1 - 8);
+        ctx.lineTo(carX0, carY0 + 8);
+        ctx.quadraticCurveTo(carX0, carY0, carX0 + 8, carY0);
+        ctx.closePath();
+        ctx.strokeStyle = '#5b6472';
+        ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Content
-        ctx.font = '11px monospace';
-        
-        // ATO Mode
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('MODUS', 15, 38);
-        if (this.sim.atoMode) {
-            ctx.fillStyle = '#00ff66';
-            ctx.fillText('AUTONOM', 90, 38);
-        } else {
-            ctx.fillStyle = '#00ff66';
-            ctx.fillText('MANUELL', 90, 38);
+        const doorCount = 11;
+        const rowX0 = 26, rowX1 = 402;
+        const cellW = 24;
+        const cellGap = (rowX1 - rowX0 - doorCount * cellW) / (doorCount - 1);
+        for (let i = 0; i < doorCount; i++) {
+            const cx = rowX0 + i * (cellW + cellGap);
+            ctx.fillStyle = textLight;
+            ctx.fillRect(cx, 46, cellW, 10);
+
+            ctx.fillStyle = bgField;
+            ctx.strokeStyle = borderCol;
+            ctx.lineWidth = 1;
+            const sq = 10;
+            const sqx = cx + cellW / 2 - sq / 2;
+            ctx.fillRect(sqx, 68, sq, sq);
+            ctx.strokeRect(sqx, 68, sq, sq);
         }
 
-        // Doors
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('TÜREN', 15, 56);
-        if (this.sim.doorProgress > 0 || this.sim.doorsOpen) {
-            ctx.fillStyle = '#ff3333';
-            ctx.fillText(this.sim.doorState === 1 ? 'ÖFFNEN...' : (this.sim.doorState === 3 ? 'SCHLIESSEN...' : 'GEÖFFNET'), 90, 56);
-        } else {
-            ctx.fillStyle = '#00ff66';
-            ctx.fillText('VERRIEGELT', 90, 56);
+        // ---- Bereich 2: Zentrales Symbol-Raster ----
+        const gridX0 = 10, gridX1 = 456, gridY0 = 96, gridY1 = 188;
+        const cols = 5;
+        const colGap = 7.75;
+        const colW = (gridX1 - gridX0 - (cols - 1) * colGap) / cols;
+        const rowGap = 4;
+        const rowH = (gridY1 - gridY0 - rowGap) / 2;
+        const row1Y = gridY0;
+        const row2Y = gridY0 + rowH + rowGap;
+        const colX = (i) => gridX0 + i * (colW + colGap);
+
+        const drawField = (x, y, w, h, highlighted) => {
+            ctx.fillStyle = highlighted ? blueActive : '#20242c';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = borderCol;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, w, h);
+        };
+
+        // Row 1, Col 1: Isolierung/Abschaltung (Kreis, diagonal durchgestrichen)
+        {
+            const x = colX(0), yc = row1Y + rowH / 2, xc = x + colW / 2;
+            drawField(x, row1Y, colW, rowH, false);
+            ctx.strokeStyle = textLight;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(xc, yc, 13, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(xc - 16, yc + 16);
+            ctx.lineTo(xc + 16, yc - 16);
+            ctx.stroke();
         }
 
-        // Emergency Brake / Sifa
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('SICHERHEIT', 15, 74);
-        if (this.sim.emergencyBrake) {
-            ctx.fillStyle = '#ff3333';
-            ctx.fillText('NOTBREMSE AKTIV', 90, 74);
-        } else {
-            ctx.fillStyle = '#00ff66';
-            ctx.fillText('SIFA OK', 90, 74);
+        // Row 1, Col 2: Stromabnehmer / Hochspannung "3~"
+        {
+            const x = colX(1), yc = row1Y + rowH / 2, xc = x + colW / 2;
+            drawField(x, row1Y, colW, rowH, false);
+            ctx.strokeStyle = textLight;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(xc, yc - 15);
+            ctx.lineTo(xc - 10, yc - 2);
+            ctx.lineTo(xc + 10, yc - 2);
+            ctx.lineTo(xc, yc + 12);
+            ctx.stroke();
+            ctx.fillStyle = textLight;
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('3~', xc, yc + 15);
         }
 
-        // Traction Force (KRAFT) display
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('KRAFT', 15, 92);
-        const forcePercent = Math.max(0, this.sim.throttle) * 100;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(`${forcePercent.toFixed(0)} %`, 78, 92);
+        // Column 3 (merged, both rows): Tür-Symbol, aktiv/blau
+        {
+            const x = colX(2), w = colW, yc = gridY0 + (gridY1 - gridY0) / 2, xc = x + w / 2;
+            drawField(x, gridY0, w, gridY1 - gridY0, true);
+            ctx.fillStyle = '#ffffff';
+            const doorW = 12, doorH = 34, gap = 4;
+            ctx.fillRect(xc - gap / 2 - doorW, yc - doorH / 2, doorW, doorH);
+            ctx.fillRect(xc + gap / 2, yc - doorH / 2, doorW, doorH);
+            ctx.strokeStyle = '#0c1e4a';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(xc - gap / 2 - doorW, yc - doorH / 2, doorW, doorH);
+            ctx.strokeRect(xc + gap / 2, yc - doorH / 2, doorW, doorH);
+        }
 
-        // Traction Force bar (0 to 100%)
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(145, 83, 80, 10);
+        // Row 1, Col 4: Kupplung (Rechteck über Kreis)
+        {
+            const x = colX(3), yc = row1Y + rowH / 2, xc = x + colW / 2;
+            drawField(x, row1Y, colW, rowH, false);
+            ctx.strokeStyle = textLight;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(xc - 9, yc - 15, 18, 10);
+            ctx.beginPath();
+            ctx.arc(xc, yc + 6, 9, 0, Math.PI * 2);
+            ctx.stroke();
+        }
 
-        // Vertical indicator line showing current force request
-        const forceX = 145 + (forcePercent / 100) * 80;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(forceX - 1, 81, 2, 14);
+        // Row 1, Col 5: Sanden / Akustik (strahlenförmig)
+        {
+            const x = colX(4), yc = row1Y + rowH / 2, xc = x + colW / 2;
+            drawField(x, row1Y, colW, rowH, false);
+            ctx.strokeStyle = textLight;
+            ctx.lineWidth = 2;
+            for (let a = 0; a < 8; a++) {
+                const ang = (a / 8) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.moveTo(xc + Math.cos(ang) * 5, yc + Math.sin(ang) * 5);
+                ctx.lineTo(xc + Math.cos(ang) * 15, yc + Math.sin(ang) * 15);
+                ctx.stroke();
+            }
+        }
 
-        // Brake deceleration display (BREMSE)
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('BREMSE', 15, 110);
-        const decel = Math.max(0, -this.sim.acceleration);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(`${decel.toFixed(2)} m/s²`, 78, 110);
+        // Row 2, Col 1: Bremse (Kreis mit zwei Bremsbacken)
+        {
+            const x = colX(0), yc = row2Y + rowH / 2, xc = x + colW / 2;
+            drawField(x, row2Y, colW, rowH, false);
+            ctx.strokeStyle = textLight;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(xc, yc, 11, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = textLight;
+            ctx.fillRect(xc - 18, yc - 4, 6, 8);
+            ctx.fillRect(xc + 12, yc - 4, 6, 8);
+        }
 
-        // Deceleration bar (0 to 3.5, with red background ab 2.0)
-        const normalWidth = (2.0 / 3.5) * 80;
-        const redWidth = (1.5 / 3.5) * 80;
+        // Row 2, Col 2: Motor "M" im Kreis
+        {
+            const x = colX(1), yc = row2Y + rowH / 2, xc = x + colW / 2;
+            drawField(x, row2Y, colW, rowH, false);
+            ctx.strokeStyle = textLight;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(xc, yc, 13, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = textLight;
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('M', xc, yc + 1);
+        }
 
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(145, 101, normalWidth, 10);
+        // Row 2, Col 4: Brandmeldung (Flamme)
+        {
+            const x = colX(3), yc = row2Y + rowH / 2, xc = x + colW / 2;
+            drawField(x, row2Y, colW, rowH, false);
+            ctx.fillStyle = textLight;
+            ctx.beginPath();
+            ctx.moveTo(xc, yc - 15);
+            ctx.quadraticCurveTo(xc + 12, yc - 4, xc + 5, yc + 8);
+            ctx.quadraticCurveTo(xc + 8, yc, xc, yc + 15);
+            ctx.quadraticCurveTo(xc - 8, yc, xc - 5, yc - 6);
+            ctx.quadraticCurveTo(xc - 8, yc - 10, xc, yc - 15);
+            ctx.closePath();
+            ctx.fill();
+        }
 
-        ctx.fillStyle = '#b91c1c'; // Red background for 2.0 to 3.5 range
-        ctx.fillRect(145 + normalWidth, 101, redWidth, 10);
+        // Row 2, Col 5: Stromabnehmer gesenkt / Erdung (T-Symbol mit Blitz)
+        {
+            const x = colX(4), yc = row2Y + rowH / 2, xc = x + colW / 2;
+            drawField(x, row2Y, colW, rowH, false);
+            ctx.strokeStyle = textLight;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(xc - 12, yc - 12);
+            ctx.lineTo(xc + 2, yc - 12);
+            ctx.moveTo(xc - 5, yc - 12);
+            ctx.lineTo(xc - 5, yc + 12);
+            ctx.stroke();
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.moveTo(xc + 8, yc - 10);
+            ctx.lineTo(xc, yc + 2);
+            ctx.lineTo(xc + 6, yc + 2);
+            ctx.lineTo(xc - 2, yc + 14);
+            ctx.lineTo(xc + 12, yc - 2);
+            ctx.lineTo(xc + 6, yc - 2);
+            ctx.closePath();
+            ctx.fill();
+        }
 
-        // Vertical indicator line showing current brake deceleration
-        const brakeX = 145 + (Math.min(3.5, decel) / 3.5) * 80;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(brakeX - 1, 99, 2, 14);
+        // ---- Bereich 3: Text-Informationszeile ----
+        const infoY = 200;
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        ctx.fillStyle = this.sim.emergencyBrake ? '#ff5555' : textLight;
+        ctx.fillText(this.sim.emergencyBrake ? 'Störung' : 'Normalbetrieb', 10, infoY);
+
+        const isHolding = (this.sim.speed < 0.05 && this.sim.throttle < 0);
+        ctx.fillStyle = isHolding ? textLight : textMuted;
+        ctx.fillText('Haltebremse', 145, infoY);
+
+        const speedKmh = Math.max(0, this.sim.speed) * 3.6;
+        ctx.fillStyle = textLight;
+        ctx.fillText(`${speedKmh.toFixed(1)} km/h`, 260, infoY);
+
+        const doorState = this.sim.doorState;
+        const doorLetter = (doorState === 1) ? 'B' : (doorState === 2) ? 'C' : (doorState === 3) ? 'D' : 'A';
+        ctx.fillText(`Tür-Zust ${doorLetter}`, 375, infoY);
+
+        // ---- Bereich 4: Status-Indikator ----
+        const statY = 214;
+        ctx.fillStyle = '#f2e6a8';
+        ctx.fillRect(10, statY, 24, 16);
+        ctx.strokeStyle = borderCol;
+        ctx.strokeRect(10, statY, 24, 16);
+        ctx.fillStyle = textDark;
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('D', 22, statY + 9);
+
+        // ---- Fußzeile (Untere Menüleiste) ----
+        const footerY = height - footerH;
+        ctx.fillStyle = bgLight;
+        ctx.fillRect(0, footerY, mainW, footerH);
+        const segCount = 8;
+        const segW = mainW / segCount;
+        ctx.strokeStyle = '#8a8f97';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < segCount; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * segW, footerY);
+            ctx.lineTo(i * segW, height);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = textDark;
+        ctx.textAlign = 'center';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('Melde-', segW * 0.5, footerY + footerH / 2 - 7);
+        ctx.fillText('liste', segW * 0.5, footerY + footerH / 2 + 7);
+        ctx.fillText('Einstell.', segW * 1.5, footerY + footerH / 2);
+        ctx.fillText('Anfahrt', segW * 3.5, footerY + footerH / 2 - 7);
+        ctx.fillText('sperren', segW * 3.5, footerY + footerH / 2 + 7);
+
+        // Home icon in the last footer segment
+        {
+            const hx = segW * 7.5, hy = footerY + footerH / 2;
+            ctx.strokeStyle = textDark;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(hx, hy, 10, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(hx - 5, hy);
+            ctx.lineTo(hx, hy - 5);
+            ctx.lineTo(hx + 5, hy);
+            ctx.lineTo(hx + 3, hy);
+            ctx.lineTo(hx + 3, hy + 5);
+            ctx.lineTo(hx - 3, hy + 5);
+            ctx.lineTo(hx - 3, hy);
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        // ---- Rechte Seitenleiste ----
+        const sbX = mainW;
+        const sbY0 = headerH;
+        const sbH = height - headerH;
+        ctx.fillStyle = bgLight;
+        ctx.fillRect(sbX, sbY0, sidebarW, sbH);
+        const sbSegCount = 5;
+        const sbSegH = sbH / sbSegCount;
+        ctx.strokeStyle = '#8a8f97';
+        for (let i = 1; i < sbSegCount; i++) {
+            ctx.beginPath();
+            ctx.moveTo(sbX, sbY0 + i * sbSegH);
+            ctx.lineTo(width, sbY0 + i * sbSegH);
+            ctx.stroke();
+        }
+        ctx.fillStyle = textDark;
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Quittung', sbX + sidebarW / 2, sbY0 + sbSegH * 3.5);
 
         screen.leftTexture.needsUpdate = true;
     }
@@ -2534,30 +2837,46 @@ export class TrainModel {
         const width = screen.rightCanvas.width;
         const height = screen.rightCanvas.height;
 
+        // Palette borrowed from drawLeftScreen (panel1/Fahrplan) so the two screens read
+        // as one family: light Kopfzeile on a dark field, same muted/border tones.
+        const bgField = '#0c0f12';
+        const bgLight = '#d7dae0';
+        const textDark = '#101216';
+        const textMuted = '#6b7280';
+        const borderCol = '#4b5563';
+
         // Clear background
-        ctx.fillStyle = '#0c0f12';
+        ctx.fillStyle = bgField;
         ctx.fillRect(0, 0, width, height);
 
         // --- Kopfzeile (Statusleiste) ---
-        ctx.fillStyle = '#1a1d22';
-        ctx.fillRect(0, 0, width, 25);
+        const headerH = 25;
+        ctx.fillStyle = bgLight;
+        ctx.fillRect(0, 0, width, headerH);
+        ctx.textBaseline = 'middle';
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = textDark;
         ctx.font = '12px sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText('485', 10, 18);
+        ctx.fillText('485', 10, headerH / 2 + 1);
 
         const now = new Date();
         const days = ['So.', 'Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.'];
         const dateStr = `${days[now.getDay()]} ${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         ctx.textAlign = 'right';
-        ctx.fillText(dateStr, width - 10, 18);
+        ctx.fillText(dateStr, width - 10, headerH / 2 + 1);
+        ctx.textBaseline = 'alphabetic';
 
         // --- Zeile 1 (Karteireiter) ---
         const tabWidth = (width - 20) / 4;
         const drawTab = (x, label) => {
             ctx.fillStyle = '#4a4d52';
-            ctx.fillRect(x, 30, tabWidth - 2, 25);
+            ctx.beginPath();
+            ctx.roundRect(x, 30, tabWidth - 2, 25, 4);
+            ctx.fill();
+            ctx.strokeStyle = borderCol;
+            ctx.lineWidth = 1;
+            ctx.stroke();
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.fillText(label, x + tabWidth / 2, 47);
@@ -2570,10 +2889,12 @@ export class TrainModel {
         const btnWidth = (width - 30) / 5;
         const drawBtn = (x, y, label, color, textColor = '#ffffff') => {
             ctx.fillStyle = color;
-            // Rounded corners approximation
             ctx.beginPath();
             ctx.roundRect(x, y, btnWidth - 4, 30, 5);
             ctx.fill();
+            ctx.strokeStyle = borderCol;
+            ctx.lineWidth = 1;
+            ctx.stroke();
             ctx.fillStyle = textColor;
             ctx.textAlign = 'center';
             ctx.font = 'bold 10px sans-serif';
@@ -2588,29 +2909,32 @@ export class TrainModel {
             drawBtn(10 + i * btnWidth, 65, row2Labels[i], row2Colors[i], row2TextColors[i]);
         }
 
-        // --- Zeile 3 (Untere Tastenreihe) ---
+        // --- Zeile 3 (Untere Tastenreihe) - bündig unter den ersten 4 Spalten, 5. leer ---
         const row3Labels = ['ZF', 'ELA', 'FGZ', 'RLS'];
         for (let i = 0; i < 4; i++) {
             drawBtn(10 + i * btnWidth, 105, row3Labels[i], '#4a4d52');
         }
 
-        // --- Zeile 4 (Informationsleiste / Ticker) ---
+        // --- Zeile 4 (Informationsleiste / Ticker) - flush against the footer's top edge ---
+        const footerH = 35;
+        const tickerH = 40;
+        const tickerY = (height - footerH) - tickerH;
         ctx.fillStyle = '#05070a';
-        ctx.fillRect(0, 150, width, 40);
+        ctx.fillRect(0, tickerY, width, tickerH);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = '14px sans-serif';
         ctx.textAlign = 'left';
-        const tickerText = '...örung im Bereich Innenstadt: Li. 43 und 44 fahrt in Ri. Passauer Str      ';
+        const tickerText = 'Straßenbahnen aufgrund von Hitze außer Betrieb. Ein Schienenersetzverkehr wird bereitgestellt.      ';
         const textMetrics = ctx.measureText(tickerText);
         const tickerOffset = (Date.now() / 50) % textMetrics.width;
 
         ctx.save();
         ctx.beginPath();
-        ctx.rect(0, 150, width, 40);
+        ctx.rect(0, tickerY, width, tickerH);
         ctx.clip();
-        ctx.fillText(tickerText, 10 - tickerOffset, 175);
-        ctx.fillText(tickerText, 10 - tickerOffset + textMetrics.width, 175);
+        ctx.fillText(tickerText, 10 - tickerOffset, tickerY + 25);
+        ctx.fillText(tickerText, 10 - tickerOffset + textMetrics.width, tickerY + 25);
         ctx.restore();
 
         // --- Zeile 5 (Fußzeile / Menüleiste) ---
@@ -2636,7 +2960,7 @@ export class TrainModel {
         ctx.closePath();
         ctx.fill();
 
-        ctx.fillStyle = '#6b7280';
+        ctx.fillStyle = textMuted;
         ctx.font = '10px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Legende', 80, height - 15);
@@ -2647,7 +2971,8 @@ export class TrainModel {
         ctx.fillText('umschalten', 220, height - 10);
 
         ctx.textAlign = 'right';
-        ctx.fillText('Einstellungen', width - 10, height - 15);
+        ctx.fillText('Einstel-', width - 10, height - 20);
+        ctx.fillText('lungen', width - 10, height - 10);
 
         screen.rightTexture.needsUpdate = true;
     }
@@ -2673,6 +2998,67 @@ export class TrainModel {
         
         this.destScreenMat = new THREE.MeshBasicMaterial({ map: texture });
         return this.destScreenMat;
+    }
+
+    // Draws text horizontally compressed (canvas 2D has no reliable cross-browser
+    // font-stretch support), for a narrower/condensed look at a given font size.
+    fillTextNarrow(ctx, text, x, y, scaleX = 0.8) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scaleX, 1);
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+    }
+
+    // Draws the whole in-cab radio interface (title, station, current song, or "Aus")
+    // onto one radio display canvas. Shared by the initial draw and updateRadioDisplay().
+    drawRadioDisplay(ctx, canvas, stationName, songName, active) {
+        ctx.fillStyle = '#0a0a0c';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = 'center';
+
+        ctx.fillStyle = '#7a7f8a';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textBaseline = 'top';
+        this.fillTextNarrow(ctx, 'U-Bahn-Radio', canvas.width / 2, 14);
+
+        if (!active) {
+            ctx.fillStyle = '#565a63';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textBaseline = 'middle';
+            this.fillTextNarrow(ctx, 'Aus', canvas.width / 2, canvas.height / 2 + 10);
+            return;
+        }
+
+        ctx.fillStyle = '#ffcc44';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textBaseline = 'middle';
+        this.fillTextNarrow(ctx, stationName, canvas.width / 2, canvas.height / 2 - 10);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '18px sans-serif';
+        this.fillTextNarrow(ctx, songName, canvas.width / 2, canvas.height / 2 + 40);
+
+        // "Aus" button, top-right corner - matches the hit-test zone in WorldManager's
+        // radio click handler (uv.x > 0.75 && uv.y > 0.7, i.e. this same corner).
+        const btnW = canvas.width * 0.22, btnH = canvas.height * 0.26;
+        const btnX = canvas.width - btnW - 6, btnY = 6;
+        ctx.strokeStyle = '#8a2f2f';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(btnX, btnY, btnW, btnH);
+        ctx.fillStyle = '#e05555';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textBaseline = 'middle';
+        this.fillTextNarrow(ctx, 'Aus', btnX + btnW / 2, btnY + btnH / 2 + 1);
+    }
+
+    // Called from main.js whenever the radio's station/song/on-off state changes,
+    // keeping every registered radio display screen (one per cab) in sync.
+    updateRadioDisplay(stationName, songName, active) {
+        for (const d of this.radioDisplays) {
+            this.drawRadioDisplay(d.ctx, d.canvas, stationName, songName, active);
+            d.texture.needsUpdate = true;
+        }
     }
 
     updateDestinationSign(isReversing) {
@@ -2940,7 +3326,7 @@ export class TrainModel {
     buildBellowsHalf(carGroup, startZ, endZ, type) {
         const isG1 = (this.trainType === 'G1');
         const wallMat = this.materials.bodyWhite;
-        const bellowsMat = this.materials.bodyDarkGrey;
+        const bellowsMat = this.materials.bellowsLightGrey;
  
         const dz = endZ - startZ;
         const absDz = Math.abs(dz);
@@ -3011,6 +3397,42 @@ export class TrainModel {
         );
         bellowsCeil.position.set(0, bellowsCeilY, bellowsCenterZ);
         carGroup.add(bellowsCeil);
+
+        // --- Outer bellows (flush with outer walls and roof) ---
+        // Procedural bellows textures
+        const texSides = this.createBellowsTexture('vertical');
+        texSides.repeat.set(bellowsDz / 0.05, 1);
+        const outerMatSides = cheapMaterial({ map: texSides, roughness: 0.8 });
+
+        const texCeil = this.createBellowsTexture('horizontal');
+        texCeil.repeat.set(1, bellowsDz / 0.05);
+        const outerMatCeil = cheapMaterial({ map: texCeil, roughness: 0.8 });
+
+        const outerBottomY = 0.40;
+        const outerCeilY = frameTopY + frameTopH / 2;
+        const outerH = outerCeilY - outerBottomY;
+        const outerY = outerBottomY + outerH / 2;
+
+        const outerBellowsL = new THREE.Mesh(
+            new THREE.BoxGeometry(0.02, outerH, bellowsDz),
+            outerMatSides
+        );
+        outerBellowsL.position.set(-unscaledWidth / 2, outerY, bellowsCenterZ);
+        carGroup.add(outerBellowsL);
+
+        const outerBellowsR = new THREE.Mesh(
+            new THREE.BoxGeometry(0.02, outerH, bellowsDz),
+            outerMatSides
+        );
+        outerBellowsR.position.set(unscaledWidth / 2, outerY, bellowsCenterZ);
+        carGroup.add(outerBellowsR);
+
+        const outerBellowsCeil = new THREE.Mesh(
+            new THREE.BoxGeometry(unscaledWidth, 0.02, bellowsDz),
+            outerMatCeil
+        );
+        outerBellowsCeil.position.set(0, outerCeilY, bellowsCenterZ);
+        carGroup.add(outerBellowsCeil);
  
         const bellowsFloorGeom = new THREE.BoxGeometry(openWidth, 0.01, absDz);
         this.applyBoxUVs(bellowsFloorGeom, openWidth, 0.01, absDz, 2.0);
@@ -3259,7 +3681,7 @@ export class TrainModel {
 
         // Throttle levers: tilt forward/backward based on throttle
         this.throttleLevers.forEach(lever => {
-            const targetLeverRot = - throttle * 0.45 * lever.cabDir;
+            const targetLeverRot = - throttle * 0.45 * lever.cabDir * (lever.invert ? -1 : 1);
             lever.mesh.rotation.x += (targetLeverRot - lever.mesh.rotation.x) * 0.2;
         });
 
@@ -4550,7 +4972,7 @@ export class TrainModel {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('HBL', 64, 64 - 15);
-        
+
         ctx.strokeStyle = '#94a3b8';
         for (let p = 0; p <= 12; p += 2) {
             const angle = Math.PI * 0.75 + (p / 12) * Math.PI * 1.5;
@@ -4702,6 +5124,31 @@ export class TrainModel {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set(1, 1);
+        return texture;
+    }
+
+    createBellowsTexture(direction) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        // Dark base fold color
+        ctx.fillStyle = '#141619';
+        ctx.fillRect(0, 0, 64, 64);
+        
+        // Light fold peak stripes
+        ctx.fillStyle = '#2c2f35';
+        if (direction === 'vertical') {
+            ctx.fillRect(16, 0, 16, 64);
+            ctx.fillRect(48, 0, 16, 64);
+        } else {
+            ctx.fillRect(0, 16, 64, 16);
+            ctx.fillRect(0, 48, 64, 16);
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
         return texture;
     }
 
@@ -5234,8 +5681,8 @@ export class TrainModel {
         const winRearZ = winOrigRearZ + winShift;
         const winTopFrontZ = winOrigBottomZ + winFrontSlope * (winTopY - winBottomY) + winShift;
         const winPts = [[winBottomZ, winBottomY], [winRearZ, winBottomY], [winRearZ, winTopY], [winTopFrontZ, winTopY]];
-        // Real driver door width = 700mm (z -1.11 to -1.81)
-        const doorHolePts = [[-1.11, 0.60], [-1.81, 0.60], [-1.81, 2.40], [-1.11, 2.40]];
+        // Real driver door width = 700mm (z -1.11 to -1.81), height increased to 2.55
+        const doorHolePts = [[-1.11, 0.60], [-1.81, 0.60], [-1.81, 2.55], [-1.11, 2.55]];
         const flankHoles = [{ pts: winPts, r: 0.06 }, { pts: doorHolePts, r: 0.04 }];
         G.g1CabSideL = this.createG1SidePlateGeometry(flankPts, -1, 0.05, 1.40, { holes: flankHoles });
         G.g1CabSideR = this.createG1SidePlateGeometry(flankPts, 1, 0.05, 1.40, { holes: flankHoles });
@@ -5255,14 +5702,8 @@ export class TrainModel {
         // red wedge fills the white-band zone between the cab door and the white
         // band's diagonal front edge (45 degrees, top corner at the door's rear
         // edge, running down-rearwards past the body joint at z = -1.90).
-        // Front tip is a single straight cut, top-anchored: (0.0995, 0.60)
-        // sits flush on flankPts' own value there, and the bottom corner
-        // follows flankPts' rising-segment slope (~0.33, from (0.085, 0.57)
-        // to (0.211, 0.95)) down from that anchor, landing at z=0.033 at
-        // y=0.40 - slightly behind flankPts' own value there (0.085), since
-        // flankPts flattens out below y=0.57 while this line keeps the same
-        // incline all the way down.
-        const redStripePts = [[0.0995, 0.60], [0.033, 0.40], [-1.90, 0.40], [-1.90, 0.60]];
+        // band's diagonal front edge.
+        const redStripePts = [[0.033, 0.60], [0.033, 0.40], [-1.90, 0.40], [-1.90, 0.60]];
         G.g1CabRedStripeL = this.createG1SidePlateGeometry(redStripePts, -1, 0.052, 1.402);
         G.g1CabRedStripeR = this.createG1SidePlateGeometry(redStripePts, 1, 0.052, 1.402);
 
@@ -5271,13 +5712,18 @@ export class TrainModel {
         G.g1CabSkirtStripeL = this.createG1SidePlateGeometry(skirtStripePts, -1, 0.052, 1.402);
         G.g1CabSkirtStripeR = this.createG1SidePlateGeometry(skirtStripePts, 1, 0.052, 1.402);
 
-        const redWedgePts = [[-1.81, 1.20], [-1.81, 0.60], [-2.41, 0.60]];
+        // White band segment behind the door (horizontal, Y = 0.60 to 1.20)
+        const whiteRearPts = [[-1.90, 1.20], [-1.81, 1.20], [-1.81, 0.60], [-1.90, 0.60]];
+        G.g1CabWhiteRearL = this.createG1SidePlateGeometry(whiteRearPts, -1, 0.052, 1.402);
+        G.g1CabWhiteRearR = this.createG1SidePlateGeometry(whiteRearPts, 1, 0.052, 1.402);
+
+        // Red triangle in front of the door (slanted, Y = 0.60 to 1.20, z from -1.11 to -0.51)
+        const redWedgePts = [[-1.11, 1.20], [-0.51, 0.60], [-0.51, 1.20]];
         G.g1CabRedWedgeL = this.createG1SidePlateGeometry(redWedgePts, -1, 0.052, 1.402);
         G.g1CabRedWedgeR = this.createG1SidePlateGeometry(redWedgePts, 1, 0.052, 1.402);
 
-        // White sliver completing the white band between the diagonal cut and the
-        // body panel joint at z = -1.90
-        const whiteTriPts = [[-1.81, 1.20], [-1.90, 1.11], [-1.90, 1.20]];
+        // White triangle in front of the door (slanted, Y = 0.60 to 1.20, z from -1.11 to -0.51)
+        const whiteTriPts = [[-1.11, 0.60], [-0.51, 0.60], [-1.11, 1.20]];
         G.g1CabWhiteTriL = this.createG1SidePlateGeometry(whiteTriPts, -1, 0.052, 1.402);
         G.g1CabWhiteTriR = this.createG1SidePlateGeometry(whiteTriPts, 1, 0.052, 1.402);
 

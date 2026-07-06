@@ -34,10 +34,26 @@ export class StationBuilder {
             "Maximilianstraße": {
                 bottomColor: '#f8fafc',
                 bottomGrout: '#94a3b8',
-                topColor: '#3a9c35',
-                topGrout: '#d1d5db',
+                topColor: '#6FB464',
+                topGrout: '#94a3b8',
                 stripeBg: '#ffffff',
-                stripeText: '#1b5e20'
+                stripeText: '#000000'
+            },
+            "Bärenschanze": {
+                bottomColor: '#f8fafc',
+                bottomGrout: '#94a3b8',
+                topColor: '#1f799e',
+                topGrout: '#94a3b8',
+                stripeBg: '#ffffff',
+                stripeText: '#000000'
+            },
+            "Gostenhof": {
+                bottomColor: '#f8fafc',
+                bottomGrout: '#94a3b8',
+                topColor: '#e0bf04',
+                topGrout: '#94a3b8',
+                stripeBg: '#ffffff',
+                stripeText: '#000000'
             },
             "Langwasser Süd": {
                 bottomColor: '#41525a',
@@ -168,7 +184,8 @@ export class StationBuilder {
         // Transverse Walls at the ends
         const transWallDepth = 0.4;
         const transWallWidth = 10.0; // Wide enough to cover the outer main tube
-        const transWallHeight = 7.0;
+        const isMaxStyle = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
+        const transWallHeight = isMaxStyle ? 7.84 : 7.0;
 
         const transWallGeom = new THREE.BoxGeometry(transWallWidth, transWallHeight, transWallDepth);
 
@@ -310,8 +327,9 @@ export class StationBuilder {
         // Stair enclosure wall geometry: identical for both platform ends (no zDir/anchor
         // dependence), so build + UV-fix it once here instead of once per end inside
         // createStairsAndEscalator below.
-        const stairWallDepth = 28 * 0.3; // numSteps * stepDepth
-        const stairWallHeight = 7.0; // Reach ceiling
+        const numSteps = isMaxStyle ? 33 : 28;
+        const stairWallDepth = numSteps * 0.3; // numSteps * stepDepth
+        const stairWallHeight = isMaxStyle ? 7.84 : 7.0; // Reach ceiling
         // The transverse (end) wall is 0.4m thick, centered on this same anchor (Z=0), so it
         // extends transWallDepth/2 past Z=0 towards the platform. The stair enclosure wall used
         // to stop exactly at Z=0 (the transverse wall's centre), only overlapping half its
@@ -342,7 +360,7 @@ export class StationBuilder {
 
             const stepDepth = 0.3;
             const stepHeight = 0.16;
-            const numSteps = 28; // height = 4.48m
+            // numSteps is closed over from the outer scope to keep walls and steps in sync
 
             const rampLength = Math.sqrt(Math.pow(numSteps * stepDepth, 2) + Math.pow(numSteps * stepHeight, 2));
             const rampAngle = Math.atan2(numSteps * stepHeight, numSteps * stepDepth);

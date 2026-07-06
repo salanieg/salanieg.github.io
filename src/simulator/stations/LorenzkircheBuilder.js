@@ -135,12 +135,16 @@ export class LorenzkircheBuilder extends StationBuilder {
 
         // Draw LORENZKIRCHE text in the middle (at 15m mark)
         pctx.fillStyle = '#111827';
-        pctx.font = 'bold 80px sans-serif';
+        pctx.font = 'bold 100px "Jost Regular", sans-serif';
         pctx.textAlign = 'center';
         pctx.textBaseline = 'middle';
         pctx.fillText('LORENZKIRCHE', 1500, 256);
+        pctx.strokeStyle = '#111827';
+        pctx.lineWidth = 2.0;
+        pctx.strokeText('LORENZKIRCHE', 1500, 256);
 
         const panelTex = new THREE.CanvasTexture(panelCanvas);
+        panelTex.anisotropy = 8;
         panelTex.wrapS = THREE.RepeatWrapping;
         panelTex.wrapT = THREE.RepeatWrapping;
         // The texture spans 30m. A 10m segment should cover 1/3 of the texture.
@@ -182,159 +186,119 @@ export class LorenzkircheBuilder extends StationBuilder {
     }
 
     buildSegmentGroundAndCeiling(segmentData) {
-        const { j, pos, normal, spacing, rotY, localPos } = segmentData;
+        const { j } = segmentData;
+        if (j !== 0) return; // ground/vault/lights are built ONCE, continuously, below
+
+        const sA = this.station.position - this.platLength / 2;
+        const sB = this.station.position + this.platLength / 2;
+        const spacing = this.spacing; // station's own fixed gap (radius stays constant along the platform)
         const groundWidth = spacing + 2.8;
-
-        // Correctly scaled ballast material for the station track bed
-        const groundMat = this.materials.ballast.clone();
-        groundMat.map = this.materials.ballast.map.clone();
-        groundMat.map.repeat.set(groundWidth, this.subLen);
-
-        const groundMesh = new THREE.Mesh(new THREE.BoxGeometry(groundWidth, 0.1, this.subLen), groundMat);
-        groundMesh.position.copy(localPos);
-        groundMesh.position.y = -0.52;
-        groundMesh.rotation.y = rotY;
-        this.group.add(groundMesh);
-
         const tubeCenterL = spacing / 4 + 1.2;
         const tubeCenterR = -tubeCenterL;
         const tubeRadius = tubeCenterL;
-        const vaultGeomR = new THREE.CylinderGeometry(tubeRadius, tubeRadius, this.subLen, 128, 1, true, Math.PI / 2, Math.PI);
-        const vaultGeomL = vaultGeomR;
 
-        const vaultR = new THREE.Mesh(vaultGeomR, this.vaultMat);
-        vaultR.position.copy(localPos).addScaledVector(new THREE.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)), tubeCenterR);
-        vaultR.position.y = 0.865;
-        vaultR.rotation.order = 'YXZ';
-        vaultR.rotation.set(Math.PI / 2, 0, 0);
-        vaultR.rotation.y = rotY;
+        // Track bed, as one continuous swept slab instead of per-10m boxes. buildSweptBar's
+        // top-face U is normalised 0..1 across the width (not metric), so bake the width-wise
+        // tile density into repeat.x instead (matching the ~1-tile-per-1.2m convention used
+        // for V via Hmeters below).
+        const groundMat = this.materials.ballast.clone();
+        groundMat.map = this.materials.ballast.map.clone();
+        groundMat.map.wrapS = groundMat.map.wrapT = THREE.RepeatWrapping;
+        groundMat.map.repeat.set(groundWidth / 1.2, 1);
+        this.model.buildSweptBar(this.group, sA, sB, () => groundWidth / 2,
+            this.centerPos.y - 0.47, this.centerPos.y - 0.57, [groundMat, groundMat], 1.2);
 
-        const vaultL = new THREE.Mesh(vaultGeomL, this.vaultMat);
-        vaultL.position.copy(localPos).addScaledVector(new THREE.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)), tubeCenterL);
-        vaultL.position.y = 0.865;
-        vaultL.rotation.order = 'YXZ';
-        vaultL.rotation.set(Math.PI / 2, 0, 0);
-        vaultL.rotation.y = rotY;
+        // Vault (dome arch over each track), as a continuous swept half-circle profile —
+        // this is what makes the tube follow the curve instead of meeting at an angle every
+        // 10m. Profile: x = R*cos(phi), y = R*sin(phi), phi:0..PI — traces from the right
+        // spring-point up over the top and down to the left spring-point (a dome opening
+        // downward), matching the original cylinder's net shape after its YXZ transform.
+        const arcSteps = 32;
+        const vaultArc = [];
+        for (let k = 0; k <= arcSteps; k++) {
+            const phi = Math.PI * k / arcSteps;
+            vaultArc.push({ x: tubeRadius * Math.cos(phi), y: tubeRadius * Math.sin(phi) });
+        }
+        this.model.buildSweptProfile(this.group, sA, sB, vaultArc, this.centerPos.y + 0.865, () => tubeCenterL, this.vaultMat, 5);
+        this.model.buildSweptProfile(this.group, sA, sB, vaultArc, this.centerPos.y + 0.865, () => tubeCenterR, this.vaultMat, 5);
 
-        this.group.add(vaultL, vaultR);
-
+        // Light strips (continuous casing + glow), and their discrete hanger rods (real
+        // periodic fixtures, kept at the same spacing/positions as the original per-segment
+        // pairs: two hangers per 10m... per this.subLen segment, at local z = +-1.5m).
         const lightW = 0.4;
         const lightH = 0.1;
         const hangerLen = 1.0;
         const lightY = 0.865 + tubeRadius - hangerLen;
-
         const lightMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
         const casingMat = new THREE.MeshLambertMaterial({ color: '#e2e8f0' });
         const hangerMat = new THREE.MeshLambertMaterial({ color: '#9ca3af' });
         const hangerGeom = new THREE.CylinderGeometry(0.02, 0.02, hangerLen, 8);
 
-        const buildLight = (centerX) => {
-            const casing = new THREE.Mesh(new THREE.BoxGeometry(lightW, lightH + 0.05, this.subLen), casingMat);
-            casing.position.copy(localPos).addScaledVector(new THREE.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)), centerX);
-            casing.position.y = lightY + 0.025;
-            casing.rotation.y = rotY;
+        [tubeCenterL, tubeCenterR].forEach(centerX => {
+            this.model.buildSweptBar(this.group, sA, sB, () => lightW / 2,
+                this.centerPos.y + lightY + 0.1, this.centerPos.y + lightY - 0.05, [casingMat, casingMat], 1.2, () => centerX);
+            this.model.buildSweptBar(this.group, sA, sB, () => (lightW - 0.05) / 2,
+                this.centerPos.y + lightY + 0.025, this.centerPos.y + lightY - 0.075, [lightMat, lightMat], 1.2, () => centerX);
 
-            const glow = new THREE.Mesh(new THREE.BoxGeometry(lightW - 0.05, lightH, this.subLen), lightMat);
-            glow.position.copy(localPos).addScaledVector(new THREE.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)), centerX);
-            glow.position.y = lightY - 0.025;
-            glow.rotation.y = rotY;
-
-            this.group.add(casing, glow);
-
-            const addHanger = (zOffset) => {
-                const hanger = new THREE.Mesh(hangerGeom, hangerMat);
-                hanger.position.copy(localPos).addScaledVector(new THREE.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)), centerX);
-                hanger.position.y = lightY + hangerLen/2;
-                hanger.position.addScaledVector(new THREE.Vector3(-Math.sin(rotY), 0, Math.cos(rotY)), zOffset);
-                this.group.add(hanger);
-            };
-            addHanger(1.5);
-            addHanger(-1.5);
-        };
-
-        buildLight(tubeCenterL);
-        buildLight(tubeCenterR);
+            for (let jj = 0; jj < this.numSub; jj++) {
+                const s_mid = sA + (jj + 0.5) * this.subLen;
+                [1.5, -1.5].forEach(zOffset => {
+                    const s = s_mid + zOffset;
+                    const pos = this.sim.getTrackPosition(s);
+                    const tangent = this.sim.getTrackTangent(s);
+                    const rotY = Math.atan2(tangent.x, tangent.z) - this.centerAngle;
+                    const hanger = new THREE.Mesh(hangerGeom, hangerMat);
+                    hanger.position.copy(this.group.worldToLocal(pos.clone().addScaledVector(new THREE.Vector3(-tangent.z, 0, tangent.x), centerX)));
+                    hanger.position.y = lightY + hangerLen / 2;
+                    hanger.rotation.y = rotY;
+                    this.group.add(hanger);
+                });
+            }
+        });
     }
 
     buildSegmentPlatform(segmentData) {
-        const { rotY, localPos, j } = segmentData;
+        const { j } = segmentData;
+        if (j !== 0) return; // built once, continuously, for the whole platform
         const platWidth = this.spacing - 3.08;
-
-        const geom = new THREE.BoxGeometry(platWidth, this.platHeight, this.subLen);
-        this.model.adjustPlatformUVs(geom, j, this.subLen, 1.2);
-
+        const sA = this.station.position - this.platLength / 2;
+        const sB = this.station.position + this.platLength / 2;
         const platMat = this.model.getPlatformMaterials(this.station, platWidth, true, true);
-        const plat = new THREE.Mesh(geom, platMat);
-        plat.position.copy(localPos);
-        plat.position.y = this.platCenterY;
-        plat.rotation.y = rotY;
-        this.group.add(plat);
+        this.model.buildSweptBar(this.group, sA, sB, () => platWidth / 2,
+            this.centerPos.y + this.platTopY, this.centerPos.y + this.platTopY - this.platHeight,
+            [platMat[0], platMat[2]], 1.2);
     }
 
     buildSegmentOuterWalls(segmentData) {
-        const { j, pos, normal, spacing, rotY, localPos } = segmentData;
+        const { j } = segmentData;
+        if (j !== 0) return; // built once, continuously, for the whole platform
 
+        const spacing = this.spacing;
         const tubeCenterL = spacing / 4 + 1.2;
         const tubeCenterR = -tubeCenterL;
         const tubeRadius = tubeCenterL;
-
         const panelRadius = tubeRadius - 0.02; // Slightly inside the concrete
 
-        const dyBottom = 0.0; // From floor
-        const dyTop = 2.5;    // Up to 2.5m
-        const thetaL_start = Math.acos(-dyBottom / panelRadius);
-        const thetaL_end = Math.acos(-dyTop / panelRadius);
-        const panelGeomOuterLeft = new THREE.CylinderGeometry(panelRadius, panelRadius, this.subLen, 16, 1, true, thetaL_start, thetaL_end - thetaL_start);
+        // Curved wall panel (a low band of the tube's own cylindrical surface, from floor to
+        // 2.5m), swept continuously so it follows the true curve instead of meeting at an
+        // angle every segment. thetaStart/End solve the SAME "y = -R*cos(theta)" relation the
+        // original per-segment cylinder slice used, so y still runs from 0 (floor) to 2.5m.
+        const thetaStart = Math.acos(0);              // dyBottom = 0
+        const thetaEnd = Math.acos(-2.5 / panelRadius); // dyTop = 2.5
+        const panelSteps = 16;
+        const panelProfileL = [];
+        for (let k = 0; k <= panelSteps; k++) {
+            const theta = thetaStart + (thetaEnd - thetaStart) * k / panelSteps;
+            panelProfileL.push({ x: panelRadius * Math.sin(theta), y: -panelRadius * Math.cos(theta) });
+        }
+        const panelProfileR = panelProfileL.map(p => ({ x: -p.x, y: p.y })); // mirror image
 
-        const thetaR_start = Math.PI * 2 - thetaL_end;
-        const thetaR_end = Math.PI * 2 - thetaL_start;
-        const panelGeomOuterRight = new THREE.CylinderGeometry(panelRadius, panelRadius, this.subLen, 16, 1, true, thetaR_start, thetaR_end - thetaR_start);
-
-        const globalZ = (j + 0.5 - this.numSub / 2) * this.subLen;
-
-        const setUVs = (geom, invertU) => {
-            const uv = geom.attributes.uv;
-            const pos = geom.attributes.position;
-            // The segment is this.subLen (10m) long. globalZ gives us its absolute position.
-            // We want the 30m texture to map continuously across all segments.
-            for (let i = 0; i < uv.count; i++) {
-                const y = pos.getY(i);
-                const localZ = y; // -5 to +5
-                const absoluteZ = globalZ + localZ; // The true world Z position relative to station center
-
-                // Map absoluteZ to U coordinate.
-                // Since the texture covers 30m and we use repeat.set(10/30, 1),
-                // U should go from 0 to 1 across the 10m segment.
-                // Actually, if we use repeat.set, the geometry UV should just be the world position scaled!
-                // Wait, if repeat is set to 10/30, then a UV of 0 to 1 will map to 0 to 0.33 of the texture.
-                // It's easier to NOT use repeat.set, and just map absoluteZ directly to U!
-                let u_new = absoluteZ / 30.0;
-
-                if (invertU) u_new = -u_new; // Reverse for the other side
-
-                const v_new = uv.getX(i); // Height
-                uv.setXY(i, u_new, v_new);
-            }
-        };
-
-        setUVs(panelGeomOuterLeft, false);
-        setUVs(panelGeomOuterRight, true);
-
-        const panelR = new THREE.Mesh(panelGeomOuterRight, this.panelMat);
-        panelR.position.copy(localPos).addScaledVector(new THREE.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)), tubeCenterR);
-        panelR.position.y = 0.865;
-        panelR.rotation.order = 'YXZ';
-        panelR.rotation.set(Math.PI / 2, 0, 0);
-        panelR.rotation.y = rotY;
-
-        const panelL = new THREE.Mesh(panelGeomOuterLeft, this.panelMat);
-        panelL.position.copy(localPos).addScaledVector(new THREE.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)), tubeCenterL);
-        panelL.position.y = 0.865;
-        panelL.rotation.order = 'YXZ';
-        panelL.rotation.set(Math.PI / 2, 0, 0);
-        panelL.rotation.y = rotY;
-
-        this.group.add(panelR, panelL);
+        const sA = this.station.position - this.platLength / 2;
+        const sB = this.station.position + this.platLength / 2;
+        // tileU=30 matches the original texture's 30m repeat (with the "LORENZKIRCHE" text at
+        // its 15m mark), so the text still appears at roughly the platform's own centre.
+        this.model.buildSweptProfile(this.group, sA, sB, panelProfileL, this.centerPos.y + 0.865, () => tubeCenterL, this.panelMat, 30);
+        this.model.buildSweptProfile(this.group, sA, sB, panelProfileR, this.centerPos.y + 0.865, () => tubeCenterR, this.panelMat, 30);
     }
 
     buildPillars() {

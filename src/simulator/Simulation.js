@@ -132,6 +132,7 @@ export class Simulation {
         
         // Mode
         this.atoMode = false; // Autopilot (ATO)
+        this.atoCoasting = false; // ATO: currently rolling in neutral (coasting) on open track
         this.activeCameraType = 'cab';
         this.wantsDoorWarning = false;
         this.doorWarningActive = false;
@@ -171,9 +172,9 @@ export class Simulation {
 
         // Radio state
         this.radioActive = false;
-        this.currentRadioStationIdx = 0;
-        this.radioMenuOpen = false;
-        this.wantsRadioPlay = false;
+        this.wantsRadioPlay = false; // click while off: turn on (default station)
+        this.wantsRadioNext = false; // click while on, main area: next station
+        this.wantsRadioOff = false;  // click while on, "Aus" button: turn off
     }
  
     get trainHalfLength() {
@@ -825,9 +826,10 @@ export class Simulation {
         const distToStation = Math.abs(trainCenter - nextStation.position);
         const dir = this.isReversing ? -1 : 1;
 
-        // --- Stopped at platform ---
+        // --- Stopped precisely at the platform ---
         if (this.speed < 0.05 && distToStation < 1.5) {
             this.throttle = -0.5; // hold brakes
+            this.atoCoasting = false;
             if (this.doorState === 0 && this.stopWaitTime < this.scheduledStopTime - 3) {
                 this.triggerDoors();
                 this.atoDoorWarningPlayed = false;
@@ -842,9 +844,14 @@ export class Simulation {
             return;
         }
 
-        // Wait for doors to close before departing
-        if (this.doorState !== 0 || this.doorProgress > 0) {
+        // Doors must be fully closed before the train is allowed to move. Anywhere other than
+        // a correct platform stop (e.g. left open by a manual override away from a station) the
+        // autopilot closes them itself, so it always keeps heading for the next stop once able.
+        if (this.doorState !== 0) {
             this.throttle = -0.5;
+            if (this.doorState === 1 || this.doorState === 2) {
+                this.triggerDoors(); // command close (no-op if still moving, per its own interlock)
+            }
             return;
         }
 
@@ -860,10 +867,44 @@ export class Simulation {
         // Compute the desired throttle level
         let desired;
         if (err < brakeThreshold) {
-            desired = Math.max(-1.0, -0.3 - Math.min(0.7, ((-err) - brakeThreshold) * 0.2));
-        } else if (err > 1.0 && !onApproach) {
-            desired = Math.min(1.0, 0.4 + Math.min(0.6, (err - 1.0) * 0.12));
+            this.atoCoasting = false;
+
+            // Comfortable, realistic brake envelope: gentle onset while still far from the
+            // platform, ramping up to full authority through the main approach and HELD there
+            // all the way to the stop — do not taper it off again near distance 0, or the train
+            // loses the margin it needs over the 0.75 m/s² the braking curve assumes and can
+            // roll straight through the stop instead of actually halting. The soft final touch
+            // ("sanft kurz vorm Stillstand") is provided by the physics layer's own low-speed
+            // snubbing (BRAKE_SNUBBING_MS2), which is independent of this cap.
+            const farZone = 100; // m: gentle initial-brake envelope
+            const rampEnd = 15;  // m: envelope reaches full strength by this distance out
+            const brakeCap = distToStation > farZone
+                ? 0.35
+                : 0.35 + 0.65 * Math.min(1, (farZone - distToStation) / (farZone - rampEnd));
+
+            const raw = -0.3 - Math.min(0.7, ((-err) - brakeThreshold) * 0.2);
+            desired = Math.max(-brakeCap, raw);
+        } else if (!onApproach) {
+            // Cruising on the open track: once the speed limit is reached, roll in neutral
+            // (coast) and only re-apply power once speed has decayed 10 km/h below it — e.g.
+            // hold at 80 km/h by coasting down to 70 km/h before accelerating again, instead of
+            // continuously chattering the throttle to hold the limit exactly.
+            const coastBand = 10 / 3.6;
+            if (!this.atoCoasting && this.speed >= this.targetSpeed) {
+                this.atoCoasting = true;
+            } else if (this.atoCoasting && this.speed <= this.targetSpeed - coastBand) {
+                this.atoCoasting = false;
+            }
+
+            if (this.atoCoasting) {
+                desired = 0;
+            } else if (err > 1.0) {
+                desired = Math.min(1.0, 0.4 + Math.min(0.6, (err - 1.0) * 0.12));
+            } else {
+                desired = 0;
+            }
         } else {
+            this.atoCoasting = false;
             desired = 0;
         }
 

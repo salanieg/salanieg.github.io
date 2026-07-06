@@ -2,7 +2,13 @@ export class RadioManager {
     constructor(audioManager) {
         this.audioManager = audioManager;
         this.currentStationIdx = 0;
+        this.defaultStationIdx = 0; // "Antenne Delta" - what the radio starts on
         this.stations = [
+            {
+                name: "Antenne Delta",
+                path: "music/Antenne Delta/",
+                files: ["Alpine Breath.mp3", "Drifting Inside.mp3", "River Of Souls.mp3", "Space Aviation.mp3"]
+            },
             {
                 name: "Classic Radio",
                 path: "music/Classic Radio/",
@@ -34,6 +40,11 @@ export class RadioManager {
         this.audioElement = new Audio();
         this.audioElement.crossOrigin = "anonymous";
         this.sourceNode = null;
+
+        // Set by nextStation()/prevStation(): on the next play() for a freshly
+        // zapped-to track, seek to a random point once its duration is known,
+        // so switching stations "zaps in" mid-song like a real radio scan.
+        this._seekRandomOnLoad = false;
     }
 
     init() {
@@ -70,6 +81,20 @@ export class RadioManager {
             !this.audioElement.src.endsWith(url)) {
             this.audioElement.src = url;
             this.audioElement.load();
+
+            if (this._seekRandomOnLoad) {
+                this._seekRandomOnLoad = false;
+                const seekToRandomPoint = () => {
+                    const dur = this.audioElement.duration;
+                    // Land somewhere in the middle of the track (10%-70%), never right at
+                    // the start (wouldn't look "zapped in") or right at the end (would
+                    // immediately trigger onended and skip to the next track).
+                    if (isFinite(dur) && dur > 5) {
+                        this.audioElement.currentTime = dur * (0.1 + Math.random() * 0.6);
+                    }
+                };
+                this.audioElement.addEventListener('loadedmetadata', seekToRandomPoint, { once: true });
+            }
         }
 
         this.audioElement.play().catch(e => console.error("Radio playback error:", e));
@@ -86,19 +111,39 @@ export class RadioManager {
 
     nextStation() {
         this.currentStationIdx = (this.currentStationIdx + 1) % this.stations.length;
-        this.currentFileIdx = 0;
-        this.play();
+        this.zapToRandomTrack();
         return this.currentStationIdx;
     }
 
     prevStation() {
         this.currentStationIdx = (this.currentStationIdx - 1 + this.stations.length) % this.stations.length;
-        this.currentFileIdx = 0;
-        this.play();
+        this.zapToRandomTrack();
         return this.currentStationIdx;
+    }
+
+    // Jump to a random song of the new station, at a random point in the track,
+    // instead of always restarting the station's playlist from track 1 / 0:00.
+    zapToRandomTrack() {
+        const station = this.stations[this.currentStationIdx];
+        this.currentFileIdx = Math.floor(Math.random() * station.files.length);
+        this._seekRandomOnLoad = true;
+        this.play();
+    }
+
+    // Used whenever the radio is (re-)switched on: always starts on the default
+    // station, but still zaps into a random song at a random point within it.
+    startDefaultStation() {
+        this.currentStationIdx = this.defaultStationIdx;
+        this.zapToRandomTrack();
     }
 
     getStationName() {
         return this.stations[this.currentStationIdx].name;
+    }
+
+    getCurrentSongName() {
+        const station = this.stations[this.currentStationIdx];
+        const file = station.files[this.currentFileIdx % station.files.length];
+        return file.replace(/\.[^/.]+$/, ''); // strip the file extension
     }
 }

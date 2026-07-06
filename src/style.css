@@ -1,6 +1,13 @@
 /* Premium styling for Nuremberg U1 Simulator */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
 
+@font-face {
+    font-family: 'Jost Regular';
+    src: url('./assets/Jost-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root {
     --bg-color: #080a0f;
     --card-bg: rgba(13, 17, 28, 0.7);
@@ -497,6 +504,39 @@ footer {
     box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
 }
 
+/* Mobile Camera HUD: single button cycling through the four camera views */
+.camera-hud-mobile {
+    display: none;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 10px 18px;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 5;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.camera-hud-mobile:active {
+    transform: scale(0.95);
+    background: var(--nuremberg-red);
+}
+
+body.is-mobile .camera-hud {
+    display: none;
+}
+
+body.is-mobile .camera-hud-mobile {
+    display: block;
+}
+
 /* Camera Selectors Floating HUD */
 .camera-hud {
     position: absolute;
@@ -885,6 +925,19 @@ footer {
     transform: scale(0.98);
 }
 
+.fullscreen-hint {
+    display: none;
+    margin: 12px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+}
+
+body.is-mobile .fullscreen-hint {
+    display: block;
+}
+
 #btn-loading-bar {
     position: absolute;
     top: 0;
@@ -978,13 +1031,87 @@ footer {
     transform: scale(0.95);
 }
 
+/* Mobile Teleport HUD: single button revealing a scrollable station list */
+.teleport-hud-mobile {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 5;
+    pointer-events: auto;
+}
+
+body.is-mobile .teleport-hud {
+    display: none;
+}
+
+body.is-mobile .teleport-hud-mobile {
+    display: block;
+}
+
+.teleport-mobile-btn {
+    background: var(--nuremberg-red);
+    border: none;
+    color: white;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.teleport-mobile-btn:active {
+    transform: scale(0.95);
+}
+
+.teleport-mobile-list {
+    display: none;
+    position: absolute;
+    bottom: 54px;
+    right: 0;
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+    min-width: 180px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.teleport-mobile-list.open {
+    display: block;
+}
+
+.teleport-mobile-list button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.teleport-mobile-list button:active {
+    background: var(--nuremberg-red);
+    color: white;
+}
+
 /* Mobile Touch Controls (Bottom Left) - only shown on touch devices, see body.is-mobile */
 .mobile-controls {
     display: none;
     position: absolute;
     bottom: 20px;
     left: 20px;
-    align-items: flex-end;
+    align-items: center;
     gap: 14px;
     z-index: 5;
     pointer-events: auto;
@@ -1045,6 +1172,37 @@ body.is-mobile .mobile-controls {
     cursor: pointer;
 }
 
+.mobile-joystick {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    touch-action: none;
+}
+
+.mobile-joystick-knob {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--nuremberg-red);
+    border: 1px solid rgba(255,255,255,0.3);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.mobile-buttons-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .mobile-doors-btn {
     width: 56px;
     height: 56px;
@@ -1053,7 +1211,9 @@ body.is-mobile .mobile-controls {
     backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border-color);
     color: var(--text-color);
-    font-size: 22px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     transition: all 0.2s;
@@ -1062,6 +1222,28 @@ body.is-mobile .mobile-controls {
 .mobile-doors-btn:active {
     transform: scale(0.92);
     background: var(--nuremberg-red);
+}
+
+.mobile-auto-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    transition: all 0.2s;
+}
+
+.mobile-auto-btn.active {
+    background: var(--nuremberg-red);
+    color: white;
+    box-shadow: 0 0 10px rgba(211, 47, 47, 0.5);
 }
 
 .volume-icon {
@@ -1127,70 +1309,6 @@ body.is-mobile .mobile-controls {
     text-align: right;
 }
 
-/* Radio Popup */
-.radio-overlay {
-    position: absolute;
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 300px;
-    background: rgba(0, 0, 0, 0.4); /* Subtle background for readability */
-    backdrop-filter: blur(5px);
-    border-radius: 12px;
-    padding: 15px;
-    z-index: 2000;
-    pointer-events: auto;
-    color: white;
-    text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.radio-station-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.radio-station-nav button {
-    background: none;
-    border: 1px solid white;
-    color: white;
-    font-size: 1.5rem;
-    padding: 0 15px;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-.radio-station-nav button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-#radio-station-name {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
-
-.radio-controls {
-    display: flex;
-    gap: 10px;
-}
-
-.radio-controls button {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid white;
-    color: white;
-    padding: 8px;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-.radio-controls button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-
 /* Performance Debug HUD (Taste P) */
 .perf-hud {
     position: absolute;
@@ -1206,6 +1324,93 @@ body.is-mobile .mobile-controls {
     line-height: 1.5;
     color: #7cfc9a;
     pointer-events: none;
+}
+
+/* City Model Placement Debug HUD (Taste C) */
+.city-debug-hud {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 61;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: #cfe8ff;
+    pointer-events: auto;
+    width: 300px;
+}
+
+.city-debug-hud .cd-title {
+    font-weight: 700;
+    color: #7cc7ff;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.city-debug-hud .cd-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.city-debug-hud .cd-label {
+    width: 26px;
+    flex-shrink: 0;
+    color: #9fb3c8;
+}
+
+.city-debug-hud .cd-input {
+    width: 68px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    border-radius: 4px;
+    padding: 2px 4px;
+    text-align: right;
+}
+
+.city-debug-hud .cd-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #cfe8ff;
+    font-family: inherit;
+    font-size: 11px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.city-debug-hud .cd-btn:hover {
+    background: rgba(124, 199, 255, 0.25);
+}
+
+.city-debug-hud .cd-btn:active {
+    transform: scale(0.92);
+}
+
+.city-debug-hud .cd-output {
+    width: 100%;
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #7cfc9a;
+    font-family: inherit;
+    font-size: 11px;
+    border-radius: 4px;
+    padding: 6px;
+    resize: none;
+    box-sizing: border-box;
+}
+
+.city-debug-hud .cd-copy {
+    margin-top: 6px;
+    width: 100%;
 }
 
 .start-btn:disabled {

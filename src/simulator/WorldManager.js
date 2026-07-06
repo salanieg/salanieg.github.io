@@ -41,23 +41,41 @@ export class WorldManager {
         this.adaptationTimer = 0;
         this.adaptationActive = false;
 
-        // Passenger camera rotation (look-around)
-        this.passengerRotation = { yaw: -Math.PI / 2, pitch: 0 };
+        // Passenger camera rotation (look-around). Passenger spawns near the side wall
+        // (x=-0.75, see passengerLocalPos below) - +PI/2 points the view across the car
+        // towards the centre aisle/Gang instead of straight into the near wall (-PI/2).
+        this.passengerRotation = { yaw: Math.PI / 2, pitch: 0 };
+        this.passengerRotationView = { yaw: Math.PI / 2, pitch: 0 }; // smoothed value actually rendered
         this.isDraggingPassenger = false;
 
         // Cockpit camera rotation (look-around)
         this.cabRotation = { yaw: 0, pitch: 0 };
+        this.cabRotationView = { yaw: 0, pitch: 0 }; // smoothed value actually rendered
         this.isDraggingCab = false;
 
         // Platform camera rotation (look-around) & drag state
         this.platformRotation = { yaw: 0, pitch: 0 };
+        this.platformRotationView = { yaw: 0, pitch: 0 }; // smoothed value actually rendered
         this.isDraggingPlatform = false;
         this.platformCameraStationIdx = -1; // track active station for platform view
 
         // Orbit camera rotation & zoom (fixed chase camera)
         this.orbitRotation = { yaw: Math.PI / 4, pitch: Math.PI / 8 };
+        this.orbitRotationView = { yaw: Math.PI / 4, pitch: Math.PI / 8 }; // smoothed value actually rendered
         this.orbitDistance = 40;
         this.isDraggingOrbit = false;
+
+        // Two-finger pinch-to-zoom state (touch devices)
+        this.pinchStartDist = null;
+        this.pinchStartOrbitDistance = null;
+        this.pinchStartFov = null;
+
+        // Default FOV per camera, restored whenever the view is switched so a
+        // pinch-zoom on one camera doesn't carry over to another
+        this._defaultFov = { cab: 75, passenger: 65, platform: 55, orbit: 60 };
+
+        // Analog walk input from the mobile joystick (x = strafe, y = forward), range -1..1
+        this.mobileWalkInput = { x: 0, y: 0 };
 
         // Walking keys state
         this.keysPressed = {
@@ -152,9 +170,17 @@ export class WorldManager {
                 this.raycaster.setFromCamera(this.mouse, this.activeCamera);
                 const intersects = this.raycaster.intersectObjects(this.train3D.radioMeshes, false);
                 if (intersects.length > 0) {
-                    this.sim.radioMenuOpen = true;
+                    const uv = intersects[0].uv;
+                    // Small "Aus" button drawn in the screen's top-right corner (see
+                    // TrainModel.drawRadioDisplay) - top-right in canvas space is
+                    // uv.x > 0.75 / uv.y > 0.7 (PlaneGeometry v=1 is the top edge).
+                    const hitOffButton = uv && uv.x > 0.75 && uv.y > 0.7;
                     if (!this.sim.radioActive) {
-                        this.sim.wantsRadioPlay = true;
+                        this.sim.wantsRadioPlay = true; // turn on: always starts on the default station
+                    } else if (hitOffButton) {
+                        this.sim.wantsRadioOff = true;
+                    } else {
+                        this.sim.wantsRadioNext = true; // any other click: next station
                     }
                 }
             }
@@ -243,11 +269,20 @@ export class WorldManager {
             if (e.button === 0) this.endLook();
         };
 
-        // Touch equivalents (single-finger look-around on smartphones/tablets)
+        // Touch equivalents (single-finger look-around, two-finger pinch-to-zoom)
         this.onTouchStart = (e) => {
             if (e.touches.length === 1) {
                 const t = e.touches[0];
                 this.startLook(t.clientX, t.clientY);
+            } else if (e.touches.length === 2) {
+                // A second finger landed: cancel any single-finger look-drag and
+                // start tracking pinch distance instead.
+                this.endLook();
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                this.pinchStartDist = Math.hypot(dx, dy);
+                this.pinchStartOrbitDistance = this.orbitDistance;
+                this.pinchStartFov = this.activeCamera.fov;
             }
         };
 
@@ -256,11 +291,29 @@ export class WorldManager {
                 e.preventDefault(); // avoid page scroll/rubber-banding while looking around
                 const t = e.touches[0];
                 this.moveLook(t.clientX, t.clientY);
+            } else if (e.touches.length === 2 && this.pinchStartDist) {
+                e.preventDefault();
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.hypot(dx, dy);
+                const ratio = this.pinchStartDist / Math.max(1, dist); // fingers apart -> ratio < 1 -> zoom in
+
+                if (this.activeCameraType === 'orbit') {
+                    this.orbitDistance = Math.max(5, Math.min(5000, this.pinchStartOrbitDistance * ratio));
+                } else {
+                    this.activeCamera.fov = Math.max(30, Math.min(90, this.pinchStartFov * ratio));
+                    this.activeCamera.updateProjectionMatrix();
+                }
             }
         };
 
-        this.onTouchEnd = () => {
-            this.endLook();
+        this.onTouchEnd = (e) => {
+            if (e.touches.length < 2) {
+                this.pinchStartDist = null;
+            }
+            if (e.touches.length === 0) {
+                this.endLook();
+            }
         };
 
         this.onWheel = (e) => {
@@ -320,6 +373,12 @@ export class WorldManager {
             this.activeCameraType = type;
             this.activeCamera = this.cameras[type];
 
+            // Reset FOV so a pinch-zoom on one view doesn't carry over to another
+            if (this._defaultFov[type] !== undefined) {
+                this.cameras[type].fov = this._defaultFov[type];
+                this.cameras[type].updateProjectionMatrix();
+            }
+
             // OrbitControls are disabled as we now use a custom fixed chase camera logic
             this.controls.enabled = false;
 
@@ -327,6 +386,30 @@ export class WorldManager {
                 this.platformCameraStationIdx = -1; // force reset position/look direction on next frame
             }
         }
+    }
+
+    // Analog walk input from the mobile joystick, x = strafe (-1 left..1 right),
+    // y = forward (-1 back..1 fwd). Combined additively with the arrow-key input
+    // in the passenger/platform walking logic below.
+    setMobileWalkInput(x, y) {
+        this.mobileWalkInput.x = x;
+        this.mobileWalkInput.y = y;
+    }
+
+    // Frame-rate independent exponential smoothing of a look-around yaw/pitch target
+    // into the value actually used for rendering, so touch-drag jitter doesn't
+    // translate directly into a jerky camera.
+    _smoothRotation(view, target, dt, speed = 14) {
+        // Only smooth on mobile (touch drag benefits from it); desktop keeps the
+        // original instant 1:1 response.
+        if (!document.body.classList.contains('is-mobile')) {
+            view.yaw = target.yaw;
+            view.pitch = target.pitch;
+            return;
+        }
+        const t = 1 - Math.exp(-dt * speed);
+        view.yaw += (target.yaw - view.yaw) * t;
+        view.pitch += (target.pitch - view.pitch) * t;
     }
 
     // Render-resolution quality setting: scales the device pixel ratio (1.0 / 0.75 / 0.5).
@@ -382,11 +465,13 @@ export class WorldManager {
             case 'cab': {
                 // Driver's perspective inside the active leading carriage
                 const cabLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 2.00, -activeCarLength + 1.2) : new THREE.Vector3(0, 2.00, -1.2);
-                
-                // Calculate local direction vector with relative yaw/pitch
+
+                // Calculate local direction vector with relative yaw/pitch (smoothed
+                // towards the touch/mouse-driven target so drag jitter isn't jarring)
+                this._smoothRotation(this.cabRotationView, this.cabRotation, dt);
                 const defaultYaw = this.sim.isReversing ? Math.PI : 0;
-                const yaw = defaultYaw + this.cabRotation.yaw;
-                const pitch = this.cabRotation.pitch;
+                const yaw = defaultYaw + this.cabRotationView.yaw;
+                const pitch = this.cabRotationView.pitch;
                 
                 const localDir = new THREE.Vector3(
                     Math.sin(yaw) * Math.cos(pitch),
@@ -408,24 +493,31 @@ export class WorldManager {
                 // Passenger standing inside the train (height 70% of floor-to-ceiling distance)
                 const passCar = train3D.carriages[this.passengerCarIdx];
 
-                // Handle walking inside the carriage (Arrow keys for camera walking)
+                // Handle walking inside the carriage (arrow keys and/or mobile joystick)
+                this._smoothRotation(this.passengerRotationView, this.passengerRotation, dt);
                 const walkSpeed = 4.5 * dt; // Brisk walking speed inside the train
-                const yaw = this.passengerRotation.yaw;
+                const yaw = this.passengerRotationView.yaw;
                 const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
                 const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-                
+
                 const moveVec = new THREE.Vector3();
                 if (this.keysPressed.ArrowUp) moveVec.add(forward);
                 if (this.keysPressed.ArrowDown) moveVec.sub(forward);
                 if (this.keysPressed.ArrowRight) moveVec.add(right);
                 if (this.keysPressed.ArrowLeft) moveVec.sub(right);
-                
-                if (moveVec.lengthSq() > 0) {
-                    moveVec.normalize().multiplyScalar(walkSpeed);
+                if (moveVec.lengthSq() > 1) moveVec.normalize();
+
+                moveVec.addScaledVector(forward, this.mobileWalkInput.y);
+                moveVec.addScaledVector(right, this.mobileWalkInput.x);
+                if (moveVec.lengthSq() > 1) moveVec.normalize();
+
+                if (moveVec.lengthSq() > 0.0001) {
+                    moveVec.multiplyScalar(walkSpeed);
+                    const moveLen = moveVec.length();
                     this.passengerLocalPos.add(moveVec);
 
                     // Footstep sound triggering (slower, more intense)
-                    this.footstepDistance += walkSpeed;
+                    this.footstepDistance += moveLen;
                     if (this.footstepDistance > 1.4) {
                         if (this.onFootstep) this.onFootstep(0.12);
                         this.footstepDistance = 0;
@@ -462,9 +554,9 @@ export class WorldManager {
 
                 // Calculate local direction vector from passenger yaw/pitch
                 const localDir = new THREE.Vector3(
-                    Math.sin(yaw) * Math.cos(this.passengerRotation.pitch),
-                    Math.sin(this.passengerRotation.pitch),
-                    Math.cos(yaw) * Math.cos(this.passengerRotation.pitch)
+                    Math.sin(yaw) * Math.cos(this.passengerRotationView.pitch),
+                    Math.sin(this.passengerRotationView.pitch),
+                    Math.cos(yaw) * Math.cos(this.passengerRotationView.pitch)
                 );
                 
                 const localTarget = this.passengerLocalPos.clone().add(localDir);
@@ -500,7 +592,12 @@ export class WorldManager {
                     const spacing = this.sim.getTrackSpacing(camZ);
                     // Plärrer: the island platform is offset to the side; pick the UPPER deck
                     // when heading Hardhöhe (forward) and the LOWER deck when heading Langwasser.
-                    const localX = isPlaerrer ? -5.0 : (isScharfreiterring ? (spacing / 2 - 2.58) : (isSideStation ? spacing / 2 + 2.8 : 0));
+                    const baseLocalX = isPlaerrer ? -5.0 : (isScharfreiterring ? (spacing / 2 - 2.58) : (isSideStation ? spacing / 2 + 2.8 : 0));
+                    // Plain island platforms (no special-cased offset above) shouldn't always
+                    // spawn dead-centre - clearly off to one side, like a person would stand,
+                    // never within 2m of the middle.
+                    const side = Math.random() < 0.5 ? -1 : 1;
+                    const localX = (baseLocalX === 0) ? side * (2.0 + Math.random() * 2.5) : baseLocalX;
                     const levelY = (isPlaerrer && this.sim.isReversing) ? -this.sim.plaerrerDrop : 0;
 
                     const defaultPos = statPos.clone().addScaledVector(statNormal, localX);
@@ -515,42 +612,54 @@ export class WorldManager {
                     
                     this.platformRotation.yaw = Math.atan2(dir.x, dir.z);
                     this.platformRotation.pitch = Math.asin(dir.y);
+                    // Snap the smoothed view too so switching stations doesn't slew the camera
+                    this.platformRotationView.yaw = this.platformRotation.yaw;
+                    this.platformRotationView.pitch = this.platformRotation.pitch;
                 }
-                
-                // Handle walking on the platform (WASD are for train, arrow keys for camera walking)
+
+                this._smoothRotation(this.platformRotationView, this.platformRotation, dt);
+
+                // Handle walking on the platform (WASD are for train, arrow keys and/or
+                // mobile joystick for camera walking)
                 const walkSpeed = 5.0 * dt; // 5 m/s walking speed
-                const yaw = this.platformRotation.yaw;
+                const yaw = this.platformRotationView.yaw;
                 const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
                 const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-                
+
                 const moveVec = new THREE.Vector3();
                 if (this.keysPressed.ArrowUp) moveVec.add(forward);
                 if (this.keysPressed.ArrowDown) moveVec.sub(forward);
                 if (this.keysPressed.ArrowRight) moveVec.add(right);
                 if (this.keysPressed.ArrowLeft) moveVec.sub(right);
-                
-                if (moveVec.lengthSq() > 0) {
-                    moveVec.normalize().multiplyScalar(walkSpeed);
+                if (moveVec.lengthSq() > 1) moveVec.normalize();
+
+                moveVec.addScaledVector(forward, this.mobileWalkInput.y);
+                moveVec.addScaledVector(right, this.mobileWalkInput.x);
+                if (moveVec.lengthSq() > 1) moveVec.normalize();
+
+                if (moveVec.lengthSq() > 0.0001) {
+                    moveVec.multiplyScalar(walkSpeed);
+                    const moveLen = moveVec.length();
                     this.cameras.platform.position.add(moveVec);
 
                     // Footstep sound triggering (slower, more intense)
-                    this.footstepDistance += walkSpeed;
+                    this.footstepDistance += moveLen;
                     if (this.footstepDistance > 2.2) {
                         if (this.onFootstep) this.onFootstep(0.25);
                         this.footstepDistance = 0;
                     }
                 }
-                
+
                 // Ensure Y stays at exactly platform eye level relative to the station track elevation
                 const plLevelY = (targetStation.name === "Plärrer" && this.sim.isReversing) ? -this.sim.plaerrerDrop : 0;
                 const stationY = this.sim.getTrackPosition(targetStation.position, _wmPos).y;
                 this.cameras.platform.position.y = stationY + plLevelY + 2.575;
-                
+
                 // Compute look direction from yaw/pitch
                 const lookDir = new THREE.Vector3(
-                    Math.sin(yaw) * Math.cos(this.platformRotation.pitch),
-                    Math.sin(this.platformRotation.pitch),
-                    Math.cos(yaw) * Math.cos(this.platformRotation.pitch)
+                    Math.sin(yaw) * Math.cos(this.platformRotationView.pitch),
+                    Math.sin(this.platformRotationView.pitch),
+                    Math.cos(yaw) * Math.cos(this.platformRotationView.pitch)
                 );
                 
                 const targetPos = this.cameras.platform.position.clone().add(lookDir);
@@ -559,9 +668,12 @@ export class WorldManager {
             }
                 
             case 'orbit': {
-                // Fixed chase camera focusing on the center of the train, following its rotation
+                // Chase camera orbiting around the cockpit (leading cab), not the whole
+                // train's centre - trainZ is the very front tip, so pull back just enough
+                // to land roughly on the driver's position (see the cab camera's own
+                // cabLocalPos z-offset of ~1.2m above) instead of half the train's length.
                 const direction = this.sim.isReversing ? -1 : 1;
-                const centerZ = trainZ - direction * (this.sim.trainHalfLength);
+                const centerZ = trainZ - direction * 1.5;
                 this.sim._sampleTrack(centerZ, _wmPos, _wmTan);
 
                 // Target slightly above track level
@@ -572,8 +684,9 @@ export class WorldManager {
                 const trainYaw = Math.atan2(_wmTan.x, _wmTan.z);
 
                 // Calculate camera position relative to train center and orientation
-                const yaw = trainYaw + this.orbitRotation.yaw;
-                const pitch = this.orbitRotation.pitch;
+                this._smoothRotation(this.orbitRotationView, this.orbitRotation, dt);
+                const yaw = trainYaw + this.orbitRotationView.yaw;
+                const pitch = this.orbitRotationView.pitch;
 
                 const offset = _wmOffset.set(
                     Math.sin(yaw) * Math.cos(pitch),

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { StationBuilder } from './stations/StationBuilder.js?v=67';
-import { RathausBuilder } from './stations/RathausBuilder.js?v=43';
-import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=43';
+import { RathausBuilder } from './stations/RathausBuilder.js?v=45';
+import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=45';
 
 export class StationModel {
     constructor(scene, simulation) {
@@ -49,6 +49,67 @@ export class StationModel {
             boardCasing: new THREE.BoxGeometry(2.53, 0.65, 0.25),
             boardHanger: new THREE.CylinderGeometry(0.015, 0.015, 0.6, 6)
         };
+        
+        // Maximilianstraße custom ceiling material matching tunnel walls
+        this.tunnelConcreteTexture = this.createTunnelConcreteTexture();
+        this.maximilianstrasseCeilingMat = new THREE.MeshLambertMaterial({
+            map: this.tunnelConcreteTexture,
+            color: 0xffffff,
+            side: THREE.DoubleSide
+        });
+        // Cross-beams (Querstreben) and the upper concrete wall band above the tiles use the
+        // same rough concrete texture as the tunnel entrance/portal walls and staircase walls
+        // (StationBuilder.createRoughConcreteMaterial), NOT the dark tunnel-tube texture above —
+        // the ceiling keeps that one, only these two elements switch.
+        this.stationConcreteWallMat = this.createRoughConcreteMaterial();
+        this.stationConcreteWallMat.side = THREE.DoubleSide;
+        this.stationConcreteBeamMat = this.createRoughConcreteMaterial();
+        this.stationConcreteBeamMat.side = THREE.DoubleSide;
+        this.stationConcreteBeamMat.map.wrapS = this.stationConcreteBeamMat.map.wrapT = THREE.RepeatWrapping;
+        this.stationConcreteBeamMat.map.repeat.set(4, 1);
+        this.stationConcreteBeamMat.map.needsUpdate = true;
+        if (this.stationConcreteBeamMat.bumpMap) {
+            this.stationConcreteBeamMat.bumpMap.wrapS = this.stationConcreteBeamMat.bumpMap.wrapT = THREE.RepeatWrapping;
+            this.stationConcreteBeamMat.bumpMap.repeat.set(4, 1);
+            this.stationConcreteBeamMat.bumpMap.needsUpdate = true;
+        }
+
+        // Shared materials for trash cans (Mülleimer)
+        this.materials.trashBody = new THREE.MeshStandardMaterial({
+            map: this.createTrashCanTexture(),
+            roughness: 0.25,
+            metalness: 0.8
+        });
+        this.materials.trashLid = new THREE.MeshStandardMaterial({
+            color: 0xd1d5db, // Light grey/silver
+            roughness: 0.2,
+            metalness: 0.85
+        });
+        this.materials.trashBag = new THREE.MeshStandardMaterial({
+            color: 0x0055ff,
+            roughness: 0.3,
+            metalness: 0.1
+        });
+        this.materials.trashBag.userData = {};
+        this.materials.trashBag.onBeforeCompile = (shader) => {
+            shader.uniforms.uTime = { value: 0 };
+            shader.uniforms.uWind = { value: 0.1 };
+            shader.vertexShader = `
+                uniform float uTime;
+                uniform float uWind;
+            ` + shader.vertexShader;
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+                float wave = sin(position.x * 12.0 + uTime * 6.0) * cos(position.z * 12.0 + uTime * 4.0);
+                transformed.y += wave * uWind * 0.03;
+                transformed.x += wave * uWind * 0.01;
+                transformed.z += wave * uWind * 0.01;
+                `
+            );
+            this.materials.trashBag.userData.shader = shader;
+        };
 
         // PRE-BUILD ALL 27 STATIONS ONCE AT STARTUP
         // This completely avoids building meshes, canvas textures, and materials in the render loop.
@@ -77,6 +138,32 @@ export class StationModel {
                 }
             }
         });
+
+        // Update trash bag shader uniforms for wind ripple animation
+        if (this.materials.trashBag && this.materials.trashBag.userData.shader) {
+            this.materials.trashBag.userData.shader.uniforms.uTime.value = performance.now() * 0.001;
+            
+            // Calculate wind from train velocity & proximity
+            let maxWind = 0.05; // base idle wind
+            const trainSpeed = Math.abs(this.sim.speed);
+            
+            let closestDist = Infinity;
+            this.sim.stations.forEach((station, idx) => {
+                if (this.loadedStations.has(idx)) {
+                    const dist = Math.abs(trainZ - station.position);
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                    }
+                }
+            });
+            
+            if (closestDist < 100) {
+                const proximityFactor = Math.max(0, 1 - closestDist / 100);
+                maxWind = 0.05 + proximityFactor * trainSpeed * 0.15;
+            }
+            
+            this.materials.trashBag.userData.shader.uniforms.uWind.value = Math.min(1.0, maxWind);
+        }
     }
 
     adjustPlatformUVs(geometry, j, subLen, H_meters) {
@@ -107,6 +194,10 @@ export class StationModel {
     // Top-face UV: U normalised 0..1 across the (tapering) width, V = arcLength / Hmeters
     // (matches adjustPlatformUVs so the floor texture tiles continuously along the platform).
     buildSweptBar(group, sStart, sEnd, halfWidthFn, topY, botY, mats, Hmeters, centerOffFn) {
+        // topY/botY may be a plain number (flat) OR a function of s (e.g. a periodic zigzag
+        // profile like Jakobinenstraße's folded wall/coping) — sampled per ring either way.
+        const topYFn = typeof topY === 'function' ? topY : () => topY;
+        const botYFn = typeof botY === 'function' ? botY : () => botY;
         const length = sEnd - sStart;
         const nSeg = Math.max(2, Math.ceil(length));   // ~1 m rings
         const rings = [];
@@ -119,10 +210,11 @@ export class StationModel {
             const nX = -tan.z / nlen, nZ = tan.x / nlen;
             const hw = halfWidthFn(s);
             const co = centerOffFn ? centerOffFn(s) : 0; // lateral centre offset from centerline
+            const ty = topYFn(s), by = botYFn(s);
             if (prevWorld) cum += wp.distanceTo(prevWorld);
             prevWorld = wp.clone();
             const mk = (lat, y) => group.worldToLocal(new THREE.Vector3(wp.x + nX * lat, y, wp.z + nZ * lat));
-            rings.push({ bl: mk(co - hw, botY), br: mk(co + hw, botY), tr: mk(co + hw, topY), tl: mk(co - hw, topY), cum });
+            rings.push({ bl: mk(co - hw, by), br: mk(co + hw, by), tr: mk(co + hw, ty), tl: mk(co - hw, ty), cum });
         }
         const pos = [], uv = [];
         let vCount = 0;
@@ -161,7 +253,17 @@ export class StationModel {
         geom.addGroup(sideStart, sideCount, 0);
         geom.computeVertexNormals();
         // DoubleSide so winding never produces invisible faces on either curl direction.
-        const meshMats = mats.map(m => { const c = m.clone(); c.side = THREE.DoubleSide; return c; });
+        // NOTE: Material.clone() does NOT copy onBeforeCompile/customProgramCacheKey (they are
+        // plain function properties, not part of Three.js's copyable material state) — carry
+        // them over manually, otherwise any shader-hook-based cutout (e.g. Lorenzkirche/Rathaus
+        // vault passages) silently stops working on the cloned material.
+        const meshMats = mats.map(m => {
+            const c = m.clone();
+            c.side = THREE.DoubleSide;
+            if (m.onBeforeCompile) c.onBeforeCompile = m.onBeforeCompile;
+            if (m.customProgramCacheKey) c.customProgramCacheKey = m.customProgramCacheKey;
+            return c;
+        });
         const mesh = new THREE.Mesh(geom, meshMats);
         group.add(mesh);
         return mesh;
@@ -173,10 +275,26 @@ export class StationModel {
     // V interpolates vBot..vTop (caller passes either metric values for tiling textures, or
     // 0..1 for a single-image band like the station-name stripe). The base material's map is
     // cloned with repeat (1,1) / offset (0,0) / RepeatWrapping so only the baked UVs tile it.
-    buildSweptWall(group, sStart, sEnd, offFn, yBotW, yTopW, baseMat, tileU, vBot, vTop) {
+    buildSweptWall(group, sStart, sEnd, offFn, yBotW, yTopW, baseMat, tileU, vBot, vTop, nSegOverride, vMetricScale) {
+        // yBotW/yTopW may be a plain number (flat top/bottom) OR a function of s — e.g. a
+        // periodic zigzag profile like Jakobinenstraße's folded wall/coping. For a periodic
+        // profile, pass nSegOverride so rings land exactly on the pattern's own breakpoints
+        // (e.g. a multiple of the period) — otherwise the default ~1m/ring default resolution
+        // aliases against a short period and the peaks come out uneven ("phase noise").
+        //
+        // vMetricScale (optional): when yTopW/yBotW VARIES with s (e.g. a zigzag top edge), the
+        // default vBot..vTop-per-ring interpolation stretches the texture to fill whatever the
+        // LOCAL ring height happens to be — so a horizontal grout line ends up following the
+        // zigzag instead of staying level ("Textur folgt den Dreieck-Streckungen"). Passing
+        // vMetricScale switches V to an ABSOLUTE-world-Y mapping (V = worldY * vMetricScale,
+        // ignoring vBot/vTop) so horizontal texture features stay at a constant world height and
+        // the varying top edge just clips across the (unstretched) texture, like a real wall
+        // whose roofline cuts across horizontal masonry courses.
+        const yBotFn = typeof yBotW === 'function' ? yBotW : () => yBotW;
+        const yTopFn = typeof yTopW === 'function' ? yTopW : () => yTopW;
         const length = sEnd - sStart;
-        const nSeg = Math.max(2, Math.ceil(length));
-        const bots = [], tops = [], us = [];
+        const nSeg = nSegOverride || Math.max(2, Math.ceil(length));
+        const bots = [], tops = [], us = [], vBots = [], vTops = [];
         let cum = 0, prevWorld = null;
         for (let r = 0; r <= nSeg; r++) {
             const s = sStart + length * r / nSeg;
@@ -185,11 +303,14 @@ export class StationModel {
             const nlen = Math.hypot(-tan.z, tan.x) || 1;
             const nX = -tan.z / nlen, nZ = tan.x / nlen;
             const off = offFn(s);
+            const yb = yBotFn(s), yt = yTopFn(s);
             if (prevWorld) cum += wp.distanceTo(prevWorld);
             prevWorld = wp.clone();
-            bots.push(group.worldToLocal(new THREE.Vector3(wp.x + nX * off, yBotW, wp.z + nZ * off)));
-            tops.push(group.worldToLocal(new THREE.Vector3(wp.x + nX * off, yTopW, wp.z + nZ * off)));
+            bots.push(group.worldToLocal(new THREE.Vector3(wp.x + nX * off, yb, wp.z + nZ * off)));
+            tops.push(group.worldToLocal(new THREE.Vector3(wp.x + nX * off, yt, wp.z + nZ * off)));
             us.push(cum / tileU);
+            if (vMetricScale) { vBots.push(yb * vMetricScale); vTops.push(yt * vMetricScale); }
+            else { vBots.push(vBot); vTops.push(vTop); }
         }
         // The two side walls have viewers standing on opposite sides of the track (facing each
         // other), so a single "u increases with distance along s" rule reads correctly for only
@@ -208,8 +329,9 @@ export class StationModel {
         for (let r = 0; r < nSeg; r++) {
             const bl = bots[r], tl = tops[r], br = bots[r + 1], tr = tops[r + 1];
             const uL = us[r], uR = us[r + 1];
-            tri(bl, br, tr, [uL, vBot], [uR, vBot], [uR, vTop]);
-            tri(bl, tr, tl, [uL, vBot], [uR, vTop], [uL, vTop]);
+            const vB0 = vBots[r], vB1 = vBots[r + 1], vT0 = vTops[r], vT1 = vTops[r + 1];
+            tri(bl, br, tr, [uL, vB0], [uR, vB1], [uR, vT1]);
+            tri(bl, tr, tl, [uL, vB0], [uR, vT1], [uL, vT0]);
         }
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -217,6 +339,9 @@ export class StationModel {
         geom.computeVertexNormals();
         const mat = baseMat.clone();
         mat.side = THREE.DoubleSide;
+        // Material.clone() does NOT copy onBeforeCompile/customProgramCacheKey — see buildSweptBar.
+        if (baseMat.onBeforeCompile) mat.onBeforeCompile = baseMat.onBeforeCompile;
+        if (baseMat.customProgramCacheKey) mat.customProgramCacheKey = baseMat.customProgramCacheKey;
         if (baseMat.map) { mat.map = baseMat.map.clone(); mat.map.wrapS = mat.map.wrapT = THREE.RepeatWrapping; mat.map.repeat.set(1, 1); mat.map.offset.set(0, 0); mat.map.needsUpdate = true; }
         if (baseMat.bumpMap) { mat.bumpMap = baseMat.bumpMap.clone(); mat.bumpMap.wrapS = mat.bumpMap.wrapT = THREE.RepeatWrapping; mat.bumpMap.repeat.set(1, 1); mat.bumpMap.offset.set(0, 0); }
         const mesh = new THREE.Mesh(geom, mat);
@@ -268,6 +393,10 @@ export class StationModel {
         geom.computeVertexNormals();
         const mat = material.clone();
         mat.side = THREE.DoubleSide;
+        // Material.clone() does NOT copy onBeforeCompile/customProgramCacheKey — see buildSweptBar.
+        // This is what silently dropped Lorenzkirche/Rathaus's shader-based vault passage cutouts.
+        if (material.onBeforeCompile) mat.onBeforeCompile = material.onBeforeCompile;
+        if (material.customProgramCacheKey) mat.customProgramCacheKey = material.customProgramCacheKey;
         if (material.map) { mat.map = material.map.clone(); mat.map.wrapS = mat.map.wrapT = THREE.RepeatWrapping; mat.map.repeat.set(1, 1); mat.map.offset.set(0, 0); mat.map.needsUpdate = true; }
         const mesh = new THREE.Mesh(geom, mat);
         group.add(mesh);
@@ -669,8 +798,6 @@ export class StationModel {
         let jakobinenstrasseSandstoneMat = null;
         let jakobinenstrasseCeilingLightMat = null;
         let jakobinenstrasseCeilingDarkMat = null;
-        let jakobinenstrasseWallGeom = null;
-        let jakobinenstrasseFillGeom = null;
         let jakobinenstrasseTextMat = null;
 
         let aufsessplatzRedTileMat = null;
@@ -685,52 +812,23 @@ export class StationModel {
             jakobinenstrasseCeilingLightMat = new THREE.MeshLambertMaterial({ color: '#d1d5db' });
             jakobinenstrasseCeilingDarkMat = new THREE.MeshLambertMaterial({ color: '#9ca3af' });
 
-            const shape = new THREE.Shape();
-            shape.moveTo(-2.5, -0.38);
-            shape.lineTo(-2.5, 3.72);
-            shape.lineTo(-1.25, 4.72);
-            shape.lineTo(0.0, 3.72);
-            shape.lineTo(1.25, 4.72);
-            shape.lineTo(2.5, 3.72);
-            shape.lineTo(2.5, -0.38);
-            shape.closePath();
-
-            const wGeom = new THREE.ExtrudeGeometry(shape, { depth: 0.2, bevelEnabled: false });
-            wGeom.translate(0, 0, -0.1);
-            wGeom.rotateY(Math.PI / 2);
-            jakobinenstrasseWallGeom = wGeom;
-
-            const fillShape = new THREE.Shape();
-            fillShape.moveTo(-2.5, 3.72);
-            fillShape.lineTo(-1.25, 4.72);
-            fillShape.lineTo(0.0, 3.72);
-            fillShape.lineTo(1.25, 4.72);
-            fillShape.lineTo(2.5, 3.72);
-            fillShape.lineTo(2.5, 3.95);
-            fillShape.lineTo(1.25, 4.95);
-            fillShape.lineTo(0.0, 3.95);
-            fillShape.lineTo(-1.25, 4.95);
-            fillShape.lineTo(-2.5, 3.95);
-            fillShape.closePath();
-
-            const fGeom = new THREE.ExtrudeGeometry(fillShape, { depth: 0.2, bevelEnabled: false });
-            fGeom.translate(0, 0, -0.1);
-            fGeom.rotateY(Math.PI / 2);
-            jakobinenstrasseFillGeom = fGeom;
-
             const canvas = document.createElement('canvas');
             canvas.width = 1024;
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#27272a';
-            ctx.font = 'bold 64px "Outfit", "Inter", "Segoe UI", sans-serif';
+            ctx.font = 'bold 80px "Jost Regular", "Outfit", "Inter", "Segoe UI", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText("JAKOBINENSTRASSE", canvas.width / 2, canvas.height / 2);
+            ctx.strokeStyle = '#27272a';
+            ctx.lineWidth = 2.0;
+            ctx.strokeText("JAKOBINENSTRASSE", canvas.width / 2, canvas.height / 2);
             
             const texture = new THREE.CanvasTexture(canvas);
             texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = 8;
             jakobinenstrasseTextMat = new THREE.MeshLambertMaterial({
                 map: texture,
                 transparent: true
@@ -748,10 +846,26 @@ export class StationModel {
             "Maximilianstraße": {
                 bottomColor: '#f8fafc',
                 bottomGrout: '#94a3b8',
-                topColor: '#3a9c35',
-                topGrout: '#d1d5db',
+                topColor: '#6FB464',
+                topGrout: '#94a3b8',
                 stripeBg: '#ffffff',
-                stripeText: '#1b5e20'
+                stripeText: '#000000'
+            },
+            "Bärenschanze": {
+                bottomColor: '#f8fafc',
+                bottomGrout: '#94a3b8',
+                topColor: '#1f799e',
+                topGrout: '#94a3b8',
+                stripeBg: '#ffffff',
+                stripeText: '#000000'
+            },
+            "Gostenhof": {
+                bottomColor: '#f8fafc',
+                bottomGrout: '#94a3b8',
+                topColor: '#e0bf04',
+                topGrout: '#94a3b8',
+                stripeBg: '#ffffff',
+                stripeText: '#000000'
             },
             "Langwasser Süd": {
                 bottomColor: '#41525a',
@@ -790,13 +904,17 @@ export class StationModel {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#4b5563'; // medium-dark grey
-            ctx.font = 'bold 72px "Outfit", "Inter", "Segoe UI", sans-serif';
+            ctx.font = 'bold 90px "Jost Regular", "Outfit", "Inter", "Segoe UI", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText("HARDHÖHE", canvas.width / 2, canvas.height / 2);
+            ctx.strokeStyle = '#4b5563';
+            ctx.lineWidth = 2.0;
+            ctx.strokeText("HARDHÖHE", canvas.width / 2, canvas.height / 2);
             
             const texture = new THREE.CanvasTexture(canvas);
             texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = 8;
             wallTextMat = new THREE.MeshLambertMaterial({
                 map: texture,
                 transparent: true
@@ -1076,7 +1194,7 @@ export class StationModel {
                         ceilMat
                     );
                     plate1a.position.copy(stationGroup.worldToLocal(p1aPosWorld));
-                    plate1a.position.y = 4.45; // shifted up
+                    plate1a.position.y = 5.5; // shifted up
                     plate1a.rotation.set(-slopeAngle, rotY, 0, 'YXZ');
 
                     const p1bPosWorld = pos.clone().addScaledVector(tangent, -0.625);
@@ -1085,7 +1203,7 @@ export class StationModel {
                         ceilMat
                     );
                     plate1b.position.copy(stationGroup.worldToLocal(p1bPosWorld));
-                    plate1b.position.y = 4.45;
+                    plate1b.position.y = 5.5;
                     plate1b.rotation.set(slopeAngle, rotY, 0, 'YXZ');
                     
                     const p2aPosWorld = pos.clone().addScaledVector(tangent, 0.625);
@@ -1094,7 +1212,7 @@ export class StationModel {
                         ceilMat
                     );
                     plate2a.position.copy(stationGroup.worldToLocal(p2aPosWorld));
-                    plate2a.position.y = 4.45;
+                    plate2a.position.y = 5.5;
                     plate2a.rotation.set(-slopeAngle, rotY, 0, 'YXZ');
 
                     const p2bPosWorld = pos.clone().addScaledVector(tangent, 1.875);
@@ -1103,88 +1221,60 @@ export class StationModel {
                         ceilMat
                     );
                     plate2b.position.copy(stationGroup.worldToLocal(p2bPosWorld));
-                    plate2b.position.y = 4.45;
+                    plate2b.position.y = 5.5;
                     plate2b.rotation.set(slopeAngle, rotY, 0, 'YXZ');
 
                     stationGroup.add(plate1a, plate1b, plate2a, plate2b);
 
-                    // Custom continuous concrete light girders suspended from ceiling (solid dark grey/black)
-                    const lightOff = spacing / 2 - 1.185;
+                    // Concrete light girders + their neon tubes, swept continuously along the
+                    // true curve (built once), instead of a straight 5m box per segment. The
+                    // vertical rod hangers connecting girders to the folded ceiling peaks stay
+                    // discrete (real periodic fixtures, at the same Z=+-1.25-per-house spacing).
                     const girderH = 0.25; // heightened from 0.12
-                    const girderY = 2.90; // lowered from 3.40 (penetrates deeper into the station)
+                    const girderY = 3.775; // positioned so the neon tubes' bottom edge is flush with display boards (3.60m)
                     const girderMat = this.materials.boardHanger; // solid dark color
-                    
-                    const girderL = new THREE.Mesh(new THREE.BoxGeometry(0.25, girderH, subLen), girderMat);
-                    girderL.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, -lightOff)));
-                    girderL.position.y = girderY;
-                    girderL.rotation.y = rotY;
-
-                    const girderR = new THREE.Mesh(new THREE.BoxGeometry(0.25, girderH, subLen), girderMat);
-                    girderR.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, lightOff)));
-                    girderR.position.y = girderY;
-                    girderR.rotation.y = rotY;
-
-                    stationGroup.add(girderL, girderR);
-
-                    // Double neon tubes under each girder
-                    const tubeGeom = new THREE.BoxGeometry(0.03, 0.03, subLen);
-                    const tubeY = girderY - girderH/2 - 0.035; // hang slightly below the bottom of the girder
-
-                    const tubeL1 = new THREE.Mesh(tubeGeom, this.materials.lightTube);
-                    tubeL1.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, -lightOff - 0.05)));
-                    tubeL1.position.y = tubeY;
-                    tubeL1.rotation.y = rotY;
-
-                    const tubeL2 = new THREE.Mesh(tubeGeom, this.materials.lightTube);
-                    tubeL2.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, -lightOff + 0.05)));
-                    tubeL2.position.y = tubeY;
-                    tubeL2.rotation.y = rotY;
-
-                    const tubeR1 = new THREE.Mesh(tubeGeom, this.materials.lightTube);
-                    tubeR1.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, lightOff - 0.05)));
-                    tubeR1.position.y = tubeY;
-                    tubeR1.rotation.y = rotY;
-
-                    const tubeR2 = new THREE.Mesh(tubeGeom, this.materials.lightTube);
-                    tubeR2.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, lightOff + 0.05)));
-                    tubeR2.position.y = tubeY;
-                    tubeR2.rotation.y = rotY;
-
-                    stationGroup.add(tubeL1, tubeL2, tubeR1, tubeR2);
-
-                    // Vertical rod hangers connecting girders to folded ceiling peaks (Z = ±1.25)
-                    const ceilHangerY = 4.95; // peak of the two houses is at y = 4.95m
-                    const girderTopY = girderY + girderH/2;
+                    const lightOffFn = (s) => this.sim.getTrackSpacing(s) / 2 - 1.185;
+                    const tubeY = girderY - girderH / 2 - 0.035; // hang slightly below the bottom of the girder
+                    const ceilHangerY = 6.0; // peak of the two houses is at y = 6.0m
+                    const girderTopY = girderY + girderH / 2;
                     const hangerLen = ceilHangerY - girderTopY;
                     const hangerY = (ceilHangerY + girderTopY) / 2;
-                    
                     const hangerGeom = new THREE.CylinderGeometry(0.015, 0.015, hangerLen, 8);
 
-                    const hangL1 = new THREE.Mesh(hangerGeom, this.materials.boardHanger);
-                    hangL1.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, -lightOff).addScaledVector(tangent, -1.25)));
-                    hangL1.position.y = hangerY;
-                    hangL1.rotation.y = rotY;
+                    if (j === 0) {
+                        const R2 = station.position - (numSub * subLen) / 2;
+                        const gsA = R2, gsB = R2 + numSub * subLen;
+                        const girderMats = [girderMat, girderMat];
+                        const tubeMats = [this.materials.lightTube, this.materials.lightTube];
+                        for (const sign of [1, -1]) {
+                            this.buildSweptBar(stationGroup, gsA, gsB, () => 0.125, centerPos.y + girderY + girderH / 2, centerPos.y + girderY - girderH / 2, girderMats, 1.2, (s) => sign * lightOffFn(s));
+                            this.buildSweptBar(stationGroup, gsA, gsB, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) - 0.05));
+                            this.buildSweptBar(stationGroup, gsA, gsB, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) + 0.05));
+                        }
 
-                    const hangL2 = new THREE.Mesh(hangerGeom, this.materials.boardHanger);
-                    hangL2.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, -lightOff).addScaledVector(tangent, 1.25)));
-                    hangL2.position.y = hangerY;
-                    hangL2.rotation.y = rotY;
-
-                    const hangR1 = new THREE.Mesh(hangerGeom, this.materials.boardHanger);
-                    hangR1.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, lightOff).addScaledVector(tangent, -1.25)));
-                    hangR1.position.y = hangerY;
-                    hangR1.rotation.y = rotY;
-
-                    const hangR2 = new THREE.Mesh(hangerGeom, this.materials.boardHanger);
-                    hangR2.position.copy(stationGroup.worldToLocal(pos.clone().addScaledVector(normal, lightOff).addScaledVector(tangent, 1.25)));
-                    hangR2.position.y = hangerY;
-                    hangR2.rotation.y = rotY;
-
-                    stationGroup.add(hangL1, hangL2, hangR1, hangR2);
+                        for (let jj = 0; jj < numSub; jj++) {
+                            const s_mid = gsA + (jj + 0.5) * subLen;
+                            [-1.25, 1.25].forEach(tOff => {
+                                const s = s_mid + tOff;
+                                const hPos = this.sim.getTrackPosition(s);
+                                const hTan = this.sim.getTrackTangent(s);
+                                const hRotY = Math.atan2(hTan.x, hTan.z) - centerAngle;
+                                const hNormal = new THREE.Vector3(-hTan.z, 0, hTan.x);
+                                const hOff = lightOffFn(s);
+                                [1, -1].forEach(sign => {
+                                    const hanger = new THREE.Mesh(hangerGeom, this.materials.boardHanger);
+                                    hanger.position.copy(stationGroup.worldToLocal(hPos.clone().addScaledVector(hNormal, sign * hOff)));
+                                    hanger.position.y = hangerY;
+                                    hanger.rotation.y = hRotY;
+                                    stationGroup.add(hanger);
+                                });
+                            });
+                        }
+                    }
                 } else {
-                    const isMax = (station.name === "Maximilianstraße");
+                    const isMax = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
                     const isLwNord = (station.name === "Langwasser Nord");
-                    const ceilY = isMax ? 5.0 : 4.66; // Decke quer-mitskaliert (×1.4134) für 1×-Profil
+                    const ceilY = isMax ? 5.84 : 4.66; // Decke quer-mitskaliert (×1.4134) für 1×-Profil
                     const ceilW = isLwNord ? (spacing - 2.22) : groundWidth;
 
                     if (station.name === "Aufseßplatz") {
@@ -1222,9 +1312,10 @@ export class StationModel {
                         if (j === 0) {
                             const cHalfW = (s) => (isLwNord ? (this.sim.getTrackSpacing(s) - 2.22)
                                                             : (this.sim.getTrackSpacing(s) + (isSideStation ? 11.1 : 3.66))) / 2;
+                            const ceilMat = isMax ? this.maximilianstrasseCeilingMat : this.materials.ceiling;
                             this.buildSweptBar(stationGroup, station.position - platLength / 2, station.position + platLength / 2,
                                 cHalfW, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
-                                [this.materials.ceiling, this.materials.ceiling], 1.2);
+                                [ceilMat, ceilMat], isMax ? 2.4 : 1.2);
                         }
                     }
 
@@ -1259,33 +1350,7 @@ export class StationModel {
                         }
                     }
 
-                    if (station.name === "Maximilianstraße") {
-                        // Concrete cross-beams (girders) under the ceiling
-                        // Spacing doubled: place exactly ONE beam per segment (at local Z offset 0)
-                        const beamMat = new THREE.MeshLambertMaterial({ color: '#52525b' }); // dark grey concrete
-                        const beamGeom = new THREE.BoxGeometry(groundWidth, 0.65, 0.6); // 0.65m height so it hangs deeper
-                        
-                        const localNorm = new THREE.Vector3(-Math.cos(rotY), 0, Math.sin(rotY));
-                        
-                        const beam = new THREE.Mesh(beamGeom, beamMat);
-                        beam.position.copy(localPos); // centered in the segment
-                        beam.position.y = 4.575; // Unterkante 4.25m, Oberkante 4.90m (Dach liegt auf)
-                        beam.rotation.y = rotY;
-                        
-                        stationGroup.add(beam);
-                        
-                        // Attach lights under the beam (y = 4.225), running parallel to the crossbeams (along X)
-                        const lightOffset = spacing > 8 ? 2.5 : 1.3;
-                        const addBeamLight = (beamCenter, xOffset) => {
-                            const l = new THREE.Mesh(this.sharedGeometries.lightTube, this.materials.lightTube);
-                            l.position.copy(beamCenter).addScaledVector(localNorm, xOffset);
-                            l.position.y = 4.225;
-                            l.rotation.y = rotY + Math.PI / 2; // rotate 90 deg to align with the crossbeam (X axis)
-                            stationGroup.add(l);
-                        };
-                        addBeamLight(beam.position, -lightOffset);
-                        addBeamLight(beam.position, lightOffset);
-                    }
+
                 }
             }
 
@@ -1413,46 +1478,60 @@ export class StationModel {
                     });
                 });
             } else if (station.name === "Jakobinenstraße") {
-                const localWallR = stationGroup.worldToLocal(posWallR.clone());
-                const localWallL = stationGroup.worldToLocal(posWallL.clone());
-
-                // 1. Sandstone Walls (Left & Right)
-                const wallL = new THREE.Mesh(jakobinenstrasseWallGeom, [jakobinenstrasseSandstoneMat, this.materials.grayWallEdge]);
-                wallL.position.copy(localWallL);
-                wallL.position.y = 0;
-                wallL.rotation.y = rotY;
-
-                const wallR = new THREE.Mesh(jakobinenstrasseWallGeom, [jakobinenstrasseSandstoneMat, this.materials.grayWallEdge]);
-                wallR.position.copy(localWallR);
-                wallR.position.y = 0;
-                wallR.rotation.y = rotY;
-
-                stationGroup.add(wallL, wallR);
-
-                // 1b. Dark Wall Fill above Sandstone Walls (Left & Right) to meet the ceiling
-                const fillL = new THREE.Mesh(jakobinenstrasseFillGeom, this.materials.boardHanger);
-                fillL.position.copy(localWallL);
-                fillL.position.y = 0;
-                fillL.rotation.y = rotY;
-
-                const fillR = new THREE.Mesh(jakobinenstrasseFillGeom, this.materials.boardHanger);
-                fillR.position.copy(localWallR);
-                fillR.position.y = 0;
-                fillR.rotation.y = rotY;
-
-                stationGroup.add(fillL, fillR);
+                // 1. Sandstone "houses" wall + its dark coping band, swept continuously along
+                // the true curve. The zigzag is a periodic function of ABSOLUTE arc position
+                // (period 2.5m — the shape's own trough-peak-trough repeat), aligned so it still
+                // reads as the same repeating house motif, but panels no longer meet at an angle
+                // on curves. R is the grid origin (segment j=0's own start boundary), matching
+                // exactly where the old per-5m panels used to begin.
+                if (j === 0) {
+                    const R = station.position - (numSub * subLen) / 2;
+                    const period = 2.5;
+                    const triWave = (s, vTrough, vPeak) => {
+                        const t = (((s - R) % period) + period) % period;
+                        const frac = Math.abs(t - period / 2) / (period / 2); // 0 at peak, 1 at trough
+                        return vPeak - frac * (vPeak - vTrough);
+                    };
+                    const sA = R, sB = R + numSub * subLen;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const wallTop = (s) => centerPos.y + triWave(s, 4.77, 5.77);
+                    const wallBot = centerPos.y - 0.38;
+                    const fillBot = (s) => centerPos.y + triWave(s, 4.77, 5.77);
+                    const fillTop = (s) => centerPos.y + triWave(s, 5.0, 6.0);
+                    // Rings must land EXACTLY on the period's own quarter-points (trough/rise/
+                    // peak/fall every 0.625m) so the zigzag comes out perfectly sharp and even
+                    // instead of aliasing against the default ~1m/ring resolution ("ungleichmäßige
+                    // Zacken"). numSub*subLen is always a multiple of 5, and 5/0.625=8, so this
+                    // divides in exactly — no remainder/phase drift across the whole sweep.
+                    const zigzagNSeg = numSub * 8;
+                    // buildSweptWall forces the cloned material's texture.repeat to (1,1), so the
+                    // baked UV alone must reproduce the real-world scale createSandstoneMaterial's
+                    // canvas represents (texture.userData.worldW/worldH metres per tile):
+                    // tileU = worldW (1 U-unit = 1 tile = worldW real metres along the wall).
+                    // V uses vMetricScale=1/worldH (ABSOLUTE world Y, not normalised per-ring) so
+                    // the horizontal courses stay level and only get clipped by the zigzag top
+                    // edge, instead of stretching to fill each ring's local (varying) height —
+                    // that stretching is what made the grout lines themselves look zigzagged.
+                    const sandW = jakobinenstrasseSandstoneMat.map.userData.worldW;
+                    const sandH = jakobinenstrasseSandstoneMat.map.userData.worldH;
+                    for (const sign of [1, -1]) {
+                        const off = (s) => sign * offW(s);
+                        this.buildSweptWall(stationGroup, sA, sB, off, wallBot, wallTop, jakobinenstrasseSandstoneMat, sandW, 0, 0, zigzagNSeg, 1 / sandH);
+                        this.buildSweptWall(stationGroup, sA, sB, off, fillBot, fillTop, this.materials.boardHanger, 1.2, 0, 1, zigzagNSeg);
+                    }
+                }
 
                 // 2. Dark vertical columns at the segment end boundaries (z = 2.5)
                 const pEndL = posWallL.clone().addScaledVector(normal, -0.101).addScaledVector(tangent, 2.5);
                 const colL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
                 colL.position.copy(stationGroup.worldToLocal(pEndL));
-                colL.position.y = 2.96;
+                colL.position.y = 4.01;
                 colL.rotation.y = rotY;
 
                 const pEndR = posWallR.clone().addScaledVector(normal, 0.101).addScaledVector(tangent, 2.5);
                 const colR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
                 colR.position.copy(stationGroup.worldToLocal(pEndR));
-                colR.position.y = 2.96;
+                colR.position.y = 4.01;
                 colR.rotation.y = rotY;
 
                 stationGroup.add(colL, colR);
@@ -1461,13 +1540,13 @@ export class StationModel {
                 const pMidL = posWallL.clone().addScaledVector(normal, -0.101);
                 const colMidL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
                 colMidL.position.copy(stationGroup.worldToLocal(pMidL));
-                colMidL.position.y = 2.96;
+                colMidL.position.y = 4.01;
                 colMidL.rotation.y = rotY;
 
                 const pMidR = posWallR.clone().addScaledVector(normal, 0.101);
                 const colMidR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
                 colMidR.position.copy(stationGroup.worldToLocal(pMidR));
-                colMidR.position.y = 2.96;
+                colMidR.position.y = 4.01;
                 colMidR.rotation.y = rotY;
 
                 stationGroup.add(colMidL, colMidR);
@@ -1477,13 +1556,13 @@ export class StationModel {
                     const pStartL = posWallL.clone().addScaledVector(normal, -0.101).addScaledVector(tangent, -2.5);
                     const colStartL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
                     colStartL.position.copy(stationGroup.worldToLocal(pStartL));
-                    colStartL.position.y = 2.96;
+                    colStartL.position.y = 4.01;
                     colStartL.rotation.y = rotY;
 
                     const pStartR = posWallR.clone().addScaledVector(normal, 0.101).addScaledVector(tangent, -2.5);
                     const colStartR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
                     colStartR.position.copy(stationGroup.worldToLocal(pStartR));
-                    colStartR.position.y = 2.96;
+                    colStartR.position.y = 4.01;
                     colStartR.rotation.y = rotY;
 
                     stationGroup.add(colStartL, colStartR);
@@ -1498,7 +1577,7 @@ export class StationModel {
                     const pTextL = posWallL.clone().addScaledVector(tangent, 1.25);
                     textMeshL.position.copy(stationGroup.worldToLocal(pTextL));
                     textMeshL.position.x += 0.11;
-                    textMeshL.position.y = 1.85; // Augenhöhe (approx 1.85m local Y, i.e., 1.3m above 0.55m platform)
+                    textMeshL.position.y = 2.21875; // Top edge 2.50m above track bed
                     textMeshL.rotation.set(0, rotY + Math.PI / 2, 0);
 
                     // Right wall text (facing tracks)
@@ -1506,7 +1585,7 @@ export class StationModel {
                     const pTextR = posWallR.clone().addScaledVector(tangent, 1.25);
                     textMeshR.position.copy(stationGroup.worldToLocal(pTextR));
                     textMeshR.position.x -= 0.11;
-                    textMeshR.position.y = 1.85; // Augenhöhe
+                    textMeshR.position.y = 2.21875; // Top edge 2.50m above track bed
                     textMeshR.rotation.set(0, rotY - Math.PI / 2, 0);
 
                     stationGroup.add(textMeshL, textMeshR);
@@ -1525,7 +1604,7 @@ export class StationModel {
                     }
                     const mats = this[cacheKey];
                     const repeatX = Math.round(platLength / (0.35 * (384 / 64)));
-                    const isMax = (station.name === "Maximilianstraße");
+                    const isMax = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
                     const topHeight = isMax ? 5.0 : 3.7;
                     const hFactor = preset.flatTiles ? 0.6 : 1.2;
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
@@ -1534,9 +1613,20 @@ export class StationModel {
                     for (const sign of [1, -1]) {
                         const off = (s) => sign * offW(s);
                         const offS = (s) => sign * (offW(s) - 0.02); // stripe sits just in front of the wall
-                        this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 1.10, mats.bottom, 1.2, -0.38 / hFactor, 1.10 / hFactor);
-                        this.buildSweptWall(stationGroup, sA, sB, off, cy + 1.10, cy + 1.10 + topHeight, mats.top, 1.2, 1.1 / hFactor, (1.1 + topHeight) / hFactor);
-                        this.buildSweptWall(stationGroup, sA, sB, offS, cy + 1.89, cy + 2.11, mats.stripe, 90 / repeatX, 0, 1);
+                        if (isMax) {
+                            // Tiled bottom: cy - 0.38 to cy + 1.10
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 1.10, mats.bottom, 1.2, -0.38 / hFactor, 1.10 / hFactor);
+                            // Tiled green top: cy + 1.10 to cy + 3.68 (height 2.58m, same height as lower green wall)
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy + 1.10, cy + 3.68, mats.top, 1.2, 1.1 / hFactor, 3.68 / hFactor);
+                            // Stripe: cy + 2.28 to cy + 2.50
+                            this.buildSweptWall(stationGroup, sA, sB, offS, cy + 2.28, cy + 2.50, mats.stripe, 90 / repeatX, 0, 1);
+                            // Concrete upper wall: cy + 3.68 to cy + 5.84 (ceiling height, coarser concrete texture scale 2.4)
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy + 3.68, cy + 5.84, this.stationConcreteWallMat, 2.4, 3.68 / 2.4, 5.84 / 2.4);
+                        } else {
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 1.10, mats.bottom, 1.2, -0.38 / hFactor, 1.10 / hFactor);
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy + 1.10, cy + 1.10 + topHeight, mats.top, 1.2, 1.1 / hFactor, (1.1 + topHeight) / hFactor);
+                            this.buildSweptWall(stationGroup, sA, sB, offS, cy + 2.28, cy + 2.50, mats.stripe, 90 / repeatX, 0, 1);
+                        }
                     }
                 }
             } else if (station.name === "Hardhöhe") {
@@ -1659,7 +1749,7 @@ export class StationModel {
                         this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 0.75, aufsessplatzRedTileMat, 1.2, -0.38 / 1.2, 0.75 / 1.2);
                         this.buildSweptWall(stationGroup, sA, sB, off, cy + 0.75, cy + 2.55, aufsessplatzWhiteTileMat, 1.2, 0.75 / 1.2, 2.55 / 1.2);
                         this.buildSweptWall(stationGroup, sA, sB, off, cy + 2.55, cy + 4.59, aufsessplatzRedTileMat, 1.2, 2.55 / 1.2, 4.59 / 1.2);
-                        this.buildSweptWall(stationGroup, sA, sB, offS, cy + 1.56, cy + 1.74, aufsessplatzStripeMat, 90 / repeatX, 0, 1);
+                        this.buildSweptWall(stationGroup, sA, sB, offS, cy + 2.32, cy + 2.50, aufsessplatzStripeMat, 90 / repeatX, 0, 1);
                     }
                 }
             } else {
@@ -1667,8 +1757,8 @@ export class StationModel {
                 // (built once on j===0), tapering its lateral offset with the inter-track gap.
                 if (station.name !== "Langwasser Nord" && j === 0) {
                     const wallMaterial = new THREE.MeshLambertMaterial({ color: station.color || '#333333' });
-                    const isMax = (station.name === "Maximilianstraße");
-                    const ceilYw = isMax ? 5.0 : 4.66;
+                    const isMax = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
+                    const ceilYw = isMax ? 5.84 : 4.66;
                     const wallMats = [wallMaterial, wallMaterial];
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
                     const wallInset = isSideStation ? 5.55 : 1.83;
@@ -1681,9 +1771,9 @@ export class StationModel {
  
         // 4. Pillars (every 15 meters by default: -37.5, -22.5, -7.5, 7.5, 22.5, 37.5)
         let stationPillarZ = [-37.5, -22.5, -7.5, 7.5, 22.5, 37.5].map(z => z * S_len);
-        if (station.name === "Maximilianstraße") {
-            // 11 pillars in equal distance (from -30 to 30 with spacing 6m) to clear the escalators
-            stationPillarZ = [-30, -24, -18, -12, -6, 0, 6, 12, 18, 24, 30].map(z => z * S_len);
+        if (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name)) {
+            // 12 pillars in equal distance (from -33 to 33 with spacing 6m) to clear the escalators
+            stationPillarZ = [-33, -27, -21, -15, -9, -3, 3, 9, 15, 21, 27, 33].map(z => z * S_len);
         } else if (station.name === "Aufseßplatz") {
             // 9 pillars in equal distance (from -32 to 32 with spacing 8m)
             stationPillarZ = [-32, -24, -16, -8, 0, 8, 16, 24, 32].map(z => z * S_len);
@@ -1691,11 +1781,13 @@ export class StationModel {
         const tPillarTrunkGeom = new THREE.BoxGeometry(0.3, 2.75, 0.3);
         const tPillarBarGeom = new THREE.BoxGeometry(2.4, 0.25, 0.35);
  
-        stationPillarZ.forEach(pz => {
+        stationPillarZ.forEach((pz, idx) => {
             if (station.name === "Hardhöhe" || station.name === "Jakobinenstraße") return; // column-free!
-            const isTiledExitStation = (station.name === "Maximilianstraße" || 
-                                        station.name === "Langwasser Süd" || 
-                                        station.name === "Gemeinschaftshaus" || 
+            const isTiledExitStation = (station.name === "Maximilianstraße" ||
+                                        station.name === "Bärenschanze" ||
+                                        station.name === "Gostenhof" ||
+                                        station.name === "Langwasser Süd" ||
+                                        station.name === "Gemeinschaftshaus" ||
                                         station.name === "Langwasser Mitte");
             if (isTiledExitStation && (Math.abs(Math.abs(pz) - 37.5 * S_len) < 0.01)) return; // remove end pillars to clear escalators
             const s = station.position + pz;
@@ -1706,14 +1798,18 @@ export class StationModel {
             const rotY = Math.atan2(tangent.x, tangent.z) - centerAngle;
 
             // Calculate target height and Y position for pillars
-            const isMax = (station.name === "Maximilianstraße");
-            let ceilY = isMax ? 5.0 : 4.66;
+            const isMax = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
+            let ceilY = isMax ? 5.84 : 4.66;
             if (station.name === "Aufseßplatz") ceilY = 4.59;
             if (station.name === "Hardhöhe") ceilY = 4.8;
             if (station.name === "Eberhardshof") ceilY = 4.65;
 
-            const pHeight = ceilY - 0.865;
-            const pY = 0.865 + pHeight / 2;
+            let pHeight = ceilY - 0.865;
+            let pY = 0.865 + pHeight / 2;
+            if (isMax) {
+                pHeight = 3.295; // Shorter pillars: ends at 4.16 (ceiling 5.84 - beam height 1.68)
+                pY = 0.865 + pHeight / 2;
+            }
 
             if (isSideStation) {
                 const pR = pos.clone().addScaledVector(normal, -spacing / 2 - 3.54);
@@ -1873,6 +1969,32 @@ export class StationModel {
                     stationGroup.add(pillar);
                 }
             }
+
+            // Build cross-beams and lights for Maximilianstraße aligned with the pillars
+            if (isMax) {
+                const beamWidth = spacing + 3.66;
+                const beamGeom = new THREE.BoxGeometry(beamWidth, 1.68, 0.84);
+                const beam = new THREE.Mesh(beamGeom, this.stationConcreteBeamMat);
+                
+                const beamCenter = stationGroup.worldToLocal(pos.clone());
+                beamCenter.y = 5.00;
+                beam.position.copy(beamCenter);
+                beam.rotation.y = rotY;
+                stationGroup.add(beam);
+
+                // Attach lights under the beam (Y = 4.10, which is just below the beam bottom 4.16)
+                const localNorm = new THREE.Vector3(-Math.cos(rotY), 0, Math.sin(rotY));
+                const lightOffset = spacing > 8 ? 2.5 : 1.3;
+                const addBeamLight = (xOffset) => {
+                    const l = new THREE.Mesh(this.sharedGeometries.lightTube, this.materials.lightTube);
+                    l.position.copy(beamCenter).addScaledVector(localNorm, xOffset);
+                    l.position.y = 4.10;
+                    l.rotation.y = rotY + Math.PI / 2;
+                    stationGroup.add(l);
+                };
+                addBeamLight(-lightOffset);
+                addBeamLight(lightOffset);
+            }
         });
 
         // Benches removed by user request (except custom benches in Hardhöhe)
@@ -2016,7 +2138,7 @@ export class StationModel {
 
             const isLwNord = (station.name === "Langwasser Nord");
             const boardY = 3.925; // Unterkante bei 3.60m (3.60 + 0.65/2)
-            const ceilY = (station.name === "Hardhöhe") ? 4.8 : ((station.name === "Maximilianstraße") ? 5.0 : 4.66);
+            const ceilY = (station.name === "Hardhöhe") ? 4.8 : (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name) ? 5.84 : 4.66);
             const hangerLen = ceilY - boardY;
             const hangerY = boardY + hangerLen / 2;
             const boardHangerGeom = new THREE.CylinderGeometry(0.015, 0.015, hangerLen, 6);
@@ -2026,7 +2148,7 @@ export class StationModel {
 
             // Gleis 1 Board (Left Platform - Outer side facing active tracks)
             // Swapped directions: track 1 side board uses materialsG2 ("LANGWASSER SÜD")
-            const g1X = isSideStation ? (-spacing / 2 - 1.73) : (isLwNord ? -1.0 : (isScharfreiterring ? -(localSchPlatCenter + 1.0) : -1.5));
+            const g1X = isSideStation ? (-spacing / 2 - 3.205) : (isScharfreiterring ? -(localSchPlatCenter + 1.835) : (-spacing / 2 + 3.205));
             const p1 = pos.clone().addScaledVector(normal, g1X);
             const board1 = new THREE.Mesh(this.sharedGeometries.boardCasing, materialsG2);
             board1.position.copy(stationGroup.worldToLocal(p1.clone()));
@@ -2050,7 +2172,7 @@ export class StationModel {
 
             // Gleis 2 Board (Right Platform - Outer side facing active tracks)
             // Swapped directions: track 2 side board uses materialsG1 ("HARDHÖHE")
-            const g2X = isSideStation ? (spacing / 2 + 1.73) : (isLwNord ? 1.0 : (isScharfreiterring ? (localSchPlatCenter + 1.0) : 1.5));
+            const g2X = isSideStation ? (spacing / 2 + 3.205) : (isScharfreiterring ? (localSchPlatCenter + 1.835) : (spacing / 2 - 3.205));
             const p2 = pos.clone().addScaledVector(normal, g2X);
             const board2 = new THREE.Mesh(this.sharedGeometries.boardCasing, materialsG1);
             board2.position.copy(stationGroup.worldToLocal(p2.clone()));
@@ -2074,7 +2196,7 @@ export class StationModel {
 
             if (isScharfreiterring) {
                 // Left Platform Inner Board (facing decorative tracks)
-                const g1InnerX = -(localSchPlatCenter - 1.0);
+                const g1InnerX = -(localSchPlatCenter - 1.835);
                 const p1Inner = pos.clone().addScaledVector(normal, g1InnerX);
                 const board1Inner = new THREE.Mesh(this.sharedGeometries.boardCasing, materialsBlank);
                 board1Inner.position.copy(stationGroup.worldToLocal(p1Inner.clone()));
@@ -2097,7 +2219,7 @@ export class StationModel {
                 stationGroup.add(hanger1InnerL, hanger1InnerR);
 
                 // Right Platform Inner Board (facing decorative tracks)
-                const g2InnerX = localSchPlatCenter - 1.0;
+                const g2InnerX = localSchPlatCenter - 1.835;
                 const p2Inner = pos.clone().addScaledVector(normal, g2InnerX);
                 const board2Inner = new THREE.Mesh(this.sharedGeometries.boardCasing, materialsBlank);
                 board2Inner.position.copy(stationGroup.worldToLocal(p2Inner.clone()));
@@ -2124,7 +2246,7 @@ export class StationModel {
         // 7. Lights (every 10 meters)
         const lightZ = [-40, -30, -20, -10, 0, 10, 20, 30, 40];
         lightZ.forEach(lz => {
-            if (["Hardhöhe", "Maximilianstraße", "Jakobinenstraße", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz"].includes(station.name)) return; // Skip standard lights
+            if (["Hardhöhe", "Maximilianstraße", "Bärenschanze", "Gostenhof", "Jakobinenstraße", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz"].includes(station.name)) return; // Skip standard lights
             const s = station.position + lz;
             const pos = this.sim.getTrackPosition(s);
             const tangent = this.sim.getTrackTangent(s);
@@ -2471,7 +2593,127 @@ export class StationModel {
             builder.buildStairs();
         });
 
+        // --- ADD TRASH CANS ---
+        this.addTrashCansToStation(station, stationGroup, S_len, platLength, platTopY, centerAngle);
+
         return stationGroup;
+    }
+
+    createRoughConcreteMaterial() {
+        // Same rough concrete look as StationBuilder.createRoughConcreteMaterial (used for the
+        // stair/tunnel-entrance portal walls), duplicated here so station-wide elements like the
+        // cross-beams and upper wall band can share materials cached at the StationModel level.
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Base color: light grey concrete (somewhat brighter)
+        ctx.fillStyle = '#b0b0b0';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Add subtle organic patches for concrete texture
+        for (let i = 0; i < 15; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            const radius = 20 + Math.random() * 40;
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            const isDark = Math.random() > 0.5;
+            const alpha = 0.05 + Math.random() * 0.08;
+            grad.addColorStop(0, isDark ? `rgba(100,100,100,${alpha})` : `rgba(235,235,235,${alpha})`);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // High-frequency fine concrete grain noise
+        const numGrains = 4000;
+        for (let i = 0; i < numGrains; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            const size = 1.0 + Math.random() * 1.5;
+
+            const rand = Math.random();
+            if (rand < 0.4) {
+                ctx.fillStyle = '#8e8e8e'; // dark speckles
+            } else if (rand < 0.8) {
+                ctx.fillStyle = '#d2d2d2'; // light speckles
+            } else {
+                ctx.fillStyle = '#a0a0a0'; // mid speckles
+            }
+
+            ctx.globalAlpha = 0.12;
+            ctx.fillRect(x, y, size, size);
+        }
+        ctx.globalAlpha = 1.0;
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.repeat.set(1, 1);
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        // Generate bump map canvas for rough surface
+        const bumpCanvas = document.createElement('canvas');
+        bumpCanvas.width = 256;
+        bumpCanvas.height = 256;
+        const bCtx = bumpCanvas.getContext('2d');
+
+        bCtx.fillStyle = '#808080';
+        bCtx.fillRect(0, 0, 256, 256);
+
+        bCtx.globalAlpha = 0.25;
+        for (let i = 0; i < 3000; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            const size = 1 + Math.random() * 2;
+            bCtx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+            bCtx.fillRect(x, y, size, size);
+        }
+        bCtx.globalAlpha = 1.0;
+
+        const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
+        bumpTexture.wrapS = THREE.ClampToEdgeWrapping;
+        bumpTexture.wrapT = THREE.ClampToEdgeWrapping;
+        bumpTexture.repeat.set(1, 1);
+
+        return new THREE.MeshLambertMaterial({
+            map: texture,
+            bumpMap: bumpTexture,
+            bumpScale: 0.008
+        });
+    }
+
+    createTunnelConcreteTexture() {
+        // Near-black base with minimal pixel grain – adapts naturally to 8-sided cylinder panels
+        const size = 128;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Near-black base
+        ctx.fillStyle = '#080808';
+        ctx.fillRect(0, 0, size, size);
+
+        // Minimal grainy noise – only very subtle pixel variation
+        for (let i = 0; i < 6000; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+            const v = Math.floor(10 + Math.random() * 18); // 10–28 range, almost invisible
+            ctx.fillStyle = `rgb(${v},${v},${v})`;
+            ctx.fillRect(x, y, 1, 1);
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        // 8 panels in the octagon cylinder – 8 U-repeats means each panel gets exactly one texture tile
+        // V=1 covers the 5m segment height without stretching
+        tex.repeat.set(8, 1);
+        return tex;
     }
 
     createBallastTexture() {
@@ -2514,13 +2756,17 @@ export class StationModel {
         ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
 
         ctx.fillStyle = '#000000'; // black text
-        ctx.font = 'bold 54px "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 68px "Jost Regular", "Outfit", "Inter", "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(name.toUpperCase(), canvas.width / 2, canvas.height / 2); // CAPS LOCK
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1.5;
+        ctx.strokeText(name.toUpperCase(), canvas.width / 2, canvas.height / 2);
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = 8;
         return new THREE.MeshBasicMaterial({ map: texture });
     }
 
@@ -2534,7 +2780,7 @@ export class StationModel {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = textColor;
-        ctx.font = 'bold 26px "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 33px "Jost Regular", "Outfit", "Inter", "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
@@ -2544,10 +2790,20 @@ export class StationModel {
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.scale(0.68, 1.0); // Compress horizontally to make it narrow/condensed
         ctx.fillText(name.toUpperCase(), 0, 0);
+        if (textColor === '#000000') {
+            ctx.strokeStyle = textColor;
+            ctx.lineWidth = 1.2;
+            ctx.strokeText(name.toUpperCase(), 0, 0);
+        } else if (textColor !== '#ffffff') {
+            ctx.strokeStyle = textColor;
+            ctx.lineWidth = 0.8;
+            ctx.strokeText(name.toUpperCase(), 0, 0);
+        }
         ctx.restore();
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = 8;
         texture.wrapS = THREE.RepeatWrapping;
 
         // Calculate repeat count to maintain aspect ratio on a 90m long, 0.35m high wall stripe.
@@ -2685,32 +2941,47 @@ export class StationModel {
     }
 
     createSandstoneMaterial() {
-        // Lightweight sandstone look: tiny 16x16 canvas (just a base tone + grout grid),
-        // no bump map, no per-pixel grain loops. Cheap to generate and to render.
+        // Coursed ashlar sandstone: irregular-height horizontal courses (20-40cm real-world),
+        // each built from blocks in varying beige tones, with the joints offset row-to-row like
+        // real masonry (running bond). Cheap to generate — only flat fillRect calls, no
+        // per-pixel loops, no bump map. The canvas represents a fixed WORLD_W x WORLD_H metre
+        // patch of wall (stored in texture.userData so callers can size their own tiling
+        // density instead of guessing); it then repeats via wrapping.
+        const WORLD_W = 2.4, WORLD_H = 1.2;
         const canvas = document.createElement('canvas');
-        canvas.width = 16;
-        canvas.height = 16;
+        canvas.width = 256;
+        canvas.height = 256;
         const ctx = canvas.getContext('2d');
+        const pxPerMX = canvas.width / WORLD_W;
+        const pxPerMY = canvas.height / WORLD_H;
+        const joint = 2; // grout line thickness in px, shows through as the gap between blocks
 
-        // Warm sandstone base tone
-        ctx.fillStyle = '#decab0';
-        ctx.fillRect(0, 0, 16, 16);
+        // Grout base (shows through in the gaps left between blocks below)
+        ctx.fillStyle = '#5c4d3a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Single thin grout line at the bottom edge of the tile to suggest masonry rows
-        ctx.strokeStyle = '#8c765c';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(0, 15.5);
-        ctx.lineTo(16, 15.5);
-        ctx.stroke();
+        const tones = ['#d8c1a0', '#e2ccac', '#cdb187', '#e7d5ba', '#d4b98f', '#ddc9a5', '#c9ab7e'];
+        let y = 0, row = 0;
+        while (y < canvas.height) {
+            const courseM = 0.20 + Math.random() * 0.20; // 20-40cm course height
+            let h = Math.round(courseM * pxPerMY);
+            if (y + h > canvas.height) h = canvas.height - y;
+            const blockM = 0.5 + Math.random() * 0.35; // ~50-85cm block width
+            const w = Math.max(16, Math.round(blockM * pxPerMX));
+            const offset = (row % 2 === 0) ? 0 : -Math.round(w / 2); // running-bond offset
+            for (let x = offset; x < canvas.width; x += w) {
+                ctx.fillStyle = tones[(Math.random() * tones.length) | 0];
+                ctx.fillRect(x + joint, y + joint, w - joint * 2, Math.max(1, h - joint * 2));
+            }
+            y += h;
+            row++;
+        }
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(15, 6); // mimics the previous row/column tiling density
         texture.colorSpace = THREE.SRGBColorSpace;
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
+        texture.userData = { worldW: WORLD_W, worldH: WORLD_H };
 
         return new THREE.MeshLambertMaterial({
             map: texture
@@ -3021,5 +3292,304 @@ export class StationModel {
 
     disposeGroup(group) {
         // No longer culling the groups themselves from memory, just caching them.
+    }
+
+    createTrashCanTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Gradient background for brushed stainless steel (bright metal)
+        const grad = ctx.createLinearGradient(0, 0, 256, 0);
+        grad.addColorStop(0, '#bdc3c7');
+        grad.addColorStop(0.35, '#e2e8f0');
+        grad.addColorStop(0.5, '#ffffff');
+        grad.addColorStop(0.65, '#e2e8f0');
+        grad.addColorStop(1, '#bdc3c7');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 512);
+        
+        // Add vertical brushed metal lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 60; i++) {
+            const x = Math.random() * 256;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 512);
+            ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
+        for (let i = 0; i < 60; i++) {
+            const x = Math.random() * 256;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 512);
+            ctx.stroke();
+        }
+        
+        // Draw the black trash icon (person throwing trash)
+        ctx.fillStyle = '#2c3e50';
+        ctx.strokeStyle = '#2c3e50';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        const cx = 128;
+        const cy = 150;
+        
+        // Head
+        ctx.beginPath();
+        ctx.arc(cx, cy - 25, 7, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Torso
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 18);
+        ctx.lineTo(cx - 3, cy + 5);
+        ctx.stroke();
+        
+        // Left Leg
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, cy + 5);
+        ctx.lineTo(cx - 12, cy + 30);
+        ctx.stroke();
+        
+        // Right Leg
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, cy + 5);
+        ctx.lineTo(cx + 4, cy + 30);
+        ctx.stroke();
+        
+        // Left Arm (leaning back slightly)
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 14);
+        ctx.lineTo(cx - 15, cy - 2);
+        ctx.stroke();
+        
+        // Right Arm (throwing trash)
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 14);
+        ctx.lineTo(cx + 12, cy - 14);
+        ctx.lineTo(cx + 20, cy - 2);
+        ctx.stroke();
+        
+        // Falling trash (small dot)
+        ctx.beginPath();
+        ctx.arc(cx + 24, cy + 5, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Trash bin outline on the right
+        ctx.beginPath();
+        ctx.moveTo(cx + 22, cy + 12);
+        ctx.lineTo(cx + 34, cy + 12);
+        ctx.lineTo(cx + 31, cy + 32);
+        ctx.lineTo(cx + 25, cy + 32);
+        ctx.closePath();
+        ctx.stroke();
+        
+        // Dot/Mesh pattern below the icon (embossed dots)
+        for (let row = 0; row < 18; row++) {
+            const y = 220 + row * 13;
+            // Diamond pattern width
+            const maxCols = 15 - Math.abs(row - 9); 
+            const startX = 128 - (maxCols - 1) * 7;
+            for (let col = 0; col < maxCols; col++) {
+                const x = startX + col * 14;
+                // Draw embossed dot: shadow + highlight
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+                ctx.beginPath();
+                ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.beginPath();
+                ctx.arc(x + 1, y + 1, 1.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return texture;
+    }
+
+    buildTrashCan() {
+        const trashCanGroup = new THREE.Group();
+        
+        // 1. Create the main body shape (extruded)
+        const shape = new THREE.Shape();
+        shape.moveTo(-0.1, -0.25);
+        shape.lineTo(0.1, -0.25);
+        shape.quadraticCurveTo(0.2, 0.0, 0.1, 0.25);
+        shape.lineTo(-0.1, 0.25);
+        shape.quadraticCurveTo(-0.2, 0.0, -0.1, -0.25);
+        
+        // Add a hole in the shape so the body and rim are hollow inside
+        const holePath = new THREE.Path();
+        holePath.moveTo(-0.05, -0.12);
+        holePath.lineTo(-0.05, 0.12);
+        holePath.lineTo(0.05, 0.12);
+        holePath.lineTo(0.05, -0.12);
+        holePath.closePath();
+        shape.holes.push(holePath);
+        
+        // Extrude body up to 0.95m
+        const extrudeSettings = {
+            depth: 0.95,
+            bevelEnabled: false,
+            curveSegments: 16
+        };
+        const bodyGeom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        bodyGeom.rotateX(-Math.PI / 2); // Make it stand vertically
+        
+        // Apply cylindrical UV projection for the body geometry
+        const posAttr = bodyGeom.attributes.position;
+        const uvAttr = bodyGeom.attributes.uv;
+        for (let i = 0; i < posAttr.count; i++) {
+            const y = posAttr.getY(i);
+            const z = posAttr.getZ(i);
+            
+            // Map U from Z-range [-0.25, 0.25] -> [0, 1]
+            // Map V from Y-range [0, 0.95] -> [0, 1]
+            let u = (z + 0.25) / 0.5;
+            let v = y / 0.95;
+            
+            u = Math.max(0, Math.min(1, u));
+            v = Math.max(0, Math.min(1, v));
+            
+            uvAttr.setXY(i, u, v);
+        }
+        uvAttr.needsUpdate = true;
+        
+        const bodyMesh = new THREE.Mesh(bodyGeom, this.materials.trashBody);
+        trashCanGroup.add(bodyMesh);
+        
+        // 2. Create the top lid (inward funnel)
+        const lidGeom = new THREE.CylinderGeometry(0.23, 0.08, 0.04, 16, 1, true);
+        lidGeom.scale(0.65, 1.0, 1.0);
+        const lidMesh = new THREE.Mesh(lidGeom, this.materials.trashLid);
+        lidMesh.position.y = 0.97;
+        trashCanGroup.add(lidMesh);
+        
+        // 3. Create the rim (thin top border following the body shape)
+        const rimGeom = new THREE.ExtrudeGeometry(shape, { depth: 0.015, bevelEnabled: false, curveSegments: 16 });
+        rimGeom.rotateX(-Math.PI / 2);
+        const rimMesh = new THREE.Mesh(rimGeom, this.materials.trashLid);
+        rimMesh.position.y = 0.985;
+        trashCanGroup.add(rimMesh);
+        
+        // 4. Create the blue trash bag inside, lowered to be visible through the opening
+        const bagGeom = new THREE.BoxGeometry(0.12, 0.02, 0.26);
+        const bagMesh = new THREE.Mesh(bagGeom, this.materials.trashBag);
+        bagMesh.position.y = 0.90;
+        trashCanGroup.add(bagMesh);
+        
+        return trashCanGroup;
+    }
+
+    addTrashCansToStation(station, stationGroup, S_len, platLength, platTopY, centerAngle) {
+        // Collect pillar coordinates to avoid collision
+        let pillarZList = [];
+        if (station.name !== "Hardhöhe" && station.name !== "Jakobinenstraße") {
+            if (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name)) {
+                pillarZList = [-30, -24, -18, -12, -6, 0, 6, 12, 18, 24, 30].map(z => z * S_len);
+            } else if (station.name === "Aufseßplatz") {
+                pillarZList = [-32, -24, -16, -8, 0, 8, 16, 24, 32].map(z => z * S_len);
+            } else {
+                pillarZList = [-37.5, -22.5, -7.5, 7.5, 22.5, 37.5].map(z => z * S_len);
+            }
+        }
+
+        // Helper function to shift Z position to avoid columns
+        const checkPillarsAndAdjustZ = (targetZ) => {
+            let adjustedZ = targetZ;
+            let attempts = 0;
+            let hasCollision = true;
+            // Shift towards the center first to avoid going out of platform bounds
+            const shiftDir = targetZ >= 0 ? -1.0 : 1.0;
+            while (hasCollision && attempts < 100) {
+                hasCollision = false;
+                for (const pz of pillarZList) {
+                    if (Math.abs(adjustedZ - pz) < 2.5) { // 2.5m safety margin
+                        adjustedZ += shiftDir * 1.5;
+                        hasCollision = true;
+                        break;
+                    }
+                }
+                attempts++;
+            }
+            return adjustedZ;
+        };
+
+        const isSideStation = station.side;
+        const isScharfreiterring = (station.name === "Scharfreiterring");
+        const centerSpacing = this.sim.getTrackSpacing(station.position);
+
+        // 3 Z positions along the platform
+        const rawZOffsets = [-platLength * 0.3, 0, platLength * 0.3];
+        const adjustedZOffsets = rawZOffsets.map(z => checkPillarsAndAdjustZ(z));
+
+        // Helper to calculate curved coordinates relative to track spline
+        const getLocalPlacement = (z, offsetX) => {
+            const s = station.position + z;
+            const pos = this.sim.getTrackPosition(s);
+            const tangent = this.sim.getTrackTangent(s);
+            const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
+            
+            // Calculate world position and convert to local space of the stationGroup
+            const worldPos = pos.clone().addScaledVector(normal, offsetX);
+            const localPos = stationGroup.worldToLocal(worldPos);
+            const rotY = Math.atan2(tangent.x, tangent.z) - centerAngle;
+            
+            return {
+                pos: localPos,
+                rotY: rotY
+            };
+        };
+
+        let placements = []; // array of { pos, rotY }
+
+        if (isSideStation) {
+            adjustedZOffsets.forEach(z => {
+                const s = station.position + z;
+                const spacing = this.sim.getTrackSpacing(s);
+                
+                // Left platform trash can (near left wall)
+                placements.push(getLocalPlacement(z, spacing / 2 + 5.25));
+                
+                // Right platform trash can (near right wall)
+                placements.push(getLocalPlacement(z, -(spacing / 2 + 5.25)));
+            });
+        } else if (isScharfreiterring) {
+            adjustedZOffsets.forEach(z => {
+                const s = station.position + z;
+                const spacing = this.sim.getTrackSpacing(s);
+                const leftPlatCenter = spacing / 2 - 5.03;
+                
+                // Left platform trash can
+                placements.push(getLocalPlacement(z, leftPlatCenter + 3.25));
+                
+                // Right platform trash can
+                placements.push(getLocalPlacement(z, -(leftPlatCenter + 3.25)));
+            });
+        } else {
+            // Island platform: place in the center (X = 0)
+            if (centerSpacing - 3.08 > 0.5) {
+                adjustedZOffsets.forEach(z => {
+                    placements.push(getLocalPlacement(z, 0));
+                });
+            }
+        }
+
+        // Build and add the trash cans
+        placements.forEach(p => {
+            const trashCan = this.buildTrashCan();
+            trashCan.position.copy(p.pos);
+            trashCan.position.y = platTopY; // Ensure it stands flat on the deck floor
+            trashCan.rotation.y = p.rotY;
+            stationGroup.add(trashCan);
+        });
     }
 }
