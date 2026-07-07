@@ -35,6 +35,13 @@ export class TrackManager {
             viaduct: new THREE.MeshLambertMaterial({ color: '#4a4a4a', side: THREE.DoubleSide }),
             wall: new THREE.MeshLambertMaterial({ color: '#333333' }),
             portal: new THREE.MeshLambertMaterial({ color: '#2c3e50' }),
+            fence: new THREE.MeshLambertMaterial({
+                map: this.createFenceTexture(),
+                transparent: true,
+                alphaTest: 0.5,
+                side: THREE.DoubleSide
+            }),
+            concrete: this.createRoughConcreteMaterial(),
             // Neon lights materials
             tunnelGlow: new THREE.MeshBasicMaterial({ color: '#e0f2fe' }), // cyan-white neon glow
             tunnelFixtureMat: new THREE.MeshLambertMaterial({ color: '#1e293b' }), // dark Slate casing
@@ -74,6 +81,7 @@ export class TrackManager {
             sleeper: new THREE.BoxGeometry(2.4, 0.12, 0.3),
             thirdRail: new THREE.BoxGeometry(0.12, 0.15, 1.0), // unit length
             thirdRailCover: new THREE.BoxGeometry(0.24, 0.08, 1.0), // unit length
+            fencePost: new THREE.BoxGeometry(0.04, 1.0, 0.04),
             
             // Tunnel Elements (Double track width, 5m sub-segments)
             tunnelWall: new THREE.CylinderGeometry(6.2, 6.2, 5.0, 8, 1, true),
@@ -1275,24 +1283,63 @@ export class TrackManager {
                 this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
                     (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.80, (s) => gTY(s) - 0.30, this.materials.viaduct);
                 for (const sign of [1, -1]) {
-                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, (s) => sign * (gSp(s) / 2 + 2.15),
+                    const offsetFn = (s) => sign * (gSp(s) / 2 + 2.15);
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, offsetFn,
                         () => 0.1, (s) => gTY(s) - 0.25, (s) => gTY(s) + 0.75, this.materials.viaduct);
+                    this.buildSweptFence(chunkGroup, sStart, sEnd, offsetFn,
+                        (s) => gTY(s) + 0.75, (s) => gTY(s) + 1.95, this.materials.fence);
+                    this.placeFencePosts(addBatched, sStart, sEnd, offsetFn,
+                        (s) => gTY(s) + 0.75, 1.2, chunkGroup);
+                }
+            } else if (kind === 'ramp') {
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.80, (s) => gTY(s) - 0.30, this.materials.viaduct);
+                for (const sign of [1, -1]) {
+                    const offsetFn = (s) => sign * (gSp(s) / 2 + 2.15);
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, offsetFn,
+                        () => 0.1, (s) => gTY(s) - 0.25, (s) => gTY(s) + 0.75, this.materials.concrete);
+                    this.buildSweptFence(chunkGroup, sStart, sEnd, offsetFn,
+                        (s) => gTY(s) + 0.75, (s) => gTY(s) + 1.95, this.materials.fence);
+                    this.placeFencePosts(addBatched, sStart, sEnd, offsetFn,
+                        (s) => gTY(s) + 0.75, 1.2, chunkGroup);
                 }
             } else if (kind === 'atgrade-split') {
                 for (const sign of [1, -1]) {
                     this.buildSweptTrackBox(chunkGroup, sStart, sEnd, (s) => sign * gSp(s) / 2,
                         () => 1.6, (s) => gTY(s) - 0.45, (s) => gTY(s) - 0.30, ballastMat);
+                    
+                    const offsetFn = (s) => sign * (gSp(s) / 2 + 2.15);
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, offsetFn,
+                        () => 0.1, (s) => gTY(s) - 0.45, (s) => gTY(s) + 0.55, this.materials.concrete);
+                    this.buildSweptFence(chunkGroup, sStart, sEnd, offsetFn,
+                        (s) => gTY(s) + 0.55, (s) => gTY(s) + 1.75, this.materials.fence);
+                    this.placeFencePosts(addBatched, sStart, sEnd, offsetFn,
+                        (s) => gTY(s) + 0.55, 1.2, chunkGroup);
                 }
             } else if (kind === 'atgrade-normal') {
                 this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
                     (s) => (gSp(s) + 3.8) / 2, (s) => gTY(s) - 0.45, (s) => gTY(s) - 0.30, ballastMat);
+                for (const sign of [1, -1]) {
+                    const offsetFn = (s) => sign * (gSp(s) / 2 + 2.15);
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, offsetFn,
+                        () => 0.1, (s) => gTY(s) - 0.45, (s) => gTY(s) + 0.55, this.materials.concrete);
+                    this.buildSweptFence(chunkGroup, sStart, sEnd, offsetFn,
+                        (s) => gTY(s) + 0.55, (s) => gTY(s) + 1.75, this.materials.fence);
+                    this.placeFencePosts(addBatched, sStart, sEnd, offsetFn,
+                        (s) => gTY(s) + 0.55, 1.2, chunkGroup);
+                }
             } else if (kind === 'shaft') {
                 const wShaft = (s) => gSp(s) + 4.5;
                 const wallCenterY = (s) => (gTY(s) - 0.85) / 2;
                 const wallHalfH = (s) => (0.15 - gTY(s)) / 2;
                 for (const sign of [1, -1]) {
-                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, (s) => sign * wShaft(s) / 2,
-                        () => 0.1, (s) => wallCenterY(s) - wallHalfH(s), (s) => wallCenterY(s) + wallHalfH(s), this.materials.viaduct);
+                    const offsetFn = (s) => sign * wShaft(s) / 2;
+                    this.buildSweptTrackBox(chunkGroup, sStart, sEnd, offsetFn,
+                        () => 0.1, (s) => wallCenterY(s) - wallHalfH(s), (s) => wallCenterY(s) + wallHalfH(s), this.materials.concrete);
+                    this.buildSweptFence(chunkGroup, sStart, sEnd, offsetFn,
+                        () => -0.35, () => 0.85, this.materials.fence);
+                    this.placeFencePosts(addBatched, sStart, sEnd, offsetFn,
+                        () => -0.35, 1.2, chunkGroup);
                 }
                 this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
                     (s) => wShaft(s) / 2, (s) => gTY(s) - 0.65, (s) => gTY(s) - 0.45, this.materials.viaduct);
@@ -1359,10 +1406,10 @@ export class TrackManager {
             // run, or flush it and start a new one if the kind just changed. The actual
             // geometry is built once per contiguous run in flushBedRun() above, as one
             // continuous swept mesh (see buildSweptTrackBox for why that fixes ramp "steps").
-            const isViaduct = (subChunkType === 'elevated' || subChunkType === 'ramp');
             const isPlatformHere = this.isInsideStationPlatform(s_mid);
             let kind;
-            if (isViaduct) kind = 'viaduct';
+            if (subChunkType === 'elevated') kind = 'viaduct';
+            else if (subChunkType === 'ramp') kind = 'ramp';
             else if (subChunkType === 'at-grade') kind = (isPlatformHere && spacing > 15.0) ? 'atgrade-split' : 'atgrade-normal';
             else if (subChunkType === 'shaft') kind = 'shaft';
             else kind = isPlatformHere ? 'tunnel-platform' : 'tunnel';
@@ -1616,10 +1663,14 @@ export class TrackManager {
             const s = startZ + i * 25 + 12.5;
             const pos = this.sim.getTrackPosition(s);
             if (pos.y < 1.5) continue; // Only render pillars if track is elevated enough
-            
+
+            const localPos = group.worldToLocal(pos.clone());
+            const pillarHeight = Math.max(1.0, pos.y - 1.5);
             const pillar = new THREE.Mesh(this.geometries.viaductPillar, this.materials.viaduct);
-            pillar.position.copy(group.worldToLocal(pos));
-            pillar.position.y = -10;
+            pillar.scale.set(1, pillarHeight / 20, 1);
+            pillar.position.x = localPos.x;
+            pillar.position.z = localPos.z;
+            pillar.position.y = localPos.y - pillarHeight / 2 - 0.6;
             group.add(pillar);
         }
     }
@@ -1832,6 +1883,197 @@ export class TrackManager {
 
         const tex = new THREE.CanvasTexture(canvas);
         return tex;
+    }
+
+    createFenceTexture() {
+        const size = 128;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, size, size);
+
+        // Dark grey metal color
+        ctx.fillStyle = '#222222';
+        
+        // Horizontal rails: top, bottom, and two intermediate rails
+        const railThick = 5;
+        ctx.fillRect(0, 0, size, railThick);
+        ctx.fillRect(0, size - railThick, size, railThick);
+        ctx.fillRect(0, Math.floor(size / 3) - 2, size, 4);
+        ctx.fillRect(0, Math.floor(size * 2 / 3) - 2, size, 4);
+
+        // Vertical bars: reduced from 8 to 4 for wider spacing
+        const numBars = 4;
+        const step = size / numBars;
+        for (let i = 0; i <= numBars; i++) {
+            ctx.fillRect(i * step - 2, 0, 4, size);
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1, 1);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return texture;
+    }
+
+    createRoughConcreteMaterial() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Base color: light grey concrete (somewhat brighter)
+        ctx.fillStyle = '#b0b0b0';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Add subtle organic patches for concrete texture
+        for (let i = 0; i < 15; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            const radius = 20 + Math.random() * 40;
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            const isDark = Math.random() > 0.5;
+            const alpha = 0.05 + Math.random() * 0.08;
+            grad.addColorStop(0, isDark ? `rgba(100,100,100,${alpha})` : `rgba(235,235,235,${alpha})`);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // High-frequency fine concrete grain noise
+        const numGrains = 4000;
+        for (let i = 0; i < numGrains; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            const size = 1.0 + Math.random() * 1.5;
+
+            const rand = Math.random();
+            if (rand < 0.4) {
+                ctx.fillStyle = '#8e8e8e'; // dark speckles
+            } else if (rand < 0.8) {
+                ctx.fillStyle = '#d2d2d2'; // light speckles
+            } else {
+                ctx.fillStyle = '#a0a0a0'; // mid speckles
+            }
+
+            ctx.globalAlpha = 0.12;
+            ctx.fillRect(x, y, size, size);
+        }
+        ctx.globalAlpha = 1.0;
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1, 1);
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        // Generate bump map canvas for rough surface
+        const bumpCanvas = document.createElement('canvas');
+        bumpCanvas.width = 256;
+        bumpCanvas.height = 256;
+        const bCtx = bumpCanvas.getContext('2d');
+
+        bCtx.fillStyle = '#808080';
+        bCtx.fillRect(0, 0, 256, 256);
+
+        bCtx.globalAlpha = 0.25;
+        for (let i = 0; i < 3000; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            const size = 1 + Math.random() * 2;
+            bCtx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+            bCtx.fillRect(x, y, size, size);
+        }
+        bCtx.globalAlpha = 1.0;
+
+        const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
+        bumpTexture.wrapS = THREE.RepeatWrapping;
+        bumpTexture.wrapT = THREE.RepeatWrapping;
+        bumpTexture.repeat.set(1, 1);
+
+        return new THREE.MeshLambertMaterial({
+            map: texture,
+            bumpMap: bumpTexture,
+            bumpScale: 0.008,
+            side: THREE.DoubleSide
+        });
+    }
+
+    buildSweptFence(chunkGroup, sStart, sEnd, centerOffFn, yBotFn, yTopFn, material, resStep = 2) {
+        const length = sEnd - sStart;
+        if (length <= 0) return null;
+        const nSeg = Math.max(1, Math.ceil(length / resStep));
+        const rings = [];
+        let cum = 0;
+        const wp = new THREE.Vector3(), tan = new THREE.Vector3(), prevWp = new THREE.Vector3();
+        for (let r = 0; r <= nSeg; r++) {
+            const s = sStart + length * r / nSeg;
+            this.sim.getTrackPosition(s, wp);
+            this.sim.getTrackTangent(s, tan);
+            const nlen = Math.hypot(-tan.z, tan.x) || 1;
+            const nX = -tan.z / nlen, nZ = tan.x / nlen;
+            const off = centerOffFn ? centerOffFn(s) : 0;
+            const yTop = yTopFn(s), yBot = yBotFn(s);
+            if (r > 0) cum += wp.distanceTo(prevWp);
+            prevWp.copy(wp);
+            
+            const botPt = chunkGroup.worldToLocal(new THREE.Vector3(wp.x + nX * off, yBot, wp.z + nZ * off));
+            const topPt = chunkGroup.worldToLocal(new THREE.Vector3(wp.x + nX * off, yTop, wp.z + nZ * off));
+            rings.push({ bot: botPt, top: topPt, cum, isPlatform: this.isInsideStationPlatform(s) });
+        }
+        const pos = [], uv = [];
+        const tri = (a, b, c, ua, ub, uc) => {
+            pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+            uv.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]);
+        };
+        const quad = (p0, p1, p2, p3, u0, u1, u2, u3) => {
+            tri(p0, p1, p2, u0, u1, u2);
+            tri(p0, p2, p3, u0, u2, u3);
+        };
+        for (let r = 0; r < nSeg; r++) {
+            const A = rings[r], B = rings[r + 1];
+            if (A.isPlatform || B.isPlatform) continue; // Skip rendering fence if it's on a station platform
+            const uA = A.cum / 1.25;
+            const uB = B.cum / 1.25;
+            quad(A.bot, B.bot, B.top, A.top, [uA, 0], [uB, 0], [uB, 1], [uA, 1]);
+        }
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+        geom.computeVertexNormals();
+        const mesh = new THREE.Mesh(geom, material);
+        chunkGroup.add(mesh);
+        return mesh;
+    }
+
+    placeFencePosts(addBatched, sStart, sEnd, offsetFn, yBotFn, height, chunkGroup) {
+        const step = 2.5;
+        const count = Math.max(1, Math.floor((sEnd - sStart) / step));
+        const wp = new THREE.Vector3(), tan = new THREE.Vector3();
+        for (let i = 0; i <= count; i++) {
+            const s = sStart + (sEnd - sStart) * i / count;
+            if (this.isInsideStationPlatform(s)) continue; // Skip rendering post if it's on a station platform
+            this.sim.getTrackPosition(s, wp);
+            this.sim.getTrackTangent(s, tan);
+            
+            const nlen = Math.hypot(-tan.z, tan.x) || 1;
+            const nX = -tan.z / nlen;
+            const nZ = tan.x / nlen;
+            
+            const off = offsetFn(s);
+            const yBot = typeof yBotFn === 'function' ? yBotFn(s) : yBotFn;
+            
+            const worldPos = new THREE.Vector3(wp.x + nX * off, yBot + height / 2, wp.z + nZ * off);
+            const localPos = chunkGroup.worldToLocal(worldPos.clone());
+            const rotY = Math.atan2(tan.x, tan.z) - chunkGroup.rotation.y;
+            
+            addBatched('fencePost', this.geometries.fencePost, this.materials.wall,
+                localPos.x, localPos.y, localPos.z, rotY, 1, height, 1);
+        }
     }
 
 }

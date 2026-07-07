@@ -80,6 +80,7 @@ export class TrainModel {
         
         // Destination screen materials
         this.destScreenMat = null;
+        this.dt1DestScreenMat = null;
         
         // Shared materials
         this.materials = {
@@ -92,6 +93,7 @@ export class TrainModel {
             bodyGrey: cheapMaterial({ color: '#2e3033', metalness: 0.3, roughness: 0.5 }), // Underframe
             bodyBumperGrey: cheapMaterial({ color: '#43474d', metalness: 0.35, roughness: 0.55 }), // G1 front skirt block
             cabDoorGrey: cheapMaterial({ color: '#1a1c20', metalness: 0.3, roughness: 0.35 }), // G1 cab door on the black flank
+            dt1DoorRubberLip: cheapMaterial({ color: '#4a4d51', metalness: 0.05, roughness: 0.9, side: THREE.DoubleSide }), // DT1 door rubber lips, static and dark gray
             cockpitTrim: cheapMaterial({ color: '#252931', roughness: 0.85, side: THREE.DoubleSide }), // G1 interior A-pillar trim — a shade darker than the dashboard panel casing (#2c303a)
             floorGrey: this.createFloorMaterial(),
             fabricRed: this.createFabricMaterial(),
@@ -188,6 +190,7 @@ export class TrainModel {
         };
         this.carriages = [];
         this.lastDisplayText = "";
+        this.dt1DestScreenMat = null;
         
         // Rebuild the selected train model
         this.buildTrain();
@@ -2995,7 +2998,7 @@ export class TrainModel {
         ctx.fillStyle = '#0a0a0c';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = '#ffffff'; // White text
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 44px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -3006,6 +3009,36 @@ export class TrainModel {
         
         this.destScreenMat = new THREE.MeshBasicMaterial({ map: texture });
         return this.destScreenMat;
+    }
+
+    createDT1DestinationSignMaterial() {
+        if (this.dt1DestScreenMat) return this.dt1DestScreenMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#0a0a0c';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#002b5c';
+        ctx.fillRect(canvas.width / 2 - 132, canvas.height / 2 - 28, 84, 56);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 44px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('U1', canvas.width / 2 - 90, canvas.height / 2);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.fillText('Fürth Hardhöhe', canvas.width / 2 + 70, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.needsUpdate = true;
+        this.dt1DestScreenMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
+        return this.dt1DestScreenMat;
     }
 
     // Draws text horizontally compressed (canvas 2D has no reliable cross-browser
@@ -3070,6 +3103,37 @@ export class TrainModel {
     }
 
     updateDestinationSign(isReversing) {
+        if (this.trainType === 'DT1') {
+            if (!this.dt1DestScreenMat || !this.dt1DestScreenMat.map) return;
+            if (this.lastReversing === isReversing) return;
+            this.lastReversing = isReversing;
+
+            const canvas = this.dt1DestScreenMat.map.image;
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0a0a0c';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#002b5c';
+            ctx.fillRect(canvas.width / 2 - 132, canvas.height / 2 - 28, 84, 56);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 44px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('U1', canvas.width / 2 - 90, canvas.height / 2);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 32px sans-serif';
+            const text = isReversing ? 'Langwasser Süd' : 'Fürth Hardhöhe';
+            ctx.fillText(text, canvas.width / 2 + 70, canvas.height / 2);
+
+            this.dt1DestScreenMat.map.needsUpdate = true;
+            return;
+        }
+
         if (!this.destScreenMat || !this.destScreenMat.map) return;
         if (this.lastReversing === isReversing) return;
         this.lastReversing = isReversing;
@@ -3081,7 +3145,7 @@ export class TrainModel {
         ctx.fillStyle = '#0a0a0c';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        ctx.fillStyle = '#ffffff'; // White text
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 44px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -3614,6 +3678,7 @@ export class TrainModel {
         const openSide = this.sim.currentPlatformSide;
         const doorState = this.sim.doorState;
         const blink = (Math.floor(Date.now() / 250) % 2 === 0);
+        const isDT1 = this.trainType === 'DT1';
 
         this.doors.forEach(door => {
             const isActiveSide = (door.side === openSide);
@@ -3633,7 +3698,7 @@ export class TrainModel {
             let color = 0xff0000;
             let visible = true;
 
-            if (isActiveSide) {
+            if (!isDT1 && isActiveSide) {
                 if (this.sim.doorWarningActive) {
                     color = 0xff0000; // Red
                     visible = blink;  // Blinking
@@ -3646,12 +3711,16 @@ export class TrainModel {
             }
 
             if (door.stripL) {
-                door.stripL.material.color.setHex(color);
-                door.stripL.visible = visible;
+                if (!isDT1) {
+                    door.stripL.material.color.setHex(color);
+                }
+                door.stripL.visible = isDT1 ? true : visible;
             }
             if (door.stripR) {
-                door.stripR.material.color.setHex(color);
-                door.stripR.visible = visible;
+                if (!isDT1) {
+                    door.stripR.material.color.setHex(color);
+                }
+                door.stripR.visible = isDT1 ? true : visible;
             }
         });
 
@@ -4238,10 +4307,10 @@ export class TrainModel {
 
             leafGroup.add(glass, bezel);
 
-            // 3. Illuminated door strip on the meeting edge (outside face)
+            // 3. Static dark-gray rubber lip on the meeting edge (outside face)
             const strip = new THREE.Mesh(
-                new THREE.BoxGeometry(0.005, doorHeight - 0.02, 0.012),
-                new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                new THREE.BoxGeometry(0.008, doorHeight - 0.02, 0.016),
+                this.materials.dt1DoorRubberLip
             );
             const stripZ = isLeft ? (closedOffset - 0.009) : (-closedOffset + 0.009);
             const stripX = 0.011 * Math.sign(xOffset);
@@ -4382,15 +4451,17 @@ export class TrainModel {
         vagMesh.position.set(-0.55, 0.79, 0.1265);
         faceGroup.add(vagMesh);
 
-        // 4. Destination roller sign in a dark bezel, 1435mm wide, sitting just
-        // above the windshield's own top edge (G.dt1PaneY + G.dt1PaneH, local to
-        // faceGroup) rather than high up near the roofline.
-        const destMat = this.createDestinationSignMaterial();
-        const destY = G.dt1PaneY + G.dt1PaneH + 0.15; // 0.02 gap above the pane + half the frame height (0.13)
-        const destFrame = new THREE.Mesh(new THREE.BoxGeometry(1.495, 0.26, 0.02), this.materials.bodyDarkGrey);
-        destFrame.position.set(0, destY, 0.115);
-        const destMesh = new THREE.Mesh(new THREE.BoxGeometry(1.435, 0.22, 0.02), destMat);
-        destMesh.position.set(0, destY, 0.13);
+        // 4. Destination roller sign in a light-gray rounded frame, slightly
+        // higher above the windshield than before for a cleaner look.
+        const destMat = this.createDT1DestinationSignMaterial();
+        const destY = G.dt1PaneY + G.dt1PaneH + 0.26;
+        const destFrameMat = cheapMaterial({ color: '#d8dde3', roughness: 0.85, metalness: 0.05 });
+        const destFrame = new THREE.Mesh(this.createRoundedFrameGeometry(1.54, 0.30, 0.02, 0.08, 0.03), destFrameMat);
+        destFrame.position.set(0, destY, 0.118);
+        const destMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.46, 0.24), destMat);
+        destMesh.position.set(0, destY, 0.129);
+        destMesh.renderOrder = 10;
+        destFrame.renderOrder = 9;
         faceGroup.add(destFrame, destMesh);
 
         // Flat central headlight above the destination display, at the top edge
@@ -4945,19 +5016,7 @@ export class TrainModel {
 
         cockpitGroup.add(partitionL, partitionR, partitionTop, handle);
 
-        // Station display above the cockpit door (passenger side)
-        const signOffset = -cabDir * 0.04;
-        const displayZ = (noseZ - cabDir * 1.44) + signOffset;
-
-        const displayBacking = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.14, 0.03), this.materials.bodyDarkGrey);
-        displayBacking.position.set(0, 2.12, displayZ);
-        cockpitGroup.add(displayBacking);
-
-        const displayScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.12), this.interiorDisplayMat);
-        displayScreen.position.set(0, 2.12, displayZ + signOffset * 0.4);
-        displayScreen.rotation.y = (cabDir === 1) ? Math.PI : 0;
-        cockpitGroup.add(displayScreen);
-        this.interiorDisplays.push(displayScreen);
+        // Interior station display removed for DT1.
     }
 
     drawDT1LeftScreen(screen) {

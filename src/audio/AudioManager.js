@@ -435,6 +435,22 @@ export class AudioManager {
     playDoorWarning() {
         if (!this.initialized) return;
         const now = this.ctx.currentTime;
+        const isDT1 = this.trainType === 'DT1';
+
+        if (isDT1) {
+            const totalDuration = 3.3;
+            const interval = totalDuration / 24;
+            const beepCount = 24;
+            const duration = 0.04;
+            const volume = 0.2;
+            const freq = 1800;
+            for (let i = 0; i < beepCount; i++) {
+                const time = now + i * interval;
+                this.playTone(freq, duration, volume, time);
+            }
+            return;
+        }
+
         const beepCount = 10;
         const interval = 1 / 3;
         for (let i = 0; i < beepCount; i++) {
@@ -507,8 +523,8 @@ export class AudioManager {
         filter.frequency.setValueAtTime(isDT1 ? 1200 : 1000, now);
         const gainNoise = this.ctx.createGain();
         gainNoise.gain.setValueAtTime(0, now);
-        gainNoise.gain.linearRampToValueAtTime(isDT1 ? 0.08 : 0.04, now + 0.15);
-        gainNoise.gain.setValueAtTime(isDT1 ? 0.08 : 0.04, now + duration - 0.2);
+        gainNoise.gain.linearRampToValueAtTime(isDT1 ? 0.03 : 0.04, now + 0.15);
+        gainNoise.gain.setValueAtTime(isDT1 ? 0.03 : 0.04, now + duration - 0.2);
         gainNoise.gain.exponentialRampToValueAtTime(0.001, now + duration);
         noise.connect(filter);
         filter.connect(gainNoise);
@@ -528,8 +544,8 @@ export class AudioManager {
         lfo.connect(lfoGain);
         lfoGain.connect(osc.frequency);
         gainOsc.gain.setValueAtTime(0, now);
-        gainOsc.gain.linearRampToValueAtTime(0.03, now + 0.1);
-        gainOsc.gain.setValueAtTime(0.03, now + duration - 0.15);
+        gainOsc.gain.linearRampToValueAtTime(isDT1 ? 0.012 : 0.03, now + 0.1);
+        gainOsc.gain.setValueAtTime(isDT1 ? 0.012 : 0.03, now + duration - 0.15);
         gainOsc.gain.exponentialRampToValueAtTime(0.001, now + duration);
         osc.connect(gainOsc);
         gainOsc.connect(this.masterVolume);
@@ -538,7 +554,7 @@ export class AudioManager {
         lfo.stop(now + duration);
         osc.stop(now + duration);
 
-        // DT1 Metallic Rattle
+        // DT1 metallic rattle: quieter, lower and more rumbling
         if (isDT1) {
             const rattleBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
             const rattleData = rattleBuffer.getChannelData(0);
@@ -546,22 +562,23 @@ export class AudioManager {
             const rattleNoise = this.ctx.createBufferSource();
             rattleNoise.buffer = rattleBuffer;
             const rattleFilter = this.ctx.createBiquadFilter();
-            rattleFilter.type = 'highpass';
-            rattleFilter.frequency.setValueAtTime(3000, now);
+            rattleFilter.type = 'lowpass';
+            rattleFilter.frequency.setValueAtTime(900, now);
+            rattleFilter.Q.setValueAtTime(0.8, now);
             const rattleGain = this.ctx.createGain();
 
-            // Amplitude modulation for rattling effect
+            // Slower, softer modulation for a more physical rumble
             const rattleLFO = this.ctx.createOscillator();
-            rattleLFO.type = 'square';
-            rattleLFO.frequency.setValueAtTime(15, now);
+            rattleLFO.type = 'sine';
+            rattleLFO.frequency.setValueAtTime(8, now);
             const rattleLFOGain = this.ctx.createGain();
-            rattleLFOGain.gain.setValueAtTime(0.5, now);
+            rattleLFOGain.gain.setValueAtTime(0.25, now);
             rattleLFO.connect(rattleLFOGain);
 
             const rattleBaseGain = this.ctx.createGain();
             rattleBaseGain.gain.setValueAtTime(0, now);
-            rattleBaseGain.gain.linearRampToValueAtTime(0.12, now + 0.2);
-            rattleBaseGain.gain.setValueAtTime(0.12, now + duration - 0.3);
+            rattleBaseGain.gain.linearRampToValueAtTime(0.05, now + 0.25);
+            rattleBaseGain.gain.setValueAtTime(0.05, now + duration - 0.35);
             rattleBaseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
             rattleNoise.connect(rattleFilter);
@@ -569,7 +586,6 @@ export class AudioManager {
             rattleGain.connect(rattleBaseGain);
             rattleBaseGain.connect(this.masterVolume);
 
-            // Connect LFO to gain
             rattleLFOGain.connect(rattleGain.gain);
 
             rattleLFO.start(now);
@@ -577,15 +593,15 @@ export class AudioManager {
             rattleLFO.stop(now + duration);
             rattleNoise.stop(now + duration);
 
-            // Resonant "metallic" pings
-            for (let i = 0; i < 3; i++) {
-                const pingTime = now + 0.2 + Math.random() * (duration - 0.5);
+            // Softer, lower-pitched pings
+            for (let i = 0; i < 2; i++) {
+                const pingTime = now + 0.25 + Math.random() * (duration - 0.45);
                 const pingOsc = this.ctx.createOscillator();
                 const pingGain = this.ctx.createGain();
                 pingOsc.type = 'triangle';
-                pingOsc.frequency.setValueAtTime(2500 + Math.random() * 1000, pingTime);
+                pingOsc.frequency.setValueAtTime(700 + Math.random() * 300, pingTime);
                 pingGain.gain.setValueAtTime(0, pingTime);
-                pingGain.gain.linearRampToValueAtTime(0.02, pingTime + 0.01);
+                pingGain.gain.linearRampToValueAtTime(0.008, pingTime + 0.01);
                 pingGain.gain.exponentialRampToValueAtTime(0.001, pingTime + 0.05);
                 pingOsc.connect(pingGain);
                 pingGain.connect(this.masterVolume);

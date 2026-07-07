@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=60';
 import { WorldManager } from './simulator/WorldManager.js?v=53';
 import { TrackManager } from './simulator/TrackManager.js?v=56';
-import { StationModel } from './simulator/StationModel.js?v=55';
+import { StationModel } from './simulator/StationModel.js?v=56';
 import { TrainModel } from './simulator/TrainModel.js?v=75';
 import { AudioManager } from './audio/AudioManager.js?v=39';
 import { RadioManager } from './audio/RadioManager.js';
@@ -359,17 +359,6 @@ class App {
                         child.receiveShadow = false;
                         if (child.material) {
                             child.material.shadowSide = null;
-                            // The "Windows" panes (and the road-marking decals) lie exactly on
-                            // the facade/asphalt plane, so they z-fight and flicker with the
-                            // surface behind them while moving. A small negative polygon offset
-                            // biases their depth toward the camera and resolves the fighting.
-                            const matName = child.material.name || '';
-                            if (matName === 'Windows' || matName === 'ROAD_MARKING' ||
-                                matName.startsWith('road_arrow') || matName.startsWith('road_marking')) {
-                                child.material.polygonOffset = true;
-                                child.material.polygonOffsetFactor = -2;
-                                child.material.polygonOffsetUnits = -2;
-                            }
                         }
                     }
                 });

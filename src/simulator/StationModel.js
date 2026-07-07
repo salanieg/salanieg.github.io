@@ -797,8 +797,18 @@ export class StationModel {
         const platCenterY = 0.2825;
         const isSideStation = station.side;
         const isScharfreiterring = (station.name === "Scharfreiterring");
+        // Scharfreiterring's platform edges and decorative middle tracks are meant to be
+        // dead straight (real station). Sampling this.sim.getTrackSpacing(s)/getTrackY(s)
+        // PER POSITION along their ~120-190m run bakes in the small independent-per-track
+        // GPS reconstruction noise (lateral wobble) and, worse, the elevation RAMP that ends
+        // inside this span (portal transition p1->sh1 lands ~50m from the station centre) -
+        // that ramp is what made the decorative track bed visibly bend downward. Freezing
+        // both to the station-centre value removes both: only the along-track curve (X/Z,
+        // independent of spacing/elevation) still follows the real alignment.
+        const schFixedSpacing = spacing;
+        const schFixedY = centerPos.y;
         // const signMaterial = this.createStationSignMaterial(station.name);
-        // const signGeom = new THREE.BoxGeometry(0.08, 0.6, 2.0); 
+        // const signGeom = new THREE.BoxGeometry(0.08, 0.6, 2.0);
 
         let eberhardshofRoofMat = null;
         let eberhardshofTubeGeom = null;
@@ -1483,7 +1493,9 @@ export class StationModel {
             } else if (isScharfreiterring) {
                 if (j === 0) {
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
-                    const offFn = (s) => this.sim.getTrackSpacing(s) / 2 - 5.03; // localSchPlatCenter
+                    // Frozen at the station-centre spacing (schFixedSpacing), NOT sampled per s,
+                    // so the platform's inner edge (facing the decorative tracks) is dead straight.
+                    const offFn = () => schFixedSpacing / 2 - 5.03; // localSchPlatCenter
                     const hwFn = () => localSchPlatHalfWidth; // 3.5
                     const mats6 = this.getPlatformMaterials(station, localSchPlatHalfWidth * 2, true, true);
                     this.buildSweptBar(stationGroup, sA, sB, hwFn, centerPos.y + platTopY, centerPos.y + platTopY - platHeight, [mats6[0], mats6[2]], 1.2, (s) => offFn(s));
@@ -2514,6 +2526,11 @@ export class StationModel {
                 im.setMatrixAt(instanceIdx, matrix);
             };
 
+            // Decorative-track lateral offset is frozen (schFixedSpacing, not a per-position
+            // sample) so both rails stay perfectly parallel and straight; see schFixedSpacing
+            // above for why.
+            const localSchTrackCenterFixed = Math.max(1.23, schFixedSpacing / 2 - 10.06);
+
             for (let j = 0; j < schNumSub; j++) {
                 const z_start = -95 * S_len + j * schSubLen;
                 const z_end = -95 * S_len + (j + 1) * schSubLen;
@@ -2525,17 +2542,20 @@ export class StationModel {
 
                 const posStart = this.sim.getTrackPosition(s_start);
                 const posEnd = this.sim.getTrackPosition(s_end);
+                // Freeze elevation to the station-centre Y instead of following the real
+                // getTrackY(s) ramp along this span (see schFixedY above) - only X/Z still
+                // trace the real alignment curve.
+                posStart.y = schFixedY;
+                posEnd.y = schFixedY;
                 const tangentStart = this.sim.getTrackTangent(s_start);
                 const tangentEnd = this.sim.getTrackTangent(s_end);
-                const spacingStart = this.sim.getTrackSpacing(s_start);
-                const spacingEnd = this.sim.getTrackSpacing(s_end);
 
                 const normalStart = new THREE.Vector3(-tangentStart.z, 0, tangentStart.x);
                 const normalEnd = new THREE.Vector3(-tangentEnd.z, 0, tangentEnd.x);
 
-                const localSchTrackCenterStart = Math.max(1.23, spacingStart / 2 - 10.06);
-                const localSchTrackCenterEnd = Math.max(1.23, spacingEnd / 2 - 10.06);
-                const localSchTrackCenterMid = (localSchTrackCenterStart + localSchTrackCenterEnd) / 2;
+                const localSchTrackCenterStart = localSchTrackCenterFixed;
+                const localSchTrackCenterEnd = localSchTrackCenterFixed;
+                const localSchTrackCenterMid = localSchTrackCenterFixed;
 
                 // Ballast
                 const localBallastWidth = (localSchTrackCenterMid + 0.8) * 2;
@@ -2594,20 +2614,19 @@ export class StationModel {
                 const pos = this.sim.getTrackPosition(distVal);
                 const tangent = this.sim.getTrackTangent(distVal);
                 const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-                const spacing = this.sim.getTrackSpacing(distVal);
                 const angle = Math.atan2(tangent.x, tangent.z);
 
-                const localSchTrackCenter = Math.max(1.23, spacing / 2 - 10.06);
-
-                const posL = pos.clone().addScaledVector(normal, -localSchTrackCenter);
-                posL.y = -0.25;
+                // Same frozen lateral offset as the rails/ballast above, so the sleepers stay
+                // centred under them instead of drifting off to the side.
+                const posL = pos.clone().addScaledVector(normal, -localSchTrackCenterFixed);
+                posL.y = schFixedY - 0.25;
                 const localL = stationGroup.worldToLocal(posL);
                 const mL = new THREE.Matrix4().makeRotationY(angle - centerAngle);
                 mL.setPosition(localL);
                 decSleepersL.setMatrixAt(s, mL);
 
-                const posR = pos.clone().addScaledVector(normal, localSchTrackCenter);
-                posR.y = -0.25;
+                const posR = pos.clone().addScaledVector(normal, localSchTrackCenterFixed);
+                posR.y = schFixedY - 0.25;
                 const localR = stationGroup.worldToLocal(posR);
                 const mR = new THREE.Matrix4().makeRotationY(angle - centerAngle);
                 mR.setPosition(localR);
