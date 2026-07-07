@@ -197,8 +197,11 @@ export class WorldManager {
             this.previousMousePosition = { x: clientX, y: clientY };
         };
 
-        this.moveLook = (clientX, clientY) => {
-            const sens = 0.003;
+        this.moveLook = (clientX, clientY, isTouch = false) => {
+            // Touch drags cover much less screen distance per look-around gesture than a
+            // mouse swipe does, so at the same sensitivity mobile felt sluggish. Boost it
+            // for touch input only — desktop mouse-look is untouched.
+            const sens = isTouch ? 0.0075 : 0.003;
             if (this.isDraggingPassenger && this.activeCameraType === 'passenger') {
                 const deltaX = clientX - this.previousMousePosition.x;
                 const deltaY = clientY - this.previousMousePosition.y;
@@ -290,7 +293,7 @@ export class WorldManager {
             if (e.touches.length === 1 && (this.isDraggingPassenger || this.isDraggingCab || this.isDraggingPlatform || this.isDraggingOrbit)) {
                 e.preventDefault(); // avoid page scroll/rubber-banding while looking around
                 const t = e.touches[0];
-                this.moveLook(t.clientX, t.clientY);
+                this.moveLook(t.clientX, t.clientY, true);
             } else if (e.touches.length === 2 && this.pinchStartDist) {
                 e.preventDefault();
                 const dx = e.touches[0].clientX - e.touches[1].clientX;

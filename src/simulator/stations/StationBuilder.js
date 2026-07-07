@@ -159,7 +159,7 @@ export class StationBuilder {
     buildBenches() {}
     buildSignsAndBoards() {}
     buildStairs() {
-        if (this.station.type !== 'underground') return;
+        if (this.station.type !== 'underground' && this.station.name !== 'Messe') return;
 
         const station = this.station;
         const group = this.group;
@@ -195,10 +195,11 @@ export class StationBuilder {
         // StationModel.buildStation spanning the true, UNROUNDED station.halfLength — so
         // anchoring stairs to this.platLength/2 there was off by up to ~2.5 m, leaving a
         // visible gap between the platform edge and the end wall/stairs.
-        const endHalfLength = isRound ? (this.platLength / 2) : station.halfLength;
+        const endHalfLength = (station.name === "Messe") ? 6.6 : (isRound ? (this.platLength / 2) : station.halfLength);
 
         const getEndAnchor = (zDir) => {
-            const s = station.position + zDir * endHalfLength;
+            const offset = (station.name === "Messe") ? (zDir === -1 ? 0.0 : 40.0) : (zDir * endHalfLength);
+            const s = station.position + offset;
             const edgePos = this.sim.getTrackPosition(s);
             const tangent = this.sim.getTrackTangent(s);
             const rotY = Math.atan2(tangent.x, tangent.z) - centerAngle;
@@ -373,63 +374,50 @@ export class StationBuilder {
             // per-end Z position depends on zDir)
             const wallMidZ = midZ - zDir * stairWallOverlap / 2;
 
-            const lWall = new THREE.Mesh(stairWallGeom, wallMat);
-            lWall.position.set(-2.3, stairWallHeight/2, wallMidZ);
+            if (this.station.name !== "Messe") {
+                const lWall = new THREE.Mesh(stairWallGeom, wallMat);
+                lWall.position.set(-2.3, stairWallHeight/2, wallMidZ);
 
-            const rWall = new THREE.Mesh(stairWallGeom, wallMat);
-            rWall.position.set(2.3, stairWallHeight/2, wallMidZ);
-            stairGroup.add(lWall, rWall);
+                const rWall = new THREE.Mesh(stairWallGeom, wallMat);
+                rWall.position.set(2.3, stairWallHeight/2, wallMidZ);
+                stairGroup.add(lWall, rWall);
+            }
 
-            // 2. Stairs in the middle
+            // 2. Stairs in the middle + escalator steps as TWO InstancedMeshes instead of
+            // 3*numSteps (~95) individual meshes. Frustum culling stays ON: three r160
+            // auto-computes the instance-aware bounding sphere on first cull.
             const stairWidth = 2.0;
             const stairGeom = new THREE.BoxGeometry(stairWidth, stepHeight, stepDepth);
-            for (let i = 0; i < numSteps; i++) {
-                const step = new THREE.Mesh(stairGeom, stepMat);
-                step.position.set(
-                    0.0, 
-                    i * stepHeight + stepHeight/2, 
-                    zDir * (i * stepDepth + stepDepth/2) 
-                );
-                stairGroup.add(step);
-            }
-            
-            // 3. Double Escalators (with steps)
             const escWidth = 1.1;
+            const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
+            const stairInst = new THREE.InstancedMesh(stairGeom, stepMat, numSteps);
+            const escInst = new THREE.InstancedMesh(escStepGeom, escStepMat, 2 * numSteps);
+            const stepMatrix = new THREE.Matrix4();
+            for (let i = 0; i < numSteps; i++) {
+                const sy = i * stepHeight + stepHeight / 2;
+                const sz = zDir * (i * stepDepth + stepDepth / 2);
+                stairInst.setMatrixAt(i, stepMatrix.makeTranslation(0, sy, sz));
+                escInst.setMatrixAt(2 * i, stepMatrix.makeTranslation(-1.55, sy, sz));
+                escInst.setMatrixAt(2 * i + 1, stepMatrix.makeTranslation(1.55, sy, sz));
+            }
+            stairInst.instanceMatrix.needsUpdate = true;
+            escInst.instanceMatrix.needsUpdate = true;
+            stairGroup.add(stairInst, escInst);
+
+            // 3. Double Escalators (ramp casings under the steps)
             const escRampGeom = new THREE.BoxGeometry(escWidth, 0.1, rampLength);
-            
+
             // Left escalator casing - lowered by 15cm so the steps stick out
             const escL = new THREE.Mesh(escRampGeom, escStepMat);
             escL.position.set(-1.55, midY - 0.15, midZ);
             escL.rotation.x = rotX;
-            
+
             // Right escalator casing - lowered by 15cm so the steps stick out
             const escR = new THREE.Mesh(escRampGeom, escStepMat);
             escR.position.set(1.55, midY - 0.15, midZ);
             escR.rotation.x = rotX;
-            
+
             stairGroup.add(escL, escR);
-
-            // Left & Right escalator steps
-            const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
-            for (let i = 0; i < numSteps; i++) {
-                // Left escalator step
-                const stepL = new THREE.Mesh(escStepGeom, escStepMat);
-                stepL.position.set(
-                    -1.55,
-                    i * stepHeight + stepHeight/2,
-                    zDir * (i * stepDepth + stepDepth/2)
-                );
-                stairGroup.add(stepL);
-
-                // Right escalator step
-                const stepR = new THREE.Mesh(escStepGeom, escStepMat);
-                stepR.position.set(
-                    1.55,
-                    i * stepHeight + stepHeight/2,
-                    zDir * (i * stepDepth + stepDepth/2)
-                );
-                stairGroup.add(stepR);
-            }
             
             // 4. Escalator Glass Balustrades
             const glassGeom = new THREE.BoxGeometry(0.05, 0.9, rampLength);
@@ -660,11 +648,18 @@ export class StationBuilder {
             this.group.add(twGroup);
         };
 
-        createStairsAndEscalator(-1, anchorNeg);
-        createStairsAndEscalator(1, anchorPos);
+        if (station.name === "Messe") {
+            createStairsAndEscalator(1, anchorNeg);  // climbs from 0.0 to 8.4
+            createStairsAndEscalator(-1, anchorPos); // climbs from 40.0 to 31.6
+        } else {
+            createStairsAndEscalator(-1, anchorNeg);
+            createStairsAndEscalator(1, anchorPos);
+        }
 
-        placeTransverseWalls(-1, transWallMatNeg, platEdgeX_neg, anchorNeg);
-        placeTransverseWalls(1, transWallMatPos, platEdgeX_pos, anchorPos);
+        if (station.name !== "Messe") {
+            placeTransverseWalls(-1, transWallMatNeg, platEdgeX_neg, anchorNeg);
+            placeTransverseWalls(1, transWallMatPos, platEdgeX_pos, anchorPos);
+        }
     }
 
     createDurchgangVerbotenTexture() {

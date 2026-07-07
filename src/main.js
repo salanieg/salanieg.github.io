@@ -346,7 +346,7 @@ class App {
                 const model = gltf.scene;
 
                 // Apply the exact position and orientation values determined via debugger
-                model.position.set(-5704.90, 0.00, -4338.00);
+                model.position.set(-5376.00, 0.00, -4222.50);
                 model.rotation.set(0, 0.0000, 0);
                 model.scale.set(1.000, 1.000, 1.000);
 
@@ -359,6 +359,17 @@ class App {
                         child.receiveShadow = false;
                         if (child.material) {
                             child.material.shadowSide = null;
+                            // The "Windows" panes (and the road-marking decals) lie exactly on
+                            // the facade/asphalt plane, so they z-fight and flicker with the
+                            // surface behind them while moving. A small negative polygon offset
+                            // biases their depth toward the camera and resolves the fighting.
+                            const matName = child.material.name || '';
+                            if (matName === 'Windows' || matName === 'ROAD_MARKING' ||
+                                matName.startsWith('road_arrow') || matName.startsWith('road_marking')) {
+                                child.material.polygonOffset = true;
+                                child.material.polygonOffsetFactor = -2;
+                                child.material.polygonOffsetUnits = -2;
+                            }
                         }
                     }
                 });

@@ -53,24 +53,6 @@ export class TrackManager {
             }),
             window: new THREE.MeshBasicMaterial({ color: '#ffcc44' }),
             building: new THREE.MeshLambertMaterial({ color: '#f1f5f9' }),
-            treeTrunk: new THREE.MeshLambertMaterial({ color: '#4a2f13' }),
-            treeLeaves: new THREE.MeshLambertMaterial({ color: '#2d6a4f' }),
-
-            // Far-distance backdrop (Kulisse), ~200m beyond the outer tracks: flat, alpha-cut
-            // billboards, unlit (MeshBasicMaterial = cheapest shading) and DoubleSide since the
-            // route runs both directions past them. Texture is near-white/neutral so the
-            // per-instance color (set via InstancedMesh.setColorAt) supplies all the actual
-            // color/height variation with a single shared draw call per type.
-            treeLaubBillboard: new THREE.MeshBasicMaterial({
-                map: this.createTreeBillboardTexture(false),
-                alphaTest: 0.5,
-                side: THREE.DoubleSide
-            }),
-            treeNadelBillboard: new THREE.MeshBasicMaterial({
-                map: this.createTreeBillboardTexture(true),
-                alphaTest: 0.5,
-                side: THREE.DoubleSide
-            }),
 
             // Ground (clouds are now part of WorldManager's sky-photo background)
             // side: DoubleSide because the shaft cutout strips are now swept continuously
@@ -110,13 +92,7 @@ export class TrackManager {
             // City Elements
             building: new THREE.BoxGeometry(1, 1, 1),
             window: new THREE.PlaneGeometry(1, 1),
-            treeTrunk: new THREE.CylinderGeometry(0.15, 0.25, 3.5, 6),
-            treeLeaves: new THREE.SphereGeometry(1.6, 6, 5),
             street: new THREE.PlaneGeometry(6, 5.0), // 5m street sub-segments
-
-            // Far-distance backdrop billboard: unit plane, base edge at local y=0 so per-instance
-            // scale.y directly becomes the tree/building height standing on the ground.
-            billboard: new THREE.PlaneGeometry(1, 1),
 
             // Ground (clouds are now part of WorldManager's sky-photo background)
             ground: new THREE.PlaneGeometry(120, 10.0), // Overlapped to prevent curve seams (10m instead of 5m)
@@ -126,8 +102,6 @@ export class TrackManager {
         // Align geometries
         this.geometries.tunnelWall.rotateX(Math.PI / 2);
 
-        this.geometries.treeTrunk.translate(0, 1.75, 0);
-        this.geometries.billboard.translate(0, 0.5, 0);
         this.geometries.street.rotateX(-Math.PI / 2);
         this.geometries.ground.rotateX(-Math.PI / 2);
         this.geometries.bgGround.rotateX(-Math.PI / 2);
@@ -148,86 +122,6 @@ export class TrackManager {
         // hall + diverging tubes) is built from main.js AFTER the StationModel exists, so it
         // can reuse the station floor/stair textures. See buildPlaerrer(stationModel).
 
-        // Distant backdrop scenery (trees/buildings) only depends on the static TrackData
-        // route, so it can be built once right here instead of waiting on main.js.
-        this.buildTrackScenery();
-    }
-
-    // Behelfs-Kulisse: flat billboard trees standing in a band ~200m beyond the outer
-    // tracks, for the whole route. Built once as 2 InstancedMeshes total (one draw call
-    // per species) - never rebuilt, never updated per frame - so despite covering all
-    // ~18.5km of route this costs only a few thousand extra triangles overall.
-    buildTrackScenery() {
-        const sim = this.sim;
-        const total = sim.totalLength;
-        const step = 5; // candidate slot spacing per side (m)
-        const placeChance = 0.88; // leaves natural gaps instead of a solid tree wall
-
-        const laubM = [], laubC = [];
-        const nadelM = [], nadelC = [];
-
-        const pos = new THREE.Vector3();
-        const tan = new THREE.Vector3();
-        const nrm = new THREE.Vector3();
-        const faceDir = new THREE.Vector3();
-        const quat = new THREE.Quaternion();
-        const scl = new THREE.Vector3();
-        const axisY = new THREE.Vector3(0, 1, 0);
-
-        for (let d = 0; d < total; d += step) {
-            const chunkType = sim.getChunkType(d);
-            if (chunkType === 'underground' || chunkType === 'shaft') continue; // no open sky here
-
-            sim.getTrackPosition(d, pos);
-            sim.getTrackTangent(d, tan);
-            nrm.set(-tan.z, 0, tan.x);
-            const clearance = sim.getTrackSpacing(d) / 2 + 5; // past the outer rail/ballast
-
-            for (const side of [-1, 1]) {
-                if (Math.random() > placeChance) continue;
-
-                const lateral = clearance + 200 + Math.random() * 70; // 200-270 m band
-                const along = (Math.random() - 0.5) * step;
-                const p = pos.clone()
-                    .addScaledVector(nrm, side * lateral)
-                    .addScaledVector(tan, along);
-                p.y = 0;
-
-                faceDir.copy(nrm).multiplyScalar(-side); // billboard faces back toward the track
-                quat.setFromAxisAngle(axisY, Math.atan2(faceDir.x, faceDir.z));
-
-                const brightness = 0.85 + Math.random() * 0.3;
-                if (Math.random() < 0.55) {
-                    // Laubbaum (deciduous)
-                    const h = 5 + Math.random() * 11, w = h * (0.55 + Math.random() * 0.25);
-                    scl.set(w, h, 1);
-                    laubM.push(new THREE.Matrix4().compose(p, quat, scl));
-                    laubC.push(new THREE.Color(brightness, brightness, brightness));
-                } else {
-                    // Nadelbaum (conifer)
-                    const h = 6 + Math.random() * 13, w = h * (0.4 + Math.random() * 0.2);
-                    scl.set(w, h, 1);
-                    nadelM.push(new THREE.Matrix4().compose(p, quat, scl));
-                    nadelC.push(new THREE.Color(brightness, brightness, brightness));
-                }
-            }
-        }
-
-        const addBillboards = (mats, colors, material) => {
-            if (!mats.length) return;
-            const im = new THREE.InstancedMesh(this.geometries.billboard, material, mats.length);
-            for (let i = 0; i < mats.length; i++) {
-                im.setMatrixAt(i, mats[i]);
-                im.setColorAt(i, colors[i]);
-            }
-            im.instanceMatrix.needsUpdate = true;
-            if (im.instanceColor) im.instanceColor.needsUpdate = true;
-            im.computeBoundingSphere();
-            this.scene.add(im);
-        };
-
-        addBillboards(laubM, laubC, this.materials.treeLaubBillboard);
-        addBillboards(nadelM, nadelC, this.materials.treeNadelBillboard);
     }
 
     buildPlaerrer(stationModel) {
@@ -242,6 +136,11 @@ export class TrackManager {
         const up = new THREE.Vector3(0, 1, 0);
         const GAUGE = 0.7175, POWER = 1.1; // match the mainline rail gauge (createChunk's ±0.7175 offsets)
         const group = new THREE.Group();
+
+        // ---------- Plärrer vertical layout constants ----------
+        const LOWER_CLEAR = 3.75;                    // lower ceiling clearance
+        const platTopY = 0.865;                      // platform top height relative to track elevation
+        const lowerH = LOWER_CLEAR + platTopY;        // total height of the lower level (4.615m)
 
         // ---------- instanced track helper ----------
         const bedM = [], sleeperM = [], railM = [], powerM = [], coverM = [];
@@ -301,6 +200,10 @@ export class TrackManager {
         renderTrack(samplePath(d => sp(d) / 2, () => 0, P - zoneHalf, P + zoneHalf));
         // Gleis 2 (reverse / Langwasser, LOWER) at -spacing/2, dives – directly under Gleis 1.
         renderTrack(samplePath(d => -sp(d) / 2, dive, P - zoneHalf, P + zoneHalf));
+        // Gleis 3 (opposite UPPER) at sp(d)/2 - 18.08, base level
+        renderTrack(samplePath(d => sp(d) / 2 - 18.08, () => 0, P - platHalf - 20, P + platHalf + 20));
+        // Gleis 4 (opposite LOWER) at -sp(d)/2 - 18.08, dives
+        renderTrack(samplePath(d => -sp(d) / 2 - 18.08, dive, P - platHalf - 20, P + platHalf + 20));
 
         const bedGeom = new THREE.BoxGeometry(3.6, 0.15, 1.0);
         const addI = (geom, mat, arr) => {
@@ -308,7 +211,10 @@ export class TrackManager {
             const im = new THREE.InstancedMesh(geom, mat, arr.length);
             arr.forEach((m, i) => im.setMatrixAt(i, m));
             im.instanceMatrix.needsUpdate = true;
-            im.frustumCulled = false;
+            // Keep frustum culling ON: three r160's Frustum.intersectsObject computes the
+            // instance-aware InstancedMesh.boundingSphere automatically. frustumCulled=false
+            // would render every instanced mesh from everywhere, which costs GPU time exactly
+            // when the player looks around inside the station.
             group.add(im);
         };
         addI(bedGeom, this.materials.tunnelBallast, bedM);
@@ -318,16 +224,22 @@ export class TrackManager {
         addI(this.geometries.thirdRailCover, this.materials.tunnelThirdRail, coverM);
 
         // ---------- shared constants & reused station materials ----------
-        const platHeight = 1.165, platCenterY = 0.2825, platTopY = 0.865, segLen = 5;
-        const LOWER_W = 15, UPPER_W = 15;            // normal island-platform width (m), both levels
+        const platHeight = 1.165, segLen = 5;
+        // Island deck width: from the running-track edge to the opposite (mock) track's edge.
+        // NOT to the far hall wall — the ~4m band in front of the far wall is the opposite
+        // track's trough (Gleis 3/4 + the dummy tubes run there, below platform level).
+        const LOWER_W = 15, UPPER_W = 15;
         const EDGE_GAP = 1.54;                       // platform edge inboard of its track centre
-        const LOWER_CLEAR = 3.75;                    // lower ceiling clearance
         const HALL_H = 12.0;                          // upper vault height (m) - coved arch peak
         const ESC_HALF = 9.0;                         // escalator shaft half-length along Z
         const ESC_X0 = -11.75, ESC_X1 = -6.25;       // escalator band in X
-        const WALL_X = -21.0;                        // outer station wall
-        const HALL_FAR = WALL_X;
-        const HALL_NEAR = 3.0;
+        // Side walls sit DIRECTLY at the edge of the respective track's ballast bed (3.6m
+        // wide, so ±1.8 around the track centre) — no gap, no filler apron. The two levels
+        // differ because their tracks sit at ±sp/2 and the mock tracks at (±sp/2 - 18.08).
+        const upperFar = -19.6;    // upper mock track  0.3-18.08 = -17.78, bed edge -19.58
+        const upperNear = 2.1;     // upper running track +0.3, bed edge +2.1
+        const lowerFar = -20.2;    // lower mock track -0.3-18.08 = -18.38, bed edge -20.18
+        const lowerNear = 1.5;     // lower running track -0.3, bed edge +1.5
 
         // Reuse the existing station floor textures for both decks.
         const lowerFloorMats = stationModel.getPlatformMaterials(p, LOWER_W, false, false);
@@ -338,41 +250,6 @@ export class TrackManager {
         const skyMat = new THREE.MeshBasicMaterial({ color: '#9bc8eb' });
 
         // ---------- PROCEDURAL CUSTOM TEXTURES ----------
-        // 1. Concrete texture for vault panels (Upper Level)
-        const createPlaerrerConcreteTexture = () => {
-            const w = 512, h = 512;
-            const canvas = document.createElement('canvas');
-            canvas.width = w; canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            
-            // Light grey base concrete
-            ctx.fillStyle = '#b8c0c8';
-            ctx.fillRect(0, 0, w, h);
-            
-            // Add subtle grainy noise
-            for (let i = 0; i < 8000; i++) {
-                const val = Math.floor(Math.random() * 16 - 8);
-                const r = 184 + val, g = 192 + val, b = 200 + val;
-                ctx.fillStyle = `rgb(${r},${g},${b})`;
-                ctx.fillRect(Math.random() * w, Math.random() * h, 1, 1);
-            }
-            
-            // Draw panel joints (concrete seams)
-            ctx.strokeStyle = '#9ea6ae';
-            ctx.lineWidth = 1.5;
-            for (let x = 0; x < w; x += 128) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-            }
-            for (let y = 0; y < h; y += 128) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-            }
-            
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.wrapS = THREE.RepeatWrapping;
-            tex.wrapT = THREE.RepeatWrapping;
-            tex.anisotropy = 8;
-            return tex;
-        };
 
         // 2. Cream tile wall with red chevrons & bold "PLÄRRER" text (Lower Level)
         const createLowerWallTexture = () => {
@@ -430,6 +307,11 @@ export class TrackManager {
             const tex = new THREE.CanvasTexture(canvas);
             tex.wrapS = THREE.RepeatWrapping;
             tex.wrapT = THREE.ClampToEdgeWrapping;
+            tex.repeat.set(1, 1 / lowerH);
+            // The wall profiles start 0.35m below track level (tucked into the ballast bed);
+            // shift V so the texture's 0..1 still spans track level..lowerH — keeps the name
+            // band at its height and avoids a stretched clamp streak under the ceiling.
+            tex.offset.set(0, -0.35 / lowerH);
             tex.anisotropy = 8;
             return tex;
         };
@@ -459,12 +341,25 @@ export class TrackManager {
             return tex;
         };
 
-        const hallVaultMat = new THREE.MeshLambertMaterial({ map: createPlaerrerConcreteTexture(), side: THREE.DoubleSide });
-        hallVaultMat.map.repeat.set(10 / 2, 32 / 2); // 2m x 2m concrete panels
-
-        // framed-stair / escalator textures
+        // framed-stair / escalator textures / concrete textures
         const sb = new StationBuilder(stationModel, p);
         const concreteMat = sb.createRoughConcreteMaterial();
+        
+        // Clone concreteMat and configure it for Plärrer ceiling/walls to prevent high-frequency tiling
+        const ceilConcreteMat = concreteMat.clone();
+        ceilConcreteMat.map = concreteMat.map.clone();
+        ceilConcreteMat.map.wrapS = THREE.RepeatWrapping;
+        ceilConcreteMat.map.wrapT = THREE.RepeatWrapping;
+        ceilConcreteMat.map.repeat.set(1, 0.1); // repeat every 10 meters along the profile height
+        if (ceilConcreteMat.bumpMap) {
+            ceilConcreteMat.bumpMap = concreteMat.bumpMap.clone();
+            ceilConcreteMat.bumpMap.wrapS = THREE.RepeatWrapping;
+            ceilConcreteMat.bumpMap.wrapT = THREE.RepeatWrapping;
+            ceilConcreteMat.bumpMap.repeat.set(1, 0.1);
+        }
+        ceilConcreteMat.userData = { keepWrapAndRepeat: true };
+
+        const hallVaultMat = ceilConcreteMat;
         const stepMat     = new THREE.MeshLambertMaterial({ map: sb.createStairTexture() });
         const escStepMat  = new THREE.MeshLambertMaterial({ map: sb.createEscalatorStripeTexture() });
         const glassMat    = new THREE.MeshBasicMaterial({ color: '#9fb3c8', transparent: true, opacity: 0.45 });
@@ -490,56 +385,56 @@ export class TrackManager {
         };
 
         // ---------- platform decks ----------
-        const platSegLen = 1.0;
-        const buildDeck = (dm, j2, trackSign, width, mats, baseY, openHalf) => {
-            const f = frameAt(dm);
-            const edgeX = trackSign * sp(dm) / 2 - EDGE_GAP;
-            const outerX = edgeX - width;
-
-            const addBox = (xStart, xEnd) => {
-                const w = Math.abs(xEnd - xStart);
-                if (w < 0.01) return;
-                const cx = (xStart + xEnd) / 2;
-                const geom = new THREE.BoxGeometry(w, platHeight, platSegLen);
-                stationModel.adjustPlatformUVs(geom, j2, platSegLen, 1.2);
-                const ctr = f.c.clone().addScaledVector(f.nrm, cx);
-                const deck = new THREE.Mesh(geom, mats);
-                deck.position.set(ctr.x, baseY + platCenterY, ctr.z); deck.rotation.y = f.rotY;
-                group.add(deck);
-            };
-
-            const inEscZone = openHalf && Math.abs(dm - P) < openHalf;
-            if (inEscZone) {
-                const holeMin = Math.min(ESC_X0, ESC_X1);
-                const holeMax = Math.max(ESC_X0, ESC_X1);
-                if (trackSign > 0) {
-                    addBox(edgeX, holeMax);
-                    addBox(holeMin, outerX);
-                } else {
-                    addBox(edgeX, outerX);
-                }
-            } else {
-                addBox(edgeX, outerX);
-            }
-
-            const e1 = f.c.clone().addScaledVector(f.nrm, edgeX - 0.08);
-            const strip = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, platSegLen), stripMat);
-            strip.position.set(e1.x, baseY + platTopY + 0.012, e1.z); strip.rotation.y = f.rotY; group.add(strip);
-            const e2 = f.c.clone().addScaledVector(f.nrm, edgeX - 0.45);
-            const tactile = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.02, platSegLen), tactileMat);
-            tactile.position.set(e2.x, baseY + platTopY + 0.012, e2.z); tactile.rotation.y = f.rotY; group.add(tactile);
-            // outer safety stripe
-            const e3 = f.c.clone().addScaledVector(f.nrm, edgeX - width + 0.08);
-            const strip2 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, platSegLen), stripMat);
-            strip2.position.set(e3.x, baseY + platTopY + 0.012, e3.z); strip2.rotation.y = f.rotY; group.add(strip2);
+        // Continuous swept meshes (buildSweptBar, like the generic stations) instead of the
+        // old per-1m boxes + per-1m strips: ~900 meshes -> 14 draw calls. The elevation is
+        // flat across the whole platform (underground level, dive fully developed), so
+        // constant top/bottom Y per level is exact.
+        const uDeckTop = sim.getTrackPosition(P).y + platTopY;             // upper deck top
+        const lDeckTop = sim.getTrackPosition(P).y + dive(P) + platTopY;   // lower deck top
+        const deckBar = (sA, sB, innerFn, outerFn, topYd, mats) => {
+            const hwFn = (s) => (innerFn(s) - outerFn(s)) / 2;
+            const coFn = (s) => (innerFn(s) + outerFn(s)) / 2;
+            return stationModel.buildSweptBar(group, sA, sB, hwFn, topYd, topYd - platHeight, [mats[0], mats[2]], 1.2, coFn);
         };
-        let j = 0;
-        for (let d = P - platHalf; d < P + platHalf - 0.01; d += platSegLen, j++) {
-            const dm = d + platSegLen / 2;
-            const baseY = sim.getTrackPosition(dm).y;
-            buildDeck(dm, j, +1, UPPER_W, upperFloorMats, baseY, ESC_HALF);          // Hardhöhe (upper)
-            buildDeck(dm, j, -1, LOWER_W, lowerFloorMats, baseY + dive(dm), null);   // Langwasser (lower)
-        }
+        // buildSweptBar maps the top-face U 0..1 across the bar's own width. The floor texture
+        // is sized for the FULL deck width, so partial strips (flanking the escalator shaft)
+        // must remap their U to their share of the full deck or the tiles get squashed.
+        const remapTopU = (mesh, u0, u1) => {
+            const uvA = mesh.geometry.attributes.uv;
+            const g = mesh.geometry.groups.find(gr => gr.materialIndex === 1);
+            for (let i = g.start; i < g.start + g.count; i++) {
+                uvA.setX(i, u0 + uvA.getX(i) * (u1 - u0));
+            }
+            uvA.needsUpdate = true;
+        };
+        const stripBar = (sA, sB, xFn, halfW, topYd, mat) =>
+            stationModel.buildSweptBar(group, sA, sB, () => halfW, topYd + 0.022, topYd + 0.002, [mat, mat], 1.2, xFn);
+        const buildDeckLevel = (trackSign, width, topYd, mats, openHalf) => {
+            const edge = (s) => trackSign * sp(s) / 2 - EDGE_GAP;
+            const outer = (s) => edge(s) - width;
+            const s0 = P - platHalf, s1 = P + platHalf;
+            if (openHalf) {
+                // Full width outside the central escalator shaft, two flanking strips inside it.
+                const holeMin = Math.min(ESC_X0, ESC_X1), holeMax = Math.max(ESC_X0, ESC_X1);
+                deckBar(s0, P - openHalf, edge, outer, topYd, mats);
+                const mA = deckBar(P - openHalf, P + openHalf, edge, () => holeMax, topYd, mats);
+                const mB = deckBar(P - openHalf, P + openHalf, () => holeMin, outer, topYd, mats);
+                // top-face U runs 0 at the outer edge .. 1 at the track edge
+                remapTopU(mA, (holeMax - outer(P)) / width, 1);
+                remapTopU(mB, 0, (holeMin - outer(P)) / width);
+                deckBar(P + openHalf, s1, edge, outer, topYd, mats);
+            } else {
+                deckBar(s0, s1, edge, outer, topYd, mats);
+            }
+            // white edge strip / tactile band / outer safety stripe, continuous
+            stripBar(s0, s1, (s) => edge(s) - 0.08, 0.08, topYd, stripMat);
+            stripBar(s0, s1, (s) => edge(s) - 0.45, 0.15, topYd, tactileMat);
+            stripBar(s0, s1, (s) => edge(s) - width + 0.08, 0.08, topYd, stripMat);
+        };
+        buildDeckLevel(+1, UPPER_W, uDeckTop, upperFloorMats, ESC_HALF);   // Hardhöhe (upper)
+        buildDeckLevel(-1, LOWER_W, lDeckTop, lowerFloorMats, null);       // Langwasser (lower)
+
+        const uBaseY = sim.getTrackPosition(P).y;          // upper track elevation
 
         // Helper to build standard escalator/stair bank
         const buildEscalatorBank = (centerZ, wallOffset, stairWidth, escOffset, zSign, baseFloorY, targetFloorY, escHalf) => {
@@ -572,41 +467,34 @@ export class TrackManager {
             rWall.position.set(wallOffset, 0, 0);
             escGroup.add(lWall, rWall);
 
-            // 2. Stairs in the middle
+            // 2. Stairs in the middle + escalator steps, as TWO InstancedMeshes instead of
+            // 3*numSteps individual meshes (numSteps is ~60 for the 10m central bank).
             const stairGeom = new THREE.BoxGeometry(stairWidth, stepHeight, stepDepth);
-            for (let i = 0; i < numSteps; i++) {
-                const step = new THREE.Mesh(stairGeom, stepMat);
-                step.position.set(
-                    0.0,
-                    i * stepHeight + stepHeight / 2 - Math.abs(targetFloorY - baseFloorY) / 2,
-                    -zSign * (escHalf - (i * stepDepth + stepDepth / 2))
-                );
-                escGroup.add(step);
-            }
-
-            // 3. Double Escalators (with steps, escalator textures)
             const escWidth = 1.1;
-            const escRampGeom = new THREE.BoxGeometry(escWidth, 0.1, rampLength);
-            
-            const escL = new THREE.Mesh(escRampGeom, escStepMat);
-            escL.position.set(-escOffset, -0.15, 0); escL.rotation.x = rotX;
-            
-            const escR = new THREE.Mesh(escRampGeom, escStepMat);
-            escR.position.set(escOffset, -0.15, 0); escR.rotation.x = rotX;
-            escGroup.add(escL, escR);
-
-            // Escalator steps
             const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
+            const stairInst = new THREE.InstancedMesh(stairGeom, stepMat, numSteps);
+            const escInst = new THREE.InstancedMesh(escStepGeom, escStepMat, 2 * numSteps);
+            const stepMatrix = new THREE.Matrix4();
             for (let i = 0; i < numSteps; i++) {
                 const sy = i * stepHeight + stepHeight / 2 - Math.abs(targetFloorY - baseFloorY) / 2;
                 const sz = -zSign * (escHalf - (i * stepDepth + stepDepth / 2));
-
-                const stepL = new THREE.Mesh(escStepGeom, escStepMat);
-                stepL.position.set(-escOffset, sy, sz); escGroup.add(stepL);
-
-                const stepR = new THREE.Mesh(escStepGeom, escStepMat);
-                stepR.position.set(escOffset, sy, sz); escGroup.add(stepR);
+                stairInst.setMatrixAt(i, stepMatrix.makeTranslation(0, sy, sz));
+                escInst.setMatrixAt(2 * i, stepMatrix.makeTranslation(-escOffset, sy, sz));
+                escInst.setMatrixAt(2 * i + 1, stepMatrix.makeTranslation(escOffset, sy, sz));
             }
+            stairInst.instanceMatrix.needsUpdate = true;
+            escInst.instanceMatrix.needsUpdate = true;
+            escGroup.add(stairInst, escInst);
+
+            // 3. Double Escalators (ramps under the steps, escalator textures)
+            const escRampGeom = new THREE.BoxGeometry(escWidth, 0.1, rampLength);
+
+            const escL = new THREE.Mesh(escRampGeom, escStepMat);
+            escL.position.set(-escOffset, -0.15, 0); escL.rotation.x = rotX;
+
+            const escR = new THREE.Mesh(escRampGeom, escStepMat);
+            escR.position.set(escOffset, -0.15, 0); escR.rotation.x = rotX;
+            escGroup.add(escL, escR);
 
             // 4. Escalator Glass Balustrades
             const glassGeom = new THREE.BoxGeometry(0.05, 0.9, rampLength);
@@ -654,75 +542,93 @@ export class TrackManager {
         const botYC = fBotC.c.y + dive(P + ESC_HALF) + platTopY;
         buildEscalatorBank(P, 2.55, 2.4, 1.775, -1, botYC, topYC, 9.0);
         
-        // Build north wide escalator/stair bank (connecting the upper platform at P - platHalf to the mezzanine level above, going north out of the station)
-        const fTopN = frameAt(P - platHalf);
-        const topYN = fTopN.c.y + platTopY;
+        // Build the wide escalator/stair bank at the LANGWASSER end (P - platHalf, i.e. the
+        // start-of-line direction): connects the upper platform to the mezzanine above and
+        // leaves the hall through the matching opening in that end wall.
+        const fTopL = frameAt(P - platHalf);
+        const topYL = fTopL.c.y + platTopY;
         const mezzanineHeight = 5.0;
-        // Use escHalf = 4.33 (for a realistic steep 30-degree slope) and shift south by 15cm (center at P - platHalf - 4.18) to overlap and eliminate the gap
-        buildEscalatorBank(P - platHalf - 4.18, 5.5, 8.0, 4.55, -1, topYN, topYN + mezzanineHeight, 4.33);
+        // Use escHalf = 4.33 (for a realistic steep 30-degree slope) and shift 15cm into the
+        // hall (center at P - platHalf - 4.18) to overlap and eliminate the gap
+        buildEscalatorBank(P - platHalf - 4.18, 5.5, 8.0, 4.55, -1, topYL, topYL + mezzanineHeight, 4.33);
 
         // ---------- LOWER platform enclosure (Flat vertical walls & horizontal ceiling) ----------
         const lBaseY = sim.getTrackPosition(P).y + dive(P);
-        const lowerFar = WALL_X; // -21.0
-        const lowerNear = 0.7;
-        const lowerW = lowerNear - lowerFar; // 21.7
-        const lowerH = LOWER_CLEAR + platTopY; // 4.615
         
-        // Wall and ceiling profiles in absolute lateral coordinates
-        const lowerWallProfile = [{ x: lowerFar, y: 0 }, { x: lowerFar, y: lowerH }];
+        // Wall and ceiling profiles in absolute lateral coordinates. Walls start slightly
+        // below the ballast bed top (-0.3) so the wall base meets the bed with no crack.
+        const lowerWallLeftProfile = [{ x: lowerFar, y: -0.35 }, { x: lowerFar, y: lowerH }];
+        const lowerWallRightProfile = [{ x: lowerNear, y: -0.35 }, { x: lowerNear, y: lowerH }];
         const lowerCeilProfile = [{ x: lowerFar, y: lowerH }, { x: lowerNear, y: lowerH }];
         const lowerCeilLeftProfile = [{ x: lowerFar, y: lowerH }, { x: ESC_X0, y: lowerH }];
         const lowerCeilRightProfile = [{ x: ESC_X1, y: lowerH }, { x: lowerNear, y: lowerH }];
 
         const lowerWallMat = new THREE.MeshLambertMaterial({ map: createLowerWallTexture(), side: THREE.DoubleSide });
-        const lowerCeilMat = new THREE.MeshLambertMaterial({ color: '#bfc4cc', side: THREE.DoubleSide });
-        
-        const lowerTileMat = lowerWallMat;
+        lowerWallMat.userData = { keepWrapAndRepeat: true };
+        // Near-side variant with horizontally mirrored U: the near wall is seen from the
+        // opposite side of its face, so the shared texture would read mirror-inverted there
+        // (the "PLÄRRER gespiegelt" bug). Negative repeat.x + RepeatWrapping flips it back.
+        const lowerWallMatMirror = lowerWallMat.clone();
+        lowerWallMatMirror.map = lowerWallMat.map.clone();
+        lowerWallMatMirror.map.repeat.x = -1;
+        lowerWallMatMirror.userData = { keepWrapAndRepeat: true };
+        const lowerCeilMat = ceilConcreteMat;
+
         const plainCreamTileMat = new THREE.MeshLambertMaterial({ map: createPlainCreamTileTexture(), side: THREE.DoubleSide });
-        plainCreamTileMat.map.repeat.set(12, 6);
+        // Used on ShapeGeometry end walls whose UVs are in METERS: one texture (≈21 tile
+        // rows) every ~2.4m gives ~11cm tiles, matching the side walls. The old repeat of
+        // 12/m tiled the texture 12x PER METER — pure sub-pixel noise.
+        plainCreamTileMat.map.repeat.set(0.42, 0.42);
         const endWallLowerMat = plainCreamTileMat;
 
-        // Sweep Zone 1: P - platHalf to P - ESC_HALF (solid lower ceiling)
-        stationModel.buildSweptProfile(group, P - platHalf, P - ESC_HALF, lowerWallProfile, lBaseY, () => 0, lowerWallMat, 6);
-        stationModel.buildSweptProfile(group, P - platHalf, P - ESC_HALF, lowerCeilProfile, lBaseY, () => 0, lowerCeilMat, 10);
+        // Side walls once over the full platform length (they are identical in every zone;
+        // splitting them per zone only multiplied meshes and GPU texture clones).
+        stationModel.buildSweptProfile(group, P - platHalf, P + platHalf, lowerWallLeftProfile, lBaseY, () => 0, lowerWallMat, 6);
+        stationModel.buildSweptProfile(group, P - platHalf, P + platHalf, lowerWallRightProfile, lBaseY, () => 0, lowerWallMatMirror, 6);
 
-        // Sweep Zone 2: P - ESC_HALF to P + ESC_HALF (center escalator opening)
-        stationModel.buildSweptProfile(group, P - ESC_HALF, P + ESC_HALF, lowerWallProfile, lBaseY, () => 0, lowerWallMat, 6);
+        // Ceiling in 3 zones (solid / escalator opening / solid)
+        stationModel.buildSweptProfile(group, P - platHalf, P - ESC_HALF, lowerCeilProfile, lBaseY, () => 0, lowerCeilMat, 10);
         stationModel.buildSweptProfile(group, P - ESC_HALF, P + ESC_HALF, lowerCeilLeftProfile, lBaseY, () => 0, lowerCeilMat, 10);
         stationModel.buildSweptProfile(group, P - ESC_HALF, P + ESC_HALF, lowerCeilRightProfile, lBaseY, () => 0, lowerCeilMat, 10);
-
-        // Sweep Zone 3: P + ESC_HALF to P + platHalf (solid lower ceiling)
-        stationModel.buildSweptProfile(group, P + ESC_HALF, P + platHalf, lowerWallProfile, lBaseY, () => 0, lowerWallMat, 6);
         stationModel.buildSweptProfile(group, P + ESC_HALF, P + platHalf, lowerCeilProfile, lBaseY, () => 0, lowerCeilMat, 10);
 
         // ---------- UPPER distribution HALL (Flat ceiling & vertical walls) ----------
-        const hallFar = WALL_X; // -21.0
-        const hallNear = 3.0;
-        const hallW = hallNear - hallFar; // 24.0
-        const hallXc = (hallFar + hallNear) / 2; // -9.0
-        const hallHeight = 12.0; // flat ceiling height matching the previous vault peak
+        const hallHeight = 12.0; // flat ceiling height above the hall floor (floorY)
+        const hallCeilY = hallHeight + platTopY; // same, but relative to the upper TRACK level
 
-        // Rectangular cross-section profile for a completely flat ceiling
-        const hallProfile = [
-            { x: hallFar, y: 0 },
-            { x: hallFar, y: hallHeight },
-            { x: hallNear, y: hallHeight },
-            { x: hallNear, y: 0 }
-        ];
+        // Side walls: tiled PLÄRRER name band with the SAME height as the lower level's wall
+        // (from track level up lowerH), plain concrete continuing above it up to the ceiling.
+        // y-coords are relative to the upper track level (uBaseY), matching the lower walls.
+        const upperTileLeftProfile = [{ x: upperFar, y: -0.35 }, { x: upperFar, y: lowerH }];
+        const upperTileRightProfile = [{ x: upperNear, y: -0.35 }, { x: upperNear, y: lowerH }];
+        const upperConcLeftProfile = [{ x: upperFar, y: lowerH }, { x: upperFar, y: hallCeilY }];
+        const upperConcRightProfile = [{ x: upperNear, y: lowerH }, { x: upperNear, y: hallCeilY }];
+        const upperCeilProfile = [{ x: upperFar, y: hallCeilY }, { x: upperNear, y: hallCeilY }];
 
-        // Sweep the solid upper rectangular ceiling along the entire platform length
-        stationModel.buildSweptProfile(group, P - platHalf, P + platHalf, hallProfile, floorY, () => 0, hallVaultMat, 10);
+        stationModel.buildSweptProfile(group, P - platHalf, P + platHalf, upperTileLeftProfile, uBaseY, () => 0, lowerWallMat, 6);
+        stationModel.buildSweptProfile(group, P - platHalf, P + platHalf, upperTileRightProfile, uBaseY, () => 0, lowerWallMatMirror, 6);
+        stationModel.buildSweptProfile(group, P - platHalf, P + platHalf, upperConcLeftProfile, uBaseY, () => 0, hallVaultMat, 10);
+        stationModel.buildSweptProfile(group, P - platHalf, P + platHalf, upperConcRightProfile, uBaseY, () => 0, hallVaultMat, 10);
+        stationModel.buildSweptProfile(group, P - platHalf, P + platHalf, upperCeilProfile, uBaseY, () => 0, hallVaultMat, 10);
 
         // Helper to query vault/ceiling height at any X coordinate (always flat 12m now)
         const getVaultHeight = (x) => hallHeight;
 
-        const hallWallMat = hallVaultMat;
         const endWallUpperMat = new THREE.MeshLambertMaterial({ color: '#b8c0c8', side: THREE.DoubleSide });
 
         // ---------- COLUMNS (Segmented silver pillars on both levels) ----------
+        // All columns share ONE unit cylinder (scaled per instance) and all joint rings share
+        // one geometry: 2 InstancedMeshes instead of ~110 individual meshes.
         const colMat = new THREE.MeshLambertMaterial({ color: '#b4bac2' }); // Brushed steel silver
         const colRingGeom = new THREE.CylinderGeometry(0.51, 0.51, 0.04, 16);
         const colRingMat = new THREE.MeshLambertMaterial({ color: '#2d3035' }); // Dark steel joints
+        const colUnitGeom = new THREE.CylinderGeometry(0.5, 0.5, 1, 16);
+        const colM = [], colRingM = [];
+        const colPos = (x, y, z, yScale) => {
+            const m = new THREE.Matrix4().makeTranslation(x, y, z);
+            if (yScale) m.multiply(new THREE.Matrix4().makeScale(1, yScale, 1));
+            return m;
+        };
 
         for (let d = P - platHalf + 6; d < P + platHalf - 1; d += 12) {
             const f = frameAt(d);
@@ -732,55 +638,48 @@ export class TrackManager {
             for (const cx of [-4.5, -13.5]) {
                 const cp = f.c.clone().addScaledVector(f.nrm, cx);
 
-                // A. Upper columns (adjusted height to perfectly match curved ceiling vault)
+                // A. Upper columns (height matches the flat hall ceiling)
                 const uColH = getVaultHeight(cx);
-                const uCol = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, uColH, 16), colMat);
-                uCol.position.set(cp.x, uFloorY + uColH / 2, cp.z);
-                group.add(uCol);
-
-                // Add dark segment joint rings to upper columns
+                colM.push(colPos(cp.x, uFloorY + uColH / 2, cp.z, uColH));
                 for (let y = 2.4; y < uColH - 0.5; y += 2.4) {
-                    const ring = new THREE.Mesh(colRingGeom, colRingMat);
-                    ring.position.set(cp.x, uFloorY + y, cp.z);
-                    group.add(ring);
+                    colRingM.push(colPos(cp.x, uFloorY + y, cp.z));
                 }
 
                 // B. Lower columns (joining lower floor and lower ceiling)
-                const lCol = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, LOWER_CLEAR, 16), colMat);
-                lCol.position.set(cp.x, lFloorY + LOWER_CLEAR / 2, cp.z);
-                group.add(lCol);
-
-                // Add dark segment joint rings to lower columns
+                colM.push(colPos(cp.x, lFloorY + LOWER_CLEAR / 2, cp.z, LOWER_CLEAR));
                 for (let y = 1.2; y < LOWER_CLEAR - 0.3; y += 1.2) {
-                    const ring = new THREE.Mesh(colRingGeom, colRingMat);
-                    ring.position.set(cp.x, lFloorY + y, cp.z);
-                    group.add(ring);
+                    colRingM.push(colPos(cp.x, lFloorY + y, cp.z));
                 }
             }
         }
+        addI(colUnitGeom, colMat, colM);
+        addI(colRingGeom, colRingMat, colRingM);
 
         // ---------- LIGHTS & SKYLIGHTS ----------
+        // Rings and disks of both levels as 4 InstancedMeshes instead of ~40 meshes.
+        const flatAt = (x, y, z, rotZ = 0) => {
+            const m = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(Math.PI / 2, 0, rotZ));
+            m.setPosition(x, y, z);
+            return m;
+        };
+
         // 1. Upper Level Skylights (Recessed flat rings on the flat ceiling, rotated to face track direction)
+        const skyRingM = [], skyDiskM = [];
         for (let d = P - platHalf + 6; d < P + platHalf - 1; d += 12) {
             const f = frameAt(d);
-            const uFloorY = f.c.y + platTopY;
+            const skylightY = f.c.y + platTopY + hallHeight;
             const sc = f.c.clone().addScaledVector(f.nrm, -9.0);
-            const skylightY = uFloorY + hallHeight;
 
             // Recessed flat rings with a diameter close to the column distance (approx 8m diameter / 4m radius)
-            const ring = new THREE.Mesh(new THREE.RingGeometry(3.8, 4.0, 64), recessMat);
-            ring.position.set(sc.x, skylightY - 0.01, sc.z);
-            ring.rotation.set(Math.PI / 2, 0, f.rotY);
-            group.add(ring);
-            
-            const disk = new THREE.Mesh(new THREE.CircleGeometry(3.8, 64), skyMat);
-            disk.position.set(sc.x, skylightY - 0.02, sc.z);
-            disk.rotation.set(Math.PI / 2, 0, f.rotY);
-            group.add(disk);
+            skyRingM.push(flatAt(sc.x, skylightY - 0.01, sc.z, f.rotY));
+            skyDiskM.push(flatAt(sc.x, skylightY - 0.02, sc.z, f.rotY));
         }
+        addI(new THREE.RingGeometry(3.8, 4.0, 64), recessMat, skyRingM);
+        addI(new THREE.CircleGeometry(3.8, 64), skyMat, skyDiskM);
 
         // 2. Lower Level lights (Recessed flat rings matching the upper skylight locations on the flat ceiling)
         const lightX = -9.0;
+        const lRingM = [], lDiskM = [];
         for (let d = P - platHalf; d < P + platHalf - 0.1; d += segLen) {
             const dm = d + segLen / 2;
             if (Math.abs(dm - P) < ESC_HALF) continue; // Skip escalator shaft
@@ -789,20 +688,20 @@ export class TrackManager {
                 const f = frameAt(dm);
                 const lc = f.c.clone().addScaledVector(f.nrm, lightX);
                 const lCeilY = f.c.y + dive(dm) + lowerH;
-
-                const ring = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.62, 18), recessMat);
-                ring.position.set(lc.x, lCeilY - 0.02, lc.z); ring.rotation.x = Math.PI / 2; group.add(ring);
-                const disk = new THREE.Mesh(new THREE.CircleGeometry(0.45, 18), skyMat);
-                disk.position.set(lc.x, lCeilY - 0.03, lc.z); disk.rotation.x = Math.PI / 2; group.add(disk);
+                lRingM.push(flatAt(lc.x, lCeilY - 0.02, lc.z));
+                lDiskM.push(flatAt(lc.x, lCeilY - 0.03, lc.z));
             }
         }
+        addI(new THREE.RingGeometry(0.45, 0.62, 18), recessMat, lRingM);
+        addI(new THREE.CircleGeometry(0.45, 18), skyMat, lDiskM);
 
         // ---------- PLATFORM ACCESSORIES & FURNISHING ----------
         const trashBodyGeom = new THREE.BoxGeometry(0.25, 0.45, 0.25);
         const trashLidGeom = new THREE.BoxGeometry(0.26, 0.04, 0.26);
         const trashOrangeMat = new THREE.MeshLambertMaterial({ color: '#f97316' }); // Nuremberg Orange
 
-        // 1. Column-Mounted Trash Cans
+        // 1. Column-Mounted Trash Cans (2 InstancedMeshes: bodies + lids)
+        const trashBodyM = [], trashLidM = [];
         for (let d = P - platHalf + 6; d < P + platHalf - 1; d += 12) {
             const f = frameAt(d);
             const uFloorY = f.c.y + platTopY;
@@ -812,121 +711,88 @@ export class TrackManager {
                 const cp = f.c.clone().addScaledVector(f.nrm, cx);
                 const facingSign = (cx === -4.5) ? 1 : -1; // Face outward from column center
                 const colRadius = 0.5 + 0.125; // column radius + half-thickness of trash can
+                const tx = cp.x + facingSign * colRadius;
 
-                // A. Upper Level Trash Can
-                const utx = cp.x + facingSign * colRadius;
-                const uty = uFloorY + 0.8;
-                const uBody = new THREE.Mesh(trashBodyGeom, trashOrangeMat);
-                uBody.position.set(utx, uty, cp.z); group.add(uBody);
-                const uLid = new THREE.Mesh(trashLidGeom, colRingMat);
-                uLid.position.set(utx, uty + 0.245, cp.z); group.add(uLid);
-
-                // B. Lower Level Trash Can
-                const ltx = cp.x + facingSign * colRadius;
-                const lty = lFloorY + 0.8;
-                const lBody = new THREE.Mesh(trashBodyGeom, trashOrangeMat);
-                lBody.position.set(ltx, lty, cp.z); group.add(lBody);
-                const lLid = new THREE.Mesh(trashLidGeom, colRingMat);
-                lLid.position.set(ltx, lty + 0.245, cp.z); group.add(lLid);
+                for (const fy of [uFloorY, lFloorY]) {
+                    trashBodyM.push(colPos(tx, fy + 0.8, cp.z));
+                    trashLidM.push(colPos(tx, fy + 0.8 + 0.245, cp.z));
+                }
             }
         }
+        addI(trashBodyGeom, trashOrangeMat, trashBodyM);
+        addI(trashLidGeom, colRingMat, trashLidM);
 
         // 2. Back-to-Back Red Wire Mesh Benches & Snack Vending Machines
         const benchPipeGeom = new THREE.CylinderGeometry(0.04, 0.04, 2.2, 8).rotateX(Math.PI / 2);
         const benchLegGeom = new THREE.CylinderGeometry(0.04, 0.04, 0.45, 8);
         const seatBaseGeom = new THREE.BoxGeometry(0.45, 0.03, 0.4);
         const seatBackGeom = new THREE.BoxGeometry(0.03, 0.4, 0.4);
-        const benchRedMat = new THREE.MeshLambertMaterial({ color: '#dc2626' }); // Vibrant red mesh color
+        const benchOrangeMat = new THREE.MeshLambertMaterial({ color: '#f97316' }); // Nuremberg Orange (matches the trash cans)
 
+        // All benches share 4 InstancedMeshes (pipe/legs/seats/backs across every bench on
+        // both levels) instead of ~20 meshes per bench. addBench only collects matrices;
+        // the InstancedMeshes are created after the distribution loop below.
+        const benchPipeM = [], benchLegM = [], benchSeatM = [], benchBackM = [];
         const addBench = (bz, levelFloorY) => {
             const bx = -9.0;
             const f = frameAt(bz);
-            const benchGroup = new THREE.Group();
-            benchGroup.position.set(f.c.x + f.nrm.x * bx, levelFloorY, f.c.z + f.nrm.z * bx);
-            benchGroup.rotation.y = f.rotY;
+            const base = new THREE.Matrix4().makeTranslation(
+                f.c.x + f.nrm.x * bx, levelFloorY, f.c.z + f.nrm.z * bx);
+            // +90°: benches sit across the platform, seats facing along the tracks
+            base.multiply(new THREE.Matrix4().makeRotationY(f.rotY + Math.PI / 2));
+            const part = (arr, px, py, pz, rotZ = 0) => {
+                const m = base.clone().multiply(new THREE.Matrix4().makeTranslation(px, py, pz));
+                if (rotZ) m.multiply(new THREE.Matrix4().makeRotationZ(rotZ));
+                arr.push(m);
+            };
 
-            // Horizontal support pipe
-            const pipe = new THREE.Mesh(benchPipeGeom, benchRedMat);
-            pipe.position.set(0, 0.45, 0); benchGroup.add(pipe);
-
-            // Legs
-            const leg1 = new THREE.Mesh(benchLegGeom, benchRedMat);
-            leg1.position.set(0, 0.225, -0.9); benchGroup.add(leg1);
-            const leg2 = new THREE.Mesh(benchLegGeom, benchRedMat);
-            leg2.position.set(0, 0.225, 0.9); benchGroup.add(leg2);
+            part(benchPipeM, 0, 0.45, 0);                 // horizontal support pipe
+            part(benchLegM, 0, 0.225, -0.9);              // legs
+            part(benchLegM, 0, 0.225, 0.9);
 
             // 4 back-to-back seats
-            const zOffsets = [-0.75, -0.25, 0.25, 0.75];
-            for (const zo of zOffsets) {
-                // Side 1 (facing right)
-                const seat1 = new THREE.Mesh(seatBaseGeom, benchRedMat);
-                seat1.position.set(0.25, 0.47, zo); benchGroup.add(seat1);
-                const back1 = new THREE.Mesh(seatBackGeom, benchRedMat);
-                back1.position.set(0.04, 0.67, zo); back1.rotation.z = -0.15; benchGroup.add(back1);
-
-                // Side 2 (facing left)
-                const seat2 = new THREE.Mesh(seatBaseGeom, benchRedMat);
-                seat2.position.set(-0.25, 0.47, zo); benchGroup.add(seat2);
-                const back2 = new THREE.Mesh(seatBackGeom, benchRedMat);
-                back2.position.set(-0.04, 0.67, zo); back2.rotation.z = 0.15; benchGroup.add(back2);
+            for (const zo of [-0.75, -0.25, 0.25, 0.75]) {
+                part(benchSeatM, 0.25, 0.47, zo);                 // side 1 (facing right)
+                part(benchBackM, 0.04, 0.67, zo, -0.15);
+                part(benchSeatM, -0.25, 0.47, zo);                // side 2 (facing left)
+                part(benchBackM, -0.04, 0.67, zo, 0.15);
             }
-            group.add(benchGroup);
         };
 
         const addVendingMachine = (vz, levelFloorY) => {
+            // Collect per-part matrices; every vending machine shares the same 7 instanced
+            // part meshes (created after the distribution loop), instead of ~26 meshes with
+            // fresh geometries/materials per machine.
             const vx = -9.0;
             const f = frameAt(vz);
-            const vmGroup = new THREE.Group();
-            vmGroup.position.set(f.c.x + f.nrm.x * vx, levelFloorY, f.c.z + f.nrm.z * vx);
-            vmGroup.rotation.y = f.rotY;
+            const base = new THREE.Matrix4().makeTranslation(
+                f.c.x + f.nrm.x * vx, levelFloorY, f.c.z + f.nrm.z * vx);
+            base.multiply(new THREE.Matrix4().makeRotationY(f.rotY));
+            const part = (arr, px, py, pz) =>
+                arr.push(base.clone().multiply(new THREE.Matrix4().makeTranslation(px, py, pz)));
 
-            const cabMat = new THREE.MeshLambertMaterial({ color: '#3f4448' });
-
-            // 1. Back support body (Z = -0.05, depth 0.65, front at Z = 0.275)
-            const cabBack = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.2, 0.65), cabMat);
-            cabBack.position.set(0, 1.1, -0.05); vmGroup.add(cabBack);
-
-            // 2. Window recess back panel (Z = 0.28, depth 0.02, front at Z = 0.29)
-            const recess = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.5, 0.02), new THREE.MeshLambertMaterial({ color: '#111215' }));
-            recess.position.set(0, 1.1, 0.28); vmGroup.add(recess);
-
-            // 3. Colorful shelves snack boxes (Z = 0.32, depth 0.05, front at Z = 0.345)
-            const colors = ['#f87171', '#60a5fa', '#34d399', '#fbbf24', '#a78bfa'];
+            part(vmCabBackM, 0, 1.1, -0.05);      // 1. back support body
+            part(vmRecessM, 0, 1.1, 0.28);        // 2. window recess back panel
+            // 3. Colorful shelves snack boxes (color set per instance below)
             for (let r2 = 0; r2 < 4; r2++) {
-                const ry = 0.52 + r2 * 0.36;
                 for (let c2 = 0; c2 < 4; c2++) {
-                    const rx = -0.33 + c2 * 0.22;
-                    const item = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.12, 0.16, 0.05),
-                        new THREE.MeshBasicMaterial({ color: colors[(r2 + c2) % colors.length] })
-                    );
-                    item.position.set(rx, ry, 0.32); vmGroup.add(item);
+                    part(vmItemM, -0.33 + c2 * 0.22, 0.52 + r2 * 0.36, 0.32);
+                    vmItemColors.push(vmItemPalette[(r2 + c2) % vmItemPalette.length]);
                 }
             }
-
-            // 4. Glass shield (Z = 0.36, depth 0.01, front at Z = 0.365)
-            const glass = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.5, 0.01), glassMat);
-            glass.position.set(0, 1.1, 0.36); vmGroup.add(glass);
-
-            // 5. Border frame parts (depth 0.12, centered at Z = 0.335 -> back at 0.275, front at 0.395)
-            const leftFrame = new THREE.Mesh(new THREE.BoxGeometry(0.075, 1.5, 0.12), cabMat);
-            leftFrame.position.set(-0.5125, 1.1, 0.335); vmGroup.add(leftFrame);
-
-            const rightFrame = new THREE.Mesh(new THREE.BoxGeometry(0.075, 1.5, 0.12), cabMat);
-            rightFrame.position.set(0.5125, 1.1, 0.335); vmGroup.add(rightFrame);
-
-            const bottomFrame = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.35, 0.12), cabMat);
-            bottomFrame.position.set(0, 0.175, 0.335); vmGroup.add(bottomFrame);
-
-            const topFrame = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.35, 0.12), cabMat);
-            topFrame.position.set(0, 2.025, 0.335); vmGroup.add(topFrame);
-
-            // 6. Backlit top header panel (blue) (Z = 0.40, depth 0.01, front at Z = 0.405)
-            const header = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.25, 0.01), new THREE.MeshBasicMaterial({ color: '#0284c7' }));
-            header.position.set(0, 2.025, 0.40); vmGroup.add(header);
-
-            group.add(vmGroup);
+            part(vmGlassM, 0, 1.1, 0.36);         // 4. glass shield
+            part(vmSideFrameM, -0.5125, 1.1, 0.335); // 5. border frame
+            part(vmSideFrameM, 0.5125, 1.1, 0.335);
+            part(vmCapFrameM, 0, 0.175, 0.335);
+            part(vmCapFrameM, 0, 2.025, 0.335);
+            part(vmHeaderM, 0, 2.025, 0.40);      // 6. backlit top header panel
         };
+        const vmCabBackM = [], vmRecessM = [], vmItemM = [], vmGlassM = [];
+        const vmSideFrameM = [], vmCapFrameM = [], vmHeaderM = [];
+        const vmItemColors = [];
+        const vmItemPalette = ['#f87171', '#60a5fa', '#34d399', '#fbbf24', '#a78bfa']
+            .map(c => new THREE.Color(c));
+        const vmCabMat = new THREE.MeshLambertMaterial({ color: '#3f4448' });
 
         // Distribute elements along the platforms (both levels) at midpoints between columns
         // Column midpoints are: P - 36, P - 24, P - 12, P, P + 12, P + 24, P + 36
@@ -936,7 +802,7 @@ export class TrackManager {
             const uFloor = sim.getTrackPosition(zPos).y + platTopY;
             const lFloor = sim.getTrackPosition(zPos).y + dive(zPos) + platTopY;
 
-            // Skip escalator zones for vending machines/benches (central and north wide banks)
+            // Skip escalator zones for vending machines/benches (central and Langwasser-end wide banks)
             if (Math.abs(offset) < ESC_HALF + 2.0 || (offset > -platHalf - 2.0 && offset < -platHalf + 20.0)) continue;
 
             if (offset === -24 || offset === 24) {
@@ -947,6 +813,29 @@ export class TrackManager {
                 addBench(zPos, lFloor);
             }
         }
+        // Build the shared instanced meshes for benches and vending machines.
+        addI(benchPipeGeom, benchOrangeMat, benchPipeM);
+        addI(benchLegGeom, benchOrangeMat, benchLegM);
+        addI(seatBaseGeom, benchOrangeMat, benchSeatM);
+        addI(seatBackGeom, benchOrangeMat, benchBackM);
+        addI(new THREE.BoxGeometry(1.1, 2.2, 0.65), vmCabMat, vmCabBackM);
+        addI(new THREE.BoxGeometry(0.95, 1.5, 0.02), new THREE.MeshLambertMaterial({ color: '#111215' }), vmRecessM);
+        addI(new THREE.BoxGeometry(0.95, 1.5, 0.01), glassMat, vmGlassM);
+        addI(new THREE.BoxGeometry(0.075, 1.5, 0.12), vmCabMat, vmSideFrameM);
+        addI(new THREE.BoxGeometry(1.1, 0.35, 0.12), vmCabMat, vmCapFrameM);
+        addI(new THREE.BoxGeometry(0.95, 0.25, 0.01), new THREE.MeshBasicMaterial({ color: '#0284c7' }), vmHeaderM);
+        if (vmItemM.length) {
+            const itemInst = new THREE.InstancedMesh(
+                new THREE.BoxGeometry(0.12, 0.16, 0.05),
+                new THREE.MeshBasicMaterial({ color: '#ffffff' }), vmItemM.length);
+            vmItemM.forEach((m, i2) => {
+                itemInst.setMatrixAt(i2, m);
+                itemInst.setColorAt(i2, vmItemColors[i2]);
+            });
+            itemInst.instanceMatrix.needsUpdate = true;
+            itemInst.instanceColor.needsUpdate = true;
+            group.add(itemInst);
+        }
 
         // ---------- single-track TUBES + standard tunnel-entrance portals ----------
         // The two stacked tubes run from each platform end out to the zone boundary, where a
@@ -955,10 +844,19 @@ export class TrackManager {
         const tubeMat = this.materials.tunnelWall;
         const TUBE_R = 3.4;
         if (!this._plTubeGeom) this._plTubeGeom = new THREE.CylinderGeometry(1, 1, 1, 20, 1, true).rotateX(Math.PI / 2);
+        if (!this._plGlowGeom) this._plGlowGeom = new THREE.BoxGeometry(0.55, 0.07, 1);
+        // Tube segments + their crown lamp strips only collect matrices here; they become
+        // TWO InstancedMeshes after the loop (instead of ~300 individual meshes).
+        const tubeM = [], tubeGlowM = [];
         const renderTube = (latFn, yFn, d0, d1) => {
             const ds = 10, R = TUBE_R;
+            // The last ring must land EXACTLY on d1: with a plain `d += ds` loop the tube
+            // stopped up to ds short of the end wall / zone boundary whenever (d1-d0) is not
+            // a multiple of ds — the "tube doesn't reach the cutout" gap.
+            const nSeg = Math.max(1, Math.ceil((d1 - d0) / ds));
             let prev = null;
-            for (let d = d0; d <= d1 + 0.01; d += ds) {
+            for (let i = 0; i <= nSeg; i++) {
+                const d = i === nSeg ? d1 : d0 + i * ds;
                 const c = sim.getTrackPosition(d);
                 const tan = sim.getTrackTangent(d);
                 const nrm = new THREE.Vector3(-tan.z, 0, tan.x);
@@ -975,18 +873,13 @@ export class TrackManager {
                         const m = new THREE.Matrix4().makeBasis(right, aUp, dir);
                         m.setPosition(mid);
                         m.multiply(new THREE.Matrix4().makeScale(R, R, len));
-                        const tube = new THREE.Mesh(this._plTubeGeom, tubeMat);
-                        tube.applyMatrix4(m);
-                        group.add(tube);
+                        tubeM.push(m);
 
                         // Lamp strip running along the crown of the tube.
-                        if (!this._plGlowGeom) this._plGlowGeom = new THREE.BoxGeometry(0.55, 0.07, 1);
                         const gm = new THREE.Matrix4().makeBasis(right, aUp, dir);
                         gm.setPosition(mid.clone().addScaledVector(aUp, R * 0.82));
                         gm.multiply(new THREE.Matrix4().makeScale(1, 1, len));
-                        const glow = new THREE.Mesh(this._plGlowGeom, this.materials.tunnelGlow);
-                        glow.applyMatrix4(gm);
-                        group.add(glow);
+                        tubeGlowM.push(gm);
                     }
                 }
                 prev = cur;
@@ -1009,7 +902,13 @@ export class TrackManager {
             const pp = f.c.clone().addScaledVector(f.nrm, lat);
             const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), mat);
             mesh.position.set(pp.x, yc, pp.z);
-            mesh.rotation.y = f.rotY;
+            // rotY alone maps the shape's local +X to -nrm, i.e. the u-coordinates (designed
+            // in +nrm lateral coords like every other lateral offset here) would come out
+            // MIRRORED about the track axis: the asymmetric panels then overshoot one side
+            // wall and leave the middle of the end wall wide open. The extra half turn flips
+            // local +X onto +nrm (the tube hole is centred at u=0, so it stays aligned; the
+            // materials are DoubleSide, so the flipped facing is irrelevant).
+            mesh.rotation.y = f.rotY + Math.PI;
             group.add(mesh);
         };
 
@@ -1026,37 +925,39 @@ export class TrackManager {
             const oppR0 = Math.min(inner, inner + sign * 20.0);
             const oppR1 = Math.max(inner, inner + sign * 20.0);
             
-            // Draw upper opposite mock tube only at the south end (sign === 1)
-            // since the north end has the wide escalator bank going up to the mezzanine!
-            if (sign === 1) {
-                renderTube(d => sp(d) / 2 - 18.08, () => 0, oppR0, oppR1);     // upper opposite
-            }
+            // Draw upper and lower opposite mock tubes at both ends
+            renderTube(d => sp(d) / 2 - 18.08, () => 0, oppR0, oppR1);     // upper opposite
             renderTube(d => -sp(d) / 2 - 18.08, dive, oppR0, oppR1);        // lower opposite
-
             const baseYi = sim.getTrackPosition(inner).y;
 
             // Upper portals
-            buildEndWall(inner, sp(inner) / 2, baseYi + 0.8, endWallUpperMat,
-                         -9.3, 3.8, -3.8, hallHeight + 0.07);          // right upper end wall (running track)
-            
             if (sign === 1) {
-                // South end: draw left upper end wall with opposite track hole (covers -21.0 to 0.26 absolute)
+                // Hardhöhe end: fully closed — left upper end wall with opposite track hole
+                // (covers -21.88 to -8.75 absolute)
                 buildEndWall(inner, sp(inner) / 2 - 18.08, baseYi + 0.8, endWallUpperMat,
-                             -12.0, 9.3, -3.8, hallHeight + 0.07);
+                             -4.1, 9.03, -3.8, hallHeight + 0.07);
+                // Hardhöhe end: right upper end wall with running track hole (covers -8.75 to 3.9 absolute)
+                buildEndWall(inner, sp(inner) / 2, baseYi + 0.8, endWallUpperMat,
+                             -9.05, 3.6, -3.8, hallHeight + 0.07);
             } else {
-                // North end: draw solid left/right walls flanking the escalator bank to close off the station
-                buildEndWall(inner, -17.75, baseYi + 0.8, endWallUpperMat,
-                             -3.25, 3.25, -3.8, hallHeight + 0.07, true); // left gap wall (covers -21.0 to -14.5)
-                buildEndWall(inner, -1.88, baseYi + 0.8, endWallUpperMat,
-                             -1.62, 1.62, -3.8, hallHeight + 0.07, true); // right gap wall (covers -3.5 to -0.26)
+                // Langwasser end: left upper end wall with opposite track hole, leaving the wide
+                // stair/escalator opening to the mezzanine (covers -21.88 to -14.5 absolute;
+                // -14.5 to -3.5 stays open for the bank built above)
+                buildEndWall(inner, sp(inner) / 2 - 18.08, baseYi + 0.8, endWallUpperMat,
+                             -4.1, 3.28, -3.8, hallHeight + 0.07);
+                // Langwasser end: right upper end wall with running track hole (covers -3.5 to 3.9 absolute)
+                buildEndWall(inner, sp(inner) / 2, baseYi + 0.8, endWallUpperMat,
+                             -3.8, 3.6, -3.8, hallHeight + 0.07);
             }
 
             // Lower portals (Split into 2 panels, each with a tube hole)
             buildEndWall(inner, -sp(inner) / 2, baseYi + dive(inner) + 0.8, endWallLowerMat,
-                         -9.3, 3.8, -3.8, LOWER_CLEAR + platTopY - 0.85);        // right lower end wall (running track)
+                         -9.05, 4.1, -3.8, LOWER_CLEAR + platTopY - 0.85);        // right lower end wall (running track - covers -9.35 to 3.8 absolute)
             buildEndWall(inner, -sp(inner) / 2 - 18.08, baseYi + dive(inner) + 0.8, endWallLowerMat,
-                         -12.0, 9.3, -3.8, LOWER_CLEAR + platTopY - 0.85);        // left lower end wall (opposite track - covers -21.0 to 0.26 absolute)
+                         -3.6, 9.03, -3.8, LOWER_CLEAR + platTopY - 0.85);        // left lower end wall (opposite track - covers -21.98 to -9.35 absolute)
         }
+        addI(this._plTubeGeom, tubeMat, tubeM);
+        addI(this._plGlowGeom, this.materials.tunnelGlow, tubeGlowM);
 
         this.scene.add(group);
         this.plaerrerGroup = group;
@@ -1826,69 +1727,6 @@ export class TrackManager {
 
         group.add(buildingIM, windowIM);
 
-        // 2. Create Instanced Trees Forest (30 trees total) - skipped near all stations
-        const centerZ = idx * this.chunkSize + this.chunkSize / 2;
-        const isNearStation = this.sim.stations.some(s => Math.abs(centerZ - s.position) < 60);
-
-        if (!isNearStation) {
-            const treeTrunkIM = new THREE.InstancedMesh(this.geometries.treeTrunk, this.materials.treeTrunk, 30);
-            const treeLeavesIM = new THREE.InstancedMesh(this.geometries.treeLeaves, this.materials.treeLeaves, 30);
-
-            const leafColors = [
-                new THREE.Color('#143d16'), // very dark green
-                new THREE.Color('#1e5321'), // dark green
-                new THREE.Color('#2a6a30'), // forest green
-                new THREE.Color('#38823f'), // medium green
-                new THREE.Color('#4a9c52')  // light green
-            ];
-
-            for (let t = 0; t < 30; t++) {
-                const seed = idx * 23 + t * 47;
-                const rand1 = seedRandom(seed);
-                const rand2 = seedRandom(seed + 1);
-                const rand3 = seedRandom(seed + 2);
-
-                const isLeft = (t < 15);
-                
-                // Select a side and coordinate band to avoid the street at +/- 18 (width 6, so 15 to 21)
-                let X_tree;
-                if (rand3 < 0.35) {
-                    // Inner band (between track ballast and street)
-                    X_tree = 8 + rand1 * 6; // 8 to 14
-                } else {
-                    // Outer band (beyond the street)
-                    X_tree = 22 + rand1 * 14; // 22 to 36
-                }
-                if (isLeft) X_tree = -X_tree;
-
-                const Z_tree = -25 + rand2 * 50; // spread along the 50m chunk
-
-                const scaleY = 0.85 + rand1 * 0.45;
-                const scaleXZ = 0.85 + rand2 * 0.35;
-
-                // Trunk
-                const trunkMatrix = new THREE.Matrix4();
-                trunkMatrix.makeScale(scaleXZ, scaleY, scaleXZ);
-                trunkMatrix.setPosition(X_tree, groundY - chunkGroupY, Z_tree); // keep world Y flat
-                treeTrunkIM.setMatrixAt(t, trunkMatrix);
-
-                // Leaves
-                const leavesMatrix = new THREE.Matrix4();
-                const leavesScale = scaleXZ * 1.35;
-                leavesMatrix.makeScale(leavesScale, leavesScale, leavesScale);
-                leavesMatrix.setPosition(X_tree, (groundY + 3.5 * scaleY) - chunkGroupY, Z_tree); // keep world Y flat
-                treeLeavesIM.setMatrixAt(t, leavesMatrix);
-
-                const leafColIdx = Math.floor(rand2 * leafColors.length);
-                treeLeavesIM.setColorAt(t, leafColors[leafColIdx]);
-            }
-            treeTrunkIM.instanceMatrix.needsUpdate = true;
-            treeLeavesIM.instanceMatrix.needsUpdate = true;
-            if (treeLeavesIM.instanceColor) treeLeavesIM.instanceColor.needsUpdate = true;
-
-            group.add(treeTrunkIM, treeLeavesIM);
-        }
-
         // Clouds are no longer separate per-chunk meshes: they are baked into the
         // equirectangular sky photo used as scene.background (see WorldManager.init).
     }
@@ -1940,51 +1778,6 @@ export class TrackManager {
         // 1:1 repeat because we now scale UVs in the geometry itself to match world meters
         texture.repeat.set(1, 1);
         return texture;
-    }
-
-    // Alpha-cut billboard silhouette for the distant tree backdrop. Transparent background,
-    // trunk baked brown, foliage baked in a natural mid-tone so the per-instance brightness
-    // multiply (see buildTrackScenery) still reads as green, never shifts hue oddly.
-    createTreeBillboardTexture(needle) {
-        const w = 96, h = 128;
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, w, h);
-
-        ctx.fillStyle = '#5a3d1e';
-        ctx.fillRect(w / 2 - 4, h - 26, 8, 26);
-
-        if (needle) {
-            // Nadelbaum: stacked tapering triangles (fir/spruce silhouette)
-            ctx.fillStyle = '#1f4d33';
-            const tiers = 4;
-            for (let i = 0; i < tiers; i++) {
-                const t = i / (tiers - 1);
-                const yTop = 6 + t * 46;
-                const yBase = yTop + 46;
-                const halfW = (w * 0.5) * (0.35 + 0.65 * t);
-                ctx.beginPath();
-                ctx.moveTo(w / 2, yTop);
-                ctx.lineTo(w / 2 - halfW, yBase);
-                ctx.lineTo(w / 2 + halfW, yBase);
-                ctx.closePath();
-                ctx.fill();
-            }
-        } else {
-            // Laubbaum: irregular round canopy from overlapping blobs
-            ctx.fillStyle = '#3f7d52';
-            const cx = w / 2, cy = 46;
-            const blobs = [[0, 0, 30], [-20, 10, 22], [20, 8, 24], [-8, -18, 20], [12, -16, 22], [0, 18, 26]];
-            for (const [ox, oy, r] of blobs) {
-                ctx.beginPath();
-                ctx.arc(cx + ox, cy + oy, r, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        return new THREE.CanvasTexture(canvas);
     }
 
     createTunnelConcreteTexture() {

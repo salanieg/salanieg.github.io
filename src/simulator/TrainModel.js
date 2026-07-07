@@ -92,16 +92,16 @@ export class TrainModel {
             bodyGrey: cheapMaterial({ color: '#2e3033', metalness: 0.3, roughness: 0.5 }), // Underframe
             bodyBumperGrey: cheapMaterial({ color: '#43474d', metalness: 0.35, roughness: 0.55 }), // G1 front skirt block
             cabDoorGrey: cheapMaterial({ color: '#1a1c20', metalness: 0.3, roughness: 0.35 }), // G1 cab door on the black flank
-            cockpitTrim: cheapMaterial({ color: '#9aa0a8', roughness: 0.85, side: THREE.DoubleSide }), // G1 interior A-pillar trim
+            cockpitTrim: cheapMaterial({ color: '#252931', roughness: 0.85, side: THREE.DoubleSide }), // G1 interior A-pillar trim — a shade darker than the dashboard panel casing (#2c303a)
             floorGrey: this.createFloorMaterial(),
             fabricRed: this.createFabricMaterial(),
             cockpitFloor: cheapMaterial({ color: '#bcbcbc', metalness: 0.1, roughness: 0.8 }),
             currentCollectorYellow: cheapMaterial({ color: '#ffcc00', metalness: 0.1, roughness: 0.5 }), // Stromabnehmer yellow
             skirtGrey: cheapMaterial({ color: '#53565f', metalness: 0.1, roughness: 0.5 }), // G1 dark grey skirt stripe
             underbodyOrange: cheapMaterial({ color: '#d35400', metalness: 0.1, roughness: 0.6 }), // DT1 orange box
-            windowGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }),
-            cabWindowGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }), // match standard window transparency
-            windshieldGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }),
+            windowGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.02, side: THREE.DoubleSide, depthWrite: false }),
+            cabWindowGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.02, side: THREE.DoubleSide, depthWrite: false }), // match standard window transparency
+            windshieldGlass: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.02, side: THREE.DoubleSide, depthWrite: false }),
             wheel: cheapMaterial({ color: '#111111', metalness: 0.8, roughness: 0.6 }),
             lightGlowWhite: new THREE.MeshBasicMaterial({ color: 0xffffff }),
             lightGlowRed: new THREE.MeshBasicMaterial({ color: 0xcc0000 }),
@@ -1532,11 +1532,17 @@ export class TrainModel {
             this.cabDoors.push({ pivot: doorPivot, sign, side, carIdx });
 
             // Interior linings above/below the cab side windows (ending at the
-            // doorway cutout so they never block the opening)
-            const liningBottom = new THREE.Mesh(new THREE.BoxGeometry(0.012, 1.06, 0.90), this.materials.bodyWhite);
+            // doorway cutout so they never block the opening). Dedicated dark-grey
+            // material (not the shared bodyWhite livery colour, which must stay
+            // off-white for the exterior stripe/door panel) matching the other
+            // darkened cockpit trim (#252931).
+            if (!this.materials.cockpitSideWall) {
+                this.materials.cockpitSideWall = cheapMaterial({ color: '#252931', roughness: 0.85 });
+            }
+            const liningBottom = new THREE.Mesh(new THREE.BoxGeometry(0.012, 1.06, 0.90), this.materials.cockpitSideWall);
             liningBottom.position.set(sign * 1.393, 0.92, -0.66);
             // starts behind the swept-back A-pillar bevel so it cannot poke through
-            const liningTop = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.38, 1.15), this.materials.bodyWhite);
+            const liningTop = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.38, 1.15), this.materials.cockpitSideWall);
             liningTop.position.set(sign * 1.393, 2.64, -1.20);
             sideGroup.add(liningBottom, liningTop);
         }
@@ -1549,15 +1555,17 @@ export class TrainModel {
         cabCeilingLining.position.set(0, 2.83, -1.32);
         sideGroup.add(cabCeilingLining);
 
-        // 10. Cabin Rear Wall partition (Rückwand)
+        // 10. Cabin Rear Wall partition (Rückwand) — the two transverse windows
+        // flanking the cockpit door get a 10% black tint (rest of the train's
+        // glass stays near-clear at 2% white).
         const partitionGlassMat = new THREE.MeshBasicMaterial({
-            color: '#ffffff',
+            color: '#000000',
             transparent: true,
-            opacity: 0.1,
+            opacity: 0.10,
             side: THREE.DoubleSide,
             depthWrite: false
         });
-        const partitionWallMat = cheapMaterial({ color: '#cfd8dc', roughness: 0.9 });
+        const partitionWallMat = cheapMaterial({ color: '#252931', roughness: 0.9 }); // a shade darker than the dashboard panel casing (#2c303a), matching cockpitTrim
         const interiorWidth = unscaledWidth - 0.12; // 2.78m for G1, stays strictly inside the interior walls
         const partitionH = (this.trainType === 'G1') ? 2.075 : 1.60;
         const partitionY = (this.trainType === 'G1') ? 1.4125 : 1.20;
@@ -1631,7 +1639,7 @@ export class TrainModel {
     // so it never intersects the seat or the dashboard/desk.
     buildG1ThrottleLever(cockpitGroup, noseZ, cabDir) {
         const frameMat = cheapMaterial({ color: '#c9cdd2', roughness: 0.6, metalness: 0.3 });
-        const gripMat = cheapMaterial({ color: '#161616', roughness: 0.7 });
+        const gripMat = cheapMaterial({ map: this.createWoodTexture(), roughness: 0.45 }); // warm wood grip, same golden-oak tone as the DT1 wall panels
         const rodMat = cheapMaterial({ color: '#3a3d42', roughness: 0.5, metalness: 0.4 });
 
         const floorY = 0.40;
@@ -3181,14 +3189,14 @@ export class TrainModel {
         const ctx = canvas.getContext('2d');
 
         // Background: Light grey (slightly darker than wall #e6e8eb)
-        ctx.fillStyle = '#bcbcbc';
+        ctx.fillStyle = '#9a9a9a';
         ctx.fillRect(0, 0, 512, 512);
 
         // Add tiny random triangles (fast white and fast black)
         for (let i = 0; i < 4000; i++) {
             const x = Math.random() * 512;
             const y = Math.random() * 512;
-            const size = 0.5 + Math.random() * 2;
+            const size = 1 + Math.random() * 3.5;
             const angle = Math.random() * Math.PI * 2;
 
             ctx.fillStyle = Math.random() > 0.5 ? '#fcfcfc' : '#050505';
