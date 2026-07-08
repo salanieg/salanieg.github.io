@@ -98,6 +98,7 @@ export class TrainModel {
             cockpitTrim: cheapMaterial({ color: '#252931', roughness: 0.85, side: THREE.DoubleSide }), // G1 interior A-pillar trim — a shade darker than the dashboard panel casing (#2c303a)
             floorGrey: this.createFloorMaterial(),
             fabricRed: this.createFabricMaterial(),
+            ceilingGreyG1: cheapMaterial({ color: '#8c8482', metalness: 0.1, roughness: 0.8, side: THREE.DoubleSide }),
             cockpitFloor: cheapMaterial({ color: '#bcbcbc', metalness: 0.1, roughness: 0.8 }),
             currentCollectorYellow: cheapMaterial({ color: '#ffcc00', metalness: 0.1, roughness: 0.5 }), // Stromabnehmer yellow
             skirtGrey: cheapMaterial({ color: '#53565f', metalness: 0.1, roughness: 0.5 }), // G1 dark grey skirt stripe
@@ -664,9 +665,9 @@ export class TrainModel {
             roof.position.set(0, 2.876, bodyPosZ);
             carGroup.add(roof);
  
-            // Underside Ceiling lining (White) - height 0.01, Y = 2.846
+            // Underside Ceiling lining (Grey) - height 0.01, Y = 2.846
             const ceilingLiningGeom = new THREE.BoxGeometry(2.80, 0.01, bodyLength);
-            const ceilingLining = new THREE.Mesh(ceilingLiningGeom, this.materials.bodyWhite);
+            const ceilingLining = new THREE.Mesh(ceilingLiningGeom, this.materials.ceilingGreyG1);
             ceilingLining.position.set(0, 2.846, bodyPosZ);
             carGroup.add(ceilingLining);
  
@@ -711,8 +712,12 @@ export class TrainModel {
             seatConfigs.forEach(cfg => {
                 // Bounds are already securely managed by the interval parameters (bounds.front and bounds.rear)
                 if (true) {
-                    if (cfg.panelIdx === 2) {
-                        // Replace one of the long bench pairs per carriage with facing transverse seats
+                    const isG1MiddleCar = (this.trainType === 'G1') && (i === 1 || i === 2);
+                    const useTransverseSeats = (cfg.panelIdx === 2) || (isG1MiddleCar && cfg.panelIdx === 1);
+
+                    if (useTransverseSeats) {
+                        // Replace one of the long bench pairs per carriage with facing transverse seats,
+                        // except for the two middle G1 cars where the regular bench layout is used.
                         this.buildTransverseSeats(carGroup, cfg.z, cfg.len);
                     } else {
                         const isCockpitEnd = (i === 0 && cfg.panelIdx === 0) || (i === 3 && cfg.panelIdx === 3);
@@ -1708,8 +1713,8 @@ export class TrainModel {
         // Cab roof: red plan-shaped cap following the brow arc and bevel sweep
         sideGroup.add(new THREE.Mesh(G.g1CabRoofCap, this.materials.bodyRedG1));
 
-        // Cab Underside Ceiling lining (White)
-        const cabCeilingLining = new THREE.Mesh(new THREE.BoxGeometry(2.78, 0.01, 1.12), this.materials.bodyWhite);
+        // Cab Underside Ceiling lining (Grey)
+        const cabCeilingLining = new THREE.Mesh(new THREE.BoxGeometry(2.78, 0.01, 1.12), this.materials.ceilingGreyG1);
         cabCeilingLining.position.set(0, 2.83, -1.32);
         sideGroup.add(cabCeilingLining);
 
@@ -3548,6 +3553,17 @@ export class TrainModel {
                 }
             }
         });
+
+        // Add extra center poles between long benches (Panel 1) in end cars ONLY
+        if (isG1 && (carIndex === 0 || carIndex === 3)) {
+            const doors = this.getG1DoorPositions(carIndex);
+            // Panel 1 (between door 1 and door 2) has the long benches in end cars
+            const z1 = doors[0] - 0.818;
+            const z2 = doors[1] + 0.818;
+            const step = (z2 - z1) / 3;
+            addPole(0, z1 + step);
+            addPole(0, z1 + 2 * step);
+        }
     }
 
     buildBellowsHalf(carGroup, startZ, endZ, type) {
