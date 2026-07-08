@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 // Reusable temp vectors for update loop to avoid GC stutter
 const _carP1 = new THREE.Vector3();
@@ -162,7 +163,12 @@ export class TrainModel {
     setTrainModel(type) {
         if (this.trainType === type) return;
         this.trainType = type;
-        
+
+        // Free GPU resources of the old build before dropping the references —
+        // without this every G1<->DT1 switch leaks ~1800 geometries plus the
+        // per-build canvas textures in VRAM.
+        this.disposeTrainResources();
+
         // Clear all children of this.group
         while (this.group.children.length > 0) {
             const child = this.group.children[0];
@@ -210,6 +216,155 @@ export class TrainModel {
             this.carWidth = 2.90 * S;
             this.buildG1Train();
         }
+        this.mergeStaticMeshes();
+    }
+
+    // All scene-graph objects that are animated, toggled or raycast at runtime
+    // and therefore must survive the static-geometry merge as individual nodes.
+    // Collected from the same registries the update loop works with, so a new
+    // dynamic part only needs to be registered once.
+    collectDynamicObjects() {
+        const dynamic = new Set();
+        const registries = [
+            this.doors, this.cabDoors, this.interiorDisplays, this.speedNeedles,
+            this.brakeNeedles, this.throttleLevers, this.dashboardScreens,
+            this.radioMeshes, this.radioDisplays,
+            this.lights.frontWhite, this.lights.frontRed,
+            this.lights.rearWhite, this.lights.rearRed
+        ];
+        for (const registry of registries) {
+            for (const entry of registry) {
+                if (!entry) continue;
+                if (entry.isObject3D) {
+                    dynamic.add(entry);
+                } else if (typeof entry === 'object') {
+                    for (const value of Object.values(entry)) {
+                        if (value && value.isObject3D) dynamic.add(value);
+                    }
+                }
+            }
+        }
+        return dynamic;
+    }
+
+    // The build methods produce one mesh per construction part (~2700 per train),
+    // which makes the train cost ~2700 draw calls whenever it is on screen. Bake
+    // all static parts of each carriage down to one mesh per material; carriages
+    // stay separate groups because they articulate individually along the track
+    // curve. Dynamic parts (doors, needles, lights, raycast targets, ...) are
+    // left untouched.
+    mergeStaticMeshes() {
+        const dynamicRoots = this.collectDynamicObjects();
+        const sharedGeos = new Set(Object.values(this.geometries));
+        this.group.updateMatrixWorld(true);
+
+        let before = 0;
+        this.group.traverse(o => { if (o.isMesh) before++; });
+
+        // Merge domains: the four carriage groups, plus every dynamic group
+        // (door leaves, cab-door pivots, ...) — those move as rigid bodies, so
+        // their child meshes are static relative to the group and merge within it.
+        const domains = [...this.carriages];
+        for (const root of dynamicRoots) {
+            if (root.children.length > 0) domains.push(root);
+        }
+        for (const domain of domains) {
+            this.mergeDomain(domain, dynamicRoots, sharedGeos);
+        }
+
+        let after = 0;
+        this.group.traverse(o => { if (o.isMesh) after++; });
+        console.log(`TrainModel (${this.trainType}): Geometry-Merging ${before} -> ${after} Meshes`);
+    }
+
+    // Merges all static meshes underneath `root` into one mesh per material,
+    // added directly to `root`. Skipped: nested dynamic subtrees (they form
+    // their own domain), hidden subtrees, meshes with children (their subtree
+    // would be torn apart on removal), multi-material meshes and custom
+    // renderOrder (DT1 destination sign decal).
+    mergeDomain(root, dynamicRoots, sharedGeos) {
+        const buckets = new Map();
+        const collect = (node) => {
+            if (!node.visible || (node !== root && dynamicRoots.has(node))) return;
+            if (node !== root && node.isMesh && node.children.length === 0 &&
+                !Array.isArray(node.material) && node.renderOrder === 0) {
+                let list = buckets.get(node.material);
+                if (!list) buckets.set(node.material, list = []);
+                list.push(node);
+            }
+            for (const child of node.children) collect(child);
+        };
+        collect(root);
+
+        const invRoot = new THREE.Matrix4().copy(root.matrixWorld).invert();
+        const relMatrix = new THREE.Matrix4();
+
+        for (const [material, meshes] of buckets) {
+            if (meshes.length < 2) continue; // nothing gained by merging one mesh
+
+            // Bake each mesh's root-relative transform into a geometry copy
+            const geos = [];
+            for (const mesh of meshes) {
+                const geo = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+                relMatrix.copy(invRoot).multiply(mesh.matrixWorld);
+                geo.applyMatrix4(relMatrix);
+                geos.push(geo);
+            }
+
+            // mergeGeometries() requires identical attribute sets: reduce to
+            // position/normal/uv and fill gaps (zero-uvs only ever land on
+            // untextured materials, textured parts all carry real uvs).
+            const needsUv = geos.some(g => g.attributes.uv);
+            for (const geo of geos) {
+                for (const name of Object.keys(geo.attributes)) {
+                    if (name !== 'position' && name !== 'normal' && name !== 'uv') {
+                        geo.deleteAttribute(name);
+                    }
+                }
+                if (!geo.attributes.normal) geo.computeVertexNormals();
+                if (needsUv && !geo.attributes.uv) {
+                    const count = geo.attributes.position.count;
+                    geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(count * 2), 2));
+                }
+            }
+
+            const merged = BufferGeometryUtils.mergeGeometries(geos, false);
+            if (!merged) continue; // keep the originals if merging failed
+
+            const mergedMesh = new THREE.Mesh(merged, material);
+            mergedMesh.matrixAutoUpdate = false; // static child of the animated domain root
+            root.add(mergedMesh);
+
+            for (const mesh of meshes) {
+                mesh.parent.remove(mesh);
+                if (!sharedGeos.has(mesh.geometry)) mesh.geometry.dispose();
+            }
+        }
+    }
+
+    // Frees the GPU resources of the current build. Shared assets that survive
+    // a G1<->DT1 rebuild (this.materials, this.geometries, the persistent
+    // destination/interior display materials) are excluded.
+    disposeTrainResources() {
+        const sharedMats = new Set(Object.values(this.materials));
+        if (this.interiorDisplayMat) sharedMats.add(this.interiorDisplayMat);
+        if (this.destScreenMat) sharedMats.add(this.destScreenMat);
+        const sharedGeos = new Set(Object.values(this.geometries));
+        const sharedTextures = new Set();
+        for (const m of sharedMats) {
+            if (m.map) sharedTextures.add(m.map);
+        }
+
+        this.group.traverse(o => {
+            if (!o.isMesh && !o.isSprite) return;
+            if (o.geometry && !sharedGeos.has(o.geometry)) o.geometry.dispose();
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            for (const m of mats) {
+                if (!m || sharedMats.has(m)) continue;
+                if (m.map && !sharedTextures.has(m.map)) m.map.dispose();
+                m.dispose();
+            }
+        });
     }
 
     getCarriageProperties(i) {

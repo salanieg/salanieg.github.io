@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ITEM_SENTENCES } from './people/PassengerData.js';
 
 // Reusable temp vectors for per-frame camera math (avoid GC churn)
 const _wmPos = new THREE.Vector3();
@@ -261,7 +262,10 @@ export class WorldManager {
         };
 
         this.onMouseDown = (e) => {
-            if (e.button === 0) this.startLook(e.clientX, e.clientY);
+            if (e.button === 0) {
+                this.startLook(e.clientX, e.clientY);
+                this.clickStartPos = { x: e.clientX, y: e.clientY };
+            }
         };
 
         this.onMouseMove = (e) => {
@@ -269,7 +273,17 @@ export class WorldManager {
         };
 
         this.onMouseUp = (e) => {
-            if (e.button === 0) this.endLook();
+            if (e.button === 0) {
+                this.endLook();
+                if (this.clickStartPos) {
+                    const dx = e.clientX - this.clickStartPos.x;
+                    const dy = e.clientY - this.clickStartPos.y;
+                    if (Math.hypot(dx, dy) < 16) {
+                        this.handleSceneClick(e);
+                    }
+                    this.clickStartPos = null;
+                }
+            }
         };
 
         // Touch equivalents (single-finger look-around, two-finger pinch-to-zoom)
@@ -277,6 +291,7 @@ export class WorldManager {
             if (e.touches.length === 1) {
                 const t = e.touches[0];
                 this.startLook(t.clientX, t.clientY);
+                this.touchStartPos = { x: t.clientX, y: t.clientY };
             } else if (e.touches.length === 2) {
                 // A second finger landed: cancel any single-finger look-drag and
                 // start tracking pinch distance instead.
@@ -316,6 +331,17 @@ export class WorldManager {
             }
             if (e.touches.length === 0) {
                 this.endLook();
+                if (this.touchStartPos) {
+                    const t = e.changedTouches ? e.changedTouches[0] : null;
+                    if (t) {
+                        const dx = t.clientX - this.touchStartPos.x;
+                        const dy = t.clientY - this.touchStartPos.y;
+                        if (Math.hypot(dx, dy) < 25) {
+                            this.handleSceneClick({ clientX: t.clientX, clientY: t.clientY });
+                        }
+                    }
+                    this.touchStartPos = null;
+                }
             }
         };
 
@@ -343,6 +369,51 @@ export class WorldManager {
         this.footstepDistance = 0;
         this.onFootstep = null; // Callback
 
+        // Programmatic retro speech bubble overlay
+        const bubble = document.createElement('div');
+        bubble.id = 'passenger-bubble';
+        bubble.style.position = 'absolute';
+        bubble.style.display = 'none';
+        bubble.style.backgroundColor = '#ffffff';
+        bubble.style.color = '#000000';
+        bubble.style.padding = '8px 12px';
+        bubble.style.border = '2px solid #000000';
+        bubble.style.fontFamily = 'monospace';
+        bubble.style.fontSize = '13px';
+        bubble.style.zIndex = '1000';
+        bubble.style.pointerEvents = 'none';
+        bubble.style.maxWidth = '250px';
+        bubble.style.boxShadow = '4px 4px 0px rgba(0,0,0,0.15)';
+        bubble.style.borderRadius = '0px';
+
+        const nameEl = document.createElement('div');
+        nameEl.id = 'bubble-name';
+        nameEl.style.fontWeight = 'bold';
+        nameEl.style.marginBottom = '4px';
+        bubble.appendChild(nameEl);
+
+        const textEl = document.createElement('div');
+        textEl.id = 'bubble-text';
+        bubble.appendChild(textEl);
+
+        // Progress loader bar
+        const loader = document.createElement('div');
+        loader.id = 'bubble-loader';
+        loader.style.display = 'block';
+        loader.style.height = '4px';
+        loader.style.backgroundColor = '#000000';
+        loader.style.width = '100%';
+        loader.style.marginTop = '8px';
+        loader.style.transformOrigin = 'left center';
+        loader.style.transform = 'scaleX(1)';
+        bubble.appendChild(loader);
+        this.speechBubbleLoader = loader;
+        this.bubbleTimeout = null;
+
+        document.getElementById('viewport-container').appendChild(bubble);
+        this.speechBubble = bubble;
+        this.activePassengerForBubble = null;
+
         this.container.addEventListener('mousedown', this.onMouseDown);
         window.addEventListener('mousemove', this.onMouseMove);
         window.addEventListener('mouseup', this.onMouseUp);
@@ -353,6 +424,84 @@ export class WorldManager {
         window.addEventListener('wheel', this.onWheel, { passive: true });
         window.addEventListener('keydown', this.onKeyDown);
         window.addEventListener('keyup', this.onKeyUp);
+    }
+
+    handleSceneClick(e) {
+        // Calculate mouse position in normalized device coordinates relative to the canvas bounding rect
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+            ((e.clientX - rect.left) / rect.width) * 2 - 1,
+            -((e.clientY - rect.top) / rect.height) * 2 + 1
+        );
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, this.activeCamera);
+
+        // Collect all active passenger groups in the scene
+        const passengers = [];
+        this.scene.traverse(child => {
+            if (child.userData && child.userData.isPassenger) {
+                passengers.push(child);
+            }
+        });
+
+        // Raycast ONLY against passenger groups to avoid any interference/blocking by other meshes (like train carriages or platform structures)
+        const intersects = raycaster.intersectObjects(passengers, true);
+
+        let clickedPassenger = null;
+        if (intersects.length > 0) {
+            let current = intersects[0].object;
+            while (current) {
+                if (current.userData && current.userData.isPassenger) {
+                    clickedPassenger = current;
+                    break;
+                }
+                current = current.parent;
+            }
+        }
+
+        if (clickedPassenger) {
+            const config = clickedPassenger.userData.config;
+            const name = config.name || "Fahrgast";
+            const item = config.item || "";
+            const sentence = ITEM_SENTENCES[item] || "Hallo! Schöner Tag heute.";
+
+            document.getElementById('bubble-name').innerText = name;
+            document.getElementById('bubble-text').innerText = sentence;
+            this.activePassengerForBubble = clickedPassenger;
+
+            // Make the speech bubble immediately display block to allow layout transitions
+            this.speechBubble.style.display = 'block';
+
+            // Clear previous timeout if any
+            if (this.bubbleTimeout) {
+                clearTimeout(this.bubbleTimeout);
+                this.bubbleTimeout = null;
+            }
+
+            // Reset loading bar scale and remove transition
+            this.speechBubbleLoader.style.transition = 'none';
+            this.speechBubbleLoader.style.transform = 'scaleX(1)';
+            
+            // Force reflow so the browser registers the scaleX(1) state instantly
+            void this.speechBubbleLoader.offsetWidth;
+
+            // Start CSS transition to scale down to 0 over 7 seconds
+            this.speechBubbleLoader.style.transition = 'transform 7s linear';
+            this.speechBubbleLoader.style.transform = 'scaleX(0)';
+
+            // Set timeout to automatically close the bubble after 7 seconds
+            this.bubbleTimeout = setTimeout(() => {
+                this.activePassengerForBubble = null;
+                this.bubbleTimeout = null;
+            }, 7000);
+        } else {
+            this.activePassengerForBubble = null;
+            if (this.bubbleTimeout) {
+                clearTimeout(this.bubbleTimeout);
+                this.bubbleTimeout = null;
+            }
+        }
     }
 
     setupLights() {
@@ -712,6 +861,62 @@ export class WorldManager {
 
         // Apply render
         this.renderer.render(this.scene, this.activeCamera);
+
+        // Update speech bubble position
+        if (this.activePassengerForBubble) {
+            // Check if passenger is still in the active scene hierarchy (i.e. not culled or removed)
+            let parent = this.activePassengerForBubble.parent;
+            let inScene = false;
+            while (parent) {
+                if (parent === this.scene) {
+                    inScene = true;
+                    break;
+                }
+                parent = parent.parent;
+            }
+
+            if (!inScene) {
+                this.activePassengerForBubble = null;
+                if (this.bubbleTimeout) {
+                    clearTimeout(this.bubbleTimeout);
+                    this.bubbleTimeout = null;
+                }
+                if (this.speechBubble) {
+                    this.speechBubble.style.display = 'none';
+                }
+            } else {
+                const headWorldPos = new THREE.Vector3();
+                this.activePassengerForBubble.getWorldPosition(headWorldPos);
+                // Height offset to place bubble above passenger head (approx 1.8m in world space)
+                headWorldPos.y += 1.8;
+
+                // Check if behind camera (using world coordinates before projecting)
+                const frustum = new THREE.Frustum();
+                const projScreenMatrix = new THREE.Matrix4();
+                projScreenMatrix.multiplyMatrices(this.activeCamera.projectionMatrix, this.activeCamera.matrixWorldInverse);
+                frustum.setFromProjectionMatrix(projScreenMatrix);
+                const isVisible = frustum.containsPoint(headWorldPos);
+
+                // Project 3D coordinate to 2D screen coordinate
+                headWorldPos.project(this.activeCamera);
+
+                if (isVisible) {
+                    // Convert projected coords to CSS pixels
+                    const x = (headWorldPos.x * 0.5 + 0.5) * this.container.clientWidth;
+                    const y = (-(headWorldPos.y * 0.5) + 0.5) * this.container.clientHeight;
+
+                    this.speechBubble.style.display = 'block';
+                    this.speechBubble.style.left = `${x - this.speechBubble.clientWidth / 2}px`;
+                    this.speechBubble.style.top = `${y - this.speechBubble.clientHeight - 10}px`;
+                } else {
+                    this.speechBubble.style.display = 'none';
+                }
+            }
+        } else {
+            if (this.speechBubble) {
+                this.speechBubble.style.display = 'none';
+            }
+        }
     }
     updateEnvironmentLighting(trainZ) {
         const direction = this.sim.isReversing ? -1 : 1;

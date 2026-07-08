@@ -3,7 +3,7 @@ import { Simulation } from './simulator/Simulation.js?v=60';
 import { WorldManager } from './simulator/WorldManager.js?v=53';
 import { TrackManager } from './simulator/TrackManager.js?v=56';
 import { StationModel } from './simulator/StationModel.js?v=56';
-import { TrainModel } from './simulator/TrainModel.js?v=75';
+import { TrainModel } from './simulator/TrainModel.js?v=76';
 import { AudioManager } from './audio/AudioManager.js?v=39';
 import { RadioManager } from './audio/RadioManager.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -195,7 +195,12 @@ class App {
 
             // Rebuild the 3D train model
             this.trainModel.setTrainModel(nextType);
-            
+
+            // Upload the freshly built model to the GPU in this frame (one
+            // controlled hitch on the button click instead of a surprise hitch
+            // when the new train first comes into view)
+            this.warmUpRenderer();
+
             // Update cameras to make sure they are aligned
             if (this.world.activeCameraType === 'cab') {
                 this.world.setCamera('cab');
@@ -327,6 +332,23 @@ class App {
         requestAnimationFrame(animateProgress);
     }
 
+    // Renders one frame with frustum culling disabled on every object, so all
+    // geometry buffers, textures and shader programs land on the GPU right now
+    // (behind the splash screen / button click) instead of lazily during the
+    // first frame the train swings into view — that lazy upload of ~1900 buffers
+    // was a hard, visible hitch when looking around.
+    warmUpRenderer() {
+        const restore = [];
+        this.world.scene.traverse(o => {
+            if (o.frustumCulled) {
+                o.frustumCulled = false;
+                restore.push(o);
+            }
+        });
+        this.world.renderer.render(this.world.scene, this.world.activeCamera);
+        restore.forEach(o => o.frustumCulled = true);
+    }
+
     loadCityModel() {
         const btnStart = this.dom.btnStart;
         btnStart.disabled = true;
@@ -346,7 +368,7 @@ class App {
                 const model = gltf.scene;
 
                 // Apply the exact position and orientation values determined via debugger
-                model.position.set(-5376.00, 0.00, -4222.50);
+                model.position.set(-5138.00, 0.00, -3912.00);
                 model.rotation.set(0, 0.0000, 0);
                 model.scale.set(1.000, 1.000, 1.000);
 
@@ -369,6 +391,10 @@ class App {
                 model.matrixWorldAutoUpdate = false;
 
                 this.cityModel = model;
+
+                // Push everything (city, stations, full train) onto the GPU while
+                // the splash screen is still up
+                this.warmUpRenderer();
 
                 if (btnLoadingBar) {
                     btnLoadingBar.style.width = '100%';
@@ -413,6 +439,10 @@ class App {
                 if (window.location.protocol === 'file:') {
                     errorMsg = 'Browser blockiert lokale Dateien (CORS).';
                 }
+
+                // Even without the city model, upload the train/stations now so the
+                // first look-around doesn't hitch
+                this.warmUpRenderer();
 
                 if (btnLoadingBar) {
                     btnLoadingBar.style.width = '100%';
@@ -958,6 +988,18 @@ class App {
         // Reset timers and announcement flags
         this.sim.stopWaitTime = 0;
         this.announcedNextStation = false;
+
+        // Clear speech bubble on teleportation
+        if (this.world.activePassengerForBubble) {
+            this.world.activePassengerForBubble = null;
+            if (this.world.bubbleTimeout) {
+                clearTimeout(this.world.bubbleTimeout);
+                this.world.bubbleTimeout = null;
+            }
+            if (this.world.speechBubble) {
+                this.world.speechBubble.style.display = 'none';
+            }
+        }
 
         // Force update 3D meshes immediately
         this.trackManager.update(this.sim.position);

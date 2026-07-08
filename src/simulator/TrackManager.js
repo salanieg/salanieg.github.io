@@ -967,6 +967,9 @@ export class TrackManager {
         addI(this._plTubeGeom, tubeMat, tubeM);
         addI(this._plGlowGeom, this.materials.tunnelGlow, tubeGlowM);
 
+        // Spawn passengers
+        stationModel.spawnPassengersForStation(p, group);
+
         this.scene.add(group);
         this.plaerrerGroup = group;
     }

@@ -3,6 +3,7 @@ import { StationBuilder } from './stations/StationBuilder.js?v=67';
 import { RathausBuilder } from './stations/RathausBuilder.js?v=45';
 import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=45';
 import { PassengerBuilder } from './people/PassengerBuilder.js';
+import { PASSENGER_DATA } from './people/PassengerData.js';
 
 export class StationModel {
     constructor(scene, simulation) {
@@ -792,6 +793,7 @@ export class StationModel {
         
         // --- LEGACY FALLBACK ---
         const stationGroup = new THREE.Group();
+        const isAufsessplatzLook = ["Aufseßplatz", "Hasenbuck", "Frankenstraße", "Maffeiplatz"].includes(station.name);
         
         const centerPos = this.sim.getTrackPosition(station.position);
         const centerTangent = this.sim.getTrackTangent(station.position);
@@ -884,10 +886,22 @@ export class StationModel {
                 map: texture,
                 transparent: true
             });
-        } else if (station.name === "Aufseßplatz") {
-            aufsessplatzRedTileMat = this.createTiledMaterial('#ff5f38', '#7a1a08', 0.15);
-            aufsessplatzWhiteTileMat = this.createTiledMaterial('#fcfcfc', '#7a1a08', 0.15);
-            aufsessplatzStripeMat = this.createWallStripeMaterial("Aufseßplatz", '#ff5f38', '#ffffff');
+        } else if (isAufsessplatzLook) {
+            let tileColor = '#c74806';
+            let groutColor = '#632403';
+            if (station.name === "Hasenbuck") {
+                tileColor = '#714a39';
+                groutColor = '#38251c';
+            } else if (station.name === "Frankenstraße") {
+                tileColor = '#385580';
+                groutColor = '#1c2a40';
+            } else if (station.name === "Maffeiplatz") {
+                tileColor = '#4e7c4e';
+                groutColor = '#273e27';
+            }
+            aufsessplatzRedTileMat = this.createTiledMaterial(tileColor, groutColor, 0.15);
+            aufsessplatzWhiteTileMat = this.createTiledMaterial('#b0b9b8', groutColor, 0.15);
+            aufsessplatzStripeMat = this.createWallStripeMaterial(station.name, tileColor, '#ffffff');
         } else if (station.name === "Muggenhof") {
             // 1. Corrugated ceiling texture/material
             const canvasRoof = document.createElement('canvas');
@@ -972,7 +986,7 @@ export class StationModel {
         // Slat ceiling in the Aufseßplatz look, shared by the three Langwasser-branch
         // stations as well. The plates between the slat field and the side walls use the
         // rough concrete of the tunnel portals / Plärrer walls (not plain dark grey).
-        const hasSlatCeiling = ["Aufseßplatz", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte"].includes(station.name);
+        const hasSlatCeiling = ["Aufseßplatz", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Hasenbuck", "Frankenstraße", "Maffeiplatz"].includes(station.name);
         let slatCeilingConcreteMat = null;
         if (hasSlatCeiling) {
             // Slat texture canvas: 80% slat (#e2e8f0), 20% gap (#111111)
@@ -1043,7 +1057,7 @@ export class StationModel {
             "Langwasser Süd": {
                 bottomColor: '#41525a',
                 bottomGrout: '#222d32',
-                topColor: '#ffffff',
+                topColor: '#b0b9b8',
                 topGrout: '#7e8a93',
                 stripeBg: '#184763',
                 stripeText: '#ffffff',
@@ -1052,7 +1066,7 @@ export class StationModel {
             "Gemeinschaftshaus": {
                 bottomColor: '#41525a',
                 bottomGrout: '#222d32',
-                topColor: '#ffffff',
+                topColor: '#b0b9b8',
                 topGrout: '#7e8a93',
                 stripeBg: '#41525a',
                 stripeText: '#ffffff',
@@ -1061,7 +1075,7 @@ export class StationModel {
             "Langwasser Mitte": {
                 bottomColor: '#41525a',
                 bottomGrout: '#222d32',
-                topColor: '#ffffff',
+                topColor: '#b0b9b8',
                 topGrout: '#7e8a93',
                 stripeBg: '#51301b',
                 stripeText: '#ffffff',
@@ -1850,7 +1864,7 @@ export class StationModel {
                     }
 
                     // Continuous neon lighting parallel to platform edge, mounted directly to the ceiling
-                    const targetStations = ["Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz"];
+                    const targetStations = ["Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz", "Hasenbuck", "Frankenstraße"];
                     if (targetStations.includes(station.name)) {
                         const lightOff = spacing / 2 - 1.185;
                         const ductW = 0.2;
@@ -2268,7 +2282,7 @@ export class StationModel {
                     
                     stationGroup.add(textMeshR, textMeshL);
                 }
-            } else if (station.name === "Aufseßplatz") {
+            } else if (isAufsessplatzLook) {
                 // Red/white tiled 3-layer walls + name stripe as continuous swept ribbons, once.
                 if (j === 0) {
                     const repeatX = Math.round(platLength / (0.35 * (384 / 64)));
@@ -2306,7 +2320,7 @@ export class StationModel {
         if (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name)) {
             // 12 pillars in equal distance (from -33 to 33 with spacing 6m) to clear the escalators
             stationPillarZ = [-33, -27, -21, -15, -9, -3, 3, 9, 15, 21, 27, 33].map(z => z * S_len);
-        } else if (station.name === "Aufseßplatz") {
+        } else if (isAufsessplatzLook) {
             // 9 pillars in equal distance (from -32 to 32 with spacing 8m)
             stationPillarZ = [-32, -24, -16, -8, 0, 8, 16, 24, 32].map(z => z * S_len);
         }
@@ -2558,7 +2572,7 @@ export class StationModel {
                     pillar.position.y = pY;
                     pillar.rotation.y = rotY;
                     stationGroup.add(pillar);
-                } else if (station.name === "Aufseßplatz") {
+                } else if (isAufsessplatzLook) {
                     const cacheKey = `pillarGeom_${station.name}`;
                     if (!this[cacheKey]) {
                         const geom = new THREE.CylinderGeometry(0.42, 0.42, pHeight, 16);
@@ -2891,7 +2905,7 @@ export class StationModel {
         // 7. Lights (every 10 meters)
         const lightZ = [-40, -30, -20, -10, 0, 10, 20, 30, 40];
         lightZ.forEach(lz => {
-            if (["Hardhöhe", "Maximilianstraße", "Bärenschanze", "Gostenhof", "Jakobinenstraße", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz"].includes(station.name)) return; // Skip standard lights
+            if (["Hardhöhe", "Maximilianstraße", "Bärenschanze", "Gostenhof", "Jakobinenstraße", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz", "Hasenbuck", "Frankenstraße"].includes(station.name)) return; // Skip standard lights
             const s = station.position + lz;
             const pos = this.sim.getTrackPosition(s);
             const tangent = this.sim.getTrackTangent(s);
@@ -3496,6 +3510,9 @@ export class StationModel {
         // --- ADD TRASH CANS ---
         this.addTrashCansToStation(station, stationGroup, S_len, platLength, platTopY, centerAngle);
 
+        // --- SPAWN PASSENGERS ---
+        this.spawnPassengersForStation(station, stationGroup);
+
         return stationGroup;
     }
 
@@ -3770,7 +3787,7 @@ export class StationModel {
             map: texture,
             bumpMap: bumpTexture,
             bumpScale: 0.015,
-            roughness: roughness
+            emissive: new THREE.Color(tileColor).multiplyScalar(0.25)
         });
     }
 
@@ -4396,7 +4413,7 @@ export class StationModel {
         if (station.name !== "Hardhöhe" && station.name !== "Jakobinenstraße") {
             if (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name)) {
                 pillarZList = [-30, -24, -18, -12, -6, 0, 6, 12, 18, 24, 30].map(z => z * S_len);
-            } else if (station.name === "Aufseßplatz") {
+            } else if (["Aufseßplatz", "Hasenbuck", "Frankenstraße", "Maffeiplatz"].includes(station.name)) {
                 pillarZList = [-32, -24, -16, -8, 0, 8, 16, 24, 32].map(z => z * S_len);
             } else {
                 pillarZList = [-37.5, -22.5, -7.5, 7.5, 22.5, 37.5].map(z => z * S_len);
@@ -4491,6 +4508,143 @@ export class StationModel {
             trashCan.position.y = platTopY; // Ensure it stands flat on the deck floor
             trashCan.rotation.y = p.rotY;
             stationGroup.add(trashCan);
+        });
+    }
+
+    spawnPassengersForStation(station, stationGroup) {
+        if (station.name === "Messe") {
+            // Preservation: Messe passengers are pre-defined in the original buildStation method
+            return;
+        }
+
+        const configs = PASSENGER_DATA[station.name];
+        if (!configs || configs.length === 0) return;
+
+        const passBuilder = new PassengerBuilder();
+        const platLength = 2 * station.halfLength;
+        const platTopY = 0.865;
+        const centerTangent = this.sim.getTrackTangent(station.position);
+        const centerAngle = Math.atan2(centerTangent.x, centerTangent.z);
+        const isSideStation = station.side;
+        const isScharfreiterring = (station.name === "Scharfreiterring");
+
+        const getLocalPlacement = (zOffset, xOffset, isLowerLevel = false) => {
+            const s = station.position + zOffset;
+            const wp = this.sim.getTrackPosition(s);
+            const tan = this.sim.getTrackTangent(s);
+            const nlen = Math.hypot(-tan.z, tan.x) || 1;
+            const nX = -tan.z / nlen;
+            const nZ = tan.x / nlen;
+            
+            let yOffset = platTopY;
+            if (station.name === "Plärrer" && isLowerLevel) {
+                yOffset += this.sim.getLowerLevelOffset(s);
+            }
+            
+            const worldPos = new THREE.Vector3(wp.x + nX * xOffset, wp.y + yOffset, wp.z + nZ * xOffset);
+            const posLocal = stationGroup.worldToLocal(worldPos);
+            const rotY = Math.atan2(tan.x, tan.z) - centerAngle;
+            return { pos: posLocal, rotY };
+        };
+
+        // Zone division along platform Z axis to avoid collisions
+        const zZones = [
+            [-0.32, -0.20],
+            [-0.15, -0.05],
+            [0.05, 0.15],
+            [0.20, 0.32]
+        ];
+
+        configs.forEach((baseConfig, idx) => {
+            const config = { ...baseConfig };
+            
+            // Deterministic seeded pseudo-random helper to make passenger positions fixed and processor-friendly
+            const seedBase = station.name.charCodeAt(0) + station.name.charCodeAt(station.name.length - 1) + idx * 100;
+            let seed = seedBase;
+            const rand = () => {
+                const x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            };
+
+            // Deterministically pick height, skin, hair colors/styles if not explicitly specified
+            if (!config.height) {
+                config.height = 1.60 + rand() * 0.25;
+            }
+            if (!config.skinColor) {
+                const skins = ['#ffdbac', '#f1c27d', '#e0ac69', '#c68642', '#8d5524', '#f5d0c0'];
+                config.skinColor = skins[Math.floor(rand() * skins.length)];
+            }
+            if (!config.hairColor) {
+                const hairs = ['#593e1a', '#edd18c', '#090807', '#808080', '#b25a38'];
+                config.hairColor = hairs[Math.floor(rand() * hairs.length)];
+            }
+            if (!config.hairStyle) {
+                const styles = ['short', 'long', 'ponytail', 'bun'];
+                config.hairStyle = styles[Math.floor(rand() * styles.length)];
+            }
+
+            const zone = zZones[idx];
+            const randZFrac = zone[0] + rand() * (zone[1] - zone[0]);
+            const zOffset = randZFrac * platLength;
+            const s = station.position + zOffset;
+            const spacing = this.sim.getTrackSpacing(s);
+
+            let xOffset = 0;
+
+            if (station.name === "Plärrer") {
+                // Stacked platforms, assign 2 passengers to U1 (lower) and 2 to U2 (upper)
+                const isLowerLevel = (idx % 2 === 0);
+                const trackSign = isLowerLevel ? -1 : 1;
+                const edgeGap = 1.54;
+                const edgeX = trackSign * spacing / 2 - edgeGap;
+
+                // Avoid the middle corridor (middle is edgeX - 4.5)
+                const standNearTrack = (rand() > 0.5);
+                const dx = standNearTrack ? (0.5 + rand() * 2.0) : (6.5 + rand() * 2.0);
+                xOffset = edgeX - dx;
+            } else if (isSideStation) {
+                // Side platform
+                const isLeftPlat = (rand() > 0.5);
+                const sign = isLeftPlat ? 1 : -1;
+                const off = spacing / 2 + 3.54;
+                
+                // Avoid middle of 4m width, enforce 50cm safety margin from track edge (dx >= -1.5)
+                const standNearTrack = (rand() > 0.5);
+                const dx = standNearTrack ? (-1.5 + rand() * 0.9) : (0.8 + rand() * 0.9);
+                xOffset = sign * (off + dx);
+            } else if (isScharfreiterring) {
+                // Scharfreiterring (wide platforms)
+                const isLeftPlat = (rand() > 0.5);
+                const sign = isLeftPlat ? 1 : -1;
+                const leftPlatCenter = spacing / 2 - 5.03;
+                
+                const standNearTrack = (rand() > 0.5);
+                const dx = standNearTrack ? (-3.0 + rand() * 1.8) : (1.2 + rand() * 1.8);
+                xOffset = sign * (leftPlatCenter + dx);
+            } else {
+                // Island platform: center X = 0, width = spacing - 3.08.
+                const platWidth = spacing - 3.08;
+                const isLeft = (rand() > 0.5);
+                
+                // Avoid middle corridor (|X| < 1.0)
+                if (isLeft) {
+                    xOffset = -1.0 - rand() * (platWidth / 2 - 1.5);
+                } else {
+                    xOffset = 1.0 + rand() * (platWidth / 2 - 1.5);
+                }
+            }
+
+            const passenger = passBuilder.createCharacter(config);
+            const isLower = (station.name === "Plärrer" && idx % 2 === 0);
+            const p = getLocalPlacement(zOffset, xOffset, isLower);
+            passenger.position.copy(p.pos);
+
+            // Natural randomized stance angles
+            const angles = [0, Math.PI / 2, -Math.PI / 2, Math.PI];
+            const baseAngle = angles[Math.floor(rand() * angles.length)];
+            passenger.rotation.y = p.rotY + baseAngle + (rand() - 0.5) * 0.5;
+
+            stationGroup.add(passenger);
         });
     }
 

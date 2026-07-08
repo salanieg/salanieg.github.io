@@ -115,6 +115,9 @@ export class StationBuilder {
         this.buildPointLights();
         this.buildStandardDetails();
 
+        // Spawn passengers
+        this.model.spawnPassengersForStation(this.station, this.group);
+
         return this.group;
     }
 
