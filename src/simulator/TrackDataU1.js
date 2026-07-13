@@ -10,6 +10,7 @@
 // side-platform narrowing, so platformSpacing is no longer used at runtime (kept below only
 // as a provenance reference). The two running tracks are centerline ± gap/2.
 export const TRACK_DATA = {
+  lineId: "U1",
   step: 5,
   total: 18615,
   startPad: 70.16,

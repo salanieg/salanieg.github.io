@@ -83,7 +83,7 @@ export const PASSENGER_DATA = {
     "Plärrer": [
         { name: "Der hyper-hektische Umsteiger", shirtColor: "#374151", pose: "sprint", item: "fahrkarte" },
         { name: "Der N-ERGIE-Techniker", shirtColor: "#bae6fd", shirtStyle: "flash", item: "werkzeugkoffer" },
-        { name: "Die VAG-Fahrerin im Feierabend", shirtColor: "#b91c1c", shirtStyle: "vag", item: "lanyard" },
+        { name: "Die U-Bahn-Fahrerin im Feierabend", shirtColor: "#b91c1c", shirtStyle: "casual", item: "lanyard" },
         { name: "Der völlig Orientierungslose", pose: "clueless", item: "netzplan" }
     ],
     "Gostenhof": [
@@ -112,7 +112,7 @@ export const PASSENGER_DATA = {
     ],
     "Muggenhof": [
         { name: "Der Pegnitzauen-Grillmeister", shirtStyle: "hawaii_summer", pantsStyle: "shorts", glasses: "sunglasses", item: "einweggrill" },
-        { name: "Der VAG-Betriebshof-Mechaniker", shirtStyle: "overall_oil", item: "schraubenschluessel" },
+        { name: "Der Betriebshof-Mechaniker", shirtStyle: "overall_oil", item: "schraubenschluessel" },
         { name: "Der Vogelbeobachter von der Pegnitz", shirtStyle: "camo", hairStyle: "angler_hat", item: "fernglas" },
         { name: "Der Hochbahn-Architektur-Fan", pose: "lookup", item: "slr_camera" }
     ],

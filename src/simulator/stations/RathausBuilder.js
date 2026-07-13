@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { StationBuilder } from './StationBuilder.js?v=67';
+import { tagCanvasTextureSRGBKeepLook } from '../TextureUtils.js';
 
 export class RathausBuilder extends StationBuilder {
     setupMaterials() {
@@ -31,7 +32,7 @@ export class RathausBuilder extends StationBuilder {
             }
         }
 
-        const muralTex = new THREE.CanvasTexture(muralCanvas);
+        const muralTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(muralCanvas));
         muralTex.wrapS = THREE.RepeatWrapping;
         muralTex.wrapT = THREE.RepeatWrapping;
         muralTex.repeat.set(10, 1); // stretch along the wall
@@ -58,7 +59,7 @@ export class RathausBuilder extends StationBuilder {
             fctx.arc(Math.random()*256, Math.random()*256, Math.random()*10, 0, Math.PI*2);
             fctx.fill();
         }
-        const floorTex = new THREE.CanvasTexture(floorCanvas);
+        const floorTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(floorCanvas));
         floorTex.wrapS = THREE.RepeatWrapping;
         floorTex.wrapT = THREE.RepeatWrapping;
         floorTex.repeat.set(20, 5);
@@ -134,8 +135,13 @@ export class RathausBuilder extends StationBuilder {
                         if (dz3*dz3 + dy*dy < r*r) discard;
                     }
 
-                    // 2. Straight cutouts at the ends for stairs
-                    if (localZ < -41.0 || localZ > 41.0) {
+                    // 2. Straight cutouts at the ends for stairs. Threshold derived from
+                    // THIS station's own platLength/2 (with the same 4m inset that
+                    // Lorenzkirche's original hardcoded 41.0 implied for its 45m
+                    // half-length) instead of a copied constant — Rathaus's platform
+                    // is 60m half-length, so the old fixed 41.0 landed the cutout
+                    // ~19m short of the real end, nowhere near the actual stairwell.
+                    if (localZ < -${(this.platLength / 2 - 4.0).toFixed(3)} || localZ > ${(this.platLength / 2 - 4.0).toFixed(3)}) {
                         if (abs(localX) < 2.5) {
                             discard;
                         }

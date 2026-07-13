@@ -80,11 +80,17 @@
                 <button id="btn-menu" class="menu-btn">Menü</button>
             </div>
 
-            <!-- Performance Debug HUD (Taste P) -->
+            <!-- Performance Debug HUD (Taste O) -->
             <div id="perf-hud" class="perf-hud" style="display: none;"></div>
 
             <!-- City Model Placement Debug HUD (Taste C) -->
             <div id="city-debug-hud" class="city-debug-hud" style="display: none;"></div>
+
+            <!-- Glass Reflection Tuning HUD (Taste P) -->
+            <div id="glass-debug-hud" class="city-debug-hud glass-debug-hud" style="display: none;"></div>
+
+            <!-- Sound Mixer Debug HUD (Taste N) -->
+            <div id="sound-debug-hud" class="city-debug-hud glass-debug-hud" style="display: none;"></div>
 
             <!-- Menu Overlay: Wenden / Steuerung / Zugmodell / Lautstärke -->
             <div id="menu-overlay" class="menu-overlay" style="display: none;">
@@ -96,7 +102,15 @@
                     <div class="menu-options">
                         <button id="btn-reverse" class="menu-option-btn" title="Fahrtrichtung wenden (nur im Stillstand bei geschlossenen Türen)">Wenden</button>
                         <button id="btn-controls" class="menu-option-btn" title="Steuerungstastaturbelegung anzeigen">Steuerung</button>
-                        <button id="btn-model" class="menu-option-btn" title="Zugmodell wechseln (G1 / DT1)">Zugmodell: G1</button>
+                        <button id="btn-line" class="menu-option-btn" title="Linie wechseln (U1 / U2 / U3)">Linie: U1</button>
+                        <div class="menu-model-row">
+                            <label for="select-model">Zugmodell:</label>
+                            <select id="select-model" class="menu-model-select">
+                                <option value="G1">G1</option>
+                                <option value="DT1">DT1</option>
+                                <option value="DT3">DT3</option>
+                            </select>
+                        </div>
                         <button id="btn-resolution" class="menu-option-btn" title="Renderauflösung ändern (niedriger = flüssiger, aber unschärfer)">Auflösung: 100 %</button>
                         <div class="menu-volume-row">
                             <span class="volume-icon" title="Stummschalten/Aktivieren">🔊</span>
@@ -128,6 +142,6 @@
     </div>
 
     <!-- Main Logic script -->
-    <script type="module" src="./src/main.js?v=119"></script>
+    <script type="module" src="./src/main.js?v=149"></script>
 </body>
 </html>

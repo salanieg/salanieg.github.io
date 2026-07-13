@@ -7,7 +7,9 @@ export class PassengerBuilder {
 
     getMaterial(colorHex) {
         if (!this.materials[colorHex]) {
-            this.materials[colorHex] = new THREE.MeshLambertMaterial({ color: colorHex });
+            const baseColor = new THREE.Color(colorHex);
+            baseColor.multiplyScalar(0.5); // Dim by 50%
+            this.materials[colorHex] = new THREE.MeshBasicMaterial({ color: baseColor, fog: false });
         }
         return this.materials[colorHex];
     }
@@ -44,7 +46,7 @@ export class PassengerBuilder {
                     ctx.fillRect(0, y, w, 2);
                 }
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'plaid') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#8b4513';
@@ -57,7 +59,7 @@ export class PassengerBuilder {
                     ctx.fillRect(0, y, w, 2);
                 }
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'plaid_red') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#b91c1c';
@@ -70,7 +72,7 @@ export class PassengerBuilder {
                     ctx.fillRect(0, y, w, 1);
                 }
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'logo') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#374151';
@@ -80,7 +82,7 @@ export class PassengerBuilder {
                 ctx.fillStyle = '#00ffff';
                 ctx.fillRect(9, 5, 4, 4);
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'yellow_shoulders') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#374151';
@@ -88,7 +90,7 @@ export class PassengerBuilder {
                 ctx.fillStyle = '#ffd700';
                 ctx.fillRect(0, 0, w, 4);
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'tie') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#1e3a8a';
@@ -102,7 +104,7 @@ export class PassengerBuilder {
                 ctx.fillStyle = '#dc2626';
                 ctx.fillRect(w/2 - 1, 3, 2, 8);
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'tie_crooked') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#374151';
@@ -121,7 +123,7 @@ export class PassengerBuilder {
                 ctx.lineTo(w/2 + 1, h - 3);
                 ctx.fill();
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'fcn') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#800000';
@@ -134,7 +136,7 @@ export class PassengerBuilder {
                 ctx.fillRect(4, 0, 2, 2);
                 ctx.fillRect(10, 0, 2, 2);
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'greuther') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#008000';
@@ -147,7 +149,7 @@ export class PassengerBuilder {
                 ctx.fillRect(4, 0, 2, 2);
                 ctx.fillRect(10, 0, 2, 2);
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'split_nuremberg_fuerth') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#b91c1c';
@@ -159,7 +161,7 @@ export class PassengerBuilder {
                 ctx.fillStyle = '#ffffff';
                 for (let y = 2; y < h; y += 4) ctx.fillRect(w/2, y, w/2, 2);
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'doctor') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#ffffff';
@@ -171,7 +173,7 @@ export class PassengerBuilder {
                 ctx.lineTo(w/2, 6);
                 ctx.fill();
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'overall_oil') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#1e3a8a';
@@ -182,7 +184,7 @@ export class PassengerBuilder {
                 ctx.fillRect(2, 5, 2, 2);
                 ctx.fillRect(10, 8, 3, 2);
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'suspenders') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#111111';
@@ -191,7 +193,7 @@ export class PassengerBuilder {
                 ctx.fillRect(3, 0, 2, h);
                 ctx.fillRect(w - 5, 0, 2, h);
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'pinstripe') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#111111';
@@ -201,7 +203,7 @@ export class PassengerBuilder {
                     ctx.fillRect(x, 0, 1, h);
                 }
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'lanyard_datev') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#5c4033';
@@ -214,7 +216,7 @@ export class PassengerBuilder {
                 ctx.lineTo(w - 3, 0);
                 ctx.stroke();
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'evening') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#111111';
@@ -228,7 +230,7 @@ export class PassengerBuilder {
                 ctx.fillStyle = '#111111';
                 ctx.fillRect(w/2 - 2, 2, 4, 2); // bowtie
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'pattern_orange_turquoise') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#ea580c';
@@ -240,7 +242,7 @@ export class PassengerBuilder {
                     }
                 }
             });
-            material = new THREE.MeshLambertMaterial({ map: tex });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else {
             material = this.getMaterial(shirtColor);
         }
@@ -1150,7 +1152,7 @@ export class PassengerBuilder {
                 stick.rotation.z = Math.PI / 8;
                 
                 // Glow mesh
-                const glowMat = new THREE.MeshBasicMaterial({ color: '#00ff00', transparent: true, opacity: 0.35 });
+                const glowMat = new THREE.MeshBasicMaterial({ color: '#00ff00', transparent: true, opacity: 0.35, fog: false });
                 const glow = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.13, 0.025), glowMat);
                 glow.position.set(hR.x, 0.48, hR.z);
                 glow.rotation.z = Math.PI / 8;
@@ -1328,7 +1330,7 @@ export class PassengerBuilder {
                 torch.position.set(hR.x, 0.48, hR.z + 0.02);
                 
                 // transparent yellow beam
-                const beamMat = new THREE.MeshBasicMaterial({ color: '#ffff00', transparent: true, opacity: 0.35 });
+                const beamMat = new THREE.MeshBasicMaterial({ color: '#ffff00', transparent: true, opacity: 0.35, fog: false });
                 const beam = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 8), beamMat);
                 beam.position.set(hR.x, 0.48, hR.z + 0.15);
                 beam.rotation.x = Math.PI / 2;

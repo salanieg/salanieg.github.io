@@ -1,9 +1,12 @@
 import * as THREE from 'three';
-import { Simulation } from './simulator/Simulation.js?v=60';
-import { WorldManager } from './simulator/WorldManager.js?v=53';
-import { TrackManager } from './simulator/TrackManager.js?v=56';
-import { StationModel } from './simulator/StationModel.js?v=56';
-import { TrainModel } from './simulator/TrainModel.js?v=76';
+import { Simulation } from './simulator/Simulation.js?v=65';
+import { WorldManager } from './simulator/WorldManager.js?v=66';
+import { TrackManager } from './simulator/TrackManager.js?v=74';
+import { StationModel } from './simulator/StationModel.js?v=71';
+import { TrainModel } from './simulator/TrainModel.js?v=87';
+import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=10';
+import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=10';
+import { TRACK_DATA_TRUNK } from './simulator/TrackDataTrunk.js?v=2';
 import { AudioManager } from './audio/AudioManager.js?v=39';
 import { RadioManager } from './audio/RadioManager.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -11,14 +14,21 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 class App {
     constructor() {
-        this.sim = new Simulation();
+        // Line rigs (Simulation/TrackManager/StationModel/TrainModel per line, U1/U2/U3) are
+        // built lazily in buildLineRig() -- see init(). Exactly one line is "active" at a
+        // time; this.sim/trackManager/stationModel/trainModel always alias the active rig's
+        // instances, so the rest of the app (keyboard input, teleport, camera, animate())
+        // keeps working unchanged regardless of which line is currently selected.
+        this.lineRigs = {};
+        this.activeLineId = 'U1';
+        this.sim = null;
         this.audio = new AudioManager();
         this.radio = new RadioManager(this.audio);
         this.world = null;
         this.trackManager = null;
         this.stationModel = null;
         this.trainModel = null;
-        
+
         this.clock = new THREE.Clock();
         this.isRunning = false;
         
@@ -47,17 +57,40 @@ class App {
     }
 
     init() {
-        // Build 3D world manager
+        // Build 3D world manager (WorldManager owns the renderer/canvas/cameras -- it is the
+        // one true singleton; it just needs telling which line's Simulation to read from,
+        // which switchLine() keeps in sync via this.world.sim).
         const canvasContainer = document.getElementById('canvas3d');
-        this.world = new WorldManager(canvasContainer, this.sim);
-        
-        // Setup Procedural World Builders
-        this.trackManager = new TrackManager(this.world.scene, this.sim);
-        this.stationModel = new StationModel(this.world.scene, this.sim);
-        this.trainModel = new TrainModel(this.world.scene, this.sim);
+        this.world = new WorldManager(canvasContainer, null);
 
-        // Plärrer reuses the StationModel's floor/stair textures, so build it now.
-        this.trackManager.buildPlaerrer(this.stationModel);
+        // Build U1's rig first and adopt it as active, exactly like the previous single-line
+        // setup did (U1 loads immediately; U2/U3 build lazily on first selection).
+        const u1Rig = this.buildLineRig('U1');
+        this.lineRigs.U1 = u1Rig;
+        this.adoptRig(u1Rig);
+
+        // Plärrer is a bespoke, shared node between all three lines (Gleis 1/2 = U1,
+        // Gleis 3/4 = U2/U3) -- it must survive line switches, so it's reparented out of
+        // U1's lineRoot into the permanent world scene right after being built.
+        this.plaerrerGroup = this.trackManager.buildPlaerrer(this.stationModel);
+        this.world.scene.add(this.plaerrerGroup); // Object3D.add() reparents automatically
+
+        // Shared trunk (Rothenburger Straße..Rathenauplatz): built once, lives permanently in
+        // the world scene like Plärrer above, instead of once per U2/U3 lineRoot. See
+        // buildTrunkRig() and Simulation.isTrunkZone.
+        this.trunkGroup = this.buildTrunkRig();
+        this.world.scene.add(this.trunkGroup);
+
+        // Bespoke switch transitions (Rothenburger Straße / Rathenauplatz): built once, shared
+        // between U2 and U3 like Plärrer/the trunk above, instead of each line deriving its own
+        // (previously noisy, GPS-survey-based) switch geometry. Needs working U2/U3 Simulations
+        // even though their full visual rigs are still lazily built on first line-select.
+        const u2Sim = this.getOrCreateSim('U2'), u3Sim = this.getOrCreateSim('U3');
+        this.switchGroups = {};
+        for (const name of ['Rothenburger Straße', 'Rathenauplatz']) {
+            const g = this.trackManager.buildSwitchTransition(u2Sim, u3Sim, name, name);
+            if (g) { this.switchGroups[name] = g; this.world.scene.add(g); }
+        }
 
         // Load textures first (with a progress bar), then the city model
         this.loadTexturesPhase();
@@ -71,16 +104,11 @@ class App {
         // Bind Start Button
         this.dom.btnStart.addEventListener('click', this.startSimulation.bind(this));
 
-        // Populate Teleport Select Dropdown
-        const teleportSelect = document.getElementById('teleport-select');
-        this.sim.stations.forEach((station, idx) => {
-            const opt = document.createElement('option');
-            opt.value = idx;
-            opt.textContent = station.name;
-            teleportSelect.appendChild(opt);
-        });
+        // Populate Teleport Select Dropdown / mobile list from the active line's stations
+        this.rebuildTeleportUI();
 
         // Teleport Button event listener
+        const teleportSelect = document.getElementById('teleport-select');
         document.getElementById('btn-teleport').addEventListener('click', (e) => {
             const val = teleportSelect.value;
             if (val !== "") {
@@ -92,17 +120,6 @@ class App {
         // Mobile Teleport HUD: single "Teleport" button revealing a station list
         const teleportMobileList = document.getElementById('teleport-mobile-list');
         const teleportMobileBtn = document.getElementById('btn-teleport-mobile');
-        if (teleportMobileList) {
-            this.sim.stations.forEach((station, idx) => {
-                const btn = document.createElement('button');
-                btn.textContent = station.name;
-                btn.addEventListener('click', () => {
-                    this.teleportToStation(idx);
-                    teleportMobileList.classList.remove('open');
-                });
-                teleportMobileList.appendChild(btn);
-            });
-        }
         if (teleportMobileBtn && teleportMobileList) {
             teleportMobileBtn.addEventListener('click', (e) => {
                 teleportMobileList.classList.toggle('open');
@@ -184,32 +201,47 @@ class App {
             e.target.blur();
         });
 
-        // Zugmodell Button event listener
-        document.getElementById('btn-model').addEventListener('click', (e) => {
-            const nextType = this.sim.trainModelType === 'G1' ? 'DT1' : 'G1';
-            this.sim.trainModelType = nextType;
-            document.getElementById('btn-model').textContent = `Zugmodell: ${nextType}`;
+        // Zugmodell Select event listener
+        const modelSelect = document.getElementById('select-model');
+        if (modelSelect) {
+            modelSelect.addEventListener('change', (e) => {
+                const nextType = e.target.value;
+                this.sim.trainModelType = nextType;
 
-            // Update audio engine to use specific sounds for DT1
-            this.audio.setTrainType(nextType);
+                // Update audio engine to use specific sounds for the chosen model
+                this.audio.setTrainType(nextType);
 
-            // Rebuild the 3D train model
-            this.trainModel.setTrainModel(nextType);
+                // Rebuild the 3D train model
+                this.trainModel.setTrainModel(nextType);
 
-            // Upload the freshly built model to the GPU in this frame (one
-            // controlled hitch on the button click instead of a surprise hitch
-            // when the new train first comes into view)
-            this.warmUpRenderer();
+                // Upload the freshly built model to the GPU in this frame (one
+                // controlled hitch on the selection instead of a surprise hitch
+                // when the new train first comes into view)
+                this.warmUpRenderer();
 
-            // Update cameras to make sure they are aligned
-            if (this.world.activeCameraType === 'cab') {
-                this.world.setCamera('cab');
-            }
-            
-            // Play feedback click sound
-            this.audio.playCabSwitch();
-            e.target.blur();
-        });
+                // Update cameras to make sure they are aligned
+                if (this.world.activeCameraType === 'cab') {
+                    this.world.setCamera('cab');
+                }
+
+                // Play feedback click sound
+                this.audio.playCabSwitch();
+                e.target.blur();
+            });
+        }
+
+        // Linie Button event listener: cycles U1 -> U2 -> U3 -> U1 (same idiom as Auflösung)
+        const lineBtn = document.getElementById('btn-line');
+        const lineOrder = ['U1', 'U2', 'U3'];
+        if (lineBtn) {
+            lineBtn.addEventListener('click', (e) => {
+                const idx = lineOrder.indexOf(this.activeLineId);
+                const next = lineOrder[(idx + 1) % lineOrder.length];
+                this.switchLine(next);
+                lineBtn.textContent = `Linie: ${next}`;
+                e.target.blur();
+            });
+        }
 
         // Auflösungs-Button: schaltet die Renderauflösung 100 % -> 75 % -> 50 % durch
         const resBtn = document.getElementById('btn-resolution');
@@ -300,6 +332,169 @@ class App {
         requestAnimationFrame(this.animate.bind(this));
     }
 
+    // Builds a fresh, self-contained {sim, trackManager, stationModel, trainModel} rig for one
+    // line, parented under its own lineRoot group so the whole line can be shown/hidden with a
+    // single .visible toggle when switching. TrackManager/StationModel/TrainModel only ever
+    // call scene.add(...) on whatever "scene" they were constructed with, so handing them a
+    // THREE.Group instead of the real THREE.Scene works transparently (Object3D duck-typing).
+    // Simulation is cheap (arc-length math only, no meshes) but each line's rig is otherwise
+    // lazily built on first selection. The bespoke switch-transition pieces need working U2/U3
+    // Simulations at init() time regardless, so this cache lets buildLineRig() and init() share
+    // the same instance instead of constructing two.
+    getOrCreateSim(lineId) {
+        if (!this._simCache) this._simCache = {};
+        if (!this._simCache[lineId]) {
+            const trackDataByLine = { U2: TRACK_DATA_U2, U3: TRACK_DATA_U3 };
+            this._simCache[lineId] = trackDataByLine[lineId] ? new Simulation(trackDataByLine[lineId]) : new Simulation();
+        }
+        return this._simCache[lineId];
+    }
+
+    buildLineRig(lineId) {
+        const sim = this.getOrCreateSim(lineId);
+        const lineRoot = new THREE.Group();
+        lineRoot.name = `lineRoot_${lineId}`;
+        this.world.scene.add(lineRoot);
+        const trackManager = new TrackManager(lineRoot, sim);
+        const stationModel = new StationModel(lineRoot, sim);
+        const trainModel = new TrainModel(lineRoot, sim);
+        if (lineId !== 'U1') {
+            // U2/U3 lines run the automated DT3 train.
+            sim.trainModelType = 'DT3';
+            trainModel.setTrainModel('DT3');
+        }
+        // Every line stops at the shared bespoke Plärrer hall (U1: Gleis 1/2, U2/U3 ride
+        // the Gleis 3/4 corridor). Hand each rig the permanent group so its own update()
+        // can distance-cull it against ITS Plärrer arc position. (For the initial U1 rig
+        // this.plaerrerGroup doesn't exist yet -- buildPlaerrer assigns it right after.)
+        if (this.plaerrerGroup) trackManager.plaerrerGroup = this.plaerrerGroup;
+        return { lineId, sim, trackManager, stationModel, trainModel, lineRoot };
+    }
+
+    // Builds the shared trunk (Rothenburger Straße..Rathenauplatz) once: a standalone
+    // Simulation/TrackManager/StationModel trio (lineId "TRUNK", never driven, no train) fed
+    // TRACK_DATA_TRUNK. TrackManager's own chunk streaming only keeps a window of the route
+    // resident (it doesn't know this route is small), so every chunk is built directly instead
+    // of going through trackManager.update() -- the trunk is short (~75 chunks) and needs to be
+    // permanently resident anyway, exactly like the bespoke Plärrer hall next to it.
+    // StationModel's constructor already pre-builds all of its stations (just doesn't add them
+    // to the scene until update() culls them in); since there are only 5, add them directly too.
+    buildTrunkRig() {
+        const sim = new Simulation(TRACK_DATA_TRUNK);
+        const root = new THREE.Group();
+        root.name = 'trunkRoot';
+        const trackManager = new TrackManager(root, sim);
+        const stationModel = new StationModel(root, sim);
+        const totalChunks = Math.ceil(sim.totalLength / trackManager.chunkSize);
+        for (let i = 0; i <= totalChunks; i++) {
+            const chunk = trackManager.createChunk(i);
+            trackManager.chunkCache.set(i, chunk);
+            trackManager.activeChunks.set(i, chunk);
+            root.add(chunk);
+        }
+        stationModel.stationsList.forEach(g => root.add(g));
+        this._trunkSim = sim;
+        return root;
+    }
+
+    // Distance-cull the whole shared trunk group against the ACTIVE line's own train position,
+    // same idiom as TrackManager's internal plaerrerGroup toggle. Only U2/U3 ever have a
+    // trunkZone (Simulation.isTrunkZone returns false / trunkZone is null for U1, which never
+    // runs through this corridor), so U1 always keeps it hidden.
+    updateTrunkVisibility() {
+        if (!this.trunkGroup) return;
+        const zone = this.sim.trunkZone;
+        this.trunkGroup.visible = !!zone && this.sim.position >= zone[0] - 600 && this.sim.position <= zone[1] + 600;
+    }
+
+    // Same idiom, per switch-transition piece (each is keyed by station name so it lines up
+    // with this.sim.switchZones, which the ACTIVE line's own Simulation computes for itself).
+    updateSwitchVisibility() {
+        if (!this.switchGroups) return;
+        for (const z of this.sim.switchZones || []) {
+            const g = this.switchGroups[z.name];
+            if (g) g.visible = this.sim.position >= z.range[0] - 600 && this.sim.position <= z.range[1] + 600;
+        }
+    }
+
+    // Points this.sim/trackManager/stationModel/trainModel (and WorldManager's own sim
+    // reference) at the given rig's instances. Every other method in this file reads through
+    // these aliases, so nothing else needs to know a line switch happened.
+    adoptRig(rig) {
+        this.activeLineId = rig.lineId;
+        this.sim = rig.sim;
+        this.trackManager = rig.trackManager;
+        this.stationModel = rig.stationModel;
+        this.trainModel = rig.trainModel;
+        this.world.sim = rig.sim;
+    }
+
+    switchLine(lineId) {
+        if (lineId === this.activeLineId) return;
+        if (!this.lineRigs[lineId]) {
+            this.lineRigs[lineId] = this.buildLineRig(lineId);
+        }
+        this.lineRigs[this.activeLineId].lineRoot.visible = false;
+        this.lineRigs[lineId].lineRoot.visible = true;
+        this.adoptRig(this.lineRigs[lineId]);
+
+        // Reset per-line announcement/UI state (belongs to whichever train is now active).
+        this.announcedNextStation = false;
+        this.lastDoorState = 0;
+
+        this.rebuildTeleportUI();
+        this.audio.setTrainType(this.trainModel.trainType);
+
+        // Update the model dropdown to reflect this line's current model,
+        // defaulting to G1 on U1 and DT3 on U2/U3 for freshly built rigs.
+        const modelSelect = document.getElementById('select-model');
+        if (modelSelect) {
+            modelSelect.value = this.sim.trainModelType || (lineId === 'U1' ? 'G1' : 'DT3');
+        }
+
+        // Snap geometry/camera to the resumed train position, same as the G1<->DT1 rebuild.
+        this.trackManager.update(this.sim.position);
+        this.updateTrunkVisibility();
+        this.updateSwitchVisibility();
+        this.stationModel.update(this.sim.position);
+        this.trainModel.update(0);
+        this.world.update(0, this.trainModel);
+        this.warmUpRenderer();
+        if (this.world.activeCameraType === 'cab') this.world.setCamera('cab');
+        this.audio.playCabSwitch();
+    }
+
+    // (Re)populates the teleport <select> and the mobile teleport button list from the
+    // currently active line's station list. The desktop <select> keeps its static disabled
+    // placeholder <option> (index.html) and only the real per-station options are rebuilt.
+    rebuildTeleportUI() {
+        const teleportSelect = document.getElementById('teleport-select');
+        if (teleportSelect) {
+            while (teleportSelect.options.length > 1) teleportSelect.remove(1);
+            this.sim.stations.forEach((station, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = station.name;
+                teleportSelect.appendChild(opt);
+            });
+            teleportSelect.value = "";
+        }
+
+        const teleportMobileList = document.getElementById('teleport-mobile-list');
+        if (teleportMobileList) {
+            teleportMobileList.innerHTML = '';
+            this.sim.stations.forEach((station, idx) => {
+                const btn = document.createElement('button');
+                btn.textContent = station.name;
+                btn.addEventListener('click', () => {
+                    this.teleportToStation(idx);
+                    teleportMobileList.classList.remove('open');
+                });
+                teleportMobileList.appendChild(btn);
+            });
+        }
+    }
+
     loadTexturesPhase() {
         const btnText = document.getElementById('btn-text');
         const btnLoadingBar = document.getElementById('btn-loading-bar');
@@ -347,6 +542,10 @@ class App {
         });
         this.world.renderer.render(this.world.scene, this.world.activeCamera);
         restore.forEach(o => o.frustumCulled = true);
+
+        // One-time interior snapshot for the faux glass reflections — piggybacks
+        // on the controlled warm-up hitch (startup and G1<->DT1 switch).
+        this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
     }
 
     loadCityModel() {
@@ -580,6 +779,210 @@ class App {
         }
     }
 
+    toggleGlassDebugHud() {
+        const hud = document.getElementById('glass-debug-hud');
+        if (!hud) return;
+
+        this.glassDebugVisible = !this.glassDebugVisible;
+        hud.style.display = this.glassDebugVisible ? 'block' : 'none';
+
+        if (this.glassDebugVisible && !this.glassDebugBuilt) {
+            this.buildGlassDebugHud();
+            this.glassDebugBuilt = true;
+        }
+
+        if (this.glassDebugVisible) {
+            this.refreshGlassDebugHud();
+        }
+    }
+
+    // Behelfs-Overlay (Taste P) zum Live-Tunen der Faux-Glasreflexionen
+    // (statische Interieur-Cubemap, siehe TrainModel.createFauxGlassMaterial):
+    // Reflektivität, Fresnel-Basis und Tönung pro Glasgruppe, samt
+    // Copy-Paste-Zeilen für den this.materials-Block in TrainModel.js.
+    buildGlassDebugHud() {
+        const hud = document.getElementById('glass-debug-hud');
+        if (!hud) return;
+
+        this.glassDebugGroups = [
+            { key: 'window', label: 'Seitenfenster', mats: ['windowGlass', 'cabWindowGlass'] },
+            { key: 'windshield', label: 'Windschutzscheibe', mats: ['windshieldGlass'] },
+            { key: 'partition', label: 'Rückwand (Cockpit)', mats: ['partitionGlass'] }
+        ];
+        this.glassDebugParams = [
+            { key: 'reflectivity', uniform: 'uReflectivity', label: 'Reflexion', min: 0, max: 1, step: 0.01 },
+            { key: 'fresnelBase', uniform: 'uFresnelBase', label: 'Fresnel-Basis', min: 0, max: 1, step: 0.01 },
+            { key: 'opacity', uniform: 'uOpacity', label: 'Tönung', min: 0, max: 0.3, step: 0.005 }
+        ];
+
+        let html = '<div class="cd-title">Glas-Reflexionen (Taste P zum Schließen)</div>';
+        for (const group of this.glassDebugGroups) {
+            html += `<div class="gd-group">${group.label}</div>`;
+            for (const p of this.glassDebugParams) {
+                html += `
+                    <div class="cd-row">
+                        <span class="cd-label">${p.label}</span>
+                        <input type="range" class="gd-slider" data-group="${group.key}" data-param="${p.key}"
+                               min="${p.min}" max="${p.max}" step="${p.step}">
+                        <input type="number" class="cd-input" data-group="${group.key}" data-param="${p.key}" step="${p.step}">
+                    </div>`;
+            }
+        }
+        html += `
+            <textarea id="gd-output" class="cd-output" rows="5" readonly></textarea>
+            <button id="gd-copy" class="cd-btn cd-copy">Code kopieren</button>`;
+
+        hud.innerHTML = html;
+
+        hud.querySelectorAll('.gd-slider, .cd-input').forEach(input => {
+            input.addEventListener('input', () => {
+                const value = parseFloat(input.value);
+                if (Number.isNaN(value)) return;
+                const param = this.glassDebugParams.find(p => p.key === input.dataset.param);
+                for (const mat of this.glassDebugGroupMats(input.dataset.group)) {
+                    mat.uniforms[param.uniform].value = value;
+                }
+                this.refreshGlassDebugHud();
+            });
+        });
+
+        document.getElementById('gd-copy').addEventListener('click', () => {
+            const output = document.getElementById('gd-output');
+            output.select();
+            navigator.clipboard.writeText(output.value).catch(() => {});
+        });
+    }
+
+    // Materials are resolved live from trainModel (not captured at build time)
+    // so the panel keeps working if the train model is ever rebuilt/switched.
+    glassDebugGroupMats(groupKey) {
+        const group = this.glassDebugGroups.find(g => g.key === groupKey);
+        if (!group || !this.trainModel) return [];
+        return group.mats.map(name => this.trainModel.materials[name]).filter(Boolean);
+    }
+
+    refreshGlassDebugHud() {
+        const hud = document.getElementById('glass-debug-hud');
+        if (!hud || !this.glassDebugGroups) return;
+
+        // Sync sliders and number fields from the live uniform values
+        for (const group of this.glassDebugGroups) {
+            const mat = this.glassDebugGroupMats(group.key)[0];
+            if (!mat) continue;
+            for (const p of this.glassDebugParams) {
+                const value = mat.uniforms[p.uniform].value;
+                hud.querySelectorAll(`[data-group="${group.key}"][data-param="${p.key}"]`).forEach(el => {
+                    if (document.activeElement !== el) el.value = Number(value.toFixed(3));
+                });
+            }
+        }
+
+        // Paste-ready lines for the this.materials block in TrainModel.js
+        const output = document.getElementById('gd-output');
+        if (output && this.trainModel) {
+            const line = (name, tint, comment) => {
+                const mat = this.trainModel.materials[name];
+                if (!mat) return '';
+                const u = mat.uniforms;
+                return `${name}: this.createFauxGlassMaterial({ tint: '${tint}', opacity: ${Number(u.uOpacity.value.toFixed(3))}, reflectivity: ${Number(u.uReflectivity.value.toFixed(2))}, fresnelBase: ${Number(u.uFresnelBase.value.toFixed(2))} }),${comment}`;
+            };
+            output.value = [
+                line('windowGlass', '#ffffff', ''),
+                line('cabWindowGlass', '#ffffff', ' // no reflection: curved cab glass broke the box-test math'),
+                line('windshieldGlass', '#ffffff', ' // subtler, so the driver\'s forward view stays clear head-on'),
+                line('partitionGlass', '#000000', ' // cab rear-wall (Rückwand) panes: 10% black tint kept')
+            ].filter(Boolean).join('\n');
+        }
+    }
+
+    // Sound-Mixer Debug-Overlay (Taste N) zum Live-Justieren/Identifizieren der
+    // synthetisierten Fahrgeräusche (AudioManager.debugMix-Multiplikatoren).
+    toggleSoundDebugHud() {
+        const hud = document.getElementById('sound-debug-hud');
+        if (!hud) return;
+
+        this.soundDebugVisible = !this.soundDebugVisible;
+        hud.style.display = this.soundDebugVisible ? 'block' : 'none';
+
+        if (this.soundDebugVisible && !this.soundDebugBuilt) {
+            this.buildSoundDebugHud();
+            this.soundDebugBuilt = true;
+        }
+
+        if (this.soundDebugVisible) {
+            this.refreshSoundDebugHud();
+        }
+    }
+
+    buildSoundDebugHud() {
+        const hud = document.getElementById('sound-debug-hud');
+        if (!hud) return;
+
+        this.soundDebugChannels = [
+            { key: 'motor', label: 'Motor (Fahrmotor-Hum)' },
+            { key: 'inverter', label: 'Inverter (Umrichter-Sirren)' },
+            { key: 'dt1Rumble', label: 'DT1-Rumpeln' },
+            { key: 'dt1Growl', label: 'DT1-Growl' },
+            { key: 'startupSing', label: 'Anfahr-Singen (G1)' },
+            { key: 'ambient', label: 'Ambient-Klangteppich' },
+            { key: 'brake', label: 'Bremsquietschen' },
+            { key: 'rolling', label: 'Rollgeräusch (Schienen)' }
+        ];
+
+        let html = '<div class="cd-title">Sound-Mixer (Taste N zum Schließen)</div>';
+        for (const ch of this.soundDebugChannels) {
+            html += `
+                <div class="cd-row">
+                    <span class="cd-label">${ch.label}</span>
+                    <input type="range" class="gd-slider" data-channel="${ch.key}" min="0" max="2" step="0.01">
+                    <input type="number" class="cd-input" data-channel="${ch.key}" min="0" max="2" step="0.01">
+                </div>`;
+        }
+        html += `
+            <div class="cd-row">
+                <span class="cd-label">Motor stumm bis 25 km/h</span>
+                <input type="checkbox" id="sd-mute-below-25">
+            </div>
+            <button id="sd-reset" class="cd-btn cd-copy">Zurücksetzen</button>`;
+
+        hud.innerHTML = html;
+
+        hud.querySelectorAll('.gd-slider, .cd-input').forEach(input => {
+            input.addEventListener('input', () => {
+                const value = parseFloat(input.value);
+                if (Number.isNaN(value)) return;
+                this.audio.debugMix[input.dataset.channel] = value;
+                this.refreshSoundDebugHud();
+            });
+        });
+
+        document.getElementById('sd-mute-below-25').addEventListener('change', (e) => {
+            this.audio.debugMotorMuteBelow25 = e.target.checked;
+        });
+
+        document.getElementById('sd-reset').addEventListener('click', () => {
+            for (const ch of this.soundDebugChannels) this.audio.debugMix[ch.key] = 1;
+            this.audio.debugMotorMuteBelow25 = false;
+            document.getElementById('sd-mute-below-25').checked = false;
+            this.refreshSoundDebugHud();
+        });
+    }
+
+    refreshSoundDebugHud() {
+        const hud = document.getElementById('sound-debug-hud');
+        if (!hud || !this.soundDebugChannels) return;
+
+        for (const ch of this.soundDebugChannels) {
+            const value = this.audio.debugMix[ch.key];
+            hud.querySelectorAll(`[data-channel="${ch.key}"]`).forEach(el => {
+                if (document.activeElement !== el) el.value = Number(value.toFixed(2));
+            });
+        }
+
+        const muteCheckbox = document.getElementById('sd-mute-below-25');
+        if (muteCheckbox) muteCheckbox.checked = this.audio.debugMotorMuteBelow25;
+    }
+
     startSimulation() {
         // Hide splash screen
         this.dom.splash.style.display = 'none';
@@ -626,7 +1029,7 @@ class App {
         // 2. Keyboard bindings
         document.addEventListener('keydown', (e) => {
             // Performance HUD toggle (works regardless of simulation state)
-            if (e.key.toLowerCase() === 'p') {
+            if (e.key.toLowerCase() === 'o') {
                 this.perfHudVisible = !this.perfHudVisible;
                 const hud = document.getElementById('perf-hud');
                 if (hud) hud.style.display = this.perfHudVisible ? 'block' : 'none';
@@ -634,9 +1037,19 @@ class App {
                 this.perfTimer = 0;
             }
 
+            // Glass reflection tuning HUD toggle (works regardless of simulation state)
+            if (e.key.toLowerCase() === 'p') {
+                this.toggleGlassDebugHud();
+            }
+
             // City model placement debug HUD toggle (works regardless of simulation state)
             if (e.key.toLowerCase() === 'c') {
                 this.toggleCityDebugHud();
+            }
+
+            // Sound mixer tuning HUD toggle (works regardless of simulation state)
+            if (e.key.toLowerCase() === 'n') {
+                this.toggleSoundDebugHud();
             }
 
             if (!this.isRunning) return;
@@ -911,11 +1324,13 @@ class App {
 
         // Always update 3D scene
         this.trackManager.update(this.sim.position);
+        this.updateTrunkVisibility();
+        this.updateSwitchVisibility();
         this.stationModel.update(this.sim.position);
         this.trainModel.update(dt);
         this.world.update(dt, this.trainModel);
 
-        // Performance HUD (Taste P): FPS + Renderer-Statistiken, 2x pro Sekunde aktualisiert
+        // Performance HUD (Taste O): FPS + Renderer-Statistiken, 2x pro Sekunde aktualisiert
         if (this.perfHudVisible) {
             this.perfFrames++;
             this.perfTimer += dt;
@@ -1003,14 +1418,20 @@ class App {
 
         // Force update 3D meshes immediately
         this.trackManager.update(this.sim.position);
+        this.updateTrunkVisibility();
+        this.updateSwitchVisibility();
         this.stationModel.update(this.sim.position);
         this.trainModel.update(0);
         this.world.update(0, this.trainModel);
 
         // If orbit camera is active, update orbit controls target
         if (this.world.activeCameraType === 'orbit') {
-            const centerCar = this.trainModel.carriages[1];
-            this.world.controls.target.copy(centerCar.localToWorld(new THREE.Vector3(0, 1.8, -9.5)));
+            const activeCabCar = this.trainModel.carriages[this.sim.isReversing ? 3 : 0];
+            const isG1 = (this.sim.trainModelType === 'G1');
+            const carLength = isG1 ? 19.270 : 19.0;
+            const cabLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 2.00, -carLength + 1.2) : new THREE.Vector3(0, 2.00, -1.2);
+
+            this.world.controls.target.copy(activeCabCar.localToWorld(cabLocalPos));
             this.world.controls.update();
         } else if (this.world.activeCameraType === 'platform') {
             // For platform view, re-initialize coordinates for the new station
@@ -1021,14 +1442,16 @@ class App {
 
 // Instantiate App
 window.addEventListener('DOMContentLoaded', () => {
-    // Load the Jost Regular font programmatically to ensure it is fully ready
-    // before the canvas textures are generated in App initialization.
-    const font = new FontFace('Jost Regular', 'url(./src/assets/Jost-Regular.ttf)');
-    font.load().then((loadedFont) => {
-        document.fonts.add(loadedFont);
+    // Load the Jost Regular and Doto Bold fonts programmatically to ensure they are fully ready
+    // before the canvas textures are generated and the DOM UI is rendered.
+    const jostFont = new FontFace('Jost Regular', 'url(./src/assets/Jost-Regular.ttf)');
+    const dotoFont = new FontFace('Doto Bold', 'url(./src/assets/Doto-Bold.ttf)');
+
+    Promise.all([jostFont.load(), dotoFont.load()]).then((loadedFonts) => {
+        loadedFonts.forEach(font => document.fonts.add(font));
         new App();
     }).catch((err) => {
-        console.error("Failed to load Jost Regular, starting app anyway:", err);
+        console.error("Failed to load fonts, starting app anyway:", err);
         new App();
     });
 });

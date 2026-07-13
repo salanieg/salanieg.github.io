@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { StationBuilder } from './stations/StationBuilder.js?v=67';
+import { tagCanvasTextureSRGBKeepLook } from './TextureUtils.js';
 
 export class TrackManager {
     constructor(scene, simulation) {
         this.scene = scene;
         this.sim = simulation;
-        
+
         // Chunk configuration
         this.chunkSize = 50; // meters per track segment
         this.visibleChunksCount = 40; // load +/- 40 chunks (4km total window)
@@ -14,9 +15,21 @@ export class TrackManager {
         this.activeChunks = new Map(); // chunkIndex -> THREE.Group currently in the scene
         
         const ballastTex = this.createBallastTexture();
+        const concreteBedTex = this.createConcreteBedTexture();
+        const darkSleeperTex = this.createTunnelConcreteTexture();
         this.materials = {
-            rail: new THREE.MeshLambertMaterial({ color: '#8b4513' }),
-            sleeper: new THREE.MeshLambertMaterial({ color: '#cccccc' }), // light grey concrete sleepers
+            // Rail cross-section is split into a dark steel body (this.geometries.rail) and
+            // a separate glossy head cap (this.geometries.railHead) sitting on top of it, so
+            // the "white shine" only affects the top running surface, not the whole rail.
+            rail: new THREE.MeshLambertMaterial({ color: '#3b3530' }),
+            railHead: new THREE.MeshPhongMaterial({ color: '#d8d8d8', specular: '#ffffff', shininess: 120 }),
+            // Small fastener clips (Halterungen) connecting underground (Innenstrecke) rails
+            // to the concrete Gleisbett every 20cm, instead of gravel + cross-ties.
+            railClip: new THREE.MeshLambertMaterial({ color: '#292824' }),
+            tunnelRailClip: new THREE.MeshLambertMaterial({ color: '#1c1a18' }),
+            // Open-air (Außenstrecke) sleepers/ties, kept but recolored to a dark concrete
+            // texture instead of flat light grey.
+            sleeper: new THREE.MeshLambertMaterial({ map: darkSleeperTex, color: '#ffffff' }),
             // side: DoubleSide on ballast/tunnelBallast/viaduct because they are swept into
             // continuous curved beds/fences (buildSweptTrackBox) that bend both left and
             // right along the route; DoubleSide sidesteps any winding-order ambiguity from
@@ -26,14 +39,22 @@ export class TrackManager {
                 map: ballastTex,
                 side: THREE.DoubleSide
             }),
+            // Ballastless concrete Gleisbett for underground (Innenstrecke) track — replaces
+            // gravel ballast there entirely (lit station-platform / dark plain-tunnel variant).
+            innerBed: new THREE.MeshLambertMaterial({ map: concreteBedTex, side: THREE.DoubleSide }),
+            tunnelInnerBed: new THREE.MeshLambertMaterial({ map: concreteBedTex, color: '#888888', side: THREE.DoubleSide }),
             thirdRail: new THREE.MeshLambertMaterial({ color: '#cccccc' }), // light grey matte metal power rail
             tunnelWall: new THREE.MeshLambertMaterial({ map: this.createTunnelConcreteTexture(), color: 0xffffff, side: THREE.DoubleSide }),
+            dividerWall: new THREE.MeshLambertMaterial({ map: this.createTunnelConcreteTexture(), color: 0xffffff, side: THREE.DoubleSide }),
+            dividerPillar: new THREE.MeshLambertMaterial({ map: this.createTunnelConcreteTexture(), color: 0xffffff }),
             tunnelBallast: new THREE.MeshLambertMaterial({ map: ballastTex, color: '#888888', side: THREE.DoubleSide }),
-            tunnelRail: new THREE.MeshLambertMaterial({ color: '#5d2e0d' }),
-            tunnelSleeper: new THREE.MeshLambertMaterial({ color: '#777777' }),
+            tunnelRail: new THREE.MeshLambertMaterial({ color: '#241f1c' }),
+            tunnelRailHead: new THREE.MeshPhongMaterial({ color: '#8a8a8a', specular: '#cccccc', shininess: 80 }),
+            tunnelSleeper: new THREE.MeshLambertMaterial({ map: darkSleeperTex, color: '#666666' }),
             tunnelThirdRail: new THREE.MeshLambertMaterial({ color: '#bbbbbb' }),
             viaduct: new THREE.MeshLambertMaterial({ color: '#4a4a4a', side: THREE.DoubleSide }),
             wall: new THREE.MeshLambertMaterial({ color: '#333333' }),
+            cable: new THREE.MeshLambertMaterial({ color: '#000000' }),
             portal: new THREE.MeshLambertMaterial({ color: '#2c3e50' }),
             fence: new THREE.MeshLambertMaterial({
                 map: this.createFenceTexture(),
@@ -41,16 +62,17 @@ export class TrackManager {
                 alphaTest: 0.5,
                 side: THREE.DoubleSide
             }),
+            fencePostMat: new THREE.MeshLambertMaterial({ color: '#b0b0b0' }),
             concrete: this.createRoughConcreteMaterial(),
             // Neon lights materials
-            tunnelGlow: new THREE.MeshBasicMaterial({ color: '#e0f2fe' }), // cyan-white neon glow
+            tunnelGlow: new THREE.MeshBasicMaterial({ color: '#ffffff' }), // white neon glow
             tunnelFixtureMat: new THREE.MeshLambertMaterial({ color: '#1e293b' }), // dark Slate casing
             neonHaloMat: new THREE.MeshBasicMaterial({
                 map: this.createNeonHaloTexture(),
                 blending: THREE.NormalBlending,
                 transparent: true,
                 depthWrite: false,
-                color: 0xc8eeff,
+                color: 0xffffff,
                 side: THREE.DoubleSide
             }),
             
@@ -65,26 +87,38 @@ export class TrackManager {
             // side: DoubleSide because the shaft cutout strips are now swept continuously
             // (buildSweptTrackBox) along curves in both directions; harmless for the flat
             // plane usage elsewhere.
-            ground: new THREE.MeshLambertMaterial({
-                color: '#4a9c70', // solid mint green
-                side: THREE.DoubleSide
-            }),
-            bgGround: new THREE.MeshLambertMaterial({
-                color: '#4a9c70' // unified color to prevent brightness seams
-            })
+            ground: (() => {
+                const tex = this.createGrassTexture();
+                tex.repeat.set(0.1, 0.1);
+                return new THREE.MeshLambertMaterial({
+                    map: tex,
+                    side: THREE.DoubleSide,
+                    polygonOffset: true,
+                    polygonOffsetFactor: 4,
+                    polygonOffsetUnits: 4
+                });
+            })()
         };
         
         // PRE-CREATE ALL GEOMETRIES AT STARTUP
         // This avoids memory allocations, Garbage Collection, and GPU buffer re-uploads during the game loop.
         this.geometries = {
-            rail: new THREE.BoxGeometry(0.1, 0.15, 1.0), // unit length for dynamic scaling
+            // Typical Vignole rail profile (foot / web / head), unit length for dynamic
+            // scaling; the flat glossy head cap is a separate geometry (see below) so it can
+            // carry its own "white shine" material without splitting extrude face groups.
+            rail: this.createRailBodyGeometry(),
+            railHead: this.createRailHeadGeometry(),
+            railClip: new THREE.BoxGeometry(0.16, 0.03, 0.06), // small fastener connecting inner rails to the concrete Gleisbett
             sleeper: new THREE.BoxGeometry(2.4, 0.12, 0.3),
             thirdRail: new THREE.BoxGeometry(0.12, 0.15, 1.0), // unit length
             thirdRailCover: new THREE.BoxGeometry(0.24, 0.08, 1.0), // unit length
             fencePost: new THREE.BoxGeometry(0.04, 1.0, 0.04),
             
-            // Tunnel Elements (Double track width, 5m sub-segments)
-            tunnelWall: new THREE.CylinderGeometry(6.2, 6.2, 5.0, 8, 1, true),
+            // Tunnel Elements (rectangular cross-section, built procedurally)
+            // tunnelWall geometry is built procedurally in createTunnelWallMesh;
+            // dividerWall likewise (buildSweptTrackBox, continuously curved) —
+            // only the discrete dividerPillar still uses a shared box geometry.
+            dividerPillar: new THREE.BoxGeometry(0.5, 1, 0.5), // unit height, scaled per segment
             tunnelFixture: new THREE.BoxGeometry(0.12, 0.08, 1.2), // thin casing along Z
             tunnelGlow: new THREE.BoxGeometry(0.08, 0.04, 1.0), // neon tube along Z
             tunnelHalo: (() => {
@@ -101,22 +135,40 @@ export class TrackManager {
             building: new THREE.BoxGeometry(1, 1, 1),
             window: new THREE.PlaneGeometry(1, 1),
             street: new THREE.PlaneGeometry(6, 5.0), // 5m street sub-segments
-
-            // Ground (clouds are now part of WorldManager's sky-photo background)
-            ground: new THREE.PlaneGeometry(120, 10.0), // Overlapped to prevent curve seams (10m instead of 5m)
-            bgGround: new THREE.PlaneGeometry(450, 25.0) // Overlapped to prevent curve seams (25m instead of 5m)
         };
 
         // Align geometries
-        this.geometries.tunnelWall.rotateX(Math.PI / 2);
+        // tunnelWall geometry is built procedurally (no pre-created geometry to rotate)
 
         this.geometries.street.rotateX(-Math.PI / 2);
-        this.geometries.ground.rotateX(-Math.PI / 2);
-        this.geometries.bgGround.rotateX(-Math.PI / 2);
 
         // Pre-create the portal extrude geometry
         this.geometries.portal = this.createPortalGeometry();
- 
+
+        // Apply world-space-like UV mapping to the divider pillar (an
+        // InstancedMesh, scaled per instance) so the texture tiles
+        // consistently. Since it's a simple box, we can adjust the UVs of the
+        // base geometry so that after scaling it lands closer to our 4m target.
+        const scaleUV = (geom, sx, sy, sz) => {
+            const uv = geom.attributes.uv;
+            for (let i = 0; i < uv.count; i++) {
+                // Determine which face this vertex belongs to based on normal
+                // (Quick hack for BoxGeometry: 6 groups of 4 vertices)
+                const groupIdx = Math.floor(i / 4);
+                if (groupIdx === 0 || groupIdx === 1) { // ±X faces (height x depth)
+                    uv.setXY(i, uv.getX(i) * sz / 4, uv.getY(i) * sy / 4);
+                } else if (groupIdx === 2 || groupIdx === 3) { // ±Y faces (width x depth)
+                    uv.setXY(i, uv.getX(i) * sx / 4, uv.getY(i) * sz / 4);
+                } else { // ±Z faces (width x height)
+                    uv.setXY(i, uv.getX(i) * sx / 4, uv.getY(i) * sy / 4);
+                }
+            }
+            uv.needsUpdate = true;
+        };
+        // dividerPillar is scaled by (dividerWidth, 6.6, dividerWidth) per instance.
+        // We can't perfectly match per-instance width here, but we can fix height (6.6) and length (1.0).
+        scaleUV(this.geometries.dividerPillar, 1.0, 6.6, 1.0);
+
         
         // Pre-create a shared sleeper InstancedMesh template matrix
         this.sleepersPerChunk = 25; // 25 sleepers per chunk for perfect curves
@@ -130,6 +182,321 @@ export class TrackManager {
         // hall + diverging tubes) is built from main.js AFTER the StationModel exists, so it
         // can reuse the station floor/stair textures. See buildPlaerrer(stationModel).
 
+        // U2<->U3 switch transitions (Rothenburger Straße / Rathenauplatz) are a shared,
+        // hand-authored piece built ONCE by main.js (TrackManager.buildSwitchTransition, same
+        // idiom as buildPlaerrer) and added directly to the world scene -- nothing to do here;
+        // this line's own chunk generation just skips that arc range (Simulation.isSwitchZone,
+        // see createChunk).
+
+        // U2/U3 only: bespoke stacked approach tracks + tubes through this line's own
+        // Plärrer zone, meeting the permanent shared hall's Gleis 3/4 mock stubs flush.
+        this.buildPlaerrerApproach();
+    }
+
+    // ---------- shared low-level helpers for bespoke (non-chunk) track rendering ----------
+
+    // Matrix placing a unit-length box between A and B, shifted `lateral` metres to the
+    // right of the segment direction and `yOff` up (same math as buildPlaerrer's local
+    // segMatrix; duplicated there to keep that fragile builder untouched).
+    _trackSegMatrix(A, B, lateral, yOff) {
+        const dir = new THREE.Vector3().subVectors(B, A);
+        const length = dir.length();
+        if (length < 0.01) return null;
+        dir.normalize();
+        const up = new THREE.Vector3(0, 1, 0);
+        const right = new THREE.Vector3().crossVectors(up, dir).normalize();
+        const aUp = new THREE.Vector3().crossVectors(dir, right).normalize();
+        const mid = new THREE.Vector3().addVectors(A, B).multiplyScalar(0.5).addScaledVector(right, lateral);
+        mid.y += yOff;
+        const m = new THREE.Matrix4().makeBasis(right, aUp, dir);
+        m.setPosition(mid);
+        m.multiply(new THREE.Matrix4().makeScale(1, 1, length));
+        return m;
+    }
+
+    _newTrackCollectors() {
+        return { bed: [], sleeper: [], rail: [], railHead: [], power: [], cover: [] };
+    }
+
+    // Collect bed/rail/railHead/power/cover (+ optional sleeper) instance matrices for ONE
+    // track whose CENTER runs along pts[] (world-space points at track elevation). Same
+    // per-part offsets as buildPlaerrer's renderTrack, so bespoke track built here joins
+    // the hall's mock Gleis 3/4 stubs seamlessly.
+    _collectTrackRun(coll, pts, { powerSide = 1, sleepers = false } = {}) {
+        const GAUGE = 0.7175, POWER = 1.1;
+        for (let i = 0; i < pts.length - 1; i++) {
+            const A = pts[i], B = pts[i + 1];
+            const push = (arr, lateral, yOff) => {
+                const m = this._trackSegMatrix(A, B, lateral, yOff);
+                if (m) arr.push(m);
+            };
+            push(coll.bed, 0, -0.375);
+            push(coll.rail, -GAUGE, -0.21); push(coll.railHead, -GAUGE, -0.21);
+            push(coll.rail, GAUGE, -0.21); push(coll.railHead, GAUGE, -0.21);
+            push(coll.power, powerSide * POWER, -0.05);
+            push(coll.cover, powerSide * POWER, 0.03);
+            if (sleepers) {
+                const dir = new THREE.Vector3().subVectors(B, A);
+                const length = dir.length();
+                if (length < 0.01) continue;
+                const angle = Math.atan2(dir.x, dir.z);
+                const nS = Math.max(1, Math.round(length / 2));
+                for (let s = 0; s < nS; s++) {
+                    const t = (s + 0.5) / nS;
+                    const pp = A.clone().lerp(B, t);
+                    const m = new THREE.Matrix4().makeRotationY(angle);
+                    m.setPosition(pp.x, pp.y - 0.25, pp.z);
+                    coll.sleeper.push(m);
+                }
+            }
+        }
+    }
+
+    _addInstanced(group, geom, mat, matrices) {
+        if (!matrices.length) return;
+        const im = new THREE.InstancedMesh(geom, mat, matrices.length);
+        matrices.forEach((m, i) => im.setMatrixAt(i, m));
+        im.instanceMatrix.needsUpdate = true;
+        group.add(im);
+    }
+
+    _emitTrackCollectors(group, coll) {
+        if (!this._bespokeBedGeom) this._bespokeBedGeom = new THREE.BoxGeometry(3.6, 0.15, 1.0);
+        this._addInstanced(group, this._bespokeBedGeom, this.materials.tunnelBallast, coll.bed);
+        this._addInstanced(group, this.geometries.sleeper, this.materials.tunnelSleeper, coll.sleeper);
+        this._addInstanced(group, this.geometries.rail, this.materials.tunnelRail, coll.rail);
+        this._addInstanced(group, this.geometries.railHead, this.materials.tunnelRailHead, coll.railHead);
+        this._addInstanced(group, this.geometries.thirdRail, this.materials.tunnelThirdRail, coll.power);
+        this._addInstanced(group, this.geometries.thirdRailCover, this.materials.tunnelThirdRail, coll.cover);
+    }
+
+    // ONE rectangular tunnel-wall mesh (floor/ceiling/side walls, inward-facing, 4m-tiled
+    // UVs like createTunnelWallMesh) swept along an arbitrary world-space centerline --
+    // used for the junction branch tubes, which don't follow the own line's arc
+    // parametrization. pts are at track elevation; floor/ceiling match the mainline tunnel
+    // cross-section (centre offset +0.8: floor -2.8, ceiling +3.8 -> -2.0 / +4.6 here).
+    _buildPolylineTunnel(group, pts, halfWFn, floorY = -2.0, ceilY = 4.6) {
+        if (pts.length < 2) return null;
+        const vertices = [], uvs = [], indices = [];
+        let cum = 0;
+        for (let i = 0; i < pts.length; i++) {
+            const P = pts[i];
+            const Pn = pts[Math.min(pts.length - 1, i + 1)];
+            const Pp = pts[Math.max(0, i - 1)];
+            const tan = new THREE.Vector3().subVectors(Pn, Pp);
+            tan.y = 0;
+            tan.normalize();
+            const nX = -tan.z, nZ = tan.x;
+            if (i > 0) cum += P.distanceTo(pts[i - 1]);
+            const hw = halfWFn(i);
+            const corners = [[-hw, floorY], [hw, floorY], [hw, ceilY], [-hw, ceilY], [-hw, floorY]];
+            let per = 0, prev = null;
+            for (const [lat, y] of corners) {
+                if (prev) per += Math.hypot(lat - prev[0], y - prev[1]);
+                prev = [lat, y];
+                vertices.push(P.x + nX * lat, P.y + y, P.z + nZ * lat);
+                uvs.push(per / 4.0, cum / 4.0);
+            }
+        }
+        const vertsPerRing = 5;
+        for (let r = 0; r < pts.length - 1; r++) {
+            for (let k = 0; k < 4; k++) {
+                const a = r * vertsPerRing + k;
+                const b = a + 1;
+                const c = a + vertsPerRing;
+                const d = b + vertsPerRing;
+                indices.push(a, b, c, b, d, c);
+            }
+        }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+        const mesh = new THREE.Mesh(geometry, this.materials.tunnelWall);
+        group.add(mesh);
+        return mesh;
+    }
+
+    // Cubic Hermite evaluator: p0/p1 endpoint positions, t0/t1 endpoint TANGENT VECTORS already
+    // scaled to the desired "pull" (standard practice: chord length, so the curve doesn't
+    // overshoot or undershoot). u in [0,1]. Used by buildSwitchTransition for a smooth,
+    // mathematically continuous (C1: matches position AND direction at both ends) branch
+    // curve -- unlike the old GPS-survey-derived junction geometry, this is exact by construction.
+    _hermitePoint(p0, t0, p1, t1, u) {
+        const u2 = u * u, u3 = u2 * u;
+        const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+        return new THREE.Vector3(
+            h00 * p0.x + h10 * t0.x + h01 * p1.x + h11 * t1.x,
+            h00 * p0.y + h10 * t0.y + h01 * p1.y + h11 * t1.y,
+            h00 * p0.z + h10 * t0.z + h01 * p1.z + h11 * t1.z,
+        );
+    }
+
+    // Samples position+tangent+track-spacing ("frame") from a Simulation at arc distance s.
+    _frameAt(sim, s) {
+        return { pos: sim.getTrackPosition(s), tan: sim.getTrackTangent(s), spacing: sim.getTrackSpacing(s) };
+    }
+
+    // Builds ONE Hermite branch (a full double-track tunnel) from an entry frame to an exit
+    // frame, sampled at `steps` even points. Both endpoint tangents are scaled by the chord
+    // length between the frames (standard Hermite "pull" heuristic) so the curve starts/ends
+    // exactly parallel to the entry/exit track direction -- seamless with whatever precedes
+    // (the station platform) and follows (that line's own real procedural tunnel) it.
+    _buildHermiteBranch(group, coll, entry, exit, steps = 100) {
+        const chord = entry.pos.distanceTo(exit.pos);
+        const t0 = entry.tan.clone().normalize().multiplyScalar(chord);
+        const t1 = exit.tan.clone().normalize().multiplyScalar(chord);
+        const pts = [], halfW = [];
+        for (let i = 0; i <= steps; i++) {
+            const u = i / steps;
+            const p = this._hermitePoint(entry.pos, t0, exit.pos, t1, u);
+            p.y -= 0.004; // avoid z-fighting where branches still overlap near the entry
+            pts.push(p);
+            // Track spacing eases from the entry's (shared, narrow) spacing to the exit's
+            // (that line's own, real) spacing with the same smoothstep used elsewhere in the
+            // project for taper blends -- avoids a kink in the RATE of widening.
+            const e = u * u * (3 - 2 * u);
+            const spacing = entry.spacing + (exit.spacing - entry.spacing) * e;
+            halfW.push(spacing / 2 + 3.1);
+        }
+        this._buildPolylineTunnel(group, pts, (i) => halfW[i]);
+        const buildTrackPts = (sgn) => pts.map((p, i) => {
+            const pp = pts[Math.max(0, i - 1)], pn = pts[Math.min(pts.length - 1, i + 1)];
+            const tan = new THREE.Vector3().subVectors(pn, pp);
+            tan.y = 0; tan.normalize();
+            const spacing = (halfW[i] - 3.1) * 2;
+            return p.clone().addScaledVector(new THREE.Vector3(-tan.z, 0, tan.x), sgn * spacing / 2);
+        });
+        this._collectTrackRun(coll, buildTrackPts(1), { powerSide: 1 });
+        this._collectTrackRun(coll, buildTrackPts(-1), { powerSide: -1 });
+    }
+
+    // Builds ONE shared, hand-authored switch transition at `stationName`: from a single entry
+    // frame (the shared trunk double track, just past the platform) it smoothly forks into U2's
+    // own real future track and U3's own real future track, each SWITCH_LEN further along that
+    // line's OWN real Simulation -- exactly where that line's normal procedural tunnel already
+    // continues, so the hand-off at the far end is seamless (zero position/tangent delta, no
+    // cap, no dead end). u2Sim/u3Sim each have their OWN arc-length numbering (they start from
+    // opposite termini), so every arc distance used here is computed from EACH line's own
+    // station lookup -- never reusing one line's raw arc number on the other line's Simulation.
+    // The entry frame itself uses u2Sim: within the trunk-shared zone (well past +5m from the
+    // platform edge is still deep inside the byte-identical splice core, see
+    // gen_topology_u23.mjs's TRUNK_MARGIN/BLEND) u2Sim and u3Sim agree here to within a few cm,
+    // so either line's own Simulation is an equally valid source for that one shared point.
+    // Built ONCE (called from main.js via U1's TrackManager, same precedent as buildPlaerrer)
+    // and added directly to the world scene, so U2 and U3 render the literal same geometry here.
+    buildSwitchTransition(u2Sim, u3Sim, stationName, name) {
+        const SWITCH_LEN = 250;
+        // dir: away from the trunk interior, toward the real switch -- must match
+        // Simulation.js's SWITCH_STATIONS convention (Rothenburger Str.: -1, Rathenauplatz: +1).
+        const dir = stationName === 'Rothenburger Straße' ? -1 : 1;
+        const st2 = u2Sim.stations.find(s => s.name === stationName);
+        const st3 = u3Sim.stations.find(s => s.name === stationName);
+        if (!st2 || !st3) return null;
+
+        // getTrackTangent always points in the direction of INCREASING arc length; for dir=-1
+        // stations (Rothenburger Straße) that's backwards relative to the entry->exit direction
+        // of travel, which turned the Hermite curve into a near-reversal (~150deg kink) until
+        // caught by this session's own smoothness check. Flipping by `dir` makes every tangent
+        // point the way the curve actually travels, regardless of that station's sign.
+        const flip = (f) => { f.tan.multiplyScalar(dir); return f; };
+        const entry = flip(this._frameAt(u2Sim, st2.position + dir * (st2.halfLength + 5)));
+        const exitU2 = flip(this._frameAt(u2Sim, st2.position + dir * (st2.halfLength + 5 + SWITCH_LEN)));
+        const exitU3 = flip(this._frameAt(u3Sim, st3.position + dir * (st3.halfLength + 5 + SWITCH_LEN)));
+
+        const group = new THREE.Group();
+        group.name = `switchTransition_${name}`;
+        const coll = this._newTrackCollectors();
+        this._buildHermiteBranch(group, coll, entry, exitU2);
+        this._buildHermiteBranch(group, coll, entry, exitU3);
+        this._emitTrackCollectors(group, coll);
+        return group;
+    }
+
+    // U2/U3 only: their sim.plaerrer is set (stacked semantics like U1), so the generic
+    // chunk pipeline suppresses ALL tunnel/rails within +-(plStackHalf+plRamp) of Plärrer.
+    // U1's permanent hall provides the platform section plus 20m mock Gleis 3/4 stubs;
+    // everything beyond that -- the stacked single tracks (forward = LOWER Gleis 4 slot,
+    // reverse = UPPER Gleis 3, see Simulation.plaerrerForwardDives) with their diverging
+    // tubes and crown lamp strips -- is built here along this line's OWN centerline, which
+    // the generator pinned onto exactly the hall's Gleis 3/4 corridor.
+    buildPlaerrerApproach() {
+        const sim = this.sim;
+        const p = sim.plaerrer;
+        if (!p || !sim.track.lineId || sim.track.lineId === 'U1') return;
+        const P = p.position;
+        const zoneHalf = sim.plStackHalf + sim.plRamp;
+        const innerHalf = p.halfLength + 20; // where the hall's mock Gleis 3/4 stubs end
+        const group = new THREE.Group();
+        group.name = `plaerrerApproach_${sim.track.lineId}`;
+
+        const sp = (d) => sim.getTrackSpacing(d);
+        const dive = (d) => sim.getLowerLevelOffset(d);
+        const samplePath = (latFn, yFn, d0, d1, ds = 5) => {
+            const pts = [];
+            for (let d = d0; d <= d1 + 0.01; d += ds) {
+                const c = sim.getTrackPosition(d);
+                const tan = sim.getTrackTangent(d);
+                const pt = c.clone().addScaledVector(new THREE.Vector3(-tan.z, 0, tan.x), latFn(d));
+                pt.y = c.y + yFn(d);
+                pts.push(pt);
+            }
+            return pts;
+        };
+
+        if (!this._plTubeGeom) this._plTubeGeom = new THREE.CylinderGeometry(1, 1, 1, 20, 1, true).rotateX(Math.PI / 2);
+        if (!this._plGlowGeom) this._plGlowGeom = new THREE.BoxGeometry(0.55, 0.07, 1);
+        const TUBE_R = 3.4;
+        const up = new THREE.Vector3(0, 1, 0);
+        const tubeM = [], tubeGlowM = [];
+        const renderTube = (pts) => {
+            for (let i = 0; i < pts.length - 1; i++) {
+                const prev = pts[i], cur = pts[i + 1];
+                const dir = new THREE.Vector3().subVectors(cur, prev);
+                const len = dir.length();
+                if (len < 0.01) continue;
+                dir.normalize();
+                const right = new THREE.Vector3().crossVectors(up, dir).normalize();
+                const aUp = new THREE.Vector3().crossVectors(dir, right).normalize();
+                const mid = new THREE.Vector3().addVectors(prev, cur).multiplyScalar(0.5);
+                mid.y += 0.8;
+                const m = new THREE.Matrix4().makeBasis(right, aUp, dir);
+                m.setPosition(mid);
+                m.multiply(new THREE.Matrix4().makeScale(TUBE_R, TUBE_R, len));
+                tubeM.push(m);
+                const gm = new THREE.Matrix4().makeBasis(right, aUp, dir);
+                gm.setPosition(mid.clone().addScaledVector(aUp, TUBE_R * 0.82));
+                gm.multiply(new THREE.Matrix4().makeScale(1, 1, len));
+                tubeGlowM.push(gm);
+            }
+        };
+
+        const coll = this._newTrackCollectors();
+        for (const sign of [-1, 1]) {
+            const d0 = sign < 0 ? P - zoneHalf : P + innerHalf;
+            const d1 = sign < 0 ? P - innerHalf : P + zoneHalf;
+            // Forward (+sp/2) rides the LOWER Gleis 4 slot for U2/U3; reverse the upper.
+            // Power rail at -1.1 for both: matches the hall's mock stubs, whose renderTrack
+            // placed it at +1.1 in U1's (anti-parallel) frame.
+            this._collectTrackRun(coll, samplePath((d) => sp(d) / 2, dive, d0, d1), { powerSide: -1, sleepers: true });
+            this._collectTrackRun(coll, samplePath((d) => -sp(d) / 2, () => 0, d0, d1), { powerSide: -1, sleepers: true });
+            renderTube(samplePath((d) => sp(d) / 2, dive, d0, d1, 10));
+            renderTube(samplePath((d) => -sp(d) / 2, () => 0, d0, d1, 10));
+        }
+        this._emitTrackCollectors(group, coll);
+        this._addInstanced(group, this._plTubeGeom, this.materials.tunnelWall, tubeM);
+        this._addInstanced(group, this._plGlowGeom, this.materials.tunnelGlow, tubeGlowM);
+        this.scene.add(group);
+    }
+
+    // Per-side tunnel half-width: sideSign +1 = positive lateral (normal (-tz, 0, tx))
+    // direction. The two sides used to differ near U2/U3 switches (junction-cavern
+    // widening); those are now a fully separate, hand-authored piece
+    // (buildSwitchTransition) that owns its own geometry, so both sides are just the
+    // symmetric base width everywhere else.
+    getTunnelSideWidth(s, sideSign) {
+        return this.getTunnelHalfWidth(s);
     }
 
     buildPlaerrer(stationModel) {
@@ -151,7 +518,7 @@ export class TrackManager {
         const lowerH = LOWER_CLEAR + platTopY;        // total height of the lower level (4.615m)
 
         // ---------- instanced track helper ----------
-        const bedM = [], sleeperM = [], railM = [], powerM = [], coverM = [];
+        const bedM = [], sleeperM = [], railM = [], railHeadM = [], powerM = [], coverM = [];
         const segMatrix = (A, B, lateral, yOff) => {
             const dir = new THREE.Vector3().subVectors(B, A);
             const length = dir.length();
@@ -173,8 +540,8 @@ export class TrackManager {
                 const length = dir.length();
                 if (length < 0.01) continue;
                 const bed = segMatrix(A, B, 0, -0.375); if (bed) bedM.push(bed);
-                const rL = segMatrix(A, B, -GAUGE, -0.21); if (rL) railM.push(rL);
-                const rR = segMatrix(A, B, GAUGE, -0.21); if (rR) railM.push(rR);
+                const rL = segMatrix(A, B, -GAUGE, -0.21); if (rL) { railM.push(rL); railHeadM.push(rL); }
+                const rR = segMatrix(A, B, GAUGE, -0.21); if (rR) { railM.push(rR); railHeadM.push(rR); }
                 const pw = segMatrix(A, B, POWER, -0.05); if (pw) powerM.push(pw);
                 const cv = segMatrix(A, B, POWER, 0.03); if (cv) coverM.push(cv);
                 const angle = Math.atan2(dir.x, dir.z);
@@ -228,6 +595,7 @@ export class TrackManager {
         addI(bedGeom, this.materials.tunnelBallast, bedM);
         addI(this.geometries.sleeper, this.materials.tunnelSleeper, sleeperM);
         addI(this.geometries.rail, this.materials.tunnelRail, railM);
+        addI(this.geometries.railHead, this.materials.tunnelRailHead, railHeadM);
         addI(this.geometries.thirdRail, this.materials.tunnelThirdRail, powerM);
         addI(this.geometries.thirdRailCover, this.materials.tunnelThirdRail, coverM);
 
@@ -321,7 +689,7 @@ export class TrackManager {
             // band at its height and avoids a stretched clamp streak under the ceiling.
             tex.offset.set(0, -0.35 / lowerH);
             tex.anisotropy = 8;
-            return tex;
+            return tagCanvasTextureSRGBKeepLook(tex);
         };
 
         // 3. Plain cream tiles texture for end walls (no chevrons/text to avoid stretching)
@@ -346,7 +714,7 @@ export class TrackManager {
             const tex = new THREE.CanvasTexture(canvas);
             tex.wrapS = THREE.RepeatWrapping;
             tex.wrapT = THREE.RepeatWrapping;
-            return tex;
+            return tagCanvasTextureSRGBKeepLook(tex);
         };
 
         // framed-stair / escalator textures / concrete textures
@@ -972,9 +1340,11 @@ export class TrackManager {
 
         this.scene.add(group);
         this.plaerrerGroup = group;
+        return group;
     }
 
     createPortalGeometry() {
+        // Outer frame of the portal (slightly larger than tunnel opening)
         const archShape = new THREE.Shape();
         archShape.moveTo(-7.5, -2.8);
         archShape.lineTo(7.5, -2.8);
@@ -982,8 +1352,18 @@ export class TrackManager {
         archShape.lineTo(-7.5, 6.7);
         archShape.lineTo(-7.5, -2.8);
         
+        // Rectangular hole matching the tunnel cross-section
+        // halfW default = spacing/2 + 3.1 ~ 6.2 at default scale
+        // floorY = -2.8, ceilY = 3.8 relative to center (y offset 0.8)
+        const holeW = 6.0; // slightly smaller than the outer frame
+        const holeBot = -2.6;
+        const holeTop = 3.6;
         const hole = new THREE.Path();
-        hole.absarc(0, 0, 6.2, 0, Math.PI * 2, true);
+        hole.moveTo(-holeW, holeBot);
+        hole.lineTo(holeW, holeBot);
+        hole.lineTo(holeW, holeTop);
+        hole.lineTo(-holeW, holeTop);
+        hole.lineTo(-holeW, holeBot);
         archShape.holes.push(hole);
 
         const extrudeSettings = { 
@@ -1000,89 +1380,155 @@ export class TrackManager {
     }
 
     // Builds ONE merged tunnel-wall mesh for a whole chunk from a list of [s_start, s_end]
-    // arc-length segments (typically the 5 m sub-segments). Merging all ring pairs into a
-    // single BufferGeometry replaces the former one-mesh-per-5m approach (10 draw calls and
-    // 10 geometries per underground chunk -> 1).
+    // arc-length segments. Now generates a RECTANGULAR cross-section instead of a circular one.
+    // The four sides (floor, ceiling, left wall, right wall) form a box tunnel.
+    // Blends `target` in around `st`'s platform (full strength for
+    // halfLength+2m, then a 15m lerp back to `base`), taking the larger of
+    // that and whatever `current` already holds — shared shape for both the
+    // per-station moderate widen/raise (every station) and the bespoke
+    // extra-large one (a handful of named stations with tall ceilings),
+    // so the bespoke ones simply end up larger via Math.max instead of
+    // needing a second, separate code path.
+    _stationWidenBlend(s, st, current, target, base) {
+        const dist = Math.abs(s - st.position);
+        const fullPlatform = st.halfLength + 2.0;
+        const transitionZone = 15.0;
+        if (dist >= fullPlatform + transitionZone) return current;
+        if (dist <= fullPlatform) return Math.max(current, target);
+        const t = (dist - fullPlatform) / transitionZone;
+        return Math.max(current, THREE.MathUtils.lerp(target, base, t));
+    }
+
+    getTunnelHalfWidth(s) {
+        const spacing = this.sim.getTrackSpacing(s);
+        const baseHalfW = spacing / 2 + 3.1;
+        let halfW = baseHalfW;
+
+        // Every station gets a MODERATE widening around its platform — a
+        // plain tunnel-tube width looked wrong right where a station hall
+        // sits, even for the generic (non-bespoke) stations.
+        for (const st of this.sim.stations) {
+            halfW = this._stationWidenBlend(s, st, halfW, spacing / 2 + 4.1, baseHalfW);
+        }
+
+        // A handful of bespoke stations have taller/wider built geometry
+        // (their own ceiling meshes) and need more clearance than the
+        // moderate default to avoid overlapping the tunnel tube; Math.max
+        // above already keeps whichever of the two ends up larger.
+        const wideStations = { "Jakobinenstraße": 5.5, "Maximilianstraße": 6.2, "Bärenschanze": 6.2, "Gostenhof": 6.2 };
+        for (const name in wideStations) {
+            const st = this.sim.stations.find(st => st.name === name);
+            if (st) halfW = this._stationWidenBlend(s, st, halfW, spacing / 2 + wideStations[name], baseHalfW);
+        }
+        return halfW;
+    }
+
+    getTunnelCeilingHeight(s) {
+        const base = 3.8;
+        let ceilY = base;
+
+        // Every station gets a moderate ceiling raise (see getTunnelHalfWidth).
+        for (const st of this.sim.stations) {
+            ceilY = this._stationWidenBlend(s, st, ceilY, 4.4, base);
+        }
+
+        // Bespoke tall-ceiling stations, same Math.max-wins pattern.
+        const highCeilingStations = { "Maximilianstraße": 5.2, "Bärenschanze": 5.2, "Gostenhof": 5.2, "Jakobinenstraße": 4.8 };
+        for (const name in highCeilingStations) {
+            const st = this.sim.stations.find(st => st.name === name);
+            if (st) ceilY = this._stationWidenBlend(s, st, ceilY, highCeilingStations[name], base);
+        }
+        return ceilY;
+    }
+
     createTunnelWallMesh(segments, chunkGroup) {
-        const radialSegments = 16; // 16 for a rounder, premium look
+        // Rectangular cross-section: 4 corners per ring
+        // Corner order: 0=bottom-left, 1=bottom-right, 2=top-right, 3=top-left
+        const cornersPerRing = 4;
 
         const vertices = [];
         const indices = [];
         const uvs = [];
         let ringBase = 0;
 
-        const up = new THREE.Vector3(0, 1, 0); // vertical up
+        const up = new THREE.Vector3(0, 1, 0);
         const normal = new THREE.Vector3();
         const center = new THREE.Vector3();
         const tangent = new THREE.Vector3();
         const worldVertex = new THREE.Vector3();
 
         for (const [s_start, s_end] of segments) {
-            // Two rings of vertices per segment (j = 0 and 1)
+            // Two rings of vertices per segment (j = 0 front, j = 1 back)
             for (let j = 0; j <= 1; j++) {
                 const s = j === 0 ? s_start : s_end;
                 this.sim.getTrackPosition(s, center);
                 this.sim.getTrackTangent(s, tangent);
-                const spacing = this.sim.getTrackSpacing(s);
 
-                let radius = spacing / 2 + 3.1;
-
-                // Expand tunnel around Jakobinenstraße, Maximilianstraße, Bärenschanze and Gostenhof to prevent overlaps with tall ceilings/walls
-                for (const name of ["Jakobinenstraße", "Maximilianstraße", "Bärenschanze", "Gostenhof"]) {
-                    const st = this.sim.stations.find(s => s.name === name);
-                    if (st) {
-                        const dist = Math.abs(s - st.position);
-                        const fullPlatform = st.halfLength + 2.0; // platform length + 2m margin
-                        const transitionZone = 15.0; // 15m smooth transition
-                        if (dist < fullPlatform + transitionZone) {
-                            const extraR = (name !== "Jakobinenstraße") ? 6.2 : 5.5;
-                            const targetRadius = spacing / 2 + extraR; // expanded radius to clear the tall ceiling/walls
-                            if (dist <= fullPlatform) {
-                                radius = Math.max(radius, targetRadius);
-                            } else {
-                                // Smoothly interpolate between targetRadius and normal radius
-                                const t = (dist - fullPlatform) / transitionZone;
-                                const lerped = THREE.MathUtils.lerp(targetRadius, spacing / 2 + 3.1, t);
-                                radius = Math.max(radius, lerped);
-                            }
-                        }
-                    }
-                }
+                // Per-side half-widths (asymmetric at the U2<->U3 junction caverns) and
+                // ceiling height for the rectangular tunnel
+                const halfWL = this.getTunnelSideWidth(s, -1);
+                const halfWR = this.getTunnelSideWidth(s, 1);
+                let ceilY = this.getTunnelCeilingHeight(s);
 
                 normal.set(-tangent.z, 0, tangent.x).normalize();
 
-                // Ring center (y is offset by 0.8)
+                // Tunnel dimensions relative to center
+                const floorY = -2.8;  // floor below track center
+                // const ceilY = 3.8;    // ceiling above track center
+
+                // Center offset (same as old code)
                 center.y += 0.8;
 
-                for (let k = 0; k <= radialSegments; k++) {
-                    const theta = (k / radialSegments) * Math.PI * 2;
-                    const cos = Math.cos(theta);
-                    const sin = Math.sin(theta);
+                // Generate 4 corners + 1 duplicate of first corner for UV wrap
+                // Corner order: bottom-left, bottom-right, top-right, top-left, bottom-left(wrap)
+                const cornerOffsets = [
+                    [-halfWL, floorY],  // 0: bottom-left
+                    [ halfWR, floorY],  // 1: bottom-right
+                    [ halfWR, ceilY],   // 2: top-right
+                    [-halfWL, ceilY],   // 3: top-left
+                    [-halfWL, floorY],  // 4: wrap back to bottom-left
+                ];
+
+                // Calculate cumulative perimeter distance for U-mapping
+                let perimeterCum = 0;
+                const perimeterPoints = [];
+                for (let k = 0; k < cornerOffsets.length; k++) {
+                    if (k > 0) {
+                        const d = Math.hypot(cornerOffsets[k][0] - cornerOffsets[k-1][0], cornerOffsets[k][1] - cornerOffsets[k-1][1]);
+                        perimeterCum += d;
+                    }
+                    perimeterPoints.push(perimeterCum);
+                }
+
+                for (let k = 0; k < cornerOffsets.length; k++) {
+                    const [lateralOff, verticalOff] = cornerOffsets[k];
 
                     worldVertex.copy(center)
-                        .addScaledVector(normal, cos * radius)
-                        .addScaledVector(up, sin * radius);
+                        .addScaledVector(normal, lateralOff)
+                        .addScaledVector(up, verticalOff);
 
                     const localVertex = chunkGroup.worldToLocal(worldVertex);
                     vertices.push(localVertex.x, localVertex.y, localVertex.z);
 
-                    // UV coordinates: u goes around the circle, v goes along the length of the track
-                    uvs.push(k / radialSegments, j);
+                    // UV: U follows the perimeter in METERS, V follows track length in METERS.
+                    // Tiled at 4m x 4m.
+                    uvs.push(perimeterPoints[k] / 4.0, s / 4.0);
                 }
             }
 
             // Generate indices for faces (inward-facing normals)
-            for (let k = 0; k < radialSegments; k++) {
+            const vertsPerRing = cornersPerRing + 1; // 5 vertices per ring (4 corners + wrap)
+            for (let k = 0; k < cornersPerRing; k++) {
                 const a = ringBase + k;
                 const b = ringBase + (k + 1);
-                const c = ringBase + (radialSegments + 1) + k;
-                const d = ringBase + (radialSegments + 1) + (k + 1);
+                const c = ringBase + vertsPerRing + k;
+                const d = ringBase + vertsPerRing + (k + 1);
 
-                // Two triangles per quad (front faces facing inside)
+                // Two triangles per quad (front faces facing inside the tunnel)
                 indices.push(a, b, c);
                 indices.push(b, d, c);
             }
-            ringBase += 2 * (radialSegments + 1);
+            ringBase += 2 * vertsPerRing;
         }
 
         const geometry = new THREE.BufferGeometry();
@@ -1093,6 +1539,230 @@ export class TrackManager {
 
         return new THREE.Mesh(geometry, this.materials.tunnelWall);
     }
+
+    // Adds 5 horizontal black cables along both side walls of the tunnel.
+    // The cables have a 100m wavelength and 20cm amplitude.
+    createTunnelCables(segments, chunkGroup, startZ) {
+        const vertices = [];
+        const indices = [];
+        let vertexCount = 0;
+
+        const numCables = 5;
+        const cableSpacing = 0.1; // 10cm apart
+        const yBase = 0.5; // Lowered from 1.0m to hang lower
+
+        // Outer wall cables: present along every underground segment,
+        // regardless of station proximity (unlike the divider cables below).
+        for (const [s_start, s_end] of segments) {
+            for (let i = 0; i < numCables; i++) {
+                const yOff = yBase + i * cableSpacing;
+                for (const sideSign of [-1, 1]) {
+                    vertexCount += this._addCableSegment(s_start, s_end, sideSign, true, yOff, vertices, indices, vertexCount, chunkGroup);
+                }
+            }
+        }
+
+        // Divider cables: only across the same runs the divider wall itself
+        // occupies (getDividerWallRuns) — using the wall's own 5m-precise
+        // boundaries instead of a once-per-segment check keeps the cables
+        // from floating into the 20m buffer zone where there's no wall.
+        for (const { sStart, sEnd } of this.getDividerWallRuns(startZ)) {
+            for (let i = 0; i < numCables; i++) {
+                const yOff = yBase + i * cableSpacing;
+                for (const sideSign of [-1, 1]) {
+                    vertexCount += this._addCableSegment(sStart, sEnd, sideSign, false, yOff, vertices, indices, vertexCount, chunkGroup);
+                }
+            }
+        }
+
+        if (vertices.length === 0) return null;
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+
+        return new THREE.Mesh(geometry, this.materials.cable);
+    }
+
+    // Samples the cable ribbon every `resStep` meters between s_start/s_end
+    // instead of just the two endpoints, so it follows the true track curve
+    // (and its own sine sag) the same way buildSweptTrackBox/buildSweptFence
+    // do for the bed/fences — a straight chord between two far-apart points
+    // visibly cut corners on curves. Returns the vertex count added, so the
+    // caller can advance its running vStart correctly.
+    _addCableSegment(s_start, s_end, sideSign, isOuter, yOff, vertices, indices, vStart, chunkGroup, resStep = 2) {
+        const length = s_end - s_start;
+        if (length <= 0) return 0;
+        const up = new THREE.Vector3(0, 1, 0);
+        const normal = new THREE.Vector3();
+        const center = new THREE.Vector3();
+        const tangent = new THREE.Vector3();
+        const worldVertex = new THREE.Vector3();
+        const cableWidth = 0.04;
+        const waveLength = 100.0;
+        const amplitude = 0.2;
+
+        const nSeg = Math.max(1, Math.ceil(length / resStep));
+        // Winding: outer wall side -1 (left) needs flip, side 1 (right) doesn't.
+        // Divider: side -1 (inner left) doesn't need flip, side 1 (inner right) needs flip.
+        const shouldFlip = isOuter ? (sideSign === -1) : (sideSign === 1);
+
+        for (let r = 0; r <= nSeg; r++) {
+            const s = s_start + length * r / nSeg;
+            this.sim.getTrackPosition(s, center);
+            this.sim.getTrackTangent(s, tangent);
+
+            let lateralOff;
+            if (isOuter) {
+                lateralOff = sideSign * (this.getTunnelSideWidth(s, sideSign) - 0.03);
+            } else {
+                // Divider face is at spacing/2 - 0.7675 - 1.75 = (spacing - 5.035)/2
+                const dividerHalfW = (this.sim.getTrackSpacing(s) - 5.035) / 2;
+                lateralOff = sideSign * (dividerHalfW + 0.03); // 3cm in front of divider
+            }
+
+            normal.set(-tangent.z, 0, tangent.x).normalize();
+            const wave = Math.sin(s * Math.PI * 2 / waveLength) * amplitude;
+            const totalY = yOff + wave + 0.8;
+
+            for (let k = 0; k <= 1; k++) {
+                const vOffset = (k === 0 ? -cableWidth / 2 : cableWidth / 2);
+                worldVertex.copy(center)
+                    .addScaledVector(normal, lateralOff)
+                    .addScaledVector(up, totalY + vOffset);
+
+                const localVertex = chunkGroup.worldToLocal(worldVertex);
+                vertices.push(localVertex.x, localVertex.y, localVertex.z);
+            }
+
+            if (r > 0) {
+                const b = vStart + (r - 1) * 2;
+                if (shouldFlip) {
+                    indices.push(b, b + 2, b + 1);
+                    indices.push(b + 1, b + 2, b + 3);
+                } else {
+                    indices.push(b, b + 1, b + 2);
+                    indices.push(b + 1, b + 3, b + 2);
+                }
+            }
+        }
+        return (nSeg + 1) * 2;
+    }
+
+    // Contiguous 5m-granularity runs where a continuous divider WALL should
+    // exist (spacing > 5.135m i.e. dividerWidth > 0.1, underground, not
+    // within a station's platform + 20m buffer, not Plärrer). Shared by
+    // createTunnelDividers (the wall itself) and createTunnelCables (the
+    // cables that run alongside it), so both line up — the cables used to
+    // only check once per up-to-50m chunk-segment, a much coarser test that
+    // let them float into the 20m buffer zone where the wall doesn't exist.
+    getDividerWallRuns(startZ) {
+        const numSub = 10;
+        const subLen = this.chunkSize / numSub;
+        const stationBuffer = 20.0;
+        const runs = [];
+        let run = null;
+        for (let j = 0; j < numSub; j++) {
+            const s_start = startZ + j * subLen;
+            const s_end = startZ + (j + 1) * subLen;
+            const s_mid = (s_start + s_end) / 2;
+
+            let ok = !this.sim.isPlaerrerZone(s_mid) && this.getChunkType(s_mid) === 'underground';
+            if (ok) {
+                const spacing = this.sim.getTrackSpacing(s_mid);
+                ok = (spacing - 5.035) > 0.1 && spacing >= 4.0;
+            }
+            if (ok) {
+                for (const st of this.sim.stations) {
+                    if (Math.abs(s_mid - st.position) < st.halfLength + stationBuffer) { ok = false; break; }
+                }
+            }
+
+            if (ok) {
+                if (!run) run = { sStart: s_start, sEnd: s_end };
+                else run.sEnd = s_end;
+            } else if (run) {
+                runs.push(run);
+                run = null;
+            }
+        }
+        if (run) runs.push(run);
+        return runs;
+    }
+
+    // Creates dividers between the two tracks inside the tunnel:
+    // - spacing >= 4m (dividerWidth > 0.1): continuous concrete WALL, swept
+    //   along the true curve like the track bed/platforms (see
+    //   buildSweptTrackBox) instead of a chain of flat, only-yaw-rotated
+    //   boxes that didn't bend within their own 5m span.
+    // - spacing < 4m: concrete PILLARS (dynamically sized) every ~5m —
+    //   discrete posts are already correctly positioned/oriented per
+    //   instance, so they don't have the "chord on a curve" problem and stay
+    //   as instanced placements.
+    // Width leaves 1.75m clearance from the inner rail edge to the divider face.
+    // Inner rail edge = trackCenter ± (0.7175 + 0.05) = ±0.7675 from track center.
+    // Dividers start 20m after each station platform ends (not at trasse portals).
+    createTunnelDividers(chunkGroup, startZ, addBatchedMatrix) {
+        const numSub = 10;
+        const subLen = this.chunkSize / numSub;
+        const floorY = -2.8;
+        const ceilY = 3.8;
+        const wallHeight = ceilY - floorY; // 6.6m
+        const centerYOffset = 0.8; // same Y offset as tunnel walls
+        const stationBuffer = 20.0; // 20m clearance after station platform ends
+        const gTY = (s) => this.sim.getTrackY(s);
+        const gSp = (s) => this.sim.getTrackSpacing(s);
+
+        // Continuous concrete wall: one swept mesh per contiguous run (see
+        // getDividerWallRuns — shared with createTunnelCables so the wall and
+        // its cables always cover exactly the same stretch).
+        for (const { sStart, sEnd } of this.getDividerWallRuns(startZ)) {
+            this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                (s) => (gSp(s) - 5.035) / 2,
+                (s) => gTY(s) + centerYOffset + floorY,
+                (s) => gTY(s) + centerYOffset + ceilY,
+                this.materials.dividerWall);
+        }
+
+        // Narrow spacing: discrete concrete pillars every ~5m.
+        for (let j = 0; j < numSub; j++) {
+            const s_mid = startZ + j * subLen + subLen / 2;
+            if (this.sim.isPlaerrerZone(s_mid)) continue;
+            if (this.getChunkType(s_mid) !== 'underground') continue;
+
+            let nearStation = false;
+            for (const st of this.sim.stations) {
+                if (Math.abs(s_mid - st.position) < st.halfLength + stationBuffer) { nearStation = true; break; }
+            }
+            if (nearStation) continue;
+
+            const spacing = gSp(s_mid);
+            // Divider width: 1.75m gap from inner rail edge to divider face on each side.
+            // Inner rail of each track is at spacing/2 - 0.7175 (half gauge) from center,
+            // rail half-width is 0.05m, so inner edge is at spacing/2 - 0.7675.
+            // dividerHalfWidth = spacing/2 - 0.7675 - 1.75
+            // dividerWidth = spacing - 2 * (0.7675 + 1.75) = spacing - 5.035
+            const dividerWidth = spacing - 5.035;
+            if (dividerWidth <= 0.1 || spacing >= 4.0) continue; // too narrow, or handled by the wall runs above
+
+            const pos = this.sim.getTrackPosition(s_mid);
+            const tangent = this.sim.getTrackTangent(s_mid);
+            const localPos = chunkGroup.worldToLocal(pos.clone());
+            const angle = Math.atan2(tangent.x, tangent.z) - chunkGroup.rotation.y;
+
+            const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0));
+            const pillarY = localPos.y + centerYOffset + floorY + wallHeight / 2;
+            const scaleXZ = dividerWidth / 0.5; // dividerPillar base geometry is 0.5m
+            const m = new THREE.Matrix4().compose(
+                new THREE.Vector3(localPos.x, pillarY, localPos.z),
+                q,
+                new THREE.Vector3(scaleXZ, wallHeight, scaleXZ)
+            );
+            addBatchedMatrix('dividerPillar', this.geometries.dividerPillar, this.materials.dividerPillar, m);
+        }
+    }
+
 
     // Sweeps a solid rectangular BOX cross-section along the track spline between sStart..sEnd
     // as ONE continuous BufferGeometry, instead of a chain of straight 5m boxes each only
@@ -1209,10 +1879,28 @@ export class TrackManager {
     }
 
     createChunk(idx) {
-        const chunkGroup = new THREE.Group();
         const startZ = idx * this.chunkSize;
         const endZ = (idx + 1) * this.chunkSize;
-        
+
+        // Shared trunk zone (Rothenburger Straße..Rathenauplatz, U2/U3 only): the whole track
+        // bed/walls/rails/dividers/lights this function would build here are already provided
+        // by the shared trunk rig (see main.js, mirroring the Plärrer hall), so return an empty
+        // chunk instead of duplicating them. Gated to U2/U3 specifically -- isTrunkZone is also
+        // true for the shared trunk rig's OWN Simulation (its stations ARE the trunk stations),
+        // which must still build itself.
+        const lineId = this.sim.track.lineId;
+        if ((lineId === 'U2' || lineId === 'U3') && this.sim.isTrunkZone(startZ + this.chunkSize / 2)) {
+            return new THREE.Group();
+        }
+
+        // Same idiom, for the bespoke switch-transition piece just past each of the two trunk
+        // boundary stations (buildSwitchTransition, built once in main.js and shared like the
+        // trunk rig): this line's own per-chunk tunnel is fully replaced there, so skip it too.
+        if ((lineId === 'U2' || lineId === 'U3') && this.sim.isSwitchZone(startZ + this.chunkSize / 2)) {
+            return new THREE.Group();
+        }
+
+        const chunkGroup = new THREE.Group();
         const posStart = this.sim.getTrackPosition(startZ);
         const posEnd = this.sim.getTrackPosition(endZ);
         const posCenter = new THREE.Vector3().addVectors(posStart, posEnd).multiplyScalar(0.5);
@@ -1231,16 +1919,10 @@ export class TrackManager {
 
         // Resolve materials dynamically to darken tunnels
         let ballastMat = this.materials.ballast;
-        let railMat = this.materials.rail;
-        let sleeperMat = this.materials.sleeper;
-        let thirdRailMat = this.materials.thirdRail;
 
         const isPlatform = this.isInsideStationPlatform(centerZ);
         if (chunkType === 'underground' && !isPlatform) {
             ballastMat = this.materials.tunnelBallast;
-            railMat = this.materials.tunnelRail;
-            sleeperMat = this.materials.tunnelSleeper;
-            thirdRailMat = this.materials.tunnelThirdRail;
         }
 
         // --- Batching collectors ------------------------------------------------------
@@ -1282,9 +1964,20 @@ export class TrackManager {
             const { kind, sStart, sEnd } = bedRun;
             const gTY = (s) => this.sim.getTrackY(s);
             const gSp = (s) => this.sim.getTrackSpacing(s);
-            if (kind === 'viaduct') {
+
+            // Lay a mathematically curved, smooth 600m-wide grass ground carpet for all open-air sections
+            if (kind === 'viaduct' || kind === 'ramp' || kind === 'atgrade-split' || kind === 'atgrade-normal') {
                 this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
-                    (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.80, (s) => gTY(s) - 0.30, this.materials.viaduct);
+                    () => 300, () => -0.50, () => -0.49, this.materials.ground);
+            }
+
+            if (kind === 'viaduct') {
+                // Concrete bridge deck below, gravel ballast bed on top (same thickness/
+                // position as the at-grade ballast layer) — the Trasse still runs on Schotter.
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.80, (s) => gTY(s) - 0.45, this.materials.viaduct);
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.45, (s) => gTY(s) - 0.30, ballastMat);
                 for (const sign of [1, -1]) {
                     const offsetFn = (s) => sign * (gSp(s) / 2 + 2.15);
                     this.buildSweptTrackBox(chunkGroup, sStart, sEnd, offsetFn,
@@ -1296,7 +1989,9 @@ export class TrackManager {
                 }
             } else if (kind === 'ramp') {
                 this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
-                    (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.80, (s) => gTY(s) - 0.30, this.materials.viaduct);
+                    (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.80, (s) => gTY(s) - 0.45, this.materials.viaduct);
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
+                    (s) => (gSp(s) + 4.3) / 2, (s) => gTY(s) - 0.45, (s) => gTY(s) - 0.30, ballastMat);
                 for (const sign of [1, -1]) {
                     const offsetFn = (s) => sign * (gSp(s) / 2 + 2.15);
                     this.buildSweptTrackBox(chunkGroup, sStart, sEnd, offsetFn,
@@ -1352,18 +2047,32 @@ export class TrackManager {
                 // INNER edge (the visible cutout boundary) tracks wShaft(s)/2 continuously —
                 // same run, same function as the retaining walls above — instead of the old
                 // per-5m step, which is what made the opening look jagged on curves. The
-                // OUTER edge stays fixed at 60m, matching the normal open-air ground width.
+                // OUTER edge stays fixed at 300m, matching the normal 600m-wide ground carpet.
                 for (const sign of [1, -1]) {
-                    const outer = 60;
+                    const outer = 300;
                     this.buildSweptTrackBox(chunkGroup, sStart, sEnd,
                         (s) => sign * (wShaft(s) / 2 + outer) / 2,
                         (s) => (outer - wShaft(s) / 2) / 2,
-                        () => -0.425, () => -0.375, this.materials.ground);
+                        () => -0.50, () => -0.49, this.materials.ground);
                 }
             } else if (kind === 'tunnel' || kind === 'tunnel-platform') {
                 const yOff = kind === 'tunnel-platform' ? 0.52 : 0.50;
-                this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
-                    (s) => (gSp(s) + 4.2) / 2, (s) => gTY(s) - yOff - 0.2, (s) => gTY(s) - yOff + 0.2, ballastMat);
+                // Color resolved from `kind` itself (already classified per 5m
+                // sub-segment / continuous run at the real platform boundary),
+                // NOT from the outer `ballastMat` variable — that one is only
+                // resolved once per 50m CHUNK from the chunk's center point, so
+                // the bright/dark bed transition used to land wherever the
+                // chunk center happened to fall, up to ~25m off the actual
+                // platform edge that `kind` already gets right.
+                // Underground track runs on a ballastless concrete Gleisbett (Feste
+                // Fahrbahn) instead of gravel ballast — no cross-ties there either,
+                // the rails are fastened straight to the slab (see the rail-clip loop).
+                const concreteBedMat = kind === 'tunnel-platform' ? this.materials.innerBed : this.materials.tunnelInnerBed;
+                // Bed spans the full (possibly asymmetric, at junction caverns) tunnel width
+                this.buildSweptTrackBox(chunkGroup, sStart, sEnd,
+                    (s) => (this.getTunnelSideWidth(s, 1) - this.getTunnelSideWidth(s, -1)) / 2,
+                    (s) => (this.getTunnelSideWidth(s, 1) + this.getTunnelSideWidth(s, -1)) / 2,
+                    (s) => gTY(s) - yOff - 0.2, (s) => gTY(s) - yOff + 0.2, concreteBedMat);
             }
             bedRun = null;
         };
@@ -1386,21 +2095,45 @@ export class TrackManager {
             const subChunkType = this.getChunkType(s_mid);
 
             // Build tunnel wall segment if it overlaps with underground tunnels.
-            // Underground = [0,p1], [p2,p3], [p4,end] from the re-anchored elevation breakpoints.
-            const e = this.sim.track.elevation;
-            const tunnelIntervals = [
-                [0, e.p1],
-                [e.p2, e.p3],
-                [e.p4, this.sim.totalLength]
-            ];
+            // Underground = [0,p1], [p2,p3], [p4,end] from the re-anchored elevation breakpoints
+            // (U1's hand-tuned profile), or -- for tracks with a generic elevationZones list
+            // (e.g. U2/U3, entirely underground) -- every 'underground'/'shaft' zone.
+            let tunnelIntervals;
+            if (this.sim.track.elevationZones) {
+                tunnelIntervals = [];
+                let zoneStart = 0;
+                for (const zn of this.sim.track.elevationZones) {
+                    if (zn.type === 'underground' || zn.type === 'shaft') tunnelIntervals.push([zoneStart, zn.end]);
+                    zoneStart = zn.end;
+                }
+            } else {
+                const e = this.sim.track.elevation;
+                tunnelIntervals = [
+                    [0, e.p1],
+                    [e.p2, e.p3],
+                    [e.p4, this.sim.totalLength]
+                ];
+            }
             tunnelIntervals.forEach(interval => {
                 const intersectStart = Math.max(s_start, interval[0]);
                 const intersectEnd = Math.min(s_end, interval[1]);
                 if (intersectStart < intersectEnd) {
+                    const midS = (intersectStart + intersectEnd) / 2;
                     // Plärrer is enclosed by a bespoke rectangular hall (buildPlaerrer),
                     // so suppress the generic circular tube there (it is too small to reach
                     // the lower level anyway).
-                    if (this.sim.isPlaerrerZone((intersectStart + intersectEnd) / 2)) return;
+                    if (this.sim.isPlaerrerZone(midS)) return;
+                    // EVERY station builds its own enclosing walls/ceiling
+                    // (StationModel's hall, or a bespoke builder like
+                    // LorenzkircheBuilder's dome vault) — these are taller/
+                    // wider than even the widened generic tube (see
+                    // getTunnelHalfWidth/getTunnelCeilingHeight), so keeping
+                    // the generic tube rendered underneath made its lower
+                    // ceiling visibly poke into the station's own, taller one.
+                    // The widening still shapes the short transition zone
+                    // just outside the platform, where the tube flares to
+                    // meet the station's architecture.
+                    if (this.isInsideStationPlatform(midS)) return;
                     tunnelWallSegs.push([intersectStart, intersectEnd]);
                 }
             });
@@ -1421,35 +2154,19 @@ export class TrackManager {
             else if (bedRun.kind !== kind) { flushBedRun(); bedRun = { kind, sStart: s_start, sEnd: s_end }; }
             else bedRun.sEnd = s_end;
 
-            // Build Ground & Streets for open-air sub-segments
-            if (subChunkType !== 'underground') {
-                const groundY = -0.35;
-                const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-
-                // Left background ground (width 450m, offset -280m, covers -505m to -55m)
-                const posBgL = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, -280));
-                addBatched('bgGround', this.geometries.bgGround, this.materials.bgGround,
-                    posBgL.x, (groundY - 0.15) - chunkGroupY, posBgL.z, rotY); // keep world Y flat at -0.5m
-
-                // Right background ground (width 450m, offset 280m, covers 55m to 505m)
-                const posBgR = chunkGroup.worldToLocal(pos.clone().addScaledVector(normal, 280));
-                addBatched('bgGround', this.geometries.bgGround, this.materials.bgGround,
-                    posBgR.x, (groundY - 0.15) - chunkGroupY, posBgR.z, rotY);
-
-                // Open-cut shaft has split grass terrain to expose retaining walls; that split
-                // is now built as one continuous swept pair per run in flushBedRun() (kind
-                // 'shaft'), alongside the retaining walls it must line up with, so skip it here.
-                if (subChunkType !== 'shaft') {
-                    addBatched('ground', this.geometries.ground, this.materials.ground,
-                        localPos.x, (groundY - 0.05) - chunkGroupY, localPos.z, rotY);
-                }
-            }
         }
         flushBedRun(); // build the last open run (nothing left to change its kind)
 
         // Merged tunnel wall: one geometry + one draw call for the whole chunk
         if (tunnelWallSegs.length > 0) {
             chunkGroup.add(this.createTunnelWallMesh(tunnelWallSegs, chunkGroup));
+            const cables = this.createTunnelCables(tunnelWallSegs, chunkGroup, startZ);
+            if (cables) chunkGroup.add(cables);
+        }
+
+        // Add tunnel dividers (concrete walls or pillars between tracks)
+        if (chunkType === 'underground') {
+            this.createTunnelDividers(chunkGroup, startZ, addBatchedMatrix);
         }
 
         // Add elevated pillars underneath the tracks
@@ -1461,19 +2178,24 @@ export class TrackManager {
         // The fixtures/tubes/halos are collected into the chunk batches (3 InstancedMeshes)
         // instead of 24 individual meshes per chunk.
         if (chunkType === 'underground') {
-            const lightSpacings = [6.25, 18.75, 31.25, 43.75];
+            const lightSpacings = [12.5, 37.5];
             lightSpacings.forEach(ls => {
                 if (this.sim.isPlaerrerZone(startZ + ls)) return;
                 this.createTunnelLights(chunkGroup, startZ + ls, addBatchedMatrix);
             });
         }
 
-        // 2. Build running rails as InstancedMesh
-        const railsIM = new THREE.InstancedMesh(this.geometries.rail, railMat, 40);
-        const powerRailsIM = new THREE.InstancedMesh(this.geometries.thirdRail, thirdRailMat, 20);
-        const coversIM = new THREE.InstancedMesh(this.geometries.thirdRailCover, thirdRailMat, 20);
+        // 2. Build running rails. Routed through addBatchedMatrix per SUB-SEGMENT
+        // (bright this.materials.rail vs dark tunnelRail, same for thirdRail/
+        // sleeper below) instead of one InstancedMesh with a single material
+        // resolved once for the whole 50m chunk from its center point — that
+        // used to let the bright/dark rail transition land up to ~25m off the
+        // real platform edge, the same imprecision just fixed for the ballast
+        // bed (kind is already classified per 5m sub-segment; the material now
+        // follows that same precision instead of the chunk-level shortcut).
+        const isDarkAt = (s) => this.getChunkType(s) === 'underground' && !this.isInsideStationPlatform(s);
 
-        const setSegmentMatrix = (im, instanceIdx, A_world, B_world) => {
+        const pushSegmentMatrix = (key, geom, mat, A_world, B_world) => {
             const A = chunkGroup.worldToLocal(A_world.clone());
             const B = chunkGroup.worldToLocal(B_world.clone());
             const pos = new THREE.Vector3().addVectors(A, B).multiplyScalar(0.5);
@@ -1488,24 +2210,32 @@ export class TrackManager {
             const matrix = new THREE.Matrix4();
             matrix.makeBasis(right, actualUp, dir);
             matrix.setPosition(pos);
+            matrix.multiply(new THREE.Matrix4().makeScale(1.0, 1.0, length));
 
-            const scaleMatrix = new THREE.Matrix4().makeScale(1.0, 1.0, length);
-            matrix.multiply(scaleMatrix);
-
-            im.setMatrixAt(instanceIdx, matrix);
+            addBatchedMatrix(key, geom, mat, matrix);
         };
 
-        const _zeroMat = new THREE.Matrix4().makeScale(0, 0, 0);
         for (let j = 0; j < numSub; j++) {
             const s_start = startZ + j * subLen;
             const s_end = startZ + (j + 1) * subLen;
+            const s_mid = (s_start + s_end) / 2;
 
             // Suppress generic rails in the bespoke Plärrer zone.
-            if (this.sim.isPlaerrerZone((s_start + s_end) / 2)) {
-                for (let r = 0; r < 4; r++) railsIM.setMatrixAt(j * 4 + r, _zeroMat);
-                for (let p = 0; p < 2; p++) { powerRailsIM.setMatrixAt(j * 2 + p, _zeroMat); coversIM.setMatrixAt(j * 2 + p, _zeroMat); }
-                continue;
-            }
+            if (this.sim.isPlaerrerZone(s_mid)) continue;
+
+            const dark = isDarkAt(s_mid);
+            const railKey = dark ? 'tunnelRail' : 'rail';
+            const railMatChoice = dark ? this.materials.tunnelRail : this.materials.rail;
+            const headKey = dark ? 'tunnelRailHead' : 'railHead';
+            const headMatChoice = dark ? this.materials.tunnelRailHead : this.materials.railHead;
+            const clipKey = dark ? 'tunnelRailClip' : 'railClip';
+            const clipMatChoice = dark ? this.materials.tunnelRailClip : this.materials.railClip;
+            const thirdKey = dark ? 'tunnelThirdRail' : 'thirdRail';
+            const thirdMatChoice = dark ? this.materials.tunnelThirdRail : this.materials.thirdRail;
+            // Underground (Innenstrecke) vs open-air (Außenstrecke): both plain tunnel AND
+            // underground station platforms run on the ballastless concrete Gleisbett (no
+            // ballast, no ties there), unlike `dark` which only governs material brightness.
+            const underground = this.getChunkType(s_mid) === 'underground';
 
             const posStart = this.sim.getTrackPosition(s_start);
             const posEnd = this.sim.getTrackPosition(s_end);
@@ -1535,7 +2265,26 @@ export class TrackManager {
                 A.y = posStart.y - 0.21;
                 const B = posEnd.clone().addScaledVector(normalEnd, offsetsEnd[r]);
                 B.y = posEnd.y - 0.21;
-                setSegmentMatrix(railsIM, j * 4 + r, A, B);
+                pushSegmentMatrix(railKey, this.geometries.rail, railMatChoice, A, B);
+                pushSegmentMatrix(headKey, this.geometries.railHead, headMatChoice, A, B);
+
+                // Underground (Innenstrecke) rails sit on a ballastless concrete Gleisbett
+                // instead of gravel + cross-ties, fastened with small clip brackets every
+                // 20cm (see sleeper placement below, which skips ties underground).
+                if (underground) {
+                    const clipStep = 0.2;
+                    const segLen = A.distanceTo(B);
+                    const nClips = Math.max(1, Math.round(segLen / clipStep));
+                    const rotYc = Math.atan2(B.x - A.x, B.z - A.z) - chunkGroup.rotation.y;
+                    for (let c = 0; c < nClips; c++) {
+                        const t = (c + 0.5) / nClips;
+                        const cp = A.clone().lerp(B, t);
+                        cp.y -= 0.075; // sit right under the rail foot
+                        const localCp = chunkGroup.worldToLocal(cp);
+                        addBatched(clipKey, this.geometries.railClip, clipMatChoice,
+                            localCp.x, localCp.y, localCp.z, rotYc);
+                    }
+                }
             }
 
             const powerStart = [
@@ -1552,32 +2301,31 @@ export class TrackManager {
                 A_rail.y = posStart.y - 0.05;
                 const B_rail = posEnd.clone().addScaledVector(normalEnd, powerEnd[p]);
                 B_rail.y = posEnd.y - 0.05;
-                setSegmentMatrix(powerRailsIM, j * 2 + p, A_rail, B_rail);
+                pushSegmentMatrix(thirdKey, this.geometries.thirdRail, thirdMatChoice, A_rail, B_rail);
 
                 const A_cover = posStart.clone().addScaledVector(normalStart, powerStart[p]);
                 A_cover.y = posStart.y + 0.03;
                 const B_cover = posEnd.clone().addScaledVector(normalEnd, powerEnd[p]);
                 B_cover.y = posEnd.y + 0.03;
-                setSegmentMatrix(coversIM, j * 2 + p, A_cover, B_cover);
+                pushSegmentMatrix(thirdKey + 'Cover', this.geometries.thirdRailCover, thirdMatChoice, A_cover, B_cover);
             }
         }
 
-        railsIM.instanceMatrix.needsUpdate = true;
-        powerRailsIM.instanceMatrix.needsUpdate = true;
-        coversIM.instanceMatrix.needsUpdate = true;
-        chunkGroup.add(railsIM, powerRailsIM, coversIM);
-
-        // 3. Build Sleepers locally for both tracks (25 sleepers)
-        const sleeperIM1 = new THREE.InstancedMesh(this.geometries.sleeper, sleeperMat, this.sleepersPerChunk);
-        const sleeperIM2 = new THREE.InstancedMesh(this.geometries.sleeper, sleeperMat, this.sleepersPerChunk);
+        // 3. Build Sleepers (Streben) for both tracks (25 per chunk), same per-position
+        // bright/dark precision as the rails above. Only open-air track (Außenstrecke) gets
+        // ties on top of the gravel ballast; underground track (Innenstrecke) has none — it
+        // runs on the ballastless concrete Gleisbett with small clip fasteners instead (see
+        // the per-rail clip loop above).
         const spacingVal = this.chunkSize / this.sleepersPerChunk;
 
         for (let s = 0; s < this.sleepersPerChunk; s++) {
             const distVal = startZ + s * spacingVal + spacingVal / 2;
-            if (this.sim.isPlaerrerZone(distVal)) {
-                sleeperIM1.setMatrixAt(s, _zeroMat); sleeperIM2.setMatrixAt(s, _zeroMat);
-                continue;
-            }
+            if (this.sim.isPlaerrerZone(distVal)) continue;
+            if (this.getChunkType(distVal) === 'underground') continue; // no ties underground
+
+            const sleeperKey = 'sleeper';
+            const sleeperMatChoice = this.materials.sleeper;
+
             const pos = this.sim.getTrackPosition(distVal);
             const tangent = this.sim.getTrackTangent(distVal);
             const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
@@ -1589,22 +2337,22 @@ export class TrackManager {
             const localPos1 = chunkGroup.worldToLocal(pos1);
             const matrix1 = new THREE.Matrix4().makeRotationY(angle - chunkGroup.rotation.y);
             matrix1.setPosition(localPos1);
-            sleeperIM1.setMatrixAt(s, matrix1);
+            addBatchedMatrix(sleeperKey, this.geometries.sleeper, sleeperMatChoice, matrix1);
 
             const pos2 = pos.clone().addScaledVector(normal, -spacing / 2);
             pos2.y = pos.y - 0.25;
             const localPos2 = chunkGroup.worldToLocal(pos2);
             const matrix2 = new THREE.Matrix4().makeRotationY(angle - chunkGroup.rotation.y);
             matrix2.setPosition(localPos2);
-            sleeperIM2.setMatrixAt(s, matrix2);
+            addBatchedMatrix(sleeperKey, this.geometries.sleeper, sleeperMatChoice, matrix2);
         }
-        sleeperIM1.instanceMatrix.needsUpdate = true;
-        sleeperIM2.instanceMatrix.needsUpdate = true;
-        chunkGroup.add(sleeperIM1, sleeperIM2);
 
-        // 5. Add tunnel portals at the re-anchored portal transition coordinates
-        const e = this.sim.track.elevation;
-        const portals = [e.p1, e.p2, e.p3, e.p4];
+        // 5. Add tunnel portals at the re-anchored portal transition coordinates. Tracks with
+        // a generic elevationZones list (U2/U3) are entirely underground -- no portals at all.
+        const portals = this.sim.track.elevationZones ? [] : (() => {
+            const e = this.sim.track.elevation;
+            return [e.p1, e.p2, e.p3, e.p4];
+        })();
         portals.forEach(portalZ => {
             if (portalZ >= startZ && portalZ < endZ) {
                 const spacing = this.sim.getTrackSpacing(portalZ);
@@ -1682,41 +2430,61 @@ export class TrackManager {
         const pos = this.sim.getTrackPosition(s);
         const tangent = this.sim.getTrackTangent(s);
         const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-        const spacing = this.sim.getTrackSpacing(s);
-        const scale = (spacing / 2 + 3.1) / 6.2;
 
-        const R_tunnel = 6.2 * scale;
-        const Y_center = 0.8;
-        const Y_lamp = 1.8;
-        const Y_diff = Y_lamp - Y_center;
-        const X_diff = Math.sqrt(Math.max(0.1, R_tunnel * R_tunnel - Y_diff * Y_diff)) - 0.5;
+        // Lights are mounted on the top edge of the outer walls
+        const ceilY = 3.8; // ceiling height relative to center
+        const Y_center = 0.8; // center Y offset
 
-        const posL = pos.clone().addScaledVector(normal, X_diff);
-        const posR = pos.clone().addScaledVector(normal, -X_diff);
+        // Slightly inset from corner to avoid z-fighting or clipping. Per-side widths so
+        // the lamps stay ON the wall where a junction cavern widens one side.
+        const Y_lamp = Y_center + ceilY - 0.06;
 
-        const rotZ_L = Math.atan2(Y_diff, -X_diff) + Math.PI / 2;
-        const rotZ_R = Math.atan2(Y_diff, X_diff) + Math.PI / 2;
+        const posL = pos.clone().addScaledVector(normal, this.getTunnelSideWidth(s, 1) - 0.08);
+        const posR = pos.clone().addScaledVector(normal, -(this.getTunnelSideWidth(s, -1) - 0.08));
 
         const localL = chunkGroup.worldToLocal(posL);
         const localR = chunkGroup.worldToLocal(posR);
         const angle = Math.atan2(tangent.x, tangent.z) - chunkGroup.rotation.y;
 
         const one = new THREE.Vector3(1, 1, 1);
-        const addLamp = (local, rotZ) => {
-            // Fixture casing at the wall, then the glow tube and the halo plane as
-            // fixed local +Y offsets of the fixture (formerly child meshes).
-            const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, rotZ, 'YXZ'));
+        const addLamp = (local, isLeft) => {
+            // Fixture tilted 45 degrees to face the track from the corner
+            // isLeft=true is at -X, needs to tilt +PI/4 to face center (+X)
+            const tilt = (isLeft ? 1 : -1) * Math.PI / 4;
+            const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, tilt));
             const fm = new THREE.Matrix4().compose(new THREE.Vector3(local.x, local.y + Y_lamp, local.z), q, one);
+
             addBatchedMatrix('tunnelFixture', this.geometries.tunnelFixture, this.materials.tunnelFixtureMat, fm);
-            const gm = fm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.041, 0));
+
+            const gm = fm.clone().multiply(new THREE.Matrix4().makeTranslation(0, -0.041, 0));
             addBatchedMatrix('tunnelGlow', this.geometries.tunnelGlow, this.materials.tunnelGlow, gm);
-            // halo slightly offset from the casing in local +Y (towards center of tunnel)
-            const hm = fm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.005, 0));
-            addBatchedMatrix('tunnelHalo', this.geometries.tunnelHalo, this.materials.neonHaloMat, hm);
+
+            // "Knick" Effect: two halos, one for ceiling and one for wall
+
+            // 1. Ceiling Halo (Horizontal)
+            const chm = new THREE.Matrix4().compose(
+                new THREE.Vector3(local.x, local.y + Y_lamp + 0.05, local.z),
+                new THREE.Quaternion().setFromEuler(new THREE.Euler(0, isLeft ? angle : angle + Math.PI, 0)),
+                one
+            );
+            // Shift inward (toward track center)
+            chm.multiply(new THREE.Matrix4().makeTranslation(1.6, 0, 0));
+            addBatchedMatrix('tunnelHalo', this.geometries.tunnelHalo, this.materials.neonHaloMat, chm);
+
+            // 2. Wall Halo (Vertical)
+            const whm = new THREE.Matrix4().compose(
+                new THREE.Vector3(local.x, local.y + Y_lamp, local.z),
+                new THREE.Quaternion().setFromEuler(new THREE.Euler(0, isLeft ? angle : angle + Math.PI, -Math.PI / 2)),
+                one
+            );
+            // In the rotated basis:
+            // X=Down, Y=Inward. Translate (1.6, 0.05) -> Down 1.6m, Inward 0.05m
+            whm.multiply(new THREE.Matrix4().makeTranslation(1.6, 0.05, 0));
+            addBatchedMatrix('tunnelHalo', this.geometries.tunnelHalo, this.materials.neonHaloMat, whm);
         };
 
-        addLamp(localL, rotZ_L); // Left Wall Lamp
-        addLamp(localR, rotZ_R); // Right Wall Lamp
+        addLamp(localL, true);  // Left Wall/Ceiling Corner
+        addLamp(localR, false); // Right Wall/Ceiling Corner
     }
 
     createPortalArch(localPortalZ, group, centerX = 0, scale = 1.0) {
@@ -1806,24 +2574,25 @@ export class TrackManager {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set(1, 4);
-        return texture;
+        return tagCanvasTextureSRGBKeepLook(texture);
     }
 
     createBallastTexture() {
+        // Coarse gravel (grober Schotter) for the outer rail ballast beds.
         const canvas = document.createElement('canvas');
         canvas.width = 128;
         canvas.height = 128;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#3a3a3a';
+        ctx.fillStyle = '#413f40';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < 2000; i++) {
+        for (let i = 0; i < 900; i++) {
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height;
-            const size = 1 + Math.random() * 2;
+            const size = 2 + Math.random() * 4; // larger, coarser stones than fine ballast noise
             const colorVal = Math.random();
-            if (colorVal < 0.4) ctx.fillStyle = '#1e1e1e';
-            else if (colorVal < 0.8) ctx.fillStyle = '#4a4a4a';
-            else ctx.fillStyle = '#555555';
+            if (colorVal < 0.45) ctx.fillStyle = '#1a1819';
+            else if (colorVal < 0.85) ctx.fillStyle = '#807f7d';
+            else ctx.fillStyle = '#413f40';
             ctx.fillRect(x, y, size, size);
         }
         const texture = new THREE.CanvasTexture(canvas);
@@ -1834,58 +2603,229 @@ export class TrackManager {
         return texture;
     }
 
+    createConcreteBedTexture() {
+        // Smooth concrete Gleisbett strip for the inner rails (between the two tracks).
+        const size = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#3d372a';
+        ctx.fillRect(0, 0, size, size);
+        for (let i = 0; i < 14; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+            const r = 30 + Math.random() * 60;
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+            const c = Math.random() > 0.5 ? '55,56,51' : '70,71,65';
+            grad.addColorStop(0, `rgba(${c},0.35)`);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, size, size);
+        }
+        ctx.globalAlpha = 0.5;
+        for (let i = 0; i < 6000; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+            const v = Math.random();
+            ctx.fillStyle = v < 0.34 ? '#373833' : (v < 0.68 ? '#464741' : '#3d372a');
+            ctx.fillRect(x, y, 1 + Math.random(), 1 + Math.random());
+        }
+        ctx.globalAlpha = 1.0;
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(1, 1);
+        return tagCanvasTextureSRGBKeepLook(tex);
+    }
+
+    createRailBodyGeometry() {
+        // Vignole rail profile (foot -> web -> flared head) in the XY cross-section plane,
+        // extruded along Z (the rail's length axis, matching the old BoxGeometry's Z=length
+        // convention so every placement matrix keeps working unchanged). The flat top of the
+        // head is left open here and capped separately by createRailHeadGeometry() so the top
+        // running surface can carry its own glossy material.
+        const shape = new THREE.Shape();
+        const pts = [
+            [-0.07, -0.075], [0.07, -0.075],  // foot (wide base)
+            [0.02, -0.045],                    // taper up to the web (right)
+            [0.02, 0.025],                      // web (right)
+            [0.045, 0.045],                     // flare out to the head (right)
+            [-0.045, 0.045],                    // flat head top (closed by the head cap above)
+            [-0.02, 0.025],                      // flare in from the head (left)
+            [-0.02, -0.045],                      // web (left)
+        ];
+        shape.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], pts[i][1]);
+        shape.lineTo(pts[0][0], pts[0][1]);
+        const geom = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false, curveSegments: 1 });
+        geom.translate(0, 0, -0.5); // center along Z like the old unit-length BoxGeometry
+        return geom;
+    }
+
+    createRailHeadGeometry() {
+        // Flat glossy rail-head cap, sitting directly on the body's flat top (y=0.045..0.075).
+        const geom = new THREE.BoxGeometry(0.09, 0.03, 1.0);
+        geom.translate(0, 0.06, 0);
+        return geom;
+    }
+
     createTunnelConcreteTexture() {
-        // Near-black base with minimal pixel grain – adapts naturally to 8-sided cylinder panels
-        const size = 128;
+        // Improved smooth concrete texture: medium-dark grey with subtle procedural patches
+        const size = 256;
         const canvas = document.createElement('canvas');
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext('2d');
 
-        // Near-black base
-        ctx.fillStyle = '#080808';
+        // Base grey
+        ctx.fillStyle = '#333333';
         ctx.fillRect(0, 0, size, size);
 
-        // Minimal grainy noise – only very subtle pixel variation
-        for (let i = 0; i < 6000; i++) {
+        // Subtle large-scale patches (cloud-like)
+        for (let i = 0; i < 12; i++) {
             const x = Math.random() * size;
             const y = Math.random() * size;
-            const v = Math.floor(10 + Math.random() * 18); // 10–28 range, almost invisible
-            ctx.fillStyle = `rgb(${v},${v},${v})`;
+            const r = 40 + Math.random() * 80;
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+            const v = Math.floor(Math.random() * 15) - 7; // -7 to +7 offset
+            grad.addColorStop(0, `rgba(${51+v},${51+v},${51+v}, 0.4)`);
+            grad.addColorStop(1, 'rgba(51,51,51,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, size, size);
+        }
+
+        // Fine grainy noise
+        for (let i = 0; i < 20000; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+            const v = Math.floor(Math.random() * 10) - 5;
+            const c = 51 + v;
+            ctx.fillStyle = `rgb(${c},${c},${c})`;
             ctx.fillRect(x, y, 1, 1);
         }
 
         const tex = new THREE.CanvasTexture(canvas);
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;
-        // 8 panels in the octagon cylinder \u2013 8 U-repeats means each panel gets exactly one texture tile
-        // V=1 covers the 5m segment height without stretching
-        tex.repeat.set(8, 1);
-        return tex;
+        // 1:1 repeat; UVs are scaled in world-meters during geometry generation
+        tex.repeat.set(1, 1);
+        return tagCanvasTextureSRGBKeepLook(tex);
     }
 
     createNeonHaloTexture() {
-        // Tall canvas so the gradient naturally stretches vertically when the sprite is scaled.
-        const size = 128;
+        // Linear neon tube glow using capsule-shaped falloff.
+        // The canvas is 64 pixels wide and 128 pixels tall.
+        // We define a line segment at x = X_peak (corresponding to the neon tube position)
+        // and calculate the distance to this segment for each pixel, using scaled/stretched
+        // horizontal coordinates on the left and right sides of the peak to achieve a
+        // seamless fade-out to 0 at the boundaries of the canvas.
+        const width = 64;
+        const height = 128;
         const canvas = document.createElement('canvas');
-        canvas.width = size / 2;  // 64 wide
-        canvas.height = size;     // 128 tall
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const imgData = ctx.createImageData(width, height);
+        const data = imgData.data;
 
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
-        // Elliptical falloff: tight horizontally, extended vertically
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, cx);
-        grad.addColorStop(0.00, 'rgba(210,235,255,0.65)');
-        grad.addColorStop(0.30, 'rgba(190,225,255,0.28)');
-        grad.addColorStop(0.65, 'rgba(170,215,255,0.07)');
-        grad.addColorStop(1.00, 'rgba(0,0,0,0.00)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Peak/tube position: 12.5 pixels from left edge (corresponding to -1.6m from center of 5.25m plane)
+        const X_peak = 12.5;
 
+        // Capsule parameters: line segment from y = 36 to y = 92
+        const Y1 = 36;
+        const Y2 = 92;
+        const max_d = 32;
+
+        // Scaled horizontal distances to make the falloff reach exactly 0 at x = 0 and x = 64
+        const scale_left = max_d / X_peak;
+        const scale_right = max_d / (width - X_peak);
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                // Calculate scaled dx
+                const raw_dx = x - X_peak;
+                const dx = raw_dx < 0 ? raw_dx * scale_left : raw_dx * scale_right;
+
+                // Calculate dy to the segment [Y1, Y2]
+                let dy = 0;
+                if (y < Y1) {
+                    dy = y - Y1;
+                } else if (y > Y2) {
+                    dy = y - Y2;
+                }
+
+                const d = Math.sqrt(dx * dx + dy * dy);
+                const t = d / max_d;
+
+                let a = 0;
+                if (t < 1.0) {
+                    if (t <= 0) {
+                        a = 0.65;
+                    } else if (t < 0.3) {
+                        const k = t / 0.3;
+                        a = 0.65 + (0.28 - 0.65) * k;
+                    } else if (t < 0.65) {
+                        const k = (t - 0.3) / (0.65 - 0.3);
+                        a = 0.28 + (0.07 - 0.28) * k;
+                    } else {
+                        const k = (t - 0.65) / (1.0 - 0.65);
+                        a = 0.07 * (1.0 - k);
+                    }
+                }
+
+                const idx = (y * width + x) * 4;
+                data[idx] = 255;     // Red
+                data[idx + 1] = 255; // Green
+                data[idx + 2] = 255; // Blue
+                data[idx + 3] = Math.round(a * 255);
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
         const tex = new THREE.CanvasTexture(canvas);
         return tex;
+    }
+
+    createGrassTexture() {
+        const W = 128, H = 128;
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        // Base mid-green
+        ctx.fillStyle = '#4a7c3f';
+        ctx.fillRect(0, 0, W, H);
+
+        // Subtle vertical streaks simulating grass blades / light variation
+        const streakColors = ['#3d6b34', '#557a47', '#4a7c3f', '#3a6030', '#5a8a4e', '#426e38'];
+        for (let i = 0; i < 80; i++) {
+            const x = Math.floor(Math.random() * W);
+            const w = 1 + Math.floor(Math.random() * 3);
+            const h = 4 + Math.floor(Math.random() * 12);
+            const y = Math.floor(Math.random() * H);
+            ctx.fillStyle = streakColors[Math.floor(Math.random() * streakColors.length)];
+            ctx.globalAlpha = 0.35 + Math.random() * 0.45;
+            ctx.fillRect(x, y, w, h);
+        }
+        ctx.globalAlpha = 1.0;
+
+        // Fine random noise dots for micro-detail
+        for (let i = 0; i < 1200; i++) {
+            const x = Math.random() * W;
+            const y = Math.random() * H;
+            ctx.fillStyle = Math.random() > 0.5 ? '#3a5c30' : '#5e9050';
+            ctx.globalAlpha = 0.18;
+            ctx.fillRect(x, y, 1, 1);
+        }
+        ctx.globalAlpha = 1.0;
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return texture;
     }
 
     createFenceTexture() {
@@ -1896,8 +2836,8 @@ export class TrackManager {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, size, size);
 
-        // Dark grey metal color
-        ctx.fillStyle = '#222222';
+        // Light grey metal color
+        ctx.fillStyle = '#c8c8c8';
         
         // Horizontal rails: top, bottom, and two intermediate rails
         const railThick = 5;
@@ -2074,7 +3014,7 @@ export class TrackManager {
             const localPos = chunkGroup.worldToLocal(worldPos.clone());
             const rotY = Math.atan2(tan.x, tan.z) - chunkGroup.rotation.y;
             
-            addBatched('fencePost', this.geometries.fencePost, this.materials.wall,
+            addBatched('fencePost', this.geometries.fencePost, this.materials.fencePostMat,
                 localPos.x, localPos.y, localPos.z, rotY, 1, height, 1);
         }
     }

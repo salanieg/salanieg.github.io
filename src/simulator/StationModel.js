@@ -1,9 +1,76 @@
 import * as THREE from 'three';
 import { StationBuilder } from './stations/StationBuilder.js?v=67';
-import { RathausBuilder } from './stations/RathausBuilder.js?v=45';
-import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=45';
+import { RathausBuilder } from './stations/RathausBuilder.js?v=47';
+import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=47';
 import { PassengerBuilder } from './people/PassengerBuilder.js';
 import { PASSENGER_DATA } from './people/PassengerData.js';
+import { tagCanvasTextureSRGBKeepLook } from './TextureUtils.js';
+import { TRACK_DATA as TRACK_DATA_U1 } from './TrackDataU1.js';
+import { TRACK_DATA_U2 } from './TrackDataU2.js';
+import { TRACK_DATA_U3 } from './TrackDataU3.js';
+
+// Mixes a hex color toward white by `amount` (0..1). Used to brighten the
+// platform floor tile texture itself, independent of scene ambient light,
+// since underground platforms only get ambient (no directional lighting) and
+// looked too dark with the tile colors' true (unlit-reference) values.
+function lightenHex(hex, amount) {
+    const c = new THREE.Color(hex);
+    c.lerp(new THREE.Color(0xffffff), amount);
+    return `#${c.getHexString()}`;
+}
+
+function getUpcomingViaText(lineId, stationName, direction) {
+    let trackData;
+    if (lineId === 'U2') {
+        trackData = TRACK_DATA_U2;
+    } else if (lineId === 'U3') {
+        trackData = TRACK_DATA_U3;
+    } else if (lineId === 'U1') {
+        trackData = TRACK_DATA_U1;
+    }
+
+    if (!trackData) return "";
+
+    const stations = trackData.stations;
+    const currIdx = stations.findIndex(s => s.name === stationName);
+    if (currIdx === -1) return "";
+
+    let upcoming = [];
+    if (direction === 'forward') {
+        for (let i = currIdx + 1; i < stations.length; i++) {
+            upcoming.push(stations[i].name);
+        }
+    } else {
+        for (let i = currIdx - 1; i >= 0; i--) {
+            upcoming.push(stations[i].name);
+        }
+    }
+
+    if (upcoming.length <= 1) {
+        return ""; // Only destination remains or none
+    }
+
+    // Exclude the destination itself
+    const intermediate = upcoming.slice(0, -1);
+    if (intermediate.length === 0) {
+        return "";
+    }
+
+    const nextTwo = intermediate.slice(0, 2);
+
+    const displayName = name => {
+        if (name === "Hauptbahnhof") return "Hbf.";
+        if (name === "Grossreuth bei Schweinau") return "Grossreuth";
+        if (name === "Gustav-Adolf-Straße") return "Gustav-Adolf-Str.";
+        if (name === "Friedrich-Ebert-Platz") return "Friedrich-Ebert-Pl.";
+        if (name === "Rothenburger Straße") return "Rothenburger Str.";
+        if (name === "Bauernfeindstraße") return "Bauernfeindstr.";
+        if (name === "Gemeinschaftshaus") return "Gemeinschaftsh.";
+        return name;
+    };
+
+    return "über " + nextTwo.map(displayName).join(" - ");
+}
 
 export class StationModel {
     constructor(scene, simulation) {
@@ -81,16 +148,19 @@ export class StationModel {
             this.stationConcreteBeamMat.bumpMap.needsUpdate = true;
         }
 
-        // Shared materials for trash cans (Mülleimer)
-        this.materials.trashBody = new THREE.MeshStandardMaterial({
+        // Shared materials for trash cans (Mülleimer). Phong instead of Standard:
+        // high-metalness Standard materials NEED an environment map to reflect —
+        // the scene has none, so the cans rendered near-black in stations. Phong
+        // gets its metallic sheen from the light sources directly.
+        this.materials.trashBody = new THREE.MeshPhongMaterial({
             map: this.createTrashCanTexture(),
-            roughness: 0.25,
-            metalness: 0.8
+            shininess: 60,
+            specular: 0x555555
         });
-        this.materials.trashLid = new THREE.MeshStandardMaterial({
+        this.materials.trashLid = new THREE.MeshPhongMaterial({
             color: 0xd1d5db, // Light grey/silver
-            roughness: 0.2,
-            metalness: 0.85
+            shininess: 90,
+            specular: 0x666666
         });
         this.materials.trashBag = new THREE.MeshStandardMaterial({
             color: 0x0055ff,
@@ -125,6 +195,24 @@ export class StationModel {
             const group = this.buildStation(station);
             this.stationsList.push(group);
         });
+
+        // EXPERIMENT: exempt every station material from ACES tone mapping, so
+        // its assigned color isn't additionally shifted by the filmic rolloff
+        // (materials still darken/lighten with the zone's ambient — this only
+        // removes the tonemapping-curve part of the drift, see the "exact
+        // station colors" discussion). Covers Rathaus/Lorenzkirche/generic
+        // stations alike since they're all part of stationsList by now.
+        const toneMappedOff = new Set();
+        for (const group of this.stationsList) {
+            group.traverse(o => {
+                const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+                for (const m of mats) {
+                    if (toneMappedOff.has(m)) continue;
+                    m.toneMapped = false;
+                    toneMappedOff.add(m);
+                }
+            });
+        }
     }
 
     update(trainZ) {
@@ -200,7 +288,7 @@ export class StationModel {
     // the top face uses material group 1, all other faces group 0.
     // Top-face UV: U normalised 0..1 across the (tapering) width, V = arcLength / Hmeters
     // (matches adjustPlatformUVs so the floor texture tiles continuously along the platform).
-    buildSweptBar(group, sStart, sEnd, halfWidthFn, topY, botY, mats, Hmeters, centerOffFn) {
+    buildSweptBar(group, sStart, sEnd, halfWidthFn, topY, botY, mats, Hmeters, centerOffFn, Wmeters) {
         // topY/botY may be a plain number (flat) OR a function of s (e.g. a periodic zigzag
         // profile like Jakobinenstraße's folded wall/coping) — sampled per ring either way.
         const topYFn = typeof topY === 'function' ? topY : () => topY;
@@ -221,7 +309,7 @@ export class StationModel {
             if (prevWorld) cum += wp.distanceTo(prevWorld);
             prevWorld = wp.clone();
             const mk = (lat, y) => group.worldToLocal(new THREE.Vector3(wp.x + nX * lat, y, wp.z + nZ * lat));
-            rings.push({ bl: mk(co - hw, by), br: mk(co + hw, by), tr: mk(co + hw, ty), tl: mk(co - hw, ty), cum });
+            rings.push({ bl: mk(co - hw, by), br: mk(co + hw, by), tr: mk(co + hw, ty), tl: mk(co - hw, ty), cum, hw });
         }
         const pos = [], uv = [];
         let vCount = 0;
@@ -231,19 +319,30 @@ export class StationModel {
             vCount += 3;
         };
         const quad = (p0, p1, p2, p3, u0, u1, u2, u3) => { tri(p0, p1, p2, u0, u1, u2); tri(p0, p2, p3, u0, u2, u3); };
+
+        const wTile = Wmeters;
+
         // TOP face -> material group 1
         const topStart = vCount;
         for (let r = 0; r < nSeg; r++) {
             const A = rings[r], B = rings[r + 1];
             const vA = A.cum / Hmeters, vB = B.cum / Hmeters;
-            quad(A.tl, A.tr, B.tr, B.tl, [0, vA], [1, vA], [1, vB], [0, vB]);
+            if (wTile) {
+                // Absolute-meters U-mapping (tiled): U = worldWidth / wTile
+                const uA = (2 * A.hw) / wTile;
+                const uB = (2 * B.hw) / wTile;
+                quad(A.tl, A.tr, B.tr, B.tl, [0, vA], [uA, vA], [uB, vB], [0, vB]);
+            } else {
+                // Legacy 0..1 U-mapping (stretched): standard for platform floors
+                quad(A.tl, A.tr, B.tr, B.tl, [0, vA], [1, vA], [1, vB], [0, vB]);
+            }
         }
         const topCount = vCount - topStart;
         // SIDES + BOTTOM + end caps -> material group 0
         const sideStart = vCount;
         for (let r = 0; r < nSeg; r++) {
             const A = rings[r], B = rings[r + 1];
-            const vA = A.cum, vB = B.cum;
+            const vA = A.cum / Hmeters, vB = B.cum / Hmeters;
             quad(A.bl, A.tl, B.tl, B.bl, [0, vA], [1, vA], [1, vB], [0, vB]); // left
             quad(A.tr, A.br, B.br, B.tr, [0, vA], [1, vA], [1, vB], [0, vB]); // right
             quad(A.br, A.bl, B.bl, B.br, [0, vA], [1, vA], [1, vB], [0, vB]); // bottom
@@ -546,6 +645,11 @@ export class StationModel {
         if (spec) {
             Object.assign(config, spec);
         }
+        // Underground platforms only receive flat ambient light (no directional
+        // lighting), so the true tile colors read as too dark. Brighten just the
+        // floor texture rather than the scene lighting.
+        config.tileColor = lightenHex(config.tileColor, 0.30);
+        config.groutColor = lightenHex(config.groutColor, 0.20);
 
         const pixelsPerMeter = 100;
         const W_pixels = Math.round(platWidth * pixelsPerMeter);
@@ -603,11 +707,11 @@ export class StationModel {
 
                     if (config.alternatingBands) {
                         if (r >= 5) {
-                            tileColor = '#909291';
-                            groutColor = '#4b5563';
+                            tileColor = lightenHex('#909291', 0.30);
+                            groutColor = lightenHex('#4b5563', 0.20);
                         } else {
-                            tileColor = '#757980';
-                            groutColor = '#374151';
+                            tileColor = lightenHex('#757980', 0.30);
+                            groutColor = lightenHex('#374151', 0.20);
                         }
                     }
 
@@ -788,9 +892,21 @@ export class StationModel {
         if (station.name === "Rathaus") return new RathausBuilder(this, station).build();
         if (station.name === "Lorenzkirche") return new LorenzkircheBuilder(this, station).build();
         // Plärrer is a bespoke stacked station built entirely in TrackManager.buildPlaerrer
-        // (two levels, offset platforms, hall, diverging tubes); skip the generic station.
+        // (two levels, offset platforms, hall, diverging tubes). It is built once (by U1's
+        // rig) and lives permanently in the world scene, carrying BOTH corridors: Gleis 1/2
+        // for U1 and the parallel Gleis 3/4 slot that U2/U3's centerlines are pinned onto.
+        // So NO line builds a generic Plärrer stop -- the shared hall IS the station
+        // (U2/U3 zone tubes come from TrackManager.buildPlaerrerApproach).
         if (station.name === "Plärrer") return new THREE.Group();
-        
+        // The other 5 shared-trunk stations (Rothenburger Straße..Rathenauplatz) are now
+        // byte-identical between U2 and U3 (scratch/gen_topology_u23.mjs splices U2's trunk
+        // into U3), so they're built once by a dedicated shared trunk rig (main.js, lineId
+        // "TRUNK") instead of once per line -- U2/U3 skip them here exactly like Plärrer above.
+        const TRUNK_STATION_NAMES = ['Rothenburger Straße', 'Opernhaus', 'Hauptbahnhof', 'Wöhrder Wiese', 'Rathenauplatz'];
+        if (TRUNK_STATION_NAMES.includes(station.name) && (this.sim.track.lineId === 'U2' || this.sim.track.lineId === 'U3')) {
+            return new THREE.Group();
+        }
+
         // --- LEGACY FALLBACK ---
         const stationGroup = new THREE.Group();
         const isAufsessplatzLook = ["Aufseßplatz", "Hasenbuck", "Frankenstraße", "Maffeiplatz"].includes(station.name);
@@ -917,7 +1033,7 @@ export class StationModel {
                 ctxRoof.fillStyle = '#e6e6e6'; // bright highlight
                 ctxRoof.fillRect(x + 4, 0, 4, 128);
             }
-            const roofTex = new THREE.CanvasTexture(canvasRoof);
+            const roofTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvasRoof));
             roofTex.wrapS = THREE.RepeatWrapping;
             roofTex.wrapT = THREE.RepeatWrapping;
             roofTex.repeat.set(10, 1);
@@ -953,7 +1069,7 @@ export class StationModel {
             ctxCol.lineTo(80, 196);
             ctxCol.stroke();
             
-            muggenhofColumnTex = new THREE.CanvasTexture(canvasCol);
+            muggenhofColumnTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvasCol));
             muggenhofColumnTex.wrapS = THREE.RepeatWrapping;
             muggenhofColumnTex.wrapT = THREE.RepeatWrapping;
             muggenhofColumnMat = new THREE.MeshLambertMaterial({ map: muggenhofColumnTex });
@@ -1032,25 +1148,25 @@ export class StationModel {
         const wallPresets = {
             "Maximilianstraße": {
                 bottomColor: '#f8fafc',
-                bottomGrout: '#94a3b8',
+                bottomGrout: '#3e4033',
                 topColor: '#6FB464',
-                topGrout: '#94a3b8',
+                topGrout: '#3e4033',
                 stripeBg: '#ffffff',
                 stripeText: '#000000'
             },
             "Bärenschanze": {
                 bottomColor: '#f8fafc',
-                bottomGrout: '#94a3b8',
+                bottomGrout: '#3e4033',
                 topColor: '#1f799e',
-                topGrout: '#94a3b8',
+                topGrout: '#3e4033',
                 stripeBg: '#ffffff',
                 stripeText: '#000000'
             },
             "Gostenhof": {
                 bottomColor: '#f8fafc',
-                bottomGrout: '#94a3b8',
+                bottomGrout: '#3e4033',
                 topColor: '#e0bf04',
-                topGrout: '#94a3b8',
+                topGrout: '#3e4033',
                 stripeBg: '#ffffff',
                 stripeText: '#000000'
             },
@@ -1800,6 +1916,9 @@ export class StationModel {
                                 ceilMat = this.materials.messeBlue;
                             }
 
+                            const hMeters = isMax ? 4.0 : 1.2;
+                            const wMeters = isMax ? 4.0 : 1.2;
+
                             if (station.name === "Messe") {
                                 const sStart = station.position - platLength / 2;
                                 const sEnd = station.position + platLength / 2;
@@ -1807,28 +1926,28 @@ export class StationModel {
                                 // Left side roof slab (closed track/platform side)
                                 this.buildSweptBar(stationGroup, sStart, sEnd,
                                     (s) => (cHalfW(s) - 2.3) / 2, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
-                                    [ceilMat, ceilMat], 1.2, (s) => -(cHalfW(s) + 2.3) / 2);
+                                    [ceilMat, ceilMat], hMeters, (s) => -(cHalfW(s) + 2.3) / 2, wMeters);
 
                                 // Right side roof slab (closed track/platform side)
                                 this.buildSweptBar(stationGroup, sStart, sEnd,
                                     (s) => (cHalfW(s) - 2.3) / 2, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
-                                    [ceilMat, ceilMat], 1.2, (s) => (cHalfW(s) + 2.3) / 2);
+                                    [ceilMat, ceilMat], hMeters, (s) => (cHalfW(s) + 2.3) / 2, wMeters);
 
                                 // Center roof slab (with cutouts for escalators)
                                 // Section 1: Langwasser outer end
                                 this.buildSweptBar(stationGroup, sStart, station.position + 0.0,
                                     () => 2.3, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
-                                    [ceilMat, ceilMat], 1.2, () => 0);
+                                    [ceilMat, ceilMat], hMeters, () => 0, wMeters);
 
                                 // Section 2: Concourse building zone
                                 this.buildSweptBar(stationGroup, station.position + 8.4, station.position + 31.6,
                                     () => 2.3, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
-                                    [ceilMat, ceilMat], 1.2, () => 0);
+                                    [ceilMat, ceilMat], hMeters, () => 0, wMeters);
 
                                 // Section 3: Fürth outer end
                                 this.buildSweptBar(stationGroup, station.position + 40.0, sEnd,
                                     () => 2.3, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
-                                    [ceilMat, ceilMat], 1.2, () => 0);
+                                    [ceilMat, ceilMat], hMeters, () => 0, wMeters);
 
                                 // Build longitudinal concrete beams connecting the pillars continuously
                                 this.materials.messeConcrete = this.materials.messeConcrete || new THREE.MeshLambertMaterial({ color: '#bda297' });
@@ -1843,7 +1962,7 @@ export class StationModel {
                                 const sB = station.position + platLength / 2;
                                 this.buildSweptBar(stationGroup, sA, sB,
                                     cHalfW, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
-                                    [ceilMat, ceilMat], isMax ? 2.4 : 1.2);
+                                    [ceilMat, ceilMat], hMeters, () => 0, wMeters);
                             }
                         }
                         if (station.name === "Messe") {
@@ -2750,11 +2869,52 @@ export class StationModel {
         // Generic station name signs removed by user request
 
         // 6b. Hanging Departure Boards (Anzeigetafeln)
-        const via1 = "über Lorenzkirche - Plärrer - Fürth";
-        const via2 = "über Hasenbuck - Hbf. - Messe";
-        
-        const boardMatGleis1 = this.createDepartureBoardMaterial(1, "HARDHÖHE", via1);
-        const boardMatGleis2 = this.createDepartureBoardMaterial(2, "LANGWASSER SÜD", via2);
+        let track1Label = "2"; // reverse direction track label (Gleis 2)
+        let track2Label = "1"; // forward direction track label (Gleis 1)
+        let row1DataT1, row2DataT1; // Track 1 (reverse)
+        let row1DataT2, row2DataT2; // Track 2 (forward)
+
+        const lineId = this.sim.track.lineId;
+
+        if (lineId === 'U2') {
+            // U2: SW Röthenbach (#cb0611), NE Flughafen (#cb0611)
+            // Track 1 (reverse) -> Röthenbach
+            row1DataT1 = { line: 'U2', color: '#cb0611', destination: 'Röthenbach', via: getUpcomingViaText('U2', station.name, 'reverse'), minutes: '2' };
+            row2DataT1 = { line: 'U2', color: '#cb0611', destination: 'Röthenbach', via: getUpcomingViaText('U2', station.name, 'reverse'), minutes: '12' };
+
+            // Track 2 (forward) -> Flughafen
+            row1DataT2 = { line: 'U2', color: '#cb0611', destination: 'Flughafen', via: getUpcomingViaText('U2', station.name, 'forward'), minutes: '3' };
+            row2DataT2 = { line: 'U2', color: '#cb0611', destination: 'Flughafen', via: getUpcomingViaText('U2', station.name, 'forward'), minutes: '13' };
+        } else if (lineId === 'U3') {
+            // U3: SW Grossreuth bei Schweinau (#2da4a8), NW Nordwestring (#2da4a8)
+            // Track 1 (reverse) -> Grossreuth bei Schweinau
+            row1DataT1 = { line: 'U3', color: '#2da4a8', destination: 'Grossreuth b. Schw.', via: getUpcomingViaText('U3', station.name, 'reverse'), minutes: '4' };
+            row2DataT1 = { line: 'U3', color: '#2da4a8', destination: 'Grossreuth b. Schw.', via: getUpcomingViaText('U3', station.name, 'reverse'), minutes: '14' };
+
+            // Track 2 (forward) -> Nordwestring
+            row1DataT2 = { line: 'U3', color: '#2da4a8', destination: 'Nordwestring', via: getUpcomingViaText('U3', station.name, 'forward'), minutes: '1' };
+            row2DataT2 = { line: 'U3', color: '#2da4a8', destination: 'Nordwestring', via: getUpcomingViaText('U3', station.name, 'forward'), minutes: '11' };
+        } else if (lineId === 'TRUNK') {
+            // U2/U3 Shared Trunk: Rothenburger Straße..Rathenauplatz
+            // Display both U2 and U3 with track labels 1 and 2
+            // Track 1 (reverse, Gleis 2) -> U2 Röthenbach & U3 Grossreuth
+            row1DataT1 = { line: 'U2', color: '#cb0611', destination: 'Röthenbach', via: getUpcomingViaText('U2', station.name, 'reverse'), minutes: '2' };
+            row2DataT1 = { line: 'U3', color: '#2da4a8', destination: 'Grossreuth b. Schw.', via: getUpcomingViaText('U3', station.name, 'reverse'), minutes: '7' };
+
+            // Track 2 (forward, Gleis 1) -> U2 Flughafen & U3 Nordwestring
+            row1DataT2 = { line: 'U2', color: '#cb0611', destination: 'Flughafen', via: getUpcomingViaText('U2', station.name, 'forward'), minutes: '3' };
+            row2DataT2 = { line: 'U3', color: '#2da4a8', destination: 'Nordwestring', via: getUpcomingViaText('U3', station.name, 'forward'), minutes: '5' };
+        } else {
+            // Default U1: Hardhöhe (#0055a5) and Langwasser Süd (#0055a5)
+            row1DataT1 = { line: 'U1', color: '#0055a5', destination: 'Langwasser Süd', via: getUpcomingViaText('U1', station.name, 'reverse'), minutes: '1' };
+            row2DataT1 = { line: 'U1', color: '#0055a5', destination: 'Langwasser Süd', via: getUpcomingViaText('U1', station.name, 'reverse'), minutes: '8' };
+
+            row1DataT2 = { line: 'U1', color: '#0055a5', destination: 'Fürth Hardhöhe', via: getUpcomingViaText('U1', station.name, 'forward'), minutes: '3' };
+            row2DataT2 = { line: 'U1', color: '#0055a5', destination: 'Fürth Hardhöhe', via: getUpcomingViaText('U1', station.name, 'forward'), minutes: '13' };
+        }
+
+        const boardMatGleis1 = this.createDepartureBoardMaterial(track2Label, row1DataT2, row2DataT2);
+        const boardMatGleis2 = this.createDepartureBoardMaterial(track1Label, row1DataT1, row2DataT1);
 
         const materialsG1 = [
             this.materials.boardCasing, 
@@ -3500,11 +3660,14 @@ export class StationModel {
         } else if (station.name === "Stadtgrenze") {
             this.buildStadtgrenzeStairs(station, stationGroup, platLength, spacing, centerPos, centerAngle);
         } else {
-            import('./stations/StationBuilder.js?v=67').then(({ StationBuilder }) => {
-                const builder = new StationBuilder(this, station);
-                builder.group = stationGroup;
-                builder.buildStairs();
-            });
+            // StationBuilder is already imported statically at the top of this
+            // file, so the dynamic import() this used to go through was
+            // unnecessary — building synchronously avoids the async race it
+            // introduced (stairs/escalators used to finish one microtask
+            // after everything else in the station).
+            const builder = new StationBuilder(this, station);
+            builder.group = stationGroup;
+            builder.buildStairs();
         }
 
         // --- ADD TRASH CANS ---
@@ -3604,33 +3767,46 @@ export class StationModel {
     }
 
     createTunnelConcreteTexture() {
-        // Near-black base with minimal pixel grain – adapts naturally to 8-sided cylinder panels
-        const size = 128;
+        // Improved smooth concrete texture: medium-dark grey with subtle procedural patches
+        const size = 256;
         const canvas = document.createElement('canvas');
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext('2d');
 
-        // Near-black base
-        ctx.fillStyle = '#080808';
+        // Base grey
+        ctx.fillStyle = '#333333';
         ctx.fillRect(0, 0, size, size);
 
-        // Minimal grainy noise – only very subtle pixel variation
-        for (let i = 0; i < 6000; i++) {
+        // Subtle large-scale patches (cloud-like)
+        for (let i = 0; i < 12; i++) {
             const x = Math.random() * size;
             const y = Math.random() * size;
-            const v = Math.floor(10 + Math.random() * 18); // 10–28 range, almost invisible
-            ctx.fillStyle = `rgb(${v},${v},${v})`;
+            const r = 40 + Math.random() * 80;
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+            const v = Math.floor(Math.random() * 15) - 7; // -7 to +7 offset
+            grad.addColorStop(0, `rgba(${51+v},${51+v},${51+v}, 0.4)`);
+            grad.addColorStop(1, 'rgba(51,51,51,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, size, size);
+        }
+
+        // Fine grainy noise
+        for (let i = 0; i < 20000; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+            const v = Math.floor(Math.random() * 10) - 5;
+            const c = 51 + v;
+            ctx.fillStyle = `rgb(${c},${c},${c})`;
             ctx.fillRect(x, y, 1, 1);
         }
 
         const tex = new THREE.CanvasTexture(canvas);
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;
-        // 8 panels in the octagon cylinder – 8 U-repeats means each panel gets exactly one texture tile
-        // V=1 covers the 5m segment height without stretching
-        tex.repeat.set(8, 1);
-        return tex;
+        // 1:1 repeat; UVs are scaled in world-meters during geometry generation
+        tex.repeat.set(1, 1);
+        return tagCanvasTextureSRGBKeepLook(tex);
     }
 
     createBallastTexture() {
@@ -3990,7 +4166,7 @@ export class StationModel {
         });
     }
 
-    createDepartureBoardMaterial(trackNumber, destination, viaText) {
+    createDepartureBoardMaterial(trackNumberLabel, row1, row2) {
         const canvas = document.createElement('canvas');
         canvas.width = 1024;
         canvas.height = 264;
@@ -4001,7 +4177,7 @@ export class StationModel {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // 2. Draw Left Screen (Departure Display)
-        ctx.fillStyle = '#080c10'; // black/dark blue screen
+        ctx.fillStyle = '#100d08'; // dark screen background
         ctx.beginPath();
         if (ctx.roundRect) {
             ctx.roundRect(16, 16, 736, 232, 16);
@@ -4011,7 +4187,7 @@ export class StationModel {
         ctx.fill();
 
         // 3. Draw Right Screen (Info Display Screen)
-        ctx.fillStyle = '#080c10';
+        ctx.fillStyle = '#100d08';
         ctx.beginPath();
         if (ctx.roundRect) {
             ctx.roundRect(792, 16, 216, 232, 24);
@@ -4028,14 +4204,14 @@ export class StationModel {
         ctx.fillText('i', 900, 126); // Draw lowercase 'i' centered
 
         // 5. Draw Track/Gleis info in Left Screen
-        ctx.fillStyle = '#ffcc00'; // Yellow text
+        ctx.fillStyle = '#f4d96d'; // Yellow text
         ctx.textAlign = 'center';
         
         ctx.font = 'bold 24px "Outfit", "Inter", "Segoe UI", sans-serif';
         ctx.fillText('Gleis', 100, 70);
         
         ctx.font = 'bold 110px "Outfit", "Inter", "Segoe UI", sans-serif';
-        ctx.fillText(trackNumber.toString(), 100, 160);
+        ctx.fillText(trackNumberLabel, 100, 160);
 
         // Vertical divider on Left Screen
         ctx.strokeStyle = '#223344';
@@ -4049,14 +4225,10 @@ export class StationModel {
         const destX = 300;
         const timeX = 660;
         const minX = 720;
-        
-        // Departures info (dynamic minute countdown offset)
-        const min1 = trackNumber === 1 ? '3' : '1';
-        const min2 = trackNumber === 1 ? '13' : '8';
 
         // Row 1
-        // Blue U1 badge
-        ctx.fillStyle = '#0055a5';
+        // Line badge
+        ctx.fillStyle = row1.color;
         ctx.beginPath();
         if (ctx.roundRect) {
             ctx.roundRect(210, 36, 64, 32, 6);
@@ -4066,32 +4238,32 @@ export class StationModel {
         ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 20px "Outfit", "Inter", sans-serif';
-        ctx.fillText('U1', 242, 52);
+        ctx.fillText(row1.line, 242, 52);
 
         // Destination name
-        ctx.fillStyle = '#ffcc00';
+        ctx.fillStyle = '#f4d96d';
         ctx.textAlign = 'left';
         ctx.font = 'bold 28px "Outfit", "Inter", sans-serif';
-        ctx.fillText(destination, destX, 50);
+        ctx.fillText(row1.destination, destX, 50);
 
         // Subline
         ctx.fillStyle = '#88929a';
         ctx.font = '16px "Outfit", "Inter", sans-serif';
-        ctx.fillText(viaText, destX, 82);
+        ctx.fillText(row1.via, destX, 82);
 
         // Minutes
-        ctx.fillStyle = '#ffcc00';
+        ctx.fillStyle = '#f4d96d';
         ctx.textAlign = 'right';
         ctx.font = 'bold 36px "Outfit", sans-serif';
-        ctx.fillText(min1, timeX, 50);
+        ctx.fillText(row1.minutes, timeX, 50);
         
         ctx.textAlign = 'left';
         ctx.font = '14px sans-serif';
         ctx.fillText('Min.', minX, 50);
 
         // Row 2
-        // Blue U1 badge
-        ctx.fillStyle = '#0055a5';
+        // Line badge
+        ctx.fillStyle = row2.color;
         ctx.beginPath();
         if (ctx.roundRect) {
             ctx.roundRect(210, 116, 64, 32, 6);
@@ -4102,31 +4274,31 @@ export class StationModel {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 20px "Outfit", "Inter", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('U1', 242, 132);
+        ctx.fillText(row2.line, 242, 132);
 
         // Destination name
-        ctx.fillStyle = '#ffcc00';
+        ctx.fillStyle = '#f4d96d';
         ctx.textAlign = 'left';
         ctx.font = 'bold 28px "Outfit", "Inter", sans-serif';
-        ctx.fillText(destination, destX, 130);
+        ctx.fillText(row2.destination, destX, 130);
 
         // Subline
         ctx.fillStyle = '#88929a';
         ctx.font = '16px "Outfit", "Inter", sans-serif';
-        ctx.fillText(viaText, destX, 162);
+        ctx.fillText(row2.via, destX, 162);
 
         // Minutes
-        ctx.fillStyle = '#ffcc00';
+        ctx.fillStyle = '#f4d96d';
         ctx.textAlign = 'right';
         ctx.font = 'bold 36px "Outfit", sans-serif';
-        ctx.fillText(min2, timeX, 130);
+        ctx.fillText(row2.minutes, timeX, 130);
         
         ctx.textAlign = 'left';
         ctx.font = '14px sans-serif';
         ctx.fillText('Min.', minX, 130);
 
         // 7. Bottom Ticker (yellow bar with black text)
-        ctx.fillStyle = '#ffcc00';
+        ctx.fillStyle = '#f4d96d';
         ctx.fillRect(206, 196, 524, 34);
         
         ctx.fillStyle = '#000000';
@@ -4150,7 +4322,7 @@ export class StationModel {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // 2. Draw Left Screen (Departure Display)
-        ctx.fillStyle = '#080c10'; // black/dark blue screen
+        ctx.fillStyle = '#100d08'; // dark screen background
         ctx.beginPath();
         if (ctx.roundRect) {
             ctx.roundRect(16, 16, 736, 232, 16);
@@ -4160,7 +4332,7 @@ export class StationModel {
         ctx.fill();
 
         // 3. Draw Right Screen (Info Display Screen)
-        ctx.fillStyle = '#080c10';
+        ctx.fillStyle = '#100d08';
         ctx.beginPath();
         if (ctx.roundRect) {
             ctx.roundRect(792, 16, 216, 232, 24);

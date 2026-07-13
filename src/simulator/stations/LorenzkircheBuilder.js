@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { StationBuilder } from './StationBuilder.js?v=67';
+import { tagCanvasTextureSRGBKeepLook } from '../TextureUtils.js';
 
 export class LorenzkircheBuilder extends StationBuilder {
     setupMaterials() {
@@ -16,7 +17,7 @@ export class LorenzkircheBuilder extends StationBuilder {
             const y = Math.random() * 512;
             ctx.fillRect(x, y, 2, 2);
         }
-        const concTex = new THREE.CanvasTexture(concCanvas);
+        const concTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(concCanvas));
         concTex.wrapS = THREE.RepeatWrapping;
         concTex.wrapT = THREE.RepeatWrapping;
         concTex.repeat.set(10, 10);
@@ -85,8 +86,12 @@ export class LorenzkircheBuilder extends StationBuilder {
                         if (dz3*dz3 + dy*dy < r*r) discard;
                     }
                     
-                    // 2. Straight cutouts at the ends for stairs
-                    if (localZ < -41.0 || localZ > 41.0) {
+                    // 2. Straight cutouts at the ends for stairs. Threshold derived from
+                    // THIS station's own platLength/2 minus a 4m inset (matches the
+                    // originally hardcoded 41.0, since Lorenzkirche's platLength/2 is
+                    // 45) instead of a fixed constant — see RathausBuilder for why a
+                    // copy-pasted constant broke on a station with a different length.
+                    if (localZ < -${(this.platLength / 2 - 4.0).toFixed(3)} || localZ > ${(this.platLength / 2 - 4.0).toFixed(3)}) {
                         if (abs(localX) < 2.5) {
                             discard;
                         }
@@ -111,7 +116,7 @@ export class LorenzkircheBuilder extends StationBuilder {
             fctx.fillStyle = Math.random() > 0.5 ? '#9c4d3b' : '#733729';
             fctx.fillRect(Math.random()*256, Math.random()*256, 4, 4);
         }
-        const floorTex = new THREE.CanvasTexture(floorCanvas);
+        const floorTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(floorCanvas));
         floorTex.wrapS = THREE.RepeatWrapping;
         floorTex.wrapT = THREE.RepeatWrapping;
         floorTex.repeat.set(20, 5);
@@ -143,7 +148,7 @@ export class LorenzkircheBuilder extends StationBuilder {
         pctx.lineWidth = 2.0;
         pctx.strokeText('LORENZKIRCHE', 1500, 256);
 
-        const panelTex = new THREE.CanvasTexture(panelCanvas);
+        const panelTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(panelCanvas));
         panelTex.anisotropy = 8;
         panelTex.wrapS = THREE.RepeatWrapping;
         panelTex.wrapT = THREE.RepeatWrapping;
@@ -181,7 +186,7 @@ export class LorenzkircheBuilder extends StationBuilder {
         rctx.arc(256, 256, 64, 0, Math.PI*2);
         rctx.stroke();
 
-        const rosTex = new THREE.CanvasTexture(rosCanvas);
+        const rosTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(rosCanvas));
         this.rosetteMat = new THREE.MeshLambertMaterial({ map: rosTex, transparent: true, alphaTest: 0.1, side: THREE.DoubleSide });
     }
 

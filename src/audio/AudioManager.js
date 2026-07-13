@@ -52,6 +52,21 @@ export class AudioManager {
         this.dt1RumbleGain = null;
         this.dt1GrowlOsc = null;
         this.dt1GrowlGain = null;
+
+        // Debug-Mixer (Taste N): Multiplikatoren pro Sound-Schicht zum Testen/Justieren.
+        // 1 = unverändert, 0 = stumm. Wird in update() auf die Ziel-Lautstärken angewendet.
+        this.debugMix = {
+            motor: 1,
+            inverter: 1,
+            dt1Rumble: 1,
+            dt1Growl: 1,
+            startupSing: 1,
+            ambient: 1,
+            brake: 1,
+            rolling: 1
+        };
+        // Test-Schalter (Sound-Mixer, Taste N): Motor komplett stumm unter 25 km/h
+        this.debugMotorMuteBelow25 = false;
     }
 
     setTrainType(type) {
@@ -311,54 +326,51 @@ export class AudioManager {
         const speedKmh = speed * 3.6;
         const isDT1 = this.trainType === 'DT1';
 
-        // 1. Motor sound
+        // 1. Motor sound - komplett entfernt (Motorhum), Regler bleibt im Sound-Mixer (Taste N) für Tests erhalten
+        this.motorGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.2);
         if (speedKmh > 0.5) {
-            // DT1 has a deeper, slower motor sound
-            const baseFreq = isDT1 ? (22 + speedKmh * 1.1) : (30 + speedKmh * 1.5);
-            this.motorOsc1.frequency.setTargetAtTime(baseFreq, this.ctx.currentTime, 0.1);
-            this.motorOsc2.frequency.setTargetAtTime(baseFreq * 2.0, this.ctx.currentTime, 0.1);
 
-            const motorVolMultiplier = isDT1 ? 0.18 : 0.12; // DT1 is a bit louder/grittier
-            const targetMotorVol = (0.05 + Math.abs(throttle) * motorVolMultiplier) * Math.min(1.0, speedKmh / 5);
-            this.motorGain.gain.setTargetAtTime(targetMotorVol, this.ctx.currentTime, 0.2);
-
-            // Inverter: DT1 has no modern high-pitch inverter sing, but maybe a low hum
+            // Inverter: DT1 has no modern high-pitch inverter sing, but maybe a low hum.
+            // G1's inverter sing only starts at 20 km/h, but from there it should sound
+            // exactly like the original curve used to sound starting at 0 km/h - so we
+            // just feed the original formulas an effective speed shifted by -20.
+            const invSpeed = isDT1 ? speedKmh : Math.max(0, speedKmh - 20);
             let inverterFreq = 200;
             if (isDT1) {
-                inverterFreq = 100 + speedKmh * 2; // low grumble
+                inverterFreq = 100 + invSpeed * 2; // low grumble
             } else {
-                if (speedKmh < 25) {
-                    inverterFreq = 150 + speedKmh * 22;
-                } else if (speedKmh < 50) {
-                    inverterFreq = 400 + (speedKmh - 25) * 10;
+                if (invSpeed < 25) {
+                    inverterFreq = 150 + invSpeed * 22;
+                } else if (invSpeed < 50) {
+                    inverterFreq = 400 + (invSpeed - 25) * 10;
                 } else {
-                    inverterFreq = 650 + (speedKmh - 50) * 5;
+                    inverterFreq = 650 + (invSpeed - 50) * 5;
                 }
             }
             this.inverterOsc.frequency.setTargetAtTime(inverterFreq, this.ctx.currentTime, 0.15);
 
-            const inverterRamp = Math.min(1.0, speedKmh / 10);
+            const inverterRamp = Math.min(1.0, invSpeed / 10);
             const effort = Math.max(Math.abs(throttle), Math.min(1.0, brakePressure / 5));
 
             // DT1 inverter sound is much quieter/deeper
             const inverterVolMultiplier = isDT1 ? 0.04 : 0.10;
             const inverterCutoff = isDT1 ? 30 : 65;
 
-            const targetInverterVol = effort > 0.02
-                ? effort * inverterVolMultiplier * Math.max(0, 1 - speedKmh / inverterCutoff) * inverterRamp
-                : 0;
+            const targetInverterVol = (effort > 0.02
+                ? effort * inverterVolMultiplier * Math.max(0, 1 - invSpeed / inverterCutoff) * inverterRamp
+                : 0) * this.debugMix.inverter;
             this.inverterGain.gain.setTargetAtTime(targetInverterVol, this.ctx.currentTime, 0.1);
 
             // DT1 Specific extra mechanical rumble
             if (isDT1) {
                 const rumbleFreq = 15 + speedKmh * 0.5;
                 this.dt1RumbleOsc.frequency.setTargetAtTime(rumbleFreq, this.ctx.currentTime, 0.1);
-                const rumbleVol = effort * 0.08 * Math.min(1.0, speedKmh / 10);
+                const rumbleVol = effort * 0.08 * Math.min(1.0, speedKmh / 10) * this.debugMix.dt1Rumble;
                 this.dt1RumbleGain.gain.setTargetAtTime(rumbleVol, this.ctx.currentTime, 0.2);
 
                 const growlFreq = 40 + speedKmh * 1.5;
                 this.dt1GrowlOsc.frequency.setTargetAtTime(growlFreq, this.ctx.currentTime, 0.1);
-                const growlVol = effort * 0.05 * Math.min(1.0, speedKmh / 20);
+                const growlVol = effort * 0.05 * Math.min(1.0, speedKmh / 20) * this.debugMix.dt1Growl;
                 this.dt1GrowlGain.gain.setTargetAtTime(growlVol, this.ctx.currentTime, 0.2);
             } else {
                 this.dt1RumbleGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.2);
@@ -377,7 +389,7 @@ export class AudioManager {
             if (speedKmh < 3.0) startupVolume = (speedKmh - 0.1) / 2.9;
             else if (speedKmh < 7.0) startupVolume = 1.0;
             else startupVolume = 1.0 - (speedKmh - 7.0) / 13.0;
-            startupVolume *= Math.min(1.0, Math.abs(throttle) * 1.5) * 0.025;
+            startupVolume *= Math.min(1.0, Math.abs(throttle) * 1.5) * 0.025 * this.debugMix.startupSing;
             const lfoSpeed = 6.0 + (speedKmh * 0.85);
             this.startupSingLFO.frequency.setTargetAtTime(lfoSpeed, this.ctx.currentTime, 0.1);
         }
@@ -393,9 +405,9 @@ export class AudioManager {
             this.chordOscs[2].frequency.setTargetAtTime((20.000 * clampedSpeed + 800.000) * pitchScale, this.ctx.currentTime, 0.5);
 
             const maxAmbVol = isDT1 ? 0.04 : 0.07; // DT1 whine is less prominent
-            const targetAmbVol = speedKmh < 50
+            const targetAmbVol = (speedKmh < 50
                 ? Math.min(maxAmbVol, (speedKmh / 80) * 0.15)
-                : Math.max(0, maxAmbVol * (1 - (speedKmh - 50) / 40));
+                : Math.max(0, maxAmbVol * (1 - (speedKmh - 50) / 40))) * this.debugMix.ambient;
             this.ambientGain.gain.setTargetAtTime(targetAmbVol, this.ctx.currentTime, 0.4);
             const filterCutoff = Math.max(isDT1 ? 300 : 400, (isDT1 ? 700 : 900) - speedKmh * 6);
             this.ambientFilter.frequency.setTargetAtTime(filterCutoff, this.ctx.currentTime, 0.5);
@@ -406,7 +418,7 @@ export class AudioManager {
         // Brake squeal
         if (speedKmh > 0.5 && speedKmh < 18 && brakePressure > 1.5) {
             const speedFactor = 1 - Math.abs(speedKmh - 6) / 10;
-            const volume = Math.max(0, speedFactor) * (brakePressure / 5) * 0.08;
+            const volume = Math.max(0, speedFactor) * (brakePressure / 5) * 0.08 * this.debugMix.brake;
             this.brakeGain.gain.setTargetAtTime(volume, this.ctx.currentTime, 0.1);
             // DT1 brake squeal is slightly lower pitched
             const pitch = (isDT1 ? 1400 : 1800) + speedKmh * 80;
@@ -421,7 +433,7 @@ export class AudioManager {
 
             // DT1 poltert mehr (higher volume, lower cutoff)
             const rollingMultiplier = isDT1 ? 4.5 : 3.0;
-            this.rollingGain.gain.setTargetAtTime(volCurve * rollingMultiplier, this.ctx.currentTime, 0.2);
+            this.rollingGain.gain.setTargetAtTime(volCurve * rollingMultiplier * this.debugMix.rolling, this.ctx.currentTime, 0.2);
 
             const cutoffMin = isDT1 ? 150 : 200;
             const cutoffMax = isDT1 ? 500 : 600;

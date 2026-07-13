@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TRACK_DATA as TD } from './TrackData.js?v=55';
+import { TRACK_DATA as TD } from './TrackDataU1.js?v=55';
 
 // Reusable temporary vectors to prevent runtime allocations/garbage collection in path queries
 const _tempP0 = new THREE.Vector3();
@@ -58,21 +58,21 @@ function getResistanceForce(v_ms) {
  * Nuremberg U-Bahn Line 1 Physics & State Simulation Engine
  */
 export class Simulation {
-    constructor() {
+    constructor(trackData = TD) {
         // ---------------------------------------------------------------
         // Track geometry & stations are sourced from Schienen.geojson and
-        // precomputed into TrackData.js: the centerline of the route, the
+        // precomputed into TrackDataU1.js: the centerline of the route, the
         // inter-track spacing, every station's position/length, the
         // elevation transitions and the decorative side tracks. The whole
         // route is scaled so its length equals 18500 m.
         // ---------------------------------------------------------------
-        this.track = TD;
+        this.track = trackData;
 
         this.stations = [];
-        TD.stations.forEach((s, idx) => {
+        trackData.stations.forEach((s, idx) => {
             const center = this.getTrackPosition(s.position);
             const tangent = this.getTrackTangent(s.position);
-            const distPrev = (idx === 0) ? s.position : (s.position - TD.stations[idx - 1].position);
+            const distPrev = (idx === 0) ? s.position : (s.position - trackData.stations[idx - 1].position);
 
             this.stations.push({
                 name: s.name,
@@ -88,7 +88,7 @@ export class Simulation {
             });
         });
 
-        this.totalLength = TD.total;
+        this.totalLength = trackData.total;
 
         // Plärrer is a bespoke stacked station: two 12 m island platforms one above the
         // other. The Hardhöhe-bound track (forward) uses the UPPER level (base tunnel
@@ -100,10 +100,80 @@ export class Simulation {
         // centerline). They diverge into two separate tubes over the ramps out to ~±380 m.
         // Gleis 2 (reverse) is fully dived BEFORE the tracks converge, so it never has to
         // cross sideways through Gleis 1.
+        // The bespoke stacked hall (TrackManager.buildPlaerrer, built once by U1 and kept
+        // permanently in the world scene) serves ALL THREE lines: U1 rides Gleis 1/2, and
+        // U2/U3 ride the parallel Gleis 3/4 corridor 18.08 m away -- their generated
+        // centerlines are pinned onto exactly that corridor (scratch/gen_topology_u23.mjs).
+        // So every line with a Plärrer stop gets the same stacked semantics here: spacing
+        // converges to 0.6 m, one direction dives to the lower level, and the generic
+        // tunnel/rails are suppressed in the zone (replaced by the hall + approach tubes).
         this.plaerrer = this.stations.find(s => s.name === "Plärrer") || null;
+        // U2/U3 traverse the shared corridor OPPOSITE to U1 (their south-west termini
+        // Röthenbach/Grossreuth lie toward Fürth as seen from Plärrer), so their FORWARD
+        // (+spacing/2) track lands on the Gleis 4 slot and must be the one that dives;
+        // U1 keeps its historic reverse-dives behavior (Gleis 2 lower, Gleis 1 upper).
+        this.plaerrerForwardDives = !!(trackData.lineId && trackData.lineId !== "U1");
         this.plaerrerDrop = 10.0;  // lower level depth below the upper level (Gleis 2 ≈ -16.5 m)
         this.plStackHalf = 150;    // (zone half-extent = plStackHalf + plRamp; tubes span it)
         this.plRamp = 300;         // the tubes/dive reach this far past the stacked core
+
+        // Shared trunk zone (Rothenburger Straße..Rathenauplatz, U2/U3 only): the station
+        // platforms + connecting track there are now byte-identical between U2 and U3
+        // (scratch/gen_topology_u23.mjs splices U2's trunk into U3), so they're rendered ONCE
+        // by a dedicated shared "trunk rig" (built in main.js, mirroring the Plärrer hall)
+        // instead of once per line. Each line's OWN TrackManager/StationModel must skip
+        // building chunks/stations there (see isTrunkZone, TrackManager.createChunk,
+        // StationModel.buildStation) so the two don't end up duplicated in the scene. The 10m
+        // cutoff must stay INSIDE the splice's own guaranteed-identical range (the crossfade
+        // in gen_topology_u23.mjs completes ~15m before each station) and well short of the
+        // real switch (~73-76m out) -- extending this out to the switch was what made U2/U3's
+        // centerlines get force-blended together right where they're meant to diverge, which
+        // is what made the junctions look "wild". TrackDataTrunk.js's own EXTRACT_MARGIN (40m)
+        // stays a bit wider than this cutoff so the shared rig's geometry always covers
+        // slightly more than what each line skips (avoiding a gap at the 50m chunk grain).
+        const TRUNK_STATION_NAMES = ['Rothenburger Straße', 'Opernhaus', 'Hauptbahnhof', 'Wöhrder Wiese', 'Rathenauplatz'];
+        const trunkPositions = TRUNK_STATION_NAMES.map(nm => this.stations.find(s => s.name === nm)?.position);
+        this.trunkZone = trunkPositions.every(p => p !== undefined)
+            ? [Math.min(...trunkPositions) - 10, Math.max(...trunkPositions) + 10]
+            : null;
+
+        // Bespoke switch-transition zones (U2/U3 only): past each of the two boundary trunk
+        // stations, ~SWITCH_LEN of tunnel is a hand-authored, shared piece (TrackManager.
+        // buildSwitchTransition, built once and reused by both lines like the Plärrer hall)
+        // instead of each line's own procedural chunk tunnel -- see isSwitchZone,
+        // TrackManager.createChunk. `dir` is the arc direction AWAY from the trunk interior
+        // (where the real switch/Weiche physically sits), matching gen_topology_u23.mjs's
+        // convention. Zone starts a few meters inside the platform edge (no gap at the 50m
+        // chunk grain) and ends a bit past SWITCH_LEN (must match TrackManager's SWITCH_LEN).
+        const SWITCH_LEN = 250;
+        const SWITCH_STATIONS = [
+            { name: 'Rothenburger Straße', dir: -1 },
+            { name: 'Rathenauplatz', dir: 1 },
+        ];
+        this.switchZones = SWITCH_STATIONS
+            .map(({ name, dir }) => {
+                const st = this.stations.find(s => s.name === name);
+                if (!st) return null;
+                const a = st.position + dir * (st.halfLength - 5);
+                const b = st.position + dir * (st.halfLength + SWITCH_LEN + 10);
+                return { name, range: [Math.min(a, b), Math.max(a, b)] };
+            })
+            .filter(Boolean);
+
+        // Named speed-restricted curve zones (station-name pairs, not raw indices, so a
+        // second/third line's own station order never accidentally hits the wrong stretch).
+        // U1's own sharp curve (Messe -> Bauernfeindstraße) is the historic default, applied
+        // whenever a track doesn't specify curveSpeedZones itself (pass [] to opt out).
+        const curveZoneDefs = trackData.curveSpeedZones !== undefined
+            ? trackData.curveSpeedZones
+            : [{ before: "Messe", after: "Bauernfeindstraße", limitKmh: 50 }];
+        this.curveSpeedZones = curveZoneDefs
+            .map(z => ({
+                startPos: this.stations.find(s => s.name === z.before)?.position,
+                endPos: this.stations.find(s => s.name === z.after)?.position,
+                limitKmh: z.limitKmh
+            }))
+            .filter(z => z.startPos !== undefined && z.endPos !== undefined);
 
         // Simulation State
         this.trainModelType = 'G1'; // 'G1' or 'DT1'
@@ -178,8 +248,10 @@ export class Simulation {
     }
  
     get trainHalfLength() {
-        // Maßstab 1:1 – 1 Einheit = 1 Meter. Halbe Gesamtzuglänge (G1 = 76,170 m, DT1 ≈ 74,3 m).
-        return this.trainModelType === 'G1' ? 38.085 : 37.15;
+        // Maßstab 1:1 – 1 Einheit = 1 Meter. Halbe Gesamtzuglänge (G1 = 76,170 m, DT1 ≈ 74,3 m, DT3 ≈ 38,085 m).
+        if (this.trainModelType === 'G1') return 38.085;
+        if (this.trainModelType === 'DT3') return 19.0425;
+        return 37.15; // DT1
     }
 
     getTrackPosition(dist, target = new THREE.Vector3()) {
@@ -222,10 +294,13 @@ export class Simulation {
     }
 
     // Extra vertical offset applied to the moving train (and its cameras) so that it rides
-    // the correct stacked Plärrer level: the upper level when heading to Hardhöhe (forward),
-    // the lower level when heading to Langwasser Süd (reverse).
+    // the correct stacked Plärrer level. U1: upper when heading to Hardhöhe (forward),
+    // lower when heading to Langwasser Süd (reverse). U2/U3 traverse the corridor the
+    // other way round (see plaerrerForwardDives), so for them FORWARD rides the lower
+    // Gleis 4 and reverse stays on the upper Gleis 3.
     getTrackElevationOffset(dist, reversing) {
-        return reversing ? this.getLowerLevelOffset(dist) : 0;
+        const ridesLower = this.plaerrerForwardDives ? !reversing : reversing;
+        return ridesLower ? this.getLowerLevelOffset(dist) : 0;
     }
 
     // True inside the bespoke Plärrer zone (platform + the two-tube split on each side),
@@ -237,12 +312,39 @@ export class Simulation {
         return Math.abs(dist - p.position) <= this.plStackHalf + this.plRamp;
     }
 
+    // True inside the shared trunk zone (Rothenburger Straße..Rathenauplatz), where the
+    // generic per-line chunk/station building is suppressed in favour of the shared trunk rig.
+    isTrunkZone(dist) {
+        return !!this.trunkZone && dist >= this.trunkZone[0] && dist <= this.trunkZone[1];
+    }
+
+    // True inside a bespoke switch-transition zone (past Rothenburger Straße/Rathenauplatz),
+    // where the generic per-line chunk tunnel is suppressed in favour of the shared,
+    // hand-authored switch piece (TrackManager.buildSwitchTransition).
+    isSwitchZone(dist) {
+        for (const z of this.switchZones) if (dist >= z.range[0] && dist <= z.range[1]) return true;
+        return false;
+    }
+
+    // Generic interpreter for tracks that carry a simple `elevationZones` list instead of
+    // U1's hand-tuned 8-segment ramp chain (used by lines with no surface/elevated sections,
+    // e.g. U2/U3 which are entirely underground -- no ramp blending needed between zones).
+    _zoneTypeAt(z) {
+        const zones = this.track.elevationZones;
+        for (const zn of zones) if (z <= zn.end) return zn.type;
+        return zones[zones.length - 1].type;
+    }
+
     getTrackY(z) {
         // Elevation profile. Levels: underground -6.5 m, surface 0 m, elevated +7 m.
         // Transition distances (portals / open-cut shafts / ramps) come from TrackData
         // and are re-anchored to the geojson station positions.
-        const e = this.track.elevation;
         const UG = -6.5, EL = 7.0;
+        if (this.track.elevationZones) {
+            const t = this._zoneTypeAt(z);
+            return (t === 'elevated' || t === 'ramp') ? EL : (t === 'at-grade' ? 0.0 : UG);
+        }
+        const e = this.track.elevation;
 
         // 1. Langwasser Mitte -> Scharfreiterring (underground -> at-grade)
         if (z < e.p1) return UG;
@@ -276,6 +378,7 @@ export class Simulation {
     getChunkType(z) {
         // Structural type along the route, keyed to the same re-anchored transition
         // distances as getTrackY (TrackData.elevation).
+        if (this.track.elevationZones) return this._zoneTypeAt(z);
         const e = this.track.elevation;
 
         // 1. Langwasser Mitte -> Scharfreiterring
@@ -590,11 +693,12 @@ export class Simulation {
             }
         }
 
-        // Special curves speed limit (e.g. between Messe and Bauernfeindstraße)
-        const s5 = this.stations[5].position;
-        const s6 = this.stations[6].position;
-        if (this.position > s5 + 0 && this.position < s6 - 0) {
-            limit = 50; // sharp curve
+        // Named curve speed zones (e.g. U1's Messe -> Bauernfeindstraße), see this.curveSpeedZones
+        for (const z of this.curveSpeedZones) {
+            if (this.position > z.startPos && this.position < z.endPos) {
+                limit = z.limitKmh;
+                break;
+            }
         }
 
         this.targetSpeed = limit / 3.6; // convert to m/s
@@ -795,29 +899,25 @@ export class Simulation {
     }
 
     getCurveAheadConstraint(trainCenter, dir, decel) {
-        // Antizipiert die scharfe Kurve zwischen Messe and Bauernfeindstraße:
-        // ein erfahrener Fahrer bremst VOR der Kurve ab, nicht erst beim Erreichen der Zone.
-        const s6 = this.stations[5].position;
-        const s7 = this.stations[6].position;
-        const zoneStart = s6 + 0;
-        const zoneEnd = s7 - 0;
-        const curveLimit = 50 / 3.6;
+        // Antizipiert scharfe Kurven (this.curveSpeedZones): ein erfahrener Fahrer bremst VOR
+        // der Kurve ab, nicht erst beim Erreichen der Zone. Returns the most restrictive
+        // constraint across all zones (usually there's just one, as for U1's Messe curve).
+        let result = Infinity;
+        for (const z of this.curveSpeedZones) {
+            const curveLimit = z.limitKmh / 3.6;
+            const entrancePos = dir > 0 ? z.startPos : z.endPos;
+            const exitPos = dir > 0 ? z.endPos : z.startPos;
 
-        const entrancePos = dir > 0 ? zoneStart : zoneEnd;
-        const exitPos = dir > 0 ? zoneEnd : zoneStart;
+            const distToExit = (exitPos - trainCenter) * dir;
+            if (distToExit < 0) continue; // Kurve bereits vollständig passiert
 
-        const distToExit = (exitPos - trainCenter) * dir;
-        if (distToExit < 0) {
-            return Infinity; // Kurve bereits vollständig passiert
+            const distToEntrance = (entrancePos - trainCenter) * dir;
+            const v = distToEntrance > 0
+                ? Math.sqrt(Math.max(0, curveLimit * curveLimit + 2 * decel * distToEntrance))
+                : curveLimit;
+            if (v < result) result = v;
         }
-
-        const distToEntrance = (entrancePos - trainCenter) * dir;
-        if (distToEntrance > 0) {
-            // Noch vor der Kurve: zulässige Geschwindigkeit JETZT, um rechtzeitig auf curveLimit zu kommen
-            return Math.sqrt(Math.max(0, curveLimit * curveLimit + 2 * decel * distToEntrance));
-        }
-        // Bereits innerhalb der Kurvenzone
-        return curveLimit;
+        return result;
     }
 
     runATO(dt) {

@@ -7,6 +7,8 @@ const _wmPos = new THREE.Vector3();
 const _wmTan = new THREE.Vector3();
 const _wmTarget = new THREE.Vector3();
 const _wmOffset = new THREE.Vector3();
+const _wmQuat = new THREE.Quaternion();
+const _wmEuler = new THREE.Euler();
 
 export class WorldManager {
     constructor(containerEl, simulation) {
@@ -35,12 +37,15 @@ export class WorldManager {
         
         // Sky & Env
         this.skyColor = new THREE.Color('#93d5f8'); // Day sky blue (fog tint; background uses skyTexture)
-        this.tunnelColor = new THREE.Color('#050505'); // Dark tunnel
+        this.tunnelColor = new THREE.Color('#000000'); // Pitch black tunnel
         this._isOpenAirBackground = null; // tracks which background is active (avoids Color/Texture .equals())
         
-        // Eye adaptation effect
+        // Eye adaptation effect: on a tunnel<->daylight change the exposure jumps to
+        // adaptationFromExposure and settles back to 1.0 over adaptationDuration seconds.
         this.adaptationTimer = 0;
         this.adaptationActive = false;
+        this.adaptationDuration = 1.0;
+        this.adaptationFromExposure = 1.0;
 
         // Passenger camera rotation (look-around). Passenger spawns near the side wall
         // (x=-0.75, see passengerLocalPos below) - +PI/2 points the view across the car
@@ -110,6 +115,12 @@ export class WorldManager {
         this.resolutionScale = 1.0; // user quality setting, applied via setResolutionScale
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = false;
+        // Filmic tone mapping: rolls over-bright sunlit areas off smoothly instead of
+        // clipping each color channel at 1.0 (which washed colors out and shifted hues),
+        // and is required for toneMappingExposure — the eye-adaptation flash below —
+        // to have any effect at all (three.js ignores exposure under NoToneMapping).
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.0;
         this.container.appendChild(this.renderer.domElement);
 
         // Open-air sky: an equirectangular photo used directly as scene.background.
@@ -126,16 +137,16 @@ export class WorldManager {
         
         // 1. Cab Camera (inside front cabin)
         this.cameras.cab = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-        
+
         // 2. Passenger Camera (inside passenger coach looking out window)
         this.cameras.passenger = new THREE.PerspectiveCamera(65, aspect, 0.1, 1000);
-        
+
         // 3. Platform Camera (cinematic angle at next station)
         this.cameras.platform = new THREE.PerspectiveCamera(55, aspect, 0.1, 1000);
-        
+
         // 4. Orbit Camera (general view)
         this.cameras.orbit = new THREE.PerspectiveCamera(60, aspect, 0.1, 15000);
-        
+
         // Orbit Controls
         this.controls = new OrbitControls(this.cameras.orbit, this.renderer.domElement);
         this.controls.enableDamping = true;
@@ -349,6 +360,11 @@ export class WorldManager {
             if (this.activeCameraType === 'orbit') {
                 this.orbitDistance += e.deltaY * 0.05;
                 this.orbitDistance = Math.max(5, Math.min(5000, this.orbitDistance));
+            } else if (this.activeCameraType === 'cab' || this.activeCameraType === 'passenger' || this.activeCameraType === 'platform') {
+                const cam = this.cameras[this.activeCameraType];
+                cam.fov += e.deltaY * 0.05;
+                cam.fov = Math.max(30, Math.min(90, cam.fov));
+                cam.updateProjectionMatrix();
             }
         };
 
@@ -515,7 +531,7 @@ export class WorldManager {
         this.scene.add(this.sunLight);
 
         // Train Headlight (spotlight attached to the front of the train)
-        this.headlight = new THREE.SpotLight(0xffffff, 5.0, 150, Math.PI / 6, 0.5, 1.0);
+        this.headlight = new THREE.SpotLight(0xffffff, 15.0, 80, Math.PI / 4.5, 0.8, 1.0);
         this.scene.add(this.headlight);
         this.scene.add(this.headlight.target); // Spotlight needs target in scene
     }
@@ -593,7 +609,8 @@ export class WorldManager {
         const trainZ = this.sim.position;
         const direction = this.sim.isReversing ? -1 : 1;
         const isG1 = (this.sim.trainModelType === 'G1');
-        const trainLength = (isG1 ? 76.170 : 76.0); // 1:1 – volle Zuglänge in Metern
+        const isDT3 = (this.sim.trainModelType === 'DT3');
+        const trainLength = isG1 ? 76.170 : (isDT3 ? 38.085 : 76.0); // 1:1 – volle Zuglänge in Metern
         
         // Train front is at trainZ, rear is at trainZ - direction * trainLength
         const frontZ = trainZ;
@@ -601,14 +618,14 @@ export class WorldManager {
         const centerZ = trainZ - direction * (trainLength / 2);
 
         // Update lighting based on environment (tunnel vs open-air)
-        this.updateEnvironmentLighting(trainZ);
+        this.updateEnvironmentLighting(trainZ, dt);
 
         // Update headlight position (always at the front of the train, relative to active leading carriage)
-        const activeCabCar = train3D.carriages[this.sim.isReversing ? 3 : 0];
-        const activeCarLength = isG1 ? 19.270 : 19.0;
+        const activeCabCar = train3D.carriages[this.sim.isReversing ? (train3D.carriages.length - 1) : 0];
+        const activeCarLength = isG1 ? 19.270 : (isDT3 ? 19.0425 : 19.0);
         
         const headLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 1.2, -activeCarLength - 0.5) : new THREE.Vector3(0, 1.2, 0.5);
-        const headLocalTarget = this.sim.isReversing ? new THREE.Vector3(0, 1.0, -99.0) : new THREE.Vector3(0, 1.0, 80.0);
+        const headLocalTarget = this.sim.isReversing ? new THREE.Vector3(0, 0.2, -40.5) : new THREE.Vector3(0, 0.2, 40.5);
         this.headlight.position.copy(activeCabCar.localToWorld(headLocalPos));
         this.headlight.target.position.copy(activeCabCar.localToWorld(headLocalTarget));
 
@@ -677,10 +694,11 @@ export class WorldManager {
                 }
 
                 // Carriage switching logic (walk between wagons)
+                const lastCarIdx = train3D.carriages.length - 1;
                 if (this.passengerLocalPos.z > 0 && this.passengerCarIdx > 0) {
                     this.passengerCarIdx--;
                     this.passengerLocalPos.z -= 19;
-                } else if (this.passengerLocalPos.z < -19 && this.passengerCarIdx < 3) {
+                } else if (this.passengerLocalPos.z < -19 && this.passengerCarIdx < lastCarIdx) {
                     this.passengerCarIdx++;
                     this.passengerLocalPos.z += 19;
                 }
@@ -690,11 +708,12 @@ export class WorldManager {
                 this.passengerLocalPos.x = Math.max(-0.75, Math.min(0.75, this.passengerLocalPos.x));
 
                 // Length clamping (entire train from front cockpit to rear cockpit)
-                const cabLen = isG1 ? 1.9 : 1.44;
+                const isDT3 = (this.sim.trainModelType === 'DT3');
+                const cabLen = isDT3 ? 0.35 : (isG1 ? 1.9 : 1.44);
                 let minZ = -19;
                 let maxZ = 0;
-                if (this.passengerCarIdx === 0) maxZ = -(cabLen + 0.05); // don't clip into front cab
-                if (this.passengerCarIdx === 3) minZ = -19 + (cabLen + 0.05); // don't clip into rear cab
+                if (this.passengerCarIdx === 0) maxZ = -(cabLen + 0.05); // don't clip into front cab/window
+                if (this.passengerCarIdx === lastCarIdx) minZ = -19 + (cabLen + 0.05); // don't clip into rear cab/window
 
                 this.passengerLocalPos.z = Math.max(minZ, Math.min(maxZ, this.passengerLocalPos.z));
 
@@ -733,7 +752,8 @@ export class WorldManager {
                 if (this.platformCameraStationIdx !== targetStation.index) {
                     this.platformCameraStationIdx = targetStation.index;
                     
-                    const camZ = targetStation.position - 20.0;
+                    const direction = this.sim.isReversing ? -1 : 1;
+                    const camZ = targetStation.position - direction * 20.0;
                     const statPos = this.sim.getTrackPosition(camZ);
                     const statTangent = this.sim.getTrackTangent(camZ);
                     const statNormal = new THREE.Vector3(-statTangent.z, 0, statTangent.x);
@@ -742,15 +762,20 @@ export class WorldManager {
                     const isScharfreiterring = targetStation && (targetStation.name === "Scharfreiterring");
                     const isPlaerrer = targetStation && (targetStation.name === "Plärrer");
                     const spacing = this.sim.getTrackSpacing(camZ);
-                    // Plärrer: the island platform is offset to the side; pick the UPPER deck
-                    // when heading Hardhöhe (forward) and the LOWER deck when heading Langwasser.
-                    const baseLocalX = isPlaerrer ? -5.0 : (isScharfreiterring ? (spacing / 2 - 2.58) : (isSideStation ? spacing / 2 + 2.8 : 0));
-                    // Plain island platforms (no special-cased offset above) shouldn't always
-                    // spawn dead-centre - clearly off to one side, like a person would stand,
-                    // never within 2m of the middle.
-                    const side = Math.random() < 0.5 ? -1 : 1;
-                    const localX = (baseLocalX === 0) ? side * (2.0 + Math.random() * 2.5) : baseLocalX;
-                    const levelY = (isPlaerrer && this.sim.isReversing) ? -this.sim.plaerrerDrop : 0;
+                    const trainXOffset = this.sim.isReversing ? (-spacing / 2) : (spacing / 2);
+                    
+                    let localX;
+                    if (isPlaerrer) {
+                        localX = -5.0;
+                    } else if (isScharfreiterring) {
+                        localX = trainXOffset - Math.sign(trainXOffset) * 2.58;
+                    } else if (isSideStation) {
+                        localX = trainXOffset + Math.sign(trainXOffset) * 2.8;
+                    } else {
+                        localX = trainXOffset - Math.sign(trainXOffset) * 2.50;
+                    }
+                    
+                    const levelY = this.sim.getTrackElevationOffset(camZ, this.sim.isReversing);
 
                     const defaultPos = statPos.clone().addScaledVector(statNormal, localX);
                     defaultPos.y = statPos.y + levelY + 2.575;
@@ -758,7 +783,7 @@ export class WorldManager {
                     this.cameras.platform.position.copy(defaultPos);
                     
                     // Point camera at the train's cab
-                    const trainCabinLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 1.2, -19.0) : new THREE.Vector3(0, 1.2, 0.0);
+                    const trainCabinLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 1.2, -activeCarLength) : new THREE.Vector3(0, 1.2, 0.0);
                     const trainWorldPos = activeCabCar.localToWorld(trainCabinLocalPos);
                     const dir = new THREE.Vector3().subVectors(trainWorldPos, defaultPos).normalize();
                     
@@ -803,7 +828,7 @@ export class WorldManager {
                 }
 
                 // Ensure Y stays at exactly platform eye level relative to the station track elevation
-                const plLevelY = (targetStation.name === "Plärrer" && this.sim.isReversing) ? -this.sim.plaerrerDrop : 0;
+                const plLevelY = this.sim.getTrackElevationOffset(targetStation.position, this.sim.isReversing);
                 const stationY = this.sim.getTrackPosition(targetStation.position, _wmPos).y;
                 this.cameras.platform.position.y = stationY + plLevelY + 2.575;
 
@@ -821,19 +846,18 @@ export class WorldManager {
                 
             case 'orbit': {
                 // Chase camera orbiting around the cockpit (leading cab), not the whole
-                // train's centre - trainZ is the very front tip, so pull back just enough
-                // to land roughly on the driver's position (see the cab camera's own
-                // cabLocalPos z-offset of ~1.2m above) instead of half the train's length.
-                const direction = this.sim.isReversing ? -1 : 1;
-                const centerZ = trainZ - direction * 1.5;
-                this.sim._sampleTrack(centerZ, _wmPos, _wmTan);
+                // train's centre.
+                const activeCabCar = train3D.carriages[this.sim.isReversing ? (train3D.carriages.length - 1) : 0];
+                const activeCarLength = isG1 ? 19.270 : (isDT3 ? 19.0425 : 19.0);
+                const cabLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 2.00, -activeCarLength + 1.2) : new THREE.Vector3(0, 2.00, -1.2);
 
-                // Target slightly above track level
-                const targetPos = _wmTarget.copy(_wmPos);
-                targetPos.y += 1.8;
+                // Target is exactly the driver's head position in the world
+                const targetPos = activeCabCar.localToWorld(cabLocalPos.clone());
 
-                // Train yaw from track tangent
-                const trainYaw = Math.atan2(_wmTan.x, _wmTan.z);
+                // Use actual carriage yaw instead of track tangent for a more stable chase effect
+                const carWorldQuaternion = _wmQuat.setFromRotationMatrix(activeCabCar.matrixWorld);
+                const carEuler = _wmEuler.setFromQuaternion(carWorldQuaternion, 'YXZ');
+                const trainYaw = carEuler.y + (this.sim.isReversing ? Math.PI : 0);
 
                 // Calculate camera position relative to train center and orientation
                 this._smoothRotation(this.orbitRotationView, this.orbitRotation, dt);
@@ -848,7 +872,8 @@ export class WorldManager {
 
                 this.cameras.orbit.position.copy(targetPos).add(offset);
 
-                // Prevent camera from falling below track level
+                // Prevent camera from falling below track level (using track sample only for ground ref)
+                this.sim._sampleTrack(trainZ, _wmPos, null);
                 const groundY = _wmPos.y + 0.5;
                 if (this.cameras.orbit.position.y < groundY) {
                     this.cameras.orbit.position.y = groundY;
@@ -858,6 +883,16 @@ export class WorldManager {
                 break;
             }
         }
+
+        // Planar mirror pass for the interior window reflections. Only for
+        // in-train cameras (exterior views keep the static cubemap and this
+        // costs nothing); skipped on mobile for performance.
+        const interiorCam = this.activeCameraType === 'cab' || this.activeCameraType === 'passenger';
+        train3D.updatePlanarReflections(
+            this.renderer,
+            this.activeCamera,
+            interiorCam && !document.body.classList.contains('is-mobile')
+        );
 
         // Apply render
         this.renderer.render(this.scene, this.activeCamera);
@@ -918,7 +953,7 @@ export class WorldManager {
             }
         }
     }
-    updateEnvironmentLighting(trainZ) {
+    updateEnvironmentLighting(trainZ, dt) {
         const direction = this.sim.isReversing ? -1 : 1;
         let cameraTrackZ = trainZ;
 
@@ -938,13 +973,17 @@ export class WorldManager {
 
         // Handle eye adaptation effect when transitioning
         if (isOpenAir && this._isOpenAirBackground === false) {
-            // Emerging from tunnel: trigger eye flash adaptation
+            // Emerging from tunnel: daylight blinds for a moment, eyes settle quickly
             this.adaptationActive = true;
-            this.adaptationTimer = 1.0; // 1 second flash
+            this.adaptationTimer = 0;
+            this.adaptationDuration = 1.4;
+            this.adaptationFromExposure = 2.0;
         } else if (!isOpenAir && this._isOpenAirBackground === true) {
-            // Entering tunnel: quick dark adaptation
+            // Entering tunnel: near-black at first, dark adaptation takes longer
             this.adaptationActive = true;
-            this.adaptationTimer = 0.5;
+            this.adaptationTimer = 0;
+            this.adaptationDuration = 2.2;
+            this.adaptationFromExposure = 0.35;
         }
         this._isOpenAirBackground = isOpenAir;
 
@@ -953,10 +992,10 @@ export class WorldManager {
             this.scene.background = this.skyTexture;
             this.scene.fog.color = this.skyColor;
             this.scene.fog.density = 0.0015; // very light fog for distance depth
-            
+
             this.ambientLight.intensity = isPlatform ? 0.85 : 0.6; // Brighter ambient daylight
             this.sunLight.intensity = 2.5; // Bright sunlight
-            this.headlight.intensity = 0.5; // Headlights barely visible during day
+            this.headlight.intensity = 1.0; // Headlights barely visible during day
         } else {
             // Tunnel environment
             this.scene.background = this.tunnelColor;
@@ -965,15 +1004,15 @@ export class WorldManager {
             if (isPlatform) {
                 // Brightly lit station (clear view, no thick black fog)
                 this.scene.fog.density = 0.0;
-                this.ambientLight.intensity = 0.85;
+                this.ambientLight.intensity = 0.55;
                 this.sunLight.intensity = 0.0;
-                this.headlight.intensity = 3.0;
+                this.headlight.intensity = 12.0;
             } else {
                 // Dark tunnel
                 this.scene.fog.density = 0.0; // less dense dark tunnel fog
-                this.ambientLight.intensity = 0.35;
+                this.ambientLight.intensity = 0.05;
                 this.sunLight.intensity = 0.0; // no sun inside tunnel
-                this.headlight.intensity = 8.0; // powerful headlight in dark
+                this.headlight.intensity = 20.0; // powerful headlight in dark
             }
         }
 
@@ -981,20 +1020,15 @@ export class WorldManager {
             this.scene.fog.density = this.scene.fog.densityOverride;
         }
 
-        // Apply eye adaptation flash (boost exposure briefly)
-        if (this.adaptationActive && this.adaptationTimer > 0) {
-            this.adaptationTimer -= 0.016; // approximate dt (60fps)
-            if (this.adaptationTimer <= 0) {
+        // Apply eye adaptation (exposure eases from the flash value back to 1.0)
+        if (this.adaptationActive) {
+            this.adaptationTimer += Math.min(dt || 0.016, 0.1); // clamp: a tab-refocus dt spike must not skip the effect
+            const k = Math.min(this.adaptationTimer / this.adaptationDuration, 1.0);
+            const s = k * k * (3.0 - 2.0 * k); // smoothstep: hold the blinded moment, then land softly
+            this.renderer.toneMappingExposure = this.adaptationFromExposure + (1.0 - this.adaptationFromExposure) * s;
+            if (k >= 1.0) {
                 this.adaptationActive = false;
                 this.renderer.toneMappingExposure = 1.0;
-            } else {
-                if (isOpenAir) {
-                    // Flash white/bright exposure
-                    this.renderer.toneMappingExposure = 1.0 + this.adaptationTimer * 2.0;
-                } else {
-                    // Temporarily dark, then settle
-                    this.renderer.toneMappingExposure = 0.3 + (1 - this.adaptationTimer) * 0.7;
-                }
             }
         }
     }
