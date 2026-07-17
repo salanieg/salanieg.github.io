@@ -1,4 +1,47 @@
+// ============================================================================
+// StationBuilder.js — Basisklasse für Stations-Sonderarchitektur. Der generische
+// Stationsbau lebt in StationModel.buildStation; diese Klasse liefert das
+// Template-Method-Gerüst (build() ruft setupMaterials/buildSegment*/
+// buildPillars/... auf), das Rathaus-/LorenzkircheBuilder überschreiben.
+//
+// KI-LANDKARTE:
+//   - Neue Sonderstation: Subklasse anlegen (Muster: RathausBuilder), in
+//     StationModel.buildStation den Namens-Dispatch ergänzen.
+//   - Treppen/Rolltreppen inkl. GPU-Stufenanimation: buildStairs +
+//     setupEscalatorMaterial (Vertex-Shader-Injektion unten) — die Uniform
+//     uEscalatorTime wird über den gepatchten StationModel.tick getrieben.
+//   - Gemeinsame Texturen: createStairTexture/createRoughConcreteMaterial/
+//     createDurchgangVerbotenTexture/createEscalatorStripeTexture.
+// ============================================================================
 import * as THREE from 'three';
+
+/**
+ * Shared logic for GPU-accelerated escalator animation.
+ * Moves the periodic step movement from CPU matrix updates to a Vertex Shader.
+ */
+const ESCALATOR_SHADER_INJECTION = {
+    uniforms: {
+        uEscalatorTime: { value: 0 }
+    },
+    vertexShader: {
+        header: `
+            attribute vec3 aEscalatorDir;
+            uniform float uEscalatorTime;
+        `,
+        main: `
+            // The fractional part of time creates the periodic jump: once a step has
+            // moved exactly one unit, it jumps back to its start, but since all
+            // steps are identical, the belt appears to move continuously.
+            float progress = fract(uEscalatorTime);
+
+            // Invert progress if the direction vector is negative (DOWN instead of UP)
+            // We use the length of the vector to detect direction sign.
+            if (length(aEscalatorDir) > 0.0) {
+                 transformed += aEscalatorDir * progress;
+            }
+        `
+    }
+};
 
 export class StationBuilder {
     constructor(model, station) {
@@ -182,13 +225,103 @@ export class StationBuilder {
         const handrailMat = new THREE.MeshBasicMaterial({ color: '#111111' });
         const glassMat = new THREE.MeshBasicMaterial({ color: '#94a3b8', transparent: true, opacity: 0.6 });
 
+        // Light-grey balustrade sides with a subtle horizontal lighter gradient
+        const balustradeCanvas = document.createElement('canvas');
+        balustradeCanvas.width = 128;
+        balustradeCanvas.height = 4;
+        const balCtx = balustradeCanvas.getContext('2d');
+        const balGrad = balCtx.createLinearGradient(0, 0, 128, 0);
+        balGrad.addColorStop(0.0, '#c8cdd2');   // slightly darker edge
+        balGrad.addColorStop(0.3, '#dde0e4');   // lighter centre-left
+        balGrad.addColorStop(0.5, '#e8eaed');   // lightest highlight in the middle
+        balGrad.addColorStop(0.7, '#dde0e4');   // lighter centre-right
+        balGrad.addColorStop(1.0, '#c8cdd2');   // slightly darker edge
+        balCtx.fillStyle = balGrad;
+        balCtx.fillRect(0, 0, 128, 4);
+        const balustradeGradTex = new THREE.CanvasTexture(balustradeCanvas);
+        balustradeGradTex.wrapS = THREE.RepeatWrapping;
+        balustradeGradTex.wrapT = THREE.RepeatWrapping;
+        balustradeGradTex.colorSpace = THREE.SRGBColorSpace;
+        const edelstahlMat = new THREE.MeshLambertMaterial({ map: balustradeGradTex });
+        const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
+
+        const createEscalatorGeometries = (rampLength, thickness, height, railWidth, railHeight) => {
+            const r = height / 2;
+            const halfW = rampLength / 2;
+
+            // 1. Balustrade Shape (extended straight part to full rampLength)
+            const balShape = new THREE.Shape();
+            balShape.moveTo(-halfW, -r);
+            balShape.lineTo(halfW, -r);
+            balShape.absarc(halfW, 0, r, -Math.PI / 2, Math.PI / 2, false);
+            balShape.lineTo(-halfW, r);
+            balShape.absarc(-halfW, 0, r, Math.PI / 2, 3 * Math.PI / 2, false);
+
+            const balExtrudeSettings = {
+                depth: thickness,
+                bevelEnabled: false,
+                steps: 1
+            };
+            const balustradeGeom = new THREE.ExtrudeGeometry(balShape, balExtrudeSettings);
+            balustradeGeom.translate(0, 0, -thickness / 2);
+            balustradeGeom.rotateY(Math.PI / 2);
+
+            // 2. Handrail Shape with Hole (extended straight part to full rampLength)
+            const railShape = new THREE.Shape();
+            const t = railHeight;
+            // Outer boundary (CCW)
+            railShape.moveTo(-halfW, -r - t);
+            railShape.lineTo(halfW, -r - t);
+            railShape.absarc(halfW, 0, r + t, -Math.PI / 2, Math.PI / 2, false);
+            railShape.lineTo(-halfW, r + t);
+            railShape.absarc(-halfW, 0, r + t, Math.PI / 2, 3 * Math.PI / 2, false);
+
+            // Inner boundary / Hole (CW)
+            const holePath = new THREE.Path();
+            holePath.moveTo(-halfW, r);
+            holePath.lineTo(halfW, r);
+            holePath.absarc(halfW, 0, r, Math.PI / 2, -Math.PI / 2, true);
+            holePath.lineTo(-halfW, -r);
+            holePath.absarc(-halfW, 0, r, -Math.PI / 2, Math.PI / 2, true);
+
+            railShape.holes.push(holePath);
+
+            const railExtrudeSettings = {
+                depth: railWidth,
+                bevelEnabled: false,
+                steps: 1
+            };
+            const handrailGeom = new THREE.ExtrudeGeometry(railShape, railExtrudeSettings);
+            handrailGeom.translate(0, 0, -railWidth / 2);
+            handrailGeom.rotateY(Math.PI / 2);
+
+            // 3. 2D Pill Lamp Geometry (Flat Shape in Z-Y plane)
+            const L_lamp = 0.27;
+            const H_lamp = 0.09;
+            const rl = H_lamp / 2;
+            const hw = L_lamp / 2;
+            
+            const lampShape = new THREE.Shape();
+            lampShape.moveTo(-hw + rl, -rl);
+            lampShape.lineTo(hw - rl, -rl);
+            lampShape.absarc(hw - rl, 0, rl, -Math.PI / 2, Math.PI / 2, false);
+            lampShape.lineTo(-hw + rl, rl);
+            lampShape.absarc(-hw + rl, 0, rl, Math.PI / 2, 3 * Math.PI / 2, false);
+
+            const lampGeom = new THREE.ShapeGeometry(lampShape);
+            lampGeom.rotateY(Math.PI / 2); // Rotate to lie in Z-Y plane
+
+            return { balustradeGeom, handrailGeom, lampGeom };
+        };
+
         this.doorWidth = 0.8; // "Zutritt nur für Personal" doors, outer edge flush with the platform edge
 
         // Transverse Walls at the ends
         const transWallDepth = 0.4;
         const transWallWidth = 10.0; // Wide enough to cover the outer main tube
         const isMaxStyle = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
-        const transWallHeight = isMaxStyle ? 7.84 : 7.0;
+        const baseHeight = (station.name === "Rathenauplatz") ? 9.185 : (isMaxStyle ? 7.84 : 7.0);
+        const transWallHeight = (station.name === "Rathenauplatz") ? 10.38 : (isRound ? baseHeight : (baseHeight + 1.195));
 
         const transWallGeom = new THREE.BoxGeometry(transWallWidth, transWallHeight, transWallDepth);
 
@@ -294,7 +427,7 @@ export class StationBuilder {
                         if (dx*dx + dy*dy < 2.6*2.6 && localY > 1.4) discard;
                         if (abs(dx) < 2.6 && localY <= 1.4) discard;
                         ` : `
-                        if (abs(dx) < 2.6 && localY < 4.0) discard;
+                        if (dx < 1.83 && localY < 4.0) discard;
                         `}
                     }
 
@@ -333,7 +466,7 @@ export class StationBuilder {
         // createStairsAndEscalator below.
         const numSteps = isMaxStyle ? 33 : 28;
         const stairWallDepth = numSteps * 0.3; // numSteps * stepDepth
-        const stairWallHeight = isMaxStyle ? 7.84 : 7.0; // Reach ceiling
+        const stairWallHeight = (station.name === "Rathenauplatz") ? 10.38 : (isMaxStyle ? 7.84 : 7.0); // Reach ceiling
         // The transverse (end) wall is 0.4m thick, centered on this same anchor (Z=0), so it
         // extends transWallDepth/2 past Z=0 towards the platform. The stair enclosure wall used
         // to stop exactly at Z=0 (the transverse wall's centre), only overlapping half its
@@ -366,12 +499,16 @@ export class StationBuilder {
             const stepHeight = 0.16;
             // numSteps is closed over from the outer scope to keep walls and steps in sync
 
-            const rampLength = Math.sqrt(Math.pow(numSteps * stepDepth, 2) + Math.pow(numSteps * stepHeight, 2));
-            const rampAngle = Math.atan2(numSteps * stepHeight, numSteps * stepDepth);
+            // Extend the escalator physically by 2 steps at each end to bury the loop-around
+            const numVisibleSteps = numSteps;
+            const numTotalSteps = numVisibleSteps + 4;
+
+            const rampLength = Math.sqrt(Math.pow(numVisibleSteps * stepDepth, 2) + Math.pow(numVisibleSteps * stepHeight, 2));
+            const rampAngle = Math.atan2(numVisibleSteps * stepHeight, numVisibleSteps * stepDepth);
             const rotX = -zDir * rampAngle;
 
-            const midZ = zDir * (numSteps * stepDepth / 2);
-            const midY = (numSteps * stepHeight / 2);
+            const midZ = zDir * (numVisibleSteps * stepDepth / 2);
+            const midY = (numVisibleSteps * stepHeight / 2);
 
             // 1. Enclosing Light Gray Concrete Walls (geometry built once above; only its
             // per-end Z position depends on zDir)
@@ -391,21 +528,55 @@ export class StationBuilder {
             // auto-computes the instance-aware bounding sphere on first cull.
             const stairWidth = 2.0;
             const stairGeom = new THREE.BoxGeometry(stairWidth, stepHeight, stepDepth);
-            const escWidth = 1.1;
+            const escWidth = 1.0; // Narrowed from 1.1 to 1.0 to fit inside balustrades
             const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
-            const stairInst = new THREE.InstancedMesh(stairGeom, stepMat, numSteps);
-            const escInst = new THREE.InstancedMesh(escStepGeom, escStepMat, 2 * numSteps);
+            const stairInst = new THREE.InstancedMesh(stairGeom, stepMat, numVisibleSteps);
+            const escInst = new THREE.InstancedMesh(escStepGeom, escStepMat, 2 * numTotalSteps);
+
+            // GPU Animation: Add direction attribute to escalator steps
+            const dirAttr = new Float32Array(2 * numTotalSteps * 3);
+            for (let i = 0; i < numTotalSteps; i++) {
+                // Left lane: UP (perInstanceDir[0] = 1) -> vector is (0, stepHeight, zDir * stepDepth)
+                dirAttr[(2 * i) * 3 + 0] = 0;
+                dirAttr[(2 * i) * 3 + 1] = stepHeight;
+                dirAttr[(2 * i) * 3 + 2] = zDir * stepDepth;
+
+                // Right lane: DOWN (perInstanceDir[1] = -1) -> vector is (0, -stepHeight, -zDir * stepDepth)
+                dirAttr[(2 * i + 1) * 3 + 0] = 0;
+                dirAttr[(2 * i + 1) * 3 + 1] = -stepHeight;
+                dirAttr[(2 * i + 1) * 3 + 2] = -zDir * stepDepth;
+            }
+            escStepGeom.setAttribute('aEscalatorDir', new THREE.InstancedBufferAttribute(dirAttr, 3));
+            StationBuilder.setupEscalatorMaterial(escStepMat, this.model);
+
             const stepMatrix = new THREE.Matrix4();
-            for (let i = 0; i < numSteps; i++) {
+            for (let i = 0; i < numVisibleSteps; i++) {
                 const sy = i * stepHeight + stepHeight / 2;
                 const sz = zDir * (i * stepDepth + stepDepth / 2);
                 stairInst.setMatrixAt(i, stepMatrix.makeTranslation(0, sy, sz));
+            }
+            // Escalator steps: start 2 steps earlier (-2) and end 2 steps later (numVisibleSteps + 2)
+            for (let i = 0; i < numTotalSteps; i++) {
+                const stepIdx = i - 2;
+                const sy = stepIdx * stepHeight + stepHeight / 2;
+                const sz = zDir * (stepIdx * stepDepth + stepDepth / 2);
                 escInst.setMatrixAt(2 * i, stepMatrix.makeTranslation(-1.55, sy, sz));
                 escInst.setMatrixAt(2 * i + 1, stepMatrix.makeTranslation(1.55, sy, sz));
             }
             stairInst.instanceMatrix.needsUpdate = true;
             escInst.instanceMatrix.needsUpdate = true;
             stairGroup.add(stairInst, escInst);
+
+            // GPU Animation: Mark as escalator for proximity-based sound
+            escInst.userData.isEscalator = true;
+
+            // Registering with the model is no longer needed for animation as it's now handled by the shader.
+            // We still register it if we want to keep track of all escalators for other purposes.
+            this.model.registerEscalator(escInst, { numTotalSteps });
+
+            // Ensure instances are not culled when their origin is off-screen
+            escInst.computeBoundingSphere();
+            if (escInst.boundingSphere) escInst.boundingSphere.radius *= 5;
 
             // 3. Double Escalators (ramp casings under the steps)
             const escRampGeom = new THREE.BoxGeometry(escWidth, 0.1, rampLength);
@@ -422,44 +593,61 @@ export class StationBuilder {
 
             stairGroup.add(escL, escR);
             
-            // 4. Escalator Glass Balustrades
-            const glassGeom = new THREE.BoxGeometry(0.05, 0.9, rampLength);
+            // 4. Escalator Stainless Steel Balustrades
+            const thickness = 0.05;
+            const height = 0.9;
+            const railWidth = 0.1;
+            const railHeight = 0.1;
+            const { balustradeGeom, handrailGeom, lampGeom } = createEscalatorGeometries(rampLength, thickness, height, railWidth, railHeight);
             
-            const glassL1 = new THREE.Mesh(glassGeom, glassMat);
+            const glassL1 = new THREE.Mesh(balustradeGeom, edelstahlMat);
             glassL1.position.set(-2.05, midY + 0.45, midZ);
             glassL1.rotation.x = rotX;
             
-            const glassL2 = new THREE.Mesh(glassGeom, glassMat);
+            const glassL2 = new THREE.Mesh(balustradeGeom, edelstahlMat);
             glassL2.position.set(-1.05, midY + 0.45, midZ);
             glassL2.rotation.x = rotX;
             
-            const glassR1 = new THREE.Mesh(glassGeom, glassMat);
+            const glassR1 = new THREE.Mesh(balustradeGeom, edelstahlMat);
             glassR1.position.set(1.05, midY + 0.45, midZ);
             glassR1.rotation.x = rotX;
             
-            const glassR2 = new THREE.Mesh(glassGeom, glassMat);
+            const glassR2 = new THREE.Mesh(balustradeGeom, edelstahlMat);
             glassR2.position.set(2.05, midY + 0.45, midZ);
             glassR2.rotation.x = rotX;
             
+            // Add pill-shaped lamps to the inside of the balustrades
+            const addLamps = (mesh, dirX) => {
+                const r = height / 2;
+                const halfW = rampLength / 2;
+                for (let z = -halfW + 1.0; z <= halfW - 1.0; z += 1.5) {
+                    const lamp = new THREE.Mesh(lampGeom, lampMat);
+                    lamp.position.set(dirX * (thickness / 2 + 0.001), 0.3 - r, z);
+                    mesh.add(lamp);
+                }
+            };
+            addLamps(glassL1, 1);
+            addLamps(glassL2, -1);
+            addLamps(glassR1, 1);
+            addLamps(glassR2, -1);
+            
             stairGroup.add(glassL1, glassL2, glassR1, glassR2);
             
-            // 5. Escalator Handrails
-            const railGeom = new THREE.BoxGeometry(0.1, 0.1, rampLength);
-            
-            const railL1 = new THREE.Mesh(railGeom, handrailMat);
-            railL1.position.set(-2.05, midY + 0.9, midZ);
+            // 5. Escalator Handrails (Closed loops, positioned at the same Y center as balustrades)
+            const railL1 = new THREE.Mesh(handrailGeom, handrailMat);
+            railL1.position.set(-2.05, midY + 0.45, midZ);
             railL1.rotation.x = rotX;
             
-            const railL2 = new THREE.Mesh(railGeom, handrailMat);
-            railL2.position.set(-1.05, midY + 0.9, midZ);
+            const railL2 = new THREE.Mesh(handrailGeom, handrailMat);
+            railL2.position.set(-1.05, midY + 0.45, midZ);
             railL2.rotation.x = rotX;
             
-            const railR1 = new THREE.Mesh(railGeom, handrailMat);
-            railR1.position.set(1.05, midY + 0.9, midZ);
+            const railR1 = new THREE.Mesh(handrailGeom, handrailMat);
+            railR1.position.set(1.05, midY + 0.45, midZ);
             railR1.rotation.x = rotX;
             
-            const railR2 = new THREE.Mesh(railGeom, handrailMat);
-            railR2.position.set(2.05, midY + 0.9, midZ);
+            const railR2 = new THREE.Mesh(handrailGeom, handrailMat);
+            railR2.position.set(2.05, midY + 0.45, midZ);
             railR2.rotation.x = rotX;
             
             stairGroup.add(railL1, railL2, railR1, railR2);
@@ -587,11 +775,13 @@ export class StationBuilder {
             // never overlapped by either wall piece.
             const doorInnerX = platEdgeXVal - this.doorWidth;
 
+            const transWallY = isRound ? (transWallHeight / 2 + 0.865) : (baseHeight / 2 - 0.5975);
+
             const tWallL = new THREE.Mesh(transWallGeom, mat);
-            tWallL.position.set(-doorInnerX - transWallWidth/2, transWallHeight/2 + 0.865, 0); // 0 in twGroup is Z=45
+            tWallL.position.set(-doorInnerX - transWallWidth/2, transWallY, 0); // 0 in twGroup is Z=45
 
             const tWallR = new THREE.Mesh(transWallGeom, mat);
-            tWallR.position.set(doorInnerX + transWallWidth/2, transWallHeight/2 + 0.865, 0);
+            tWallR.position.set(doorInnerX + transWallWidth/2, transWallY, 0);
 
             const doorXCenter = platEdgeXVal - this.doorWidth / 2;
             const gateL = createGateInstance();
@@ -637,9 +827,9 @@ export class StationBuilder {
                 uv.needsUpdate = true;
                 const fillerCenterX = (stairWallOuterX + doorInnerX) / 2;
                 const fillerL = new THREE.Mesh(fillerGeom, wallMat);
-                fillerL.position.set(-fillerCenterX, transWallHeight/2 + 0.865, 0);
+                fillerL.position.set(-fillerCenterX, transWallY, 0);
                 const fillerR = new THREE.Mesh(fillerGeom, wallMat);
-                fillerR.position.set(fillerCenterX, transWallHeight/2 + 0.865, 0);
+                fillerR.position.set(fillerCenterX, transWallY, 0);
                 twGroup.add(fillerL, fillerR);
             }
 
@@ -788,6 +978,33 @@ export class StationBuilder {
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
         return texture;
+    }
+
+    static setupEscalatorMaterial(material, model) {
+        // Prevent multiple injections into the same material
+        if (material.userData.escalatorSetupDone) return;
+        material.userData.escalatorSetupDone = true;
+
+        material.onBeforeCompile = (shader) => {
+            shader.uniforms.uEscalatorTime = ESCALATOR_SHADER_INJECTION.uniforms.uEscalatorTime;
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `#include <common>\n${ESCALATOR_SHADER_INJECTION.vertexShader.header}`
+            );
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `#include <begin_vertex>\n${ESCALATOR_SHADER_INJECTION.vertexShader.main}`
+            );
+        };
+        // Ensure the uniform is updated by the StationModel/TrackManager tick
+        if (model && !model.userData.escalatorUniformHooked) {
+            model.userData.escalatorUniformHooked = true;
+            const originalTick = model.tick;
+            model.tick = function(dt, time) {
+                originalTick.call(this, dt, time);
+                ESCALATOR_SHADER_INJECTION.uniforms.uEscalatorTime.value = this.escalatorTime || 0;
+            };
+        }
     }
 
     createEscalatorStripeTexture() {

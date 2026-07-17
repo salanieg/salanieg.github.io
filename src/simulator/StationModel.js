@@ -1,13 +1,41 @@
+// ============================================================================
+// StationModel.js — Baut und verwaltet ALLE Stationsbauwerke EINER Linie
+// (Bahnsteige, Wände, Treppen, Rolltreppen, Schilder, Mülleimer, Passagiere).
+//
+// KI-LANDKARTE (wo bearbeite ich was):
+//   - Bau-Pipeline: buildNextStation/buildAllStations -> buildStation(station)
+//     (die Riesen-Methode mit der komplette Stationsarchitektur; Spezialfälle
+//     Rathaus/Lorenzkirche delegieren an eigene Builder-Klassen).
+//   - Sichtbarkeit: update(trainZ) hängt fertige Gruppen entfernungsbasiert
+//     in die/aus der Szene (stationCullDist pro Station).
+//   - Gekrümmte Bahnsteig-/Wand-Meshes: buildSweptBar/buildSweptWall/
+//     buildSweptProfile (EIN durchgehendes BufferGeometry statt 5m-Kisten;
+//     buildSweptWall: U-Mapping beachten, s. Spiegel-Text-Bugfix).
+//   - Stationsspezifische Materialien (Fliesen, Schriftzüge, Kunstwerke):
+//     get<Stationsname>*Mat()-Methoden am Dateiende.
+//   - Abfahrtstafeln: createDepartureBoardMaterial; Liniensignets/Beschilderung:
+//     createStationSignMaterial/createWallStripeMaterial.
+//   - Bahnsteig-Passagiere (statisch): spawnPassengersForStation +
+//     people/PassengerData.js (Namen/Items) + people/PassengerBuilder.js.
+//   - Rolltreppen: Geometrie createEscalatorGeometries (oben), Animation im
+//     Vertex-Shader (StationBuilder.setupEscalatorMaterial), Registrierung
+//     für Sound in registerEscalator.
+// KOORDINATEN: Stationsgruppe steht am Welt-Punkt des Stationszentrums,
+// gedreht auf die Gleistangente; 1 Einheit = 1 m.
+// WICHTIG: ?v=-Versionen der TrackData-Importe müssen mit main.js
+// übereinstimmen, sonst lädt der Browser die Daten doppelt.
+// ============================================================================
 import * as THREE from 'three';
-import { StationBuilder } from './stations/StationBuilder.js?v=67';
-import { RathausBuilder } from './stations/RathausBuilder.js?v=47';
-import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=47';
+import { StationBuilder } from './stations/StationBuilder.js?v=68';
+import { RathausBuilder } from './stations/RathausBuilder.js?v=48';
+import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=48';
 import { PassengerBuilder } from './people/PassengerBuilder.js';
 import { PASSENGER_DATA } from './people/PassengerData.js';
 import { tagCanvasTextureSRGBKeepLook } from './TextureUtils.js';
-import { TRACK_DATA as TRACK_DATA_U1 } from './TrackDataU1.js';
-import { TRACK_DATA_U2 } from './TrackDataU2.js';
-import { TRACK_DATA_U3 } from './TrackDataU3.js';
+import { TrainModel } from './TrainModel.js?v=88';
+import { TRACK_DATA as TRACK_DATA_U1 } from './TrackDataU1.js?v=55';
+import { TRACK_DATA_U2 } from './TrackDataU2.js?v=10';
+import { TRACK_DATA_U3 } from './TrackDataU3.js?v=10';
 
 // Mixes a hex color toward white by `amount` (0..1). Used to brighten the
 // platform floor tile texture itself, independent of scene ambient light,
@@ -17,6 +45,75 @@ function lightenHex(hex, amount) {
     const c = new THREE.Color(hex);
     c.lerp(new THREE.Color(0xffffff), amount);
     return `#${c.getHexString()}`;
+}
+
+function createEscalatorGeometries(rampLength, thickness, height, railWidth, railHeight) {
+    const r = height / 2;
+    const halfW = rampLength / 2;
+
+    // 1. Balustrade Shape (extended straight part to full rampLength)
+    const balShape = new THREE.Shape();
+    balShape.moveTo(-halfW, -r);
+    balShape.lineTo(halfW, -r);
+    balShape.absarc(halfW, 0, r, -Math.PI / 2, Math.PI / 2, false);
+    balShape.lineTo(-halfW, r);
+    balShape.absarc(-halfW, 0, r, Math.PI / 2, 3 * Math.PI / 2, false);
+
+    const balExtrudeSettings = {
+        depth: thickness,
+        bevelEnabled: false,
+        steps: 1
+    };
+    const balustradeGeom = new THREE.ExtrudeGeometry(balShape, balExtrudeSettings);
+    balustradeGeom.translate(0, 0, -thickness / 2);
+    balustradeGeom.rotateY(Math.PI / 2);
+
+    // 2. Handrail Shape with Hole (extended straight part to full rampLength)
+    const railShape = new THREE.Shape();
+    const t = railHeight;
+    // Outer boundary (CCW)
+    railShape.moveTo(-halfW, -r - t);
+    railShape.lineTo(halfW, -r - t);
+    railShape.absarc(halfW, 0, r + t, -Math.PI / 2, Math.PI / 2, false);
+    railShape.lineTo(-halfW, r + t);
+    railShape.absarc(-halfW, 0, r + t, Math.PI / 2, 3 * Math.PI / 2, false);
+
+    // Inner boundary / Hole (CW)
+    const holePath = new THREE.Path();
+    holePath.moveTo(-halfW, r);
+    holePath.lineTo(halfW, r);
+    holePath.absarc(halfW, 0, r, Math.PI / 2, -Math.PI / 2, true);
+    holePath.lineTo(-halfW, -r);
+    holePath.absarc(-halfW, 0, r, -Math.PI / 2, Math.PI / 2, true);
+
+    railShape.holes.push(holePath);
+
+    const railExtrudeSettings = {
+        depth: railWidth,
+        bevelEnabled: false,
+        steps: 1
+    };
+    const handrailGeom = new THREE.ExtrudeGeometry(railShape, railExtrudeSettings);
+    handrailGeom.translate(0, 0, -railWidth / 2);
+    handrailGeom.rotateY(Math.PI / 2);
+
+    // 3. 2D Pill Lamp Geometry (Flat Shape in Z-Y plane)
+    const L_lamp = 0.27;
+    const H_lamp = 0.09;
+    const rl = H_lamp / 2;
+    const hw = L_lamp / 2;
+    
+    const lampShape = new THREE.Shape();
+    lampShape.moveTo(-hw + rl, -rl);
+    lampShape.lineTo(hw - rl, -rl);
+    lampShape.absarc(hw - rl, 0, rl, -Math.PI / 2, Math.PI / 2, false);
+    lampShape.lineTo(-hw + rl, rl);
+    lampShape.absarc(-hw + rl, 0, rl, Math.PI / 2, 3 * Math.PI / 2, false);
+
+    const lampGeom = new THREE.ShapeGeometry(lampShape);
+    lampGeom.rotateY(Math.PI / 2); // Rotate to lie in Z-Y plane
+
+    return { balustradeGeom, handrailGeom, lampGeom };
 }
 
 function getUpcomingViaText(lineId, stationName, direction) {
@@ -73,12 +170,14 @@ function getUpcomingViaText(lineId, stationName, direction) {
 }
 
 export class StationModel {
-    constructor(scene, simulation) {
+    constructor(scene, simulation, options = {}) {
         this.scene = scene;
         this.sim = simulation;
-        
+        this.userData = {}; // For hooks and shared data
+
         // Culling configuration
         this.loadedStations = new Map(); // stationIndex -> boolean (is in scene)
+        this.escalatorTime = 0;
         // Per-station culling distance by structural type: in the tunnel the view fades to
         // black within ~200m, so keeping underground stations resident 2km out only meant
         // 5-6 full station groups in the scene at once. Surface/elevated stations stay
@@ -167,52 +266,49 @@ export class StationModel {
             roughness: 0.3,
             metalness: 0.1
         });
-        this.materials.trashBag.userData = {};
-        this.materials.trashBag.onBeforeCompile = (shader) => {
-            shader.uniforms.uTime = { value: 0 };
-            shader.uniforms.uWind = { value: 0.1 };
-            shader.vertexShader = `
-                uniform float uTime;
-                uniform float uWind;
-            ` + shader.vertexShader;
-            shader.vertexShader = shader.vertexShader.replace(
-                '#include <begin_vertex>',
-                `
-                #include <begin_vertex>
-                float wave = sin(position.x * 12.0 + uTime * 6.0) * cos(position.z * 12.0 + uTime * 4.0);
-                transformed.y += wave * uWind * 0.03;
-                transformed.x += wave * uWind * 0.01;
-                transformed.z += wave * uWind * 0.01;
-                `
-            );
-            this.materials.trashBag.userData.shader = shader;
-        };
 
-        // PRE-BUILD ALL 27 STATIONS ONCE AT STARTUP
-        // This completely avoids building meshes, canvas textures, and materials in the render loop.
+        // ALLE Stationen werden EINMAL vorgebaut (nie im Render-Loop!).
+        // Standard: sofort und synchron hier im Konstruktor (Headless-Skripte,
+        // Trunk-Rig, lazy gebaute U2/U3-Rigs). Der Startup-Loader in main.js
+        // übergibt deferBuild=true und ruft stattdessen buildNextStation()
+        // schrittweise auf, damit der Ladebalken zwischen den Stationen echten
+        // Fortschritt anzeigen kann.
+        this._toneMappedOff = new Set();
         this.stationsList = [];
-        this.sim.stations.forEach((station, idx) => {
-            const group = this.buildStation(station);
-            this.stationsList.push(group);
-        });
-
-        // EXPERIMENT: exempt every station material from ACES tone mapping, so
-        // its assigned color isn't additionally shifted by the filmic rolloff
-        // (materials still darken/lighten with the zone's ambient — this only
-        // removes the tonemapping-curve part of the drift, see the "exact
-        // station colors" discussion). Covers Rathaus/Lorenzkirche/generic
-        // stations alike since they're all part of stationsList by now.
-        const toneMappedOff = new Set();
-        for (const group of this.stationsList) {
-            group.traverse(o => {
-                const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
-                for (const m of mats) {
-                    if (toneMappedOff.has(m)) continue;
-                    m.toneMapped = false;
-                    toneMappedOff.add(m);
-                }
-            });
+        if (!options.deferBuild) {
+            this.buildAllStations();
         }
+    }
+
+    // Baut die nächste noch fehlende Station (Index = stationsList.length).
+    // Gibt true zurück, solange noch weitere Stationen fehlen.
+    buildNextStation() {
+        const idx = this.stationsList.length;
+        const stations = this.sim.stations;
+        if (idx >= stations.length) return false;
+        const group = this.buildStation(stations[idx]);
+        this.stationsList.push(group);
+        this._applyToneMappingExemption(group);
+        return this.stationsList.length < stations.length;
+    }
+
+    buildAllStations() {
+        while (this.buildNextStation()) { /* build remaining stations */ }
+    }
+
+    // Nimmt alle Materialien einer Stationsgruppe vom ACES-Tone-Mapping aus, damit
+    // die handjustierten Stationsfarben nicht durch die Filmkurve verschoben werden
+    // (sie reagieren weiterhin auf das Zonen-Ambientlicht). Das Set verhindert
+    // doppelte Traversal-Arbeit bei geteilten Materialien.
+    _applyToneMappingExemption(group) {
+        group.traverse(o => {
+            const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+            for (const m of mats) {
+                if (this._toneMappedOff.has(m)) continue;
+                m.toneMapped = false;
+                this._toneMappedOff.add(m);
+            }
+        });
     }
 
     update(trainZ) {
@@ -233,32 +329,25 @@ export class StationModel {
                 }
             }
         });
+    }
 
-        // Update trash bag shader uniforms for wind ripple animation
-        if (this.materials.trashBag && this.materials.trashBag.userData.shader) {
-            this.materials.trashBag.userData.shader.uniforms.uTime.value = performance.now() * 0.001;
-            
-            // Calculate wind from train velocity & proximity
-            let maxWind = 0.05; // base idle wind
-            const trainSpeed = Math.abs(this.sim.speed);
-            
-            let closestDist = Infinity;
-            this.sim.stations.forEach((station, idx) => {
-                if (this.loadedStations.has(idx)) {
-                    const dist = Math.abs(trainZ - station.position);
-                    if (dist < closestDist) {
-                        closestDist = dist;
-                    }
-                }
-            });
-            
-            if (closestDist < 100) {
-                const proximityFactor = Math.max(0, 1 - closestDist / 100);
-                maxWind = 0.05 + proximityFactor * trainSpeed * 0.15;
-            }
-            
-            this.materials.trashBag.userData.shader.uniforms.uWind.value = Math.min(1.0, maxWind);
-        }
+    // Sammelt alle Rolltreppen-Meshes dieser Linie für die entfernungsbasierte
+    // Rolltreppen-Ambience in main.js (updateEscalatorAmbience). Die
+    // Stufen-Animation selbst läuft im Vertex-Shader (StationBuilder).
+    registerEscalator(mesh, params) {
+        if (!this.escalators) this.escalators = [];
+        this.escalators.push(mesh);
+    }
+
+    tick(dt, time) {
+        // Update the global escalator time uniform. The actual animation is now
+        // handled on the GPU via a vertex shader (see StationBuilder.setupEscalatorMaterial).
+        // speedStepsPerSec = 1.67 approx 0.5 m/s
+        this.escalatorTime = time * 1.67;
+
+        // The CPU loop that used to update thousands of instance matrices per frame
+        // has been removed. Matrices are now static, and the vertex shader handles
+        // the periodic movement.
     }
 
     adjustPlatformUVs(geometry, j, subLen, H_meters) {
@@ -373,6 +462,37 @@ export class StationModel {
         const mesh = new THREE.Mesh(geom, meshMats);
         group.add(mesh);
         return mesh;
+    }
+
+    // Scharfreiterring: asymmetric lateral edges for the platform decks and the canopy
+    // (Besonderheit of this station). The OUTER edge keeps a constant clearance to the
+    // active running track and thus follows its curvature; the INNER edge is a
+    // dead-straight world-space chord (matching the straight decorative middle tracks),
+    // found per s by intersecting the local normal ray with the chord through the inner
+    // edge's points at chordA/chordB. Returns { off, hw } per-s functions for buildSweptBar.
+    _schAsymEdges(chordA, chordB, sign, innerBase, outerClear) {
+        const mkE = (s) => {
+            const p = this.sim.getTrackPosition(s);
+            const t = this.sim.getTrackTangent(s);
+            const nl = Math.hypot(-t.z, t.x) || 1;
+            return { x: p.x + (-t.z / nl) * sign * innerBase, z: p.z + (t.x / nl) * sign * innerBase };
+        };
+        const EA = mkE(chordA), EB = mkE(chordB);
+        const dX = EB.x - EA.x, dZ = EB.z - EA.z;
+        const innerOff = (s) => {
+            const p = this.sim.getTrackPosition(s);
+            const t = this.sim.getTrackTangent(s);
+            const nl = Math.hypot(-t.z, t.x) || 1;
+            const nX = -t.z / nl, nZ = t.x / nl;
+            const denom = nX * dZ - nZ * dX;
+            if (Math.abs(denom) < 1e-9) return sign * innerBase;
+            return ((EA.x - p.x) * dZ - (EA.z - p.z) * dX) / denom;
+        };
+        const outerOff = (s) => sign * (this.sim.getTrackSpacing(s) / 2 - outerClear);
+        return {
+            off: (s) => (outerOff(s) + innerOff(s)) / 2,
+            hw: (s) => Math.max(0.05, Math.abs(outerOff(s) - innerOff(s)) / 2)
+        };
     }
 
     // Sweeps a single vertical wall RIBBON (one tiled face) along the track from sStart..sEnd
@@ -885,6 +1005,10 @@ export class StationModel {
         }
     }
 
+    getUpcomingViaText(lineId, stationName, direction) {
+        return getUpcomingViaText(lineId, stationName, direction);
+    }
+
     buildStation(station) {
         // --- MODULAR ARCHITECTURE HOOK ---
         // Each station will eventually have its own Builder class in src/simulator/stations/
@@ -910,7 +1034,7 @@ export class StationModel {
         // --- LEGACY FALLBACK ---
         const stationGroup = new THREE.Group();
         const isAufsessplatzLook = ["Aufseßplatz", "Hasenbuck", "Frankenstraße", "Maffeiplatz"].includes(station.name);
-        
+
         const centerPos = this.sim.getTrackPosition(station.position);
         const centerTangent = this.sim.getTrackTangent(station.position);
         const centerAngle = Math.atan2(centerTangent.x, centerTangent.z);
@@ -926,6 +1050,15 @@ export class StationModel {
         const platCenterY = 0.2825;
         const isSideStation = station.side;
         const isScharfreiterring = (station.name === "Scharfreiterring");
+        const isRoethenbach = (station.name === "Röthenbach");
+        const isHoheMarter = (station.name === "Hohe Marter");
+        const isGrossreuth = (station.name === "Grossreuth bei Schweinau");
+        const isSchweinau = (station.name === "Schweinau");
+        const isStLeonhard = (station.name === "St. Leonhard");
+        const isRothenburger = (station.name === "Rothenburger Straße");
+        const isOpernhaus = (station.name === "Opernhaus");
+        const isWoehrder = (station.name === "Wöhrder Wiese");
+        const isRathenauplatz = (station.name === "Rathenauplatz");
         // Scharfreiterring's platform edges and decorative middle tracks are meant to be
         // dead straight (real station). Sampling this.sim.getTrackSpacing(s)/getTrackY(s)
         // PER POSITION along their ~120-190m run bakes in the small independent-per-track
@@ -976,6 +1109,26 @@ export class StationModel {
         let aufsessplatzCeilingLightMat = null;
         let aufsessplatzCeilingDarkMat = null;
 
+        let grossreuthLowerTileMat = null;
+        let grossreuthUpperTileMat = null;
+        let grossreuthSignMat = null;
+        let grossreuthCeilingMat = null;
+        let grossreuthTrackCeilingMat = null;
+        let grossreuthBeamMat = null;
+        let grossreuthSkylightMat = null;
+        let grossreuthSkylightWallMat = null;
+
+        if (isGrossreuth) {
+            grossreuthLowerTileMat = this.createTiledMaterial('#333333', '#111111', 0.15);
+            grossreuthUpperTileMat = this.getGrossreuthUpperTileMat();
+            grossreuthSignMat = this.getGrossreuthSignMat();
+            grossreuthCeilingMat = new THREE.MeshLambertMaterial({ color: '#B5B9C0' });
+            grossreuthTrackCeilingMat = new THREE.MeshLambertMaterial({ color: '#ADADAF' });
+            grossreuthBeamMat = new THREE.MeshLambertMaterial({ color: '#29261D' });
+            grossreuthSkylightMat = new THREE.MeshBasicMaterial({ color: '#e0f2fe' });
+            grossreuthSkylightWallMat = new THREE.MeshLambertMaterial({ color: '#cccccc' });
+        }
+
         if (station.name === "Jakobinenstraße") {
             jakobinenstrasseSandstoneMat = this.createSandstoneMaterial();
             jakobinenstrasseCeilingLightMat = new THREE.MeshLambertMaterial({ color: '#d1d5db' });
@@ -987,7 +1140,7 @@ export class StationModel {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#27272a';
-            ctx.font = 'bold 80px "Jost Regular", "Outfit", "Inter", "Segoe UI", sans-serif';
+            ctx.font = 'bold 80px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText("JAKOBINENSTRASSE", canvas.width / 2, canvas.height / 2);
@@ -1102,7 +1255,7 @@ export class StationModel {
         // Slat ceiling in the Aufseßplatz look, shared by the three Langwasser-branch
         // stations as well. The plates between the slat field and the side walls use the
         // rough concrete of the tunnel portals / Plärrer walls (not plain dark grey).
-        const hasSlatCeiling = ["Aufseßplatz", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Hasenbuck", "Frankenstraße", "Maffeiplatz"].includes(station.name);
+        const hasSlatCeiling = ["Aufseßplatz", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Hasenbuck", "Frankenstraße", "Maffeiplatz", "St. Leonhard"].includes(station.name);
         let slatCeilingConcreteMat = null;
         if (hasSlatCeiling) {
             // Slat texture canvas: 80% slat (#e2e8f0), 20% gap (#111111)
@@ -1207,7 +1360,7 @@ export class StationModel {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#4b5563'; // medium-dark grey
-            ctx.font = 'bold 90px "Jost Regular", "Outfit", "Inter", "Segoe UI", sans-serif';
+            ctx.font = 'bold 90px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText("HARDHÖHE", canvas.width / 2, canvas.height / 2);
@@ -1259,13 +1412,21 @@ export class StationModel {
                 // Twin floor + ceiling slabs (solid) as continuous swept bars, built once.
                 if (j === 0) {
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    // The canopy stops short of the crossing building at the -Z platform end
+                    // (photo: the building roof is the only cover there).
+                    const sCeilA = station.position - 44 * S_len;
                     const cy = centerPos.y;
-                    const off = (s) => this.sim.getTrackSpacing(s) / 2 - 5.03;
                     const flr = [this.materials.platform, this.materials.platform];
                     const cel = [this.materials.ceiling, this.materials.ceiling];
+                    // Same asymmetric edges as the decks (outer follows the active track,
+                    // inner dead straight along the fake middle tracks); chord anchored on
+                    // the deck extents so all inner edges are collinear.
                     for (const sign of [1, -1]) {
-                        this.buildSweptBar(stationGroup, sA, sB, () => localSchPlatHalfWidth, cy - 0.32, cy - 0.42, flr, 1.2, (s) => sign * off(s));
-                        this.buildSweptBar(stationGroup, sA, sB, () => localSchPlatHalfWidth, cy + 4.76, cy + 4.56, cel, 1.2, (s) => sign * off(s));
+                        const { off, hw } = this._schAsymEdges(
+                            station.position - 53.5 * S_len, sB, sign,
+                            schFixedSpacing / 2 - 8.53, 1.53);
+                        this.buildSweptBar(stationGroup, sA, sB, hw, cy - 0.32, cy - 0.42, flr, 1.2, off);
+                        this.buildSweptBar(stationGroup, sCeilA, sB, hw, cy + 4.76, cy + 4.56, cel, 1.2, off);
                     }
                 }
             } else if (station.name === "Muggenhof") {
@@ -1659,7 +1820,7 @@ export class StationModel {
                 }
                 
                 // 3. Continuous light strips and hangers:
-                const lightOff = spacing / 2 - 1.185;
+                const lightOff = spacing / 2 - 1.785;
                 const lightY = 3.8;
                 
                 const lightDuctMat = new THREE.MeshLambertMaterial({ color: '#334155' });
@@ -1727,7 +1888,7 @@ export class StationModel {
                     
                     // Left Track Ceiling Panels - facing platform
                     const xStartL = -spacing / 2 - 1.4;
-                    const xEndL = -spacing / 2 + 1.185;
+                    const xEndL = -spacing / 2 + 1.785;
                     const stepL = (xEndL - xStartL) / 5;
                     
                     for (let r = 0; r < 5; r++) {
@@ -1744,7 +1905,7 @@ export class StationModel {
                     }
                     
                     // Right Track Ceiling Panels - facing platform
-                    const xStartR = spacing / 2 - 1.185;
+                    const xStartR = spacing / 2 - 1.785;
                     const xEndR = spacing / 2 + 1.4;
                     const stepR = (xEndR - xStartR) / 5;
                     
@@ -1765,7 +1926,7 @@ export class StationModel {
                 const groundWidth = isSideStation ? (spacing + 11.1) : (spacing + 3.66);
                 // Floor as ONE continuous swept slab (solid colour -> no UV concerns), built once
                 // on j===0, tapering with the inter-track gap. Replaces the per-5m boxes.
-                if (j === 0) {
+                if (j === 0 && station.name !== "Rothenburger Straße" && station.name !== "Rathenauplatz") {
                     const gHalfW = (s) => (this.sim.getTrackSpacing(s) + (isSideStation ? 11.1 : 3.66)) / 2;
                     this.buildSweptBar(stationGroup, station.position - platLength / 2, station.position + platLength / 2,
                         gHalfW, centerPos.y - 0.33, centerPos.y - 0.43,
@@ -1787,63 +1948,63 @@ export class StationModel {
                             this.buildSweptProfile(stationGroup, sA, sB, arc, cy, () => tx, eberhardshofRoofMat, 1e9);
                         });
                     }
-                } else if (station.name === "Jakobinenstraße") {
-                    const slopeAngle = Math.atan2(1.0, 1.25);
-                    const plateOverlap = 0.08; // kleine Überlappung an den Knicklinien (Tälern), um Lücken zu schließen
-                    const plateLength = Math.sqrt(1.25 * 1.25 + 1.0 * 1.0) + plateOverlap;
-                    const plateWidth = groundWidth;
+                } else if (["Jakobinenstraße", "Hohe Marter", "Wöhrder Wiese", "Rathenauplatz", "Grossreuth bei Schweinau"].includes(station.name)) {
+                    if (station.name === "Jakobinenstraße") {
+                        const slopeAngle = Math.atan2(1.0, 1.25);
+                        const plateOverlap = 0.08; // kleine Überlappung an den Knicklinien (Tälern), um Lücken zu schließen
+                        const plateLength = Math.sqrt(1.25 * 1.25 + 1.0 * 1.0) + plateOverlap;
+                        const plateWidth = groundWidth;
 
-                    // Alternate ceiling segment colors: light vs dark concrete
-                    const ceilMat = (j % 2 === 0) ? jakobinenstrasseCeilingLightMat : jakobinenstrasseCeilingDarkMat;
+                        // Alternate ceiling segment colors: light vs dark concrete
+                        const ceilMat = (j % 2 === 0) ? jakobinenstrasseCeilingLightMat : jakobinenstrasseCeilingDarkMat;
 
-                    const p1aPosWorld = pos.clone().addScaledVector(tangent, -1.875);
-                    const plate1a = new THREE.Mesh(
-                        new THREE.BoxGeometry(plateWidth, 0.15, plateLength),
-                        ceilMat
-                    );
-                    plate1a.position.copy(stationGroup.worldToLocal(p1aPosWorld));
-                    plate1a.position.y = 5.5; // shifted up
-                    plate1a.rotation.set(-slopeAngle, rotY, 0, 'YXZ');
+                        const p1aPosWorld = pos.clone().addScaledVector(tangent, -1.875);
+                        const plate1a = new THREE.Mesh(
+                            new THREE.BoxGeometry(plateWidth, 0.15, plateLength),
+                            ceilMat
+                        );
+                        plate1a.position.copy(stationGroup.worldToLocal(p1aPosWorld));
+                        plate1a.position.y = 5.5; // shifted up
+                        plate1a.rotation.set(-slopeAngle, rotY, 0, 'YXZ');
 
-                    const p1bPosWorld = pos.clone().addScaledVector(tangent, -0.625);
-                    const plate1b = new THREE.Mesh(
-                        new THREE.BoxGeometry(plateWidth, 0.15, plateLength),
-                        ceilMat
-                    );
-                    plate1b.position.copy(stationGroup.worldToLocal(p1bPosWorld));
-                    plate1b.position.y = 5.5;
-                    plate1b.rotation.set(slopeAngle, rotY, 0, 'YXZ');
-                    
-                    const p2aPosWorld = pos.clone().addScaledVector(tangent, 0.625);
-                    const plate2a = new THREE.Mesh(
-                        new THREE.BoxGeometry(plateWidth, 0.15, plateLength),
-                        ceilMat
-                    );
-                    plate2a.position.copy(stationGroup.worldToLocal(p2aPosWorld));
-                    plate2a.position.y = 5.5;
-                    plate2a.rotation.set(-slopeAngle, rotY, 0, 'YXZ');
+                        const p1bPosWorld = pos.clone().addScaledVector(tangent, -0.625);
+                        const plate1b = new THREE.Mesh(
+                            new THREE.BoxGeometry(plateWidth, 0.15, plateLength),
+                            ceilMat
+                        );
+                        plate1b.position.copy(stationGroup.worldToLocal(p1bPosWorld));
+                        plate1b.position.y = 5.5;
+                        plate1b.rotation.set(slopeAngle, rotY, 0, 'YXZ');
+                        
+                        const p2aPosWorld = pos.clone().addScaledVector(tangent, 0.625);
+                        const plate2a = new THREE.Mesh(
+                            new THREE.BoxGeometry(plateWidth, 0.15, plateLength),
+                            ceilMat
+                        );
+                        plate2a.position.copy(stationGroup.worldToLocal(p2aPosWorld));
+                        plate2a.position.y = 5.5;
+                        plate2a.rotation.set(-slopeAngle, rotY, 0, 'YXZ');
 
-                    const p2bPosWorld = pos.clone().addScaledVector(tangent, 1.875);
-                    const plate2b = new THREE.Mesh(
-                        new THREE.BoxGeometry(plateWidth, 0.15, plateLength),
-                        ceilMat
-                    );
-                    plate2b.position.copy(stationGroup.worldToLocal(p2bPosWorld));
-                    plate2b.position.y = 5.5;
-                    plate2b.rotation.set(slopeAngle, rotY, 0, 'YXZ');
+                        const p2bPosWorld = pos.clone().addScaledVector(tangent, 1.875);
+                        const plate2b = new THREE.Mesh(
+                            new THREE.BoxGeometry(plateWidth, 0.15, plateLength),
+                            ceilMat
+                        );
+                        plate2b.position.copy(stationGroup.worldToLocal(p2bPosWorld));
+                        plate2b.position.y = 5.5;
+                        plate2b.rotation.set(slopeAngle, rotY, 0, 'YXZ');
 
-                    stationGroup.add(plate1a, plate1b, plate2a, plate2b);
+                        stationGroup.add(plate1a, plate1b, plate2a, plate2b);
+                    }
 
                     // Concrete light girders + their neon tubes, swept continuously along the
-                    // true curve (built once), instead of a straight 5m box per segment. The
-                    // vertical rod hangers connecting girders to the folded ceiling peaks stay
-                    // discrete (real periodic fixtures, at the same Z=+-1.25-per-house spacing).
-                    const girderH = 0.25; // heightened from 0.12
-                    const girderY = 3.775; // positioned so the neon tubes' bottom edge is flush with display boards (3.60m)
+                    // true curve (built once), instead of a straight 5m box per segment.
+                    const girderH = 0.25;
+                    const girderY = 3.775;
                     const girderMat = this.materials.boardHanger; // solid dark color
-                    const lightOffFn = (s) => this.sim.getTrackSpacing(s) / 2 - 1.185;
+                    const lightOffFn = (s) => this.sim.getTrackSpacing(s) / 2 - 1.785;
                     const tubeY = girderY - girderH / 2 - 0.035; // hang slightly below the bottom of the girder
-                    const ceilHangerY = 6.0; // peak of the two houses is at y = 6.0m
+                    const ceilHangerY = (station.name === "Jakobinenstraße") ? 6.0 : (station.name === "Rathenauplatz" ? 9.9 : (isGrossreuth ? 5.52 : 4.56));
                     const girderTopY = girderY + girderH / 2;
                     const hangerLen = ceilHangerY - girderTopY;
                     const hangerY = (ceilHangerY + girderTopY) / 2;
@@ -1852,18 +2013,160 @@ export class StationModel {
                     if (j === 0) {
                         const R2 = station.position - (numSub * subLen) / 2;
                         const gsA = R2, gsB = R2 + numSub * subLen;
+                        
+                        // Build flat ceiling if not Jakobinenstraße
+                        if (station.name !== "Jakobinenstraße") {
+                            let ceilY = (station.name === "Rathenauplatz") ? 10.0 : (station.name === "Opernhaus" ? 7.04 : 4.66);
+                            if (isGrossreuth) ceilY = 5.62;
+
+                            const hMeters = (station.name === "Rathenauplatz") ? 4.0 : 1.2;
+                            const wMeters = (station.name === "Rathenauplatz") ? 4.0 : 1.2;
+                            let ceilMat = this.materials.ceiling;
+                            if (station.name === "Hohe Marter" || station.name === "Rathenauplatz") {
+                                ceilMat = this.maximilianstrasseCeilingMat;
+                            } else if (station.name === "Wöhrder Wiese") {
+                                ceilMat = this.getWoehrderCirclesMat();
+                            }
+
+                            if (isGrossreuth) {
+                                // 1. Platform area ceiling (center) with skylights
+                                for (let jj = 0; jj < numSub; jj++) {
+                                    const s_mid = gsA + (jj + 0.5) * subLen;
+                                    const posSub = this.sim.getTrackPosition(s_mid);
+                                    const tanSub = this.sim.getTrackTangent(s_mid);
+                                    const rotYSubRel = Math.atan2(tanSub.x, tanSub.z) - centerAngle;
+
+                                    const localPosSub = stationGroup.worldToLocal(posSub.clone());
+                                    const localDir = new THREE.Vector3(Math.sin(rotYSubRel), 0, Math.cos(rotYSubRel));
+                                    const localNorm = new THREE.Vector3(-Math.cos(rotYSubRel), 0, Math.sin(rotYSubRel));
+
+                                    const spacingSub = this.sim.getTrackSpacing(s_mid);
+                                    const platWSub = spacingSub - 3.4;
+
+                                    const hasSkylight = (jj >= 2 && jj <= numSub - 3 && jj % 2 === 0);
+
+                                    if (hasSkylight) {
+                                        const holeW = 3.5;
+                                        const holeL = 3.5;
+                                        const ceilW = (platWSub - holeW) / 2;
+                                        const endL = (subLen - holeL) / 2;
+
+                                        // Left/Right slabs
+                                        if (ceilW > 0) {
+                                            const ceilL = new THREE.Mesh(new THREE.BoxGeometry(ceilW, 0.2, subLen), grossreuthCeilingMat);
+                                            ceilL.position.copy(localPosSub).addScaledVector(localNorm, -(holeW + ceilW) / 2);
+                                            ceilL.position.y = ceilY;
+                                            ceilL.rotation.y = rotYSubRel;
+                                            stationGroup.add(ceilL);
+
+                                            const ceilR = new THREE.Mesh(new THREE.BoxGeometry(ceilW, 0.2, subLen), grossreuthCeilingMat);
+                                            ceilR.position.copy(localPosSub).addScaledVector(localNorm, (holeW + ceilW) / 2);
+                                            ceilR.position.y = ceilY;
+                                            ceilR.rotation.y = rotYSubRel;
+                                            stationGroup.add(ceilR);
+                                        }
+
+                                        // Front/Back slabs
+                                        const ceilF = new THREE.Mesh(new THREE.BoxGeometry(holeW, 0.2, endL), grossreuthCeilingMat);
+                                        ceilF.position.copy(localPosSub).addScaledVector(localDir, -2.125);
+                                        ceilF.position.y = ceilY;
+                                        ceilF.rotation.y = rotYSubRel;
+                                        stationGroup.add(ceilF);
+
+                                        const ceilB = new THREE.Mesh(new THREE.BoxGeometry(holeW, 0.2, endL), grossreuthCeilingMat);
+                                        ceilB.position.copy(localPosSub).addScaledVector(localDir, 2.125);
+                                        ceilB.position.y = ceilY;
+                                        ceilB.rotation.y = rotYSubRel;
+                                        stationGroup.add(ceilB);
+
+                                        // Recess walls
+                                        const recWL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 3.5), grossreuthSkylightWallMat);
+                                        recWL.position.copy(localPosSub).addScaledVector(localNorm, -1.75);
+                                        recWL.position.y = ceilY + 0.4;
+                                        recWL.rotation.y = rotYSubRel;
+
+                                        const recWR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 3.5), grossreuthSkylightWallMat);
+                                        recWR.position.copy(localPosSub).addScaledVector(localNorm, 1.75);
+                                        recWR.position.y = ceilY + 0.4;
+                                        recWR.rotation.y = rotYSubRel;
+
+                                        const recWF = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.8, 0.1), grossreuthSkylightWallMat);
+                                        recWF.position.copy(localPosSub).addScaledVector(localDir, -1.75);
+                                        recWF.position.y = ceilY + 0.4;
+                                        recWF.rotation.y = rotYSubRel;
+
+                                        const recWB = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.8, 0.1), grossreuthSkylightWallMat);
+                                        recWB.position.copy(localPosSub).addScaledVector(localDir, 1.75);
+                                        recWB.position.y = ceilY + 0.4;
+                                        recWB.rotation.y = rotYSubRel;
+
+                                        // Cap
+                                        const cap = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.1, 3.5), grossreuthSkylightMat);
+                                        cap.position.copy(localPosSub);
+                                        cap.position.y = ceilY + 0.8;
+                                        cap.rotation.y = rotYSubRel;
+
+                                        stationGroup.add(recWL, recWR, recWF, recWB, cap);
+                                    } else {
+                                        const ceilSolid = new THREE.Mesh(new THREE.BoxGeometry(platWSub, 0.2, subLen), grossreuthCeilingMat);
+                                        ceilSolid.position.copy(localPosSub);
+                                        ceilSolid.position.y = ceilY;
+                                        ceilSolid.rotation.y = rotYSubRel;
+                                        stationGroup.add(ceilSolid);
+                                    }
+                                }
+
+                                // Track area ceiling (sides) - specifically over the rails
+                                for (const sign of [1, -1]) {
+                                    // Rail center is at spacing/2. Standard gauge is ~1.435m.
+                                    // Let's make it a bit wider to cover the track bed properly (~2.5m total).
+                                    const trackWidth = 2.5;
+                                    const trackHalfW = trackWidth / 2;
+                                    const trackCenter = (s) => sign * (this.sim.getTrackSpacing(s) / 2);
+
+                                    this.buildSweptBar(stationGroup, gsA, gsB,
+                                        () => trackHalfW, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
+                                        [grossreuthTrackCeilingMat, grossreuthTrackCeilingMat], hMeters, trackCenter, wMeters);
+
+                                    // Beam in #29261D - in between the platform ceiling and the track ceiling strip
+                                    const beamHalfW = (s) => 0.15;
+                                    const beamLateralPos = (s) => sign * (this.sim.getTrackSpacing(s) / 2 - 1.55);
+                                    this.buildSweptBar(stationGroup, gsA, gsB,
+                                        beamHalfW, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
+                                        [grossreuthBeamMat, grossreuthBeamMat], hMeters, beamLateralPos, wMeters);
+
+                                    // Fill the gap between the track strip and the wall (if any)
+                                    // Current wall offset is spacing/2 + 1.83. Track strip ends at spacing/2 + 1.25.
+                                    const outerGapWidth = (1.83 - 1.25) / 2;
+                                    const outerGapCenter = (s) => sign * (this.sim.getTrackSpacing(s) / 2 + 1.25 + outerGapWidth);
+                                    this.buildSweptBar(stationGroup, gsA, gsB,
+                                        () => outerGapWidth, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
+                                        [grossreuthTrackCeilingMat, grossreuthTrackCeilingMat], hMeters, outerGapCenter, wMeters);
+                                }
+                            } else {
+                                const cHalfW = (s) => (this.sim.getTrackSpacing(s) + 3.66) / 2;
+                                this.buildSweptBar(stationGroup, gsA, gsB,
+                                    cHalfW, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
+                                    [ceilMat, ceilMat], hMeters, () => 0, wMeters);
+                            }
+                        }
+
+                        const startS = station.position - platLength / 2 + 3.0;
+                        const endS = station.position + platLength / 2 - 3.0;
+
                         const girderMats = [girderMat, girderMat];
                         const tubeMats = [this.materials.lightTube, this.materials.lightTube];
                         for (const sign of [1, -1]) {
-                            this.buildSweptBar(stationGroup, gsA, gsB, () => 0.125, centerPos.y + girderY + girderH / 2, centerPos.y + girderY - girderH / 2, girderMats, 1.2, (s) => sign * lightOffFn(s));
-                            this.buildSweptBar(stationGroup, gsA, gsB, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) - 0.05));
-                            this.buildSweptBar(stationGroup, gsA, gsB, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) + 0.05));
+                            this.buildSweptBar(stationGroup, startS, endS, () => 0.125, centerPos.y + girderY + girderH / 2, centerPos.y + girderY - girderH / 2, girderMats, 1.2, (s) => sign * lightOffFn(s));
+                            this.buildSweptBar(stationGroup, startS, endS, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) - 0.05));
+                            this.buildSweptBar(stationGroup, startS, endS, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) + 0.05));
                         }
 
                         for (let jj = 0; jj < numSub; jj++) {
                             const s_mid = gsA + (jj + 0.5) * subLen;
                             [-1.25, 1.25].forEach(tOff => {
                                 const s = s_mid + tOff;
+                                if (s < startS || s > endS) return; // Only spawn hangers within the shortened lights range
                                 const hPos = this.sim.getTrackPosition(s);
                                 const hTan = this.sim.getTrackTangent(s);
                                 const hRotY = Math.atan2(hTan.x, hTan.z) - centerAngle;
@@ -1881,8 +2184,9 @@ export class StationModel {
                     }
                 } else {
                     const isMax = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
-                    const isLwNord = (station.name === "Langwasser Nord");
-                    const ceilY = isMax ? 5.84 : 4.66; // Decke quer-mitskaliert (×1.4134) für 1×-Profil
+                    const isLwNord = (station.name === "Langwasser Nord" || station.name === "Bauernfeindstraße");
+                    let ceilY = isMax ? 5.84 : 4.66; // Decke quer-mitskaliert (×1.4134) für 1×-Profil
+                    if (station.name === "Rathenauplatz") ceilY = 10.0;
                     const ceilW = isLwNord ? (spacing - 2.22) : groundWidth;
 
                     if (hasSlatCeiling) {
@@ -1903,6 +2207,36 @@ export class StationModel {
                             // 3. Slat texture ceiling swept bar
                             this.buildSweptBar(stationGroup, sA, sB, bpHalf, cy + 4.58, cy + 4.57, [aufsessplatzCeilingLightMat, aufsessplatzCeilingDarkMat], 1.2);
                         }
+                    } else if (["Schweinau", "Rothenburger Straße"].includes(station.name)) {
+                        if (j === 0) {
+                            const spacing = this.sim.getTrackSpacing(station.position);
+                            const tubeCenterL = spacing / 4 + 1.2;
+                            const tubeCenterR = -tubeCenterL;
+                            const tubeRadius = tubeCenterL;
+                            // Semicircle phi 0..PI springs at platform-top level; extend it
+                            // past the OUTER spring point (phi<0 for the left tube, >PI for
+                            // the right) so the tube surface continues down to the Gleisbett
+                            // instead of stopping 0.865m above rail level with a visible gap.
+                            // Drop 1.45 rel. baseY ends inside the bed slab (top gTY-0.32).
+                            const arcSteps = 32;
+                            const extSteps = 3;
+                            const phiExt = Math.asin(1.45 / tubeRadius);
+                            const mkVaultArc = (phiFrom, phiTo) => {
+                                const pts = [];
+                                const n = arcSteps + extSteps;
+                                for (let k = 0; k <= n; k++) {
+                                    const phi = phiFrom + (phiTo - phiFrom) * k / n;
+                                    pts.push({ x: tubeRadius * Math.cos(phi), y: tubeRadius * Math.sin(phi) });
+                                }
+                                return pts;
+                            };
+                            const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                            const cy = centerPos.y;
+                            const ceilMat = (station.name === "Schweinau") ? this.getSchweinauBrickMat(station, platLength, centerPos, centerAngle) : this.getRothenburgerGravelMat(station, platLength, centerPos, centerAngle);
+
+                            this.buildSweptProfile(stationGroup, sA, sB, mkVaultArc(-phiExt, Math.PI), cy + 0.865, () => tubeCenterL, ceilMat, 5);
+                            this.buildSweptProfile(stationGroup, sA, sB, mkVaultArc(0, Math.PI + phiExt), cy + 0.865, () => tubeCenterR, ceilMat, 5);
+                        }
                     } else if (station.name !== "Plärrer" && station.name !== "Muggenhof" && station.name !== "Stadtgrenze") {
                         // Plärrer's flat ceiling is omitted: its bespoke hall (TrackManager
                         // buildPlaerrer) opens up to the surface skylights instead.
@@ -1911,6 +2245,26 @@ export class StationModel {
                             const cHalfW = (s) => (isLwNord ? (this.sim.getTrackSpacing(s) - 2.22)
                                                             : (this.sim.getTrackSpacing(s) + (isSideStation ? 11.1 : 3.66))) / 2;
                             let ceilMat = isMax ? this.maximilianstrasseCeilingMat : this.materials.ceiling;
+                            if (station.name === "Rathenauplatz") {
+                                ceilMat = this.maximilianstrasseCeilingMat;
+                            } else if (station.name === "Bauernfeindstraße") {
+                                // Fine concrete texture ceiling to match the doubled, textured pillars
+                                if (!this._bauernfeindCeilingMat) {
+                                    this._bauernfeindCeilingMat = new THREE.MeshLambertMaterial({
+                                        map: this.tunnelConcreteTexture,
+                                        color: 0xffffff,
+                                        side: THREE.DoubleSide
+                                    });
+                                }
+                                ceilMat = this._bauernfeindCeilingMat;
+                            } else if (station.name === "Röthenbach") {
+                                if (!this._roethenbachCeilingMat) {
+                                    this._roethenbachCeilingMat = new THREE.MeshLambertMaterial({ color: '#44413d' });
+                                }
+                                ceilMat = this._roethenbachCeilingMat;
+                            } else if (station.name === "Wöhrder Wiese") {
+                                ceilMat = this.getWoehrderCirclesMat();
+                            }
                             if (station.name === "Messe") {
                                 this.materials.messeBlue = this.materials.messeBlue || new THREE.MeshLambertMaterial({ color: '#3a92d8' });
                                 ceilMat = this.materials.messeBlue;
@@ -1957,12 +2311,65 @@ export class StationModel {
 
                                 this.buildSweptBar(stationGroup, sStart, sEnd, () => 0.25, cy + ceilY - 0.1, cy + ceilY - 0.1 - 0.45, beamMats, 1.2, (s) => -pillOffsetFn(s));
                                 this.buildSweptBar(stationGroup, sStart, sEnd, () => 0.25, cy + ceilY - 0.1, cy + ceilY - 0.1 - 0.45, beamMats, 1.2, (s) => pillOffsetFn(s));
-                            } else {
+                            } else if (station.name === "Bauernfeindstraße") {
+                                // Roof cutout for the escalator/walkway shaft above the tunnel
+                                // mouth at sh2 (matches the bed-slab gap in TrackManager.js's
+                                // flushBedRun) -- only the tunnel-ward end gets a cutout, the
+                                // Langwasser-ward end stays fully enclosed.
                                 const sA = station.position - platLength / 2;
                                 const sB = station.position + platLength / 2;
-                                this.buildSweptBar(stationGroup, sA, sB,
-                                    cHalfW, centerPos.y + ceilY + 0.1, centerPos.y + ceilY - 0.1,
+                                const topY = centerPos.y + ceilY + 0.1;
+                                const botY = centerPos.y + ceilY - 0.1;
+                                const sh2 = this.sim.track.elevation.sh2;
+                                const gapHalf = 3.0;
+                                this.buildSweptBar(stationGroup, sA, sh2 - gapHalf,
+                                    cHalfW, topY, botY,
                                     [ceilMat, ceilMat], hMeters, () => 0, wMeters);
+                                if (sh2 + gapHalf < sB) {
+                                    this.buildSweptBar(stationGroup, sh2 + gapHalf, sB,
+                                        cHalfW, topY, botY,
+                                        [ceilMat, ceilMat], hMeters, () => 0, wMeters);
+                                }
+                            } else if (station.name !== "Opernhaus") {
+                                const sA = station.position - platLength / 2;
+                                const sB = station.position + platLength / 2;
+                                const topY = centerPos.y + ceilY + 0.1;
+                                const botY = centerPos.y + ceilY - 0.1;
+                                this.buildSweptBar(stationGroup, sA, sB,
+                                    cHalfW, topY, botY,
+                                    [ceilMat, ceilMat], hMeters, () => 0, wMeters);
+                            } else {
+                                // Opernhaus: barrel-vault arch ceiling — one arch per 5m bay between columns.
+                                // The arch is a semicircle (R = 2.5 m) springing from colH − R above the floor.
+                                const opConcreteMat = this.getOpernhausConcreateMat();
+                                const opConcrMats = [opConcreteMat, opConcreteMat];
+                                const archR = 2.5;                          // arch radius = half column spacing
+                                const colHop = 7.04;
+                                const springLocalY = -0.38 + colHop - archR; // 4.16 m above track bed
+                                const worldSpring = centerPos.y + springLocalY;
+                                const vaultThick = 0.30;                    // vault slab thickness
+                                const bayHalfSpan = archR;                  // 2.5 m each side of bay centre
+                                const firstColZ = -platLength / 2 + 2.5;
+                                const lastColZ  =  platLength / 2 - 2.5;
+                                const numCols = Math.round((lastColZ - firstColZ) / 5.0) + 1;
+                                for (let ci = 0; ci < numCols - 1; ci++) {
+                                    const z0 = firstColZ + ci * 5.0;       // z of column i
+                                    const z1 = z0 + 5.0;                   // z of column i+1
+                                    const s0 = station.position + z0;
+                                    const s1 = station.position + z1;
+                                    const sMid = (s0 + s1) / 2;
+                                    // Arch top / bottom as function of s (position along track)
+                                    const archTop = (s) => {
+                                        const dz = s - sMid;
+                                        const sinVal = Math.sqrt(Math.max(0, archR * archR - dz * dz)) / archR;
+                                        return worldSpring + archR * sinVal;
+                                    };
+                                    const archBot = (s) => archTop(s) - vaultThick;
+                                    // Full lateral span: same as the non-Opernhaus ceiling
+                                    this.buildSweptBar(stationGroup, s0, s1,
+                                        cHalfW, archTop, archBot,
+                                        opConcrMats, 1.2, () => 0, 1.5);
+                                }
                             }
                         }
                         if (station.name === "Messe") {
@@ -1983,9 +2390,9 @@ export class StationModel {
                     }
 
                     // Continuous neon lighting parallel to platform edge, mounted directly to the ceiling
-                    const targetStations = ["Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz", "Hasenbuck", "Frankenstraße"];
+                    const targetStations = ["Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz", "Hasenbuck", "Frankenstraße", "St. Leonhard"];
                     if (targetStations.includes(station.name)) {
-                        const lightOff = spacing / 2 - 1.185;
+                        const lightOff = spacing / 2 - 1.785;
                         const ductW = 0.2;
                         const ductH = 0.06;
                         const glowW = 0.12;
@@ -2001,7 +2408,7 @@ export class StationModel {
                         // so they flow smoothly along curves instead of stepping per segment.
                         if (j === 0) {
                             const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
-                            const offFn = (s) => this.sim.getTrackSpacing(s) / 2 - 1.185;
+                            const offFn = (s) => this.sim.getTrackSpacing(s) / 2 - 1.785;
                             const dM = [lightDuctMat, lightDuctMat];
                             const gM = [lightEmissiveMat, lightEmissiveMat];
                             const dTop = centerPos.y + ductY + ductH / 2, dBot = centerPos.y + ductY - ductH / 2;
@@ -2031,14 +2438,18 @@ export class StationModel {
                 }
             } else if (isScharfreiterring) {
                 if (j === 0) {
-                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
-                    // Frozen at the station-centre spacing (schFixedSpacing), NOT sampled per s,
-                    // so the platform's inner edge (facing the decorative tracks) is dead straight.
-                    const offFn = () => schFixedSpacing / 2 - 5.03; // localSchPlatCenter
-                    const hwFn = () => localSchPlatHalfWidth; // 3.5
+                    // Decks end flush with the crossing building's outer face at the -Z end
+                    // (z = -53.5); beyond that the sloped concrete abutment ramps built with
+                    // the building form the actual platform ends (photo).
+                    const sA = station.position - 53.5 * S_len, sB = station.position + platLength / 2;
                     const mats6 = this.getPlatformMaterials(station, localSchPlatHalfWidth * 2, true, true);
-                    this.buildSweptBar(stationGroup, sA, sB, hwFn, centerPos.y + platTopY, centerPos.y + platTopY - platHeight, [mats6[0], mats6[2]], 1.2, (s) => offFn(s));
-                    this.buildSweptBar(stationGroup, sA, sB, hwFn, centerPos.y + platTopY, centerPos.y + platTopY - platHeight, [mats6[0], mats6[2]], 1.2, (s) => -offFn(s));
+                    // Asymmetric edges (Besonderheit of this station), see _schAsymEdges:
+                    // outer edge follows the active track's curvature, inner edge is a
+                    // dead-straight chord along the decorative middle tracks.
+                    for (const sign of [1, -1]) {
+                        const { off, hw } = this._schAsymEdges(sA, sB, sign, schFixedSpacing / 2 - 8.53, 1.53);
+                        this.buildSweptBar(stationGroup, sA, sB, hw, centerPos.y + platTopY, centerPos.y + platTopY - platHeight, [mats6[0], mats6[2]], 1.2, off);
+                    }
                 }
             } else {
                 // Island platform deck as ONE continuous swept mesh (smooth curve + per-vertex
@@ -2073,7 +2484,9 @@ export class StationModel {
             const posWallR = pos.clone().addScaledVector(normal, rightWallX);
 
             if (isScharfreiterring) {
-                const wallDist = spacing / 2 + 1.83;
+                // Fences/railings sit 10cm further from the running tracks than the
+                // generic 1.83m so the train clears them with margin.
+                const wallDist = spacing / 2 + 1.93;
                 const pL = pos.clone().addScaledVector(normal, -wallDist);
                 const pR = pos.clone().addScaledVector(normal, wallDist);
                 const localPL = stationGroup.worldToLocal(pL.clone());
@@ -2085,7 +2498,7 @@ export class StationModel {
                 // support posts below stay discrete (real fence posts are periodic fixtures).
                 if (j === 0) {
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
-                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.93;
                     const pillarMats = [this.materials.pillar, this.materials.pillar];
                     const railMats = [this.materials.boardHanger, this.materials.boardHanger];
                     this.buildSweptBar(stationGroup, sA, sB, () => 0.1, centerPos.y + 1.5, centerPos.y, pillarMats, 1.2, (s) => -offW(s));
@@ -2142,13 +2555,9 @@ export class StationModel {
                         stationGroup.add(post);
                     });
                 });
-            } else if (station.name === "Jakobinenstraße") {
+            } else if (["Jakobinenstraße", "St. Leonhard", "Opernhaus"].includes(station.name)) {
                 // 1. Sandstone "houses" wall + its dark coping band, swept continuously along
-                // the true curve. The zigzag is a periodic function of ABSOLUTE arc position
-                // (period 2.5m — the shape's own trough-peak-trough repeat), aligned so it still
-                // reads as the same repeating house motif, but panels no longer meet at an angle
-                // on curves. R is the grid origin (segment j=0's own start boundary), matching
-                // exactly where the old per-5m panels used to begin.
+                // the true curve.
                 if (j === 0) {
                     const R = station.position - (numSub * subLen) / 2;
                     const period = 2.5;
@@ -2159,101 +2568,276 @@ export class StationModel {
                     };
                     const sA = R, sB = R + numSub * subLen;
                     const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
-                    const wallTop = (s) => centerPos.y + triWave(s, 4.77, 5.77);
+                    const wallTop = (s) => centerPos.y + (station.name === "Opernhaus" ? 7.04 : triWave(s, 4.77, 5.77));
                     const wallBot = centerPos.y - 0.38;
                     const fillBot = (s) => centerPos.y + triWave(s, 4.77, 5.77);
                     const fillTop = (s) => centerPos.y + triWave(s, 5.0, 6.0);
-                    // Rings must land EXACTLY on the period's own quarter-points (trough/rise/
-                    // peak/fall every 0.625m) so the zigzag comes out perfectly sharp and even
-                    // instead of aliasing against the default ~1m/ring resolution ("ungleichmäßige
-                    // Zacken"). numSub*subLen is always a multiple of 5, and 5/0.625=8, so this
-                    // divides in exactly — no remainder/phase drift across the whole sweep.
                     const zigzagNSeg = numSub * 8;
-                    // buildSweptWall forces the cloned material's texture.repeat to (1,1), so the
-                    // baked UV alone must reproduce the real-world scale createSandstoneMaterial's
-                    // canvas represents (texture.userData.worldW/worldH metres per tile):
-                    // tileU = worldW (1 U-unit = 1 tile = worldW real metres along the wall).
-                    // V uses vMetricScale=1/worldH (ABSOLUTE world Y, not normalised per-ring) so
-                    // the horizontal courses stay level and only get clipped by the zigzag top
-                    // edge, instead of stretching to fill each ring's local (varying) height —
-                    // that stretching is what made the grout lines themselves look zigzagged.
-                    const sandW = jakobinenstrasseSandstoneMat.map.userData.worldW;
-                    const sandH = jakobinenstrasseSandstoneMat.map.userData.worldH;
+                    
+                    let wallMat = jakobinenstrasseSandstoneMat;
+                    let sandW = 2.4;
+                    let sandH = 1.2;
+                    if (station.name === "St. Leonhard") {
+                        wallMat = this.getStLeonhardStoneMat();
+                        sandW = wallMat.map.userData.worldW;
+                        sandH = wallMat.map.userData.worldH;
+                    } else if (station.name === "Opernhaus") {
+                        wallMat = this.getOpernhausStoneMat();
+                        sandW = wallMat.map.userData.worldW;
+                        sandH = wallMat.map.userData.worldH;
+                    }
+
                     for (const sign of [1, -1]) {
+                        if (station.name === "Opernhaus" && sign === -1) {
+                            // Build column shafts (lower 2/3) + arch-shaped head (upper 1/3)
+                            const colW = 2.0;
+                            const colD = 2.0;
+                            const fullColH = 7.04;
+                            const archR = 2.5;                           // arch radius = half column spacing
+                            const shaftH = fullColH - archR;             // 4.54 m — the rectangular shaft
+                            const shaftGeom = new THREE.BoxGeometry(colW, shaftH, colD);
+                            const springLocalY = -0.38 + shaftH;        // world-local y where arch springs (4.16)
+
+                            // Collect column world positions for arch building
+                            const colPositions = [];
+                            for (let z = -platLength / 2 + 2.5; z <= platLength / 2 - 2.5; z += 5.0) {
+                                const s = station.position + z;
+                                const posC = this.sim.getTrackPosition(s);
+                                const tangentC = this.sim.getTrackTangent(s);
+                                const rotYC = Math.atan2(tangentC.x, tangentC.z) - centerAngle;
+                                const normalC = new THREE.Vector3(-tangentC.z, 0, tangentC.x);
+                                const rightWallX = -this.sim.getTrackSpacing(s) / 2 - 1.83;
+                                const colPosWorld = posC.clone().addScaledVector(normalC, rightWallX - colD / 2);
+
+                                // Compute local position ONCE, then clone for each use
+                                const colPosLocal = stationGroup.worldToLocal(colPosWorld.clone());
+
+                                // Rectangular shaft (lower 2/3 of original height)
+                                const colMesh = new THREE.Mesh(shaftGeom, wallMat);
+                                colMesh.position.copy(colPosLocal);
+                                colMesh.position.y = -0.38 + shaftH / 2;
+                                colMesh.rotation.y = rotYC;
+                                stationGroup.add(colMesh);
+
+                                // Arch "impost" block at the column top (transition to arch)
+                                const impostH = 0.25;
+                                const impostGeom = new THREE.BoxGeometry(colW + 0.2, impostH, colD + 0.2);
+                                const impost = new THREE.Mesh(impostGeom, wallMat);
+                                impost.position.copy(colPosLocal);
+                                impost.position.y = springLocalY + impostH / 2;
+                                impost.rotation.y = rotYC;
+                                stationGroup.add(impost);
+
+                                colPositions.push({ localPos: colPosLocal.clone(), rotYC });
+                            }
+
+                            // Build semicircular arch between adjacent columns using
+                            // THREE.TorusGeometry — guaranteed correct rendering.
+                            // A half-torus (arc=π) placed at spring height; rotation.y=π/2
+                            // puts the ring in the ZY plane (longitudinal arch plane) so it
+                            // spans from one column top to the next.
+                            const opConcreteMat = this.getOpernhausConcreateMat();
+                            const archTubeR = 0.55;   // half arch-band "thickness" visible from below
+
+                            for (let ci = 0; ci < colPositions.length - 1; ci++) {
+                                const cp0 = colPositions[ci].localPos;
+                                const cp1 = colPositions[ci + 1].localPos;
+                                const bayMidX = (cp0.x + cp1.x) / 2;
+                                const bayMidZ = (cp0.z + cp1.z) / 2;
+                                const rotYArch = colPositions[ci].rotYC;
+
+                                // TorusGeometry lies in the XY plane by default, arc=π spans
+                                // from (R,0,0) → (0,R,0) → (-R,0,0).  A rotation.y of π/2
+                                // maps  X→−Z, Z→X, which puts the torus in the ZY plane:
+                                //   start → (0, 0, −R)  = column ci spring
+                                //   peak  → (0, R,  0)  = keystone
+                                //   end   → (0, 0, +R)  = column ci+1 spring
+                                const torusGeom = new THREE.TorusGeometry(
+                                    archR,          // torus radius = arch span / 2
+                                    archTubeR,      // tube radius = visible band thickness
+                                    8,              // radial segments (tube cross-section)
+                                    24,             // tubular segments (arch smoothness)
+                                    Math.PI         // half-torus (180°)
+                                );
+                                const archMesh = new THREE.Mesh(torusGeom, opConcreteMat);
+                                archMesh.position.set(bayMidX, springLocalY, bayMidZ);
+                                // rotation.y: π/2 for ZY-plane placement + track curve offset
+                                archMesh.rotation.set(0, rotYArch + Math.PI / 2, 0);
+                                stationGroup.add(archMesh);
+                            }
+
+                            continue;
+
+                        }
+
                         const off = (s) => sign * offW(s);
-                        this.buildSweptWall(stationGroup, sA, sB, off, wallBot, wallTop, jakobinenstrasseSandstoneMat, sandW, 0, 0, zigzagNSeg, 1 / sandH);
-                        this.buildSweptWall(stationGroup, sA, sB, off, fillBot, fillTop, this.materials.boardHanger, 1.2, 0, 1, zigzagNSeg);
+                        this.buildSweptWall(stationGroup, sA, sB, off, wallBot, wallTop, wallMat, sandW, 0, 0, zigzagNSeg, 1 / sandH);
+                        if (station.name !== "Opernhaus") {
+                            this.buildSweptWall(stationGroup, sA, sB, off, fillBot, fillTop, this.materials.boardHanger, 1.2, 0, 1, zigzagNSeg);
+                        }
+
+                        if (station.name === "Opernhaus" && sign === 1) {
+                            // White background plate
+                            const rightWallX_plate = this.sim.getTrackSpacing(station.position) / 2 + 1.83;
+                            const plateW = 0.1;
+                            const plateH = 7.04;
+                            const plateGeom = new THREE.BoxGeometry(plateW, plateH, platLength);
+                            const plateMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+                            const plate = new THREE.Mesh(plateGeom, plateMat);
+                            plate.position.set(rightWallX_plate + 2.1, -0.38 + plateH / 2, 0);
+                            stationGroup.add(plate);
+
+                            // build curved fences (wall side)
+                            for (let z = -platLength / 2 + 2.5; z <= platLength / 2 - 2.5; z += 5.0) {
+                                const s = station.position + z;
+                                const rightWallX = this.sim.getTrackSpacing(s) / 2 + 1.83;
+
+                                // Curved fence
+                                if (z + 5.0 <= platLength / 2) {
+                                    const s1 = s;
+                                    const s2 = s + 5.0;
+                                    const sMid = (s1 + s2) / 2;
+                                    const posMid = this.sim.getTrackPosition(sMid);
+                                    const tangentMid = this.sim.getTrackTangent(sMid);
+                                    const rotYMid = Math.atan2(tangentMid.x, tangentMid.z) - centerAngle;
+                                    const normalMid = new THREE.Vector3(-tangentMid.z, 0, tangentMid.x);
+
+                                    const numStruts = 13;
+                                    const strutSpacing = 0.25;
+                                    const fenceHeight = 2.0;
+                                    const strutGeom = new THREE.BoxGeometry(0.03, fenceHeight, 0.03);
+                                    const localMid = stationGroup.worldToLocal(posMid.clone());
+                                    const fenceMat = new THREE.MeshStandardMaterial({ color: '#2d2d2d', roughness: 0.7, metalness: 0.2 });
+
+                                    for (let i = 0; i < numStruts; i++) {
+                                        const zOffset = -1.5 + i * strutSpacing;
+                                        const xOffset = 0.45 * (1.0 - Math.pow(zOffset / 1.5, 2));
+
+                                        const strut = new THREE.Mesh(strutGeom, fenceMat);
+                                        strut.position.set(rightWallX + xOffset, fenceHeight / 2, zOffset);
+                                        strut.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotYMid);
+                                        strut.position.add(localMid);
+                                        strut.rotation.y = rotYMid;
+                                        stationGroup.add(strut);
+                                    }
+
+                                    const railGeom = new THREE.BoxGeometry(0.04, 0.04, strutSpacing + 0.02);
+                                    for (let i = 0; i < numStruts - 1; i++) {
+                                        const z1 = -1.5 + i * strutSpacing;
+                                        const z2 = z1 + strutSpacing;
+                                        const x1 = rightWallX + 0.45 * (1.0 - Math.pow(z1 / 1.5, 2));
+                                        const x2 = rightWallX + 0.45 * (1.0 - Math.pow(z2 / 1.5, 2));
+
+                                        const midX = (x1 + x2) / 2;
+                                        const midZ = (z1 + z2) / 2;
+                                        const angle = Math.atan2(x2 - x1, z2 - z1);
+
+                                        const railB = new THREE.Mesh(railGeom, fenceMat);
+                                        railB.position.set(midX, 0.02, midZ);
+                                        railB.rotation.y = angle;
+                                        railB.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotYMid);
+                                        railB.position.add(localMid);
+                                        railB.rotation.y += rotYMid;
+                                        stationGroup.add(railB);
+
+                                        const railM = new THREE.Mesh(railGeom, fenceMat);
+                                        railM.position.set(midX, 1.0, midZ);
+                                        railM.rotation.y = angle;
+                                        railM.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotYMid);
+                                        railM.position.add(localMid);
+                                        railM.rotation.y += rotYMid;
+                                        stationGroup.add(railM);
+
+                                        const railT = new THREE.Mesh(railGeom, fenceMat);
+                                        railT.position.set(midX, 1.95, midZ);
+                                        railT.rotation.y = angle;
+                                        railT.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotYMid);
+                                        railT.position.add(localMid);
+                                        railT.rotation.y += rotYMid;
+                                        stationGroup.add(railT);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
                 // 2. Dark vertical columns at the segment end boundaries (z = 2.5)
-                const pEndL = posWallL.clone().addScaledVector(normal, -0.101).addScaledVector(tangent, 2.5);
-                const colL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
-                colL.position.copy(stationGroup.worldToLocal(pEndL));
-                colL.position.y = 4.01;
-                colL.rotation.y = rotY;
+                if (station.name !== "Opernhaus") {
+                    const pEndL = posWallL.clone().addScaledVector(normal, -0.101).addScaledVector(tangent, 2.5);
+                    const colL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
+                    colL.position.copy(stationGroup.worldToLocal(pEndL));
+                    colL.position.y = 4.01;
+                    colL.rotation.y = rotY;
 
-                const pEndR = posWallR.clone().addScaledVector(normal, 0.101).addScaledVector(tangent, 2.5);
-                const colR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
-                colR.position.copy(stationGroup.worldToLocal(pEndR));
-                colR.position.y = 4.01;
-                colR.rotation.y = rotY;
+                    const pEndR = posWallR.clone().addScaledVector(normal, 0.101).addScaledVector(tangent, 2.5);
+                    const colR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
+                    colR.position.copy(stationGroup.worldToLocal(pEndR));
+                    colR.position.y = 4.01;
+                    colR.rotation.y = rotY;
 
-                stationGroup.add(colL, colR);
+                    stationGroup.add(colL, colR);
+                }
 
                 // 2b. Dark vertical column under the MIDDLE downward "Zacken" of each segment (z = 0)
-                const pMidL = posWallL.clone().addScaledVector(normal, -0.101);
-                const colMidL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
-                colMidL.position.copy(stationGroup.worldToLocal(pMidL));
-                colMidL.position.y = 4.01;
-                colMidL.rotation.y = rotY;
+                if (station.name !== "Opernhaus") {
+                    const pMidL = posWallL.clone().addScaledVector(normal, -0.101);
+                    const colMidL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
+                    colMidL.position.copy(stationGroup.worldToLocal(pMidL));
+                    colMidL.position.y = 4.01;
+                    colMidL.rotation.y = rotY;
+                    stationGroup.add(colMidL);
 
-                const pMidR = posWallR.clone().addScaledVector(normal, 0.101);
-                const colMidR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
-                colMidR.position.copy(stationGroup.worldToLocal(pMidR));
-                colMidR.position.y = 4.01;
-                colMidR.rotation.y = rotY;
-
-                stationGroup.add(colMidL, colMidR);
+                    const pMidR = posWallR.clone().addScaledVector(normal, 0.101);
+                    const colMidR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
+                    colMidR.position.copy(stationGroup.worldToLocal(pMidR));
+                    colMidR.position.y = 4.01;
+                    colMidR.rotation.y = rotY;
+                    stationGroup.add(colMidR);
+                }
 
                 // For the very first segment (j === 0), also add columns at the start boundary (z = -2.5)
-                if (j === 0) {
+                if (j === 0 && station.name !== "Opernhaus") {
                     const pStartL = posWallL.clone().addScaledVector(normal, -0.101).addScaledVector(tangent, -2.5);
                     const colStartL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
                     colStartL.position.copy(stationGroup.worldToLocal(pStartL));
                     colStartL.position.y = 4.01;
                     colStartL.rotation.y = rotY;
+                    stationGroup.add(colStartL);
 
                     const pStartR = posWallR.clone().addScaledVector(normal, 0.101).addScaledVector(tangent, -2.5);
                     const colStartR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.52, 0.12), this.materials.boardHanger);
                     colStartR.position.copy(stationGroup.worldToLocal(pStartR));
                     colStartR.position.y = 4.01;
                     colStartR.rotation.y = rotY;
-
-                    stationGroup.add(colStartL, colStartR);
+                    stationGroup.add(colStartR);
                 }
 
-
-
-                // 5. Nameplate "JAKOBINENSTRASSE" under every second house (House 2 of each segment)
+                // 5. Nameplate under every second house (House 2 of each segment)
                 if (j > 0 && j < numSub - 1) {
+                    const textMat = (station.name === "St. Leonhard") ? this.getStLeonhardTextMat() 
+                                  : ((station.name === "Opernhaus") ? this.getOpernhausTextMat() 
+                                  : jakobinenstrasseTextMat);
+
                     // Left wall text (facing tracks)
-                    const textMeshL = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 0.5625), jakobinenstrasseTextMat);
+                    const textMeshL = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 0.5625), textMat);
                     const pTextL = posWallL.clone().addScaledVector(tangent, 1.25);
                     textMeshL.position.copy(stationGroup.worldToLocal(pTextL));
                     textMeshL.position.x += 0.11;
                     textMeshL.position.y = 2.21875; // Top edge 2.50m above track bed
                     textMeshL.rotation.set(0, rotY + Math.PI / 2, 0);
+                    stationGroup.add(textMeshL);
 
                     // Right wall text (facing tracks)
-                    const textMeshR = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 0.5625), jakobinenstrasseTextMat);
-                    const pTextR = posWallR.clone().addScaledVector(tangent, 1.25);
-                    textMeshR.position.copy(stationGroup.worldToLocal(pTextR));
-                    textMeshR.position.x -= 0.11;
-                    textMeshR.position.y = 2.21875; // Top edge 2.50m above track bed
-                    textMeshR.rotation.set(0, rotY - Math.PI / 2, 0);
-
-                    stationGroup.add(textMeshL, textMeshR);
+                    if (station.name !== "Opernhaus") {
+                        const textMeshR = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 0.5625), textMat);
+                        const pTextR = posWallR.clone().addScaledVector(tangent, 1.25);
+                        textMeshR.position.copy(stationGroup.worldToLocal(pTextR));
+                        textMeshR.position.x -= 0.11;
+                        textMeshR.position.y = 2.21875; // Top edge 2.50m above track bed
+                        textMeshR.rotation.set(0, rotY - Math.PI / 2, 0);
+                        stationGroup.add(textMeshR);
+                    }
                 }
             } else if (wallPresets[station.name]) {
                 // Tiled 2-layer walls + name stripe as continuous swept ribbons, built once.
@@ -2401,6 +2985,495 @@ export class StationModel {
                     
                     stationGroup.add(textMeshR, textMeshL);
                 }
+            } else if (isRoethenbach) {
+                if (j === 0) {
+                    const tileMats = this.getRoethenbachTileMats();
+                    const heights = [
+                        [-0.38, 0.60],
+                        [0.60, 1.60],
+                        [1.60, 2.60],
+                        [2.60, 3.60],
+                        [3.60, 4.66]
+                    ];
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    for (const sign of [1, -1]) {
+                        const off = (s) => sign * offW(s);
+                        const offS = (s) => sign * (offW(s) - 0.02);
+                        for (let i = 0; i < 5; i++) {
+                            const y1 = cy + heights[i][0];
+                            const y2 = cy + heights[i][1];
+                            this.buildSweptWall(stationGroup, sA, sB, off, y1, y2, tileMats[i], 1.2, heights[i][0] / 1.2, heights[i][1] / 1.2);
+                        }
+                        
+                        const textMat = this.getRoethenbachTextMat();
+                        const textGeom = new THREE.PlaneGeometry(3.6, 0.45);
+                        for (let z = -platLength / 2 + 1.5; z <= platLength / 2 - 1.5; z += 3.0) {
+                            const s = station.position + z;
+                            const posT = this.sim.getTrackPosition(s);
+                            const tanT = this.sim.getTrackTangent(s);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pText = posT.clone().addScaledVector(normT, offS(s));
+                            
+                            const textMesh = new THREE.Mesh(textGeom, textMat);
+                            textMesh.position.copy(stationGroup.worldToLocal(pText));
+                            textMesh.position.y = 2.1;
+                            textMesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(textMesh);
+                        }
+                    }
+                }
+            } else if (isHoheMarter) {
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    
+                    if (!this._hoheMarterSolidMat) {
+                        this._hoheMarterSolidMat = new THREE.MeshLambertMaterial({ color: '#1a1c19' });
+                    }
+                    if (!this._hoheMarterStripeMat) {
+                        this._hoheMarterStripeMat = new THREE.MeshLambertMaterial({ color: '#44403D' });
+                    }
+
+                    // Left side (sign = 1)
+                    {
+                        const off = (s) => offW(s);
+                        const offS = (s) => offW(s) - 0.02;
+                        const tileMat = this.getHoheMarterTileMatFlughafen();
+                        
+                        this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 1.10, tileMat, 10.0, -0.38 / 2.5, 1.10 / 2.5);
+                        this.buildSweptWall(stationGroup, sA, sB, off, cy + 1.10, cy + 4.66, this._hoheMarterSolidMat, 1.2, 0, 1);
+                        
+                        const textMat = this.getHoheMarterTextMat(1);
+                        const textGeom = new THREE.PlaneGeometry(3.6, 0.45);
+                        for (let z = -platLength / 2 + 1.5; z <= platLength / 2 - 1.5; z += 3.0) {
+                            const s = station.position + z;
+                            const posT = this.sim.getTrackPosition(s);
+                            const tanT = this.sim.getTrackTangent(s);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pText = posT.clone().addScaledVector(normT, offS(s));
+                            
+                            const textMesh = new THREE.Mesh(textGeom, textMat);
+                            textMesh.position.copy(stationGroup.worldToLocal(pText));
+                            textMesh.position.y = 2.2;
+                            textMesh.rotation.set(0, rotYT + Math.PI / 2, 0);
+                            stationGroup.add(textMesh);
+                        }
+                    }
+                    
+                    // Right side (sign = -1)
+                    {
+                        const off = (s) => -offW(s);
+                        const offS = (s) => -(offW(s) - 0.02);
+                        const tileMat = this.getHoheMarterTileMatGrossreuth();
+                        
+                        this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 4.66, tileMat, 10.0, -0.38 / 2.5, 4.66 / 2.5);
+                        this.buildSweptWall(stationGroup, sA, sB, offS, cy + 1.15, cy + 2.15, this._hoheMarterStripeMat, 1.2, 0, 1);
+                        
+                        const textMat = this.getHoheMarterTextMat(-1);
+                        const textGeom = new THREE.PlaneGeometry(3.6, 0.45);
+                        for (let z = -platLength / 2 + 1.5; z <= platLength / 2 - 1.5; z += 3.0) {
+                            const s = station.position + z;
+                            const posT = this.sim.getTrackPosition(s);
+                            const tanT = this.sim.getTrackTangent(s);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pText = posT.clone().addScaledVector(normT, offS(s));
+                            
+                            const textMesh = new THREE.Mesh(textGeom, textMat);
+                            textMesh.position.copy(stationGroup.worldToLocal(pText));
+                            textMesh.position.y = 1.65;
+                            textMesh.rotation.set(0, rotYT - Math.PI / 2, 0);
+                            stationGroup.add(textMesh);
+                        }
+                    }
+                }
+            } else if (isSchweinau) {
+                if (j === 0) {
+                    const spacing = this.sim.getTrackSpacing(station.position);
+                    const tubeCenterL = spacing / 4 + 1.2;
+                    const tubeCenterR = -tubeCenterL;
+                    const tubeRadius = tubeCenterL;
+                    const panelRadius = tubeRadius - 0.02;
+
+                    const thetaStart = Math.acos(0);
+                    const thetaEnd = Math.acos(-2.5 / panelRadius);
+                    const panelSteps = 16;
+                    const panelProfileL = [];
+                    for (let k = 0; k <= panelSteps; k++) {
+                        const theta = thetaStart + (thetaEnd - thetaStart) * k / panelSteps;
+                        panelProfileL.push({ x: panelRadius * Math.sin(theta), y: -panelRadius * Math.cos(theta) });
+                    }
+                    const panelProfileR = panelProfileL.map(p => ({ x: -p.x, y: p.y }));
+
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const cy = centerPos.y;
+                    const wallMat = this.getSchweinauBrickMat(station, platLength, centerPos, centerAngle);
+
+                    this.buildSweptProfile(stationGroup, sA, sB, panelProfileL, cy + 0.865, () => tubeCenterL, wallMat, 1.0);
+                    this.buildSweptProfile(stationGroup, sA, sB, panelProfileR, cy + 0.865, () => tubeCenterR, wallMat, 1.0);
+
+                    // Schweinau name stripe
+                    const stripeRadius = panelRadius - 0.005;
+                    const thetaMin = Math.acos(-1.33 / stripeRadius);
+                    const thetaMax = Math.acos(-1.15 / stripeRadius);
+                    const stripeProfileL = [];
+                    for (let k = 0; k <= 4; k++) {
+                        const theta = thetaMin + (thetaMax - thetaMin) * k / 4;
+                        stripeProfileL.push({ x: stripeRadius * Math.sin(theta), y: -stripeRadius * Math.cos(theta) });
+                    }
+                    const stripeProfileR = stripeProfileL.map(p => ({ x: -p.x, y: p.y }));
+                    const stripeMat = this.getSchweinauStripeMat(station, platLength, centerPos, centerAngle);
+
+                    this.buildSweptProfile(stationGroup, sA, sB, stripeProfileL, cy + 0.865, () => tubeCenterL, stripeMat, 3.0);
+                    this.buildSweptProfile(stationGroup, sA, sB, stripeProfileR, cy + 0.865, () => tubeCenterR, stripeMat, 3.0);
+
+                    // Vault passages (Zwischendurchgänge)
+                    const archLength = 8.0;
+                    const rPassage = 4.5;
+                    const tubeRadiusPassage = spacing / 4 + 1.2;
+                    
+                    const buildPassageTube = (zPos) => {
+                        const s_mid = station.position + zPos;
+                        if (s_mid < sA || s_mid > sB) return;
+                        const posP = this.sim.getTrackPosition(s_mid);
+                        const tangentP = this.sim.getTrackTangent(s_mid);
+                        const rotYP = Math.atan2(tangentP.x, tangentP.z) - centerAngle;
+                        const localPosP = stationGroup.worldToLocal(posP.clone());
+
+                        const crossGeom = new THREE.CylinderGeometry(rPassage, rPassage, archLength, 64, 1, true, 0, Math.PI);
+                        const matrix = new THREE.Matrix4();
+                        matrix.set(
+                            0, 1, 0, 0,
+                            1, 0, 0, 0.865,
+                            0, 0, -1, 0,
+                            0, 0, 0, 1
+                        );
+                        crossGeom.applyMatrix4(matrix);
+
+                        const passageMat = new THREE.MeshLambertMaterial({ color: '#475569', side: THREE.DoubleSide });
+                        passageMat.onBeforeCompile = (shader) => {
+                            shader.vertexShader = `
+                                varying vec3 vLocalPosForClip;
+                                ${shader.vertexShader}
+                            `.replace(
+                                '#include <project_vertex>',
+                                `
+                                #include <project_vertex>
+                                vLocalPosForClip = position.xyz;
+                                `
+                            );
+                            
+                            shader.fragmentShader = `
+                                varying vec3 vLocalPosForClip;
+                                ${shader.fragmentShader}
+                            `.replace(
+                                '#include <clipping_planes_fragment>',
+                                `
+                                #include <clipping_planes_fragment>
+                                float tR = ${tubeRadiusPassage.toFixed(5)};
+                                float dy = vLocalPosForClip.y - 0.865;
+                                float distL = (vLocalPosForClip.x - tR) * (vLocalPosForClip.x - tR) + dy * dy;
+                                float distR = (vLocalPosForClip.x + tR) * (vLocalPosForClip.x + tR) + dy * dy;
+                                if (distL < tR * tR || distR < tR * tR) {
+                                    discard;
+                                }
+                                `
+                            );
+                        };
+
+                        const crossTube = new THREE.Mesh(crossGeom, passageMat);
+                        crossTube.position.copy(localPosP);
+                        crossTube.rotation.y = rotYP;
+                        stationGroup.add(crossTube);
+                    };
+
+                    buildPassageTube(-25);
+                    buildPassageTube(0);
+                    buildPassageTube(25);
+
+                    // Schweinau lights (Lorenzkirche style)
+                    const lightW = 0.4;
+                    const hangerLen = 1.0;
+                    const lightY = 0.865 + tubeRadius - hangerLen;
+                    const lightMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+                    const casingMat = new THREE.MeshLambertMaterial({ color: '#e2e8f0' });
+                    const hangerMat = new THREE.MeshLambertMaterial({ color: '#9ca3af' });
+                    const hangerGeom = new THREE.CylinderGeometry(0.02, 0.02, hangerLen, 8);
+
+                    [tubeCenterL, tubeCenterR].forEach(centerX => {
+                        this.buildSweptBar(stationGroup, sA, sB, () => lightW / 2,
+                            cy + lightY + 0.1, cy + lightY - 0.05, [casingMat, casingMat], 1.2, (s) => centerX);
+                        this.buildSweptBar(stationGroup, sA, sB, () => (lightW - 0.05) / 2,
+                            cy + lightY + 0.025, cy + lightY - 0.075, [lightMat, lightMat], 1.2, (s) => centerX);
+
+                        for (let jj = 0; jj < numSub; jj++) {
+                            const s_mid = sA + (jj + 0.5) * subLen;
+                            [-1.25, 1.25].forEach(tOff => {
+                                const s = s_mid + tOff;
+                                const posH = this.sim.getTrackPosition(s);
+                                const tangentH = this.sim.getTrackTangent(s);
+                                const rotYH = Math.atan2(tangentH.x, tangentH.z) - centerAngle;
+                                const normH = new THREE.Vector3(-tangentH.z, 0, tangentH.x);
+                                const hanger = new THREE.Mesh(hangerGeom, hangerMat);
+                                hanger.position.copy(stationGroup.worldToLocal(posH.clone().addScaledVector(normH, centerX)));
+                                hanger.position.y = lightY + hangerLen / 2;
+                                hanger.rotation.y = rotYH;
+                                stationGroup.add(hanger);
+                            });
+                        }
+                    });
+                }
+            } else if (isRothenburger) {
+                if (j === 0) {
+                    const spacing = this.sim.getTrackSpacing(station.position);
+                    const tubeCenterL = spacing / 4 + 1.2;
+                    const tubeCenterR = -tubeCenterL;
+                    const tubeRadius = tubeCenterL;
+                    const panelRadius = tubeRadius - 0.02;
+
+                    const thetaStart = Math.acos(0);
+                    const thetaEnd = Math.acos(-2.5 / panelRadius);
+                    const panelSteps = 16;
+                    const panelProfileL = [];
+                    for (let k = 0; k <= panelSteps; k++) {
+                        const theta = thetaStart + (thetaEnd - thetaStart) * k / panelSteps;
+                        panelProfileL.push({ x: panelRadius * Math.sin(theta), y: -panelRadius * Math.cos(theta) });
+                    }
+                    const panelProfileR = panelProfileL.map(p => ({ x: -p.x, y: p.y }));
+
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const cy = centerPos.y;
+                    const wallMat = this.getRothenburgerGravelMat(station, platLength, centerPos, centerAngle);
+
+                    this.buildSweptProfile(stationGroup, sA, sB, panelProfileL, cy + 0.865, () => tubeCenterL, wallMat, 1.2);
+                    this.buildSweptProfile(stationGroup, sA, sB, panelProfileR, cy + 0.865, () => tubeCenterR, wallMat, 1.2);
+
+                    // Vault passages (Zwischendurchgänge)
+                    const archLength = 8.0;
+                    const rPassage = 4.5;
+                    const tubeRadiusPassage = spacing / 4 + 1.2;
+                    
+                    const buildPassageTube = (zPos) => {
+                        const s_mid = station.position + zPos;
+                        if (s_mid < sA || s_mid > sB) return;
+                        const posP = this.sim.getTrackPosition(s_mid);
+                        const tangentP = this.sim.getTrackTangent(s_mid);
+                        const rotYP = Math.atan2(tangentP.x, tangentP.z) - centerAngle;
+                        const localPosP = stationGroup.worldToLocal(posP.clone());
+
+                        const crossGeom = new THREE.CylinderGeometry(rPassage, rPassage, archLength, 64, 1, true, 0, Math.PI);
+                        const matrix = new THREE.Matrix4();
+                        matrix.set(
+                            0, 1, 0, 0,
+                            1, 0, 0, 0.865,
+                            0, 0, -1, 0,
+                            0, 0, 0, 1
+                        );
+                        crossGeom.applyMatrix4(matrix);
+
+                        const passageMat = new THREE.MeshLambertMaterial({ color: '#475569', side: THREE.DoubleSide });
+                        passageMat.onBeforeCompile = (shader) => {
+                            shader.vertexShader = `
+                                varying vec3 vLocalPosForClip;
+                                ${shader.vertexShader}
+                            `.replace(
+                                '#include <project_vertex>',
+                                `
+                                #include <project_vertex>
+                                vLocalPosForClip = position.xyz;
+                                `
+                            );
+                            
+                            shader.fragmentShader = `
+                                varying vec3 vLocalPosForClip;
+                                ${shader.fragmentShader}
+                            `.replace(
+                                '#include <clipping_planes_fragment>',
+                                `
+                                #include <clipping_planes_fragment>
+                                float tR = ${tubeRadiusPassage.toFixed(5)};
+                                float dy = vLocalPosForClip.y - 0.865;
+                                float distL = (vLocalPosForClip.x - tR) * (vLocalPosForClip.x - tR) + dy * dy;
+                                float distR = (vLocalPosForClip.x + tR) * (vLocalPosForClip.x + tR) + dy * dy;
+                                if (distL < tR * tR || distR < tR * tR) {
+                                    discard;
+                                }
+                                `
+                            );
+                        };
+
+                        const crossTube = new THREE.Mesh(crossGeom, passageMat);
+                        crossTube.position.copy(localPosP);
+                        crossTube.rotation.y = rotYP;
+                        stationGroup.add(crossTube);
+                    };
+
+                    buildPassageTube(-25);
+                    buildPassageTube(0);
+                    buildPassageTube(25);
+
+                    // Rothenburger lights (Lorenzkirche style)
+                    const lightW = 0.4;
+                    const hangerLen = 1.0;
+                    const lightY = 0.865 + tubeRadius - hangerLen;
+                    const lightMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+                    const casingMat = new THREE.MeshLambertMaterial({ color: '#e2e8f0' });
+                    const hangerMat = new THREE.MeshLambertMaterial({ color: '#9ca3af' });
+                    const hangerGeom = new THREE.CylinderGeometry(0.02, 0.02, hangerLen, 8);
+
+                    [tubeCenterL, tubeCenterR].forEach(centerX => {
+                        this.buildSweptBar(stationGroup, sA, sB, () => lightW / 2,
+                            cy + lightY + 0.1, cy + lightY - 0.05, [casingMat, casingMat], 1.2, (s) => centerX);
+                        this.buildSweptBar(stationGroup, sA, sB, () => (lightW - 0.05) / 2,
+                            cy + lightY + 0.025, cy + lightY - 0.075, [lightMat, lightMat], 1.2, (s) => centerX);
+
+                        for (let jj = 0; jj < numSub; jj++) {
+                            const s_mid = sA + (jj + 0.5) * subLen;
+                            [-1.25, 1.25].forEach(tOff => {
+                                const s = s_mid + tOff;
+                                const posH = this.sim.getTrackPosition(s);
+                                const tangentH = this.sim.getTrackTangent(s);
+                                const rotYH = Math.atan2(tangentH.x, tangentH.z) - centerAngle;
+                                const normH = new THREE.Vector3(-tangentH.z, 0, tangentH.x);
+                                const hanger = new THREE.Mesh(hangerGeom, hangerMat);
+                                hanger.position.copy(stationGroup.worldToLocal(posH.clone().addScaledVector(normH, centerX)));
+                                hanger.position.y = lightY + hangerLen / 2;
+                                hanger.rotation.y = rotYH;
+                                stationGroup.add(hanger);
+                            });
+                        }
+                    });
+
+                    // Rothenburger ovals (every 12m)
+                    const plaqueW = 4.4;
+                    const plaqueH = 1.0;
+                    const plaqueGeom = new THREE.PlaneGeometry(plaqueW, plaqueH);
+                    const plaqueMat = this.getRothenburgerPlaqueMat();
+                    const dy = 1.235;
+                    const theta = Math.asin(dy / panelRadius);
+                    const plaqueXLocal = panelRadius * Math.cos(theta) - 0.035;
+
+                    const stationPlaqueZ = [-36, -24, -12, 0, 12, 24, 36];
+                    stationPlaqueZ.forEach(pz => {
+                        const s = station.position + pz;
+                        if (s < sA || s > sB) return;
+                        // Skip placing plaques where the cross tubes (Zwischendurchgänge) are
+                        if (pz === 0 || pz === 24 || pz === -24) return;
+                        
+                        const posT = this.sim.getTrackPosition(s);
+                        const tangentT = this.sim.getTrackTangent(s);
+                        const rotYT = Math.atan2(tangentT.x, tangentT.z) - centerAngle;
+                        const normalT = new THREE.Vector3(-tangentT.z, 0, tangentT.x);
+                        
+                        // Left
+                        const pL = posT.clone().addScaledVector(normalT, tubeCenterL + plaqueXLocal);
+                        const pMeshL = new THREE.Mesh(plaqueGeom, plaqueMat);
+                        pMeshL.position.copy(stationGroup.worldToLocal(pL));
+                        pMeshL.position.y = 0.865 + dy;
+                        pMeshL.rotation.set(0, rotYT - Math.PI / 2, 0);
+                        stationGroup.add(pMeshL);
+
+                        // Right
+                        const pR = posT.clone().addScaledVector(normalT, tubeCenterR - plaqueXLocal);
+                        const pMeshR = new THREE.Mesh(plaqueGeom, plaqueMat);
+                        pMeshR.position.copy(stationGroup.worldToLocal(pR));
+                        pMeshR.position.y = 0.865 + dy;
+                        pMeshR.rotation.set(0, rotYT + Math.PI / 2, 0);
+                        stationGroup.add(pMeshR);
+                    });
+                }
+            } else if (isWoehrder) {
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    const yBot = cy - 0.38;
+                    const yCeil = cy + 4.66;
+                    const circlesMat = this.getWoehrderCirclesMat();
+                    const worldW = circlesMat.map.userData.worldW;
+                    const worldH = circlesMat.map.userData.worldH;
+
+                    for (const sign of [1, -1]) {
+                        const off = (s) => sign * offW(s);
+                        const offS = (s) => sign * (offW(s) - 0.02);
+                        this.buildSweptWall(stationGroup, sA, sB, off, yBot, yCeil, circlesMat, worldW, yBot / worldH, yCeil / worldH);
+
+                        const textW = 3.6;
+                        const textH = 0.45;
+                        const textGeom = new THREE.PlaneGeometry(textW, textH);
+                        const textMat = this.getWoehrderTextMat();
+                        
+                        for (let z = -platLength / 2 + 1.5; z <= platLength / 2 - 1.5; z += 3.0) {
+                            const sT = station.position + z;
+                            const posT = this.sim.getTrackPosition(sT);
+                            const tanT = this.sim.getTrackTangent(sT);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pText = posT.clone().addScaledVector(normT, offS(sT));
+                            
+                            const textMesh = new THREE.Mesh(textGeom, textMat);
+                            textMesh.position.copy(stationGroup.worldToLocal(pText));
+                            textMesh.position.y = 2.1;
+                            textMesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(textMesh);
+                        }
+                    }
+                }
+            } else if (isRathenauplatz) {
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    const yBot = cy - 0.38;
+                    const yCeil = cy + 10.0;
+                    const tileMat = this.getRathenauTileMat();
+
+                    for (const sign of [1, -1]) {
+                        const off = (s) => sign * offW(s);
+                        const offS = (s) => sign * (offW(s) - 0.02);
+                        this.buildSweptWall(stationGroup, sA, sB, off, yBot, yCeil, tileMat, 1.2, yBot / 1.2, yCeil / 1.2);
+
+                        const herzlMat = this.getRathenauHerzlMat();
+                        const rathenauMat = this.getRathenauRathenauMat();
+
+                        const sHerzl = station.position - 20.0;
+                        const herzlOff = (s) => offS(s) - sign * 0.015;
+                        this.buildSweptWall(stationGroup, sHerzl - 8.0, sHerzl + 8.0, herzlOff, cy + 0.5, cy + 8.5, herzlMat, 16.0, 0, 1);
+
+                        const sRathenau = station.position + 20.0;
+                        const rathenauOff = (s) => offS(s) - sign * 0.015;
+                        this.buildSweptWall(stationGroup, sRathenau - 8.0, sRathenau + 8.0, rathenauOff, cy + 0.5, cy + 8.5, rathenauMat, 16.0, 0, 1);
+
+                        const sQuote = station.position;
+                        const quoteOff = (s) => offS(s) - sign * 0.015;
+                        this.buildSweptWall(stationGroup, sQuote - 8.0, sQuote + 8.0, quoteOff, cy + 2.5, cy + 6.5, this.getRathenauQuoteMat(), 16.0, 0, 1);
+
+                        const textW = 3.6;
+                        const textH = 0.45;
+                        const textGeom = new THREE.PlaneGeometry(textW, textH);
+                        const textMat = this.getRathenauTextMat();
+                        
+                        for (let z = -platLength / 2 + 2.0; z <= platLength / 2 - 2.0; z += 4.0) {
+                            const sT = station.position + z;
+                            const posT = this.sim.getTrackPosition(sT);
+                            const tanT = this.sim.getTrackTangent(sT);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pText = posT.clone().addScaledVector(normT, offS(sT));
+                            
+                            const textMesh = new THREE.Mesh(textGeom, textMat);
+                            textMesh.position.copy(stationGroup.worldToLocal(pText));
+                            textMesh.position.y = 2.1;
+                            textMesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(textMesh);
+                        }
+                    }
+                }
             } else if (isAufsessplatzLook) {
                 // Red/white tiled 3-layer walls + name stripe as continuous swept ribbons, once.
                 if (j === 0) {
@@ -2417,10 +3490,44 @@ export class StationModel {
                         this.buildSweptWall(stationGroup, sA, sB, offS, cy + 2.015, cy + 2.195, aufsessplatzStripeMat, 90 / repeatX, 0, 1);
                     }
                 }
+            } else if (isGrossreuth) {
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    for (const sign of [1, -1]) {
+                        const off = (s) => sign * offW(s);
+                        const offS = (s) => sign * (offW(s) - 0.02);
+                        // Lower sixth (1m high)
+                        this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 0.62, grossreuthLowerTileMat, 1.2, -0.38 / 1.2, 0.62 / 1.2);
+                        // Upper wall (5m high)
+                        this.buildSweptWall(stationGroup, sA, sB, off, cy + 0.62, cy + 5.62, grossreuthUpperTileMat, 5.0, 0, 1);
+
+                        // Signage every 3m
+                        const textGeom = new THREE.PlaneGeometry(2.4, 0.3);
+                        for (let z = -platLength / 2 + 1.5; z <= platLength / 2 - 1.5; z += 3.0) {
+                            const sT = station.position + z;
+                            const posT = this.sim.getTrackPosition(sT);
+                            const tanT = this.sim.getTrackTangent(sT);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pText = posT.clone().addScaledVector(normT, offS(sT));
+
+                            const textMesh = new THREE.Mesh(textGeom, grossreuthSignMat);
+                            textMesh.position.copy(stationGroup.worldToLocal(pText));
+                            textMesh.position.y = 2.0;
+                            textMesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(textMesh);
+                        }
+
+                        // Beam at the height of the white platform beam (#29261D)
+                        this.buildSweptWall(stationGroup, sA, sB, offS, cy + 1.15, cy + 1.17, grossreuthBeamMat, 1.2, 0, 1);
+                    }
+                }
             } else {
                 // Generic outer walls: solid colour, so one continuous swept slab per side
                 // (built once on j===0), tapering its lateral offset with the inter-track gap.
-                if (station.name !== "Langwasser Nord" && station.name !== "Messe" && station.name !== "Muggenhof" && station.name !== "Stadtgrenze" && j === 0) {
+                if (station.name !== "Langwasser Nord" && station.name !== "Bauernfeindstraße" && station.name !== "Messe" && station.name !== "Muggenhof" && station.name !== "Stadtgrenze" && j === 0) {
                     const wallMaterial = new THREE.MeshLambertMaterial({ color: station.color || '#333333' });
                     const isMax = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
                     const ceilYw = isMax ? 5.84 : 4.66;
@@ -2439,7 +3546,7 @@ export class StationModel {
         if (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name)) {
             // 12 pillars in equal distance (from -33 to 33 with spacing 6m) to clear the escalators
             stationPillarZ = [-33, -27, -21, -15, -9, -3, 3, 9, 15, 21, 27, 33].map(z => z * S_len);
-        } else if (isAufsessplatzLook) {
+        } else if (isAufsessplatzLook || station.name === "St. Leonhard") {
             // 9 pillars in equal distance (from -32 to 32 with spacing 8m)
             stationPillarZ = [-32, -24, -16, -8, 0, 8, 16, 24, 32].map(z => z * S_len);
         }
@@ -2447,7 +3554,7 @@ export class StationModel {
         const tPillarBarGeom = new THREE.BoxGeometry(2.4, 0.25, 0.35);
  
         stationPillarZ.forEach((pz, idx) => {
-            if (station.name === "Hardhöhe" || station.name === "Jakobinenstraße") return; // column-free!
+            if (["Hardhöhe", "Jakobinenstraße", "Röthenbach", "Hohe Marter", "Schweinau", "Rothenburger Straße", "Opernhaus", "Wöhrder Wiese", "Rathenauplatz", "Grossreuth bei Schweinau"].includes(station.name)) return; // column-free!
             if (station.name === "Muggenhof") {
                 const s = station.position + pz;
                 const pos = this.sim.getTrackPosition(s);
@@ -2485,6 +3592,29 @@ export class StationModel {
                 colGroup.rotation.y = rotY;
                 
                 stationGroup.add(colGroup);
+                return;
+            }
+            if (station.name === "St. Leonhard") {
+                const s = station.position + pz;
+                const pos = this.sim.getTrackPosition(s);
+                const tangent = this.sim.getTrackTangent(s);
+                const rotY = Math.atan2(tangent.x, tangent.z) - centerAngle;
+                
+                const colHeight = 4.595 - 0.865;
+                const colGeom = new THREE.CylinderGeometry(0.3, 0.3, colHeight, 24);
+                // Clone the shared stone material with round-column lighting baked in
+                if (!this._stLeonhardPillarMat) {
+                    this._stLeonhardPillarMat = this._makeCylinderPillarMat(this.getStLeonhardStoneMat());
+                    this._stLeonhardPillarMat.map.repeat.set(2, colHeight / 1.2);
+                }
+                const pillar = new THREE.Mesh(colGeom, this._stLeonhardPillarMat);
+                
+                const pLocal = stationGroup.worldToLocal(pos.clone());
+                pillar.position.copy(pLocal);
+                pillar.position.y = 0.865 + colHeight / 2;
+                pillar.rotation.y = rotY;
+                
+                stationGroup.add(pillar);
                 return;
             }
             if (station.name === "Stadtgrenze") {
@@ -2568,15 +3698,18 @@ export class StationModel {
                 const pR = pos.clone().addScaledVector(normal, -spacing / 2 - 3.54);
                 const cacheKey = `pillarGeom_side_${station.name}`;
                 if (!this[cacheKey]) {
-                    this[cacheKey] = new THREE.CylinderGeometry(0.25, 0.25, pHeight, 8);
+                    this[cacheKey] = {
+                        geom: new THREE.CylinderGeometry(0.25, 0.25, pHeight, 8),
+                        mat: this._makeCylinderPillarMat(this.materials.pillar)
+                    };
                 }
-                const pillarR = new THREE.Mesh(this[cacheKey], this.materials.pillar);
+                const pillarR = new THREE.Mesh(this[cacheKey].geom, this[cacheKey].mat);
                 pillarR.position.copy(stationGroup.worldToLocal(pR));
                 pillarR.position.y = pY;
                 pillarR.rotation.y = rotY;
 
                 const pL = pos.clone().addScaledVector(normal, spacing / 2 + 3.54);
-                const pillarL = new THREE.Mesh(this[cacheKey], this.materials.pillar);
+                const pillarL = new THREE.Mesh(this[cacheKey].geom, this[cacheKey].mat);
                 pillarL.position.copy(stationGroup.worldToLocal(pL));
                 pillarL.position.y = pY;
                 pillarL.rotation.y = rotY;
@@ -2619,9 +3752,9 @@ export class StationModel {
                     if (!this[cacheKey]) {
                         this[cacheKey] = {
                             geom: new THREE.CylinderGeometry(0.75, 0.75, pHeight, 24),
-                            mat: this.createPebbleDashMaterial()
+                            mat: this._makeCylinderPillarMat(this.createPebbleDashMaterial())
                         };
-                        this[cacheKey].mat.map.repeat.set(1, pHeight / 2.25);
+                        this[cacheKey].mat.map.repeat.set(2, pHeight / 2.25);
                     }
                     if (!this[beamCacheKey]) {
                         const beamShape = new THREE.Shape();
@@ -2677,7 +3810,9 @@ export class StationModel {
                         } else {
                             this[cacheKey] = {
                                 geom: new THREE.CylinderGeometry(0.42, 0.42, pHeight, 16),
-                                mat: this.createTiledMaterial(preset.topColor, preset.topGrout, 0.15)
+                                mat: this._makeCylinderPillarMat(
+                                    this.createTiledMaterial(preset.topColor, preset.topGrout, 0.15)
+                                )
                             };
                             this[cacheKey].mat.map.repeat.set(2, pHeight / hPillFactor);
                             if (this[cacheKey].mat.bumpMap) {
@@ -2695,11 +3830,9 @@ export class StationModel {
                     const cacheKey = `pillarGeom_${station.name}`;
                     if (!this[cacheKey]) {
                         const geom = new THREE.CylinderGeometry(0.42, 0.42, pHeight, 16);
-                        const mat = aufsessplatzRedTileMat.clone();
-                        mat.map = aufsessplatzRedTileMat.map.clone();
+                        const mat = this._makeCylinderPillarMat(aufsessplatzRedTileMat);
                         mat.map.repeat.set(2, pHeight / 1.3194);
-                        if (aufsessplatzRedTileMat.bumpMap) {
-                            mat.bumpMap = aufsessplatzRedTileMat.bumpMap.clone();
+                        if (mat.bumpMap) {
                             mat.bumpMap.repeat.set(2, pHeight / 1.3194);
                         }
                         this[cacheKey] = { geom, mat };
@@ -2735,12 +3868,33 @@ export class StationModel {
                     pillarR.rotation.y = rotY;
 
                     stationGroup.add(pillarL, pillarR);
+                } else if (station.name === "Bauernfeindstraße") {
+                    // Double-diameter pillars with a fine concrete texture (Langwasser-Nord-style
+                    // island platform, but with fatter, textured columns).
+                    if (!this._bauernfeindPillarMat) {
+                        this._bauernfeindPillarMat = this._makeCylinderPillarMat(
+                            new THREE.MeshLambertMaterial({ map: this.tunnelConcreteTexture })
+                        );
+                    }
+                    const cacheKey = `pillarGeom_generic_${station.name}`;
+                    if (!this[cacheKey]) {
+                        this[cacheKey] = new THREE.CylinderGeometry(0.5, 0.5, pHeight, 16);
+                    }
+                    const pillar = new THREE.Mesh(this[cacheKey], this._bauernfeindPillarMat);
+                    pillar.position.copy(stationGroup.worldToLocal(pos.clone()));
+                    pillar.position.y = pY;
+                    pillar.rotation.y = rotY;
+                    stationGroup.add(pillar);
                 } else {
+                    // Generic cylindrical pillar — use a shared gradient-lit material
+                    if (!this._genericRoundPillarMat) {
+                        this._genericRoundPillarMat = this._makeCylinderPillarMat(this.materials.pillar);
+                    }
                     const cacheKey = `pillarGeom_generic_${station.name}`;
                     if (!this[cacheKey]) {
                         this[cacheKey] = new THREE.CylinderGeometry(0.25, 0.25, pHeight, 8);
                     }
-                    const pillar = new THREE.Mesh(this[cacheKey], this.materials.pillar);
+                    const pillar = new THREE.Mesh(this[cacheKey], this._genericRoundPillarMat);
                     pillar.position.copy(stationGroup.worldToLocal(pos.clone()));
                     pillar.position.y = pY;
                     pillar.rotation.y = rotY;
@@ -3062,10 +4216,70 @@ export class StationModel {
             }
         });
 
+        // Bauernfeindstraße: long station-name signs hanging from the ceiling in
+        // every second inter-pillar gap. Pillars sit at ±7.5/±22.5/±37.5, so the
+        // five gaps are centred at -30/-15/0/15/30; every second gap → -30/0/30,
+        // the same rhythm as the departure boards. Same centre height as the
+        // boards (3.925, Unterkante 3.60) so the signage reads as one row.
+        if (station.name === "Bauernfeindstraße") {
+            if (!this._bauernfeindNameSignMat) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 2048;
+                canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#817B7F';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#050407';
+                ctx.font = 'bold 96px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('BAUERNFEINDSTRASSE', canvas.width / 2, canvas.height / 2 + 4);
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.colorSpace = THREE.SRGBColorSpace;
+                this._bauernfeindNameSignMat = new THREE.MeshBasicMaterial({ map: tex });
+                this._bauernfeindNameSignCasingMat = new THREE.MeshLambertMaterial({ color: '#817B7F' });
+            }
+            // 2/3 of the departure-board proportions ("1/3 kleiner")
+            const signLen = 6.67, signH = 0.433, signT = 0.053;
+            const signY = 3.925;    // departure-board centre height
+            const ceilYSign = 4.66; // this station's flat slab height
+            const faceGeom = new THREE.PlaneGeometry(signLen, signH);
+            const casingGeom = new THREE.BoxGeometry(signT, signH, signLen);
+            const signHangerLen = ceilYSign - signY;
+            const signHangerGeom = new THREE.CylinderGeometry(0.015, 0.015, signHangerLen, 6);
+            for (const bz of [-30, 0, 30]) {
+                const sSign = station.position + bz;
+                const posSign = this.sim.getTrackPosition(sSign);
+                const tanSign = this.sim.getTrackTangent(sSign);
+                const rotYSign = Math.atan2(tanSign.x, tanSign.z) - centerAngle;
+
+                const signGroup = new THREE.Group();
+                signGroup.position.copy(stationGroup.worldToLocal(posSign.clone()));
+                signGroup.position.y = signY;
+                signGroup.rotation.y = rotYSign;
+
+                signGroup.add(new THREE.Mesh(casingGeom, this._bauernfeindNameSignCasingMat));
+                for (const faceSign of [1, -1]) {
+                    // rotY = +faceSign*π/2 puts each plane's front (and a correctly
+                    // reading, unmirrored texture) toward its own platform side.
+                    const face = new THREE.Mesh(faceGeom, this._bauernfeindNameSignMat);
+                    face.position.x = faceSign * (signT / 2 + 0.002);
+                    face.rotation.y = faceSign * Math.PI / 2;
+                    signGroup.add(face);
+                }
+                for (const hz of [-2.7, 2.7]) {
+                    const hang = new THREE.Mesh(signHangerGeom, this.materials.boardHanger);
+                    hang.position.set(0, signHangerLen / 2, hz);
+                    signGroup.add(hang);
+                }
+                stationGroup.add(signGroup);
+            }
+        }
+
         // 7. Lights (every 10 meters)
         const lightZ = [-40, -30, -20, -10, 0, 10, 20, 30, 40];
         lightZ.forEach(lz => {
-            if (["Hardhöhe", "Maximilianstraße", "Bärenschanze", "Gostenhof", "Jakobinenstraße", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz", "Hasenbuck", "Frankenstraße"].includes(station.name)) return; // Skip standard lights
+            if (["Hardhöhe", "Maximilianstraße", "Bärenschanze", "Gostenhof", "Jakobinenstraße", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz", "Hasenbuck", "Frankenstraße", "Hohe Marter", "Schweinau", "St. Leonhard", "Rothenburger Straße", "Wöhrder Wiese", "Rathenauplatz"].includes(station.name)) return; // Skip standard lights
             const s = station.position + lz;
             const pos = this.sim.getTrackPosition(s);
             const tangent = this.sim.getTrackTangent(s);
@@ -3136,34 +4350,48 @@ export class StationModel {
             const schNumSub = 38; 
             const schSubLen = 5.0 * S_len;
 
-            const decBallastGeom = new THREE.BoxGeometry(1.0, 0.15, 1.0);
-            const decBallastUV = decBallastGeom.attributes.uv;
-            for (let i = 0; i < decBallastUV.count; i++) {
-                decBallastUV.setXY(i, decBallastUV.getX(i) * 10.0, decBallastUV.getY(i) * 5.0);
-            }
+            // Rail geometry/materials identical to the REAL running rails: Vignole profile
+            // body + separate glossy head cap (mirrors TrackManager.createRailBodyGeometry/
+            // createRailHeadGeometry and its rail/railHead materials).
+            const decRailBodyGeom = (() => {
+                const shape = new THREE.Shape();
+                const pts = [
+                    [-0.07, -0.075], [0.07, -0.075],  // foot (wide base)
+                    [0.02, -0.045],                    // taper up to the web (right)
+                    [0.02, 0.025],                     // web (right)
+                    [0.045, 0.045],                    // flare out to the head (right)
+                    [-0.045, 0.045],                   // flat head top (capped separately)
+                    [-0.02, 0.025],                    // flare in from the head (left)
+                    [-0.02, -0.045]                    // web (left)
+                ];
+                shape.moveTo(pts[0][0], pts[0][1]);
+                for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], pts[i][1]);
+                shape.lineTo(pts[0][0], pts[0][1]);
+                const g = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false, curveSegments: 1 });
+                g.translate(0, 0, -0.5); // center along Z (unit length, scaled per segment)
+                return g;
+            })();
+            const decRailHeadGeom = (() => {
+                const g = new THREE.BoxGeometry(0.09, 0.03, 1.0);
+                g.translate(0, 0.06, 0);
+                return g;
+            })();
+            const decRailBodyMat = new THREE.MeshLambertMaterial({ color: '#3b3530' });
+            const decRailHeadMat = new THREE.MeshPhongMaterial({ color: '#d8d8d8', specular: '#ffffff', shininess: 120 });
 
-            const decBallastIM = new THREE.InstancedMesh(
-                decBallastGeom,
-                this.materials.ballast,
-                schNumSub
-            );
-
-            const decRailsIM = new THREE.InstancedMesh(
-                new THREE.BoxGeometry(0.1, 0.15, 1.0),
-                this.materials.rail,
-                schNumSub * 4 
-            );
+            const decRailsIM = new THREE.InstancedMesh(decRailBodyGeom, decRailBodyMat, schNumSub * 4);
+            const decRailHeadsIM = new THREE.InstancedMesh(decRailHeadGeom, decRailHeadMat, schNumSub * 4);
 
             const decThirdRailsIM = new THREE.InstancedMesh(
                 new THREE.BoxGeometry(0.12, 0.15, 1.0),
-                this.materials.rail,
-                schNumSub * 2 
+                this.materials.thirdRail,
+                schNumSub * 2
             );
 
             const decCoversIM = new THREE.InstancedMesh(
                 new THREE.BoxGeometry(0.24, 0.08, 1.0),
                 this.materials.thirdRail,
-                schNumSub * 2 
+                schNumSub * 2
             );
 
             const setDecSegmentMatrix = (im, instanceIdx, A_world, B_world, yOffset = 0, xOffsetScale = 1.0) => {
@@ -3200,6 +4428,18 @@ export class StationModel {
             // above for why.
             const localSchTrackCenterFixed = Math.max(1.23, schFixedSpacing / 2 - 10.06);
 
+            // Continuous, gap-free gravel bed under BOTH decorative tracks, swept exactly
+            // like the real at-grade beds (TrackManager flushBedRun 'atgrade-normal': top
+            // at trackY-0.30, extending 1.9m beyond each track centre) but frozen to the
+            // station-centre elevation like everything decorative here. Its edges reach
+            // ~0.4m under the platform decks (inner edges at 3.72), so there is no lateral
+            // gap either; the top sits 1cm below the deck underside to avoid z-fighting.
+            const decBedHalfW = localSchTrackCenterFixed + 1.9;
+            this.buildSweptBar(stationGroup,
+                station.position - 95 * S_len, station.position + 95 * S_len,
+                () => decBedHalfW, schFixedY - 0.31, schFixedY - 0.45,
+                [this.materials.ballast, this.materials.ballast], 2.5, () => 0, 2.5);
+
             for (let j = 0; j < schNumSub; j++) {
                 const z_start = -95 * S_len + j * schSubLen;
                 const z_end = -95 * S_len + (j + 1) * schSubLen;
@@ -3224,31 +4464,28 @@ export class StationModel {
 
                 const localSchTrackCenterStart = localSchTrackCenterFixed;
                 const localSchTrackCenterEnd = localSchTrackCenterFixed;
-                const localSchTrackCenterMid = localSchTrackCenterFixed;
 
-                // Ballast
-                const localBallastWidth = (localSchTrackCenterMid + 0.8) * 2;
-                const ballastScale = (Math.abs(z_mid) > 45 * S_len) ? 0.0 : localBallastWidth;
-                setDecSegmentMatrix(decBallastIM, j, posStart, posEnd, -0.375, ballastScale);
-
-                // 4 Running rails
+                // 4 Running rails (gauge +-0.7175 and rail-top height exactly like the
+                // real tracks in TrackManager.createChunk); the glossy head cap shares
+                // the body's placement matrix.
                 const decOffsetsStart = [
-                    -localSchTrackCenterStart - 0.717,
-                    -localSchTrackCenterStart + 0.717,
-                    localSchTrackCenterStart - 0.717,
-                    localSchTrackCenterStart + 0.717
+                    -localSchTrackCenterStart - 0.7175,
+                    -localSchTrackCenterStart + 0.7175,
+                    localSchTrackCenterStart - 0.7175,
+                    localSchTrackCenterStart + 0.7175
                 ];
                 const decOffsetsEnd = [
-                    -localSchTrackCenterEnd - 0.717,
-                    -localSchTrackCenterEnd + 0.717,
-                    localSchTrackCenterEnd - 0.717,
-                    localSchTrackCenterEnd + 0.717
+                    -localSchTrackCenterEnd - 0.7175,
+                    -localSchTrackCenterEnd + 0.7175,
+                    localSchTrackCenterEnd - 0.7175,
+                    localSchTrackCenterEnd + 0.7175
                 ];
 
                 for (let r = 0; r < 4; r++) {
                     const A = posStart.clone().addScaledVector(normalStart, decOffsetsStart[r]);
                     const B = posEnd.clone().addScaledVector(normalEnd, decOffsetsEnd[r]);
                     setDecSegmentMatrix(decRailsIM, j * 4 + r, A, B, -0.21);
+                    setDecSegmentMatrix(decRailHeadsIM, j * 4 + r, A, B, -0.21);
                 }
 
                 // 2 Third rails & covers facing inwards
@@ -3266,19 +4503,20 @@ export class StationModel {
                 }
             }
 
-            decBallastIM.instanceMatrix.needsUpdate = true;
             decRailsIM.instanceMatrix.needsUpdate = true;
+            decRailHeadsIM.instanceMatrix.needsUpdate = true;
             decThirdRailsIM.instanceMatrix.needsUpdate = true;
             decCoversIM.instanceMatrix.needsUpdate = true;
-            stationGroup.add(decBallastIM, decRailsIM, decThirdRailsIM, decCoversIM);
+            stationGroup.add(decRailsIM, decRailHeadsIM, decThirdRailsIM, decCoversIM);
 
-            // Sleepers (every 1.5 meters from -95 to +95)
-            const sleeperCount = Math.floor(trackLen / 1.5) + 1;
-            const decSleepersL = new THREE.InstancedMesh(new THREE.BoxGeometry(2.4, 0.12, 0.2), this.materials.sleeper, sleeperCount);
-            const decSleepersR = new THREE.InstancedMesh(new THREE.BoxGeometry(2.4, 0.12, 0.2), this.materials.sleeper, sleeperCount);
+            // Sleepers: same geometry (2.4 x 0.12 x 0.3) and 2m spacing as the real
+            // open-air track (TrackManager: chunkSize 50 / 25 sleepers per chunk)
+            const sleeperCount = Math.floor(trackLen / 2.0) + 1;
+            const decSleepersL = new THREE.InstancedMesh(new THREE.BoxGeometry(2.4, 0.12, 0.3), this.materials.sleeper, sleeperCount);
+            const decSleepersR = new THREE.InstancedMesh(new THREE.BoxGeometry(2.4, 0.12, 0.3), this.materials.sleeper, sleeperCount);
 
             for (let s = 0; s < sleeperCount; s++) {
-                const zOffset = -95 + s * 1.5;
+                const zOffset = -95 + s * 2.0;
                 const distVal = station.position + zOffset;
                 const pos = this.sim.getTrackPosition(distVal);
                 const tangent = this.sim.getTrackTangent(distVal);
@@ -3305,112 +4543,493 @@ export class StationModel {
             decSleepersR.instanceMatrix.needsUpdate = true;
             stationGroup.add(decSleepersL, decSleepersR);
 
-            // 13. Pedestrian Overpass Bridge (Z = -35)
+            // 13. Crossing building at the -Z platform end (photo reference):
+            // two concrete towers standing on the platforms, joined by a glazed bridge
+            // over the decorative middle tracks, open footbridges continuing outward
+            // over the running tracks, and sloped concrete abutment ramps that form
+            // the actual platform ends. Anchored at z = -50; the platform decks end
+            // flush with the towers' outer face (z = -53.5).
             {
-                const s = station.position - 35 * S_len;
-                const pos = this.sim.getTrackPosition(s);
-                const tangent = this.sim.getTrackTangent(s);
-                const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-                const spacing = this.sim.getTrackSpacing(s);
-                const angle = Math.atan2(tangent.x, tangent.z) - centerAngle;
-                const localCenter = stationGroup.worldToLocal(pos.clone());
+                const s0 = station.position - 50 * S_len;
+                const pos0 = this.sim.getTrackPosition(s0);
+                const tan0 = this.sim.getTrackTangent(s0);
+                const angle0 = Math.atan2(tan0.x, tan0.z) - centerAngle;
 
-                const localSchPlatCenter = spacing / 2 - 5.03;
-                const overpassWidth = localSchPlatCenter * 2;
-                
-                // Floor
-                const overpassFloor = new THREE.Mesh(new THREE.BoxGeometry(overpassWidth, 0.2, 4.5), this.materials.pillar);
-                overpassFloor.position.copy(localCenter);
-                overpassFloor.position.y = 3.6;
-                overpassFloor.rotation.y = angle;
+                const bld = new THREE.Group();
+                bld.position.copy(stationGroup.worldToLocal(pos0.clone()));
+                bld.position.y = 0; // frozen to the station-centre elevation, like the decks
+                bld.rotation.y = angle0;
+                stationGroup.add(bld);
 
-                // Roof
-                const overpassRoof = new THREE.Mesh(new THREE.BoxGeometry(overpassWidth, 0.2, 4.5), this.materials.pillar);
-                overpassRoof.position.copy(localCenter);
-                overpassRoof.position.y = 5.8;
-                overpassRoof.rotation.y = angle;
+                const platCenter = schFixedSpacing / 2 - 5.03;
+                const half = 3.5; // tower footprint = full platform width
+                const concMat = new THREE.MeshLambertMaterial({ color: '#b3ada0' }); // beige exposed concrete
+                const frameMat = new THREE.MeshLambertMaterial({ color: '#2b3138' }); // dark window frames
+                const glassMat = new THREE.MeshLambertMaterial({ color: '#4a5a6a' }); // reflective-dark glazing
+                const doorMat = new THREE.MeshLambertMaterial({ color: '#8a8f94' }); // grey steel doors/cabinets
+                const railMat = this.materials.boardHanger;
 
-                // Walls (Front and Back)
-                const posWallF = pos.clone().addScaledVector(tangent, 2.15); 
-                const overpassWallF = new THREE.Mesh(new THREE.BoxGeometry(overpassWidth, 2.0, 0.2), this.materials.pillar);
-                overpassWallF.position.copy(stationGroup.worldToLocal(posWallF));
-                overpassWallF.position.y = 4.7;
-                overpassWallF.rotation.y = angle;
+                const bandBot = 5.3, bandTop = 8.15, roofTop = 8.65;
+                const uLogoMat = this.createSubwayULogo();
+                const logoGeom = new THREE.BoxGeometry(1.2, 1.2, 0.05);
 
-                const posWallB = pos.clone().addScaledVector(tangent, -2.15);
-                const overpassWallB = new THREE.Mesh(new THREE.BoxGeometry(overpassWidth, 2.0, 0.2), this.materials.pillar);
-                overpassWallB.position.copy(stationGroup.worldToLocal(posWallB));
-                overpassWallB.position.y = 4.7;
-                overpassWallB.rotation.y = angle;
+                // Vertical window mullions along one face of a glazing band
+                const addMullions = (parent, faceAxis, facePos, y, h, from, to, step) => {
+                    for (let u = from; u <= to + 0.001; u += step) {
+                        const m = new THREE.Mesh(new THREE.BoxGeometry(
+                            faceAxis === 'z' ? 0.08 : 0.06, h, faceAxis === 'z' ? 0.06 : 0.08), frameMat);
+                        if (faceAxis === 'z') m.position.set(u, y, facePos);
+                        else m.position.set(facePos, y, u);
+                        parent.add(m);
+                    }
+                };
 
-                stationGroup.add(overpassFloor, overpassRoof, overpassWallF, overpassWallB);
+                const buildTower = (sig) => {
+                    const tg = new THREE.Group();
+                    tg.position.set(sig * platCenter, 0, 0);
+                    bld.add(tg);
+
+                    // Solid concrete lower storey (platform level up to the window band).
+                    // Recessed on the platform side like the upper storey, so the glazed
+                    // entrance head between the yellow flanks forms a covered niche the
+                    // stairs climb into; the outer end face stays flush with the ramps.
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(half * 2, bandBot + 0.4, half * 2 - 1.2), concMat);
+                    body.position.set(0, (bandBot - 0.4) / 2, -0.6);
+                    tg.add(body);
+
+                    // Solid concrete upper storey (photo: concrete on the outer, inner and
+                    // end faces) -- recessed on the platform side, where the tilted glass
+                    // front sits between the yellow flank walls.
+                    const upper = new THREE.Mesh(new THREE.BoxGeometry(half * 2, bandTop - bandBot, half * 2 - 1.2), concMat);
+                    upper.position.set(0, (bandBot + bandTop) / 2, -0.6);
+                    tg.add(upper);
+
+                    // Entrance head (photo analysis): CONCRETE slanted cheek walls form the
+                    // outside of the funnel that encloses the stairs/escalators; only their
+                    // INNER faces are lined yellow. The head sits flush with the FRONT edge
+                    // of the hall walls (z = headZ, the halls' open end), protruding past it
+                    // at the base, clear width 4.5m around the 4.2m stair layout.
+                    // All shapes live in the (z, y) plane and are extruded across x; after
+                    // rotateY(-PI/2) shape-x maps to +z (toward the platform) and the
+                    // extrusion depth spans [-depth, 0] in x. z coordinates are relative to headZ.
+                    const headZ = half + 20.0; // = hall wall front edge (wingLen)
+
+                    // 1. Tall slanted head cheeks (platform level up to the roof)
+                    const cheekShape = new THREE.Shape();
+                    cheekShape.moveTo(-2.0, 0.865);
+                    cheekShape.lineTo(1.8, 0.865);
+                    cheekShape.lineTo(0.4, roofTop);
+                    cheekShape.lineTo(-2.0, roofTop);
+                    cheekShape.closePath();
+                    const cheekGeom = new THREE.ExtrudeGeometry(cheekShape, { depth: 0.75, bevelEnabled: false });
+                    cheekGeom.rotateY(-Math.PI / 2);
+                    // Yellow inner lining of the cheeks (slightly inset copy)
+                    const liningShape = new THREE.Shape();
+                    liningShape.moveTo(-1.9, 0.9);
+                    liningShape.lineTo(1.62, 0.9);
+                    liningShape.lineTo(0.3, roofTop - 0.2);
+                    liningShape.lineTo(-1.9, roofTop - 0.2);
+                    liningShape.closePath();
+                    const liningGeom = new THREE.ExtrudeGeometry(liningShape, { depth: 0.06, bevelEnabled: false });
+                    liningGeom.rotateY(-Math.PI / 2);
+
+                    [1, -1].forEach(fx => {
+                        // extruded span is [-depth, 0] in x -> place by the inner-face x.
+                        // Outer faces at +/-3.0 meet the battered hall walls at the front edge.
+                        const cheek = new THREE.Mesh(cheekGeom, concMat);
+                        cheek.position.set(fx === 1 ? 3.0 : -2.25, 0, headZ);
+                        tg.add(cheek);
+
+                        const lining = new THREE.Mesh(liningGeom, this.materials.yellowCabin);
+                        lining.position.set(fx === 1 ? 2.25 : -2.19, 0, headZ);
+                        tg.add(lining);
+                    });
+
+                    // 3. Tilted glass front between the yellow-lined cheeks, reaching up
+                    // to the white roof fascia
+                    const gBotY = 4.7, gBotZ = headZ + 1.24;
+                    const gTopY = roofTop - 0.1, gTopZ = headZ + 0.40;
+                    const gLen = Math.hypot(gTopY - gBotY, gBotZ - gTopZ);
+                    const gTilt = Math.atan2(gBotZ - gTopZ, gTopY - gBotY);
+                    const glassGroup = new THREE.Group();
+                    glassGroup.position.set(0, (gBotY + gTopY) / 2, (gBotZ + gTopZ) / 2);
+                    glassGroup.rotation.x = -gTilt;
+                    const glassFront = new THREE.Mesh(new THREE.BoxGeometry(4.2, gLen, 0.08), glassMat);
+                    glassGroup.add(glassFront);
+                    [-1.4, 0, 1.4].forEach(mx => {
+                        const mullion = new THREE.Mesh(new THREE.BoxGeometry(0.1, gLen, 0.14), frameMat);
+                        mullion.position.x = mx;
+                        glassGroup.add(mullion);
+                    });
+                    tg.add(glassGroup);
+
+                    // White fascia cap over the head, continuing the hall's roof edge
+                    const headCap = new THREE.Mesh(new THREE.BoxGeometry(5.9, 0.12, 1.1), new THREE.MeshLambertMaterial({ color: '#e8e8e8' }));
+                    headCap.position.set(0, roofTop + 0.06, headZ + 0.45);
+                    tg.add(headCap);
+
+                    // Overhanging flat roof slab with white fascia edge (photo)
+                    const roof = new THREE.Mesh(new THREE.BoxGeometry(half * 2 + 0.7, roofTop - bandTop, half * 2 + 0.7), concMat);
+                    roof.position.y = (bandTop + roofTop) / 2;
+                    tg.add(roof);
+                    const roofCap = new THREE.Mesh(new THREE.BoxGeometry(half * 2 + 0.8, 0.1, half * 2 + 0.8), new THREE.MeshLambertMaterial({ color: '#e8e8e8' }));
+                    roofCap.position.y = roofTop + 0.05;
+                    tg.add(roofCap);
+
+                    // Grey double doors on the outer end face (platform level, as in the photo)
+                    [-0.55, 0.55].forEach(dx => {
+                        const door = new THREE.Mesh(new THREE.BoxGeometry(0.98, 2.1, 0.08), doorMat);
+                        door.position.set(dx, 0.865 + 1.05, -(half + 0.02));
+                        tg.add(door);
+                    });
+
+                    // Glazed window band on the upper storey of the face pointing AWAY from
+                    // the platforms (first photo), with dark frame rails and mullions
+                    const nGlass = new THREE.Mesh(new THREE.BoxGeometry(half * 2 - 0.9, bandTop - bandBot - 0.35, 0.1), glassMat);
+                    nGlass.position.set(0, (bandBot + bandTop) / 2, -(half + 0.06));
+                    tg.add(nGlass);
+                    [(bandBot + bandTop) / 2 - 1.33, (bandBot + bandTop) / 2 + 1.33].forEach(fy => {
+                        const nRail = new THREE.Mesh(new THREE.BoxGeometry(half * 2 - 0.8, 0.16, 0.12), frameMat);
+                        nRail.position.set(0, fy, -(half + 0.06));
+                        tg.add(nRail);
+                    });
+                    addMullions(tg, 'z', -(half + 0.09), (bandBot + bandTop) / 2, bandTop - bandBot - 0.35, -2.7, 2.7, 0.9);
+                    // Single door in the recessed niche facing the canopy side
+                    const doorS = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.1, 0.08), doorMat);
+                    doorS.position.set(0.7, 0.865 + 1.05, half - 1.16);
+                    tg.add(doorS);
+
+                };
+                buildTower(1);
+                buildTower(-1);
+
+                // Monolithic hall bodies ("aus einem Guss"): the elongated 20m volumes are
+                // part of the building itself. Their slightly battered side walls run in
+                // ONE flat plane from platform level all the way up to the roof -- the
+                // lower walls are exactly as long as the upper ones and enclose the
+                // stairs/escalators -- all in the same concrete as the rest. The far end
+                // carries a tilted glass front like the entrance heads.
+                {
+                    const wingLen = 20.0;
+                    const botY = 0.865, topY = roofTop;
+                    const topHalfW = 3.0; // slight batter: 3.5 at the platform -> 3.0 at the roof
+                    const wallT = 0.35;
+                    const fasciaMat = new THREE.MeshLambertMaterial({ color: '#e8e8e8' });
+
+                    // Battered side wall: full height in one slanted plane, extruded along
+                    // the full length of the volume (shape in x/y, depth along +z)
+                    const mkWallGeom = (ws) => {
+                        const sh = new THREE.Shape();
+                        sh.moveTo(ws * half, botY);
+                        sh.lineTo(ws * (half - wallT), botY);
+                        sh.lineTo(ws * (topHalfW - wallT), topY);
+                        sh.lineTo(ws * topHalfW, topY);
+                        sh.closePath();
+                        return new THREE.ExtrudeGeometry(sh, { depth: wingLen, bevelEnabled: false });
+                    };
+                    const wallGeoms = [mkWallGeom(1), mkWallGeom(-1)];
+
+                    [1, -1].forEach(sig => {
+                        const cx = sig * platCenter;
+                        wallGeoms.forEach(g => {
+                            const wall = new THREE.Mesh(g, concMat);
+                            wall.position.set(cx, 0, half);
+                            bld.add(wall);
+                        });
+
+                        // Roof slab spanning the wall tops + white fascia edge
+                        const roofSlab = new THREE.Mesh(new THREE.BoxGeometry(topHalfW * 2, 0.4, wingLen), concMat);
+                        roofSlab.position.set(cx, topY - 0.2, half + wingLen / 2);
+                        bld.add(roofSlab);
+                        const fascia = new THREE.Mesh(new THREE.BoxGeometry(topHalfW * 2 + 0.15, 0.12, wingLen + 0.15), fasciaMat);
+                        fascia.position.set(cx, topY + 0.06, half + wingLen / 2);
+                        bld.add(fascia);
+
+                        // Interior soffit (upper-storey floor). It ends at z = 17.0 -- the
+                        // last 6.5m before the entrance head stay open as the stair void
+                        // where the escalators come up through this level.
+                        const soffit = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.15, 13.5), concMat);
+                        soffit.position.set(cx, 4.8, half + 13.5 / 2);
+                        bld.add(soffit);
+
+                        // U logo on the battered outer wall...
+                        const logoSide = new THREE.Mesh(logoGeom, uLogoMat);
+                        logoSide.position.set(cx + sig * 3.25, 6.6, half + wingLen - 2.5);
+                        logoSide.rotation.y = sig * Math.PI / 2;
+                        bld.add(logoSide);
+
+                        // ...and lying flat on the roof
+                        const logoTop = new THREE.Mesh(logoGeom, uLogoMat);
+                        logoTop.position.set(cx, topY + 0.16, half + wingLen - 2.5);
+                        logoTop.rotation.x = -Math.PI / 2;
+                        bld.add(logoTop);
+                    });
+                }
+
+                // Stairs + escalators under the wings: the codebase's standard dual-lane
+                // layout (static centre staircase flanked by two GPU-animated escalator
+                // lanes, four balustrades; see the Bauernfeindstraße block /
+                // StationBuilder.createStairsAndEscalator). They climb from platform
+                // level up to the bridge walk level (4.7) into the towers' upper storey.
+                {
+                    this.materials.bauernfeindStairTex = this.materials.bauernfeindStairTex || new THREE.MeshLambertMaterial({
+                        map: (() => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 64; canvas.height = 64;
+                            const ctx = canvas.getContext('2d');
+                            ctx.fillStyle = '#8a8680'; ctx.fillRect(0, 0, 64, 64);
+                            ctx.fillStyle = '#6f6b66'; ctx.fillRect(0, 0, 64, 2);
+                            const texture = new THREE.CanvasTexture(canvas);
+                            texture.colorSpace = THREE.SRGBColorSpace;
+                            return texture;
+                        })()
+                    });
+                    this.materials.bauernfeindEscStep = this.materials.bauernfeindEscStep || new THREE.MeshLambertMaterial({
+                        map: (() => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 64; canvas.height = 64;
+                            const ctx = canvas.getContext('2d');
+                            const stripeWidth = 2;
+                            for (let x = 0; x < 64; x += stripeWidth) {
+                                ctx.fillStyle = (x % (stripeWidth * 2) === 0) ? '#475569' : '#94a3b8';
+                                ctx.fillRect(x, 0, stripeWidth, 64);
+                                ctx.fillStyle = '#334155'; ctx.fillRect(x, 0, 1, 64);
+                                ctx.fillStyle = '#cbd5e1'; ctx.fillRect(x + stripeWidth - 1, 0, 1, 64);
+                            }
+                            const texture = new THREE.CanvasTexture(canvas);
+                            texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
+                            texture.colorSpace = THREE.SRGBColorSpace;
+                            return texture;
+                        })()
+                    });
+                    this.materials.bauernfeindEdelstahl = this.materials.bauernfeindEdelstahl
+                        || new THREE.MeshStandardMaterial({ color: '#e8eaed', metalness: 0.9, roughness: 0.2 });
+                    this.materials.bauernfeindHandrail = this.materials.bauernfeindHandrail
+                        || new THREE.MeshBasicMaterial({ color: '#111111' });
+                    this.materials.bauernfeindLamp = this.materials.bauernfeindLamp
+                        || new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
+
+                    const riseTarget = 4.7 - 0.865;
+                    const stepHeight = 0.16;
+                    const numSteps = Math.max(4, Math.round(riseTarget / stepHeight)); // 24
+                    const numTotalSteps = numSteps + 4;
+                    const stepDepth = 0.3;
+                    const runLength = numSteps * stepDepth; // 7.2
+                    const actualRise = numSteps * stepHeight; // 3.84
+                    const rampLength = Math.sqrt(actualRise * actualRise + runLength * runLength);
+                    const rampAngle = Math.atan2(actualRise, runLength);
+
+                    const stairWidth = 2.0;
+                    const escWidth = 1.0;
+                    const thickness = 0.05;
+                    const balustradeHeight = 0.9;
+                    const { balustradeGeom, handrailGeom, lampGeom } = createEscalatorGeometries(rampLength, thickness, balustradeHeight, 0.1, 0.1);
+
+                    [1, -1].forEach(sig => {
+                        const stairGroup = new THREE.Group();
+                        // Base anchored at the entrance head (the halls' open front edge at
+                        // z = half + 20); local +z is the climb direction, rotated to ascend
+                        // into the hall toward the tower (-z of the building).
+                        stairGroup.position.set(sig * platCenter, 0.865, half + 20.0 + 0.8);
+                        stairGroup.rotation.y = Math.PI;
+                        bld.add(stairGroup);
+
+                        const stairGeom = new THREE.BoxGeometry(stairWidth, stepHeight, stepDepth);
+                        const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
+                        const stairInst = new THREE.InstancedMesh(stairGeom, this.materials.bauernfeindStairTex, numSteps);
+                        const escInst = new THREE.InstancedMesh(escStepGeom, this.materials.bauernfeindEscStep, 2 * numTotalSteps);
+
+                        // Left lane UP, right lane DOWN (standard dual-lane pattern)
+                        const dirAttr = new Float32Array(2 * numTotalSteps * 3);
+                        for (let i = 0; i < numTotalSteps; i++) {
+                            dirAttr[(2 * i) * 3 + 1] = stepHeight;
+                            dirAttr[(2 * i) * 3 + 2] = stepDepth;
+                            dirAttr[(2 * i + 1) * 3 + 1] = -stepHeight;
+                            dirAttr[(2 * i + 1) * 3 + 2] = -stepDepth;
+                        }
+                        escStepGeom.setAttribute('aEscalatorDir', new THREE.InstancedBufferAttribute(dirAttr, 3));
+                        StationBuilder.setupEscalatorMaterial(this.materials.bauernfeindEscStep, this);
+
+                        const stepMatrix = new THREE.Matrix4();
+                        for (let i = 0; i < numSteps; i++) {
+                            const sy = i * stepHeight + stepHeight / 2;
+                            const sz = i * stepDepth + stepDepth / 2;
+                            stairInst.setMatrixAt(i, stepMatrix.makeTranslation(0, sy, sz));
+                        }
+                        for (let i = 0; i < numTotalSteps; i++) {
+                            const stepIdx = i - 2;
+                            const sy = stepIdx * stepHeight + stepHeight / 2;
+                            const sz = stepIdx * stepDepth + stepDepth / 2;
+                            escInst.setMatrixAt(2 * i, stepMatrix.makeTranslation(-1.55, sy, sz));
+                            escInst.setMatrixAt(2 * i + 1, stepMatrix.makeTranslation(1.55, sy, sz));
+                        }
+                        stairInst.instanceMatrix.needsUpdate = true;
+                        escInst.instanceMatrix.needsUpdate = true;
+                        stairGroup.add(stairInst, escInst);
+                        this.registerEscalator(escInst, { numTotalSteps });
+                        escInst.computeBoundingSphere();
+                        if (escInst.boundingSphere) escInst.boundingSphere.radius *= 5;
+
+                        const midY = actualRise / 2;
+                        const midZ = runLength / 2;
+
+                        // Continuous underside strips beneath the escalator lanes
+                        const escRampGeom = new THREE.BoxGeometry(escWidth, 0.1, rampLength);
+                        [-1.55, 1.55].forEach(ex => {
+                            const escRamp = new THREE.Mesh(escRampGeom, this.materials.bauernfeindEscStep);
+                            escRamp.position.set(ex, midY - 0.15, midZ);
+                            escRamp.rotation.x = -rampAngle;
+                            stairGroup.add(escRamp);
+                        });
+
+                        // Balustrades + handrails + lamps
+                        [-2.05, -1.05, 1.05, 2.05].forEach(bx => {
+                            const b = new THREE.Mesh(balustradeGeom, this.materials.bauernfeindEdelstahl);
+                            b.position.set(bx, midY + 0.45, midZ);
+                            b.rotation.x = -rampAngle;
+                            const r = balustradeHeight / 2;
+                            for (let z = -rampLength / 2 + 1.0; z <= rampLength / 2 - 1.0; z += 1.5) {
+                                const lamp = new THREE.Mesh(lampGeom, this.materials.bauernfeindLamp);
+                                lamp.position.set((bx < 0 ? 1 : -1) * (thickness / 2 + 0.001), 0.3 - r, z);
+                                b.add(lamp);
+                            }
+                            const h = new THREE.Mesh(handrailGeom, this.materials.bauernfeindHandrail);
+                            h.position.set(bx, midY + 0.45, midZ);
+                            h.rotation.x = -rampAngle;
+                            stairGroup.add(b, h);
+                        });
+
+                        // Dark entry portal at the back of the glazed entrance recess,
+                        // where the stairs reach the upper storey
+                        const portal = new THREE.Mesh(new THREE.BoxGeometry(4.4, 2.4, 0.06), frameMat);
+                        portal.position.set(sig * platCenter, 5.9, half - 1.14);
+                        bld.add(portal);
+                    });
+                }
+
+                // Glazed bridge section spanning the middle tracks between the towers
+                {
+                    const span = platCenter * 2 - half * 2 + 0.6; // slight overlap into the towers
+                    const depth = 6.2; // recessed vs. the 7m-deep towers
+                    const grp = new THREE.Group();
+                    bld.add(grp);
+
+                    const belt = new THREE.Mesh(new THREE.BoxGeometry(span, 5.6 - 4.4, depth), concMat);
+                    belt.position.y = (4.4 + 5.6) / 2;
+                    grp.add(belt);
+
+                    const glass = new THREE.Mesh(new THREE.BoxGeometry(span, bandTop - 5.6, depth - 0.5), glassMat);
+                    glass.position.y = (5.6 + bandTop) / 2;
+                    grp.add(glass);
+                    [5.68, bandTop - 0.08].forEach(fy => {
+                        const rail = new THREE.Mesh(new THREE.BoxGeometry(span, 0.16, depth - 0.3), frameMat);
+                        rail.position.y = fy;
+                        grp.add(rail);
+                    });
+                    const midY = (5.6 + bandTop) / 2;
+                    addMullions(grp, 'z', depth / 2 - 0.2, midY, bandTop - 5.6, -3.2, 3.2, 0.8);
+                    addMullions(grp, 'z', -(depth / 2 - 0.2), midY, bandTop - 5.6, -3.2, 3.2, 0.8);
+
+                    const roof = new THREE.Mesh(new THREE.BoxGeometry(span, roofTop - bandTop, half * 2 + 0.7), concMat);
+                    roof.position.y = (bandTop + roofTop) / 2;
+                    grp.add(roof);
+                }
+
+                // Open footbridges continuing outward over the running tracks
+                [1, -1].forEach(sig => {
+                    const len = 13.0;
+                    const cx = sig * (platCenter + half + len / 2);
+                    const deck = new THREE.Mesh(new THREE.BoxGeometry(len, 0.3, 4.0), concMat);
+                    deck.position.set(cx, 4.55, 0);
+                    bld.add(deck);
+
+                    [1.95, -1.95].forEach(dz => {
+                        [5.15, 5.7].forEach(ry => {
+                            const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.05, 0.05), railMat);
+                            rail.position.set(cx, ry, dz);
+                            bld.add(rail);
+                        });
+                        for (let px = -len / 2 + 0.5; px <= len / 2 - 0.4; px += 2.4) {
+                            const post = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.1, 0.05), railMat);
+                            post.position.set(cx + px, 5.25, dz);
+                            bld.add(post);
+                        }
+                    });
+
+                    // End support pillar carrying the footbridge behind the running track
+                    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.7, 4.8, 3.0), concMat);
+                    pillar.position.set(sig * (platCenter + half + len - 1.0), 2.0, 0);
+                    bld.add(pillar);
+                });
+
+                // Sloped concrete abutment ramps forming the platform ends (photo foreground)
+                const rampLen = 6.5;
+                const rampShape = new THREE.Shape();
+                rampShape.moveTo(0, -0.4);
+                rampShape.lineTo(0, 0.865);
+                rampShape.lineTo(rampLen, 0.05);
+                rampShape.lineTo(rampLen, -0.4);
+                rampShape.closePath();
+                const rampGeom = new THREE.ExtrudeGeometry(rampShape, { depth: half * 2, bevelEnabled: false });
+                rampGeom.rotateY(Math.PI / 2); // shape-x -> -z (toward the platform end), depth -> +x
+                const rampSlope = Math.atan2(0.865 - 0.05, rampLen);
+                [1, -1].forEach(sig => {
+                    const ramp = new THREE.Mesh(rampGeom, concMat);
+                    ramp.position.set(sig * platCenter - half, 0, -half);
+                    bld.add(ramp);
+
+                    // Handrails along both sloped edges of the ramp
+                    [half - 0.15, -(half - 0.15)].forEach(dx => {
+                        [1.0, 0.55].forEach(hy => {
+                            const rail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, rampLen + 0.15), railMat);
+                            rail.position.set(sig * platCenter + dx, (0.865 + 0.05) / 2 + hy, -half - rampLen / 2);
+                            rail.rotation.x = -rampSlope;
+                            bld.add(rail);
+                        });
+                    });
+                });
             }
 
-            // 14. Detailed Upper Overpass Concrete Cabins & U Sign
-            const uLogoMat = this.createSubwayULogo();
-            const logoGeom = new THREE.BoxGeometry(1.2, 1.2, 0.05);
+            // 14. Static decorative DT1 train (turned off) parked on the inner decorative track
+            // Positioned at z = +30m relative to the station centre (facing Langwasser)
+            const staticTrain = new TrainModel(new THREE.Group(), this.sim);
+            staticTrain.setTrainModel('DT1');
 
-            const buildOverpassCabin = (logoSign, s) => {
-                const pos = this.sim.getTrackPosition(s);
-                const tangent = this.sim.getTrackTangent(s);
-                const normal = new THREE.Vector3(-tangent.z, 0, tangent.x);
-                const spacing = this.sim.getTrackSpacing(s);
-                const angle = Math.atan2(tangent.x, tangent.z) - centerAngle;
-
-                const localSchPlatCenter = spacing / 2 - 5.03;
-                const xCenter = -logoSign * localSchPlatCenter;
-
-                const posCabin = pos.clone().addScaledVector(normal, xCenter);
-                const localPos = stationGroup.worldToLocal(posCabin);
-
-                const cabinGroup = new THREE.Group();
-                cabinGroup.position.copy(localPos);
-                cabinGroup.position.y = 5.15;
-                cabinGroup.rotation.y = angle;
-
-                // Outer concrete side walls
-                const wallOuter = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.3, 4.0), this.materials.pillar);
-                wallOuter.position.set(-logoSign * 1.3, 0, 0);
-
-                const wallInner = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.3, 4.0), this.materials.pillar);
-                wallInner.position.set(logoSign * 1.3, 0, 0);
-                
-                cabinGroup.add(wallOuter, wallInner);
-
-                const slantAngle = 0.18; 
-                const endWallGeom = new THREE.BoxGeometry(2.8, 3.3, 0.2);
-                
-                const wallFront = new THREE.Mesh(endWallGeom, this.materials.pillar);
-                wallFront.position.set(0, 0, 1.9);
-                wallFront.rotation.x = slantAngle;
-
-                const wallBack = new THREE.Mesh(endWallGeom, this.materials.pillar);
-                wallBack.position.set(0, 0, -1.9);
-                wallBack.rotation.x = -slantAngle;
-
-                cabinGroup.add(wallFront, wallBack);
-
-                const yellowInterior = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.9, 0.1), this.materials.yellowCabin);
-                yellowInterior.position.set(0, 0, 1.2);
-                
-                const windowGlass = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.9, 0.05), this.materials.glassCabin);
-                windowGlass.position.set(0, 0, 1.7);
-                windowGlass.rotation.x = slantAngle;
-
-                cabinGroup.add(yellowInterior, windowGlass);
-
-                const logo = new THREE.Mesh(logoGeom, uLogoMat);
-                logo.position.set(logoSign * 1.42, 0, 0);
-                logo.rotation.y = -logoSign * Math.PI / 2;
-                cabinGroup.add(logo);
-
-                stationGroup.add(cabinGroup);
+            const schTrainDist = station.position + 30.0 * S_len;
+            const mockSim = Object.create(this.sim);
+            mockSim.position = schTrainDist;
+            mockSim.isReversing = false;
+            mockSim.stations = this.sim.stations;
+            mockSim.track = this.sim.track || { lineId: 'U1' };
+            mockSim.getTrackXOffset = () => localSchTrackCenterFixed;
+            mockSim.getTrackPosition = (s, target) => {
+                const p = this.sim.getTrackPosition(s, target);
+                p.y = schFixedY;
+                return p;
             };
+            mockSim.getTrackElevationOffset = () => 0;
 
-            buildOverpassCabin(1, station.position - 35 * S_len);
-            buildOverpassCabin(-1, station.position - 35 * S_len);
+            staticTrain.sim = mockSim;
+            staticTrain.update(0);
 
+            staticTrain.group.position.copy(stationGroup.worldToLocal(staticTrain.group.position));
+            staticTrain.group.rotation.y -= centerAngle;
+            stationGroup.add(staticTrain.group);
 
+            // "Ausgeschaltet" - turn off all lights, screens and destination signs
+            staticTrain.radioDisplays.forEach(d => {
+                d.ctx.fillStyle = '#000';
+                d.ctx.fillRect(0, 0, d.canvas.width, d.canvas.height);
+                d.texture.needsUpdate = true;
+            });
+            if (staticTrain.dt1DestScreenMat) {
+                staticTrain.dt1DestScreenMat.color.set('#222'); // dark grey/off
+                if (staticTrain.dt1DestScreenMat.map) {
+                    staticTrain.dt1DestScreenMat.map = null;
+                    staticTrain.dt1DestScreenMat.needsUpdate = true;
+                }
+            }
+            Object.values(staticTrain.lights).forEach(lArr => lArr.forEach(l => l.visible = false));
         }
 
         if (station.name === "Messe") {
@@ -3654,6 +5273,336 @@ export class StationModel {
             stationGroup.add(passengerMan, passengerWoman1, passengerWoman2, passengerWoman3);
         }
 
+        if (station.name === "Bauernfeindstraße") {
+            // Escalator shaft through the roof cutout + a short covered walkway over
+            // the tunnel mouth, replacing the removed portal arch (see TrackManager.js
+            // createChunk portals loop / flushBedRun tunnel branch).
+            this.materials.bauernfeindStructConcrete = this.materials.bauernfeindStructConcrete
+                || new THREE.MeshLambertMaterial({ color: '#9c9891' });
+            this.materials.bauernfeindGlass = this.materials.bauernfeindGlass
+                || new THREE.MeshBasicMaterial({ color: '#94a3b8', transparent: true, opacity: 0.4, side: THREE.DoubleSide });
+            this.materials.bauernfeindWalkwayRoof = this.materials.bauernfeindWalkwayRoof
+                || new THREE.MeshLambertMaterial({ color: '#555555' });
+
+            const sh2 = this.sim.track.elevation.sh2;
+            const gapWidth = 6.0; // matches the 3.0m half-width gap cut into the ceiling/bed slab above
+            const ceilYLocal = 4.66; // isLwNord ceiling height used for this station's flat slab
+
+            const anchorPos = this.sim.getTrackPosition(sh2);
+            const anchorTangent = this.sim.getTrackTangent(sh2);
+            const anchorRotY = Math.atan2(anchorTangent.x, anchorTangent.z) - centerAngle;
+            const anchorLocalPos = stationGroup.worldToLocal(anchorPos.clone());
+
+            // Working escalator: real instanced moving steps (like buildMuggenhofStairs/
+            // buildStadtgrenzeStairs), housed under a canopy built exactly like Messe's
+            // buildEscalatorCanopy (see the Messe block above). stepDepth is solved from
+            // numSteps so numSteps*stepDepth exactly fills gapWidth -- keeps the steps,
+            // the canopy shell and the ceiling/bed-slab cutout all self-consistent instead
+            // of imposing an independent slope on the continuous shell.
+            const riseTarget = ceilYLocal + 0.1 - 0.865;
+            const stepHeight = 0.16;
+            const numSteps = Math.max(4, Math.round(riseTarget / stepHeight));
+            const numTotalSteps = numSteps + 4; // extend by 2 steps at each end
+            const stepDepth = gapWidth / numSteps;
+            const actualRise = numSteps * stepHeight;
+            const rampLength = Math.sqrt(actualRise * actualRise + gapWidth * gapWidth);
+            const rampAngle = Math.atan2(actualRise, gapWidth);
+
+            const dirZ = new THREE.Vector3(Math.sin(anchorRotY), 0, Math.cos(anchorRotY));
+
+            // 1. Canopy shell (unrotated group, individual continuous pieces tilted to rampAngle)
+            const canopyGroup = new THREE.Group();
+
+            const glassW = 0.05;
+            const glassH = 2.6;
+            const glassGeom = new THREE.BoxGeometry(glassW, glassH, rampLength);
+
+            const leftGlass = new THREE.Mesh(glassGeom, this.materials.bauernfeindGlass);
+            leftGlass.position.set(-2.35, glassH / 2, 0);
+            const rightGlass = new THREE.Mesh(glassGeom, this.materials.bauernfeindGlass);
+            rightGlass.position.set(2.35, glassH / 2, 0);
+            canopyGroup.add(leftGlass, rightGlass);
+
+            const roofGeom = new THREE.BoxGeometry(4.9, 0.1, rampLength);
+            const roofMesh = new THREE.Mesh(roofGeom, this.materials.bauernfeindGlass);
+            roofMesh.position.set(0, glassH, 0);
+            canopyGroup.add(roofMesh);
+
+            const frameGeom = new THREE.BoxGeometry(4.95, 0.15, 0.1);
+            const frameMat = new THREE.MeshLambertMaterial({ color: '#444444' });
+            for (let d = -rampLength / 2; d <= rampLength / 2; d += 2.0) {
+                const frame = new THREE.Mesh(frameGeom, frameMat);
+                frame.position.set(0, glassH, d);
+                canopyGroup.add(frame);
+            }
+
+            const canopyPos = anchorLocalPos.clone().addScaledVector(dirZ, gapWidth / 2);
+            canopyPos.y = 0.865 + actualRise / 2;
+
+            canopyGroup.position.copy(canopyPos);
+            canopyGroup.rotation.order = 'YXZ';
+            canopyGroup.rotation.y = anchorRotY;
+            canopyGroup.rotation.x = -rampAngle;
+            stationGroup.add(canopyGroup);
+
+            // 2. Working steps: the codebase's normal stairs+escalator layout (see
+            // StationBuilder.createStairsAndEscalator) -- a static center staircase
+            // flanked by two moving escalator lanes (one up, one down), four balustrade
+            // panels. Base-anchored group (no group-level slope rotation -- the stacked
+            // per-step sy/sz offsets already build the staircase shape); only the
+            // continuous casing/balustrades/handrails below get individually tilted.
+            this.materials.bauernfeindStairTex = this.materials.bauernfeindStairTex || new THREE.MeshLambertMaterial({
+                map: (() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#8a8680'; ctx.fillRect(0, 0, 64, 64);
+                    ctx.fillStyle = '#6f6b66'; ctx.fillRect(0, 0, 64, 2);
+                    const texture = new THREE.CanvasTexture(canvas);
+                    texture.colorSpace = THREE.SRGBColorSpace;
+                    return texture;
+                })()
+            });
+            this.materials.bauernfeindEscStep = this.materials.bauernfeindEscStep || new THREE.MeshLambertMaterial({
+                map: (() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    const stripeWidth = 2;
+                    for (let x = 0; x < 64; x += stripeWidth) {
+                        ctx.fillStyle = (x % (stripeWidth * 2) === 0) ? '#475569' : '#94a3b8';
+                        ctx.fillRect(x, 0, stripeWidth, 64);
+                        ctx.fillStyle = '#334155'; ctx.fillRect(x, 0, 1, 64);
+                        ctx.fillStyle = '#cbd5e1'; ctx.fillRect(x + stripeWidth - 1, 0, 1, 64);
+                    }
+                    const texture = new THREE.CanvasTexture(canvas);
+                    texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
+                    texture.colorSpace = THREE.SRGBColorSpace;
+                    return texture;
+                })()
+            });
+            this.materials.bauernfeindEdelstahl = this.materials.bauernfeindEdelstahl
+                || new THREE.MeshStandardMaterial({ color: '#e8eaed', metalness: 0.9, roughness: 0.2 });
+            this.materials.bauernfeindHandrail = this.materials.bauernfeindHandrail
+                || new THREE.MeshBasicMaterial({ color: '#111111' });
+            this.materials.bauernfeindLamp = this.materials.bauernfeindLamp
+                || new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
+
+            const stairCoreGroup = new THREE.Group();
+
+            const stairWidth = 2.0;
+            const stairGeom = new THREE.BoxGeometry(stairWidth, stepHeight, stepDepth);
+            const escWidth = 1.0;
+            const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
+            const stairInst = new THREE.InstancedMesh(stairGeom, this.materials.bauernfeindStairTex, numSteps);
+            const escInst = new THREE.InstancedMesh(escStepGeom, this.materials.bauernfeindEscStep, 2 * numTotalSteps);
+
+            // Left lane UP, right lane DOWN, same as the reference dual-lane pattern.
+            const dirAttr = new Float32Array(2 * numTotalSteps * 3);
+            for (let i = 0; i < numTotalSteps; i++) {
+                dirAttr[(2 * i) * 3 + 0] = 0;
+                dirAttr[(2 * i) * 3 + 1] = stepHeight;
+                dirAttr[(2 * i) * 3 + 2] = stepDepth;
+                dirAttr[(2 * i + 1) * 3 + 0] = 0;
+                dirAttr[(2 * i + 1) * 3 + 1] = -stepHeight;
+                dirAttr[(2 * i + 1) * 3 + 2] = -stepDepth;
+            }
+            escStepGeom.setAttribute('aEscalatorDir', new THREE.InstancedBufferAttribute(dirAttr, 3));
+            StationBuilder.setupEscalatorMaterial(this.materials.bauernfeindEscStep, this);
+
+            const stepMatrix = new THREE.Matrix4();
+            for (let i = 0; i < numSteps; i++) {
+                const sy = i * stepHeight + stepHeight / 2;
+                const sz = i * stepDepth + stepDepth / 2;
+                stairInst.setMatrixAt(i, stepMatrix.makeTranslation(0, sy, sz));
+            }
+            for (let i = 0; i < numTotalSteps; i++) {
+                const stepIdx = i - 2;
+                const sy = stepIdx * stepHeight + stepHeight / 2;
+                const sz = stepIdx * stepDepth + stepDepth / 2;
+                escInst.setMatrixAt(2 * i, stepMatrix.makeTranslation(-1.55, sy, sz));
+                escInst.setMatrixAt(2 * i + 1, stepMatrix.makeTranslation(1.55, sy, sz));
+            }
+            stairInst.instanceMatrix.needsUpdate = true;
+            escInst.instanceMatrix.needsUpdate = true;
+            stairCoreGroup.add(stairInst, escInst);
+            this.registerEscalator(escInst, { numTotalSteps });
+            escInst.computeBoundingSphere();
+            if (escInst.boundingSphere) escInst.boundingSphere.radius *= 5;
+
+            const midY = actualRise / 2;
+            const midZ = gapWidth / 2;
+
+            const escRampGeom = new THREE.BoxGeometry(escWidth, 0.1, rampLength);
+            const escL = new THREE.Mesh(escRampGeom, this.materials.bauernfeindEscStep);
+            escL.position.set(-1.55, midY - 0.15, midZ);
+            escL.rotation.x = -rampAngle;
+            const escR = new THREE.Mesh(escRampGeom, this.materials.bauernfeindEscStep);
+            escR.position.set(1.55, midY - 0.15, midZ);
+            escR.rotation.x = -rampAngle;
+            stairCoreGroup.add(escL, escR);
+
+            const thickness = 0.05;
+            const balustradeHeight = 0.9;
+            const railWidth = 0.1;
+            const railHeight = 0.1;
+            const { balustradeGeom, handrailGeom, lampGeom } = createEscalatorGeometries(rampLength, thickness, balustradeHeight, railWidth, railHeight);
+
+            const addLamps = (mesh, dirX) => {
+                const r = balustradeHeight / 2;
+                const halfW = rampLength / 2;
+                for (let z = -halfW + 1.0; z <= halfW - 1.0; z += 1.5) {
+                    const lamp = new THREE.Mesh(lampGeom, this.materials.bauernfeindLamp);
+                    lamp.position.set(dirX * (thickness / 2 + 0.001), 0.3 - r, z);
+                    mesh.add(lamp);
+                }
+            };
+
+            const balustradeXs = [-2.05, -1.05, 1.05, 2.05];
+            const balustrades = [];
+            const handrails = [];
+            for (const bx of balustradeXs) {
+                const b = new THREE.Mesh(balustradeGeom, this.materials.bauernfeindEdelstahl);
+                b.position.set(bx, midY + 0.45, midZ);
+                b.rotation.x = -rampAngle;
+                addLamps(b, bx < 0 ? 1 : -1);
+                balustrades.push(b);
+
+                const h = new THREE.Mesh(handrailGeom, this.materials.bauernfeindHandrail);
+                h.position.set(bx, midY + 0.45, midZ);
+                h.rotation.x = -rampAngle;
+                handrails.push(h);
+            }
+            stairCoreGroup.add(...balustrades, ...handrails);
+
+            stairCoreGroup.position.copy(anchorLocalPos);
+            stairCoreGroup.position.y += 0.865;
+            stairCoreGroup.rotation.y = anchorRotY;
+            stationGroup.add(stairCoreGroup);
+
+            // Covered walkway spanning sideways over the roof at the cutout, standing
+            // in for the removed tunnel portal. Shifted a half walkway-depth past sh2
+            // so its whole footprint sits over the tunnel, not the at-grade approach.
+            // Twice the previous width/height; facades are a fine concrete texture
+            // instead of glass. Deck and roof are cut out where the escalator/canopy
+            // passes through (flanking strips + a far cap closing the rest of the
+            // center strip), same idea as the ceiling/roof cutouts elsewhere.
+            this.materials.bauernfeindWalkwayConcrete = this.materials.bauernfeindWalkwayConcrete
+                || new THREE.MeshLambertMaterial({ map: this.tunnelConcreteTexture });
+
+            const walkwayWidth = 36.0;
+            const walkwayDepth = gapWidth + 2.0;
+            const wallHeight = 4.4;
+            const walkwayY = ceilYLocal + 0.35;
+
+            const walkwayAnchorLocalPos = anchorLocalPos.clone().addScaledVector(dirZ, walkwayDepth / 2);
+
+            const walkwayGroup = new THREE.Group();
+
+            // Escalator/canopy passage, in the walkway's own local frame (z=0 is its
+            // center; local z=-walkwayDepth/2 lines up with sh2, the escalator's base).
+            // Matches the canopy frame's outer face (frameGeom is 4.95 wide, so half
+            // 2.475) so the deck/roof cutout is flush with the escalators' own side
+            // cladding instead of leaving a gap (or, worse, clipping the canopy roof).
+            const escHalf = 2.475;
+            const escZStart = -walkwayDepth / 2;
+            const escZEnd = escZStart + gapWidth;
+
+            const addRect = (material, y, thickness, x0, x1, z0, z1) => {
+                if (x1 <= x0 || z1 <= z0) return;
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, thickness, z1 - z0), material);
+                mesh.position.set((x0 + x1) / 2, y, (z0 + z1) / 2);
+                walkwayGroup.add(mesh);
+            };
+            const buildDeckLike = (y, thickness, material) => {
+                addRect(material, y, thickness, -walkwayWidth / 2, -escHalf, -walkwayDepth / 2, walkwayDepth / 2);
+                addRect(material, y, thickness, escHalf, walkwayWidth / 2, -walkwayDepth / 2, walkwayDepth / 2);
+                addRect(material, y, thickness, -escHalf, escHalf, escZEnd, walkwayDepth / 2);
+            };
+
+            buildDeckLike(walkwayY, 0.2, this.materials.bauernfeindStructConcrete);
+            // Top roof: ONE full slab, no escalator cutout — the canopy tops out at
+            // ~7.4 local (escalator top 4.76 + glassH 2.6), well under this roof at
+            // walkwayY + wallHeight = 9.41, so nothing pokes through it.
+            addRect(this.materials.bauernfeindWalkwayRoof, walkwayY + wallHeight, 0.1,
+                -walkwayWidth / 2, walkwayWidth / 2, -walkwayDepth / 2, walkwayDepth / 2);
+
+            const walkwayGlassF = new THREE.Mesh(new THREE.BoxGeometry(walkwayWidth, wallHeight, 0.05), this.materials.bauernfeindWalkwayConcrete);
+            walkwayGlassF.position.set(0, walkwayY + wallHeight / 2, walkwayDepth / 2 - 0.05);
+            const walkwayGlassB = new THREE.Mesh(new THREE.BoxGeometry(walkwayWidth, wallHeight, 0.05), this.materials.bauernfeindWalkwayConcrete);
+            walkwayGlassB.position.set(0, walkwayY + wallHeight / 2, -walkwayDepth / 2 + 0.05);
+            walkwayGroup.add(walkwayGlassF, walkwayGlassB);
+
+            // Tunnel portal buildings (eckig): two open-ended box structures under the
+            // walkway, one per side of the escalator shaft, each made of exactly three
+            // pieces -- an OUTER wall flush with the tunnel tube's side walls (same
+            // spacing/2 + 3.1 base half-width as TrackManager.getTunnelHalfWidth;
+            // the tube starts ~2.5m past the building's far end, sh2+8 vs platform
+            // margin, so the planes line up where they meet), an INNER wall flush with
+            // the escalator's side cladding (same escHalf as the deck cutout above), and
+            // a CEILING slab spanning the two whose underside continues the tunnel
+            // tube's roof plane (4.6m) and whose top meets the walkway deck's underside.
+            // Built as plain boxes in the walkway's own frame so every shared edge stays
+            // flush by construction; the trains pass through the open rectangular front
+            // between each wall pair -- that opening IS the (eckige) tunnel mouth.
+            const portalOuterHalf = this.sim.getTrackSpacing(sh2) / 2 + 3.1;
+            const portalWallT = 0.3;
+            const portalFloorY = -0.5;          // surrounding terrain level
+            const portalTopY = walkwayY - 0.1;  // walkway deck underside
+            const portalCeilBotY = 4.6;         // tunnel tube roof: ring center +0.8, ceilY +3.8
+            const portalMat = this.materials.bauernfeindStructConcrete;
+            const portalWallGeom = new THREE.BoxGeometry(portalWallT, portalTopY - portalFloorY, walkwayDepth);
+            const portalCeilW = (portalOuterHalf + portalWallT) - escHalf;
+            const portalCeilGeom = new THREE.BoxGeometry(portalCeilW, portalTopY - portalCeilBotY, walkwayDepth);
+            for (const sign of [1, -1]) {
+                const wallY = (portalFloorY + portalTopY) / 2;
+                const innerWall = new THREE.Mesh(portalWallGeom, portalMat);
+                innerWall.position.set(sign * (escHalf + portalWallT / 2), wallY, 0);
+                const outerWall = new THREE.Mesh(portalWallGeom, portalMat);
+                outerWall.position.set(sign * (portalOuterHalf + portalWallT / 2), wallY, 0);
+                const portalCeil = new THREE.Mesh(portalCeilGeom, portalMat);
+                portalCeil.position.set(sign * (escHalf + portalCeilW / 2), (portalCeilBotY + portalTopY) / 2, 0);
+                walkwayGroup.add(innerWall, outerWall, portalCeil);
+            }
+
+            walkwayGroup.position.copy(walkwayAnchorLocalPos);
+            walkwayGroup.rotation.y = anchorRotY;
+            stationGroup.add(walkwayGroup);
+
+            // "Durchgang verboten" Aufsteller (free-standing A-frame stands) at both
+            // platform ends. The at-grade platform just ends in the open -- unlike the
+            // underground stations, whose StationBuilder end walls carry gates with
+            // this same plaque -- so a portable stand marks the end instead. The
+            // plaque texture is reused from StationBuilder (it doesn't touch `this`).
+            const dvTex = StationBuilder.prototype.createDurchgangVerbotenTexture.call(null);
+            const dvPlaqueMat = new THREE.MeshBasicMaterial({ map: dvTex });
+            const dvFrameMat = new THREE.MeshLambertMaterial({ color: '#d4d4d8' });
+            const dvPanelGeom = new THREE.BoxGeometry(0.55, 0.75, 0.02);
+            // BoxGeometry material order: px, nx, py, ny, pz, nz -- plaque on +z only,
+            // each panel is yawed so its +z (textured) face points outward.
+            const dvPanelMats = [dvFrameMat, dvFrameMat, dvFrameMat, dvFrameMat, dvPlaqueMat, dvFrameMat];
+            const dvTilt = 0.18;
+            for (const endSign of [1, -1]) {
+                const sEnd = station.position + endSign * (station.halfLength - 1.0);
+                const posEnd = this.sim.getTrackPosition(sEnd);
+                const tanEnd = this.sim.getTrackTangent(sEnd);
+                const rotYEnd = Math.atan2(tanEnd.x, tanEnd.z) - centerAngle;
+                const stand = new THREE.Group();
+                stand.position.copy(stationGroup.worldToLocal(posEnd.clone()));
+                stand.position.y = 0.865;
+                stand.rotation.y = rotYEnd;
+                for (const f of [1, -1]) {
+                    const panel = new THREE.Mesh(dvPanelGeom, dvPanelMats);
+                    panel.rotation.order = 'YXZ';
+                    panel.rotation.y = f === 1 ? 0 : Math.PI;
+                    panel.rotation.x = -dvTilt; // lean the two panels together (A-frame)
+                    panel.position.set(0, 0.37, f * 0.11);
+                    stand.add(panel);
+                }
+                stationGroup.add(stand);
+            }
+        }
+
         // --- APPLY NEW STANDARD STAIRS TO LEGACY STATIONS ---
         if (station.name === "Muggenhof") {
             this.buildMuggenhofStairs(station, stationGroup, platLength, spacing, centerPos, centerAngle);
@@ -3831,8 +5780,9 @@ export class StationModel {
         texture.wrapT = THREE.RepeatWrapping;
         // 1:1 repeat because we scale UVs per segment for perfect alignment
         texture.repeat.set(1, 1);
-        texture.colorSpace = THREE.SRGBColorSpace;
-        return texture;
+        // KeepLook statt nur colorSpace-Tag: das nackte Tag ließ diesen Schotter dunkler
+        // rendern als die (ungetaggte) TrackManager-Variante direkt daneben.
+        return tagCanvasTextureSRGBKeepLook(texture);
     }
 
     createStationSignMaterial(name) {
@@ -3849,7 +5799,7 @@ export class StationModel {
         ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
 
         ctx.fillStyle = '#000000'; // black text
-        ctx.font = 'bold 68px "Jost Regular", "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 68px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(name.toUpperCase(), canvas.width / 2, canvas.height / 2); // CAPS LOCK
@@ -3873,7 +5823,7 @@ export class StationModel {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = textColor;
-        ctx.font = 'bold 33px "Jost Regular", "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 33px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
@@ -3911,6 +5861,71 @@ export class StationModel {
         texture.repeat.set(repeatX, 1);
 
         return new THREE.MeshBasicMaterial({ map: texture });
+    }
+
+    /**
+     * Clones a material and bakes a round-column lighting gradient into its
+     * texture, leaving the original material completely unmodified.
+     *
+     * The gradient simulates the way a cylindrical surface catches light:
+     * the two flat-facing sides (UV 0.25 / 0.75) are bright, the flanks
+     * (UV 0 / 0.5 / 1.0) are shadowed. Identical colour stops to the
+     * Plärrer column texture in TrackManager.createColumnTexture.
+     *
+     * Works for both canvas-backed and flat-colour materials.
+     */
+    _makeCylinderPillarMat(sourceMat) {
+        // ---- build the gradient canvas ----------------------------------------
+        const srcCanvas = sourceMat.map && sourceMat.map.image instanceof HTMLCanvasElement
+            ? sourceMat.map.image : null;
+
+        const W = srcCanvas ? srcCanvas.width  : 512;
+        const H = srcCanvas ? srcCanvas.height : 64;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        if (srcCanvas) {
+            // Copy the source canvas (tile / stone / pebble-dash texture)
+            ctx.drawImage(srcCanvas, 0, 0, W, H);
+        } else {
+            // Flat-colour material — fill with the material colour
+            const col = sourceMat.color
+                ? '#' + sourceMat.color.getHexString()
+                : '#8a9496';
+            ctx.fillStyle = col;
+            ctx.fillRect(0, 0, W, H);
+        }
+
+        // Multiply-blend the cylindrical lighting gradient
+        ctx.globalCompositeOperation = 'multiply';
+        const grad = ctx.createLinearGradient(0, 0, W, 0);
+        grad.addColorStop(0,    '#7A7975'); // flank (dark)
+        grad.addColorStop(0.18, '#7A7975');
+        grad.addColorStop(0.25, '#F4F2FB'); // front face (bright)
+        grad.addColorStop(0.32, '#7A7975');
+        grad.addColorStop(0.68, '#7A7975');
+        grad.addColorStop(0.75, '#F4F2FB'); // back face (bright)
+        grad.addColorStop(0.82, '#7A7975');
+        grad.addColorStop(1,    '#7A7975');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // ---- build the new material -------------------------------------------
+        const newMat = sourceMat.clone();
+
+        const newTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+        newTex.wrapS = sourceMat.map ? sourceMat.map.wrapS : THREE.RepeatWrapping;
+        newTex.wrapT = sourceMat.map ? sourceMat.map.wrapT : THREE.ClampToEdgeWrapping;
+        if (sourceMat.map) {
+            newTex.repeat.copy(sourceMat.map.repeat);
+            newTex.offset.copy(sourceMat.map.offset);
+        }
+        newTex.colorSpace = THREE.SRGBColorSpace;
+
+        newMat.map = newTex;
+        return newMat;
     }
 
     createTiledMaterial(tileColor, groutColor, roughness = 0.15) {
@@ -4198,7 +6213,7 @@ export class StationModel {
 
         // 4. Draw Info "i" Symbol on Right Screen
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 130px "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 130px "Geist", "Inter", "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('i', 900, 126); // Draw lowercase 'i' centered
@@ -4207,10 +6222,10 @@ export class StationModel {
         ctx.fillStyle = '#f4d96d'; // Yellow text
         ctx.textAlign = 'center';
         
-        ctx.font = 'bold 24px "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 24px "Geist", "Inter", "Segoe UI", sans-serif';
         ctx.fillText('Gleis', 100, 70);
         
-        ctx.font = 'bold 110px "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 110px "Geist", "Inter", "Segoe UI", sans-serif';
         ctx.fillText(trackNumberLabel, 100, 160);
 
         // Vertical divider on Left Screen
@@ -4237,24 +6252,24 @@ export class StationModel {
         }
         ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px "Outfit", "Inter", sans-serif';
+        ctx.font = 'bold 20px "Geist", "Inter", sans-serif';
         ctx.fillText(row1.line, 242, 52);
 
         // Destination name
         ctx.fillStyle = '#f4d96d';
         ctx.textAlign = 'left';
-        ctx.font = 'bold 28px "Outfit", "Inter", sans-serif';
+        ctx.font = 'bold 28px "Geist", "Inter", sans-serif';
         ctx.fillText(row1.destination, destX, 50);
 
         // Subline
         ctx.fillStyle = '#88929a';
-        ctx.font = '16px "Outfit", "Inter", sans-serif';
+        ctx.font = '16px "Geist", "Inter", sans-serif';
         ctx.fillText(row1.via, destX, 82);
 
         // Minutes
         ctx.fillStyle = '#f4d96d';
         ctx.textAlign = 'right';
-        ctx.font = 'bold 36px "Outfit", sans-serif';
+        ctx.font = 'bold 36px "Geist", sans-serif';
         ctx.fillText(row1.minutes, timeX, 50);
         
         ctx.textAlign = 'left';
@@ -4272,25 +6287,25 @@ export class StationModel {
         }
         ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px "Outfit", "Inter", sans-serif';
+        ctx.font = 'bold 20px "Geist", "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(row2.line, 242, 132);
 
         // Destination name
         ctx.fillStyle = '#f4d96d';
         ctx.textAlign = 'left';
-        ctx.font = 'bold 28px "Outfit", "Inter", sans-serif';
+        ctx.font = 'bold 28px "Geist", "Inter", sans-serif';
         ctx.fillText(row2.destination, destX, 130);
 
         // Subline
         ctx.fillStyle = '#88929a';
-        ctx.font = '16px "Outfit", "Inter", sans-serif';
+        ctx.font = '16px "Geist", "Inter", sans-serif';
         ctx.fillText(row2.via, destX, 162);
 
         // Minutes
         ctx.fillStyle = '#f4d96d';
         ctx.textAlign = 'right';
-        ctx.font = 'bold 36px "Outfit", sans-serif';
+        ctx.font = 'bold 36px "Geist", sans-serif';
         ctx.fillText(row2.minutes, timeX, 130);
         
         ctx.textAlign = 'left';
@@ -4303,7 +6318,7 @@ export class StationModel {
         
         ctx.fillStyle = '#000000';
         ctx.textAlign = 'center';
-        ctx.font = 'bold 16px "Outfit", "Inter", sans-serif';
+        ctx.font = 'bold 16px "Geist", "Inter", sans-serif';
         ctx.fillText('Aufgrund von Bauarbeiten kann es zu Einschränkungen kommen', 468, 219);
 
         const texture = new THREE.CanvasTexture(canvas);
@@ -4343,7 +6358,7 @@ export class StationModel {
 
         // 4. Draw Info "i" Symbol on Right Screen
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 130px "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 130px "Geist", "Inter", "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('i', 900, 126);
@@ -4370,7 +6385,7 @@ export class StationModel {
         
         // White U in center
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 150px "Outfit", "Inter", "Segoe UI", sans-serif';
+        ctx.font = 'bold 150px "Geist", "Inter", "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('U', canvas.width / 2, canvas.height / 2 + 10);
@@ -4380,44 +6395,18 @@ export class StationModel {
         return new THREE.MeshBasicMaterial({ map: texture });
     }
 
-    disposeGroup(group) {
-        // No longer culling the groups themselves from memory, just caching them.
-    }
-
     createTrashCanTexture() {
         const canvas = document.createElement('canvas');
         canvas.width = 256;
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Gradient background for brushed stainless steel (bright metal)
-        const grad = ctx.createLinearGradient(0, 0, 256, 0);
-        grad.addColorStop(0, '#bdc3c7');
-        grad.addColorStop(0.35, '#e2e8f0');
-        grad.addColorStop(0.5, '#ffffff');
-        grad.addColorStop(0.65, '#e2e8f0');
-        grad.addColorStop(1, '#bdc3c7');
+        // Smooth background with a subtle dark grey fade
+        const grad = ctx.createLinearGradient(0, 0, 0, 512);
+        grad.addColorStop(0, '#d1d5db');
+        grad.addColorStop(1, '#9ca3af');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, 256, 512);
-        
-        // Add vertical brushed metal lines
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 60; i++) {
-            const x = Math.random() * 256;
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, 512);
-            ctx.stroke();
-        }
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
-        for (let i = 0; i < 60; i++) {
-            const x = Math.random() * 256;
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, 512);
-            ctx.stroke();
-        }
         
         // Draw the black trash icon (person throwing trash)
         ctx.fillStyle = '#2c3e50';
@@ -4822,6 +6811,7 @@ export class StationModel {
 
     buildMuggenhofStairs(station, stationGroup, platLength, spacing, centerPos, centerAngle) {
         const numSteps = 50;
+        const numTotalSteps = numSteps + 4; // Extend by 2 steps at each end
         const stepHeight = 0.16;
         const stepDepth = 0.3;
         const runLength = numSteps * stepDepth; // 15.0m
@@ -4871,10 +6861,12 @@ export class StationModel {
         const wallMat = this.createRoughConcreteMaterial();
         const handrailMat = new THREE.MeshBasicMaterial({ color: '#111111' });
         const glassMat = this.materials.muggenhofGlass || new THREE.MeshLambertMaterial({ color: '#14b8a6', transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+        const edelstahlMat = new THREE.MeshStandardMaterial({ color: '#e8eaed', metalness: 0.9, roughness: 0.2 });
+        const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
         
         const stairWidth = 2.0;
         const stairGeom = new THREE.BoxGeometry(stairWidth, stepHeight, stepDepth);
-        const escWidth = 1.2;
+        const escWidth = 1.0; // Narrowed from 1.2 to 1.0
         const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
         
         // Build the stairways for both platform sides: platformSign = 1 (positive X / right) and platformSign = -1 (negative X / left)
@@ -4891,7 +6883,19 @@ export class StationModel {
                 
                 // 1. Instanced steps
                 const stairInst = new THREE.InstancedMesh(stairGeom, stepMat, numSteps);
-                const escInst = new THREE.InstancedMesh(escStepGeom, escStepMat, numSteps);
+                const escInst = new THREE.InstancedMesh(escStepGeom, escStepMat, numTotalSteps);
+
+                // GPU Animation: Add direction attribute
+                const dirAttr = new Float32Array(numTotalSteps * 3);
+                for (let i = 0; i < numTotalSteps; i++) {
+                    // Descending DOWN (yDir: -1) -> vector is (0, -stepHeight, descentDir * stepDepth)
+                    dirAttr[i * 3 + 0] = 0;
+                    dirAttr[i * 3 + 1] = -stepHeight;
+                    dirAttr[i * 3 + 2] = descentDir * stepDepth;
+                }
+                escStepGeom.setAttribute('aEscalatorDir', new THREE.InstancedBufferAttribute(dirAttr, 3));
+                StationBuilder.setupEscalatorMaterial(escStepMat, this);
+
                 const stepMatrix = new THREE.Matrix4();
                 
                 // Shift stairs (inner) and escalator (outer) relative to platform center (symmetric layout)
@@ -4903,14 +6907,23 @@ export class StationModel {
                     const sz = descentDir * (i * stepDepth + stepDepth / 2);
                     stepMatrix.makeTranslation(shiftStairsX, sy, sz);
                     stairInst.setMatrixAt(i, stepMatrix);
-                    
+                }
+                for (let i = 0; i < numTotalSteps; i++) {
+                    const stepIdx = i - 2;
+                    const sy = -stepIdx * stepHeight - stepHeight / 2;
+                    const sz = descentDir * (stepIdx * stepDepth + stepDepth / 2);
                     stepMatrix.makeTranslation(shiftEscX, sy, sz);
                     escInst.setMatrixAt(i, stepMatrix);
                 }
                 stairInst.instanceMatrix.needsUpdate = true;
                 escInst.instanceMatrix.needsUpdate = true;
                 stairGroup.add(stairInst, escInst);
-                
+
+                this.registerEscalator(escInst, { numTotalSteps });
+
+                escInst.computeBoundingSphere();
+                if (escInst.boundingSphere) escInst.boundingSphere.radius *= 5;
+
                 // 2. Escalator ramp casing (under steps)
                 const escRampGeom = new THREE.BoxGeometry(escWidth, 0.1, rampLength);
                 const escCasing = new THREE.Mesh(escRampGeom, escStepMat);
@@ -4918,25 +6931,43 @@ export class StationModel {
                 escCasing.rotation.x = rotX;
                 stairGroup.add(escCasing);
                 
-                // 3. Escalator Glass Balustrades
-                const glassGeom = new THREE.BoxGeometry(0.04, 0.9, rampLength);
-                const glassL = new THREE.Mesh(glassGeom, glassMat);
+                // 3. Escalator Stainless Steel Balustrades
+                const thickness = 0.04;
+                const height = 0.9;
+                const railWidth = 0.08;
+                const railHeight = 0.08;
+                const { balustradeGeom, handrailGeom, lampGeom } = createEscalatorGeometries(rampLength, thickness, height, railWidth, railHeight);
+                
+                const glassL = new THREE.Mesh(balustradeGeom, edelstahlMat);
                 glassL.position.set(shiftEscX - 0.58, midY + 0.45, midZ);
                 glassL.rotation.x = rotX;
                 
-                const glassR = new THREE.Mesh(glassGeom, glassMat);
+                const glassR = new THREE.Mesh(balustradeGeom, edelstahlMat);
                 glassR.position.set(shiftEscX + 0.58, midY + 0.45, midZ);
                 glassR.rotation.x = rotX;
+                
+                // Add pill-shaped lamps to the inside of the balustrades
+                const addLamps = (mesh, dirX) => {
+                    const r = height / 2;
+                    const halfW = rampLength / 2;
+                    for (let z = -halfW + 1.0; z <= halfW - 1.0; z += 1.5) {
+                        const lamp = new THREE.Mesh(lampGeom, lampMat);
+                        lamp.position.set(dirX * (thickness / 2 + 0.001), 0.3 - r, z);
+                        mesh.add(lamp);
+                    }
+                };
+                addLamps(glassL, 1);
+                addLamps(glassR, -1);
+                
                 stairGroup.add(glassL, glassR);
                 
-                // 4. Escalator Handrails
-                const railGeom = new THREE.BoxGeometry(0.08, 0.08, rampLength);
-                const railL = new THREE.Mesh(railGeom, handrailMat);
-                railL.position.set(shiftEscX - 0.58, midY + 0.9, midZ);
+                // 4. Escalator Handrails (Closed loops, positioned at the same Y center as balustrades)
+                const railL = new THREE.Mesh(handrailGeom, handrailMat);
+                railL.position.set(shiftEscX - 0.58, midY + 0.45, midZ);
                 railL.rotation.x = rotX;
                 
-                const railR = new THREE.Mesh(railGeom, handrailMat);
-                railR.position.set(shiftEscX + 0.58, midY + 0.9, midZ);
+                const railR = new THREE.Mesh(handrailGeom, handrailMat);
+                railR.position.set(shiftEscX + 0.58, midY + 0.45, midZ);
                 railR.rotation.x = rotX;
                 stairGroup.add(railL, railR);
                 
@@ -5019,6 +7050,7 @@ export class StationModel {
 
     buildStadtgrenzeStairs(station, stationGroup, platLength, spacing, centerPos, centerAngle) {
         const numSteps = 50;
+        const numTotalSteps = numSteps + 4; // Extend by 2 steps at each end
         const stepHeight = 0.16;
         const stepDepth = 0.3;
         const runLength = numSteps * stepDepth; // 15.0m
@@ -5068,10 +7100,12 @@ export class StationModel {
         const wallMat = this.createRoughConcreteMaterial();
         const handrailMat = new THREE.MeshBasicMaterial({ color: '#111111' });
         const glassMat = this.materials.muggenhofGlass || new THREE.MeshLambertMaterial({ color: '#14b8a6', transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+        const edelstahlMat = new THREE.MeshStandardMaterial({ color: '#e8eaed', metalness: 0.9, roughness: 0.2 });
+        const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
         
         const stairWidth = 2.0;
         const stairGeom = new THREE.BoxGeometry(stairWidth, stepHeight, stepDepth);
-        const escWidth = 1.2;
+        const escWidth = 1.0; // Narrowed from 1.2 to 1.0
         const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
         
         // Build the stairways for both platform sides: platformSign = 1 (positive X / right) and platformSign = -1 (negative X / left)
@@ -5088,7 +7122,19 @@ export class StationModel {
                 
                 // 1. Instanced steps
                 const stairInst = new THREE.InstancedMesh(stairGeom, stepMat, numSteps);
-                const escInst = new THREE.InstancedMesh(escStepGeom, escStepMat, numSteps);
+                const escInst = new THREE.InstancedMesh(escStepGeom, escStepMat, numTotalSteps);
+
+                // GPU Animation: Add direction attribute
+                const dirAttr = new Float32Array(numTotalSteps * 3);
+                for (let i = 0; i < numTotalSteps; i++) {
+                    // Descending DOWN (yDir: -1) -> vector is (0, -stepHeight, descentDir * stepDepth)
+                    dirAttr[i * 3 + 0] = 0;
+                    dirAttr[i * 3 + 1] = -stepHeight;
+                    dirAttr[i * 3 + 2] = descentDir * stepDepth;
+                }
+                escStepGeom.setAttribute('aEscalatorDir', new THREE.InstancedBufferAttribute(dirAttr, 3));
+                StationBuilder.setupEscalatorMaterial(escStepMat, this);
+
                 const stepMatrix = new THREE.Matrix4();
                 
                 // Shift stairs (inner) and escalator (outer) relative to platform center (symmetric layout)
@@ -5100,14 +7146,23 @@ export class StationModel {
                     const sz = descentDir * (i * stepDepth + stepDepth / 2);
                     stepMatrix.makeTranslation(shiftStairsX, sy, sz);
                     stairInst.setMatrixAt(i, stepMatrix);
-                    
+                }
+                for (let i = 0; i < numTotalSteps; i++) {
+                    const stepIdx = i - 2;
+                    const sy = -stepIdx * stepHeight - stepHeight / 2;
+                    const sz = descentDir * (stepIdx * stepDepth + stepDepth / 2);
                     stepMatrix.makeTranslation(shiftEscX, sy, sz);
                     escInst.setMatrixAt(i, stepMatrix);
                 }
                 stairInst.instanceMatrix.needsUpdate = true;
                 escInst.instanceMatrix.needsUpdate = true;
                 stairGroup.add(stairInst, escInst);
-                
+
+                this.registerEscalator(escInst, { numTotalSteps });
+
+                escInst.computeBoundingSphere();
+                if (escInst.boundingSphere) escInst.boundingSphere.radius *= 5;
+
                 // 2. Escalator ramp casing (under steps)
                 const escRampGeom = new THREE.BoxGeometry(escWidth, 0.1, rampLength);
                 const escCasing = new THREE.Mesh(escRampGeom, escStepMat);
@@ -5115,25 +7170,43 @@ export class StationModel {
                 escCasing.rotation.x = rotX;
                 stairGroup.add(escCasing);
                 
-                // 3. Escalator Glass Balustrades
-                const glassGeom = new THREE.BoxGeometry(0.04, 0.9, rampLength);
-                const glassL = new THREE.Mesh(glassGeom, glassMat);
+                // 3. Escalator Stainless Steel Balustrades
+                const thickness = 0.04;
+                const height = 0.9;
+                const railWidth = 0.08;
+                const railHeight = 0.08;
+                const { balustradeGeom, handrailGeom, lampGeom } = createEscalatorGeometries(rampLength, thickness, height, railWidth, railHeight);
+                
+                const glassL = new THREE.Mesh(balustradeGeom, edelstahlMat);
                 glassL.position.set(shiftEscX - 0.58, midY + 0.45, midZ);
                 glassL.rotation.x = rotX;
                 
-                const glassR = new THREE.Mesh(glassGeom, glassMat);
+                const glassR = new THREE.Mesh(balustradeGeom, edelstahlMat);
                 glassR.position.set(shiftEscX + 0.58, midY + 0.45, midZ);
                 glassR.rotation.x = rotX;
+                
+                // Add pill-shaped lamps to the inside of the balustrades
+                const addLamps = (mesh, dirX) => {
+                    const r = height / 2;
+                    const halfW = rampLength / 2;
+                    for (let z = -halfW + 1.0; z <= halfW - 1.0; z += 1.5) {
+                        const lamp = new THREE.Mesh(lampGeom, lampMat);
+                        lamp.position.set(dirX * (thickness / 2 + 0.001), 0.3 - r, z);
+                        mesh.add(lamp);
+                    }
+                };
+                addLamps(glassL, 1);
+                addLamps(glassR, -1);
+                
                 stairGroup.add(glassL, glassR);
                 
-                // 4. Escalator Handrails
-                const railGeom = new THREE.BoxGeometry(0.08, 0.08, rampLength);
-                const railL = new THREE.Mesh(railGeom, handrailMat);
-                railL.position.set(shiftEscX - 0.58, midY + 0.9, midZ);
+                // 4. Escalator Handrails (Closed loops, positioned at the same Y center as balustrades)
+                const railL = new THREE.Mesh(handrailGeom, handrailMat);
+                railL.position.set(shiftEscX - 0.58, midY + 0.45, midZ);
                 railL.rotation.x = rotX;
                 
-                const railR = new THREE.Mesh(railGeom, handrailMat);
-                railR.position.set(shiftEscX + 0.58, midY + 0.9, midZ);
+                const railR = new THREE.Mesh(handrailGeom, handrailMat);
+                railR.position.set(shiftEscX + 0.58, midY + 0.45, midZ);
                 railR.rotation.x = rotX;
                 stairGroup.add(railL, railR);
                 
@@ -5232,5 +7305,894 @@ export class StationModel {
                 stationGroup.add(stairGroup);
             });
         });
+    }
+
+    getRoethenbachTileMats() {
+        if (!this._roethenbachTileMats) {
+            const colors = ['#28411A', '#4B6303', '#6C7001', '#7C6F2E', '#11313B'];
+            this._roethenbachTileMats = colors.map(c => this.createTiledMaterial(c, '#121511', 0.15));
+        }
+        return this._roethenbachTileMats;
+    }
+    
+    getRoethenbachTextMat() {
+        if (!this._roethenbachTextMat) {
+            const canvasText = document.createElement('canvas');
+            canvasText.width = 1024;
+            canvasText.height = 128;
+            const ctxT = canvasText.getContext('2d');
+            ctxT.clearRect(0, 0, 1024, 128);
+            ctxT.fillStyle = '#9A3618';
+            ctxT.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctxT.textAlign = 'center';
+            ctxT.textBaseline = 'middle';
+            ctxT.fillText("RÖTHENBACH", canvasText.width / 2, canvasText.height / 2);
+            ctxT.strokeStyle = '#9A3618';
+            ctxT.lineWidth = 1.8;
+            ctxT.strokeText("RÖTHENBACH", canvasText.width / 2, canvasText.height / 2);
+            
+            const textTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvasText));
+            textTex.anisotropy = 8;
+            this._roethenbachTextMat = new THREE.MeshLambertMaterial({
+                map: textTex,
+                transparent: true
+            });
+        }
+        return this._roethenbachTextMat;
+    }
+
+    getHoheMarterTileMatFlughafen() {
+        if (!this._hoheMarterTileMatFlughafen) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#162134';
+            ctx.fillRect(0, 0, 1024, 256);
+            
+            const stripeColors = ['#23334D', '#162134', '#162A43'];
+            let seed = 123;
+            const random = () => {
+                const x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            };
+            
+            const pxPerMeter = 256 / 2.5;
+            let currentX = -500;
+            while (currentX < 1500) {
+                const stripeWM = 1.0 + random() * 2.0;
+                const stripeW = Math.round(stripeWM * pxPerMeter);
+                const col = stripeColors[Math.floor(random() * stripeColors.length)];
+                
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(currentX, 0);
+                ctx.lineTo(currentX + stripeW, 0);
+                ctx.lineTo(currentX + stripeW - 256, 256);
+                ctx.lineTo(currentX - 256, 256);
+                ctx.fill();
+                
+                currentX += stripeW;
+            }
+            
+            ctx.strokeStyle = 'rgba(18,22,30,0.45)';
+            ctx.lineWidth = 1.2;
+            const tileSize = Math.round(0.15 * pxPerMeter);
+            for (let x = -256; x < 1280; x += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x - 256, 256);
+                ctx.stroke();
+            }
+            for (let y = 0; y < 256; y += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(1024, y);
+                ctx.stroke();
+            }
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.repeat.set(1, 1);
+            
+            this._hoheMarterTileMatFlughafen = new THREE.MeshLambertMaterial({ map: texture });
+        }
+        return this._hoheMarterTileMatFlughafen;
+    }
+
+    getHoheMarterTileMatGrossreuth() {
+        if (!this._hoheMarterTileMatGrossreuth) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#182536';
+            ctx.fillRect(0, 0, 1024, 256);
+            
+            const stripeColors = ['#1D2E48', '#182536', '#182536'];
+            let seed = 456;
+            const random = () => {
+                const x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            };
+            
+            const pxPerMeter = 256 / 2.5;
+            let currentX = -500;
+            while (currentX < 1500) {
+                const stripeWM = 2.0 + random() * 3.0;
+                const stripeW = Math.round(stripeWM * pxPerMeter);
+                const col = stripeColors[Math.floor(random() * stripeColors.length)];
+                
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(currentX, 0);
+                ctx.lineTo(currentX + stripeW, 0);
+                ctx.lineTo(currentX + stripeW - 256, 256);
+                ctx.lineTo(currentX - 256, 256);
+                ctx.fill();
+                
+                currentX += stripeW;
+            }
+            
+            ctx.strokeStyle = 'rgba(18,22,30,0.45)';
+            ctx.lineWidth = 1.2;
+            const tileSize = Math.round(0.15 * pxPerMeter);
+            for (let x = -256; x < 1280; x += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x - 256, 256);
+                ctx.stroke();
+            }
+            for (let y = 0; y < 256; y += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(1024, y);
+                ctx.stroke();
+            }
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.repeat.set(1, 1);
+            
+            this._hoheMarterTileMatGrossreuth = new THREE.MeshLambertMaterial({ map: texture });
+        }
+        return this._hoheMarterTileMatGrossreuth;
+    }
+
+    getHoheMarterTextMat(sign) {
+        const cacheKey = `_hoheMarterTextMat_${sign}`;
+        if (!this[cacheKey]) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 128);
+            
+            const textColor = (sign > 0) ? '#1A1C19' : '#44403D';
+            ctx.fillStyle = textColor;
+            ctx.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("HOHE MARTER", 512, 64);
+            
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.4;
+            ctx.strokeText("HOHE MARTER", 512, 64);
+            ctx.fillText("HOHE MARTER", 512, 64);
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this[cacheKey] = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+        }
+        return this[cacheKey];
+    }
+
+    getSchweinauBrickMat(station, platLength, centerPos, centerAngle) {
+        if (!this._schweinauBrickMat) {
+            const tileColor = '#694541';
+            const groutColor = '#34201c';
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = groutColor;
+            ctx.fillRect(0, 0, 256, 256);
+            
+            const rows = 16;
+            const cols = 4;
+            const h = 256 / rows;
+            const w = 256 / cols;
+            const joint = 1.5;
+            
+            for (let r = 0; r < rows; r++) {
+                const isShifted = (r % 2 === 1);
+                const xOffset = isShifted ? (w / 2) : 0;
+                ctx.fillStyle = tileColor;
+                for (let c = -1; c < cols + 1; c++) {
+                    const bx = c * w + xOffset;
+                    ctx.fillRect(bx + joint, r * h + joint, w - joint * 2, h - joint * 2);
+                }
+            }
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            
+            const bumpCanvas = document.createElement('canvas');
+            bumpCanvas.width = 256;
+            bumpCanvas.height = 256;
+            const bCtx = bumpCanvas.getContext('2d');
+            bCtx.fillStyle = '#000000';
+            bCtx.fillRect(0, 0, 256, 256);
+            bCtx.fillStyle = '#ffffff';
+            for (let r = 0; r < rows; r++) {
+                const isShifted = (r % 2 === 1);
+                const xOffset = isShifted ? (w / 2) : 0;
+                for (let c = -1; c < cols + 1; c++) {
+                    const bx = c * w + xOffset;
+                    bCtx.fillRect(bx + joint, r * h + joint, w - joint * 2, h - joint * 2);
+                }
+            }
+            const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
+            bumpTexture.wrapS = THREE.RepeatWrapping;
+            bumpTexture.wrapT = THREE.RepeatWrapping;
+            
+            this._schweinauBrickMat = new THREE.MeshLambertMaterial({
+                map: texture,
+                bumpMap: bumpTexture,
+                bumpScale: 0.012,
+                side: THREE.DoubleSide
+            });
+            if (station) {
+                this.applyVaultClipping(this._schweinauBrickMat, station, platLength, centerPos, centerAngle);
+            }
+        }
+        return this._schweinauBrickMat;
+    }
+
+    getSchweinauStripeMat(station, platLength, centerPos, centerAngle) {
+        if (!this._schweinauStripeMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 384;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#d1d5db';
+            ctx.fillRect(0, 0, 384, 64);
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 36px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.save();
+            ctx.translate(192, 32);
+            ctx.scale(0.7, 1.0);
+            ctx.fillText("SCHWEINAU", 0, 0);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.2;
+            ctx.strokeText("SCHWEINAU", 0, 0);
+            ctx.restore();
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1);
+            texture.anisotropy = 8;
+            
+            this._schweinauStripeMat = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
+            if (station) {
+                this.applyVaultClipping(this._schweinauStripeMat, station, platLength, centerPos, centerAngle);
+            }
+        }
+        return this._schweinauStripeMat;
+    }
+
+    getStLeonhardStoneMat() {
+        if (!this._stLeonhardStoneMat) {
+            const WORLD_W = 2.4, WORLD_H = 1.2;
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const pxPerMX = canvas.width / WORLD_W;
+            const pxPerMY = canvas.height / WORLD_H;
+            const joint = 2.0;
+            ctx.fillStyle = '#34201c';
+            ctx.fillRect(0, 0, 256, 256);
+            
+            const tones = ['#694541', '#523F37', '#605655', '#7B6E66'];
+            let y = 0, row = 0;
+            while (y < canvas.height) {
+                const courseM = 0.20 + Math.random() * 0.20;
+                let h = Math.round(courseM * pxPerMY);
+                if (y + h > canvas.height) h = canvas.height - y;
+                const blockM = 0.5 + Math.random() * 0.35;
+                const w = Math.max(16, Math.round(blockM * pxPerMX));
+                const offset = (row % 2 === 0) ? 0 : -Math.round(w / 2);
+                for (let x = offset; x < canvas.width; x += w) {
+                    ctx.fillStyle = tones[(Math.random() * tones.length) | 0];
+                    ctx.fillRect(x + joint, y + joint, w - joint * 2, Math.max(1, h - joint * 2));
+                }
+                y += h;
+                row++;
+            }
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.userData = { worldW: WORLD_W, worldH: WORLD_H };
+            
+            this._stLeonhardStoneMat = new THREE.MeshLambertMaterial({ map: texture });
+        }
+        return this._stLeonhardStoneMat;
+    }
+
+    getStLeonhardTextMat() {
+        if (!this._stLeonhardTextMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 128);
+            ctx.fillStyle = '#2a2725';
+            ctx.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("ST. LEONHARD", 512, 64);
+            ctx.strokeStyle = '#2a2725';
+            ctx.lineWidth = 1.8;
+            ctx.strokeText("ST. LEONHARD", 512, 64);
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this._stLeonhardTextMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+        }
+        return this._stLeonhardTextMat;
+    }
+
+    getRothenburgerGravelMat(station, platLength, centerPos, centerAngle) {
+        if (!this._rothenburgerGravelMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#393D3E';
+            ctx.fillRect(0, 0, 256, 256);
+            
+            const colors = ['#4D5256', '#3D4548', '#34383a'];
+            for (let i = 0; i < 600; i++) {
+                const x = Math.random() * 256;
+                const y = Math.random() * 256;
+                const r = 2.0 + Math.random() * 5.0;
+                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                ctx.beginPath();
+                if (Math.random() > 0.5) {
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                } else {
+                    ctx.rect(x - r, y - r, r * 2, r * 2);
+                }
+                ctx.fill();
+            }
+            for (let i = 0; i < 3000; i++) {
+                const x = Math.random() * 256;
+                const y = Math.random() * 256;
+                const val = Math.random() > 0.5 ? 20 : -20;
+                ctx.fillStyle = val > 0 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+                ctx.fillRect(x, y, 1, 1);
+            }
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            
+            const bumpCanvas = document.createElement('canvas');
+            bumpCanvas.width = 256;
+            bumpCanvas.height = 256;
+            const bCtx = bumpCanvas.getContext('2d');
+            bCtx.fillStyle = '#808080';
+            bCtx.fillRect(0, 0, 256, 256);
+            bCtx.globalAlpha = 0.35;
+            for (let i = 0; i < 400; i++) {
+                const x = Math.random() * 256;
+                const y = Math.random() * 256;
+                const r = 2.0 + Math.random() * 5.0;
+                bCtx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+                bCtx.beginPath();
+                bCtx.arc(x, y, r, 0, Math.PI * 2);
+                bCtx.fill();
+            }
+            const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
+            bumpTexture.wrapS = THREE.RepeatWrapping;
+            bumpTexture.wrapT = THREE.RepeatWrapping;
+            
+            this._rothenburgerGravelMat = new THREE.MeshLambertMaterial({
+                map: texture,
+                bumpMap: bumpTexture,
+                bumpScale: 0.02,
+                side: THREE.DoubleSide
+            });
+            if (station) {
+                this.applyVaultClipping(this._rothenburgerGravelMat, station, platLength, centerPos, centerAngle);
+            }
+        }
+        return this._rothenburgerGravelMat;
+    }
+
+    getRothenburgerPlaqueMat() {
+        if (!this._rothenburgerPlaqueMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 256);
+            
+            ctx.fillStyle = '#5C1A25';
+            ctx.beginPath();
+            ctx.ellipse(512, 128, 512, 128, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            const borderW = Math.round(256 * 0.20);
+            ctx.fillStyle = '#3D4548';
+            ctx.beginPath();
+            ctx.ellipse(512, 128, 512 - borderW * 4, 128 - borderW, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 52px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.save();
+            ctx.translate(512, 128);
+            ctx.scale(0.68, 1.0);
+            ctx.fillText("ROTHENBURGER STRASSE", 0, 0);
+            ctx.restore();
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this._rothenburgerPlaqueMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
+        }
+        return this._rothenburgerPlaqueMat;
+    }
+
+    getOpernhausStoneMat() {
+        if (!this._opernhausStoneMat) {
+            const WORLD_W = 2.4, WORLD_H = 1.2;
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const pxPerMX = canvas.width / WORLD_W;
+            const pxPerMY = canvas.height / WORLD_H;
+            const joint = 2.0;
+            ctx.fillStyle = '#1a1818';
+            ctx.fillRect(0, 0, 256, 256);
+            
+            const tones = ['#43393A', '#8C8688', '#4D3F3F', '#5E5C5D'];
+            let y = 0, row = 0;
+            while (y < canvas.height) {
+                const courseM = 0.20 + Math.random() * 0.20;
+                let h = Math.round(courseM * pxPerMY);
+                if (y + h > canvas.height) h = canvas.height - y;
+                const blockM = 0.5 + Math.random() * 0.35;
+                const w = Math.max(16, Math.round(blockM * pxPerMX));
+                const offset = (row % 2 === 0) ? 0 : -Math.round(w / 2);
+                for (let x = offset; x < canvas.width; x += w) {
+                    ctx.fillStyle = tones[(Math.random() * tones.length) | 0];
+                    ctx.fillRect(x + joint, y + joint, w - joint * 2, Math.max(1, h - joint * 2));
+                }
+                y += h;
+                row++;
+            }
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.userData = { worldW: WORLD_W, worldH: WORLD_H };
+            
+            this._opernhausStoneMat = new THREE.MeshLambertMaterial({ map: texture });
+        }
+        return this._opernhausStoneMat;
+    }
+
+    /** Rough exposed-concrete material for the Opernhaus arch ceiling. */
+    getOpernhausConcreateMat() {
+        if (!this._opernhausConcreateMat) {
+            const W = 512, H = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            // Base concrete tone: warm mid-grey
+            ctx.fillStyle = '#b0a89e';
+            ctx.fillRect(0, 0, W, H);
+
+            // Coarse aggregate: lighter patches
+            ctx.globalAlpha = 0.18;
+            for (let i = 0; i < 600; i++) {
+                const x = Math.random() * W, y = Math.random() * H;
+                const r = 2 + Math.random() * 7;
+                const tone = Math.floor(170 + Math.random() * 55);
+                ctx.fillStyle = `rgb(${tone},${tone - 6},${tone - 12})`;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Dark pits / voids
+            ctx.globalAlpha = 0.22;
+            for (let i = 0; i < 300; i++) {
+                const x = Math.random() * W, y = Math.random() * H;
+                const r = 1 + Math.random() * 4;
+                ctx.fillStyle = `rgb(${60 + (Math.random() * 30 | 0)},${55 + (Math.random() * 25 | 0)},${50 + (Math.random() * 20 | 0)})`;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Horizontal form-work lines (shuttering marks)
+            ctx.globalAlpha = 0.08;
+            for (let y = 0; y < H; y += 14 + Math.random() * 10) {
+                ctx.fillStyle = Math.random() > 0.5 ? '#7a7268' : '#c8c0b4';
+                ctx.fillRect(0, y | 0, W, 1);
+            }
+
+            // Fine speckle / sand grain noise
+            ctx.globalAlpha = 0.30;
+            for (let i = 0; i < 4000; i++) {
+                const x = Math.random() * W, y = Math.random() * H;
+                const v = 90 + (Math.random() * 80 | 0);
+                ctx.fillStyle = `rgba(${v},${v - 5},${v - 10},1)`;
+                ctx.fillRect(x | 0, y | 0, 1, 1);
+            }
+
+            ctx.globalAlpha = 1.0;
+
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+
+            this._opernhausConcreateMat = new THREE.MeshLambertMaterial({
+                map: texture,
+                side: THREE.DoubleSide
+            });
+        }
+        return this._opernhausConcreateMat;
+    }
+
+    getOpernhausTextMat() {
+        if (!this._opernhausTextMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 128);
+            ctx.fillStyle = '#2E2C2F';
+            ctx.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("OPERNHAUS", 512, 64);
+            ctx.strokeStyle = '#2E2C2F';
+            ctx.lineWidth = 1.8;
+            ctx.strokeText("OPERNHAUS", 512, 64);
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this._opernhausTextMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+        }
+        return this._opernhausTextMat;
+    }
+
+    getWoehrderCirclesMat() {
+        if (!this._woehrderCirclesMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#1e2022';
+            ctx.fillRect(0, 0, 1024, 512);
+            
+            const colors = ['#7B746D', '#1D2C46', '#435966', '#77A387', '#CCD196', '#272E2D'];
+            let seed = 98765;
+            const random = () => {
+                const x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            };
+            const drawCircle = (cx, cy, r, color) => {
+                ctx.fillStyle = color;
+                ctx.strokeStyle = '#1e2022';
+                ctx.lineWidth = 3;
+                for (let ox = -1; ox <= 1; ox++) {
+                    for (let oy = -1; oy <= 1; oy++) {
+                        ctx.beginPath();
+                        ctx.arc(cx + ox * 1024, cy + oy * 512, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                }
+            };
+            const scale = 1024 / 16.0;
+            for (let i = 0; i < 100; i++) {
+                const cx = random() * 1024;
+                const cy = random() * 512;
+                const r = (0.25 + random() * 1.25) * scale;
+                const color = colors[Math.floor(random() * colors.length)];
+                drawCircle(cx, cy, r, color);
+            }
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.userData = { worldW: 16.0, worldH: 8.0 };
+            
+            this._woehrderCirclesMat = new THREE.MeshLambertMaterial({ map: texture });
+        }
+        return this._woehrderCirclesMat;
+    }
+
+    getWoehrderTextMat() {
+        if (!this._woehrderTextMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 128);
+            ctx.fillStyle = '#374151';
+            ctx.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("WÖHRDER WIESE", 512, 64);
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1.8;
+            ctx.strokeText("WÖHRDER WIESE", 512, 64);
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this._woehrderTextMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+        }
+        return this._woehrderTextMat;
+    }
+
+    getRathenauTileMat() {
+        if (!this._rathenauTileMat) {
+            this._rathenauTileMat = this.createTiledMaterial('#f8fafc', '#cbd5e1', 0.15);
+        }
+        return this._rathenauTileMat;
+    }
+
+    getRathenauQuoteMat() {
+        if (!this._rathenauQuoteMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 256);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 54px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("DENKEN HEISST VERGLEICHEN.", 512, 90);
+            ctx.font = '42px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.fillText("- WALTHER RATHENAU.", 512, 170);
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this._rathenauQuoteMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
+        }
+        return this._rathenauQuoteMat;
+    }
+
+    getRathenauTextMat() {
+        if (!this._rathenauTextMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 128);
+            ctx.fillStyle = '#374151';
+            ctx.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("RATHENAUPLATZ", 512, 64);
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1.8;
+            ctx.strokeText("RATHENAUPLATZ", 512, 64);
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this._rathenauTextMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+        }
+        return this._rathenauTextMat;
+    }
+
+    getRathenauHerzlMat() {
+        if (!this._rathenauHerzlMat) {
+            const loader = new THREE.TextureLoader();
+            const herzlUrl = new URL('../assets/Herzl.png', import.meta.url).href;
+            const tex = loader.load(herzlUrl);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            this._rathenauHerzlMat = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide });
+        }
+        return this._rathenauHerzlMat;
+    }
+
+    getRathenauRathenauMat() {
+        if (!this._rathenauRathenauMat) {
+            const loader = new THREE.TextureLoader();
+            const rathenauUrl = new URL('../assets/Rathenau.png', import.meta.url).href;
+            const tex = loader.load(rathenauUrl);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            this._rathenauRathenauMat = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide });
+        }
+        return this._rathenauRathenauMat;
+    }
+
+    getGrossreuthUpperTileMat() {
+        if (!this._grossreuthUpperTileMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // Metallic base color
+            ctx.fillStyle = '#446E98';
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Clouds decoration
+            ctx.fillStyle = '#446E98';
+            ctx.globalAlpha = 0.5;
+            ctx.globalCompositeOperation = 'lighter';
+            let seed = 123;
+            const random = () => {
+                const x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            };
+            for (let i = 0; i < 40; i++) {
+                const x = random() * 512;
+                const y = random() * 512;
+                const r = 40 + random() * 80;
+
+                const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+                grad.addColorStop(0, 'rgba(255,255,255,0.4)');
+                grad.addColorStop(0.4, 'rgba(255,255,255,0.1)');
+                grad.addColorStop(1, 'rgba(255,255,255,0)');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Tile grid (8 rows)
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            ctx.lineWidth = 2;
+            const rows = 8;
+            const cols = 2; // elongated tiles
+            const rowH = 512 / rows;
+            const colW = 512 / cols;
+
+            for (let r = 0; r <= rows; r++) {
+                ctx.beginPath();
+                ctx.moveTo(0, r * rowH);
+                ctx.lineTo(512, r * rowH);
+                ctx.stroke();
+            }
+            for (let c = 0; c <= cols; c++) {
+                ctx.beginPath();
+                ctx.moveTo(c * colW, 0);
+                ctx.lineTo(c * colW, 512);
+                ctx.stroke();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+
+            this._grossreuthUpperTileMat = new THREE.MeshLambertMaterial({ map: texture });
+        }
+        return this._grossreuthUpperTileMat;
+    }
+
+    getGrossreuthSignMat() {
+        if (!this._grossreuthSignMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 128);
+            ctx.fillStyle = '#000219';
+            ctx.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("GROSSREUTH bei SCHWEINAU", 512, 64);
+
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this._grossreuthSignMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+        }
+        return this._grossreuthSignMat;
+    }
+
+    applyVaultClipping(mat, station, platLength, centerPos, centerAngle) {
+        const pos_end = this.sim.getTrackPosition(station.position + platLength / 2);
+        const dummy = new THREE.Object3D();
+        dummy.position.copy(centerPos);
+        dummy.rotation.y = centerAngle;
+        dummy.updateMatrixWorld();
+        const localPos_end = dummy.worldToLocal(pos_end.clone());
+        const curvatureA = localPos_end.x / (localPos_end.z * localPos_end.z);
+
+        mat.onBeforeCompile = (shader) => {
+            shader.uniforms.uCenterPos = { value: centerPos.clone() };
+            shader.uniforms.uCenterAngle = { value: centerAngle };
+            shader.uniforms.uCurvatureA = { value: curvatureA };
+            
+            shader.vertexShader = `
+                varying vec3 vWorldPosForClip;
+                ${shader.vertexShader}
+            `.replace(
+                '#include <project_vertex>',
+                `
+                #include <project_vertex>
+                vWorldPosForClip = (modelMatrix * vec4(position, 1.0)).xyz;
+                `
+            );
+            
+            shader.fragmentShader = `
+                uniform vec3 uCenterPos;
+                uniform float uCenterAngle;
+                uniform float uCurvatureA;
+                varying vec3 vWorldPosForClip;
+                ${shader.fragmentShader}
+            `.replace(
+                '#include <clipping_planes_fragment>',
+                `
+                #include <clipping_planes_fragment>
+                
+                vec3 offset = vWorldPosForClip - uCenterPos;
+                float c = cos(-uCenterAngle);
+                float s = sin(-uCenterAngle);
+                float localX = offset.x * c + offset.z * s;
+                float localZ = -offset.x * s + offset.z * c;
+                
+                localX = localX - uCurvatureA * localZ * localZ;
+                
+                float localY = offset.y;
+                
+                float dy = localY - 0.865;
+                float r = 4.5;
+                
+                if (dy >= 0.0) {
+                    float dz1 = localZ - (-25.0);
+                    float dz2 = localZ - (0.0);
+                    float dz3 = localZ - (25.0);
+                    
+                    if (abs(localX) < 5.0) {
+                        if (dz1*dz1 + dy*dy < r*r) discard;
+                        if (dz2*dz2 + dy*dy < r*r) discard;
+                        if (dz3*dz3 + dy*dy < r*r) discard;
+                    }
+                    
+                    if (localZ < -${(platLength / 2 - 4.0).toFixed(3)} || localZ > ${(platLength / 2 - 4.0).toFixed(3)}) {
+                        if (abs(localX) < 2.5) {
+                            discard;
+                        }
+                    }
+                }
+                `
+            );
+        };
+        
+        mat.customProgramCacheKey = () => {
+            return station.name + '_vaultMat';
+        };
     }
 }

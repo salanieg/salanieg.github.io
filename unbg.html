@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>U-Bahn Simulator U1 Nürnberg - Web3D</title>
     <meta name="description" content="Technisch korrekter und optisch ansprechender 3D-U-Bahn-Simulator der U-Bahn-Linie 1 in Nürnberg mit Three.js, WebGL und physikalischer Fahrsimulation.">
-    <link rel="stylesheet" href="./src/style.css?v=46">
+    <link rel="stylesheet" href="./src/style.css?v=47">
     
     <!-- ES Module Importmap for Three.js (self-hosted, no external CDN) -->
     <script type="importmap">
@@ -38,7 +38,7 @@
             
             <button id="btn-start" class="start-btn" disabled>
                 <div id="btn-loading-bar"></div>
-                <span id="btn-text">LADE TEXTUREN</span>
+                <span id="btn-text">LADEN …</span>
             </button>
             <p id="fullscreen-hint" class="fullscreen-hint">Gerät wechselt in den Vollbildmodus</p>
         </div>
@@ -102,14 +102,15 @@
                     <div class="menu-options">
                         <button id="btn-reverse" class="menu-option-btn" title="Fahrtrichtung wenden (nur im Stillstand bei geschlossenen Türen)">Wenden</button>
                         <button id="btn-controls" class="menu-option-btn" title="Steuerungstastaturbelegung anzeigen">Steuerung</button>
-                        <button id="btn-line" class="menu-option-btn" title="Linie wechseln (U1 / U2 / U3)">Linie: U1</button>
+                        <div class="menu-line-row">
+                            <button id="btn-line-u1" class="menu-line-btn menu-line-btn--u1 active" title="Linie U1">U1</button>
+                            <button id="btn-line-u2" class="menu-line-btn menu-line-btn--u2" title="Linie U2">U2</button>
+                            <button id="btn-line-u3" class="menu-line-btn menu-line-btn--u3" title="Linie U3">U3</button>
+                        </div>
                         <div class="menu-model-row">
-                            <label for="select-model">Zugmodell:</label>
-                            <select id="select-model" class="menu-model-select">
-                                <option value="G1">G1</option>
-                                <option value="DT1">DT1</option>
-                                <option value="DT3">DT3</option>
-                            </select>
+                            <button id="btn-model-gt" class="menu-model-btn active" title="Gelenkzug GT6 (Nürnberger Standard)">GT</button>
+                            <button id="btn-model-dt1" class="menu-model-btn" title="Duewag Triebwagen DT1">DT1</button>
+                            <button id="btn-model-dt3" class="menu-model-btn" title="Duewag Triebwagen DT3">DT3</button>
                         </div>
                         <button id="btn-resolution" class="menu-option-btn" title="Renderauflösung ändern (niedriger = flüssiger, aber unschärfer)">Auflösung: 100 %</button>
                         <div class="menu-volume-row">
@@ -141,7 +142,7 @@
         </main>
     </div>
 
-    <!-- Main Logic script -->
-    <script type="module" src="./src/main.js?v=149"></script>
+    <!-- Main Logic script (?v= bei jeder Änderung von main.js erhöhen — Cache-Busting) -->
+    <script type="module" src="./src/main.js?v=151"></script>
 </body>
 </html>

@@ -1,3 +1,14 @@
+// ============================================================================
+// RadioManager.js — Cockpit-Radio: streamt MP3s (music/<Sender>/) über ein
+// HTMLAudioElement in die Web-Audio-Kette des AudioManagers.
+//
+// KI-LANDKARTE:
+//   - Senderliste/Playlists: this.stations (Pfade relativ zur index.html).
+//     Neue MP3 hinzufügen = Datei in music/<Sender>/ legen UND hier eintragen.
+//   - Bedienlogik (Klick aufs Radio-Display im Führerstand): WorldManager
+//     raycastet, main.js animate() wertet sim.wantsRadioPlay/Next/Off aus.
+//   - Die Anzeige (Sender + Titel) zeichnet TrainModel.updateRadioDisplay.
+// ============================================================================
 export class RadioManager {
     constructor(audioManager) {
         this.audioManager = audioManager;
@@ -7,7 +18,7 @@ export class RadioManager {
             {
                 name: "Antenne Delta",
                 path: "music/Antenne Delta/",
-                files: ["Alpine Breath.mp3", "Drifting Inside.mp3", "River Of Souls.mp3", "Space Aviation.mp3"]
+                files: ["Pointman Frogs.mp3", "Alpine Breath.mp3", "Drifting Inside.mp3", "River Of Souls.mp3", "Space Aviation.mp3"]
             },
             {
                 name: "Classic Radio",
@@ -31,12 +42,11 @@ export class RadioManager {
             }
         ];
 
-        this.currentSource = null;
         this.gainNode = null;
         this.isPlaying = false;
         this.currentFileIdx = 0;
 
-        // New streaming implementation using HTMLAudioElement
+        // Streaming über HTMLAudioElement (statt vollständigem Buffer-Download)
         this.audioElement = new Audio();
         this.audioElement.crossOrigin = "anonymous";
         this.sourceNode = null;
@@ -131,10 +141,12 @@ export class RadioManager {
     }
 
     // Used whenever the radio is (re-)switched on: always starts on the default
-    // station, but still zaps into a random song at a random point within it.
+    // station with the first track (Pointman Frogs) from the very beginning.
     startDefaultStation() {
         this.currentStationIdx = this.defaultStationIdx;
-        this.zapToRandomTrack();
+        this.currentFileIdx = 0;       // always "Pointman Frogs"
+        this._seekRandomOnLoad = false; // play from the start, not a random point
+        this.play();
     }
 
     getStationName() {

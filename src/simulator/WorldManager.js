@@ -1,14 +1,46 @@
+// ============================================================================
+// WorldManager.js — DER Singleton für Renderer, Szene, Kameras, Licht und
+// Eingabe (Maus/Touch-Look, Gehen, Pinch-Zoom). Besitzt den einzigen
+// THREE.WebGLRenderer; main.js reicht ihm pro Frame das aktive TrainModel.
+//
+// KI-LANDKARTE (wo bearbeite ich was):
+//   - Kameras: cab/passenger/platform/orbit — Positionslogik pro Frame im
+//     großen switch in update(dt, train3D). Look-Around-State: *Rotation/
+//     *RotationView (geglättet via _smoothRotation, nur mobil).
+//   - Licht/Umgebung: setupLights + updateEnvironmentLighting (Zonen-Targets
+//     mit exponentiellem Nachziehen + Augen-Adaption via toneMappingExposure).
+//     ACHTUNG: bewusst einfaches AmbientLight-Zonenmodell — aufwendigere
+//     Konzepte (Hemisphäre, Punktlichter, Portal-Blending) wurden erprobt
+//     und auf Nutzerwunsch VOLLSTÄNDIG zurückgebaut. Nicht wieder einführen.
+//   - Eingabe: startLook/moveLook/endLook + onTouch*/onMouse*/onWheel/onKey*.
+//     Radio-Klick-Raycast (nur Cab-View) in startLook.
+//   - Fahrgast-Sprechblasen: handleSceneClick (Klick-Raycast auf Passagiere)
+//     + Positions-Update am Ende von update().
+//   - Auflösungs-Setting: setResolutionScale (Menü "Auflösung").
+// HEISSER PFAD: update() läuft jeden Frame — ausschließlich die _wm*-Temps
+// verwenden, keine new THREE.*-Allokationen einbauen.
+// ============================================================================
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ITEM_SENTENCES } from './people/PassengerData.js';
 
 // Reusable temp vectors for per-frame camera math (avoid GC churn)
 const _wmPos = new THREE.Vector3();
-const _wmTan = new THREE.Vector3();
 const _wmTarget = new THREE.Vector3();
 const _wmOffset = new THREE.Vector3();
 const _wmQuat = new THREE.Quaternion();
 const _wmEuler = new THREE.Euler();
+const _wmLocal = new THREE.Vector3();
+const _wmWorld = new THREE.Vector3();
+const _wmDir = new THREE.Vector3();
+const _wmFwd = new THREE.Vector3();
+const _wmRight = new THREE.Vector3();
+const _wmMove = new THREE.Vector3();
+const _wmUp = new THREE.Vector3(0, 1, 0);
+const _wmHeadPos = new THREE.Vector3();
+const _wmHeadTarget = new THREE.Vector3();
+const _wmFrustum = new THREE.Frustum();
+const _wmProjM = new THREE.Matrix4();
 
 export class WorldManager {
     constructor(containerEl, simulation) {
@@ -46,6 +78,19 @@ export class WorldManager {
         this.adaptationActive = false;
         this.adaptationDuration = 1.0;
         this.adaptationFromExposure = 1.0;
+
+        // Smooth lighting targets: instead of hard-assigning light intensities each frame,
+        // we set targets and exponentially lerp toward them. This eliminates the visible
+        // intensity jump when crossing a zone boundary (tunnel <-> station <-> open air).
+        // _lightSpeed* controls how fast the lerp runs in each direction (s^-1):
+        //   brightening (dark->light) is faster — like pupils constricting quickly in daylight
+        //   darkening  (light->dark) is slower  — like pupils dilating slowly in the dark
+        this._targetAmbient   = 0.6;
+        this._targetSun       = 2.5;
+        this._targetHeadlight = 1.0;
+        this._targetFogDensity = 0.0015;
+        this._lightSpeedBright = 6.0;  // s^-1 — fast brightening
+        this._lightSpeedDark   = 2.5;  // s^-1 — slow darkening (pupil dilation)
 
         // Passenger camera rotation (look-around). Passenger spawns near the side wall
         // (x=-0.75, see passengerLocalPos below) - +PI/2 points the view across the car
@@ -624,8 +669,8 @@ export class WorldManager {
         const activeCabCar = train3D.carriages[this.sim.isReversing ? (train3D.carriages.length - 1) : 0];
         const activeCarLength = isG1 ? 19.270 : (isDT3 ? 19.0425 : 19.0);
         
-        const headLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 1.2, -activeCarLength - 0.5) : new THREE.Vector3(0, 1.2, 0.5);
-        const headLocalTarget = this.sim.isReversing ? new THREE.Vector3(0, 0.2, -40.5) : new THREE.Vector3(0, 0.2, 40.5);
+        const headLocalPos = this.sim.isReversing ? _wmHeadPos.set(0, 1.2, -activeCarLength - 0.5) : _wmHeadPos.set(0, 1.2, 0.5);
+        const headLocalTarget = this.sim.isReversing ? _wmHeadTarget.set(0, 0.2, -40.5) : _wmHeadTarget.set(0, 0.2, 40.5);
         this.headlight.position.copy(activeCabCar.localToWorld(headLocalPos));
         this.headlight.target.position.copy(activeCabCar.localToWorld(headLocalTarget));
 
@@ -633,7 +678,7 @@ export class WorldManager {
         switch (this.activeCameraType) {
             case 'cab': {
                 // Driver's perspective inside the active leading carriage
-                const cabLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 2.00, -activeCarLength + 1.2) : new THREE.Vector3(0, 2.00, -1.2);
+                const cabLocalPos = this.sim.isReversing ? _wmLocal.set(0, 2.00, -activeCarLength + 1.1) : _wmLocal.set(0, 2.00, -1.1);
 
                 // Calculate local direction vector with relative yaw/pitch (smoothed
                 // towards the touch/mouse-driven target so drag jitter isn't jarring)
@@ -641,18 +686,18 @@ export class WorldManager {
                 const defaultYaw = this.sim.isReversing ? Math.PI : 0;
                 const yaw = defaultYaw + this.cabRotationView.yaw;
                 const pitch = this.cabRotationView.pitch;
-                
-                const localDir = new THREE.Vector3(
+
+                const localDir = _wmDir.set(
                     Math.sin(yaw) * Math.cos(pitch),
                     Math.sin(pitch),
                     Math.cos(yaw) * Math.cos(pitch)
                 );
-                
-                const localTarget = cabLocalPos.clone().add(localDir);
-                
-                const worldPos = activeCabCar.localToWorld(cabLocalPos.clone());
+
+                const localTarget = _wmTarget.copy(cabLocalPos).add(localDir);
+
+                const worldPos = activeCabCar.localToWorld(_wmWorld.copy(cabLocalPos));
                 const worldTarget = activeCabCar.localToWorld(localTarget);
-                
+
                 this.cameras.cab.position.copy(worldPos);
                 this.cameras.cab.lookAt(worldTarget);
                 break;
@@ -666,10 +711,10 @@ export class WorldManager {
                 this._smoothRotation(this.passengerRotationView, this.passengerRotation, dt);
                 const walkSpeed = 4.5 * dt; // Brisk walking speed inside the train
                 const yaw = this.passengerRotationView.yaw;
-                const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
-                const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+                const forward = _wmFwd.set(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
+                const right = _wmRight.crossVectors(forward, _wmUp).normalize();
 
-                const moveVec = new THREE.Vector3();
+                const moveVec = _wmMove.set(0, 0, 0);
                 if (this.keysPressed.ArrowUp) moveVec.add(forward);
                 if (this.keysPressed.ArrowDown) moveVec.sub(forward);
                 if (this.keysPressed.ArrowRight) moveVec.add(right);
@@ -724,16 +769,16 @@ export class WorldManager {
                 const currentCar = train3D.carriages[this.passengerCarIdx];
 
                 // Calculate local direction vector from passenger yaw/pitch
-                const localDir = new THREE.Vector3(
+                const localDir = _wmDir.set(
                     Math.sin(yaw) * Math.cos(this.passengerRotationView.pitch),
                     Math.sin(this.passengerRotationView.pitch),
                     Math.cos(yaw) * Math.cos(this.passengerRotationView.pitch)
                 );
-                
-                const localTarget = this.passengerLocalPos.clone().add(localDir);
-                const worldPos = currentCar.localToWorld(this.passengerLocalPos.clone());
+
+                const localTarget = _wmTarget.copy(this.passengerLocalPos).add(localDir);
+                const worldPos = currentCar.localToWorld(_wmWorld.copy(this.passengerLocalPos));
                 const worldTarget = currentCar.localToWorld(localTarget);
-                
+
                 this.cameras.passenger.position.copy(worldPos);
                 this.cameras.passenger.lookAt(worldTarget);
                 break;
@@ -800,10 +845,10 @@ export class WorldManager {
                 // mobile joystick for camera walking)
                 const walkSpeed = 5.0 * dt; // 5 m/s walking speed
                 const yaw = this.platformRotationView.yaw;
-                const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
-                const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+                const forward = _wmFwd.set(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
+                const right = _wmRight.crossVectors(forward, _wmUp).normalize();
 
-                const moveVec = new THREE.Vector3();
+                const moveVec = _wmMove.set(0, 0, 0);
                 if (this.keysPressed.ArrowUp) moveVec.add(forward);
                 if (this.keysPressed.ArrowDown) moveVec.sub(forward);
                 if (this.keysPressed.ArrowRight) moveVec.add(right);
@@ -833,13 +878,13 @@ export class WorldManager {
                 this.cameras.platform.position.y = stationY + plLevelY + 2.575;
 
                 // Compute look direction from yaw/pitch
-                const lookDir = new THREE.Vector3(
+                const lookDir = _wmDir.set(
                     Math.sin(yaw) * Math.cos(this.platformRotationView.pitch),
                     Math.sin(this.platformRotationView.pitch),
                     Math.cos(yaw) * Math.cos(this.platformRotationView.pitch)
                 );
-                
-                const targetPos = this.cameras.platform.position.clone().add(lookDir);
+
+                const targetPos = _wmTarget.copy(this.cameras.platform.position).add(lookDir);
                 this.cameras.platform.lookAt(targetPos);
                 break;
             }
@@ -849,10 +894,10 @@ export class WorldManager {
                 // train's centre.
                 const activeCabCar = train3D.carriages[this.sim.isReversing ? (train3D.carriages.length - 1) : 0];
                 const activeCarLength = isG1 ? 19.270 : (isDT3 ? 19.0425 : 19.0);
-                const cabLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 2.00, -activeCarLength + 1.2) : new THREE.Vector3(0, 2.00, -1.2);
+                const cabLocalPos = this.sim.isReversing ? _wmLocal.set(0, 2.00, -activeCarLength + 1.1) : _wmLocal.set(0, 2.00, -1.1);
 
                 // Target is exactly the driver's head position in the world
-                const targetPos = activeCabCar.localToWorld(cabLocalPos.clone());
+                const targetPos = activeCabCar.localToWorld(_wmWorld.copy(cabLocalPos));
 
                 // Use actual carriage yaw instead of track tangent for a more stable chase effect
                 const carWorldQuaternion = _wmQuat.setFromRotationMatrix(activeCabCar.matrixWorld);
@@ -920,17 +965,14 @@ export class WorldManager {
                     this.speechBubble.style.display = 'none';
                 }
             } else {
-                const headWorldPos = new THREE.Vector3();
-                this.activePassengerForBubble.getWorldPosition(headWorldPos);
+                const headWorldPos = this.activePassengerForBubble.getWorldPosition(_wmWorld);
                 // Height offset to place bubble above passenger head (approx 1.8m in world space)
                 headWorldPos.y += 1.8;
 
                 // Check if behind camera (using world coordinates before projecting)
-                const frustum = new THREE.Frustum();
-                const projScreenMatrix = new THREE.Matrix4();
-                projScreenMatrix.multiplyMatrices(this.activeCamera.projectionMatrix, this.activeCamera.matrixWorldInverse);
-                frustum.setFromProjectionMatrix(projScreenMatrix);
-                const isVisible = frustum.containsPoint(headWorldPos);
+                _wmProjM.multiplyMatrices(this.activeCamera.projectionMatrix, this.activeCamera.matrixWorldInverse);
+                _wmFrustum.setFromProjectionMatrix(_wmProjM);
+                const isVisible = _wmFrustum.containsPoint(headWorldPos);
 
                 // Project 3D coordinate to 2D screen coordinate
                 headWorldPos.project(this.activeCamera);
@@ -987,42 +1029,60 @@ export class WorldManager {
         }
         this._isOpenAirBackground = isOpenAir;
 
+        // ── Set lighting targets ──────────────────────────────────────────────────
+        // Only target values are written here; actual intensities are lerped below.
+        // This prevents hard jumps when the train crosses a zone boundary.
         if (isOpenAir) {
             // Day environment: real sky photo (equirectangular background, no extra draw call)
             this.scene.background = this.skyTexture;
             this.scene.fog.color = this.skyColor;
-            this.scene.fog.density = 0.0015; // very light fog for distance depth
 
-            this.ambientLight.intensity = isPlatform ? 0.85 : 0.6; // Brighter ambient daylight
-            this.sunLight.intensity = 2.5; // Bright sunlight
-            this.headlight.intensity = 1.0; // Headlights barely visible during day
+            this._targetAmbient    = isPlatform ? 0.85 : 0.6;
+            this._targetSun        = 2.5;
+            this._targetHeadlight  = 1.0;
+            this._targetFogDensity = 0.0015;
         } else {
             // Tunnel environment
             this.scene.background = this.tunnelColor;
             this.scene.fog.color = this.tunnelColor;
 
             if (isPlatform) {
-                // Brightly lit station (clear view, no thick black fog)
-                this.scene.fog.density = 0.0;
-                this.ambientLight.intensity = 0.55;
-                this.sunLight.intensity = 0.0;
-                this.headlight.intensity = 12.0;
+                // Brightly lit underground station
+                this._targetAmbient    = 0.55;
+                this._targetSun        = 0.0;
+                this._targetHeadlight  = 12.0;
+                this._targetFogDensity = 0.0;
             } else {
                 // Dark tunnel
-                this.scene.fog.density = 0.0; // less dense dark tunnel fog
-                this.ambientLight.intensity = 0.05;
-                this.sunLight.intensity = 0.0; // no sun inside tunnel
-                this.headlight.intensity = 20.0; // powerful headlight in dark
+                this._targetAmbient    = 0.05;
+                this._targetSun        = 0.0;
+                this._targetHeadlight  = 20.0;
+                this._targetFogDensity = 0.0;
             }
         }
 
         if (this.scene.fog && this.scene.fog.densityOverride !== undefined) {
-            this.scene.fog.density = this.scene.fog.densityOverride;
+            this._targetFogDensity = this.scene.fog.densityOverride;
         }
 
-        // Apply eye adaptation (exposure eases from the flash value back to 1.0)
+        // ── Exponential smoothing toward targets ──────────────────────────────────
+        // Separate speeds for brightening vs. darkening to mimic pupil adaptation:
+        // eyes constrict quickly in bright light, dilate slowly in the dark.
+        const safeDt = Math.min(dt || 0.016, 0.1);
+
+        const _lerpLight = (current, target) => {
+            const speed = (target > current) ? this._lightSpeedBright : this._lightSpeedDark;
+            return current + (target - current) * (1 - Math.exp(-safeDt * speed));
+        };
+
+        this.ambientLight.intensity  = _lerpLight(this.ambientLight.intensity,  this._targetAmbient);
+        this.sunLight.intensity      = _lerpLight(this.sunLight.intensity,      this._targetSun);
+        this.headlight.intensity     = _lerpLight(this.headlight.intensity,     this._targetHeadlight);
+        this.scene.fog.density       = _lerpLight(this.scene.fog.density,       this._targetFogDensity);
+
+        // ── Eye adaptation (exposure eases from flash value back to 1.0) ─────────
         if (this.adaptationActive) {
-            this.adaptationTimer += Math.min(dt || 0.016, 0.1); // clamp: a tab-refocus dt spike must not skip the effect
+            this.adaptationTimer += safeDt; // safeDt already clamped above
             const k = Math.min(this.adaptationTimer / this.adaptationDuration, 1.0);
             const s = k * k * (3.0 - 2.0 * k); // smoothstep: hold the blinded moment, then land softly
             this.renderer.toneMappingExposure = this.adaptationFromExposure + (1.0 - this.adaptationFromExposure) * s;

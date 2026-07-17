@@ -1,16 +1,39 @@
+// ============================================================================
+// main.js — App-Einstieg: verdrahtet UI, Eingaben, Audio und die Linien-Rigs
+// (Simulation/TrackManager/StationModel/TrainModel je Linie) und treibt den
+// Frame-Loop (animate).
+//
+// KI-LANDKARTE (wo bearbeite ich was):
+//   - Ladevorgang/Ladebalken: startLoadingPipeline() (echte Bauschritte
+//     treiben den Balken) -> loadCityModel() (GLB-Download mit echtem %)
+//     -> warmUpEverything() (GPU-Upload hinter dem Splash).
+//   - Linien-Verwaltung: buildLineRig/adoptRig/switchLine. Genau EINE Linie
+//     ist aktiv; this.sim/trackManager/stationModel/trainModel sind Aliase
+//     auf das aktive Rig. Geteilte Bauten (Plärrer-Halle, Stammstrecke,
+//     Weichen) leben dauerhaft in der Welt-Szene.
+//   - Frame-Loop: animate() — Physik, Sounds, Kulling-Updates, Render.
+//   - Tastatur/HUDs: bindEvents (W/S/D/F/H/A/Leertaste/1-4; Debug-HUDs:
+//     O=Performance, P=Glas-Tuning, C=Stadtmodell, N=Sound-Mixer).
+//   - Mobile: setupMobileControls (Slider, Joystick, Buttons).
+//   - Cache-Busting: die ?v=-Nummern unten bei JEDER Änderung der jeweiligen
+//     Datei erhöhen (und modulübergreifend identisch halten!).
+// ============================================================================
 import * as THREE from 'three';
-import { Simulation } from './simulator/Simulation.js?v=65';
-import { WorldManager } from './simulator/WorldManager.js?v=66';
-import { TrackManager } from './simulator/TrackManager.js?v=74';
-import { StationModel } from './simulator/StationModel.js?v=71';
-import { TrainModel } from './simulator/TrainModel.js?v=87';
+import { Simulation } from './simulator/Simulation.js?v=66';
+import { WorldManager } from './simulator/WorldManager.js?v=67';
+import { TrackManager } from './simulator/TrackManager.js?v=76';
+import { StationModel } from './simulator/StationModel.js?v=73';
+import { TrainModel } from './simulator/TrainModel.js?v=88';
 import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=10';
 import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=10';
-import { TRACK_DATA_TRUNK } from './simulator/TrackDataTrunk.js?v=2';
-import { AudioManager } from './audio/AudioManager.js?v=39';
-import { RadioManager } from './audio/RadioManager.js';
+import { TRACK_DATA_TRUNK } from './simulator/TrackDataTrunk.js?v=3';
+import { AudioManager } from './audio/AudioManager.js?v=40';
+import { RadioManager } from './audio/RadioManager.js?v=2';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+// Wiederverwendbare Temp-Vektoren für den Frame-Loop (kein GC-Druck)
+const _escPlayerPos = new THREE.Vector3();
 
 class App {
     constructor() {
@@ -31,15 +54,19 @@ class App {
 
         this.clock = new THREE.Clock();
         this.isRunning = false;
-        
-        // Announcement state
-        this.announcedNextStation = false;
+
+        // Türzustand des letzten Frames (für die Tür-Soundtrigger in animate)
         this.lastDoorState = 0;
 
-        // Performance HUD state (toggled with P)
+        // Performance HUD state (Taste O)
         this.perfHudVisible = false;
         this.perfFrames = 0;
         this.perfTimer = 0;
+
+        // Rolltreppen-Ambience: Positions-Cache (alle 0.5 s aufgefrischt statt
+        // die komplette Szene pro Frame zu traversieren)
+        this._escalatorCache = [];
+        this._escalatorTimer = 0;
 
         // City model placement debug HUD state (toggled with C)
         this.cityDebugVisible = false;
@@ -63,37 +90,11 @@ class App {
         const canvasContainer = document.getElementById('canvas3d');
         this.world = new WorldManager(canvasContainer, null);
 
-        // Build U1's rig first and adopt it as active, exactly like the previous single-line
-        // setup did (U1 loads immediately; U2/U3 build lazily on first selection).
-        const u1Rig = this.buildLineRig('U1');
-        this.lineRigs.U1 = u1Rig;
-        this.adoptRig(u1Rig);
-
-        // Plärrer is a bespoke, shared node between all three lines (Gleis 1/2 = U1,
-        // Gleis 3/4 = U2/U3) -- it must survive line switches, so it's reparented out of
-        // U1's lineRoot into the permanent world scene right after being built.
-        this.plaerrerGroup = this.trackManager.buildPlaerrer(this.stationModel);
-        this.world.scene.add(this.plaerrerGroup); // Object3D.add() reparents automatically
-
-        // Shared trunk (Rothenburger Straße..Rathenauplatz): built once, lives permanently in
-        // the world scene like Plärrer above, instead of once per U2/U3 lineRoot. See
-        // buildTrunkRig() and Simulation.isTrunkZone.
-        this.trunkGroup = this.buildTrunkRig();
-        this.world.scene.add(this.trunkGroup);
-
-        // Bespoke switch transitions (Rothenburger Straße / Rathenauplatz): built once, shared
-        // between U2 and U3 like Plärrer/the trunk above, instead of each line deriving its own
-        // (previously noisy, GPS-survey-based) switch geometry. Needs working U2/U3 Simulations
-        // even though their full visual rigs are still lazily built on first line-select.
-        const u2Sim = this.getOrCreateSim('U2'), u3Sim = this.getOrCreateSim('U3');
-        this.switchGroups = {};
-        for (const name of ['Rothenburger Straße', 'Rathenauplatz']) {
-            const g = this.trackManager.buildSwitchTransition(u2Sim, u3Sim, name, name);
-            if (g) { this.switchGroups[name] = g; this.world.scene.add(g); }
-        }
-
-        // Load textures first (with a progress bar), then the city model
-        this.loadTexturesPhase();
+        // Der komplette Szenenaufbau (U1-Rig, Plärrer, Stammstrecke, Weichen,
+        // Chunk-Vorbau, Stadtmodell, GPU-Upload) läuft schrittweise über die
+        // Lade-Pipeline, damit der Ladebalken ECHTEN Fortschritt anzeigt und
+        // die Seite während des Aufbaus nicht einfriert.
+        this.startLoadingPipeline();
 
         // Bind Footsteps from WorldManager to AudioManager
         this.world.onFootstep = (vol) => {
@@ -104,8 +105,8 @@ class App {
         // Bind Start Button
         this.dom.btnStart.addEventListener('click', this.startSimulation.bind(this));
 
-        // Populate Teleport Select Dropdown / mobile list from the active line's stations
-        this.rebuildTeleportUI();
+        // (Das Teleport-Dropdown wird von der Lade-Pipeline befüllt, sobald das
+        // aktive Rig existiert — siehe Schritt 'AKTIVIERE SZENE'.)
 
         // Teleport Button event listener
         const teleportSelect = document.getElementById('teleport-select');
@@ -201,46 +202,68 @@ class App {
             e.target.blur();
         });
 
-        // Zugmodell Select event listener
-        const modelSelect = document.getElementById('select-model');
-        if (modelSelect) {
-            modelSelect.addEventListener('change', (e) => {
-                const nextType = e.target.value;
-                this.sim.trainModelType = nextType;
+        // Zugmodell Buttons: GT / DT1 / DT3 — gleiche Logik wie Linien-Buttons
+        const modelBtns = {
+            G1:  document.getElementById('btn-model-gt'),
+            DT1: document.getElementById('btn-model-dt1'),
+            DT3: document.getElementById('btn-model-dt3'),
+        };
+        this.updateModelBtnUI = () => {
+            for (const [id, btn] of Object.entries(modelBtns)) {
+                if (btn) btn.classList.toggle('active', id === this.sim.trainModelType);
+            }
+        };
+        for (const [modelId, btn] of Object.entries(modelBtns)) {
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    if (this.sim.trainModelType === modelId) { e.target.blur(); return; }
+                    this.sim.trainModelType = modelId;
 
-                // Update audio engine to use specific sounds for the chosen model
-                this.audio.setTrainType(nextType);
+                    // Update audio engine to use specific sounds for the chosen model
+                    this.audio.setTrainType(modelId);
 
-                // Rebuild the 3D train model
-                this.trainModel.setTrainModel(nextType);
+                    // Rebuild the 3D train model
+                    this.trainModel.setTrainModel(modelId);
 
-                // Upload the freshly built model to the GPU in this frame (one
-                // controlled hitch on the selection instead of a surprise hitch
-                // when the new train first comes into view)
-                this.warmUpRenderer();
+                    // Upload the freshly built model to the GPU in this frame (one
+                    // controlled hitch on the selection instead of a surprise hitch
+                    // when the new train first comes into view)
+                    this.warmUpRenderer();
 
-                // Update cameras to make sure they are aligned
-                if (this.world.activeCameraType === 'cab') {
-                    this.world.setCamera('cab');
-                }
+                    // Update cameras to make sure they are aligned
+                    if (this.world.activeCameraType === 'cab') {
+                        this.world.setCamera('cab');
+                    }
 
-                // Play feedback click sound
-                this.audio.playCabSwitch();
-                e.target.blur();
-            });
+                    // Play feedback click sound
+                    this.audio.playCabSwitch();
+
+                    this.updateModelBtnUI();
+                    e.target.blur();
+                });
+            }
         }
 
-        // Linie Button event listener: cycles U1 -> U2 -> U3 -> U1 (same idiom as Auflösung)
-        const lineBtn = document.getElementById('btn-line');
-        const lineOrder = ['U1', 'U2', 'U3'];
-        if (lineBtn) {
-            lineBtn.addEventListener('click', (e) => {
-                const idx = lineOrder.indexOf(this.activeLineId);
-                const next = lineOrder[(idx + 1) % lineOrder.length];
-                this.switchLine(next);
-                lineBtn.textContent = `Linie: ${next}`;
-                e.target.blur();
-            });
+
+        // Linie Buttons: U1 / U2 / U3 — direkt anklickbar, aktive Linie hervorgehoben
+        const lineBtns = {
+            U1: document.getElementById('btn-line-u1'),
+            U2: document.getElementById('btn-line-u2'),
+            U3: document.getElementById('btn-line-u3'),
+        };
+        this.updateLineBtnUI = () => {
+            for (const [id, btn] of Object.entries(lineBtns)) {
+                if (btn) btn.classList.toggle('active', id === this.activeLineId);
+            }
+        };
+        for (const [lineId, btn] of Object.entries(lineBtns)) {
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    this.switchLine(lineId);
+                    this.updateLineBtnUI();
+                    e.target.blur();
+                });
+            }
         }
 
         // Auflösungs-Button: schaltet die Renderauflösung 100 % -> 75 % -> 50 % durch
@@ -328,8 +351,8 @@ class App {
         // Setup Mobile Touch Controls
         this.setupMobileControls();
 
-        // Start rendering loop immediately (renders static scene behind splash overlay)
-        requestAnimationFrame(this.animate.bind(this));
+        // Der Render-Loop wird am Ende der Lade-Pipeline gestartet
+        // (Schritt 'AKTIVIERE SZENE'), sobald das aktive Rig existiert.
     }
 
     // Builds a fresh, self-contained {sim, trackManager, stationModel, trainModel} rig for one
@@ -371,31 +394,12 @@ class App {
         return { lineId, sim, trackManager, stationModel, trainModel, lineRoot };
     }
 
-    // Builds the shared trunk (Rothenburger Straße..Rathenauplatz) once: a standalone
-    // Simulation/TrackManager/StationModel trio (lineId "TRUNK", never driven, no train) fed
-    // TRACK_DATA_TRUNK. TrackManager's own chunk streaming only keeps a window of the route
-    // resident (it doesn't know this route is small), so every chunk is built directly instead
-    // of going through trackManager.update() -- the trunk is short (~75 chunks) and needs to be
-    // permanently resident anyway, exactly like the bespoke Plärrer hall next to it.
-    // StationModel's constructor already pre-builds all of its stations (just doesn't add them
-    // to the scene until update() culls them in); since there are only 5, add them directly too.
-    buildTrunkRig() {
-        const sim = new Simulation(TRACK_DATA_TRUNK);
-        const root = new THREE.Group();
-        root.name = 'trunkRoot';
-        const trackManager = new TrackManager(root, sim);
-        const stationModel = new StationModel(root, sim);
-        const totalChunks = Math.ceil(sim.totalLength / trackManager.chunkSize);
-        for (let i = 0; i <= totalChunks; i++) {
-            const chunk = trackManager.createChunk(i);
-            trackManager.chunkCache.set(i, chunk);
-            trackManager.activeChunks.set(i, chunk);
-            root.add(chunk);
-        }
-        stationModel.stationsList.forEach(g => root.add(g));
-        this._trunkSim = sim;
-        return root;
-    }
+    // (Die Stammstrecke Rothenburger Straße..Rathenauplatz wird als eigener
+    // Simulation/TrackManager/StationModel-Verbund — lineId "TRUNK", nie
+    // befahren, ohne Zug — EINMAL von der Lade-Pipeline gebaut und dauerhaft
+    // in die Welt-Szene gehängt, genau wie die Plärrer-Halle. U2/U3 lassen
+    // diesen Bogenlängen-Bereich in ihren eigenen Rigs aus; siehe
+    // Simulation.isTrunkZone und die Schritte 'BAUE STAMMSTRECKE' unten.)
 
     // Distance-cull the whole shared trunk group against the ACTIVE line's own train position,
     // same idiom as TrackManager's internal plaerrerGroup toggle. Only U2/U3 ever have a
@@ -409,11 +413,14 @@ class App {
 
     // Same idiom, per switch-transition piece (each is keyed by station name so it lines up
     // with this.sim.switchZones, which the ACTIVE line's own Simulation computes for itself).
+    // Iterates over the GROUPS (not the zones): a line without switchZones (U1) must hide
+    // every piece, otherwise a piece left visible by the previously active line lingers.
     updateSwitchVisibility() {
         if (!this.switchGroups) return;
-        for (const z of this.sim.switchZones || []) {
-            const g = this.switchGroups[z.name];
-            if (g) g.visible = this.sim.position >= z.range[0] - 600 && this.sim.position <= z.range[1] + 600;
+        const zones = this.sim.switchZones || [];
+        for (const [name, g] of Object.entries(this.switchGroups)) {
+            const z = zones.find(zn => zn.name === name);
+            g.visible = !!z && this.sim.position >= z.range[0] - 600 && this.sim.position <= z.range[1] + 600;
         }
     }
 
@@ -438,19 +445,19 @@ class App {
         this.lineRigs[lineId].lineRoot.visible = true;
         this.adoptRig(this.lineRigs[lineId]);
 
-        // Reset per-line announcement/UI state (belongs to whichever train is now active).
-        this.announcedNextStation = false;
+        // Tür-Sound-Zustand gehört zum jetzt aktiven Zug
         this.lastDoorState = 0;
 
         this.rebuildTeleportUI();
         this.audio.setTrainType(this.trainModel.trainType);
 
-        // Update the model dropdown to reflect this line's current model,
+        // Update the model buttons to reflect this line's current model,
         // defaulting to G1 on U1 and DT3 on U2/U3 for freshly built rigs.
-        const modelSelect = document.getElementById('select-model');
-        if (modelSelect) {
-            modelSelect.value = this.sim.trainModelType || (lineId === 'U1' ? 'G1' : 'DT3');
+        if (!this.sim.trainModelType) {
+            this.sim.trainModelType = (lineId === 'U1' ? 'G1' : 'DT3');
         }
+        if (this.updateModelBtnUI) this.updateModelBtnUI();
+
 
         // Snap geometry/camera to the resumed train position, same as the G1<->DT1 rebuild.
         this.trackManager.update(this.sim.position);
@@ -461,6 +468,7 @@ class App {
         this.world.update(0, this.trainModel);
         this.warmUpRenderer();
         if (this.world.activeCameraType === 'cab') this.world.setCamera('cab');
+        if (this.world.activeCameraType === 'platform') this.world.setCamera('platform');
         this.audio.playCabSwitch();
     }
 
@@ -495,36 +503,175 @@ class App {
         }
     }
 
-    loadTexturesPhase() {
-        const btnText = document.getElementById('btn-text');
-        const btnLoadingBar = document.getElementById('btn-loading-bar');
-        
-        if (btnText) btnText.textContent = 'LADE TEXTUREN';
-        if (btnLoadingBar) btnLoadingBar.style.width = '0%';
+    // ------------------------------------------------------------------------
+    // Ehrliche Lade-Pipeline: der Balken wird von den ECHTEN Bauschritten
+    // getrieben (früher lief hier eine reine 1-Sekunden-Attrappe "LADE
+    // TEXTUREN"). Jeder Schritt läuft in einem eigenen requestAnimationFrame-
+    // Tick, damit der Browser zwischen den Schritten Text/Balken neu zeichnet.
+    // `weight` = grobe relative Dauer des Schritts (bestimmt den Balken-Anteil);
+    // `tick()` wird pro Frame aufgerufen und liefert den Fortschritt 0..1 —
+    // mehrteilige Schritte (Stationen, Chunks) kommen so pro Frame ein Stück
+    // voran, statt die Seite sekundenlang einzufrieren.
+    // Aufteilung des Balkens: Bauschritte 0..72 %, Stadtmodell-Download
+    // 72..97 % (echter XHR-Fortschritt), GPU-Upload 97..100 %.
+    startLoadingPipeline() {
+        const setText = (t) => {
+            const el = document.getElementById('btn-text');
+            if (el) el.textContent = t;
+        };
+        const setBar = (f) => {
+            const el = document.getElementById('btn-loading-bar');
+            if (el) el.style.width = (Math.max(0, Math.min(1, f)) * 100).toFixed(1) + '%';
+        };
+        this._setLoadText = setText;
+        this._setLoadBar = setBar;
 
-        let progress = 0;
-        const duration = 1000; // 1.0 second smooth texture loading bar
-        const startTime = performance.now();
+        const steps = [];
+        const once = (label, weight, fn) => steps.push({ label, weight, tick: () => { fn(); return 1; } });
 
-        const animateProgress = (now) => {
-            const elapsed = now - startTime;
-            progress = Math.min(1, elapsed / duration);
-            
-            const percent = Math.round(progress * 100);
-            if (btnLoadingBar) {
-                btnLoadingBar.style.width = percent + '%';
+        // ---- U1-Rig in Einzelschritten (inhaltlich identisch zu buildLineRig('U1')) ----
+        once('LADE STRECKE', 3, () => {
+            const sim = this.getOrCreateSim('U1');
+            const lineRoot = new THREE.Group();
+            lineRoot.name = 'lineRoot_U1';
+            this.world.scene.add(lineRoot);
+            this._loadCtx = { sim, lineRoot, trackManager: new TrackManager(lineRoot, sim) };
+        });
+        steps.push({ label: 'BAUE STATIONEN', weight: 26, tick: () => {
+            const ctx = this._loadCtx;
+            if (!ctx.stationModel) {
+                ctx.stationModel = new StationModel(ctx.lineRoot, ctx.sim, { deferBuild: true });
             }
+            const more = ctx.stationModel.buildNextStation();
+            return more ? ctx.stationModel.stationsList.length / ctx.sim.stations.length : 1;
+        } });
+        once('BAUE ZUG', 9, () => {
+            const ctx = this._loadCtx;
+            ctx.trainModel = new TrainModel(ctx.lineRoot, ctx.sim);
+            const rig = {
+                lineId: 'U1', sim: ctx.sim, trackManager: ctx.trackManager,
+                stationModel: ctx.stationModel, trainModel: ctx.trainModel, lineRoot: ctx.lineRoot
+            };
+            this.lineRigs.U1 = rig;
+            this.adoptRig(rig);
+        });
 
-            if (progress < 1) {
-                requestAnimationFrame(animateProgress);
+        // Plärrer: gemeinsamer Sonderbau aller drei Linien, dauerhaft in der
+        // Welt-Szene (buildPlaerrer setzt auch trackManager.plaerrerGroup).
+        once('BAUE PLÄRRER-HALLE', 8, () => {
+            this.plaerrerGroup = this.trackManager.buildPlaerrer(this.stationModel);
+            this.world.scene.add(this.plaerrerGroup); // Object3D.add() reparented automatisch
+        });
+
+        // Stammstrecke (U2/U3): kurz (~75 Chunks) und dauerhaft resident,
+        // deshalb werden alle Chunks direkt gebaut statt über update()-Streaming.
+        once('BAUE STAMMSTRECKE', 2, () => {
+            const sim = new Simulation(TRACK_DATA_TRUNK);
+            const root = new THREE.Group();
+            root.name = 'trunkRoot';
+            this._trunkCtx = {
+                sim, root,
+                trackManager: new TrackManager(root, sim),
+                stationModel: null,
+                chunkIdx: 0
+            };
+            this._trunkSim = sim;
+        });
+        steps.push({ label: 'BAUE STAMMSTRECKE', weight: 6, tick: () => {
+            const t = this._trunkCtx;
+            if (!t.stationModel) {
+                t.stationModel = new StationModel(t.root, t.sim, { deferBuild: true });
+                return 0.05;
+            }
+            const more = t.stationModel.buildNextStation();
+            return more ? 0.05 + 0.95 * (t.stationModel.stationsList.length / t.sim.stations.length) : 1;
+        } });
+        steps.push({ label: 'BAUE STAMMSTRECKE', weight: 7, tick: () => {
+            const t = this._trunkCtx;
+            const totalChunks = Math.ceil(t.sim.totalLength / t.trackManager.chunkSize);
+            const end = Math.min(totalChunks, t.chunkIdx + 15);
+            for (; t.chunkIdx <= end; t.chunkIdx++) {
+                const chunk = t.trackManager.createChunk(t.chunkIdx);
+                t.trackManager.chunkCache.set(t.chunkIdx, chunk);
+                t.trackManager.activeChunks.set(t.chunkIdx, chunk);
+                t.root.add(chunk);
+            }
+            if (t.chunkIdx > totalChunks) {
+                t.stationModel.stationsList.forEach(g => t.root.add(g));
+                this._trunkStationModel = t.stationModel; // für die Rolltreppen-Ambience
+                this.trunkGroup = t.root;
+                this.world.scene.add(t.root);
+                return 1;
+            }
+            return t.chunkIdx / (totalChunks + 1);
+        } });
+
+        // Weichen-Übergänge (Rothenburger Straße / Rathenauplatz): einmalig,
+        // von U2 und U3 gemeinsam genutzt. Braucht funktionierende U2/U3-
+        // Simulationen (billig), obwohl deren volle Rigs lazy bleiben.
+        once('BAUE WEICHEN', 3, () => {
+            const u2Sim = this.getOrCreateSim('U2'), u3Sim = this.getOrCreateSim('U3');
+            this.switchGroups = {};
+            for (const name of ['Rothenburger Straße', 'Rathenauplatz']) {
+                const g = this.trackManager.buildSwitchTransition(u2Sim, u3Sim, name, name);
+                if (g) { this.switchGroups[name] = g; this.world.scene.add(g); }
+            }
+        });
+
+        // U1-Strecke komplett vorbauen: füllt den Chunk-Cache für die GANZE
+        // Linie, damit während der Fahrt keine createChunk-Hitches mehr
+        // auftreten (der Cache ist ohnehin permanent — das hier verlagert die
+        // Baukosten nur ehrlich in den Ladebalken).
+        steps.push({ label: 'BAUE TUNNEL & STRECKE', weight: 22, tick: () => {
+            const tm = this.trackManager;
+            const total = Math.floor(this.sim.totalLength / tm.chunkSize);
+            if (this._prebuildIdx === undefined) this._prebuildIdx = 0;
+            const end = Math.min(total, this._prebuildIdx + 5);
+            for (; this._prebuildIdx <= end; this._prebuildIdx++) {
+                if (!tm.chunkCache.has(this._prebuildIdx)) {
+                    tm.chunkCache.set(this._prebuildIdx, tm.createChunk(this._prebuildIdx));
+                }
+            }
+            return this._prebuildIdx > total ? 1 : this._prebuildIdx / (total + 1);
+        } });
+
+        // Szene scharfschalten: Kulling-Erstlauf, Teleport-UI, Render-Loop.
+        once('AKTIVIERE SZENE', 1, () => {
+            this.rebuildTeleportUI();
+            this.trackManager.update(this.sim.position);
+            this.updateTrunkVisibility();
+            this.updateSwitchVisibility();
+            this.stationModel.update(this.sim.position);
+            this.trainModel.update(0);
+            // Render-Loop starten (zeichnet die statische Szene hinter dem Splash)
+            requestAnimationFrame(this.animate.bind(this));
+        });
+
+        // ---- Executor ----
+        const BUILD_SLICE = 0.72; // Bauschritte belegen 0..72 % des Balkens
+        const totalWeight = steps.reduce((a, s) => a + s.weight, 0);
+        let doneWeight = 0;
+        let idx = 0;
+        setText(steps[0].label);
+        setBar(0);
+        const pump = () => {
+            const step = steps[idx];
+            setText(step.label);
+            let frac = step.tick();
+            if (frac === true) frac = 1;
+            if (frac >= 1) {
+                doneWeight += step.weight;
+                idx++;
+                frac = 0;
+            }
+            setBar(((doneWeight + step.weight * frac) / totalWeight) * BUILD_SLICE);
+            if (idx < steps.length) {
+                requestAnimationFrame(pump);
             } else {
-                setTimeout(() => {
-                    this.loadCityModel();
-                }, 100);
+                this.loadCityModel(BUILD_SLICE, 0.25); // 72..97 %; GPU-Upload = Rest
             }
         };
-
-        requestAnimationFrame(animateProgress);
+        requestAnimationFrame(pump);
     }
 
     // Renders one frame with frustum culling disabled on every object, so all
@@ -548,15 +695,35 @@ class App {
         this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
     }
 
-    loadCityModel() {
+    // Lädt das Stadtmodell-GLB mit echtem Download-Fortschritt. `baseFrac` ist
+    // der Balkenstand beim Start, `slice` der Balken-Anteil des Downloads;
+    // danach folgt der GPU-Upload (warmUpEverything) bis 100 %.
+    loadCityModel(baseFrac = 0, slice = 0.25) {
         const btnStart = this.dom.btnStart;
-        btnStart.disabled = true;
+        const setText = this._setLoadText || (() => {});
+        const setBar = this._setLoadBar || (() => {});
 
-        const btnText = document.getElementById('btn-text');
-        const btnLoadingBar = document.getElementById('btn-loading-bar');
+        setText('LADE STADTMODELL');
+        setBar(baseFrac);
 
-        if (btnText) btnText.textContent = 'LADE STADTMODELL';
-        if (btnLoadingBar) btnLoadingBar.style.width = '0%';
+        // Fallback-Gesamtgröße, falls der Server keine Content-Length liefert
+        // (z. B. bei gzip-Transfer): city_model.glb ist ~4.7 MB groß.
+        const FALLBACK_TOTAL_BYTES = 4.8 * 1024 * 1024;
+
+        const finishLoading = () => {
+            // GPU-Upload: alles (Stadt, alle Stationen, alle Chunks, Zug) noch
+            // hinter dem Splash auf die GPU schieben — sonst ruckelt der erste
+            // Rundumblick, wenn ~1900 Buffer lazy hochgeladen werden.
+            setText('GPU-UPLOAD');
+            setBar(baseFrac + slice);
+            requestAnimationFrame(() => {
+                this.warmUpEverything();
+                setBar(1);
+                btnStart.classList.add('loaded');
+                btnStart.disabled = false;
+                setText('Simulation starten');
+            });
+        };
 
         const loader = new GLTFLoader();
         loader.setMeshoptDecoder(MeshoptDecoder);
@@ -567,6 +734,7 @@ class App {
                 const model = gltf.scene;
 
                 // Apply the exact position and orientation values determined via debugger
+                // (justierbar über das Stadtmodell-Debug-HUD, Taste C)
                 model.position.set(-5138.00, 0.00, -3912.00);
                 model.rotation.set(0, 0.0000, 0);
                 model.scale.set(1.000, 1.000, 1.000);
@@ -591,39 +759,15 @@ class App {
 
                 this.cityModel = model;
 
-                // Push everything (city, stations, full train) onto the GPU while
-                // the splash screen is still up
-                this.warmUpRenderer();
-
-                if (btnLoadingBar) {
-                    btnLoadingBar.style.width = '100%';
-                }
-                btnStart.classList.add('loaded');
-                btnStart.disabled = false;
-                if (btnText) {
-                    btnText.textContent = 'Simulation starten';
-                }
                 console.log('City model loaded successfully.');
+                finishLoading();
             },
             (xhr) => {
-                const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
-                if (xhr.lengthComputable) {
-                    const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
-                    const totalMB = (xhr.total / (1024 * 1024)).toFixed(1);
-                    if (btnText) {
-                        btnText.textContent = `LADE STADTMODELL (${totalMB} MB)`;
-                    }
-                    if (btnLoadingBar) {
-                        btnLoadingBar.style.width = percentComplete + '%';
-                    }
-                } else {
-                    if (btnText) {
-                        btnText.textContent = `LADE STADTMODELL (${loadedMB} MB)`;
-                    }
-                    if (btnLoadingBar) {
-                        btnLoadingBar.style.width = '50%';
-                    }
-                }
+                const total = xhr.lengthComputable ? xhr.total : FALLBACK_TOTAL_BYTES;
+                const frac = Math.min(1, xhr.loaded / total);
+                const totalMB = (total / (1024 * 1024)).toFixed(1);
+                setText(`LADE STADTMODELL (${totalMB} MB)`);
+                setBar(baseFrac + slice * frac);
             },
             (error) => {
                 console.error('Error loading city model:', error);
@@ -633,27 +777,56 @@ class App {
                 } else if (error && error.target && error.target.status) {
                     errorMsg = `HTTP-Fehler ${error.target.status}: ${error.target.statusText || 'Nicht gefunden'}`;
                 }
-                
+
                 // Check if running directly via file:// protocol
                 if (window.location.protocol === 'file:') {
                     errorMsg = 'Browser blockiert lokale Dateien (CORS).';
                 }
 
-                // Even without the city model, upload the train/stations now so the
-                // first look-around doesn't hitch
-                this.warmUpRenderer();
+                // Auch ohne Stadtmodell Zug/Stationen jetzt hochladen, damit der
+                // erste Rundumblick nicht ruckelt
+                this.warmUpEverything();
 
-                if (btnLoadingBar) {
-                    btnLoadingBar.style.width = '100%';
-                    btnLoadingBar.style.backgroundColor = '#ef4444';
+                const bar = document.getElementById('btn-loading-bar');
+                if (bar) {
+                    bar.style.width = '100%';
+                    bar.style.backgroundColor = '#ef4444';
                 }
                 btnStart.classList.add('loaded');
                 btnStart.disabled = false;
-                if (btnText) {
-                    btnText.textContent = `Simulation starten (Fehler: ${errorMsg})`;
-                }
+                setText(`Simulation starten (Fehler: ${errorMsg})`);
             }
         );
+    }
+
+    // GPU-Warm-up für ALLES: hängt vorübergehend auch die aktuell weggekullten
+    // Stationsgruppen und alle vorgebauten (aber nicht aktiven) Chunks in die
+    // Szene, rendert einen Frame ohne Frustum-Culling (warmUpRenderer) und
+    // entfernt sie wieder. So sind sämtliche Geometrien/Texturen/Shader schon
+    // auf der GPU, bevor der Spieler losfährt — kein Upload-Hitch beim ersten
+    // Einfahren in neue Abschnitte.
+    warmUpEverything() {
+        const tm = this.trackManager;
+        const sm = this.stationModel;
+        const tempAdded = [];
+        if (tm) {
+            for (const [i, chunk] of tm.chunkCache) {
+                if (!tm.activeChunks.has(i)) {
+                    tm.scene.add(chunk);
+                    tempAdded.push([tm.scene, chunk]);
+                }
+            }
+        }
+        if (sm) {
+            sm.stationsList.forEach((g, idx) => {
+                if (!sm.loadedStations.has(idx)) {
+                    sm.scene.add(g);
+                    tempAdded.push([sm.scene, g]);
+                }
+            });
+        }
+        this.warmUpRenderer();
+        for (const [parent, obj] of tempAdded) parent.remove(obj);
     }
 
     toggleCityDebugHud() {
@@ -890,7 +1063,7 @@ class App {
                 line('windowGlass', '#ffffff', ''),
                 line('cabWindowGlass', '#ffffff', ' // no reflection: curved cab glass broke the box-test math'),
                 line('windshieldGlass', '#ffffff', ' // subtler, so the driver\'s forward view stays clear head-on'),
-                line('partitionGlass', '#000000', ' // cab rear-wall (Rückwand) panes: 10% black tint kept')
+                line('partitionGlass', '#000000', ' // cab rear-wall (Rückwand) panes: 50% tinted')
             ].filter(Boolean).join('\n');
         }
     }
@@ -918,13 +1091,14 @@ class App {
         const hud = document.getElementById('sound-debug-hud');
         if (!hud) return;
 
+        // WICHTIG: Die Keys müssen exakt den Einträgen in AudioManager.debugMix
+        // entsprechen — ein Kanal ohne Gegenstück dort ließ das HUD früher mit
+        // einem TypeError abstürzen.
         this.soundDebugChannels = [
-            { key: 'motor', label: 'Motor (Fahrmotor-Hum)' },
             { key: 'inverter', label: 'Inverter (Umrichter-Sirren)' },
             { key: 'dt1Rumble', label: 'DT1-Rumpeln' },
             { key: 'dt1Growl', label: 'DT1-Growl' },
             { key: 'startupSing', label: 'Anfahr-Singen (G1)' },
-            { key: 'ambient', label: 'Ambient-Klangteppich' },
             { key: 'brake', label: 'Bremsquietschen' },
             { key: 'rolling', label: 'Rollgeräusch (Schienen)' }
         ];
@@ -939,10 +1113,6 @@ class App {
                 </div>`;
         }
         html += `
-            <div class="cd-row">
-                <span class="cd-label">Motor stumm bis 25 km/h</span>
-                <input type="checkbox" id="sd-mute-below-25">
-            </div>
             <button id="sd-reset" class="cd-btn cd-copy">Zurücksetzen</button>`;
 
         hud.innerHTML = html;
@@ -956,14 +1126,8 @@ class App {
             });
         });
 
-        document.getElementById('sd-mute-below-25').addEventListener('change', (e) => {
-            this.audio.debugMotorMuteBelow25 = e.target.checked;
-        });
-
         document.getElementById('sd-reset').addEventListener('click', () => {
             for (const ch of this.soundDebugChannels) this.audio.debugMix[ch.key] = 1;
-            this.audio.debugMotorMuteBelow25 = false;
-            document.getElementById('sd-mute-below-25').checked = false;
             this.refreshSoundDebugHud();
         });
     }
@@ -978,29 +1142,24 @@ class App {
                 if (document.activeElement !== el) el.value = Number(value.toFixed(2));
             });
         }
-
-        const muteCheckbox = document.getElementById('sd-mute-below-25');
-        if (muteCheckbox) muteCheckbox.checked = this.audio.debugMotorMuteBelow25;
     }
 
     startSimulation() {
         // Hide splash screen
         this.dom.splash.style.display = 'none';
 
-            // On mobile, switch to fullscreen (must happen synchronously within
-            // this click handler, otherwise browsers refuse the request)
-            if (document.body.classList.contains('is-mobile')) {
-                this.requestFullscreen();
-            }
+        // On mobile, switch to fullscreen (must happen synchronously within
+        // this click handler, otherwise browsers refuse the request)
+        if (document.body.classList.contains('is-mobile')) {
+            this.requestFullscreen();
+        }
 
-            // Initialize Audio Context (requires user gesture)
-            this.audio.init();
+        // Initialize Audio Context (requires user gesture)
+        this.audio.init();
 
-            // Focus container and start loop
-            this.isRunning = true;
-            this.clock.getDelta(); // reset clock delta
-
-            this.audio.playStationChime();
+        // Focus container and start loop
+        this.isRunning = true;
+        this.clock.getDelta(); // reset clock delta
     }
 
     requestFullscreen() {
@@ -1233,10 +1392,6 @@ class App {
         const isAtPlatform = distToStation < 12;
 
         if (this.sim.doorState === 0 || this.sim.doorState === 3) {
-            // Opening: play chimes only when actually at station platforms
-            if (isAtPlatform) {
-                setTimeout(() => this.audio.playStationChime(), 100);
-            }
             this.sim.triggerDoors();
         } else if (this.sim.doorState === 2 || this.sim.doorState === 1) {
             // Closing: play the door beep warning immediately
@@ -1285,9 +1440,8 @@ class App {
             const isInside = this.world.isCurrentViewReverberant();
             this.audio.update(this.sim.speed, this.sim.throttle, this.sim.brakeCylinderPressure, dt, isInside);
 
-
-            // 4. Trigger announcements
-            this.handleAnnouncements();
+            // Escalator proximity sounds
+            this.updateEscalatorAmbience(dt);
 
             // Radio click signals from WorldManager's raycast (see there for the button zones)
             if (this.sim.wantsRadioPlay) {
@@ -1323,10 +1477,13 @@ class App {
         }
 
         // Always update 3D scene
+        const time = this.clock.elapsedTime;
         this.trackManager.update(this.sim.position);
+        this.trackManager.tick(dt, time);
         this.updateTrunkVisibility();
         this.updateSwitchVisibility();
         this.stationModel.update(this.sim.position);
+        this.stationModel.tick(dt, time);
         this.trainModel.update(dt);
         this.world.update(dt, this.trainModel);
 
@@ -1351,21 +1508,61 @@ class App {
         }
     }
 
-    handleAnnouncements() {
-        const nextStation = this.sim.stations[this.sim.nextStationIdx];
-        const trainCenter = this.sim.isReversing ? (this.sim.position + this.sim.trainHalfLength) : (this.sim.position - this.sim.trainHalfLength);
-        const distToStation = Math.abs(trainCenter - nextStation.position);
-
-        // Announce when train is 220 meters before station platform center
-        if (distToStation < 220 && distToStation > 180 && !this.announcedNextStation && this.sim.speed > 5) {
-            this.audio.playStationChime();
-            this.announcedNextStation = true;
+    // Sammelt die Weltpositionen aller aktuell sichtbaren Rolltreppen aus den
+    // Registrierungs-Listen (StationModel/TrackManager.registerEscalator) neu
+    // ein. Läuft nur alle 0.5 s — Rolltreppen sind statisch, nur ihr
+    // Kulling-Zustand ändert sich. Ersetzt das frühere Traversal der KOMPLETTEN
+    // Szene (inkl. Stadtmodell) in jedem Frame, das ein Framedrop-Herd war.
+    refreshEscalatorCache() {
+        const sources = [];
+        const collect = (list) => { if (list) sources.push(...list); };
+        collect(this.stationModel && this.stationModel.escalators);
+        collect(this.trackManager && this.trackManager.escalators); // Plärrer-Halle
+        collect(this._trunkStationModel && this._trunkStationModel.escalators);
+        // Nicht-U1-Linien nutzen die von U1s TrackManager gebaute Plärrer-Halle mit
+        if (this.lineRigs.U1 && this.trackManager !== this.lineRigs.U1.trackManager) {
+            collect(this.lineRigs.U1.trackManager.escalators);
         }
 
-        // Reset announcement flag once stopped at platform center
-        if (this.sim.speed < 0.05 && distToStation < 5) {
-            this.announcedNextStation = false;
+        this._escalatorCache.length = 0;
+        for (const mesh of sources) {
+            // Nur Rolltreppen zählen, die gerade wirklich in der sichtbaren
+            // Szene hängen (Stations-Kulling + ausgeblendete Linien-Roots).
+            let node = mesh;
+            let inScene = false;
+            while (node) {
+                if (node.visible === false) break;
+                if (node === this.world.scene) { inScene = true; break; }
+                node = node.parent;
+            }
+            if (!inScene) continue;
+            this._escalatorCache.push(mesh.getWorldPosition(new THREE.Vector3()));
         }
+    }
+
+    updateEscalatorAmbience(dt) {
+        if (!this.world || !this.audio) return;
+
+        this._escalatorTimer -= dt;
+        if (this._escalatorTimer <= 0) {
+            this._escalatorTimer = 0.5;
+            this.refreshEscalatorCache();
+        }
+
+        // Nächstgelegene Rolltreppe aus dem Positions-Cache (kein Traversal,
+        // keine Allokationen im Frame-Pfad)
+        const playerPos = this.world.activeCamera.getWorldPosition(_escPlayerPos);
+        let minDistSq = Infinity;
+        for (const pos of this._escalatorCache) {
+            const d2 = playerPos.distanceToSquared(pos);
+            if (d2 < minDistSq) minDistSq = d2;
+        }
+
+        const dist = Math.sqrt(minDistSq); // Infinity -> intensity 0
+        // Linear fade out between 3m and 18m
+        const intensity = 1.0 - Math.max(0, Math.min(1, (dist - 3) / 15));
+
+        this.audio.updateEscalatorSound(intensity, dt);
     }
 
     teleportToStation(stationIdx) {
@@ -1400,9 +1597,8 @@ class App {
         this.sim.displayNextStationIdx = stationIdx;
         this.sim.pendingDisplayAdvance = false;
 
-        // Reset timers and announcement flags
+        // Reset timers
         this.sim.stopWaitTime = 0;
-        this.announcedNextStation = false;
 
         // Clear speech bubble on teleportation
         if (this.world.activePassengerForBubble) {
@@ -1442,12 +1638,14 @@ class App {
 
 // Instantiate App
 window.addEventListener('DOMContentLoaded', () => {
-    // Load the Jost Regular and Doto Bold fonts programmatically to ensure they are fully ready
-    // before the canvas textures are generated and the DOM UI is rendered.
+    // Die Schriften werden programmatisch vorgeladen, damit sie sicher bereit
+    // sind, BEVOR die Canvas-Texturen (Stationsschilder, Anzeigen) gezeichnet
+    // werden — sonst rendern die Schilder mit der Fallback-Schrift.
     const jostFont = new FontFace('Jost Regular', 'url(./src/assets/Jost-Regular.ttf)');
     const dotoFont = new FontFace('Doto Bold', 'url(./src/assets/Doto-Bold.ttf)');
+    const geistFont = new FontFace('Geist', 'url(./src/assets/Geist-Regular.ttf)');
 
-    Promise.all([jostFont.load(), dotoFont.load()]).then((loadedFonts) => {
+    Promise.all([jostFont.load(), dotoFont.load(), geistFont.load()]).then((loadedFonts) => {
         loadedFonts.forEach(font => document.fonts.add(font));
         new App();
     }).catch((err) => {

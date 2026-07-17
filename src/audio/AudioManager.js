@@ -1,6 +1,18 @@
-/**
- * Web Audio API Sound Synthesizer for Nuremberg Subway Train
- */
+// ============================================================================
+// AudioManager.js — Komplett synthetisierte Fahr- und UI-Geräusche (Web Audio).
+//
+// KI-LANDKARTE (wo bearbeite ich was):
+//   - Routing/Init: init() baut master -> dry/reverb -> destination.
+//   - Dauerhafte Fahr-Synths (laufen immer, Lautstärke wird pro Frame in
+//     update() gesteuert): setupMotorSynth (Inverter/Anfahr-Singen/DT1-Rumpeln),
+//     setupBrakeSynth, setupRollingNoise, setupEscalatorSynth.
+//   - update(speed, throttle, brakePressure, dt, isInside): HEISSER PFAD,
+//     jede Lautstärke-/Frequenzformel für Fahrgeräusche steht hier.
+//   - One-Shot-Sounds: playDoor*/playHorn/playTone/playFootstep/playCabSwitch/
+//     playAutopilotChime.
+//   - debugMix: Multiplikatoren des Sound-Mixer-HUDs (Taste N, main.js).
+//     Kanal-Liste dort und Keys hier müssen übereinstimmen!
+// ============================================================================
 
 const VMAX = 80;
 
@@ -10,28 +22,27 @@ export class AudioManager {
 
         // Nodes
         this.masterVolume = null;
-        this.uiVolume = null; // for dry sounds (SIFA, etc.)
         this.reverbNode = null;
         this.reverbGain = null;
         this.dryGain = null;
 
-        // Motor synth nodes
-        this.motorOsc1 = null;
-        this.motorOsc2 = null;
-        this.motorGain = null;
+        // Motor synth nodes (der frühere Motor-Brummton wurde entfernt;
+        // übrig ist nur noch der Inverter)
         this.inverterOsc = null;
         this.inverterGain = null;
+        this.inverterOsc2 = null;
+        this.inverterGain2 = null;
+        this.inverterOsc3 = null;
+        this.inverterGain3 = null;
 
         // Startup sing nodes
         this.startupSingOsc = null;
         this.startupSingLFO = null;
         this.startupSingLFOGain = null;
         this.startupSingGain = null;
+        this.startupSphericalOsc = null;
+        this.startupSphericalGain = null;
 
-        // Ambient Chord nodes
-        this.chordOscs = [];
-        this.ambientGain = null;
-        this.ambientFilter = null; // lowpass that cuts highs at speed
 
         // Brake squeal nodes
         this.brakeGain = null;
@@ -42,6 +53,13 @@ export class AudioManager {
         this.rollingNoiseSource = null;
         this.rollingFilter = null;
         this.rollingGain = null;
+
+        // Escalator nodes
+        this.escMasterGain = null;
+        this.escNoiseGain = null;
+        this.escPercGain = null;
+        this.escTimer = 0;
+        this.escStepIdx = 0; // 0, 1, 2, 3 (Klick, Klick, Klock, Pause)
 
         this.initialized = false;
         this.footstepBufferNormal = null;
@@ -55,18 +73,16 @@ export class AudioManager {
 
         // Debug-Mixer (Taste N): Multiplikatoren pro Sound-Schicht zum Testen/Justieren.
         // 1 = unverändert, 0 = stumm. Wird in update() auf die Ziel-Lautstärken angewendet.
+        // WICHTIG: Keys müssen mit main.js buildSoundDebugHud() -> soundDebugChannels
+        // übereinstimmen, sonst wirft das HUD beim Öffnen einen TypeError.
         this.debugMix = {
-            motor: 1,
             inverter: 1,
             dt1Rumble: 1,
             dt1Growl: 1,
             startupSing: 1,
-            ambient: 1,
             brake: 1,
             rolling: 1
         };
-        // Test-Schalter (Sound-Mixer, Taste N): Motor komplett stumm unter 25 km/h
-        this.debugMotorMuteBelow25 = false;
     }
 
     setTrainType(type) {
@@ -90,11 +106,6 @@ export class AudioManager {
             // Setup Reverb for realism (tunnels / stations)
             this.setupReverb();
 
-            // UI volume node (bypasses reverb)
-            this.uiVolume = this.ctx.createGain();
-            this.uiVolume.gain.value = initialVolume;
-            this.uiVolume.connect(this.ctx.destination);
-
             // Connect Master -> Reverb & Dry -> Destination
             this.dryGain = this.ctx.createGain();
             this.dryGain.gain.value = 1.0;
@@ -111,14 +122,14 @@ export class AudioManager {
             // Setup motor hum
             this.setupMotorSynth();
 
-            // Setup ambient chord (with lowpass to tame high-speed shriek)
-            this.setupAmbientSynth();
 
             // Setup brake squeal
             this.setupBrakeSynth();
 
             this.createNoiseBuffer();
             this.setupRollingNoise();
+
+            this.setupEscalatorSynth();
 
             this.initialized = true;
             this.ctx.resume();
@@ -150,22 +161,51 @@ export class AudioManager {
     }
 
     setupMotorSynth() {
-        this.motorOsc1 = this.ctx.createOscillator();
-        this.motorOsc1.type = 'triangle';
-        this.motorOsc1.frequency.value = 0;
-        this.motorOsc2 = this.ctx.createOscillator();
-        this.motorOsc2.type = 'sine';
-        this.motorOsc2.frequency.value = 0;
-        this.motorGain = this.ctx.createGain();
-        this.motorGain.gain.value = 0;
         this.inverterOsc = this.ctx.createOscillator();
         this.inverterOsc.type = 'sawtooth';
         this.inverterOsc.frequency.value = 100;
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 1200;
+
+        this.inverterOsc2 = this.ctx.createOscillator();
+        this.inverterOsc2.type = 'sawtooth';
+        this.inverterOsc2.frequency.value = 100;
+
+        const filter1 = this.ctx.createBiquadFilter();
+        filter1.type = 'lowpass';
+        filter1.frequency.value = 1200;
+
+        const filter2 = this.ctx.createBiquadFilter();
+        filter2.type = 'lowpass';
+        filter2.frequency.value = 1200;
+
         this.inverterGain = this.ctx.createGain();
         this.inverterGain.gain.value = 0;
+
+        this.inverterGain2 = this.ctx.createGain();
+        this.inverterGain2.gain.value = 0;
+
+        this.inverterOsc3 = this.ctx.createOscillator();
+        this.inverterOsc3.type = 'sawtooth';
+        this.inverterOsc3.frequency.value = 100;
+
+        const filter3 = this.ctx.createBiquadFilter();
+        filter3.type = 'lowpass';
+        filter3.frequency.value = 2000;
+
+        this.inverterGain3 = this.ctx.createGain();
+        this.inverterGain3.gain.value = 0;
+
+        this.inverterOsc.connect(filter1);
+        filter1.connect(this.inverterGain);
+        this.inverterGain.connect(this.masterVolume);
+
+        this.inverterOsc2.connect(filter2);
+        filter2.connect(this.inverterGain2);
+        this.inverterGain2.connect(this.masterVolume);
+
+        this.inverterOsc3.connect(filter3);
+        filter3.connect(this.inverterGain3);
+        this.inverterGain3.connect(this.masterVolume);
+
         this.startupSingOsc = this.ctx.createOscillator();
         this.startupSingOsc.type = 'sine';
         this.startupSingOsc.frequency.value = 3200;
@@ -176,16 +216,20 @@ export class AudioManager {
         this.startupSingLFOGain.gain.value = 50;
         this.startupSingGain = this.ctx.createGain();
         this.startupSingGain.gain.value = 0;
-        this.motorOsc1.connect(this.motorGain);
-        this.motorOsc2.connect(this.motorGain);
-        this.inverterOsc.connect(filter);
-        filter.connect(this.inverterGain);
-        this.motorGain.connect(this.masterVolume);
-        this.inverterGain.connect(this.masterVolume);
+
+        this.startupSphericalOsc = this.ctx.createOscillator();
+        this.startupSphericalOsc.type = 'sine';
+        this.startupSphericalOsc.frequency.value = 75;
+        this.startupSphericalGain = this.ctx.createGain();
+        this.startupSphericalGain.gain.value = 0;
+
         this.startupSingLFO.connect(this.startupSingLFOGain);
         this.startupSingLFOGain.connect(this.startupSingOsc.frequency);
         this.startupSingOsc.connect(this.startupSingGain);
         this.startupSingGain.connect(this.masterVolume);
+
+        this.startupSphericalOsc.connect(this.startupSphericalGain);
+        this.startupSphericalGain.connect(this.masterVolume);
 
         // Extra DT1 nodes for more rumble and mechanical grit
         this.dt1RumbleOsc = this.ctx.createOscillator();
@@ -213,33 +257,15 @@ export class AudioManager {
         this.dt1RumbleOsc.start();
         this.dt1GrowlOsc.start();
 
-        this.motorOsc1.start();
-        this.motorOsc2.start();
+        this.startupSphericalOsc.start();
+
         this.inverterOsc.start();
+        this.inverterOsc2.start();
+        this.inverterOsc3.start();
         this.startupSingOsc.start();
         this.startupSingLFO.start();
     }
 
-    setupAmbientSynth() {
-        this.chordOscs = [];
-        this.ambientFilter = this.ctx.createBiquadFilter();
-        this.ambientFilter.type = 'lowpass';
-        this.ambientFilter.frequency.value = 900;
-        this.ambientFilter.Q.value = 0.7;
-        this.ambientGain = this.ctx.createGain();
-        this.ambientGain.gain.value = 0;
-        const baseFreqs = [533.3, 666.6, 800];
-        baseFreqs.forEach(f => {
-            const osc = this.ctx.createOscillator();
-            osc.type = 'sine';
-            osc.frequency.value = f;
-            osc.connect(this.ambientGain);
-            osc.start();
-            this.chordOscs.push(osc);
-        });
-        this.ambientGain.connect(this.ambientFilter);
-        this.ambientFilter.connect(this.masterVolume);
-    }
 
     setupBrakeSynth() {
         this.brakeOsc = this.ctx.createOscillator();
@@ -278,7 +304,7 @@ export class AudioManager {
         let lastOut = 0;
         for (let i = 0; i < temp.length; i++) {
             const white = Math.random() * 2 - 1;
-            // Erzeugt "Braunes Rauschen" durch Akkumulation (Tiefpass-Filterung von weißem Rauschen)
+            // Erzeugt \"Braunes Rauschen\" durch Akkumulation (Tiefpass-Filterung von weißem Rauschen)
             temp[i] = (lastOut + (0.02 * white)) / 1.02;
             lastOut = temp[i];
         }
@@ -314,6 +340,119 @@ export class AudioManager {
         this.rollingNoiseSource.start();
     }
 
+    setupEscalatorSynth() {
+        this.escMasterGain = this.ctx.createGain();
+        this.escMasterGain.gain.value = 0;
+
+        // 1. Dark quiet rush (Noise)
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this.noiseBuffer;
+        noise.loop = true;
+
+        const noiseFilter = this.ctx.createBiquadFilter();
+        noiseFilter.type = 'lowpass';
+        noiseFilter.frequency.value = 150; // Very dark
+
+        this.escNoiseGain = this.ctx.createGain();
+        this.escNoiseGain.gain.value = 0.45; // Base level for the rush
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(this.escNoiseGain);
+        this.escNoiseGain.connect(this.escMasterGain);
+        noise.start();
+
+        // 2. Rhythmic clicks (Percussion)
+        this.escPercGain = this.ctx.createGain();
+        this.escPercGain.gain.value = 0.25;
+        this.escPercGain.connect(this.escMasterGain);
+
+        this.escMasterGain.connect(this.masterVolume);
+    }
+
+    playEscClick(isKlock) {
+        if (!this.initialized) return;
+        const now = this.ctx.currentTime;
+
+        // 1. Dull Impact (Triangle wave for softer overtones)
+        // Physical gain is now identical for all clicks
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(isKlock ? 140 : 220, now);
+        osc.frequency.exponentialRampToValueAtTime(1, now + 0.12);
+
+        const impactGain = 1.3;
+        gain.gain.setValueAtTime(impactGain, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+        osc.connect(gain);
+        gain.connect(this.escPercGain);
+        osc.start(now);
+        osc.stop(now + 0.12);
+
+        // 2. Heavy Rumbling Thump (Lower frequency sine sweep)
+        const thump = this.ctx.createOscillator();
+        const thumpGain = this.ctx.createGain();
+        thump.type = 'sine';
+        thump.frequency.setValueAtTime(isKlock ? 40 : 48, now);
+        thump.frequency.exponentialRampToValueAtTime(5, now + 0.18);
+
+        const tGain = 2.0;
+        thumpGain.gain.setValueAtTime(tGain, now);
+        thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+        thump.connect(thumpGain);
+        thumpGain.connect(this.escPercGain);
+        thump.start(now);
+        thump.stop(now + 0.18);
+
+        // 3. Muffled Mechanical Scuff (Lower Filtered Noise)
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this.noiseBuffer;
+        const nFilter = this.ctx.createBiquadFilter();
+        nFilter.type = 'lowpass';
+        nFilter.frequency.value = isKlock ? 200 : 350;
+
+        const noiseVol = 0.85;
+        const nGain = this.ctx.createGain();
+        nGain.gain.setValueAtTime(noiseVol, now);
+        nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+        noise.connect(nFilter);
+        nFilter.connect(nGain);
+        nGain.connect(this.escPercGain);
+        noise.start(now);
+        noise.stop(now + 0.1);
+    }
+
+    updateEscalatorSound(intensity, dt) {
+        if (!this.initialized) return;
+
+        // Set volume based on proximity (increased multiplier for loudness)
+        this.escMasterGain.gain.setTargetAtTime(intensity * 0.45, this.ctx.currentTime, 0.1);
+
+        if (intensity < 0.01) {
+            this.escTimer = 0;
+            return;
+        }
+
+        // Mechanical rhythm cycle (0: Klick, 1: Klick, 2: Klock, 3: Pause)
+        // Fixed cycle: 1 second for all 4 beats
+        this.escTimer += dt;
+        const stepDuration = 0.25;
+
+        if (this.escTimer >= stepDuration) {
+            this.escTimer -= stepDuration;
+
+            if (this.escStepIdx === 0) this.playEscClick(false); // Klick
+            else if (this.escStepIdx === 1) this.playEscClick(false); // Klick
+            else if (this.escStepIdx === 2) this.playEscClick(true); // Klock
+            // index 3 is Pause
+
+            this.escStepIdx = (this.escStepIdx + 1) % 4;
+        }
+    }
+
     update(speed, throttle, brakePressure, dt, isInside = false) {
         if (!this.initialized) return;
         if (this.ctx.state === 'suspended') this.ctx.resume();
@@ -325,41 +464,96 @@ export class AudioManager {
 
         const speedKmh = speed * 3.6;
         const isDT1 = this.trainType === 'DT1';
+        const isDT3 = this.trainType === 'DT3';
 
-        // 1. Motor sound - komplett entfernt (Motorhum), Regler bleibt im Sound-Mixer (Taste N) für Tests erhalten
-        this.motorGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.2);
-        if (speedKmh > 0.5) {
-
-            // Inverter: DT1 has no modern high-pitch inverter sing, but maybe a low hum.
-            // G1's inverter sing only starts at 20 km/h, but from there it should sound
-            // exactly like the original curve used to sound starting at 0 km/h - so we
-            // just feed the original formulas an effective speed shifted by -20.
-            const invSpeed = isDT1 ? speedKmh : Math.max(0, speedKmh - 20);
-            let inverterFreq = 200;
-            if (isDT1) {
-                inverterFreq = 100 + invSpeed * 2; // low grumble
-            } else {
-                if (invSpeed < 25) {
-                    inverterFreq = 150 + invSpeed * 22;
-                } else if (invSpeed < 50) {
-                    inverterFreq = 400 + (invSpeed - 25) * 10;
-                } else {
-                    inverterFreq = 650 + (invSpeed - 50) * 5;
-                }
-            }
-            this.inverterOsc.frequency.setTargetAtTime(inverterFreq, this.ctx.currentTime, 0.15);
-
-            const inverterRamp = Math.min(1.0, invSpeed / 10);
+        if (speedKmh > 0.05) {
+            // Inverter: DT1 has a low hum, G1 has a characteristic linear sing.
             const effort = Math.max(Math.abs(throttle), Math.min(1.0, brakePressure / 5));
+            let inverterFreq = 100;
+            let targetInverterVol = 0;
+            let inverterFreq2 = 100;
+            let targetInverterVol2 = 0;
+            let inverterFreq3 = 100;
+            let targetInverterVol3 = 0;
 
-            // DT1 inverter sound is much quieter/deeper
-            const inverterVolMultiplier = isDT1 ? 0.04 : 0.10;
-            const inverterCutoff = isDT1 ? 30 : 65;
+            if (isDT1) {
+                if (this.inverterOsc.type !== 'sawtooth') this.inverterOsc.type = 'sawtooth';
+                if (this.inverterOsc2.type !== 'sawtooth') this.inverterOsc2.type = 'sawtooth';
+                if (this.inverterOsc3.type !== 'sawtooth') this.inverterOsc3.type = 'sawtooth';
 
-            const targetInverterVol = (effort > 0.02
-                ? effort * inverterVolMultiplier * Math.max(0, 1 - invSpeed / inverterCutoff) * inverterRamp
-                : 0) * this.debugMix.inverter;
+                const freqRamp = Math.min(1.0, speedKmh / 2.0); // Frequenz-Einfaden bis 2 km/h
+                inverterFreq = 20 + 240 * freqRamp;
+                inverterFreq2 = 20 + 180 * freqRamp;
+                inverterFreq3 = 20 + (speedKmh / 80) * 980;
+
+                const baseVol = 0.04;
+                const volRamp = Math.min(1.0, speedKmh / 2.0); // Lautstärke-Einfaden für Ton 3
+
+                targetInverterVol = (effort > 0.02
+                    ? effort * baseVol
+                    : 0) * this.debugMix.inverter;
+                targetInverterVol2 = targetInverterVol * 0.5;
+                targetInverterVol3 = targetInverterVol * 0.5 * volRamp;
+            } else if (isDT3) {
+                if (this.inverterOsc.type !== 'sine') this.inverterOsc.type = 'sine';
+                if (this.inverterOsc2.type !== 'sine') this.inverterOsc2.type = 'sine';
+                if (this.inverterOsc3.type !== 'sawtooth') this.inverterOsc3.type = 'sawtooth';
+
+                const ratio = Math.min(1.0, speedKmh / 80);
+                inverterFreq = 20 + 380 * ratio; // Sine 1: 20-400 Hz
+                inverterFreq2 = 1000 + 1000 * ratio; // Sine 2: 1000-2000 Hz
+                inverterFreq3 = 20 + 980 * ratio; // Sawtooth: 20-1000 Hz
+
+                const baseVol = 0.07;
+                targetInverterVol = (effort > 0.02 ? effort * baseVol * 2.0 : 0) * this.debugMix.inverter;
+
+                // Fades in between 0 and 2 km/h
+                const fadeIn = Math.min(1.0, speedKmh / 2.0);
+                targetInverterVol2 = targetInverterVol * 0.5 * fadeIn;
+                targetInverterVol3 = targetInverterVol * 0.35 * fadeIn;
+            } else {
+                // G1: Linear sing between 15 and 80 km/h
+                if (this.inverterOsc.type !== 'sawtooth') this.inverterOsc.type = 'sawtooth';
+
+                const isBraking = brakePressure > 0.5 || throttle < -0.05;
+
+                if (isBraking) {
+                    if (speedKmh > 20) {
+                        // Braking: 1800 Hz at 80 km/h, 1000 Hz at 20 km/h
+                        inverterFreq = 1000 + (speedKmh - 20) * (800 / 60);
+                    } else {
+                        // Jump to 1600 Hz at 20 km/h, stays there until fade out
+                        inverterFreq = 1600;
+                    }
+                } else {
+                    // Normal acceleration/rolling: 500 Hz (20 km/h) -> 1000 Hz (80 km/h)
+                    inverterFreq = 500 + (speedKmh - 20) * (500 / 60);
+                }
+
+                // Volume logic:
+                // Acceleration: Fade in 15-20 km/h
+                // Braking: Stays audible until 5 km/h
+                const fadeIn = isBraking
+                    ? Math.max(0, Math.min(1, (speedKmh - 5) / 5))
+                    : Math.max(0, Math.min(1, (speedKmh - 15) / 5));
+
+                const fadeOut = Math.max(0, Math.min(1, (80 - speedKmh) / 60));
+
+                const inverterVolMultiplier = 0.10;
+                targetInverterVol = (effort > 0.02
+                    ? effort * inverterVolMultiplier * fadeIn * fadeOut
+                    : 0) * this.debugMix.inverter;
+                targetInverterVol2 = 0;
+            }
+
+            this.inverterOsc.frequency.setTargetAtTime(inverterFreq, this.ctx.currentTime, 0.15);
             this.inverterGain.gain.setTargetAtTime(targetInverterVol, this.ctx.currentTime, 0.1);
+
+            this.inverterOsc2.frequency.setTargetAtTime(inverterFreq2, this.ctx.currentTime, 0.15);
+            this.inverterGain2.gain.setTargetAtTime(targetInverterVol2, this.ctx.currentTime, 0.1);
+
+            this.inverterOsc3.frequency.setTargetAtTime(inverterFreq3, this.ctx.currentTime, 0.15);
+            this.inverterGain3.gain.setTargetAtTime(targetInverterVol3, this.ctx.currentTime, 0.1);
 
             // DT1 Specific extra mechanical rumble
             if (isDT1) {
@@ -377,43 +571,43 @@ export class AudioManager {
                 this.dt1GrowlGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.2);
             }
         } else {
-            this.motorGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
             this.inverterGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+            this.inverterGain2.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+            this.inverterGain3.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
             this.dt1RumbleGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
             this.dt1GrowlGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
         }
 
         // Startup sing – fades out at 20 km/h (G1 only)
         let startupVolume = 0;
-        if (!isDT1 && speedKmh > 0.1 && speedKmh < 20.0) {
+        let sphericalFreq = 75;
+        let sphericalVol = 0;
+
+        if (this.trainType === 'G1' && speedKmh > 0.1 && speedKmh < 20.0) {
             if (speedKmh < 3.0) startupVolume = (speedKmh - 0.1) / 2.9;
             else if (speedKmh < 7.0) startupVolume = 1.0;
             else startupVolume = 1.0 - (speedKmh - 7.0) / 13.0;
-            startupVolume *= Math.min(1.0, Math.abs(throttle) * 1.5) * 0.025 * this.debugMix.startupSing;
+
+            // Double the original volume (0.025 -> 0.05)
+            startupVolume *= Math.min(1.0, Math.abs(throttle) * 1.5) * 0.05 * this.debugMix.startupSing;
+
             const lfoSpeed = 6.0 + (speedKmh * 0.85);
             this.startupSingLFO.frequency.setTargetAtTime(lfoSpeed, this.ctx.currentTime, 0.1);
+
+            // Spherical sound logic: Only when accelerating, fade out 10-20 km/h
+            const isBraking = brakePressure > 0.5 || throttle < -0.05;
+            if (!isBraking && throttle > 0.05) {
+                sphericalFreq = 75 + (speedKmh / 20) * 625;
+                const sphericalFade = speedKmh < 10 ? 1.0 : Math.max(0, 1 - (speedKmh - 10) / 10);
+                sphericalVol = startupVolume * 2.0 * sphericalFade;
+            } else {
+                sphericalVol = 0;
+            }
         }
         this.startupSingGain.gain.setTargetAtTime(startupVolume, this.ctx.currentTime, 0.15);
+        this.startupSphericalOsc.frequency.setTargetAtTime(sphericalFreq, this.ctx.currentTime, 0.1);
+        this.startupSphericalGain.gain.setTargetAtTime(sphericalVol, this.ctx.currentTime, 0.15);
 
-        // Ambient Chord
-        if (speedKmh > 0.1) {
-            const clampedSpeed = speedKmh < 40 ? speedKmh : 40 + (speedKmh - 40) * 0.15;
-            // DT1 chords could be slightly lower pitched or omitted, but let's keep them for "whine"
-            const pitchScale = isDT1 ? 0.8 : 1.0;
-            this.chordOscs[0].frequency.setTargetAtTime((13.333 * clampedSpeed + 533.333) * pitchScale, this.ctx.currentTime, 0.5);
-            this.chordOscs[1].frequency.setTargetAtTime((16.666 * clampedSpeed + 666.666) * pitchScale, this.ctx.currentTime, 0.5);
-            this.chordOscs[2].frequency.setTargetAtTime((20.000 * clampedSpeed + 800.000) * pitchScale, this.ctx.currentTime, 0.5);
-
-            const maxAmbVol = isDT1 ? 0.04 : 0.07; // DT1 whine is less prominent
-            const targetAmbVol = (speedKmh < 50
-                ? Math.min(maxAmbVol, (speedKmh / 80) * 0.15)
-                : Math.max(0, maxAmbVol * (1 - (speedKmh - 50) / 40))) * this.debugMix.ambient;
-            this.ambientGain.gain.setTargetAtTime(targetAmbVol, this.ctx.currentTime, 0.4);
-            const filterCutoff = Math.max(isDT1 ? 300 : 400, (isDT1 ? 700 : 900) - speedKmh * 6);
-            this.ambientFilter.frequency.setTargetAtTime(filterCutoff, this.ctx.currentTime, 0.5);
-        } else {
-            this.ambientGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.5);
-        }
 
         // Brake squeal
         if (speedKmh > 0.5 && speedKmh < 18 && brakePressure > 1.5) {
@@ -463,12 +657,17 @@ export class AudioManager {
             return;
         }
 
-        const beepCount = 10;
+        const beepCount = 11;
         const interval = 1 / 3;
         for (let i = 0; i < beepCount; i++) {
             const time = now + i * interval;
-            const freq = (i % 2 === 0) ? 500 : 1000;
-            this.playTone(freq, 0.33, 0.25, time);
+            const isHigh = (i % 2 === 0);
+            const freq = isHigh ? 1000 : 500;
+            this.playTone(freq, 0.33, 0.12, time, 'sine');
+            if (isHigh) {
+                // Bei 1000 Hz zusätzlich ein halb so lauter 2000 Hz Ton
+                this.playTone(2000, 0.33, 0.06, time, 'sine');
+            }
         }
     }
 
@@ -532,11 +731,11 @@ export class AudioManager {
         noise.buffer = buffer;
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(isDT1 ? 1200 : 1000, now);
+        filter.frequency.setValueAtTime(isDT1 ? 800 : 1000, now);
         const gainNoise = this.ctx.createGain();
         gainNoise.gain.setValueAtTime(0, now);
-        gainNoise.gain.linearRampToValueAtTime(isDT1 ? 0.03 : 0.04, now + 0.15);
-        gainNoise.gain.setValueAtTime(isDT1 ? 0.03 : 0.04, now + duration - 0.2);
+        gainNoise.gain.linearRampToValueAtTime(isDT1 ? 0.05 : 0.04, now + 0.15);
+        gainNoise.gain.setValueAtTime(isDT1 ? 0.05 : 0.04, now + duration - 0.2);
         gainNoise.gain.exponentialRampToValueAtTime(0.001, now + duration);
         noise.connect(filter);
         filter.connect(gainNoise);
@@ -547,17 +746,17 @@ export class AudioManager {
         const osc = this.ctx.createOscillator();
         const gainOsc = this.ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(isDT1 ? 180 : 220, now);
-        osc.frequency.linearRampToValueAtTime(isDT1 ? 200 : 240, now + duration);
+        osc.frequency.setValueAtTime(isDT1 ? 160 : 220, now);
+        osc.frequency.linearRampToValueAtTime(isDT1 ? 180 : 240, now + duration);
         const lfo = this.ctx.createOscillator();
-        lfo.frequency.value = isDT1 ? 45 : 35;
+        lfo.frequency.value = isDT1 ? 40 : 35;
         const lfoGain = this.ctx.createGain();
-        lfoGain.gain.value = 10;
+        lfoGain.gain.value = isDT1 ? 15 : 10;
         lfo.connect(lfoGain);
         lfoGain.connect(osc.frequency);
         gainOsc.gain.setValueAtTime(0, now);
-        gainOsc.gain.linearRampToValueAtTime(isDT1 ? 0.012 : 0.03, now + 0.1);
-        gainOsc.gain.setValueAtTime(isDT1 ? 0.012 : 0.03, now + duration - 0.15);
+        gainOsc.gain.linearRampToValueAtTime(isDT1 ? 0.025 : 0.03, now + 0.1);
+        gainOsc.gain.setValueAtTime(isDT1 ? 0.025 : 0.03, now + duration - 0.15);
         gainOsc.gain.exponentialRampToValueAtTime(0.001, now + duration);
         osc.connect(gainOsc);
         gainOsc.connect(this.masterVolume);
@@ -566,8 +765,24 @@ export class AudioManager {
         lfo.stop(now + duration);
         osc.stop(now + duration);
 
-        // DT1 metallic rattle: quieter, lower and more rumbling
+        // DT1 metallic rattle: heavier, deeper and more mechanical
         if (isDT1) {
+            // 1. Deep Heavy Rumble ("Grollen")
+            const rumbleOsc = this.ctx.createOscillator();
+            const rumbleGain = this.ctx.createGain();
+            rumbleOsc.type = 'triangle';
+            rumbleOsc.frequency.setValueAtTime(45, now);
+            rumbleOsc.frequency.exponentialRampToValueAtTime(38, now + duration);
+            rumbleGain.gain.setValueAtTime(0, now);
+            rumbleGain.gain.linearRampToValueAtTime(0.18, now + 0.2);
+            rumbleGain.gain.setValueAtTime(0.18, now + duration - 0.2);
+            rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            rumbleOsc.connect(rumbleGain);
+            rumbleGain.connect(this.masterVolume);
+            rumbleOsc.start(now);
+            rumbleOsc.stop(now + duration);
+
+            // 2. Mechanical Rattle ("Rattern & Rumpeln")
             const rattleBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
             const rattleData = rattleBuffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) rattleData[i] = Math.random() * 2 - 1;
@@ -575,22 +790,22 @@ export class AudioManager {
             rattleNoise.buffer = rattleBuffer;
             const rattleFilter = this.ctx.createBiquadFilter();
             rattleFilter.type = 'lowpass';
-            rattleFilter.frequency.setValueAtTime(900, now);
-            rattleFilter.Q.setValueAtTime(0.8, now);
-            const rattleGain = this.ctx.createGain();
+            rattleFilter.frequency.setValueAtTime(500, now);
+            rattleFilter.Q.setValueAtTime(3.0, now);
 
-            // Slower, softer modulation for a more physical rumble
+            const rattleGain = this.ctx.createGain();
             const rattleLFO = this.ctx.createOscillator();
-            rattleLFO.type = 'sine';
-            rattleLFO.frequency.setValueAtTime(8, now);
+            rattleLFO.type = 'sawtooth';
+            rattleLFO.frequency.setValueAtTime(12, now);
             const rattleLFOGain = this.ctx.createGain();
-            rattleLFOGain.gain.setValueAtTime(0.25, now);
+            rattleLFOGain.gain.setValueAtTime(0.45, now);
             rattleLFO.connect(rattleLFOGain);
+            rattleLFOGain.connect(rattleGain.gain);
 
             const rattleBaseGain = this.ctx.createGain();
             rattleBaseGain.gain.setValueAtTime(0, now);
-            rattleBaseGain.gain.linearRampToValueAtTime(0.05, now + 0.25);
-            rattleBaseGain.gain.setValueAtTime(0.05, now + duration - 0.35);
+            rattleBaseGain.gain.linearRampToValueAtTime(0.24, now + 0.25);
+            rattleBaseGain.gain.setValueAtTime(0.24, now + duration - 0.35);
             rattleBaseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
             rattleNoise.connect(rattleFilter);
@@ -598,56 +813,42 @@ export class AudioManager {
             rattleGain.connect(rattleBaseGain);
             rattleBaseGain.connect(this.masterVolume);
 
-            rattleLFOGain.connect(rattleGain.gain);
-
             rattleLFO.start(now);
             rattleNoise.start(now);
             rattleLFO.stop(now + duration);
             rattleNoise.stop(now + duration);
-
-            // Softer, lower-pitched pings
-            for (let i = 0; i < 2; i++) {
-                const pingTime = now + 0.25 + Math.random() * (duration - 0.45);
-                const pingOsc = this.ctx.createOscillator();
-                const pingGain = this.ctx.createGain();
-                pingOsc.type = 'triangle';
-                pingOsc.frequency.setValueAtTime(700 + Math.random() * 300, pingTime);
-                pingGain.gain.setValueAtTime(0, pingTime);
-                pingGain.gain.linearRampToValueAtTime(0.008, pingTime + 0.01);
-                pingGain.gain.exponentialRampToValueAtTime(0.001, pingTime + 0.05);
-                pingOsc.connect(pingGain);
-                pingGain.connect(this.masterVolume);
-                pingOsc.start(pingTime);
-                pingOsc.stop(pingTime + 0.06);
-            }
         }
     }
 
     playDoorThud() {
         if (!this.initialized) return;
         const now = this.ctx.currentTime;
+        const isDT1 = this.trainType === 'DT1';
+
         const oscThump = this.ctx.createOscillator();
         const gainThump = this.ctx.createGain();
         oscThump.type = 'triangle';
-        oscThump.frequency.setValueAtTime(110, now);
-        oscThump.frequency.exponentialRampToValueAtTime(25, now + 0.5);
-        gainThump.gain.setValueAtTime(1.2, now);
+        oscThump.frequency.setValueAtTime(isDT1 ? 90 : 110, now);
+        oscThump.frequency.exponentialRampToValueAtTime(isDT1 ? 20 : 25, now + 0.5);
+        gainThump.gain.setValueAtTime(isDT1 ? 1.5 : 1.2, now);
         gainThump.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
         oscThump.connect(gainThump);
         gainThump.connect(this.masterVolume);
         oscThump.start(now);
         oscThump.stop(now + 0.6);
+
         const oscSub = this.ctx.createOscillator();
         const gainSub = this.ctx.createGain();
         oscSub.type = 'sine';
-        oscSub.frequency.setValueAtTime(55, now);
-        oscSub.frequency.exponentialRampToValueAtTime(20, now + 0.75);
-        gainSub.gain.setValueAtTime(1.5, now);
+        oscSub.frequency.setValueAtTime(isDT1 ? 45 : 55, now);
+        oscSub.frequency.exponentialRampToValueAtTime(isDT1 ? 15 : 20, now + 0.75);
+        gainSub.gain.setValueAtTime(isDT1 ? 2.0 : 1.5, now);
         gainSub.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
         oscSub.connect(gainSub);
         gainSub.connect(this.masterVolume);
         oscSub.start(now);
         oscSub.stop(now + 0.85);
+
         const bufferSize = Math.floor(this.ctx.sampleRate * 0.6);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -656,22 +857,30 @@ export class AudioManager {
         noise.buffer = buffer;
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(90, now);
+        filter.frequency.setValueAtTime(isDT1 ? 120 : 90, now);
         const gainNoise = this.ctx.createGain();
-        gainNoise.gain.setValueAtTime(0.9, now);
-        gainNoise.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        gainNoise.gain.setValueAtTime(isDT1 ? 1.2 : 0.9, now);
+        gainNoise.gain.exponentialRampToValueAtTime(0.001, now + (isDT1 ? 0.5 : 0.4));
         noise.connect(filter);
         filter.connect(gainNoise);
         gainNoise.connect(this.masterVolume);
         noise.start(now);
         noise.stop(now + 0.5);
-    }
 
-    playStationChime() {
-        if (!this.initialized) return;
-        const now = this.ctx.currentTime;
-        this.playTone(698.46, 0.4, 0.35, now);
-        this.playTone(523.25, 0.6, 0.35, now + 0.35);
+        if (isDT1) {
+            // Extra metallic ring on impact
+            const ring = this.ctx.createOscillator();
+            const ringGain = this.ctx.createGain();
+            ring.type = 'triangle';
+            ring.frequency.setValueAtTime(300, now);
+            ring.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+            ringGain.gain.setValueAtTime(0.2, now);
+            ringGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+            ring.connect(ringGain);
+            ringGain.connect(this.masterVolume);
+            ring.start(now);
+            ring.stop(now + 0.2);
+        }
     }
 
     playAutopilotChime(isActivated) {
@@ -708,49 +917,89 @@ export class AudioManager {
     playHorn() {
         if (!this.initialized || this.hornActive) return;
         this.hornActive = true;
-        const time = this.ctx.currentTime;
-        this.hornOsc1 = this.ctx.createOscillator();
-        this.hornOsc2 = this.ctx.createOscillator();
+
+        // Minimaler Zeitpuffer für sauberen Start
+        const time = this.ctx.currentTime + 0.02;
+
+        const lfo = this.ctx.createOscillator();
+        lfo.frequency.setValueAtTime(1.5, time);
+
+        const lfoGain = this.ctx.createGain();
+        lfoGain.gain.setValueAtTime(8, time);
+        lfo.connect(lfoGain);
+
+        const frequencies = [350, 450, 700, 800];
+        const waveTypes = ['square', 'square', 'triangle', 'triangle'];
+
+        this.hornOscs = frequencies.map((freq, index) => {
+            const osc = this.ctx.createOscillator();
+            osc.type = waveTypes[index];
+            osc.frequency.setValueAtTime(freq, time);
+
+            lfoGain.connect(osc.frequency);
+            osc.detune.setValueAtTime((index - 1.5) * 4, time);
+
+            return osc;
+        });
+
         this.hornGain = this.ctx.createGain();
-        this.hornOsc1.type = 'sawtooth';
-        this.hornOsc1.frequency.setValueAtTime(370, time);
-        this.hornOsc2.type = 'sawtooth';
-        this.hornOsc2.frequency.setValueAtTime(440, time);
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.value = 1500;
+        filter.frequency.value = 1100;
+        filter.Q.value = 3.5;
+
+        // Lautstärke bei Start auf 0 setzen und weich auf 0.35 ziehen
         this.hornGain.gain.setValueAtTime(0, time);
-        this.hornGain.gain.linearRampToValueAtTime(0.35, time + 0.05);
-        this.hornOsc1.connect(filter);
-        this.hornOsc2.connect(filter);
+        this.hornGain.gain.setTargetAtTime(0.35, time, 0.05);
+
+        this.hornOscs.forEach(osc => {
+            osc.connect(filter);
+            osc.start(time);
+        });
+
+        lfo.start(time);
+        this.hornLfo = lfo;
+
         filter.connect(this.hornGain);
         this.hornGain.connect(this.masterVolume);
-        this.hornOsc1.start(time);
-        this.hornOsc2.start(time);
     }
 
     stopHorn() {
         if (!this.initialized || !this.hornActive) return;
         const time = this.ctx.currentTime;
-        this.hornGain.gain.cancelScheduledValues(time);
-        this.hornGain.gain.setValueAtTime(this.hornGain.gain.value, time);
-        this.hornGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
-        const osc1 = this.hornOsc1;
-        const osc2 = this.hornOsc2;
-        setTimeout(() => { try { osc1.stop(); osc2.stop(); } catch(e){} }, 120);
+
+        // Weich auf 0 abklingen lassen
+        this.hornGain.gain.setTargetAtTime(0, time, 0.03);
+
+        // Oszillatoren erst nach dem Fade-Out komplett abschalten
+        const stopTime = time + 0.3;
+
+        this.hornOscs.forEach(osc => osc.stop(stopTime));
+        this.hornLfo.stop(stopTime);
+
         this.hornActive = false;
     }
 
-    playTone(freq, duration, volume, time) {
+    playTone(freq, duration, volume, time, type = 'sine') {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        osc.type = 'sine';
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = type;
         osc.frequency.setValueAtTime(freq, time);
+
+        // Lowpass filter to \"mellow\" the sound (entschärfen)
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1500, time);
+        filter.Q.setValueAtTime(0.5, time);
+
         gain.gain.setValueAtTime(0, time);
         gain.gain.linearRampToValueAtTime(volume, time + 0.02);
         gain.gain.setValueAtTime(volume, time + duration - 0.05);
         gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-        osc.connect(gain);
+
+        osc.connect(filter);
+        filter.connect(gain);
         gain.connect(this.masterVolume);
         osc.start(time);
         osc.stop(time + duration + 0.1);
@@ -835,31 +1084,6 @@ export class AudioManager {
         localStorage.setItem('ubahnsim_volume', vol);
         if (this.initialized && this.ctx) {
             this.masterVolume.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.05);
-            this.uiVolume.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.05);
-        }
-    }
-
-    playSifa(active = true) {
-        if (!this.initialized) return;
-        if (active) {
-            if (this.sifaOsc) return;
-            this.sifaOsc = this.ctx.createOscillator();
-            this.sifaGain = this.ctx.createGain();
-            this.sifaOsc.type = 'sine';
-            this.sifaOsc.frequency.value = 1450;
-            this.sifaGain.gain.value = 0;
-            this.sifaGain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + 0.05);
-            this.sifaOsc.connect(this.sifaGain);
-            this.sifaGain.connect(this.uiVolume);
-            this.sifaOsc.start();
-        } else {
-            if (!this.sifaOsc) return;
-            const osc = this.sifaOsc;
-            const gain = this.sifaGain;
-            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.05);
-            setTimeout(() => { try { osc.stop(); } catch(e){} }, 100);
-            this.sifaOsc = null;
-            this.sifaGain = null;
         }
     }
 }

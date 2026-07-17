@@ -1,3 +1,28 @@
+// ============================================================================
+// TrainModel.js — Komplettes 3D-Zugmodell (G1 / DT1 / DT3) inkl. Cockpit,
+// Innenraum, Türanimation, Anzeigen und Faux-Glas-Reflexionen.
+//
+// KI-LANDKARTE (wo bearbeite ich was):
+//   - Modellwahl/Neuaufbau: setTrainModel -> buildTrain -> buildG1Train/
+//     buildDT1Train/buildDT3Train. Nach dem Bau backt mergeStaticMeshes alle
+//     STATISCHEN Teile pro Domäne zu wenigen Meshes zusammen — NEUE ANIMIERTE
+//     TEILE MÜSSEN in die Dynamik-Registries (doors, cabDoors, speedNeedles,
+//     brakeNeedles, throttleLevers, dashboardScreens, radioMeshes, lights,
+//     interiorDisplays), sonst werden sie mitgemerged und bewegen sich nicht!
+//     (Headless-Prüfung: node scratch/train_census.mjs / check_registries.mjs)
+//   - Per-Frame-Logik: update(dt) — Wagenausrichtung entlang der Spline (zwei
+//     Drehgestelle je Wagen), Türen, Zeiger, Displays. HEISSER PFAD, nur die
+//     Modul-Temp-Vektoren oben verwenden, nie allokieren.
+//   - Cockpit-Bildschirme: drawLeft/Mid/RightScreen (G1), drawDT1*Screen,
+//     updateDT3Monitor (alle gedrosselt). Radio-Display: drawRadioDisplay.
+//   - Fahrziel-/Innenanzeigen: updateDestinationSign / updateInteriorDisplays.
+//   - G1-Frontgeometrie: g1FrontZ/g1CreaseX/shearG1FrontGeometry (Knicke müssen
+//     auf Shape-Grenzen liegen!); DT1-Nase: createDT1TwistedCornerGeometry.
+//   - Glas: createFauxGlassMaterial (statische Cubemap, bakeInteriorEnvMap)
+//     + echte planare Spiegelung updatePlanarReflections (nur Innen-Kameras).
+//     WICHTIG: Wagen-Ursprung liegt am FÜHRENDEN Ende (z läuft 0..-carLength).
+// KOORDINATEN: 1 Einheit = 1 m (TRAIN_SCALE = 1.0).
+// ============================================================================
 import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -120,6 +145,8 @@ export class TrainModel {
             cabDoorGrey: cheapMaterial({ color: '#1a1c20', metalness: 0.3, roughness: 0.35 }), // G1 cab door on the black flank
             dt1DoorRubberLip: cheapMaterial({ color: '#4a4d51', metalness: 0.05, roughness: 0.9, side: THREE.DoubleSide }), // DT1 door rubber lips, static and dark gray
             cockpitTrim: cheapMaterial({ color: '#252931', roughness: 0.85, side: THREE.DoubleSide }), // G1 interior A-pillar trim — a shade darker than the dashboard panel casing (#2c303a)
+            cockpitInteriorDark: cheapMaterial({ color: '#626058', roughness: 0.8, side: THREE.DoubleSide }), // G1 interior B-pillars and window surrounds (#31302C)
+            cockpitCeiling: cheapMaterial({ color: '#666666', roughness: 0.8, side: THREE.DoubleSide }), // G1 interior cockpit ceiling (#333333)
             floorGrey: this.createFloorMaterial(),
             fabricRed: this.createFabricMaterial(),
             ceilingGreyG1: cheapMaterial({ color: '#8c8482', metalness: 0.1, roughness: 0.8, side: THREE.DoubleSide }),
@@ -131,10 +158,12 @@ export class TrainModel {
             // Cab side windows and doors: reflectivity 0.30 (same as passenger windowGlass)
             cabWindowGlass: this.createFauxGlassMaterial({ tint: '#ffffff', opacity: 0.02, reflectivity: 0.30 }),
             windshieldGlass: this.createFauxGlassMaterial({ tint: '#ffffff', opacity: 0.02, reflectivity: 0 }), // no reflection, so the driver's forward view stays clear
-            partitionGlass: this.createFauxGlassMaterial({ tint: '#000000', opacity: 0.10, reflectivity: 0 }), // cab rear-wall (Rückwand) panes: 10% black tint kept, no reflection
+            partitionGlass: this.createFauxGlassMaterial({ tint: '#000000', opacity: 0.50, reflectivity: 0 }), // cab rear-wall (Rückwand) panes: 50% tinted, no reflection (per user request)
+            dt1PartitionGlass: this.createFauxGlassMaterial({ tint: '#ffffff', opacity: 0.05, reflectivity: 0 }),
             wheel: cheapMaterial({ color: '#111111', metalness: 0.8, roughness: 0.6 }),
+            cockpitFloorG1: this.createNoppenFloorMaterial(),
             lightGlowWhite: new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }),
-            lightGlowWarm: new THREE.MeshBasicMaterial({ color: 0xffdd88, fog: false }),
+            lightGlowWarm: new THREE.MeshBasicMaterial({ color: '#FEFEFC', fog: false }),
             lightGlowRed: new THREE.MeshBasicMaterial({ color: 0xcc0000, fog: false }),
             chromeMetal: cheapMaterial({ color: '#cccccc', metalness: 0.95, roughness: 0.1 }), // Chrome logo & coupler
             // Additive billboard glow for headlights (no depth write = no sorting issues)
@@ -156,13 +185,16 @@ export class TrainModel {
             }),
             
             // DT1 specific retro materials
-            dt1Roof: new THREE.MeshBasicMaterial({ color: new THREE.Color('#c5c7cb').multiplyScalar(0.5), side: THREE.DoubleSide, fog: false }), // retro light gray roof; DoubleSide since the rounded-corner roof geometry's winding isn't guaranteed to face up
-            dt1Floor: new THREE.MeshBasicMaterial({ color: new THREE.Color('#4a2711').multiplyScalar(0.5), fog: false }), // retro brown floor
-            dt1SeatBlue: new THREE.MeshBasicMaterial({ color: new THREE.Color('#2a3c54').multiplyScalar(0.5), fog: false }), // retro dark blue seats (Image 2)
+            dt1Ceiling: new THREE.MeshBasicMaterial({ color: '#9D8667', side: THREE.DoubleSide, fog: false }), // custom beige ceiling
+            dt1Floor: this.createDT1FloorMaterial(), // retro grey speckled floor
+            dt1SeatBlue: new THREE.MeshBasicMaterial({ map: this.createSeatGradientTexture(), fog: false }), // retro dark blue seats (Image 2)
             dt1SeatRed: new THREE.MeshBasicMaterial({ color: new THREE.Color('#c21d2c').multiplyScalar(0.5), fog: false }), // DT3 test-train variant: red seats, otherwise identical to DT1
             dt1SeatGreen: new THREE.MeshBasicMaterial({ color: new THREE.Color('#1a2e1a').multiplyScalar(0.5), fog: false }), // driver seat (dark green/black)
+            dt1Handrail: new THREE.MeshBasicMaterial({ map: this.createHandrailGradientTexture(), fog: false }), // retro gold-beige handrails
             dt1Wall: new THREE.MeshBasicMaterial({ map: this.createWoodTexture(), color: '#808080', side: THREE.DoubleSide, fog: false }), // retro golden wood panels (Image 2); DoubleSide so it doesn't vanish when viewed from inside the cab
-            
+            dt1Slant: new THREE.MeshBasicMaterial({ color: '#948170', side: THREE.DoubleSide, fog: false }), // slanted cove panels
+            dt1Roof: cheapMaterial({ color: '#68756B', metalness: 0.1, roughness: 0.5, side: THREE.DoubleSide }), // custom outer roof color
+
             // DT3 specific custom materials
             dt3Red: cheapMaterial({ color: '#b1271d', metalness: 0.1, roughness: 0.3, side: THREE.DoubleSide }),
             dt3WhiteOuter: cheapMaterial({ color: '#ccd3cb', metalness: 0.1, roughness: 0.4, side: THREE.DoubleSide }),
@@ -263,6 +295,7 @@ export class TrainModel {
         };
         this.carriages = [];
         this.lastDisplayText = "";
+        this.lastDisplayKey = "";
         this.dt1DestScreenMat = null;
         
         // Rebuild the selected train model
@@ -358,7 +391,8 @@ export class TrainModel {
         const collect = (node) => {
             if (!node.visible || (node !== root && dynamicRoots.has(node))) return;
             if (node !== root && node.isMesh && node.children.length === 0 &&
-                !Array.isArray(node.material) && node.renderOrder === 0) {
+                !Array.isArray(node.material) && node.renderOrder === 0 &&
+                !node.material.transparent) {
                 let list = buckets.get(node.material);
                 if (!list) buckets.set(node.material, list = []);
                 list.push(node);
@@ -935,6 +969,16 @@ export class TrainModel {
         }
     }
 
+    // Dark seat-back panel (#2C3033) inset 5cm from every edge of the white back
+    // shell, G1 only. A one-sided plane floating 1mm proud of the shell's rear
+    // face so the white shell still shows as a 5cm border around it.
+    getG1SeatBackPanelMat() {
+        if (!this._g1SeatBackPanelMat) {
+            this._g1SeatBackPanelMat = new THREE.MeshBasicMaterial({ color: '#2C3033', fog: false });
+        }
+        return this._g1SeatBackPanelMat;
+    }
+
     buildSeatBench(carGroup, xOffset, zOffset, length) {
         const seatColor = (this.trainType === 'DT3') ? this.materials.dt3FabricRed : this.materials.fabricRed;
         const shellColor = (this.trainType === 'DT3') ? this.materials.dt3WhiteInner : this.materials.bodyWhite;
@@ -976,7 +1020,18 @@ export class TrainModel {
             // White back shell
             const backShell = new THREE.Mesh(backShellGeom, shellColor);
             backShell.position.set(xWall - xSign * 0.01, 1.06, seatZ);
- 
+
+            // Dark rear panel on the shell's back face (G1 only), 5cm edge inset
+            if (this.trainType === 'G1') {
+                const panel = new THREE.Mesh(
+                    new THREE.PlaneGeometry(seatWidth - 0.10, 0.60 - 0.10),
+                    this.getG1SeatBackPanelMat()
+                );
+                panel.position.set(xWall + xSign * 0.001, 1.06, seatZ);
+                panel.rotation.y = xSign * Math.PI / 2;
+                carGroup.add(panel);
+            }
+
             // Red cushion
             const cushion = new THREE.Mesh(cushionGeom, seatColor);
             cushion.position.set(xWall - xSign * (cushionDepth / 2 + 0.02), 0.76, seatZ);
@@ -1054,6 +1109,17 @@ export class TrainModel {
             backShell.position.set(centerX, 1.06, z - dirZ * (shellD / 2 + 0.01));
             carGroup.add(backShell);
 
+            // Dark rear panel on the row shell's back face (G1 only), 5cm edge inset
+            if (this.trainType === 'G1') {
+                const panel = new THREE.Mesh(
+                    new THREE.PlaneGeometry(rowWidth - 0.10, 0.60 - 0.10),
+                    this.getG1SeatBackPanelMat()
+                );
+                panel.position.set(centerX, 1.06, z - dirZ * (shellD / 2 + 0.021));
+                panel.rotation.y = dirZ === 1 ? Math.PI : 0;
+                carGroup.add(panel);
+            }
+
             // 4. Individual red cushions and backrests
             xPositions.forEach(x => {
                 // Red cushion
@@ -1124,6 +1190,18 @@ export class TrainModel {
         // windshield bottom line, sweeping from the crease into the body sides
         faceGroup.add(new THREE.Mesh(G.g1BevelL, this.materials.bodyRedG1));
         faceGroup.add(new THREE.Mesh(G.g1BevelR, this.materials.bodyRedG1));
+
+        // Interior A-pillars trim (#31302C)
+        faceGroup.add(new THREE.Mesh(G.g1PillarTrimL, this.materials.cockpitInteriorDark));
+        faceGroup.add(new THREE.Mesh(G.g1PillarTrimR, this.materials.cockpitInteriorDark));
+
+        // Interior bevels (#31302C) - covering the inner side of the red corner bevels
+        // Offset slightly inward and back to stay strictly inside the red shell
+        const bevelIntL = new THREE.Mesh(G.g1BevelL, this.materials.cockpitInteriorDark);
+        bevelIntL.position.set(0.005, -0.005, -0.015);
+        const bevelIntR = new THREE.Mesh(G.g1BevelR, this.materials.cockpitInteriorDark);
+        bevelIntR.position.set(-0.005, -0.005, -0.015);
+        faceGroup.add(bevelIntL, bevelIntR);
 
         // 3. Gloss-black mask reaching from just above the skirt up to the roof
         // line (no red brow band anymore), recessed 6mm behind the red fascia.
@@ -1757,7 +1835,7 @@ export class TrainModel {
         // 9. Hollow Cab Enclosures (Side walls & roof to prevent looking out into raw empty space)
         const cockFloorGeom = new THREE.BoxGeometry(unscaledWidth, 0.05, 1.9);
         this.applyBoxUVs(cockFloorGeom, unscaledWidth, 0.05, 1.9, 2.0);
-        const cockFloor = new THREE.Mesh(cockFloorGeom, this.materials.floorGrey);
+        const cockFloor = new THREE.Mesh(cockFloorGeom, this.materials.cockpitFloorG1);
         cockFloor.position.set(0, 0.375, noseZ - cabDir * 0.95);
         cockpitGroup.add(cockFloor);
 
@@ -1779,22 +1857,26 @@ export class TrainModel {
             const redStripe = new THREE.Mesh(sign < 0 ? G.g1CabRedStripeL : G.g1CabRedStripeR, this.materials.bodyRedG1);
             const skirtStripe = new THREE.Mesh(sign < 0 ? G.g1CabSkirtStripeL : G.g1CabSkirtStripeR, this.materials.skirtGrey);
             const whiteRear = new THREE.Mesh(sign < 0 ? G.g1CabWhiteRearL : G.g1CabWhiteRearR, this.materials.bodyWhite);
-            const redWedge = new THREE.Mesh(sign < 0 ? G.g1CabRedWedgeL : G.g1CabRedWedgeR, this.materials.bodyGlossBlack);
+            const redWedge = new THREE.Mesh(sign < 0 ? G.g1CabRedWedgeL : G.g1CabRedWedgeR, this.materials.bodyRedG1);
             const whiteTri = new THREE.Mesh(sign < 0 ? G.g1CabWhiteTriL : G.g1CabWhiteTriR, this.materials.bodyWhite);
             const topStrip = new THREE.Mesh(sign < 0 ? G.g1CabTopStripL : G.g1CabTopStripR, this.materials.bodyRedG1);
-            sideGroup.add(flank, flankGlass, redStripe, skirtStripe, whiteRear, redWedge, whiteTri, topStrip);
+
+            // Interior claddings (#31302C) - full geometry used to avoid gaps
+            // Offset 1.5cm inward and slightly back to hide the exterior livery from inside
+            const flankInt = new THREE.Mesh(sign < 0 ? G.g1CabSideL : G.g1CabSideR, this.materials.cockpitInteriorDark);
+            flankInt.position.set(-sign * 0.015, -0.005, -0.01);
+
+            sideGroup.add(flank, flankGlass, redStripe, skirtStripe, whiteRear, redWedge, whiteTri, topStrip, flankInt);
 
             // Doorway reveal: jambs, header and sill lining the flank cutout so
             // the opening has visible depth when the door swings out
-            const jambF = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.95, 0.03), this.materials.cockpitTrim);
+            const jambF = new THREE.Mesh(new THREE.BoxGeometry(0.045, 1.94, 0.03), this.materials.cockpitInteriorDark);
             jambF.position.set(sign * 1.425, 1.575, -1.125);
-            const jambR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.95, 0.03), this.materials.cockpitTrim);
+            const jambR = new THREE.Mesh(new THREE.BoxGeometry(0.045, 1.94, 0.03), this.materials.cockpitInteriorDark);
             jambR.position.set(sign * 1.425, 1.575, -1.795);
-            const header = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.67), this.materials.cockpitTrim);
+            const header = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.03, 0.66), this.materials.cockpitInteriorDark);
             header.position.set(sign * 1.425, 2.535, -1.46);
-            const sill = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.67), this.materials.cabDoorGrey);
-            sill.position.set(sign * 1.425, 0.615, -1.46);
-            sideGroup.add(jambF, jambR, header, sill);
+            sideGroup.add(jambF, jambR, header);
 
             // Driver door: 700mm-wide leaf built as a real frame (top rail, lower
             // panel, hinge/latch stiles) around an open window cutout, so the
@@ -1802,111 +1884,115 @@ export class TrainModel {
             // Hinged at the front edge, swinging outwards (animated via this.cabDoors).
             const doorW = 0.70; // real driver door width: 700mm
             const winZ0 = -0.08, winZ1 = -(doorW - 0.07); // hinge/latch margins
-            const winY0 = 1.248, winY1 = 2.452; // top/bottom margins (aligned with passenger windows)
+            const winY0 = 1.35, winY1 = 2.35; // top/bottom margins (aligned with passenger window opening)
             const doorPivot = new THREE.Group();
             doorPivot.position.set(sign * 1.428, 0, -1.11);
 
             const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 2.54 - winY1, doorW), this.materials.bodyGlossBlack);
             topRail.position.set(0, (2.54 + winY1) / 2, -doorW / 2);
-            // Split lowerPanel into white livery stripe (Y = 0.61 to 1.20) and black frame (Y = 1.20 to winY0)
-            const lowerPanelWhite = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.20 - 0.61, doorW), this.materials.bodyWhite);
-            lowerPanelWhite.position.set(0, (0.61 + 1.20) / 2, -doorW / 2);
+            const topRailInt = new THREE.Mesh(new THREE.BoxGeometry(0.01, 2.54 - winY1 + 0.01, doorW + 0.01), this.materials.cockpitInteriorDark);
+            topRailInt.position.set(-sign * 0.02, (2.54 + winY1) / 2 - 0.005, -doorW / 2);
+
+            // Split lowerPanel into white livery stripe (Y = 0.60 to 1.20) and black frame (Y = 1.20 to winY0)
+            const lowerPanelWhite = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.20 - 0.60, doorW), this.materials.bodyWhite);
+            lowerPanelWhite.position.set(0, (0.60 + 1.20) / 2, -doorW / 2);
             const lowerPanelBlack = new THREE.Mesh(new THREE.BoxGeometry(0.04, winY0 - 1.20, doorW), this.materials.bodyGlossBlack);
             lowerPanelBlack.position.set(0, (1.20 + winY0) / 2, -doorW / 2);
+            const lowerPanelInt = new THREE.Mesh(new THREE.BoxGeometry(0.01, winY0 - 0.60 + 0.01, doorW + 0.01), this.materials.cockpitInteriorDark);
+            lowerPanelInt.position.set(-sign * 0.02, (0.60 + winY0) / 2 + 0.005, -doorW / 2);
+
             const hingeStile = new THREE.Mesh(new THREE.BoxGeometry(0.04, winY1 - winY0, -winZ0), this.materials.bodyGlossBlack);
             hingeStile.position.set(0, (winY0 + winY1) / 2, winZ0 / 2);
             const latchStile = new THREE.Mesh(new THREE.BoxGeometry(0.04, winY1 - winY0, doorW + winZ1), this.materials.bodyGlossBlack);
             latchStile.position.set(0, (winY0 + winY1) / 2, (winZ1 - doorW) / 2);
+
+            const frameIntF = new THREE.Mesh(new THREE.BoxGeometry(0.01, winY1 - winY0 + 0.02, -winZ0 + 0.01), this.materials.cockpitInteriorDark);
+            frameIntF.position.set(-sign * 0.02, (winY0 + winY1) / 2, winZ0 / 2 - 0.005);
+            const frameIntR = new THREE.Mesh(new THREE.BoxGeometry(0.01, winY1 - winY0 + 0.02, doorW + winZ1 + 0.01), this.materials.cockpitInteriorDark);
+            frameIntR.position.set(-sign * 0.02, (winY0 + winY1) / 2, (winZ1 - doorW) / 2 + 0.005);
+
             const doorGlass = new THREE.Mesh(new THREE.BoxGeometry(0.03, winY1 - winY0, winZ0 - winZ1), this.materials.cabWindowGlass);
             doorGlass.position.set(0, (winY0 + winY1) / 2, (winZ0 + winZ1) / 2);
             const handleOut = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.035), this.materials.chromeMetal);
             handleOut.position.set(sign * 0.026, 1.10, winZ1 + 0.04);
             const handleIn = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.035), this.materials.chromeMetal);
             handleIn.position.set(-sign * 0.036, 1.10, winZ1 + 0.04);
-            doorPivot.add(topRail, lowerPanelWhite, lowerPanelBlack, hingeStile, latchStile, doorGlass, handleOut, handleIn);
+            doorPivot.add(topRail, topRailInt, lowerPanelWhite, lowerPanelBlack, lowerPanelInt, hingeStile, latchStile, frameIntF, frameIntR, doorGlass, handleOut, handleIn);
             sideGroup.add(doorPivot);
             const side = ((cabDir === 1) === (sign < 0)) ? 'left' : 'right';
             this.cabDoors.push({ pivot: doorPivot, sign, side, carIdx });
-
-            // Interior linings above/below the cab side windows (ending at the
-            // doorway cutout so they never block the opening). Dedicated dark-grey
-            // material (not the shared bodyWhite livery colour, which must stay
-            // off-white for the exterior stripe/door panel) matching the other
-            // darkened cockpit trim (#252931).
-            if (!this.materials.cockpitSideWall) {
-                this.materials.cockpitSideWall = cheapMaterial({ color: '#252931', roughness: 0.85 });
-            }
-            const liningBottom = new THREE.Mesh(new THREE.BoxGeometry(0.012, 1.06, 0.90), this.materials.cockpitSideWall);
-            liningBottom.position.set(sign * 1.393, 0.92, -0.66);
-            // starts behind the swept-back A-pillar bevel so it cannot poke through
-            const liningTop = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.38, 1.15), this.materials.cockpitSideWall);
-            liningTop.position.set(sign * 1.393, 2.64, -1.20);
-            sideGroup.add(liningBottom, liningTop);
         }
 
         // Cab roof: red plan-shaped cap following the brow arc and bevel sweep
         sideGroup.add(new THREE.Mesh(G.g1CabRoofCap, this.materials.bodyRedG1));
 
-        // Cab Underside Ceiling lining (Grey)
-        const cabCeilingLining = new THREE.Mesh(new THREE.BoxGeometry(2.78, 0.01, 1.12), this.materials.ceilingGreyG1);
+        // Interior roof lining (#333333) - moved down and slightly back to stay hidden from outside
+        const interiorRoof = new THREE.Mesh(G.g1CabRoofCap, this.materials.cockpitCeiling);
+        interiorRoof.position.set(0, -0.015, -0.02);
+        sideGroup.add(interiorRoof);
+
+        // Cab Underside Ceiling lining (#333333)
+        const cabCeilingLining = new THREE.Mesh(new THREE.BoxGeometry(2.78, 0.01, 1.12), this.materials.cockpitCeiling);
         cabCeilingLining.position.set(0, 2.83, -1.32);
         sideGroup.add(cabCeilingLining);
 
         // 10. Cabin Rear Wall partition (Rückwand) — the two transverse windows
-        // flanking the cockpit door get a 10% black tint (rest of the train's
+        // flanking the cockpit door get a 50% black tint (rest of the train's
         // glass stays near-clear at 2% white); shared faux-reflection material.
         const partitionGlassMat = this.materials.partitionGlass;
         const partitionWallMat = cheapMaterial({ color: '#252931', roughness: 0.9 }); // a shade darker than the dashboard panel casing (#2c303a), matching cockpitTrim
         const interiorWidth = unscaledWidth - 0.12; // 2.78m for G1, stays strictly inside the interior walls
         const partitionH = (this.trainType === 'G1') ? 2.075 : 1.60;
-        const partitionY = (this.trainType === 'G1') ? 1.4125 : 1.20;
+        const partitionY = (this.trainType === 'G1') ? 1.4375 : 1.20; // G1: moved up 2.5cm to sit on the floor surface (Y=0.40)
         const partitionW = (interiorWidth - 0.79) / 2;
         const partitionOffset = interiorWidth / 2 - partitionW / 2;
- 
+
         const partitionLGeom = new THREE.BoxGeometry(partitionW, partitionH, 0.035);
         const partitionL = new THREE.Mesh(partitionLGeom, partitionGlassMat);
-        partitionL.position.set(-partitionOffset, partitionY, noseZ - cabDir * 1.90);
-        
+        partitionL.position.set(-partitionOffset, partitionY, noseZ - cabDir * (1.90 - 0.0175)); // Moved 1.75cm towards nose to align back face with floor edge
+
         const partitionRGeom = new THREE.BoxGeometry(partitionW, partitionH, 0.035);
         const partitionR = new THREE.Mesh(partitionRGeom, partitionGlassMat);
-        partitionR.position.set(partitionOffset, partitionY, noseZ - cabDir * 1.90);
-        
+        partitionR.position.set(partitionOffset, partitionY, noseZ - cabDir * (1.90 - 0.0175));
+
         const partitionTopH = (this.trainType === 'G1') ? 0.40 : 0.30;
-        const partitionTopY = (this.trainType === 'G1') ? 2.65 : 2.15;
+        const partitionTopY = (this.trainType === 'G1') ? 2.675 : 2.15; // G1: moved up 2.5cm
         const partitionTopGeom = new THREE.BoxGeometry(interiorWidth, partitionTopH, 0.05);
         const partitionTop = new THREE.Mesh(partitionTopGeom, partitionWallMat);
-        partitionTop.position.set(0, partitionTopY, noseZ - cabDir * 1.90);
-        
+        partitionTop.position.set(0, partitionTopY, noseZ - cabDir * (1.90 - 0.025)); // Moved 2.5cm towards nose to align back face with floor edge
+
         const cabinDoorGeom = new THREE.BoxGeometry(0.79, partitionH, 0.045);
         const cabinDoor = new THREE.Mesh(cabinDoorGeom, this.materials.bodyRedG1);
-        cabinDoor.position.set(0, partitionY, noseZ - cabDir * 1.90);
+        cabinDoor.position.set(0, partitionY, noseZ - cabDir * (1.90 - 0.0225)); // Moved 2.25cm towards nose to align back face with floor edge
 
         // Add a light grey handle (Klinke) on the left side of the door
         const handleGeom = new THREE.BoxGeometry(0.04, 0.02, 0.12);
         const handleMat = cheapMaterial({ color: '#cccccc', metalness: 0.5, roughness: 0.5 });
         const handle = new THREE.Mesh(handleGeom, handleMat);
-        handle.position.set(-0.37, partitionY + 0.05, noseZ - cabDir * (1.90 - 0.03));
+        handle.position.set(-0.37, partitionY + 0.05, noseZ - cabDir * (1.90 - 0.0225 - 0.03));
 
         cockpitGroup.add(partitionL, partitionR, partitionTop, cabinDoor, handle);
 
         // 11. Station display above the cockpit door (passenger side)
         const signOffset = -cabDir * 0.04;
-        const displayZ = (noseZ - cabDir * 1.90) + signOffset;
-        const displayY = (this.trainType === 'G1') ? 2.62 : 2.12;
+        const displayZ = (noseZ - cabDir * (1.90 - 0.025)) + signOffset; // Moved with the partition wall
+        const isG1Display = (this.trainType === 'G1');
+        const displayY = isG1Display ? 2.71 : 2.12; // G1: moved up 2.5cm
 
         const displayBacking = new THREE.Mesh(
-            new THREE.BoxGeometry(1.02, 0.14, 0.03),
+            new THREE.BoxGeometry(isG1Display ? 2.78 : 1.02, isG1Display ? 0.28 : 0.14, 0.03),
             this.materials.bodyDarkGrey
         );
         displayBacking.position.set(0, displayY, displayZ);
         cockpitGroup.add(displayBacking);
 
+        const isRotated = (cabDir === 1);
         const displayScreen = new THREE.Mesh(
-            new THREE.PlaneGeometry(1.0, 0.12),
-            this.interiorDisplayMat
+            new THREE.PlaneGeometry(isG1Display ? 2.74 : 1.0, isG1Display ? 0.24 : 0.12),
+            isRotated ? this.interiorDisplayMatB : this.interiorDisplayMatF
         );
         displayScreen.position.set(0, displayY, displayZ + signOffset * 0.4);
-        displayScreen.rotation.y = (cabDir === 1) ? Math.PI : 0;
+        displayScreen.rotation.y = isRotated ? Math.PI : 0;
         cockpitGroup.add(displayScreen);
         this.interiorDisplays.push(displayScreen);
 
@@ -1929,32 +2015,33 @@ export class TrainModel {
     // desk, whose deepest point only reaches ~0.28m out from the nose here)
     // so it never intersects the seat or the dashboard/desk.
     buildG1ThrottleLever(cockpitGroup, noseZ, cabDir) {
-        const frameMat = cheapMaterial({ color: '#c9cdd2', roughness: 0.6, metalness: 0.3 });
-        const gripMat = cheapMaterial({ map: this.createWoodTexture(), roughness: 0.45 }); // warm wood grip, same golden-oak tone as the DT1 wall panels
+        const pedestalMat = this.getG1PedestalMaterial();
+        const gripMat = cheapMaterial({ map: this.createWoodTexture('#5C311E', '#3d1f13'), roughness: 0.45 });
         const rodMat = cheapMaterial({ color: '#3a3d42', roughness: 0.5, metalness: 0.4 });
 
         const floorY = 0.40;
-        const blockTopY = 1.08; // matches the driver seat's armrest height
+        const blockTopY = 1.216; // 20% taller (was 1.08)
         const blockHeight = blockTopY - floorY;
-        const blockW = 0.20, blockD = 0.24;
+        const blockW = 0.24, blockD = 0.288; // 20% larger footprint (was 0.20x0.24)
 
         const leftSign = cabDir; // +X is "left" for cabDir=1, -X for cabDir=-1
         const blockX = leftSign * 0.55;
-        const blockZ = noseZ - cabDir * 0.75;
+        const blockZ = noseZ - cabDir * 0.55; // 20cm further away from driver (was 0.75)
 
-        const block = new THREE.Mesh(new THREE.BoxGeometry(blockW, blockHeight, blockD), frameMat);
+        const block = new THREE.Mesh(new THREE.BoxGeometry(blockW, blockHeight, blockD), pedestalMat);
         block.position.set(blockX, floorY + blockHeight / 2, blockZ);
         cockpitGroup.add(block);
 
-        // Pivot base plate on top of the block
-        const pivotBase = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.025, 12), frameMat);
-        pivotBase.position.set(blockX, blockTopY + 0.0125, blockZ);
-        cockpitGroup.add(pivotBase);
+        // Dark longitudinal line on top of the block (replaces the old pivot dome)
+        const lineMat = cheapMaterial({ color: '#111111', roughness: 0.9 });
+        const slotLine = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.002, 0.18), lineMat);
+        slotLine.position.set(blockX, blockTopY + 0.001, blockZ);
+        cockpitGroup.add(slotLine);
 
         // Lever: pivots fore/aft about its base like an aircraft throttle,
         // driven by the shared this.throttleLevers update (rotation.x).
         const leverGroup = new THREE.Group();
-        leverGroup.position.set(blockX, blockTopY + 0.025, blockZ);
+        leverGroup.position.set(blockX, blockTopY + 0.01, blockZ);
         cockpitGroup.add(leverGroup);
 
         const rodLength = 0.10;
@@ -2018,6 +2105,54 @@ export class TrainModel {
         // material's white default lets the texture's own tones show.
         this._g1SeatCushionMat = cheapMaterial({ map: tex, roughness: 0.85, metalness: 0.05 });
         return this._g1SeatCushionMat;
+    }
+
+    getG1PedestalMaterial() {
+        if (this._g1PedestalMat) return this._g1PedestalMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        // Main color #322F26
+        ctx.fillStyle = '#322F26';
+        ctx.fillRect(0, 0, 128, 128);
+
+        // Edge fades with color #423B33
+        const fadeSize = 16;
+
+        // Top fade
+        let grad = ctx.createLinearGradient(0, 0, 0, fadeSize);
+        grad.addColorStop(0, '#423B33');
+        grad.addColorStop(1, '#322F26');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 128, fadeSize);
+
+        // Bottom fade
+        grad = ctx.createLinearGradient(0, 128 - fadeSize, 0, 128);
+        grad.addColorStop(0, '#322F26');
+        grad.addColorStop(1, '#423B33');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 128 - fadeSize, 128, fadeSize);
+
+        // Left fade
+        grad = ctx.createLinearGradient(0, 0, fadeSize, 0);
+        grad.addColorStop(0, '#423B33');
+        grad.addColorStop(1, '#322F26');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, fadeSize, 128);
+
+        // Right fade
+        grad = ctx.createLinearGradient(128 - fadeSize, 0, 128, 0);
+        grad.addColorStop(0, '#322F26');
+        grad.addColorStop(1, '#423B33');
+        ctx.fillStyle = grad;
+        ctx.fillRect(128 - fadeSize, 0, fadeSize, 128);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        this._g1PedestalMat = cheapMaterial({ map: tex, roughness: 0.7, metalness: 0.2 });
+        return this._g1PedestalMat;
     }
 
     buildG1DriverSeat(cockpitGroup, noseZ, cabDir) {
@@ -2278,6 +2413,335 @@ export class TrainModel {
                 }
             });
         });
+    }
+
+    populateDT1Panels(panelMeshes, cabDir) {
+        if (!panelMeshes) return;
+
+        const panelThickness = 0.08;
+        const matRed = cheapMaterial({ color: '#d00000', roughness: 0.5 });
+        const matWhite = cheapMaterial({ color: '#f0f0f0', roughness: 0.5 });
+        const matBlack = cheapMaterial({ color: '#101010', roughness: 0.8 });
+        const matGrey = cheapMaterial({ color: '#555555', roughness: 0.6 });
+        const matSilver = cheapMaterial({ color: '#aaaaaa', roughness: 0.3, metalness: 0.7 });
+        const matBrass = cheapMaterial({ color: '#b5a642', roughness: 0.4, metalness: 0.8 });
+        const matYellow = cheapMaterial({ color: '#e0a000', roughness: 0.5 });
+        const matBlue = cheapMaterial({ color: '#00ced1', roughness: 0.5 });
+
+        const setupControlsGroup = (panel) => {
+            const group = new THREE.Group();
+            group.position.set(0, 0, -cabDir * (panelThickness / 2 + 0.002));
+            group.rotation.y = (cabDir === 1) ? Math.PI : 0;
+            panel.add(group);
+            return group;
+        };
+
+        const buildRoundButton = (colorMat) => {
+            const group = new THREE.Group();
+            const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.019, 0.005, 20), matSilver);
+            ring.rotation.x = Math.PI / 2;
+            group.add(ring);
+            const button = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.008, 20), colorMat);
+            button.rotation.x = Math.PI / 2;
+            button.position.z = 0.004;
+            group.add(button);
+            return group;
+        };
+
+        const buildToggleSwitch = () => {
+            const group = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.004, 16), matSilver);
+            base.rotation.x = Math.PI / 2;
+            group.add(base);
+            const stem = new THREE.Group();
+            stem.rotation.x = 0.4;
+            group.add(stem);
+            const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.03, 8), matSilver);
+            rod.position.z = 0.015;
+            rod.rotation.x = Math.PI / 2;
+            stem.add(rod);
+            const cap = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 8), matBlack);
+            cap.position.z = 0.03;
+            stem.add(cap);
+            return group;
+        };
+
+        const buildRectSwitch = (isSmall = false) => {
+            const w = isSmall ? 0.025 : 0.045;
+            const h = isSmall ? 0.015 : 0.025;
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.01), matBlack);
+            group.add(body);
+            return group;
+        };
+
+        const buildIndicator = (colorMat) => {
+            const group = new THREE.Group();
+            const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.004, 16), matSilver);
+            ring.rotation.x = Math.PI / 2;
+            group.add(ring);
+            const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.006, 16), colorMat);
+            lens.rotation.x = Math.PI / 2;
+            lens.position.z = 0.002;
+            group.add(lens);
+            return group;
+        };
+
+        const buildKeySwitch = () => {
+            const group = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.005, 16), matSilver);
+            base.rotation.x = Math.PI / 2;
+            group.add(base);
+            const key = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.02, 0.025), matSilver);
+            key.position.set(0, 0, 0.0125);
+            group.add(key);
+            return group;
+        };
+
+        const buildRotarySwitch = (isLarge = false) => {
+            const radius = isLarge ? 0.035 : 0.018;
+            const height = isLarge ? 0.04 : 0.015;
+            const group = new THREE.Group();
+            const knob = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 0.9, height, 16), matBlack);
+            knob.rotation.x = Math.PI / 2;
+            knob.position.z = height / 2;
+            group.add(knob);
+            return group;
+        };
+
+        const buildRustyManometer = (label1, label2, color1, color2) => {
+            const group = new THREE.Group();
+            // Rustic brass/copper rim
+            const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.015, 32), matBrass);
+            rim.rotation.x = Math.PI / 2;
+            group.add(rim);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            // Weathered parchment/metal look
+            ctx.fillStyle = '#000000'; // Black background
+            ctx.fillRect(0, 0, 128, 128);
+
+            // Add some "grime"
+            for (let i = 0; i < 400; i++) {
+                ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.3})`;
+                ctx.fillRect(Math.random() * 128, Math.random() * 128, 2, 2);
+            }
+
+            ctx.strokeStyle = '#634b35';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(64, 64, 60, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Scale 0-12
+            ctx.strokeStyle = '#d4bc9d';
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i <= 12; i++) {
+                const angle = Math.PI * 0.75 + (i / 12) * Math.PI * 1.5;
+                const len = (i % 2 === 0) ? 10 : 6;
+                ctx.beginPath();
+                ctx.moveTo(64 + Math.cos(angle) * 58, 64 + Math.sin(angle) * 58);
+                ctx.lineTo(64 + Math.cos(angle) * (58 - len), 64 + Math.sin(angle) * (58 - len));
+                ctx.stroke();
+            }
+
+            // Labels
+            ctx.fillStyle = '#d4bc9d';
+            ctx.font = 'bold 11px serif';
+            ctx.textAlign = 'center';
+            for (let i = 0; i <= 12; i += 2) {
+                const angle = Math.PI * 0.75 + (i / 12) * Math.PI * 1.5;
+                ctx.fillText(i.toString(), 64 + Math.cos(angle) * 42, 64 + Math.sin(angle) * 42 + 4);
+            }
+
+            ctx.font = '8px serif';
+            ctx.fillText(label1, 64, 85);
+            ctx.fillStyle = color2;
+            ctx.fillText(label2, 64, 98);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            const face = new THREE.Mesh(new THREE.CircleGeometry(0.06, 32), new THREE.MeshBasicMaterial({ map: tex, fog: false }));
+            face.position.z = 0.008;
+            group.add(face);
+
+            const buildNeedle = (col) => {
+                const nGrp = new THREE.Group();
+                const n = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.05, 0.001), new THREE.MeshBasicMaterial({ color: col, fog: false }));
+                n.geometry.translate(0, 0.02, 0);
+                nGrp.add(n);
+                nGrp.position.z = 0.01;
+                return nGrp;
+            };
+
+            const needle1 = buildNeedle(color1);
+            const needle2 = buildNeedle(color2);
+            needle2.position.z = 0.011;
+            face.add(needle1, needle2);
+
+            return { group, needle1, needle2 };
+        };
+
+        const buildStaticGauge = (label, value) => {
+            const group = new THREE.Group();
+            const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.015, 32), matBrass);
+            rim.rotation.x = Math.PI / 2;
+            group.add(rim);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000000'; // Black background
+            ctx.fillRect(0, 0, 128, 128);
+
+            ctx.strokeStyle = '#d4bc9d';
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i <= 100; i += 10) {
+                const angle = Math.PI * 0.75 + (i / 100) * Math.PI * 1.5;
+                ctx.beginPath();
+                ctx.moveTo(64 + Math.cos(angle) * 58, 64 + Math.sin(angle) * 58);
+                ctx.lineTo(64 + Math.cos(angle) * 48, 64 + Math.sin(angle) * 48);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#d4bc9d';
+            ctx.font = 'bold 12px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, 64, 90);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            const face = new THREE.Mesh(new THREE.CircleGeometry(0.06, 32), new THREE.MeshBasicMaterial({ map: tex, fog: false }));
+            face.position.z = 0.008;
+            group.add(face);
+
+            const needle = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.05, 0.001), new THREE.MeshBasicMaterial({ color: '#ffffff', fog: false }));
+            needle.geometry.translate(0, 0.02, 0);
+            needle.position.z = 0.01;
+            needle.rotation.z = Math.PI * 0.75 - (value / 100) * Math.PI * 1.5;
+            face.add(needle);
+
+            return group;
+        };
+
+        // Panel 1: idx -2 (Far left)
+        if (panelMeshes.panel1) {
+            const g = setupControlsGroup(panelMeshes.panel1);
+            // Top row: Red, White, Red
+            [-0.1, 0, 0.1].forEach((x, i) => {
+                const btn = buildRoundButton(i === 1 ? matWhite : matRed);
+                btn.position.set(x, 0.11, 0);
+                g.add(btn);
+            });
+            // Middle row: 3 Toggles
+            [-0.1, 0, 0.1].forEach(x => {
+                const sw = buildToggleSwitch();
+                sw.position.set(x, 0, 0);
+                g.add(sw);
+            });
+            // Bottom row: Black rect bar
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 0.005), matBlack);
+            bar.position.set(0, -0.11, 0);
+            g.add(bar);
+        }
+
+        // Panel 2: idx -1 (Left middle)
+        if (panelMeshes.panel2) {
+            const g = setupControlsGroup(panelMeshes.panel2);
+            // Top row: Red, Red, Black
+            [-0.1, 0, 0.1].forEach((x, i) => {
+                const btn = buildRoundButton(i === 2 ? matBlack : matRed);
+                btn.position.set(x, 0.11, 0);
+                g.add(btn);
+            });
+            // Middle row: 3 Toggles
+            [-0.1, 0, 0.1].forEach(x => {
+                const sw = buildToggleSwitch();
+                sw.position.set(x, 0, 0);
+                g.add(sw);
+            });
+            // Bottom row: Key, small rotary
+            const key = buildKeySwitch();
+            key.position.set(-0.06, -0.11, 0);
+            g.add(key);
+            const rot = buildRotarySwitch(false);
+            rot.position.set(0.04, -0.11, 0);
+            g.add(rot);
+        }
+
+        // Panel 3: idx 0 (Center)
+        if (panelMeshes.panel3) {
+            const g = setupControlsGroup(panelMeshes.panel3);
+            // Above speedo: 3 indicators: Yellow, Yellow, Red
+            [-0.07, 0, 0.07].forEach((x, i) => {
+                const ind = buildIndicator(i === 2 ? matRed : matYellow);
+                ind.position.set(x, 0.13, 0);
+                g.add(ind);
+            });
+
+            // Functional Dual Manometer (HBL and BZ)
+            const manometer = buildRustyManometer('HBL', 'BZ', '#ffffff', '#ff3300');
+            manometer.group.position.set(0.13, 0.02, 0);
+            g.add(manometer.group);
+
+            this.brakeNeedles.push({
+                hbl: manometer.needle1,
+                bz: manometer.needle2,
+                hblSmoothed: 8.5,
+                bzSmoothed: 0
+            });
+
+            // Static V x 10 Gauge
+            const v10 = buildStaticGauge('V x 10', 75);
+            v10.position.set(-0.13, 0.02, 0);
+            g.add(v10);
+
+            // Bottom: 4 small rect switches
+            [-0.1, -0.035, 0.035, 0.1].forEach(x => {
+                const sw = buildRectSwitch(true);
+                sw.position.set(x, -0.13, 0);
+                g.add(sw);
+            });
+        }
+
+        // Panel 4: idx 1 (Right middle)
+        if (panelMeshes.panel4) {
+            const g = setupControlsGroup(panelMeshes.panel4);
+            // Middle: 3x4 Matrix (moved up slightly)
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const sq = buildRectSwitch(true);
+                    sq.position.set(-0.12 + c * 0.08, 0.08 - r * 0.045, 0);
+                    g.add(sq);
+                }
+            }
+            // Bottom: Large rotary
+            const rot = buildRotarySwitch(true);
+            rot.position.set(0.05, -0.11, 0);
+            g.add(rot);
+        }
+
+        // Panel 5: idx 2 (Far right)
+        if (panelMeshes.panel5) {
+            const g = setupControlsGroup(panelMeshes.panel5);
+            // Bottom left: 3 large round buttons (blue)
+            [-0.13, -0.07, -0.01].forEach(x => {
+                const btn = buildRoundButton(matBlue);
+                btn.scale.set(1.4, 1.4, 1);
+                btn.position.set(x, -0.11, 0);
+                g.add(btn);
+            });
+            // Far right: Telephone
+            const phone = new THREE.Group();
+            phone.position.set(0.12, 0, 0);
+            g.add(phone);
+            const cradle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.02), matBlack);
+            phone.add(cradle);
+            const handset = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.2, 0.035), matGrey);
+            handset.position.z = 0.025;
+            phone.add(handset);
+        }
     }
 
     buildBogie(carGroup, zOffset, hasCollector = false, redFrameDirection = 0) {
@@ -3034,7 +3498,9 @@ export class TrainModel {
         const offsetStr = offsetSign + Math.abs(offsetVal).toString().padStart(4, '0');
 
         const isReversing = this.sim.isReversing;
-        const destination = isReversing ? "Langwasser Süd" : "Hardhöhe";
+        const destStation = isReversing ? this.sim.stations[0] : this.sim.stations[this.sim.stations.length - 1];
+        let destination = destStation ? destStation.name : "Terminal";
+        if (destination === 'Hardhöhe') destination = 'Fürth Hardhöhe';
 
         // 1. Top Banner (Dark Blue)
         ctx.fillStyle = '#002060';
@@ -3052,7 +3518,8 @@ export class TrainModel {
         ctx.fillText("Fahrplan : " + offsetStr, 350, 10);
 
         // Row 2
-        ctx.fillText("Linie U1", 15, 35);
+        const lineName = this.sim.track.lineId || 'U1';
+        ctx.fillText("Linie " + lineName, 15, 35);
         ctx.fillText("Kurs 3", 130, 35);
         ctx.fillText("L", 210, 35);
         ctx.fillText("Ziel: " + destination, 260, 35);
@@ -3282,7 +3749,7 @@ export class TrainModel {
     createDestinationSignMaterial() {
         if (this.destScreenMat) return this.destScreenMat;
         const canvas = document.createElement('canvas');
-        canvas.width = 512;
+        canvas.width = 1024;
         canvas.height = 128;
         const ctx = canvas.getContext('2d');
 
@@ -3290,10 +3757,17 @@ export class TrainModel {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 44px sans-serif';
+        ctx.font = 'bold 70px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText("U1 Fürth Hardhöhe", canvas.width / 2, canvas.height / 2);
+
+        const lineName = this.sim.track.lineId || 'U1';
+        const isReversing = this.sim.isReversing;
+        const destStation = isReversing ? this.sim.stations[0] : this.sim.stations[this.sim.stations.length - 1];
+        let destName = destStation ? destStation.name : 'Terminal';
+        if (destName === 'Hardhöhe') destName = 'Fürth Hardhöhe';
+
+        ctx.fillText(lineName + " " + destName, canvas.width / 2, canvas.height / 2);
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
@@ -3312,18 +3786,27 @@ export class TrainModel {
         ctx.fillStyle = '#0a0a0c';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = '#002b5c';
+        const lineName = this.sim.track.lineId || 'U1';
+        let boxColor = '#0055a5'; // Nuremberg U1 Blue
+        if (lineName === 'U2' || lineName === 'TRUNK') boxColor = '#cb0611'; // U2 Red
+        else if (lineName === 'U3') boxColor = '#2da4a8'; // U3 Turquoise
+
+        ctx.fillStyle = boxColor;
         ctx.fillRect(canvas.width / 2 - 132, canvas.height / 2 - 28, 84, 56);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 44px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('U1', canvas.width / 2 - 90, canvas.height / 2);
+        ctx.fillText(lineName, canvas.width / 2 - 90, canvas.height / 2);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 32px sans-serif';
-        ctx.fillText('Fürth Hardhöhe', canvas.width / 2 + 70, canvas.height / 2);
+        const isReversing = this.sim.isReversing;
+        const destStation = isReversing ? this.sim.stations[0] : this.sim.stations[this.sim.stations.length - 1];
+        let destName = destStation ? destStation.name : 'Terminal';
+        if (destName === 'Hardhöhe') destName = 'Fürth Hardhöhe';
+        ctx.fillText(destName, canvas.width / 2 + 70, canvas.height / 2);
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
@@ -3401,6 +3884,11 @@ export class TrainModel {
             return;
         }
 
+        const lineName = this.sim.track.lineId || 'U1';
+        const destStation = isReversing ? this.sim.stations[0] : this.sim.stations[this.sim.stations.length - 1];
+        let destName = destStation ? destStation.name : 'Terminal';
+        if (destName === 'Hardhöhe') destName = 'Fürth Hardhöhe';
+
         if (this.trainType === 'DT1') {
             if (!this.dt1DestScreenMat || !this.dt1DestScreenMat.map) return;
             if (this.lastReversing === isReversing) return;
@@ -3414,19 +3902,23 @@ export class TrainModel {
             ctx.fillStyle = '#0a0a0c';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = '#002b5c';
+            let boxColor = '#002b5c';
+            if (lineName === 'U1') boxColor = '#f97316';
+            else if (lineName === 'U2') boxColor = '#ef4444';
+            else if (lineName === 'U3') boxColor = '#06b6d4';
+
+            ctx.fillStyle = boxColor;
             ctx.fillRect(canvas.width / 2 - 132, canvas.height / 2 - 28, 84, 56);
 
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 44px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('U1', canvas.width / 2 - 90, canvas.height / 2);
+            ctx.fillText(lineName, canvas.width / 2 - 90, canvas.height / 2);
 
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 32px sans-serif';
-            const text = isReversing ? 'Langwasser Süd' : 'Fürth Hardhöhe';
-            ctx.fillText(text, canvas.width / 2 + 70, canvas.height / 2);
+            ctx.fillText(destName, canvas.width / 2 + 70, canvas.height / 2);
 
             this.dt1DestScreenMat.map.needsUpdate = true;
             return;
@@ -3444,46 +3936,103 @@ export class TrainModel {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 44px sans-serif';
+        ctx.font = 'bold 70px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        const text = isReversing ? "U1 Langwasser Süd" : "U1 Fürth Hardhöhe";
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        ctx.fillText(lineName + " " + destName, canvas.width / 2, canvas.height / 2);
         
         this.destScreenMat.map.needsUpdate = true;
     }
 
     createInteriorDisplayMaterial() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 64;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const isG1 = this.trainType === 'G1';
+
+        const createOne = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = isG1 ? 1408 : 512;
+            canvas.height = isG1 ? 128 : 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            return new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, fog: false });
+        };
+
+        this.interiorDisplayMatF = createOne();
+        this.interiorDisplayMatB = createOne();
         
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.colorSpace = THREE.SRGBColorSpace;
-        
-        this.interiorDisplayMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, fog: false });
-        return this.interiorDisplayMat;
+        // For compatibility during transition/disposal
+        this.interiorDisplayMat = this.interiorDisplayMatF;
+        return this.interiorDisplayMatF;
     }
 
-    updateInteriorDisplays(text) {
-        if (!this.interiorDisplayMat || !this.interiorDisplayMat.map) return;
-        const canvas = this.interiorDisplayMat.map.image;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.fillStyle = '#ffffff'; // White text color
-        ctx.font = 'bold 36px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-        
-        this.interiorDisplayMat.map.needsUpdate = true;
+    updateInteriorDisplays(text, side = 'left') {
+        const mats = [
+            { mat: this.interiorDisplayMatF, type: 'F' },
+            { mat: this.interiorDisplayMatB, type: 'B' }
+        ];
+
+        for (const { mat, type } of mats) {
+            if (!mat || !mat.map) continue;
+            const canvas = mat.map.image;
+            if (!canvas) continue;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const isG1 = this.trainType === 'G1';
+            ctx.fillStyle = '#ffffff'; // White text color
+            if (isG1) {
+                ctx.font = 'bold 54px "Doto Bold"';
+            } else {
+                ctx.font = 'bold 36px monospace';
+            }
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+            // Draw exit side triangles for G1
+            if (isG1) {
+                const drawTriangle = (x, y, width, height, direction, active) => {
+                    ctx.fillStyle = active ? '#ff0000' : '#440000';
+                    ctx.beginPath();
+                    if (direction === 'left') {
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x + width, y - height / 2);
+                        ctx.lineTo(x + width, y + height / 2);
+                    } else {
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x - width, y - height / 2);
+                        ctx.lineTo(x - width, y + height / 2);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+
+                    if (active) {
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = '#ff0000';
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                };
+
+                const margin = 92; // 20cm from wall (approx)
+                const triW = 40;
+                const triH = 50;
+
+                // For 'B' (Backward/Rotated) displays, we invert the visual logic
+                // because the entire mesh is rotated 180 degrees.
+                const visualLeftActive = (type === 'F') ? (side === 'left') : (side === 'right');
+                const visualRightActive = (type === 'F') ? (side === 'right') : (side === 'left');
+
+                drawTriangle(margin, canvas.height / 2, triW, triH, 'left', visualLeftActive);
+                drawTriangle(canvas.width - margin, canvas.height / 2, triW, triH, 'right', visualRightActive);
+            }
+
+            mat.map.needsUpdate = true;
+        }
     }
 
     createFabricMaterial(bgColor = '#c62828') {
@@ -3544,6 +4093,52 @@ export class TrainModel {
         uv.needsUpdate = true;
     }
 
+    createNoppenFloorMaterial() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        // Darker base for more contrast
+        ctx.fillStyle = '#111315';
+        ctx.fillRect(0, 0, 128, 128);
+
+        // Coarser studs: larger spacing and radius
+        const spacing = 32;
+        const radius = 10;
+        ctx.lineWidth = 1.5;
+
+        for (let y = spacing / 2; y < 128; y += spacing) {
+            for (let x = spacing / 2; x < 128; x += spacing) {
+                // Main circle - slightly lighter to pop from background
+                ctx.fillStyle = '#22262b';
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Increased contrast highlights (top-left)
+                ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+                ctx.beginPath();
+                ctx.arc(x, y, radius, Math.PI * 1.0, Math.PI * 1.6);
+                ctx.stroke();
+
+                // Increased contrast shadows (bottom-right)
+                ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+                ctx.beginPath();
+                ctx.arc(x, y, radius, Math.PI * 0.0, Math.PI * 0.6);
+                ctx.stroke();
+            }
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(4, 4); // Coarser tiling (fewer repetitions = larger studs)
+
+        return cheapMaterial({ map: tex, roughness: 0.9, metalness: 0.1 });
+    }
+
     createFloorMaterial() {
         const canvas = document.createElement('canvas');
         canvas.width = 512;
@@ -3591,21 +4186,25 @@ export class TrainModel {
     }
 
     playAnnouncementChime() {
-        // Dreiklang: F4 (349 Hz) → A4 (440 Hz) → C5 (523 Hz, mit langem Nachklang)
+        // Dreiklang tiefer (C4-E4-G4), 30% schneller, Triangle-Wave und Hochpassfilter
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(400, ctx.currentTime);
+            filter.connect(ctx.destination);
 
-            const playTone = (freq, startTime, duration, decayTime, gain = 0.35) => {
+            const playTone = (freq, startTime, duration, decayTime, gain = 0.15) => {
                 const osc = ctx.createOscillator();
                 const env = ctx.createGain();
                 osc.connect(env);
-                env.connect(ctx.destination);
+                env.connect(filter);
 
-                osc.type = 'sine';
+                osc.type = 'triangle';
                 osc.frequency.setValueAtTime(freq, startTime);
 
                 env.gain.setValueAtTime(0, startTime);
-                env.gain.linearRampToValueAtTime(gain, startTime + 0.012); // fast attack
+                env.gain.linearRampToValueAtTime(gain, startTime + 0.012);
                 env.gain.setValueAtTime(gain, startTime + duration);
                 env.gain.exponentialRampToValueAtTime(0.0001, startTime + duration + decayTime);
 
@@ -3614,11 +4213,12 @@ export class TrainModel {
             };
 
             const now = ctx.currentTime;
-            playTone(349.23, now + 0.00, 0.20, 0.05);          // F4 – kurz
-            playTone(440.00, now + 0.22, 0.20, 0.05);          // A4 – kurz
-            playTone(523.25, now + 0.44, 0.20, 2.50, 0.40);   // C5 – langsamer Ausklang
+            const interval = 0.15; // 30% schneller als 0.22
+            playTone(261.63, now + 0.00, 0.15, 0.05);          // C4
+            playTone(329.63, now + interval, 0.15, 0.05);      // E4
+            playTone(392.00, now + interval * 2, 0.15, 2.00, 0.20); // G4
         } catch (e) {
-            // AudioContext not available (e.g. test environment) – silently skip
+            // AudioContext not available – silently skip
         }
     }
 
@@ -3851,20 +4451,21 @@ export class TrainModel {
         carGroup.add(bellowsFloor);
  
         const signOffset = type === 'front' ? -0.04 : 0.04;
-        const displayY = isG1 ? 2.62 : 2.12;
+        const displayY = isG1 ? 2.701 : 2.12; // G1: top edge at 2.841 (interior ceiling)
         const displayBacking = new THREE.Mesh(
-            new THREE.BoxGeometry(1.02, 0.14, 0.03),
+            new THREE.BoxGeometry(isG1 ? 2.78 : 1.02, isG1 ? 0.28 : 0.14, 0.03),
             this.materials.bodyDarkGrey
         );
         displayBacking.position.set(0, displayY, startZ + signOffset);
         carGroup.add(displayBacking);
  
+        const isRotated = (type === 'front');
         const displayScreen = new THREE.Mesh(
-            new THREE.PlaneGeometry(1.0, 0.12),
-            this.interiorDisplayMat
+            new THREE.PlaneGeometry(isG1 ? 2.74 : 1.0, isG1 ? 0.24 : 0.12),
+            isRotated ? this.interiorDisplayMatB : this.interiorDisplayMatF
         );
         displayScreen.position.set(0, displayY, startZ + signOffset * 1.4);
-        displayScreen.rotation.y = type === 'front' ? Math.PI : 0;
+        displayScreen.rotation.y = isRotated ? Math.PI : 0;
         carGroup.add(displayScreen);
  
         this.interiorDisplays.push(displayScreen);
@@ -3885,20 +4486,20 @@ export class TrainModel {
         }
     }
 
+    // DT3-Routenmonitor (Canvas-Textur im Führerstand). Wird aus update() nur
+    // gedrosselt aufgerufen und zeichnet zusätzlich nur dann neu, wenn sich der
+    // sichtbare Inhalt (nächste Station, Richtung, gerundete Distanz) geändert
+    // hat — ein Canvas-Redraw + Textur-Upload pro Frame war ein Framedrop-Herd.
     updateDT3Monitor() {
         if (!this.dt3MonitorCanvas) return;
         const ctx = this.dt3MonitorCtx;
         const w = this.dt3MonitorCanvas.width;
         const h = this.dt3MonitorCanvas.height;
 
-        // Clear background
-        ctx.fillStyle = '#0b0f19'; // very dark slate/navy
-        ctx.fillRect(0, 0, w, h);
-
         const stationsList = [];
         const nextIdx = this.sim.nextStationIdx;
         const reversing = this.sim.isReversing;
-        
+
         if (reversing) {
             for (let i = 0; i < 4; i++) {
                 const idx = nextIdx - i;
@@ -3914,6 +4515,18 @@ export class TrainModel {
                 }
             }
         }
+
+        // Redraw-Key: nur neu zeichnen, wenn sich etwas Sichtbares geändert hat
+        const distRounded = stationsList.length > 0
+            ? Math.round(Math.abs(stationsList[0].position - this.sim.position))
+            : -1;
+        const monitorKey = nextIdx + '|' + reversing + '|' + distRounded;
+        if (monitorKey === this._dt3MonitorKey) return;
+        this._dt3MonitorKey = monitorKey;
+
+        // Clear background
+        ctx.fillStyle = '#0b0f19'; // very dark slate/navy
+        ctx.fillRect(0, 0, w, h);
 
         const lineName = this.sim.track.lineId || 'U3';
         let lineColor = '#10b981'; // emerald green
@@ -4158,12 +4771,18 @@ export class TrainModel {
         this.updateDestinationSign(reversing);
 
         // Update interior displays with next station name (use displayNextStationIdx – lags until train leaves)
-        const nextStation = this.sim.stations[this.sim.displayNextStationIdx];
+        const nextStationIdx = this.sim.displayNextStationIdx;
+        const nextStation = this.sim.stations[nextStationIdx];
         const nextStationName = nextStation ? nextStation.name : "Terminal";
-        const displayText = "U1 " + nextStationName;
-        if (displayText !== this.lastDisplayText) {
+        const lineName = this.sim.track.lineId || 'U1';
+        const displaySide = this.sim.getSideForStation(nextStationIdx);
+        const displayText = lineName + " " + nextStationName;
+        const displayKey = displayText + "|" + displaySide;
+
+        if (displayKey !== this.lastDisplayKey) {
             this.lastDisplayText = displayText;
-            this.updateInteriorDisplays(displayText);
+            this.lastDisplayKey = displayKey;
+            this.updateInteriorDisplays(displayText, displaySide);
         }
 
         // Play announcement chime when display flips
@@ -4303,8 +4922,14 @@ export class TrainModel {
             this.screenUpdateTimer = 0;
         }
 
+        // DT3-Routenmonitor: max. 4x pro Sekunde prüfen (die Methode selbst
+        // zeichnet zudem nur bei geändertem Inhalt neu, s. updateDT3Monitor).
         if (this.trainType === 'DT3') {
-            this.updateDT3Monitor();
+            this._dt3MonitorTimer = (this._dt3MonitorTimer || 0) + dt;
+            if (this._dt3MonitorTimer >= 0.25 || dt === 0) {
+                this._dt3MonitorTimer = 0;
+                this.updateDT3Monitor();
+            }
         }
 
         // 6. Force update world matrices recursively so cameras and headlights get correct coordinates immediately
@@ -4375,7 +5000,9 @@ export class TrainModel {
             }
 
             // Floor (Breite 2.90m -> 2.88m box)
-            const floor = new THREE.Mesh(this.geometries.dt1Floor, floorMaterial);
+            const floorGeom = this.geometries.dt1Floor.clone();
+            this.applyBoxUVs(floorGeom, 2.88, 0.05, bodyLength, 1.0);
+            const floor = new THREE.Mesh(floorGeom, floorMaterial);
             floor.scale.z = bodyLength;
             floor.position.set(0, 0.375, bodyPosZ);
             carGroup.add(floor);
@@ -4509,7 +5136,7 @@ export class TrainModel {
             roof.position.set(0, 2.815, bodyPosZ);
             carGroup.add(roof);
 
-            const ceilingLining = new THREE.Mesh(this.geometries.dt1Ceiling, this.materials.bodyWhite);
+            const ceilingLining = new THREE.Mesh(this.geometries.dt1Ceiling, this.materials.dt1Ceiling);
             ceilingLining.scale.z = bodyLength;
             ceilingLining.position.set(0, 2.77, bodyPosZ);
             carGroup.add(ceilingLining);
@@ -4519,13 +5146,30 @@ export class TrainModel {
             chassis.position.set(0, 0.34, bodyPosZ);
             carGroup.add(chassis);
 
-            const lightCount = 6;
-            for (let j = 0; j < lightCount; j++) {
-                const zRatio = (j + 0.5) / lightCount;
-                const fixtureZ = bodyPosZ - bodyLength / 2 + zRatio * bodyLength;
-                const fixture = new THREE.Mesh(this.geometries.dt1LightFixture, this.materials.lightGlowWarm);
-                fixture.position.set(0, 2.76, fixtureZ);
+            // Continuous ceiling light strips parallel to side walls (15cm x 15cm)
+            const lightStripGeom = new THREE.BoxGeometry(0.15, 0.15, 1.0);
+            for (let xSign of [-1, 1]) {
+                const fixture = new THREE.Mesh(lightStripGeom, this.materials.lightGlowWarm);
+                fixture.scale.z = bodyLength;
+                // Positioned flush with inner walls (wall is at +/- 1.40, half-width is 0.075)
+                // Center Y: 2.77 (ceiling) - 0.075 (half height) = 2.695
+                fixture.position.set(xSign * 1.325, 2.695, bodyPosZ);
                 carGroup.add(fixture);
+            }
+
+            // Slanted cove panels between door top (2.45m) and lamp inner bottom edge (2.62m, 1.25m)
+            const slantDX = 1.40 - 1.25; // 0.15
+            const slantDY = 2.62 - 2.45; // 0.17
+            const slantW = Math.sqrt(slantDX * slantDX + slantDY * slantDY);
+            const slantAngle = Math.atan2(slantDY, slantDX);
+            const slantPanelGeom = new THREE.BoxGeometry(slantW, 0.01, 1.0);
+            for (let xSign of [-1, 1]) {
+                const slant = new THREE.Mesh(slantPanelGeom, this.materials.dt1Slant);
+                slant.scale.z = bodyLength;
+                // Center between (1.40, 2.45) and (1.25, 2.62)
+                slant.position.set(xSign * 1.325, 2.535, bodyPosZ);
+                slant.rotation.z = -xSign * slantAngle;
+                carGroup.add(slant);
             }
 
             this.buildDT1TransverseSeats(carGroup, bodyPosZ, bodyLength, hasFrontCab, hasRearCab, doorPositionsZ);
@@ -4548,6 +5192,18 @@ export class TrainModel {
             doorPositionsZ.forEach(dz => {
                 this.createDT1DoorPair(carGroup, -1.44, dz, i, 'left');
                 this.createDT1DoorPair(carGroup, 1.44, dz, i, 'right');
+
+                // Vertical handrails in the middle of each entrance area, aligned with the aisle edge of the seats
+                for (let xSign of [-1, 1]) {
+                    const poleX = xSign * 0.425;
+                    const poleH = 2.77 - 0.375;
+                    const poleY = (2.77 + 0.375) / 2;
+                    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, poleH, 8), this.materials.dt1Handrail);
+                    pole.geometry.rotateX(Math.PI / 2);
+                    pole.rotation.x = Math.PI / 2;
+                    pole.position.set(poleX, poleY, dz);
+                    carGroup.add(pole);
+                }
 
                 for (let xSign of [-1, 1]) {
                     const posX = xSign * 1.43;
@@ -4640,7 +5296,7 @@ export class TrainModel {
         const backrestGeom = new THREE.BoxGeometry(seatWidth, 0.55, 0.04);
         const supportGeom = new THREE.BoxGeometry(seatWidth, 0.12, 0.45);
 
-        const buildDT1SeatRow = (xOffset, z, dirZ) => {
+        const buildDT1SeatRow = (xOffset, z, dirZ, hasPartition = false) => {
             const xSign = xOffset > 0 ? 1 : -1;
             const xPos = xOffset;
 
@@ -4654,42 +5310,72 @@ export class TrainModel {
             cushion.position.set(xPos, 0.745, z);
             carGroup.add(cushion);
 
-            // Blue Backrest (slightly inclined)
+            // Blue Backrest (tilted backwards)
             const backrest = new THREE.Mesh(backrestGeom, seatColor);
             backrest.position.set(xPos, 0.97, z - dirZ * 0.22);
-            backrest.rotation.x = dirZ * 0.05;
+            backrest.rotation.x = -dirZ * 0.15; // Inverted and increased tilt
             carGroup.add(backrest);
 
             // Backrest wood backing plate
             const backrestBacking = new THREE.Mesh(new THREE.BoxGeometry(seatWidth, 0.57, 0.02), woodMat);
             backrestBacking.position.set(xPos, 0.97, z - dirZ * 0.24);
-            backrestBacking.rotation.x = dirZ * 0.05;
+            backrestBacking.rotation.x = -dirZ * 0.15; // Match backrest tilt
             carGroup.add(backrestBacking);
 
-            // Grab handle on top of backrest (retro metal rail along X)
-            const handleGeom = new THREE.CylinderGeometry(0.01, 0.01, seatWidth, 8);
-            handleGeom.rotateZ(Math.PI / 2);
-            const handle = new THREE.Mesh(handleGeom, this.materials.chromeMetal);
-            handle.position.set(xPos, 1.21, z - dirZ * 0.25);
-            carGroup.add(handle);
-
-            // Vertical grab pole next to the seat row at the aisle edge (keeps gangway open)
-            const partitionX = xSign * 0.40;
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 2.40, 8), this.materials.chromeMetal);
-            pole.geometry.rotateX(Math.PI / 2); // align vertical
+            // New vertical handrail at the inward-facing upper corner of the seat, going to the ceiling
+            const aisleX = xSign * 0.425;
+            const backrestZ = z - dirZ * 0.24;
+            const poleH = 2.77 - 1.245;
+            const poleY = (2.77 + 1.245) / 2;
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, poleH, 8), this.materials.dt1Handrail);
+            pole.geometry.rotateX(Math.PI / 2);
             pole.rotation.x = Math.PI / 2;
-            pole.position.set(partitionX, 1.575, z + dirZ * 0.225);
+            pole.position.set(aisleX, poleY, backrestZ);
             carGroup.add(pole);
+
+            // Horizontal grab bar at 1.80m height, going outwards to the wall
+            const horizBarLen = Math.abs(xSign * 1.40 - aisleX);
+            const horizBar = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, horizBarLen, 8), this.materials.dt1Handrail);
+            horizBar.geometry.rotateZ(Math.PI / 2);
+            horizBar.position.set((aisleX + xSign * 1.40) / 2, 1.80, backrestZ);
+            carGroup.add(horizBar);
+
+            if (hasPartition) {
+                // Glass pane between seat top, wall, vertical and horizontal bars
+                const glassW = Math.abs(xSign * 1.40 - aisleX) - 0.02;
+                const glassH = 1.80 - 1.245 - 0.02;
+                const glassGeom = new THREE.BoxGeometry(glassW, glassH, 0.008);
+                const glass = new THREE.Mesh(glassGeom, this.materials.dt1PartitionGlass);
+                glass.position.set((aisleX + xSign * 1.40) / 2, (1.245 + 1.80) / 2, backrestZ);
+                carGroup.add(glass);
+
+                // Metal clamps (2 top, 2 side)
+                const clampGeom = new THREE.BoxGeometry(0.035, 0.035, 0.035);
+                const clampMat = this.materials.chromeMetal;
+
+                // Top clamps
+                for (let ox of [0.25 * glassW, 0.75 * glassW]) {
+                    const clamp = new THREE.Mesh(clampGeom, clampMat);
+                    clamp.position.set(aisleX + xSign * ox, 1.80, backrestZ);
+                    carGroup.add(clamp);
+                }
+                // Side clamps
+                for (let oy of [0.15, 0.40]) {
+                    const clamp = new THREE.Mesh(clampGeom, clampMat);
+                    clamp.position.set(aisleX, 1.245 + oy, backrestZ);
+                    carGroup.add(clamp);
+                }
+            }
         };
 
-        const buildDT1SeatBay = (zCenter) => {
+        const buildDT1SeatBay = (zCenter, partFront = false, partRear = false) => {
             // Left side double seats facing each other (aisle edge is at X = -0.40)
-            buildDT1SeatRow(-0.925, zCenter - 0.55, 1);
-            buildDT1SeatRow(-0.925, zCenter + 0.55, -1);
+            buildDT1SeatRow(-0.925, zCenter - 0.55, 1, partFront);
+            buildDT1SeatRow(-0.925, zCenter + 0.55, -1, partRear);
 
             // Right side double seats facing each other (aisle edge is at X = 0.40)
-            buildDT1SeatRow(0.925, zCenter - 0.55, 1);
-            buildDT1SeatRow(0.925, zCenter + 0.55, -1);
+            buildDT1SeatRow(0.925, zCenter - 0.55, 1, partFront);
+            buildDT1SeatRow(0.925, zCenter + 0.55, -1, partRear);
         };
 
         // Place bays of seats in the spaces between doors:
@@ -4701,24 +5387,24 @@ export class TrainModel {
         const int1_end = hasFrontCab ? -1.44 : -0.15;
         const frontSpaceLength = Math.abs(int1_end - (doorPositionsZ[0] + dHalf));
         if (frontSpaceLength > 2.0) {
-            buildDT1SeatBay(int1_end - p - w/2);
+            buildDT1SeatBay(int1_end - p - w/2, true, false);
         }
 
         // Middle Space A: between Doors 1 & 2
         const gap12_start = doorPositionsZ[0] - dHalf;
-        buildDT1SeatBay(gap12_start - p - w/2);
-        buildDT1SeatBay(gap12_start - p - w - p - w/2);
+        buildDT1SeatBay(gap12_start - p - w/2, false, true);
+        buildDT1SeatBay(gap12_start - p - w - p - w/2, true, false);
 
         // Middle Space B: between Doors 2 & 3
         const gap23_start = doorPositionsZ[1] - dHalf;
-        buildDT1SeatBay(gap23_start - p - w/2);
-        buildDT1SeatBay(gap23_start - p - w - p - w/2);
+        buildDT1SeatBay(gap23_start - p - w/2, false, true);
+        buildDT1SeatBay(gap23_start - p - w - p - w/2, true, false);
 
         // Rear Space
         const innerEnd = hasFrontCab ? -18.425 : -17.135;
         const rearSpaceLength = Math.abs(innerEnd - (doorPositionsZ[2] - dHalf));
         if (rearSpaceLength > 2.0) {
-            buildDT1SeatBay(innerEnd + p + w/2);
+            buildDT1SeatBay(innerEnd + p + w/2, false, true);
         }
     }
 
@@ -5051,40 +5737,6 @@ export class TrainModel {
         const consoleDarkGrey = cheapMaterial({ color: '#2b2e35', roughness: 0.8, metalness: 0.2 });
         const deskMat = cheapMaterial({ color: '#5d879b', roughness: 0.8 });
 
-        // 1. Create Dynamic Canvases for retro analogue dashboard
-        const leftCanvas = document.createElement('canvas');
-        leftCanvas.width = 256;
-        leftCanvas.height = 128;
-        const leftCtx = leftCanvas.getContext('2d');
-        const leftTexture = new THREE.CanvasTexture(leftCanvas);
-        leftTexture.colorSpace = THREE.SRGBColorSpace;
-        const leftMat = new THREE.MeshBasicMaterial({ map: leftTexture, fog: false });
-
-        const rightCanvas = document.createElement('canvas');
-        rightCanvas.width = 256;
-        rightCanvas.height = 128;
-        const rightCtx = rightCanvas.getContext('2d');
-        const rightTexture = new THREE.CanvasTexture(rightCanvas);
-        rightTexture.colorSpace = THREE.SRGBColorSpace;
-        const rightMat = new THREE.MeshBasicMaterial({ map: rightTexture, fog: false });
-
-        const screenObj = {
-            carIdx: carIdx,
-            cabDir: cabDir,
-            leftCanvas,
-            leftCtx,
-            leftTexture,
-            rightCanvas,
-            rightCtx,
-            rightTexture,
-            isDT1: true
-        };
-        this.dashboardScreens.push(screenObj);
-        
-        // Render initial retro screen frames
-        this.drawDT1LeftScreen(screenObj);
-        this.drawDT1RightScreen(screenObj);
-
         // Vertical back wall bulkhead (grey)
         // Width narrowed to 2.81m to fit inside; Height reduced to 0.85m and lifted to start at Y=0.40 (floor)
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(2.81, 0.85, 0.02), cheapMaterial({ color: '#7a8086', roughness: 0.9 }));
@@ -5110,7 +5762,7 @@ export class TrainModel {
 
         // Slanted panel layout for dashboard
         const panelWidth = 0.40;
-        const panelHeight = 0.22;
+        const panelHeight = 0.33; // 50% higher (was 0.22)
         const panelThickness = 0.08;
         const panelGeom = new THREE.BoxGeometry(panelWidth, panelHeight, panelThickness);
         const panelMat = cheapMaterial({ color: '#5d879b', roughness: 0.7, metalness: 0.2 });
@@ -5143,32 +5795,14 @@ export class TrainModel {
             panelMeshes[cfg.name] = mesh;
         });
 
-        if (this.trainType === 'G1') {
-            this.populateG1Panel2(panelMeshes.panel2, cabDir);
-        }
-
-        const screenWidth = 0.36;
-        const screenHeight = 0.18;
-        const screenGeom = new THREE.PlaneGeometry(screenWidth, screenHeight);
-
-        // Left Screen (on panel1)
-        const leftScreenMesh = new THREE.Mesh(screenGeom, leftMat);
-        leftScreenMesh.position.set(0, 0, -cabDir * (panelThickness / 2 + 0.002));
-        leftScreenMesh.rotation.y = (cabDir === 1) ? Math.PI : 0;
-        panelMeshes['panel1'].add(leftScreenMesh);
-
-        // Right Screen (on panel5)
-        const rightScreenMesh = new THREE.Mesh(screenGeom, rightMat);
-        rightScreenMesh.position.set(0, 0, -cabDir * (panelThickness / 2 + 0.002));
-        rightScreenMesh.rotation.y = (cabDir === 1) ? Math.PI : 0;
-        panelMeshes['panel5'].add(rightScreenMesh);
+        this.populateDT1Panels(panelMeshes, cabDir);
 
         // Speedometer Dial Face on Panel 3 (Center)
         const speedDialCanvas = document.createElement('canvas');
         speedDialCanvas.width = 256;
         speedDialCanvas.height = 256;
         const sdCtx = speedDialCanvas.getContext('2d');
-        sdCtx.fillStyle = '#111317';
+        sdCtx.fillStyle = '#000000'; // Black background
         sdCtx.fillRect(0, 0, 256, 256);
         
         sdCtx.strokeStyle = '#cccccc';
@@ -5214,7 +5848,7 @@ export class TrainModel {
         speedDialTex.colorSpace = THREE.SRGBColorSpace;
         const speedDialMat = new THREE.MeshBasicMaterial({ map: speedDialTex, fog: false });
         
-        const speedDialGeom = new THREE.PlaneGeometry(0.18, 0.18);
+        const speedDialGeom = new THREE.CircleGeometry(0.09, 32);
         const speedDialMesh = new THREE.Mesh(speedDialGeom, speedDialMat);
         speedDialMesh.position.set(0, 0, -cabDir * (panelThickness / 2 + 0.002));
         speedDialMesh.rotation.y = (cabDir === 1) ? Math.PI : 0;
@@ -6057,18 +6691,18 @@ export class TrainModel {
         return new THREE.CanvasTexture(canvas);
     }
 
-    createWoodTexture() {
+    createWoodTexture(baseColor = '#c27d38', grainColor = '#8c5016') {
         const canvas = document.createElement('canvas');
         canvas.width = 128;
         canvas.height = 128;
         const ctx = canvas.getContext('2d');
         
         // Base wood color
-        ctx.fillStyle = '#c27d38'; // nice golden oak/chestnut wood
+        ctx.fillStyle = baseColor; // nice golden oak/chestnut wood
         ctx.fillRect(0, 0, 128, 128);
         
         // Draw wavy grain lines
-        ctx.strokeStyle = '#8c5016';
+        ctx.strokeStyle = grainColor;
         for (let y = 0; y < 128; y += 4) {
             ctx.beginPath();
             ctx.moveTo(0, y);
@@ -6086,6 +6720,73 @@ export class TrainModel {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set(1, 1);
+        return texture;
+    }
+
+    createDT1FloorMaterial() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // Grundfarbe
+        ctx.fillStyle = '#4E4F4A';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Gesprenkelte kurze Längsstreifen
+        const colors = ['#5F5C4D', '#898A82'];
+        for (let i = 0; i < 8000; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const length = 4 + Math.random() * 12;
+            const width = 1 + Math.random() * 1.5;
+
+            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+            ctx.fillRect(x, y, width, length);
+        }
+
+        ctx.globalAlpha = 1.0;
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1, 1);
+
+        return new THREE.MeshBasicMaterial({
+            map: texture,
+            fog: false
+        });
+    }
+
+    createHandrailGradientTexture(color1 = '#8C8575', color2 = '#73695A') {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 32, 0);
+        grad.addColorStop(0, color1);
+        grad.addColorStop(0.5, color2);
+        grad.addColorStop(1, color1);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 32, 32);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return texture;
+    }
+
+    createSeatGradientTexture(color1 = '#393C43', color2 = '#0F1628') {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 32);
+        grad.addColorStop(0, color1);
+        grad.addColorStop(1, color2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 32, 32);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
         return texture;
     }
 
@@ -6422,7 +7123,7 @@ export class TrainModel {
     // +Z pointing outwards. The nose profile, windshield rake and the slight
     // horizontal convexity are baked in via shearG1FrontGeometry.
     createG1FrontGeometries() {
-        if (this.geometries.g1MaskNose) return;
+        if (this.geometries.g1MaskNose && this.geometries.g1PillarTrimL) return;
         const G = this.geometries;
 
         // --- Gloss-black mask, recessed 6mm, reaching from just above the skirt
@@ -6539,10 +7240,10 @@ export class TrainModel {
         G.g1Windshield = this.shearG1FrontGeometry(geom, -0.010);
 
         // --- Destination display, slightly proud on the band above the windshield.
-        // 1435mm wide (real-world display width); Y unchanged since 2.735 already
+        // 2420mm wide (matching the windshield width); Y unchanged since 2.735 already
         // sits at the bottom of the display band, just above the windshield's own
         // top edge (2.61).
-        geom = new THREE.PlaneGeometry(1.435, 0.23, 8, 2);
+        geom = new THREE.PlaneGeometry(2.42, 0.23, 8, 2);
         geom.translate(0, 2.735, 0);
         G.g1DestPlane = this.shearG1FrontGeometry(geom, -0.002);
 
@@ -6577,7 +7278,7 @@ export class TrainModel {
         // --- Interior A-pillar trim strips: ruled surfaces from the windshield
         // side edge back to the cab side window front edge (DoubleSide material,
         // so winding does not matter)
-        const pillarRows = [1.30, 1.70, 2.10, 2.45];
+        const pillarRows = [1.30, 1.70, 2.10, 2.45, 2.88];
         const buildPillarTrim = (sign) => {
             const pos = [];
             const F = (y) => [sign * 1.21, y, this.g1FrontZ(1.21, y) - 0.06];
@@ -6676,7 +7377,7 @@ export class TrainModel {
         // band's diagonal front edge (45 degrees, top corner at the door's rear
         // edge, running down-rearwards past the body joint at z = -1.90).
         // band's diagonal front edge.
-        const redStripePts = [[0.033, 0.60], [0.033, 0.40], [-1.90, 0.40], [-1.90, 0.60]];
+        const redStripePts = [[0.033, 0.599], [0.033, 0.40], [-1.90, 0.40], [-1.90, 0.599]];
         G.g1CabRedStripeL = this.createG1SidePlateGeometry(redStripePts, -1, 0.052, 1.402);
         G.g1CabRedStripeR = this.createG1SidePlateGeometry(redStripePts, 1, 0.052, 1.402);
 

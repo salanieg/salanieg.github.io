@@ -1,3 +1,10 @@
+// ============================================================================
+// PassengerData.js — Reine Daten: benannte Bahnsteig-Fahrgäste pro Station
+// (PASSENGER_DATA) und die Sprechblasen-Sätze pro Item (ITEM_SENTENCES).
+// Platzierung/Optik-Defaults: StationModel.spawnPassengersForStation;
+// Figuren-Geometrie: PassengerBuilder. Neues Item braucht BEIDES: einen
+// buildItem-Case im PassengerBuilder und einen Satz in ITEM_SENTENCES.
+// ============================================================================
 export const PASSENGER_DATA = {
     "Langwasser Süd": [
         { name: "Der Reichswald-Spaziergänger", shirtColor: "#005a2b", pantsColor: "#8b5a2b", hairColor: "#808080", item: "wanderstock" },

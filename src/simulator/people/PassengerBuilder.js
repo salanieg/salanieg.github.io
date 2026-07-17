@@ -1,3 +1,15 @@
+// ============================================================================
+// PassengerBuilder.js — Prozedurale Low-Poly-Fahrgastfiguren (statisch).
+//
+// KI-LANDKARTE:
+//   - createCharacter(options): baut eine Figur aus den Config-Feldern
+//     (shirtColor/shirtStyle/pantsColor/hairStyle/height/item/glasses ...).
+//     Die Configs kommen aus people/PassengerData.js (pro Station).
+//   - buildItem(): die tragbaren Gegenstände (Koffer, Hund, Brezel ...).
+//     Neues Item = Case hier + ITEM_SENTENCES-Eintrag in PassengerData.js.
+//   - Klick-Sprechblasen: WorldManager.handleSceneClick nutzt
+//     userData.isPassenger/config, die createCharacter setzt.
+// ============================================================================
 import * as THREE from 'three';
 
 export class PassengerBuilder {

@@ -1,5 +1,10 @@
+// ============================================================================
+// RathausBuilder.js — Sonderarchitektur der Station Rathaus (Fürth):
+// Wandmosaik/Mural und Querröhren. Überschreibt die StationBuilder-Hooks;
+// Dispatch per Stationsname in StationModel.buildStation.
+// ============================================================================
 import * as THREE from 'three';
-import { StationBuilder } from './StationBuilder.js?v=67';
+import { StationBuilder } from './StationBuilder.js?v=68';
 import { tagCanvasTextureSRGBKeepLook } from '../TextureUtils.js';
 
 export class RathausBuilder extends StationBuilder {
@@ -186,14 +191,24 @@ export class RathausBuilder extends StationBuilder {
         // makes the tube follow the curve instead of meeting at an angle every 10m. Profile:
         // x = R*cos(phi), y = R*sin(phi), phi:0..PI — dome opening downward, matching the
         // original cylinder's net shape after its YXZ transform (theta = phi + PI/2).
+        // Extended past the OUTER spring point (phi<0 for the left tube, >PI for the
+        // right) so the tube surface continues below platform-top level down to the
+        // Gleisbett/ground slab instead of stopping there with a visible gap (same
+        // fix as the Schweinau/Rothenburger vaults in StationModel).
         const arcSteps = 32;
-        const vaultArc = [];
-        for (let k = 0; k <= arcSteps; k++) {
-            const phi = Math.PI * k / arcSteps;
-            vaultArc.push({ x: tubeRadius * Math.cos(phi), y: tubeRadius * Math.sin(phi) });
-        }
-        this.model.buildSweptProfile(this.group, sA, sB, vaultArc, this.centerPos.y + 0.865, () => tubeCenterL, this.vaultMat, 5);
-        this.model.buildSweptProfile(this.group, sA, sB, vaultArc, this.centerPos.y + 0.865, () => tubeCenterR, this.vaultMat, 5);
+        const extSteps = 3;
+        const phiExt = Math.asin(1.45 / tubeRadius);
+        const mkVaultArc = (phiFrom, phiTo) => {
+            const pts = [];
+            const n = arcSteps + extSteps;
+            for (let k = 0; k <= n; k++) {
+                const phi = phiFrom + (phiTo - phiFrom) * k / n;
+                pts.push({ x: tubeRadius * Math.cos(phi), y: tubeRadius * Math.sin(phi) });
+            }
+            return pts;
+        };
+        this.model.buildSweptProfile(this.group, sA, sB, mkVaultArc(-phiExt, Math.PI), this.centerPos.y + 0.865, () => tubeCenterL, this.vaultMat, 5);
+        this.model.buildSweptProfile(this.group, sA, sB, mkVaultArc(0, Math.PI + phiExt), this.centerPos.y + 0.865, () => tubeCenterR, this.vaultMat, 5);
 
         // Continuous light strips + discrete hanger rods (kept at the same spacing as the
         // original per-segment pairs: two hangers per this.subLen segment, at local z = +-1.5m).

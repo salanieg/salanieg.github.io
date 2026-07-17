@@ -9,7 +9,9 @@
 // lines: U2's and U3's own per-line TrackManager/StationModel skip this same arc range
 // (Simulation.isTrunkZone / TrackManager.createChunk / StationModel.buildStation) so the
 // stations + connecting track exist exactly once in the scene instead of once per line.
-import { TRACK_DATA_U2 } from './TrackDataU2.js?v=9';
+// WICHTIG: ?v= muss mit main.js/StationModel.js übereinstimmen (sonst wird die
+// große TrackDataU2-Datei unter zwei URLs doppelt geladen und geparst).
+import { TRACK_DATA_U2 } from './TrackDataU2.js?v=10';
 
 const TRUNK_STATION_NAMES = ['Rothenburger Straße', 'Opernhaus', 'Hauptbahnhof', 'Wöhrder Wiese', 'Rathenauplatz'];
 // Must stay inside the real switch distance (~73-76m past each station's centre --

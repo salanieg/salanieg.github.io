@@ -26,7 +26,7 @@ export const TRACK_DATA = {
     {name:"Scharfreiterring",type:"at-grade",color:"#757575",position:1550.99,halfLength:60.22,platformSpacing:24.5,side:false},
     {name:"Langwasser Nord",type:"at-grade",color:"#f57c00",position:2048.87,halfLength:45.16,platformSpacing:11.85,side:false},
     {name:"Messe",type:"at-grade",color:"#cfd8dc",position:2818.04,halfLength:52.19,platformSpacing:18.75,side:false},
-    {name:"Bauernfeindstraße",type:"at-grade",color:"#388e3c",position:3357.58,halfLength:52.19,platformSpacing:12.05,side:true},
+    {name:"Bauernfeindstraße",type:"at-grade",color:"#388e3c",position:3357.58,halfLength:52.19,platformSpacing:12.05,side:false},
     {name:"Hasenbuck",type:"underground",color:"#714a39",position:4865.87,halfLength:60.22,platformSpacing:12.41,side:false},
     {name:"Frankenstraße",type:"underground",color:"#385580",position:5533.14,halfLength:59.21,platformSpacing:12.66,side:false},
     {name:"Maffeiplatz",type:"underground",color:"#4e7c4e",position:6243.61,halfLength:60.22,platformSpacing:12.17,side:false},

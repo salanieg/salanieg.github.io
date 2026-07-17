@@ -1,11 +1,20 @@
+// ============================================================================
+// Simulation.js — Physik- und Zustandsmaschine EINER Linie (U1/U2/U3/TRUNK).
+//
+// KI-LANDKARTE (wo bearbeite ich was):
+//   - Physik-Konstanten (Masse, Bremsen, Ruck): Kopf dieser Datei.
+//   - Streckengeometrie-Abfragen (Position/Tangente/Spurabstand/Höhe):
+//     _sampleTrack / getTrackPosition / getTrackTangent / getTrackSpacing /
+//     getTrackY / getChunkType. 1 Einheit = 1 Meter, Bogenlänge "dist" ab
+//     Streckenanfang. HEISSER PFAD: wird viele Male pro Frame aufgerufen,
+//     hier NIE allokieren (out-Vektoren nutzen).
+//   - Sonderzonen: Plärrer (gestapelte Station, isPlaerrerZone/getLowerLevelOffset),
+//     U2/U3-Stammstrecke (isTrunkZone), Weichen (isSwitchZone/getSwitchTrackFrame).
+//   - Fahrphysik: update() -> updatePhysics/updateDoors/updateStationCheck/runATO.
+//   - Türlogik: doorState 0=zu, 1=öffnet, 2=offen, 3=schließt (updateDoors/triggerDoors).
+// ============================================================================
 import * as THREE from 'three';
 import { TRACK_DATA as TD } from './TrackDataU1.js?v=55';
-
-// Reusable temporary vectors to prevent runtime allocations/garbage collection in path queries
-const _tempP0 = new THREE.Vector3();
-const _tempP1 = new THREE.Vector3();
-const _tempV0 = new THREE.Vector3();
-const _tempV1 = new THREE.Vector3();
 
 // Realistic Nuremberg Siemens G1 (Inspiro) Train Physics Constants
 const MASS_KG = 140000;            // Feste Zugmasse
@@ -67,6 +76,12 @@ export class Simulation {
         // route is scaled so its length equals 18500 m.
         // ---------------------------------------------------------------
         this.track = trackData;
+
+        // Muss VOR der stations-Schleife existieren: getTrackPosition/-Tangent
+        // (unten für station.center/tangent aufgerufen) prüfen isSwitchActiveArea,
+        // das über diese Liste iteriert. Während des Konstruktor-Laufs ist sie
+        // leer — Stationszentren liegen ohnehin nie innerhalb einer Weichenzone.
+        this.switchZones = [];
 
         this.stations = [];
         trackData.stations.forEach((s, idx) => {
@@ -145,18 +160,22 @@ export class Simulation {
         // (where the real switch/Weiche physically sits), matching gen_topology_u23.mjs's
         // convention. Zone starts a few meters inside the platform edge (no gap at the 50m
         // chunk grain) and ends a bit past SWITCH_LEN (must match TrackManager's SWITCH_LEN).
-        const SWITCH_LEN = 250;
+        const SWITCH_LEN = 350;
+        this._switchLen = SWITCH_LEN;
         const SWITCH_STATIONS = [
             { name: 'Rothenburger Straße', dir: -1 },
             { name: 'Rathenauplatz', dir: 1 },
         ];
+        // station/dir werden mitgespeichert, damit die Per-Frame-Abfragen
+        // (isSwitchActiveArea/getSwitchTrackFrame) nicht bei jedem Aufruf
+        // stations.find() ausführen müssen (heißer Pfad).
         this.switchZones = SWITCH_STATIONS
             .map(({ name, dir }) => {
                 const st = this.stations.find(s => s.name === name);
                 if (!st) return null;
-                const a = st.position + dir * (st.halfLength - 5);
-                const b = st.position + dir * (st.halfLength + SWITCH_LEN + 10);
-                return { name, range: [Math.min(a, b), Math.max(a, b)] };
+                const a = st.position + dir * st.halfLength;
+                const b = st.position + dir * (st.halfLength + 10 + SWITCH_LEN);
+                return { name, dir, station: st, range: [Math.min(a, b), Math.max(a, b)] };
             })
             .filter(Boolean);
 
@@ -176,7 +195,7 @@ export class Simulation {
             .filter(z => z.startPos !== undefined && z.endPos !== undefined);
 
         // Simulation State
-        this.trainModelType = 'G1'; // 'G1' or 'DT1'
+        this.trainModelType = 'G1'; // 'G1', 'DT1' oder 'DT3' (bestimmt Zuglänge, siehe trainHalfLength)
         this.position = this.stations[0].position + this.trainHalfLength; // start at the first station's center (Langwasser Süd)
         this.speed = 0; // m/s
         this.acceleration = 0; // m/s^2
@@ -191,15 +210,13 @@ export class Simulation {
         this.doorProgress = 0; // 0 to 1
         this.currentPlatformSide = 'right'; // side to open
 
-        // Passengers & Score
-        this.passengers = 120;
-        this.maxPassengers = 600;
+        // Stations-Folge
         this.currentStationIdx = 0;
         this.nextStationIdx = 1;
         this.displayNextStationIdx = 1; // shown on displays – lags behind nextStationIdx until train leaves
         this.pendingDisplayAdvance = false; // true once nextStationIdx advanced but train still in station
         this.isReversing = false; // driving direction
-        
+
         // Mode
         this.atoMode = false; // Autopilot (ATO)
         this.atoCoasting = false; // ATO: currently rolling in neutral (coasting) on open track
@@ -222,10 +239,6 @@ export class Simulation {
         this.scheduleOffset = 0; // difference to timetable in seconds
         this.stopWaitTime = 0; // time spent waiting at current station (seconds)
         this.scheduledStopTime = 8.25; // seconds to wait at station
-        this.score = 1000; // driving quality score
-
-        // Horn state
-        this.hornActive = false;
 
         // SIFA state
         this.sifaTimer = 0;
@@ -233,9 +246,6 @@ export class Simulation {
         this.sifaMaxTime = 30;
         this.sifaWarningTime = 2.5;
 
-        // Stats
-        this.powerConsumption = 0; // kWh used
-        
         // Track Gradient / Curves simplified
         this.gradient = 0; // % slope
         this.trackCurvature = 0; // 1/radius
@@ -254,51 +264,195 @@ export class Simulation {
         return 37.15; // DT1
     }
 
+    // True, wenn `dist` in einer Weichen-Übergangszone liegt (dort ersetzt der
+    // Hermite-Pfad aus getSwitchTrackFrame die generische Gleisgeometrie).
+    // Nutzt die im Konstruktor vorberechneten switchZones — HEISSER PFAD.
+    isSwitchActiveArea(dist) {
+        for (const z of this.switchZones) {
+            if (dist > z.range[0] && dist < z.range[1]) return true;
+        }
+        return false;
+    }
+
+    _hermitePoint(p0, t0, p1, t1, u) {
+        const u2 = u * u, u3 = u2 * u;
+        const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+        return new THREE.Vector3(
+            h00 * p0.x + h10 * t0.x + h01 * p1.x + h11 * t1.x,
+            h00 * p0.y + h10 * t0.y + h01 * p1.y + h11 * t1.y,
+            h00 * p0.z + h10 * t0.z + h01 * p1.z + h11 * t1.z,
+        );
+    }
+
+    _frameAt(dist) {
+        const pos = new THREE.Vector3();
+        const tan = new THREE.Vector3();
+        this._sampleTrack(dist, pos, tan);
+        return { pos, tan, spacing: this.getTrackSpacing(dist) };
+    }
+
+    // Liefert Position+Tangente des Zuges INNERHALB einer Weichenzone: vor dem
+    // Split das normale Gleis, danach ein Hermite-Spline vom Stamm auf die
+    // eigene Linie (U3 taucht dabei zusätzlich unter U2 durch, s.u.).
+    getSwitchTrackFrame(dist, reversing) {
+        const SWITCH_LEN = this._switchLen;
+
+        let st = null;
+        let dir = 0;
+        for (const z of this.switchZones) {
+            if (dist >= z.range[0] && dist <= z.range[1]) {
+                st = z.station;
+                dir = z.dir;
+                break;
+            }
+        }
+
+        if (!st) return null;
+
+        const contraptionStart = st.position + dir * st.halfLength;
+        const splitStart = st.position + dir * (st.halfLength + 10);
+        const splitEnd = splitStart + dir * SWITCH_LEN;
+        
+        const trunkFrame = this._frameAt(splitStart);
+        
+        // Use the actual line's geometry for the exit frame (like _rawFrameAt in TrackManager),
+        // because the lines physically diverge from the trunk at this point.
+        let exitPos = new THREE.Vector3();
+        let exitTan = new THREE.Vector3();
+        this._sampleTrack(splitEnd, exitPos, exitTan);
+        const exitFrame = { pos: exitPos, tan: exitTan, dist: splitEnd, spacing: this.getTrackSpacing(splitEnd) };
+        
+        const sgn = reversing ? -1 : 1;
+        const trackSgn = sgn * dir;
+        
+        const isBeforeSplit = dir > 0
+            ? (dist >= contraptionStart && dist < splitStart)
+            : (dist <= contraptionStart && dist > splitStart);
+            
+        if (isBeforeSplit) {
+            const base = this._frameAt(dist);
+            base.tan.x *= dir; base.tan.y *= dir; base.tan.z *= dir;
+            const hw = base.spacing / 2;
+            const pos = base.pos.clone().addScaledVector(new THREE.Vector3(-base.tan.z, 0, base.tan.x), trackSgn * hw);
+            base.tan.x *= dir; base.tan.y *= dir; base.tan.z *= dir; // Restore original tangent direction
+            return { pos, tan: base.tan };
+        }
+        
+        const u = (dist - splitStart) / (splitEnd - splitStart);
+        
+        trunkFrame.tan.x *= dir; trunkFrame.tan.y *= dir; trunkFrame.tan.z *= dir;
+        exitFrame.tan.x *= dir; exitFrame.tan.y *= dir; exitFrame.tan.z *= dir;
+        
+        const getSingleTrackFrame = (base, s) => {
+            const hw = base.spacing / 2;
+            const pos = base.pos.clone().addScaledVector(new THREE.Vector3(-base.tan.z, 0, base.tan.x), s * hw);
+            return { pos, tan: base.tan.clone(), hw: hw };
+        };
+        
+        const startF = getSingleTrackFrame(trunkFrame, trackSgn);
+        const endF = getSingleTrackFrame(exitFrame, trackSgn);
+        
+        const chord = startF.pos.distanceTo(endF.pos);
+        const t0 = startF.tan.clone().normalize().multiplyScalar(chord);
+        const t1 = endF.tan.clone().normalize().multiplyScalar(chord);
+        
+        const p = this._hermitePoint(startF.pos, t0, endF.pos, t1, u);
+        
+        // Tangent of Hermite spline at u
+        const u2 = u * u;
+        const dh00 = 6*u2 - 6*u;
+        const dh10 = 3*u2 - 4*u + 1;
+        const dh01 = -6*u2 + 6*u;
+        const dh11 = 3*u2 - 2*u;
+        
+        const tan = new THREE.Vector3(
+            dh00 * startF.pos.x + dh10 * t0.x + dh01 * endF.pos.x + dh11 * t1.x,
+            dh00 * startF.pos.y + dh10 * t0.y + dh01 * endF.pos.y + dh11 * t1.y,
+            dh00 * startF.pos.z + dh10 * t0.z + dh01 * endF.pos.z + dh11 * t1.z
+        );
+        tan.y = 0;
+        tan.normalize();
+        
+        const isU3 = (this.track.lineId === 'U3');
+        const isDiving = isU3 && !reversing;
+        
+        if (isDiving) {
+            // Apply Y dive (starts at u=0.1, max -12.0m at u=0.55, climbs back to 0 at u=1.0)
+            let diveVal = 0;
+            if (u >= 0.1 && u < 0.55) {
+                const t = (u - 0.1) / 0.45;
+                diveVal = -12.0 * (1 - Math.cos(Math.PI * t)) / 2;
+            } else if (u >= 0.55 && u <= 1.0) {
+                const t = (u - 0.55) / 0.45;
+                diveVal = -12.0 * (1 + Math.cos(Math.PI * t)) / 2;
+            }
+            p.y += diveVal;
+            
+            // Apply lateral swing (swing outwards up to maxSwing, C1 smooth, returns to 0 at u=0.9)
+            const normal = new THREE.Vector3(-tan.z, 0, tan.x);
+            let swingVal = 0;
+            if (u < 0.9) {
+                const maxSwing = st.name === 'Rathenauplatz' ? 65.0 : 90.0;
+                swingVal = maxSwing * Math.pow(Math.sin(Math.PI * u / 0.9), 2);
+            }
+            p.addScaledVector(normal, trackSgn * swingVal);
+        }
+        
+        // Restore tangent to the direction of increasing distance
+        tan.multiplyScalar(dir);
+        
+        return { pos: p, tan: tan };
+    }
+
     getTrackPosition(dist, target = new THREE.Vector3()) {
+        if (this.isSwitchActiveArea(dist)) {
+            const frame = this.getSwitchTrackFrame(dist, this.isReversing);
+            if (frame) {
+                target.copy(frame.pos);
+                return target;
+            }
+        }
         this._sampleTrack(dist, target, null);
         return target;
     }
 
     getTrackTangent(dist, target = new THREE.Vector3()) {
+        if (this.isSwitchActiveArea(dist)) {
+            const frame = this.getSwitchTrackFrame(dist, this.isReversing);
+            if (frame) {
+                target.copy(frame.tan);
+                return target;
+            }
+        }
         this._sampleTrack(dist, null, target);
         return target;
     }
 
-    // Vertical offset of the LOWER Plärrer level relative to the base elevation, as a
-    // function of distance: 0 outside the split zone, smoothly diving to -plaerrerDrop
-    // across the platform. Used to stack the two directional tracks at Plärrer.
     getLowerLevelOffset(dist) {
         const p = this.plaerrer;
         if (!p) return 0;
         const x = Math.abs(dist - p.position);
         const zone = this.plStackHalf + this.plRamp;
         if (x >= zone) return 0;
-        // Tie the dive depth to the lateral track gap so the two single-track tubes keep a
-        // ~constant centre-to-centre separation (≈ sep) and never clip: deep where the
-        // tracks are laterally close (stacked over the station), shallow where they fan out.
         const gap = this.getTrackSpacing(dist);
         const sep = 10.0;
         let dy = sep * sep - gap * gap;
         dy = dy > 0 ? Math.sqrt(dy) : 0;
         dy = Math.min(this.plaerrerDrop, dy);
-        // Fade the remaining dive smoothly to 0 as the tracks fan out. Without this the sqrt
-        // has a vertical tangent where dy→0, which produced a steep bump at the top of the
-        // climb. Safe: the tubes are already far apart laterally by the time this kicks in.
         const gapCut = 6.5;
         if (gap > gapCut) {
             const f = Math.max(0, Math.min(1, (sep - gap) / (sep - gapCut)));
             dy *= f * f * (3 - 2 * f);
         }
-        const e = Math.min(1, (zone - x) / 70);       // smooth taper to 0 at the outer end
+        const e = Math.min(1, (zone - x) / 70);
         return -dy * (e * e * (3 - 2 * e));
     }
 
-    // Extra vertical offset applied to the moving train (and its cameras) so that it rides
-    // the correct stacked Plärrer level. U1: upper when heading to Hardhöhe (forward),
-    // lower when heading to Langwasser Süd (reverse). U2/U3 traverse the corridor the
-    // other way round (see plaerrerForwardDives), so for them FORWARD rides the lower
-    // Gleis 4 and reverse stays on the upper Gleis 3.
     getTrackElevationOffset(dist, reversing) {
+        if (this.isSwitchActiveArea(dist)) {
+            // Elevation is already baked into getTrackPosition in switch active zones!
+            return 0;
+        }
         const ridesLower = this.plaerrerForwardDives ? !reversing : reversing;
         return ridesLower ? this.getLowerLevelOffset(dist) : 0;
     }
@@ -385,9 +539,12 @@ export class Simulation {
         if (z < e.p1) return 'underground';
         if (z <= e.sh1) return 'shaft';
 
-        // 2. Bauernfeindstraße -> Hasenbuck
+        // 2. Bauernfeindstraße -> Hasenbuck: standard bored tunnel tube from the platform
+        // end, not an open-cut shaft. The downward ramp slope itself (getTrackY) is
+        // unchanged -- only the surrounding structure switches from retaining walls to a
+        // tube, with its portal placed near the platform end (see the `portals` list below).
         if (z < e.sh2) return 'at-grade';
-        if (z <= e.p2) return 'shaft';
+        if (z <= e.p2) return 'underground';
 
         // 3. Hasenbuck -> Maximilianstraße
         if (z < e.p3) return 'underground';
@@ -501,9 +658,10 @@ export class Simulation {
     }
 
     getTrackXOffset(dist) {
-        // Near Plärrer the geojson gap shrinks to ~0, so ±spacing/2 naturally converges to
-        // the centerline: both tracks stack on the centerline, separated only vertically by
-        // the dive. No sideways crossing is needed, so there is no glitch through Gleis 1.
+        if (this.isSwitchActiveArea(dist)) {
+            // For U2/U3 switches, the switch path already includes the lateral offset!
+            return 0;
+        }
         const spacing = this.getTrackSpacing(dist);
         return this.isReversing ? (-spacing / 2) : (spacing / 2);
     }
@@ -591,7 +749,7 @@ export class Simulation {
         } else if (fBrake > 0) {
             maxJerk = JERK_BRAKE_MS3;
         }
-        
+
         // Apply Jerk Limit
         const maxDelta = maxJerk * dt;
         const delta = Math.max(-maxDelta, Math.min(maxDelta, rawAccel - this.acceleration));
@@ -613,15 +771,6 @@ export class Simulation {
             }
         }
 
-        // Speed limit check (score deduction in manual mode)
-        const absoluteSpeedLimit = this.targetSpeed;
-        if (this.speed > absoluteSpeedLimit + 2 / 3.6) {
-            if (!this.atoMode) {
-                // Deduct score for overspeeding in manual mode, but do not override controls
-                this.score = Math.max(0, this.score - dt * 5);
-            }
-        }
-
         // 7. Update brake cylinder pressure for dials and sounds
         if (this.emergencyBrake) {
             this.brakeCylinderPressure = Math.min(5, this.brakeCylinderPressure + dt * 10);
@@ -640,13 +789,7 @@ export class Simulation {
             }
         }
 
-        // 8. Energy consumption
-        if (fDrive > 0) {
-            const powerWatts = fDrive * this.speed;
-            this.powerConsumption += (powerWatts / 1000) * (dt / 3600); // kWh
-        }
-
-        // 9. Update position
+        // 8. Update position
         const deltaPos = this.speed * dt;
         if (this.isReversing) {
             this.position -= deltaPos;
@@ -772,6 +915,18 @@ export class Simulation {
         }
     }
 
+    getSideForStation(idx) {
+        const station = this.stations[idx];
+        if (!station) return 'left';
+        const isRightExit = station.side || station.name === "Scharfreiterring";
+        const side = isRightExit ? 'right' : 'left';
+        if (this.isReversing) {
+            return side;
+        } else {
+            return (side === 'left') ? 'right' : 'left';
+        }
+    }
+
     getPlatformSide() {
         const trainCenter = this.isReversing ? (this.position + this.trainHalfLength) : (this.position - this.trainHalfLength);
 
@@ -788,7 +943,7 @@ export class Simulation {
 
         // Nuremberg U1 rules (from the perspective of travel towards Langwasser Süd / Reverse):
         // 1. Scharfreiterring uses outer tracks -> Right exit.
-        // 2. Side platforms (Bauernfeindstraße, Muggenhof, Stadtgrenze) -> Right exit.
+        // 2. Side platforms (Muggenhof, Stadtgrenze) -> Right exit.
         // 3. Island platforms (all others) -> Left exit.
         const isRightExit = station.side || station.name === "Scharfreiterring";
         const side = isRightExit ? 'right' : 'left';
@@ -834,28 +989,6 @@ export class Simulation {
             // Update current station indices if we have stopped at the next station
             if (this.speed < 0.05 && this.nextStationIdx !== this.currentStationIdx) {
                 this.stopWaitTime += dt;
-                
-                // Passenger boarding logic
-                if (this.doorsOpen && this.doorState === 2) {
-                    // Board passengers
-                    const boardingRate = 12 * dt;
-                    if (this.passengers < this.maxPassengers) {
-                        const amount = Math.min(this.maxPassengers - this.passengers, boardingRate);
-                        this.passengers += amount;
-                    }
-                    
-                    // Award points for stopping perfectly
-                    if (this.stopWaitTime < 1.0) { // run once when stopping
-                        const deviation = Math.abs(trainCenter - nextStation.position);
-                        if (deviation < 2) {
-                            this.score += 100; // Perfect Stop!
-                        } else if (deviation < 5) {
-                            this.score += 50;  // Good Stop!
-                        } else {
-                            this.score += 10;  // OK Stop
-                        }
-                    }
-                }
 
                 // Auto-departure control: once waiting time is done, advance next station
                 if (this.stopWaitTime > this.scheduledStopTime && !this.doorsOpen) {
@@ -1014,12 +1147,13 @@ export class Simulation {
         this.throttle += Math.max(-maxChange, Math.min(maxChange, desired - this.throttle));
     }
 
+    // Leertaste: Notbremse an/aus. Beim Aktivieren wird der Fahrhebel auf
+    // Vollbremsung gelegt; beim Lösen bleibt er bewusst dort (Fahrer muss
+    // selbst wieder aufschalten).
     triggerEmergencyBrake() {
         this.emergencyBrake = !this.emergencyBrake;
         if (this.emergencyBrake) {
             this.throttle = -1;
-        } else {
-            this.emergencyBrake = false;
         }
     }
 
