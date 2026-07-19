@@ -4,31 +4,73 @@
 // StationBuilder-Hooks; Dispatch per Stationsname in StationModel.buildStation.
 // ============================================================================
 import * as THREE from 'three';
-import { StationBuilder } from './StationBuilder.js?v=68';
+import { StationBuilder } from './StationBuilder.js?v=69';
 import { tagCanvasTextureSRGBKeepLook } from '../TextureUtils.js';
 
 export class LorenzkircheBuilder extends StationBuilder {
     setupMaterials() {
-        // Concrete material for the vault
+        // Concrete material for the vault: Enhanced for a more "plastic" / 3D look
         const concCanvas = document.createElement('canvas');
         concCanvas.width = 512;
         concCanvas.height = 512;
         const ctx = concCanvas.getContext('2d');
         ctx.fillStyle = '#8c867b'; // Warm concrete base
         ctx.fillRect(0, 0, 512, 512);
-        for (let i = 0; i < 5000; i++) {
-            ctx.fillStyle = Math.random() > 0.5 ? '#7a7469' : '#9e988d';
+
+        // Larger procedural patches for surface variation
+        for (let i = 0; i < 20; i++) {
             const x = Math.random() * 512;
             const y = Math.random() * 512;
-            ctx.fillRect(x, y, 2, 2);
+            const r = 40 + Math.random() * 80;
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+            const isDark = Math.random() > 0.5;
+            grad.addColorStop(0, isDark ? 'rgba(100,95,85,0.15)' : 'rgba(160,155,145,0.15)');
+            grad.addColorStop(1, 'rgba(140,134,123,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
         }
+
+        // Finer detail noise
+        for (let i = 0; i < 8000; i++) {
+            const val = Math.random();
+            ctx.fillStyle = val > 0.7 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            ctx.fillRect(x, y, 1.5, 1.5);
+        }
+
         const concTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(concCanvas));
         concTex.wrapS = THREE.RepeatWrapping;
         concTex.wrapT = THREE.RepeatWrapping;
-        concTex.repeat.set(10, 10);
+        concTex.repeat.set(8, 8); // Tiling scale for the vault
 
-        // Ceiling vault material with custom shader to cut the 3 doorways (same as Rathaus)
-        this.vaultMat = new THREE.MeshLambertMaterial({ map: concTex, color: 0xffffff, side: THREE.DoubleSide });
+        // Bump map for plasticity
+        const bumpCanvas = document.createElement('canvas');
+        bumpCanvas.width = 512;
+        bumpCanvas.height = 512;
+        const bctx = bumpCanvas.getContext('2d');
+        bctx.fillStyle = '#808080'; // Mid-grey
+        bctx.fillRect(0, 0, 512, 512);
+        bctx.globalAlpha = 0.2;
+        for (let i = 0; i < 5000; i++) {
+            bctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+            bctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+        }
+
+        const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+        bumpTex.wrapS = bumpTex.wrapT = THREE.RepeatWrapping;
+        bumpTex.repeat.set(8, 8);
+
+        // Ceiling vault material
+        this.vaultMat = new THREE.MeshLambertMaterial({
+            map: concTex,
+            bumpMap: bumpTex,
+            bumpScale: 0.012,
+            color: 0xffffff,
+            side: THREE.DoubleSide
+        });
 
         const pos_end = this.sim.getTrackPosition(this.station.position + this.platLength / 2);
         const dummy = new THREE.Object3D();
@@ -127,40 +169,52 @@ export class LorenzkircheBuilder extends StationBuilder {
         floorTex.repeat.set(20, 5);
         this.floorMat = new THREE.MeshLambertMaterial({ map: floorTex });
 
-        // Aluminum panels for lower platform walls (30m repeating pattern)
-        const panelCanvas = document.createElement('canvas');
-        panelCanvas.width = 3000;
-        panelCanvas.height = 512;
-        const pctx = panelCanvas.getContext('2d');
+        // Aluminum panels removed - now building two text materials for correctly oriented station names
+        const buildTextMat = (isMirrored) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 128);
 
-        // Base color
-        pctx.fillStyle = '#9ca3af';
-        pctx.fillRect(0, 0, 3000, 512);
+            ctx.save();
+            if (isMirrored) {
+                // Flip the text on the canvas to compensate for the reversed UV mapping on one side
+                ctx.translate(1024, 0);
+                ctx.scale(-1, 1);
+            }
 
-        // Panel gaps every 2m (200px)
-        pctx.fillStyle = '#6b7280';
-        for (let x = 0; x < 3000; x += 200) {
-            pctx.fillRect(x + 194, 0, 6, 512);
-        }
+            ctx.fillStyle = '#111827';
+            ctx.font = 'bold 84px "Jost Regular", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-        // Draw LORENZKIRCHE text in the middle (at 15m mark)
-        pctx.fillStyle = '#111827';
-        pctx.font = 'bold 100px "Jost Regular", sans-serif';
-        pctx.textAlign = 'center';
-        pctx.textBaseline = 'middle';
-        pctx.fillText('LORENZKIRCHE', 1500, 256);
-        pctx.strokeStyle = '#111827';
-        pctx.lineWidth = 2.0;
-        pctx.strokeText('LORENZKIRCHE', 1500, 256);
+            // Horizontal row logic: text repeat handled by tileU below.
+            // One centered text instance per repeat unit.
+            ctx.save();
+            ctx.scale(0.7, 1.0); // condensed text look
+            ctx.fillText('LORENZKIRCHE', 512 / 0.7, 64);
+            ctx.strokeStyle = '#111827';
+            ctx.lineWidth = 1.5;
+            ctx.strokeText('LORENZKIRCHE', 512 / 0.7, 64);
+            ctx.restore();
 
-        const panelTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(panelCanvas));
-        panelTex.anisotropy = 8;
-        panelTex.wrapS = THREE.RepeatWrapping;
-        panelTex.wrapT = THREE.RepeatWrapping;
-        // The texture spans 30m. A 10m segment should cover 1/3 of the texture.
-        panelTex.repeat.set(10.0 / 30.0, 1);
+            ctx.restore();
 
-        this.panelMat = new THREE.MeshLambertMaterial({ map: panelTex, side: THREE.DoubleSide });
+            const tex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            tex.anisotropy = 8;
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.ClampToEdgeWrapping;
+
+            const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+            // Set keepWrapAndRepeat and calculate vertical repeat later when arc length is known
+            mat.userData = { keepWrapAndRepeat: true };
+            return mat;
+        };
+
+        // Mirroring check: tubeCenterL is positive.
+        this.textMatL = buildTextMat(true);
+        this.textMatR = buildTextMat(false);
 
         // Rosette Material
         const rosCanvas = document.createElement('canvas');
@@ -225,8 +279,7 @@ export class LorenzkircheBuilder extends StationBuilder {
         // downward), matching the original cylinder's net shape after its YXZ transform.
         // Extended past the OUTER spring point (phi<0 for the left tube, >PI for the
         // right) so the tube surface continues below platform-top level down to the
-        // ground slab/Gleisbett instead of stopping there with a visible gap (same
-        // fix as the Schweinau/Rothenburger vaults in StationModel).
+        // ground slab/Gleisbett (covering the area previously occupied by panels).
         const arcSteps = 32;
         const extSteps = 3;
         const phiExt = Math.asin(1.45 / tubeRadius);
@@ -242,38 +295,18 @@ export class LorenzkircheBuilder extends StationBuilder {
         this.model.buildSweptProfile(this.group, sA, sB, mkVaultArc(-phiExt, Math.PI), this.centerPos.y + 0.865, () => tubeCenterL, this.vaultMat, 5);
         this.model.buildSweptProfile(this.group, sA, sB, mkVaultArc(0, Math.PI + phiExt), this.centerPos.y + 0.865, () => tubeCenterR, this.vaultMat, 5);
 
-        // Light strips (continuous casing + glow), and their discrete hanger rods (real
-        // periodic fixtures, kept at the same spacing/positions as the original per-segment
-        // pairs: two hangers per 10m... per this.subLen segment, at local z = +-1.5m).
-        const lightW = 0.4;
-        const lightH = 0.1;
-        const hangerLen = 1.0;
-        const lightY = 0.865 + tubeRadius - hangerLen;
-        const lightMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
-        const casingMat = new THREE.MeshLambertMaterial({ color: '#e2e8f0' });
-        const hangerMat = new THREE.MeshLambertMaterial({ color: '#9ca3af' });
-        const hangerGeom = new THREE.CylinderGeometry(0.02, 0.02, hangerLen, 8);
-
-        [tubeCenterL, tubeCenterR].forEach(centerX => {
-            this.model.buildSweptBar(this.group, sA, sB, () => lightW / 2,
-                this.centerPos.y + lightY + 0.1, this.centerPos.y + lightY - 0.05, [casingMat, casingMat], 1.2, () => centerX);
-            this.model.buildSweptBar(this.group, sA, sB, () => (lightW - 0.05) / 2,
-                this.centerPos.y + lightY + 0.025, this.centerPos.y + lightY - 0.075, [lightMat, lightMat], 1.2, () => centerX);
-
-            for (let jj = 0; jj < this.numSub; jj++) {
-                const s_mid = sA + (jj + 0.5) * this.subLen;
-                [1.5, -1.5].forEach(zOffset => {
-                    const s = s_mid + zOffset;
-                    const pos = this.sim.getTrackPosition(s);
-                    const tangent = this.sim.getTrackTangent(s);
-                    const rotY = Math.atan2(tangent.x, tangent.z) - this.centerAngle;
-                    const hanger = new THREE.Mesh(hangerGeom, hangerMat);
-                    hanger.position.copy(this.group.worldToLocal(pos.clone().addScaledVector(new THREE.Vector3(-tangent.z, 0, tangent.x), centerX)));
-                    hanger.position.y = lightY + hangerLen / 2;
-                    hanger.rotation.y = rotY;
-                    this.group.add(hanger);
-                });
-            }
+        // Standard barrel light channel (Wöhrder-Wiese-Modell, see
+        // StationModel.buildBarrelLights): one barrel per vault, hung from the
+        // tube crown, mirrored to both tubes via the ± offFn convention.
+        this.model.buildBarrelLights(this.group, {
+            startS: sA + 3.0,
+            endS: sB - 3.0,
+            axisY: 0.865 + tubeRadius - 1.0,
+            centerPosY: this.centerPos.y,
+            centerAngle: this.centerAngle,
+            offFn: () => tubeCenterL,
+            ceilY: 0.865 + tubeRadius,
+            label: this.station.name,
         });
     }
 
@@ -291,34 +324,45 @@ export class LorenzkircheBuilder extends StationBuilder {
 
     buildSegmentOuterWalls(segmentData) {
         const { j } = segmentData;
-        if (j !== 0) return; // built once, continuously, for the whole platform
+        if (j !== 0) return;
 
         const spacing = this.spacing;
         const tubeCenterL = spacing / 4 + 1.2;
         const tubeCenterR = -tubeCenterL;
         const tubeRadius = tubeCenterL;
-        const panelRadius = tubeRadius - 0.02; // Slightly inside the concrete
+        const textRadius = tubeRadius - 0.01;
 
-        // Curved wall panel (a low band of the tube's own cylindrical surface, from floor to
-        // 2.5m), swept continuously so it follows the true curve instead of meeting at an
-        // angle every segment. thetaStart/End solve the SAME "y = -R*cos(theta)" relation the
-        // original per-segment cylinder slice used, so y still runs from 0 (floor) to 2.5m.
-        const thetaStart = Math.acos(0);              // dyBottom = 0
-        const thetaEnd = Math.acos(-2.5 / panelRadius); // dyTop = 2.5
-        const panelSteps = 16;
-        const panelProfileL = [];
-        for (let k = 0; k <= panelSteps; k++) {
-            const theta = thetaStart + (thetaEnd - thetaStart) * k / panelSteps;
-            panelProfileL.push({ x: panelRadius * Math.sin(theta), y: -panelRadius * Math.cos(theta) });
+        // Narrow curved band for the station name labels (shifted another 30cm down: from y = 1.1 to 1.6)
+        const yTop = 1.6, yBot = 1.1;
+        const thetaBot = Math.acos(-yBot / textRadius);
+        const thetaTop = Math.acos(-yTop / textRadius);
+
+        const textProfileL = [];
+        const nSteps = 8;
+        for (let k = 0; k <= nSteps; k++) {
+            const th = thetaBot + (thetaTop - thetaBot) * k / nSteps;
+            textProfileL.push({ x: textRadius * Math.sin(th), y: -textRadius * Math.cos(th) });
         }
-        const panelProfileR = panelProfileL.map(p => ({ x: -p.x, y: p.y })); // mirror image
+        const textProfileR = textProfileL.map(p => ({ x: -p.x, y: p.y }));
+
+        // Calculate arc length to fix the clipping issue (V-mapping)
+        let arcLen = 0;
+        for (let i = 1; i < textProfileL.length; i++) {
+            arcLen += Math.hypot(textProfileL[i].x - textProfileL[i-1].x, textProfileL[i].y - textProfileL[i-1].y);
+        }
+
+        // Adjust vertical repeat so the full texture height fits the narrow geometry band
+        this.textMatL.map.repeat.y = 1 / arcLen;
+        this.textMatR.map.repeat.y = 1 / arcLen;
+        this.textMatL.map.needsUpdate = true;
+        this.textMatR.map.needsUpdate = true;
 
         const sA = this.station.position - this.platLength / 2;
         const sB = this.station.position + this.platLength / 2;
-        // tileU=30 matches the original texture's 30m repeat (with the "LORENZKIRCHE" text at
-        // its 15m mark), so the text still appears at roughly the platform's own centre.
-        this.model.buildSweptProfile(this.group, sA, sB, panelProfileL, this.centerPos.y + 0.865, () => tubeCenterL, this.panelMat, 30);
-        this.model.buildSweptProfile(this.group, sA, sB, panelProfileR, this.centerPos.y + 0.865, () => tubeCenterR, this.panelMat, 30);
+
+        // tileU = 4.0 for the requested 4m horizontal spacing
+        this.model.buildSweptProfile(this.group, sA, sB, textProfileL, this.centerPos.y + 0.865, () => tubeCenterL, this.textMatL, 4.0);
+        this.model.buildSweptProfile(this.group, sA, sB, textProfileR, this.centerPos.y + 0.865, () => tubeCenterR, this.textMatR, 4.0);
     }
 
     buildPillars() {
@@ -342,11 +386,11 @@ export class LorenzkircheBuilder extends StationBuilder {
         // theta = 0 is -Y. theta = PI/2 is +X.
         // y = 0.865 + tubeRadius * 0.5 -> this is tubeRadius * 0.5 above the center (0.865)
         // So sin(angle_from_horizontal) = 0.5 -> angle = 30 degrees (PI/6)
-        // Center for Left outer wall (+X) = PI/2 + PI/6 = 2*PI/3
-        // Center for Right outer wall (-X) = -PI/2 - PI/6 = -2*PI/3 (or 4*PI/3)
-
-        const rosGeomL = new THREE.CylinderGeometry(tubeRadius - 0.05, tubeRadius - 0.05, rosetteRadius * 2, 32, 1, true, 2*Math.PI/3 - arc/2, arc);
-        const rosGeomR = new THREE.CylinderGeometry(tubeRadius - 0.05, tubeRadius - 0.05, rosetteRadius * 2, 32, 1, true, -2*Math.PI/3 - arc/2, arc);
+        // Center for Left outer wall (+X) = PI/2 + angle_from_horizontal
+        // angle_from_horizontal reduced from PI/6 (30 deg) to PI/10 (18 deg) to move it lower
+        const angleFromHoriz = Math.PI / 10;
+        const rosGeomL = new THREE.CylinderGeometry(tubeRadius - 0.05, tubeRadius - 0.05, rosetteRadius * 2, 32, 1, true, Math.PI/2 + angleFromHoriz - arc/2, arc);
+        const rosGeomR = new THREE.CylinderGeometry(tubeRadius - 0.05, tubeRadius - 0.05, rosetteRadius * 2, 32, 1, true, -Math.PI/2 - angleFromHoriz - arc/2, arc);
 
         const placeRosette = (zPos, isLeft) => {
             const s_mid = this.station.position + zPos;
@@ -397,7 +441,7 @@ export class LorenzkircheBuilder extends StationBuilder {
             const crossGeom = this.getCutCrossTubeGeom(archLength, r);
             
             // LambertMaterial so passages react realistically to SpotLight headlights
-            const passageMat = new THREE.MeshLambertMaterial({ color: '#475569', side: THREE.DoubleSide });
+            const passageMat = new THREE.MeshLambertMaterial({ color: '#333333', side: THREE.DoubleSide });
             
             passageMat.onBeforeCompile = (shader) => {
                 shader.vertexShader = `

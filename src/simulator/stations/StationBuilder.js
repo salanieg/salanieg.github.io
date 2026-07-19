@@ -226,23 +226,7 @@ export class StationBuilder {
         const glassMat = new THREE.MeshBasicMaterial({ color: '#94a3b8', transparent: true, opacity: 0.6 });
 
         // Light-grey balustrade sides with a subtle horizontal lighter gradient
-        const balustradeCanvas = document.createElement('canvas');
-        balustradeCanvas.width = 128;
-        balustradeCanvas.height = 4;
-        const balCtx = balustradeCanvas.getContext('2d');
-        const balGrad = balCtx.createLinearGradient(0, 0, 128, 0);
-        balGrad.addColorStop(0.0, '#c8cdd2');   // slightly darker edge
-        balGrad.addColorStop(0.3, '#dde0e4');   // lighter centre-left
-        balGrad.addColorStop(0.5, '#e8eaed');   // lightest highlight in the middle
-        balGrad.addColorStop(0.7, '#dde0e4');   // lighter centre-right
-        balGrad.addColorStop(1.0, '#c8cdd2');   // slightly darker edge
-        balCtx.fillStyle = balGrad;
-        balCtx.fillRect(0, 0, 128, 4);
-        const balustradeGradTex = new THREE.CanvasTexture(balustradeCanvas);
-        balustradeGradTex.wrapS = THREE.RepeatWrapping;
-        balustradeGradTex.wrapT = THREE.RepeatWrapping;
-        balustradeGradTex.colorSpace = THREE.SRGBColorSpace;
-        const edelstahlMat = new THREE.MeshLambertMaterial({ map: balustradeGradTex });
+        const edelstahlMat = StationBuilder.createBalustradeMaterial();
         const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
 
         const createEscalatorGeometries = (rampLength, thickness, height, railWidth, railHeight) => {
@@ -1005,6 +989,30 @@ export class StationBuilder {
                 ESCALATOR_SHADER_INJECTION.uniforms.uEscalatorTime.value = this.escalatorTime || 0;
             };
         }
+    }
+
+    // Standard-Balustradenmaterial aller Rolltreppen: helle Lambert-Gradient-Textur.
+    // Bewusst KEIN metallisches MeshStandardMaterial — ohne Environment-Map rendert
+    // hohe metalness fast schwarz (gleicher Effekt wie bei den Mülleimern, siehe
+    // StationModel-Konstruktor).
+    static createBalustradeMaterial() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 4;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 128, 0);
+        grad.addColorStop(0.0, '#c8cdd2');   // slightly darker edge
+        grad.addColorStop(0.3, '#dde0e4');   // lighter centre-left
+        grad.addColorStop(0.5, '#e8eaed');   // lightest highlight in the middle
+        grad.addColorStop(0.7, '#dde0e4');   // lighter centre-right
+        grad.addColorStop(1.0, '#c8cdd2');   // slightly darker edge
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 128, 4);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return new THREE.MeshLambertMaterial({ map: texture });
     }
 
     createEscalatorStripeTexture() {

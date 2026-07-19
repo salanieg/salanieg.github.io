@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { StationBuilder } from './stations/StationBuilder.js?v=68';
+import { StationBuilder } from './stations/StationBuilder.js?v=69';
 import { tagCanvasTextureSRGBKeepLook } from './TextureUtils.js';
 
 // ============================================================================
@@ -950,7 +950,7 @@ export class TrackManager {
         const escStepMat  = new THREE.MeshLambertMaterial({ map: sb.createEscalatorStripeTexture() });
         const glassMat    = new THREE.MeshBasicMaterial({ color: '#9fb3c8', transparent: true, opacity: 0.45 });
         const handrailMat = new THREE.MeshBasicMaterial({ color: '#15181c' });
-        const edelstahlMat = new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.9, roughness: 0.2 });
+        const edelstahlMat = StationBuilder.createBalustradeMaterial();
         const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
 
         const createEscalatorGeometries = (rampLength, thickness, height, railWidth, railHeight) => {
@@ -1505,6 +1505,10 @@ export class TrackManager {
         const jSideM = [], jBottomM = [];
         const jHangerGeom = new THREE.CylinderGeometry(0.015, 0.015, 1, 8);
         const jHangerM = [];
+        // Stationsname in regelmäßigen Abständen auf beiden Trägerflächen
+        // (gleiches Schema wie StationModel.buildPlaererLights/buildBarrelLights)
+        const jNameGeom = new THREE.PlaneGeometry(1.6, 0.24);
+        const jNameMat = stationModel.getBarrelTextMat('Plärrer');
 
         const buildJLighting = (levelBaseY, trackSign, levelCeilRelY, platWidth) => {
             const edgeFn = (s) => trackSign * sim.getTrackSpacing(s) / 2 - 1.54;
@@ -1545,6 +1549,21 @@ export class TrackManager {
                         m.setPosition(cp.x, hy, cp.z);
                         m.multiply(new THREE.Matrix4().makeScale(1, hLen, 1));
                         jHangerM.push(m);
+                    }
+                }
+
+                // Stationsname alle 12 m auf beiden Flächen des Trägers
+                for (let dT = s0 + 6.0; dT <= s1 - 3.0; dT += 12.0) {
+                    const f = frameAt(dT);
+                    const cp = f.c.clone().addScaledVector(f.nrm, latFn(dT));
+                    for (const face of [1, -1]) {
+                        const plate = new THREE.Mesh(jNameGeom, jNameMat);
+                        plate.position.set(
+                            cp.x + f.nrm.x * face * (jGirderW / 2 + 0.012),
+                            levelBaseY + jGirderY,
+                            cp.z + f.nrm.z * face * (jGirderW / 2 + 0.012));
+                        plate.rotation.y = f.rotY + (face > 0 ? -Math.PI / 2 : Math.PI / 2);
+                        group.add(plate);
                     }
                 }
             });
@@ -2020,6 +2039,7 @@ export class TrackManager {
         const vertices = [];
         const indices = [];
         const uvs = [];
+        const normals = [];
         let ringBase = 0;
 
         const up = new THREE.Vector3(0, 1, 0);
@@ -2027,6 +2047,9 @@ export class TrackManager {
         const center = new THREE.Vector3();
         const tangent = new THREE.Vector3();
         const worldVertex = new THREE.Vector3();
+        const faceNormalWorld = new THREE.Vector3();
+        const faceNormalLocal = new THREE.Vector3();
+        const normalProbe = new THREE.Vector3();
 
         for (const [s_start, s_end] of splitSegs) {
             const s_mid = (s_start + s_end) / 2;
@@ -2040,11 +2063,20 @@ export class TrackManager {
                 ? [true, true, true, false, true, true]
                 : [true, true, true, true];
             const numFaces = connect.length;
-            const vertsPerRing = numFaces + 1;
+            // Two UNSHARED vertices per face per ring: sharing the corner vertices
+            // between floor/wall/ceiling made computeVertexNormals average the
+            // normals across the 90° edges (and along the strip), which showed up
+            // as smudgy light/dark gradients across each face. Each face carries
+            // its own exact analytic normal instead.
+            const vertsPerRing = 2 * numFaces;
 
-            // Two rings of vertices per segment (j = 0 front, j = 1 back)
-            for (let j = 0; j <= 1; j++) {
-                const s = j === 0 ? s_start : s_end;
+            // Rings every ~2m along the segment (matching buildSweptTrackBox's resStep),
+            // not just at the two 5m sub-segment ends — a 5m chord visibly cuts the
+            // corner on curves (sagitta ~ L^2/8R), which made this wall look chunky
+            // next to the 2m-sampled divider wall.
+            const nSub = Math.max(1, Math.ceil((s_end - s_start) / 2));
+            for (let j = 0; j <= nSub; j++) {
+                const s = s_start + (s_end - s_start) * j / nSub;
                 this.sim.getTrackPosition(s, center);
                 this.sim.getTrackTangent(s, tangent);
 
@@ -2095,42 +2127,63 @@ export class TrackManager {
                     perimeterPoints.push(perimeterCum);
                 }
 
-                for (let k = 0; k < cornerOffsets.length; k++) {
-                    const [lateralOff, verticalOff] = cornerOffsets[k];
+                for (let k = 0; k < numFaces; k++) {
+                    // Inward-facing face normal from the profile edge k -> k+1:
+                    // profile edge (dLat, dY), interior on its left => (-dY, dLat).
+                    const dLat = cornerOffsets[k + 1][0] - cornerOffsets[k][0];
+                    const dY = cornerOffsets[k + 1][1] - cornerOffsets[k][1];
+                    const dLen = Math.hypot(dLat, dY) || 1;
+                    faceNormalWorld.copy(normal).multiplyScalar(-dY / dLen)
+                        .addScaledVector(up, dLat / dLen);
 
-                    worldVertex.copy(center)
-                        .addScaledVector(normal, lateralOff)
-                        .addScaledVector(up, verticalOff);
+                    for (const kk of [k, k + 1]) {
+                        const [lateralOff, verticalOff] = cornerOffsets[kk];
 
-                    const localVertex = chunkGroup.worldToLocal(worldVertex);
-                    vertices.push(localVertex.x, localVertex.y, localVertex.z);
+                        worldVertex.copy(center)
+                            .addScaledVector(normal, lateralOff)
+                            .addScaledVector(up, verticalOff);
 
-                    // UV: U follows the perimeter in METERS, V follows track length in METERS.
-                    // Tiled at 4m x 4m.
-                    uvs.push(perimeterPoints[k] / 4.0, s / 4.0);
+                        // Local-space normal via probe point, exact for any chunkGroup
+                        // transform (they are translation-only today, but cheap anyway).
+                        normalProbe.copy(worldVertex).add(faceNormalWorld);
+                        const localVertex = chunkGroup.worldToLocal(worldVertex);
+                        faceNormalLocal.copy(chunkGroup.worldToLocal(normalProbe)).sub(localVertex).normalize();
+
+                        vertices.push(localVertex.x, localVertex.y, localVertex.z);
+                        normals.push(faceNormalLocal.x, faceNormalLocal.y, faceNormalLocal.z);
+
+                        // UV: U follows the perimeter in METERS, V follows track length in METERS.
+                        // Tiled at 4m x 4m.
+                        uvs.push(perimeterPoints[kk] / 4.0, s / 4.0);
+                    }
                 }
             }
 
-            // Generate indices for faces (inward-facing normals)
-            for (let k = 0; k < numFaces; k++) {
-                if (!connect[k]) continue;
-                const a = ringBase + k;
-                const b = ringBase + (k + 1);
-                const c = ringBase + vertsPerRing + k;
-                const d = ringBase + vertsPerRing + (k + 1);
+            // Generate indices for faces (inward-facing normals), one quad strip
+            // between each pair of consecutive rings
+            for (let j = 0; j < nSub; j++) {
+                const front = ringBase + j * vertsPerRing;
+                const back = front + vertsPerRing;
+                for (let k = 0; k < numFaces; k++) {
+                    if (!connect[k]) continue;
+                    const a = front + 2 * k;
+                    const b = front + 2 * k + 1;
+                    const c = back + 2 * k;
+                    const d = back + 2 * k + 1;
 
-                // Two triangles per quad (front faces facing inside the tunnel)
-                indices.push(a, b, c);
-                indices.push(b, d, c);
+                    // Two triangles per quad (front faces facing inside the tunnel)
+                    indices.push(a, b, c);
+                    indices.push(b, d, c);
+                }
             }
-            ringBase += 2 * vertsPerRing;
+            ringBase += (nSub + 1) * vertsPerRing;
         }
 
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
         geometry.setIndex(indices);
-        geometry.computeVertexNormals();
 
         return new THREE.Mesh(geometry, this.materials.tunnelWall);
     }

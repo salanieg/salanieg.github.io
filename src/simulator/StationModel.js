@@ -26,9 +26,9 @@
 // übereinstimmen, sonst lädt der Browser die Daten doppelt.
 // ============================================================================
 import * as THREE from 'three';
-import { StationBuilder } from './stations/StationBuilder.js?v=68';
-import { RathausBuilder } from './stations/RathausBuilder.js?v=48';
-import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=48';
+import { StationBuilder } from './stations/StationBuilder.js?v=69';
+import { RathausBuilder } from './stations/RathausBuilder.js?v=51';
+import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=49';
 import { PassengerBuilder } from './people/PassengerBuilder.js';
 import { PASSENGER_DATA } from './people/PassengerData.js';
 import { tagCanvasTextureSRGBKeepLook } from './TextureUtils.js';
@@ -642,6 +642,203 @@ export class StationModel {
         return mesh;
     }
 
+    // Standard suspended barrel light channel (Wöhrder-Wiese-Modell): aluminium
+    // cylinder with a flat underside carrying flush light plates (10 cm joints),
+    // pillar-style bright fades on both flanks, sealed end caps and the station
+    // name bent onto the round faces. Built once per station, mirrored to both
+    // sides via offFn. All Y values are LOCAL to the station group (same
+    // convention as the callers: world sweep Y = centerPosY + local Y).
+    buildBarrelLights(group, { startS, endS, axisY, centerPosY, centerAngle, offFn, ceilY = null, label }) {
+        const chanR = 0.32;
+        const plateHalfW = 0.20;
+        const chordY = -Math.sqrt(chanR * chanR - plateHalfW * plateHalfW);
+        const gammaC = Math.acos(plateHalfW / chanR);
+        // Profile starts at angle 0 (right side, matches the fade phase), runs
+        // CCW over the top to the left chord edge; the jump to the right chord
+        // edge forms the flat underside, then closes at 2π.
+        const circle = [];
+        for (let k = 0; k <= 16; k++) {
+            const a = (k / 16) * (Math.PI + gammaC);
+            circle.push({ x: chanR * Math.cos(a), y: chanR * Math.sin(a) });
+        }
+        for (let k = 0; k <= 4; k++) {
+            const a = (2 * Math.PI - gammaC) + (k / 4) * gammaC;
+            circle.push({ x: chanR * Math.cos(a), y: chanR * Math.sin(a) });
+        }
+        const plateLen = 2.5, plateGap = 0.10;
+        const tubeMats = [this.materials.lightTube, this.materials.lightTube];
+        // Name plane bent onto the barrel: vertices wrapped onto a cylinder of
+        // radius rText concentric with the channel axis, so the lettering hugs
+        // the round face instead of floating flat.
+        const rText = chanR + 0.012;
+        if (!this._barrelNameGeom) {
+            const g = new THREE.PlaneGeometry(5.2, 0.66, 1, 24);
+            const nPos = g.attributes.position;
+            for (let vi = 0; vi < nPos.count; vi++) {
+                const th = nPos.getY(vi) / rText;
+                nPos.setY(vi, rText * Math.sin(th));
+                nPos.setZ(vi, rText * (Math.cos(th) - 1));
+            }
+            g.computeVertexNormals();
+            this._barrelNameGeom = g;
+        }
+        const nameGeom = this._barrelNameGeom;
+        const nameMat = this.getBarrelTextMat(label);
+        // Flat end caps sealing the open barrel profile
+        if (!this._barrelCapMat) {
+            this._barrelCapMat = new THREE.MeshLambertMaterial({ color: '#8f9499', side: THREE.DoubleSide });
+        }
+        if (!this._barrelCapGeom) {
+            const capShape = new THREE.Shape();
+            circle.forEach((pt, i) => i === 0 ? capShape.moveTo(pt.x, pt.y) : capShape.lineTo(pt.x, pt.y));
+            this._barrelCapGeom = new THREE.ShapeGeometry(capShape);
+        }
+        const capGeom = this._barrelCapGeom;
+        // Optional hanger rods up to the ceiling, every 5 m
+        let hangerGeom = null, hangerYMid = 0;
+        if (ceilY !== null && ceilY - (axisY + chanR) > 0.05) {
+            const hangerLen = ceilY - (axisY + chanR);
+            hangerGeom = new THREE.CylinderGeometry(0.015, 0.015, hangerLen, 8);
+            hangerYMid = axisY + chanR + hangerLen / 2;
+        }
+        for (const sign of [1, -1]) {
+            this.buildSweptProfile(group, startS, endS, circle, centerPosY + axisY, (s) => sign * offFn(s), this.getWoehrderChannelMat(chanR), 5);
+            for (let pS = startS; pS < endS - 0.3; pS += plateLen + plateGap) {
+                const pE = Math.min(pS + plateLen, endS);
+                this.buildSweptBar(group, pS, pE, () => plateHalfW,
+                    centerPosY + axisY + chordY + 0.01, centerPosY + axisY + chordY - 0.008,
+                    tubeMats, 1.2, (s) => sign * offFn(s));
+            }
+            for (const sCap of [startS, endS]) {
+                const cPos = this.sim.getTrackPosition(sCap);
+                const cTan = this.sim.getTrackTangent(sCap);
+                const cNorm = new THREE.Vector3(-cTan.z, 0, cTan.x);
+                const capMesh = new THREE.Mesh(capGeom, this._barrelCapMat);
+                capMesh.position.copy(group.worldToLocal(cPos.clone().addScaledVector(cNorm, sign * offFn(sCap))));
+                capMesh.position.y = axisY;
+                capMesh.rotation.y = Math.atan2(cTan.x, cTan.z) - centerAngle;
+                group.add(capMesh);
+            }
+            // Station name on both faces of the channel, every 12 m
+            for (let sT = startS + 6.0; sT <= endS - 3.0; sT += 12.0) {
+                const posT = this.sim.getTrackPosition(sT);
+                const tanT = this.sim.getTrackTangent(sT);
+                const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                for (const face of [1, -1]) {
+                    const pName = posT.clone().addScaledVector(normT, sign * offFn(sT) + face * rText);
+                    const nameMesh = new THREE.Mesh(nameGeom, nameMat);
+                    nameMesh.position.copy(group.worldToLocal(pName));
+                    nameMesh.position.y = axisY;
+                    nameMesh.rotation.set(0, rotYT + (face > 0 ? -Math.PI / 2 : Math.PI / 2), 0);
+                    group.add(nameMesh);
+                }
+            }
+            if (hangerGeom) {
+                for (let sH = startS + 2.5; sH <= endS - 1.0; sH += 5.0) {
+                    const hPos = this.sim.getTrackPosition(sH);
+                    const hTan = this.sim.getTrackTangent(sH);
+                    const hNorm = new THREE.Vector3(-hTan.z, 0, hTan.x);
+                    const hanger = new THREE.Mesh(hangerGeom, this.materials.boardHanger);
+                    hanger.position.copy(group.worldToLocal(hPos.clone().addScaledVector(hNorm, sign * offFn(sH))));
+                    hanger.position.y = hangerYMid;
+                    hanger.rotation.y = Math.atan2(hTan.x, hTan.z) - centerAngle;
+                    group.add(hanger);
+                }
+            }
+        }
+    }
+
+    // Plärrer-/Jakobinenstraße-Lichtbalken als wiederverwendbares Standardmodell:
+    // Betonträger mit seitlichen + unteren Lichtpaneelen, Abhängern zur Decke und
+    // dem Stationsnamen in regelmäßigen Abständen auf beiden Trägerflächen
+    // (analog zur Namensbeschriftung der runden Tonnenleuchte, buildBarrelLights).
+    // Läuft entlang beider Bahnsteigkanten, 20 cm einwärts. Y-Werte: cy ist die
+    // WELT-Höhe der Gleisachse, die Balkenmaße sind lokal dazu; ceilY ist die
+    // lokale Deckenhöhe für die Abhänger (Deckenunterkante = ceilY - 0.1).
+    // Mit flush=true wird der Balken bündig an die Decke gesetzt (keine Abhänger).
+    buildPlaererLights(group, station, centerAngle, { sA, sB, cy, ceilY, flush = false }) {
+        const jGirderH = 0.35, jGirderW = 0.25;
+        let jGirderY = 3.775;
+        if (flush) {
+            jGirderY = (ceilY - 0.1) - jGirderH / 2;
+        }
+        const jGirderTopY = jGirderY + jGirderH / 2;
+        const jSideH = 0.232, jSideL = 1.8, jSideGap = 0.05;
+        const jSideCycle = jSideL + jSideGap;
+        const edgeOff = (s) => this.sim.getTrackSpacing(s) / 2 - 1.74;
+        const gMats = [this.materials.boardHanger, this.materials.boardHanger];
+        for (const sign of [1, -1]) {
+            this.buildSweptBar(group, sA, sB, () => jGirderW / 2,
+                cy + jGirderY + jGirderH / 2, cy + jGirderY - jGirderH / 2, gMats, 1.2, (s) => sign * edgeOff(s));
+        }
+        const dVals = [];
+        for (let d = sA + jSideCycle / 2; d <= sB - jSideCycle / 2; d += jSideCycle) dVals.push(d);
+        const sideInst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.01, jSideH, jSideL), this.materials.lightTube, dVals.length * 4);
+        const botInst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.15, 0.01, jSideL), this.materials.lightTube, dVals.length * 2);
+        const hangM = [];
+        let si = 0, bi = 0;
+        for (const d of dVals) {
+            const posP = this.sim.getTrackPosition(d);
+            const tanP = this.sim.getTrackTangent(d);
+            const rotYP = Math.atan2(tanP.x, tanP.z) - centerAngle;
+            const normP = new THREE.Vector3(-tanP.z, 0, tanP.x);
+            for (const sign of [1, -1]) {
+                const latG = sign * edgeOff(d);
+                const sy = jGirderTopY - 0.05 - jSideH / 2;
+                for (const pside of [1, -1]) {
+                    const wp = posP.clone().addScaledVector(normP, latG + pside * (jGirderW / 2 + 0.006));
+                    const lp = group.worldToLocal(wp);
+                    const m = new THREE.Matrix4().makeRotationY(rotYP);
+                    m.setPosition(lp.x, sy, lp.z);
+                    sideInst.setMatrixAt(si++, m);
+                }
+                const cp = group.worldToLocal(posP.clone().addScaledVector(normP, latG));
+                const mb = new THREE.Matrix4().makeRotationY(rotYP);
+                mb.setPosition(cp.x, jGirderY - jGirderH / 2 - 0.006, cp.z);
+                botInst.setMatrixAt(bi++, mb);
+                if (!flush && Math.abs((d - sA) % 5.0) < jSideCycle / 2) {
+                    const hLen = (ceilY - 0.1) - jGirderTopY;
+                    if (hLen > 0.01) {
+                        const mh = new THREE.Matrix4().makeRotationY(rotYP);
+                        mh.multiply(new THREE.Matrix4().makeScale(1, hLen, 1));
+                        mh.setPosition(cp.x, jGirderTopY + hLen / 2, cp.z);
+                        hangM.push(mh);
+                    }
+                }
+            }
+        }
+        sideInst.instanceMatrix.needsUpdate = true;
+        botInst.instanceMatrix.needsUpdate = true;
+        const hangInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.015, 0.015, 1, 8), this.materials.boardHanger, hangM.length);
+        hangM.forEach((m, i) => hangInst.setMatrixAt(i, m));
+        hangInst.instanceMatrix.needsUpdate = true;
+        for (const inst of [sideInst, botInst, hangInst]) {
+            inst.computeBoundingSphere();
+            if (inst.boundingSphere) inst.boundingSphere.radius *= 5;
+            group.add(inst);
+        }
+        // Stationsname alle 12 m auf beiden Flächen beider Träger
+        const nameGeom = new THREE.PlaneGeometry(1.6, 0.24);
+        const nameMat = this.getBarrelTextMat(station.name);
+        for (let sT = sA + 6.0; sT <= sB - 3.0; sT += 12.0) {
+            const posT = this.sim.getTrackPosition(sT);
+            const tanT = this.sim.getTrackTangent(sT);
+            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+            for (const sign of [1, -1]) {
+                for (const face of [1, -1]) {
+                    const pName = posT.clone().addScaledVector(normT, sign * edgeOff(sT) + face * (jGirderW / 2 + 0.012));
+                    const nameMesh = new THREE.Mesh(nameGeom, nameMat);
+                    nameMesh.position.copy(group.worldToLocal(pName));
+                    nameMesh.position.y = jGirderY;
+                    nameMesh.rotation.set(0, rotYT + (face > 0 ? -Math.PI / 2 : Math.PI / 2), 0);
+                    group.add(nameMesh);
+                }
+            }
+        }
+    }
+
     getPlatformMaterials(station, platWidth, hasLeftStripe, hasRightStripe) {
         const cacheKey = `${station.name}_${platWidth.toFixed(3)}_${hasLeftStripe}_${hasRightStripe}`;
         if (this.platformMaterialsCache.has(cacheKey)) {
@@ -748,6 +945,73 @@ export class StationModel {
                 stripGap: 0.0,
                 weatheredStripe: false
             },
+            "Klinikum Nord": {
+                // Heller beige-weißer Plattenboden (Fotos), dunkle Blindenstreifen
+                tileSize: 0.4,
+                offset: false,
+                tileColor: '#cac4b4',
+                groutColor: '#aaa494',
+                stripeW: 0.6,
+                blindW: 0.4,
+                stripGap: 0.0,
+                weatheredStripe: false
+            },
+            "Flughafen": {
+                // Heller Terrazzo (Fotos): große helle Platten, Fugen kaum sichtbar
+                tileSize: 0.4,
+                offset: false,
+                tileColor: '#c6c3ba',
+                groutColor: '#b5b2a9',
+                stripeW: 0.6,
+                blindW: 0.4,
+                stripGap: 0.0,
+                weatheredStripe: false
+            },
+            "Maxfeld": {
+                // Heller grüngrauer Terrazzo (Fotos), dunkle Streifen an den Kanten
+                tileSize: 0.4,
+                offset: false,
+                tileColor: '#ccd1c6',
+                groutColor: '#b9beb3',
+                stripeW: 0.6,
+                blindW: 0.4,
+                stripGap: 0.0,
+                weatheredStripe: false
+            },
+            "Rennweg": {
+                // Weiße Fliesen (Fotos; das braune Rautenmuster ist stilisiert
+                // über die Fugenfarbe angedeutet)
+                tileSize: 0.3,
+                offset: false,
+                tileColor: '#e6e4dd',
+                groutColor: '#b9a898',
+                stripeW: 0.6,
+                blindW: 0.4,
+                stripGap: 0.0,
+                weatheredStripe: false
+            },
+            "Nordwestring": {
+                // Heller beige-grauer Granitboden (Fotos), dunkle Blindenstreifen
+                tileSize: 0.4,
+                offset: false,
+                tileColor: '#d5d0c4',
+                groutColor: '#c4bfb3',
+                stripeW: 0.6,
+                blindW: 0.4,
+                stripGap: 0.0,
+                weatheredStripe: false
+            },
+            "Friedrich-Ebert-Platz": {
+                // Rot-oranger Terrazzoboden (Fotos)
+                tileSize: 0.4,
+                offset: false,
+                tileColor: '#c06a45',
+                groutColor: '#9e5535',
+                stripeW: 0.6,
+                blindW: 0.4,
+                stripGap: 0.0,
+                weatheredStripe: false
+            },
             "Hardhöhe": {
                 tileSize: 0.4,
                 offset: false,
@@ -757,6 +1021,17 @@ export class StationModel {
                 alternatingBands: true,
                 weatheredStripe: false,
                 tileColor: '#757980'
+            },
+            "Wöhrder Wiese": {
+                // Near-white large tiles (photos), narrow grout
+                tileSize: 0.4,
+                offset: false,
+                tileColor: '#c6c6c0',
+                groutColor: '#93958f',
+                stripeW: 0.6,
+                blindW: 0.4,
+                stripGap: 0.0,
+                weatheredStripe: false
             }
         };
 
@@ -1059,6 +1334,12 @@ export class StationModel {
         const isOpernhaus = (station.name === "Opernhaus");
         const isWoehrder = (station.name === "Wöhrder Wiese");
         const isRathenauplatz = (station.name === "Rathenauplatz");
+        const isKlinikumNord = (station.name === "Klinikum Nord");
+        const isFlughafen = (station.name === "Flughafen");
+        const isMaxfeld = (station.name === "Maxfeld");
+        const isRennweg = (station.name === "Rennweg");
+        const isNordwestring = (station.name === "Nordwestring");
+        const isFriedrichEbert = (station.name === "Friedrich-Ebert-Platz");
         // Scharfreiterring's platform edges and decorative middle tracks are meant to be
         // dead straight (real station). Sampling this.sim.getTrackSpacing(s)/getTrackY(s)
         // PER POSITION along their ~120-190m run bakes in the small independent-per-track
@@ -1541,39 +1822,20 @@ export class StationModel {
 
                 stationGroup.add(rafterL, rafterR);
 
-                // 5. Linear lights hanging under the ceiling (above the platforms)
-                const lightOff = spacing / 2 + 2.5;
-                const lightY = 3.7;
-                const lightDuctMat = new THREE.MeshLambertMaterial({ color: '#475569' });
-                const lightEmissiveMat = this.materials.lightTube; // white emissive
-                
-                const posLightL = pos.clone().addScaledVector(normal, -lightOff);
-                const posLightR = pos.clone().addScaledVector(normal, lightOff);
-                
-                const localLightL = stationGroup.worldToLocal(posLightL);
-                const localLightR = stationGroup.worldToLocal(posLightR);
-                
-                const ductL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, subLen), lightDuctMat);
-                ductL.position.copy(localLightL);
-                ductL.position.y = lightY;
-                ductL.rotation.y = rotY;
-                
-                const glowL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, subLen), lightEmissiveMat);
-                glowL.position.copy(localLightL);
-                glowL.position.y = lightY - 0.035;
-                glowL.rotation.y = rotY;
-                
-                const ductR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, subLen), lightDuctMat);
-                ductR.position.copy(localLightR);
-                ductR.position.y = lightY;
-                ductR.rotation.y = rotY;
-                
-                const glowR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, subLen), lightEmissiveMat);
-                glowR.position.copy(localLightR);
-                glowR.position.y = lightY - 0.035;
-                glowR.rotation.y = rotY;
-                
-                stationGroup.add(ductL, glowL, ductR, glowR);
+                // 5. Standard barrel light channel above the side platforms
+                // (Wöhrder-Wiese-Modell, see buildBarrelLights), hung from the roof rafters.
+                if (j === 0) {
+                    this.buildBarrelLights(stationGroup, {
+                        startS: station.position - platLength / 2 + 3.0,
+                        endS: station.position + platLength / 2 - 3.0,
+                        axisY: 3.7,
+                        centerPosY: centerPos.y,
+                        centerAngle,
+                        offFn: (s) => this.sim.getTrackSpacing(s) / 2 + 2.5,
+                        ceilY: 4.5,
+                        label: station.name,
+                    });
+                }
                 // 6. Outer Walls (Plinth + Glass Windows + Name signs)
                 if (j === 0) {
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
@@ -1819,66 +2081,21 @@ export class StationModel {
                     stationGroup.add(ceilSolid);
                 }
                 
-                // 3. Continuous light strips and hangers:
-                const lightOff = spacing / 2 - 1.785;
-                const lightY = 3.8;
-                
-                const lightDuctMat = new THREE.MeshLambertMaterial({ color: '#334155' });
-                const lightEmissiveMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
-                const hangerMat = new THREE.MeshLambertMaterial({ color: '#64748b' });
-                
-                const posLightL = pos.clone().addScaledVector(normal, -lightOff);
-                const posLightR = pos.clone().addScaledVector(normal, lightOff);
-                
-                const localLightL = stationGroup.worldToLocal(posLightL);
-                const localLightR = stationGroup.worldToLocal(posLightR);
-                
-                const ductL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, subLen), lightDuctMat);
-                ductL.position.copy(localLightL);
-                ductL.position.y = lightY;
-                ductL.rotation.y = rotY;
-                
-                const glowL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, subLen), lightEmissiveMat);
-                glowL.position.copy(localLightL);
-                glowL.position.y = lightY - 0.04;
-                glowL.rotation.y = rotY;
-                
-                const ductR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, subLen), lightDuctMat);
-                ductR.position.copy(localLightR);
-                ductR.position.y = lightY;
-                ductR.rotation.y = rotY;
-                
-                const glowR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, subLen), lightEmissiveMat);
-                glowR.position.copy(localLightR);
-                glowR.position.y = lightY - 0.04;
-                glowR.rotation.y = rotY;
-                
-                stationGroup.add(ductL, glowL, ductR, glowR);
-                
-                const rodGeom = new THREE.CylinderGeometry(0.015, 0.015, 4.8 - lightY, 6);
-                
-                const rodL1 = new THREE.Mesh(rodGeom, hangerMat);
-                rodL1.position.copy(localLightL).addScaledVector(localDir, -1.5);
-                rodL1.position.y = lightY + (4.8 - lightY) / 2;
-                rodL1.rotation.y = rotY;
-                
-                const rodL2 = new THREE.Mesh(rodGeom, hangerMat);
-                rodL2.position.copy(localLightL).addScaledVector(localDir, 1.5);
-                rodL2.position.y = lightY + (4.8 - lightY) / 2;
-                rodL2.rotation.y = rotY;
-                
-                const rodR1 = new THREE.Mesh(rodGeom, hangerMat);
-                rodR1.position.copy(localLightR).addScaledVector(localDir, -1.5);
-                rodR1.position.y = lightY + (4.8 - lightY) / 2;
-                rodR1.rotation.y = rotY;
-                
-                const rodR2 = new THREE.Mesh(rodGeom, hangerMat);
-                rodR2.position.copy(localLightR).addScaledVector(localDir, 1.5);
-                rodR2.position.y = lightY + (4.8 - lightY) / 2;
-                rodR2.rotation.y = rotY;
-                
-                stationGroup.add(rodL1, rodL2, rodR1, rodR2);
-                
+                // 3. Standard barrel light channel (Wöhrder-Wiese-Modell, see
+                // buildBarrelLights), hung from the 4.8m steel-blue ceiling.
+                if (j === 0) {
+                    this.buildBarrelLights(stationGroup, {
+                        startS: station.position - platLength / 2 + 3.0,
+                        endS: station.position + platLength / 2 - 3.0,
+                        axisY: 3.8,
+                        centerPosY: centerPos.y,
+                        centerAngle,
+                        offFn: (s) => this.sim.getTrackSpacing(s) / 2 - 1.785,
+                        ceilY: 4.8,
+                        label: station.name,
+                    });
+                }
+
                 // 4. Slanted ceiling panels (5 rows on each side, only at j = 7, 9, 11, 13)
                 const artIndices = [7, 9, 11, 13];
                 if (artIndices.includes(j)) {
@@ -2004,7 +2221,7 @@ export class StationModel {
                     const girderMat = this.materials.boardHanger; // solid dark color
                     const lightOffFn = (s) => this.sim.getTrackSpacing(s) / 2 - 1.785;
                     const tubeY = girderY - girderH / 2 - 0.035; // hang slightly below the bottom of the girder
-                    const ceilHangerY = (station.name === "Jakobinenstraße") ? 6.0 : (station.name === "Rathenauplatz" ? 9.9 : (isGrossreuth ? 5.52 : 4.56));
+                    const ceilHangerY = (station.name === "Jakobinenstraße") ? 6.0 : (station.name === "Rathenauplatz" ? 9.9 : (isGrossreuth ? 5.52 : (isWoehrder ? 9.9 : 4.56)));
                     const girderTopY = girderY + girderH / 2;
                     const hangerLen = ceilHangerY - girderTopY;
                     const hangerY = (ceilHangerY + girderTopY) / 2;
@@ -2016,16 +2233,16 @@ export class StationModel {
                         
                         // Build flat ceiling if not Jakobinenstraße
                         if (station.name !== "Jakobinenstraße") {
-                            let ceilY = (station.name === "Rathenauplatz") ? 10.0 : (station.name === "Opernhaus" ? 7.04 : 4.66);
+                            let ceilY = (station.name === "Rathenauplatz") ? 10.0 : (station.name === "Opernhaus" ? 7.04 : (isWoehrder ? 10.0 : 4.66));
                             if (isGrossreuth) ceilY = 5.62;
 
-                            const hMeters = (station.name === "Rathenauplatz") ? 4.0 : 1.2;
-                            const wMeters = (station.name === "Rathenauplatz") ? 4.0 : 1.2;
+                            const hMeters = (station.name === "Rathenauplatz") ? 4.0 : (isWoehrder ? 6.0 : 1.2);
+                            const wMeters = (station.name === "Rathenauplatz") ? 4.0 : (isWoehrder ? 6.0 : 1.2);
                             let ceilMat = this.materials.ceiling;
                             if (station.name === "Hohe Marter" || station.name === "Rathenauplatz") {
                                 ceilMat = this.maximilianstrasseCeilingMat;
                             } else if (station.name === "Wöhrder Wiese") {
-                                ceilMat = this.getWoehrderCirclesMat();
+                                ceilMat = this.getWoehrderRockMat(); // dark rough rock ceiling (photos)
                             }
 
                             if (isGrossreuth) {
@@ -2156,10 +2373,24 @@ export class StationModel {
 
                         const girderMats = [girderMat, girderMat];
                         const tubeMats = [this.materials.lightTube, this.materials.lightTube];
-                        for (const sign of [1, -1]) {
-                            this.buildSweptBar(stationGroup, startS, endS, () => 0.125, centerPos.y + girderY + girderH / 2, centerPos.y + girderY - girderH / 2, girderMats, 1.2, (s) => sign * lightOffFn(s));
-                            this.buildSweptBar(stationGroup, startS, endS, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) - 0.05));
-                            this.buildSweptBar(stationGroup, startS, endS, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) + 0.05));
+                        if (isWoehrder) {
+                            // Standard barrel light channel (see buildBarrelLights). The
+                            // ceiling hanger rods come from the shared hanger loop below,
+                            // so no ceilY is passed here.
+                            this.buildBarrelLights(stationGroup, {
+                                startS, endS,
+                                axisY: girderY,
+                                centerPosY: centerPos.y,
+                                centerAngle,
+                                offFn: lightOffFn,
+                                label: station.name,
+                            });
+                        } else {
+                            for (const sign of [1, -1]) {
+                                this.buildSweptBar(stationGroup, startS, endS, () => 0.125, centerPos.y + girderY + girderH / 2, centerPos.y + girderY - girderH / 2, girderMats, 1.2, (s) => sign * lightOffFn(s));
+                                this.buildSweptBar(stationGroup, startS, endS, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) - 0.05));
+                                this.buildSweptBar(stationGroup, startS, endS, () => 0.015, centerPos.y + tubeY + 0.015, centerPos.y + tubeY - 0.015, tubeMats, 1.2, (s) => sign * (lightOffFn(s) + 0.05));
+                            }
                         }
 
                         for (let jj = 0; jj < numSub; jj++) {
@@ -2237,7 +2468,11 @@ export class StationModel {
                             this.buildSweptProfile(stationGroup, sA, sB, mkVaultArc(-phiExt, Math.PI), cy + 0.865, () => tubeCenterL, ceilMat, 5);
                             this.buildSweptProfile(stationGroup, sA, sB, mkVaultArc(0, Math.PI + phiExt), cy + 0.865, () => tubeCenterR, ceilMat, 5);
                         }
-                    } else if (station.name !== "Plärrer" && station.name !== "Muggenhof" && station.name !== "Stadtgrenze") {
+                    } else if (station.name !== "Plärrer" && station.name !== "Muggenhof" && station.name !== "Stadtgrenze" && station.name !== "Flughafen" && station.name !== "Nordwestring" && station.name !== "Friedrich-Ebert-Platz" && station.name !== "Rennweg") {
+                        // Flughafen baut seine Stahlraster-Decke selbst (drei
+                        // Abschnitte mit zwei Lichteinlass-Öffnungen), Nordwestring
+                        // ebenso (Spiegel-Zickzack), Friedrich-Ebert-Platz ebenso
+                        // (Rippendecke + erhöhtes oranges Mittelfeld) — siehe Wand-Zweige.
                         // Plärrer's flat ceiling is omitted: its bespoke hall (TrackManager
                         // buildPlaerrer) opens up to the surface skylights instead.
                         // Ceiling as ONE continuous swept slab (solid colour), built once on j===0.
@@ -2262,8 +2497,29 @@ export class StationModel {
                                     this._roethenbachCeilingMat = new THREE.MeshLambertMaterial({ color: '#44413d' });
                                 }
                                 ceilMat = this._roethenbachCeilingMat;
+                            } else if (station.name === "Klinikum Nord") {
+                                // Heller Sichtbeton (Fotos) statt des dunklen Standard-Deckels;
+                                // Mittelunterzug + Lochblech-Paneele kommen im Wand-Zweig dazu.
+                                if (!this._klinikumNordCeilingMat) {
+                                    this._klinikumNordCeilingMat = new THREE.MeshLambertMaterial({
+                                        map: this.tunnelConcreteTexture,
+                                        color: 0xffffff,
+                                        side: THREE.DoubleSide
+                                    });
+                                }
+                                ceilMat = this._klinikumNordCeilingMat;
+                            } else if (station.name === "Maxfeld") {
+                                // Helle, fast weiße Blechdecke (Fotos) statt des
+                                // dunklen Standard-Deckels
+                                if (!this._maxfeldCeilingMat) {
+                                    this._maxfeldCeilingMat = new THREE.MeshLambertMaterial({ color: '#d8dbdd' });
+                                }
+                                ceilMat = this._maxfeldCeilingMat;
+                            } else if (station.name === "Rennweg") {
+                                // Dunkler Waschbeton über die ganze Kaverne (Fotos)
+                                ceilMat = this.getRennwegAggregateMat();
                             } else if (station.name === "Wöhrder Wiese") {
-                                ceilMat = this.getWoehrderCirclesMat();
+                                ceilMat = this.getWoehrderRockMat();
                             }
                             if (station.name === "Messe") {
                                 this.materials.messeBlue = this.materials.messeBlue || new THREE.MeshLambertMaterial({ color: '#3a92d8' });
@@ -3276,7 +3532,7 @@ export class StationModel {
                         );
                         crossGeom.applyMatrix4(matrix);
 
-                        const passageMat = new THREE.MeshLambertMaterial({ color: '#475569', side: THREE.DoubleSide });
+                        const passageMat = new THREE.MeshLambertMaterial({ color: '#333333', side: THREE.DoubleSide });
                         passageMat.onBeforeCompile = (shader) => {
                             shader.vertexShader = `
                                 varying vec3 vLocalPosForClip;
@@ -3389,11 +3645,14 @@ export class StationModel {
                 }
             } else if (isWoehrder) {
                 if (j === 0) {
+                    // Full-height mosaic circle mural on both side walls (Rathenauplatz
+                    // height, 10m), rough-rock ceiling; in the middle third a big
+                    // mosaic-clad cuboid reaches deep down into the hall.
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
                     const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
                     const cy = centerPos.y;
                     const yBot = cy - 0.38;
-                    const yCeil = cy + 4.66;
+                    const yCeil = cy + 10.0;
                     const circlesMat = this.getWoehrderCirclesMat();
                     const worldW = circlesMat.map.userData.worldW;
                     const worldH = circlesMat.map.userData.worldH;
@@ -3403,26 +3662,91 @@ export class StationModel {
                         const offS = (s) => sign * (offW(s) - 0.02);
                         this.buildSweptWall(stationGroup, sA, sB, off, yBot, yCeil, circlesMat, worldW, yBot / worldH, yCeil / worldH);
 
-                        const textW = 3.6;
-                        const textH = 0.45;
-                        const textGeom = new THREE.PlaneGeometry(textW, textH);
-                        const textMat = this.getWoehrderTextMat();
-                        
-                        for (let z = -platLength / 2 + 1.5; z <= platLength / 2 - 1.5; z += 3.0) {
+                        // Small name logos set directly into the mosaic
+                        const muralTextGeom = new THREE.PlaneGeometry(2.4, 0.3);
+                        const textMat = this.getBarrelTextMat(station.name);
+                        for (let z = -platLength / 2 + 6.0; z <= platLength / 2 - 3.0; z += 12.0) {
                             const sT = station.position + z;
                             const posT = this.sim.getTrackPosition(sT);
                             const tanT = this.sim.getTrackTangent(sT);
                             const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
                             const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
                             const pText = posT.clone().addScaledVector(normT, offS(sT));
-                            
-                            const textMesh = new THREE.Mesh(textGeom, textMat);
+
+                            const textMesh = new THREE.Mesh(muralTextGeom, textMat);
                             textMesh.position.copy(stationGroup.worldToLocal(pText));
-                            textMesh.position.y = 2.1;
+                            textMesh.position.y = 2.30;
                             textMesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
                             stationGroup.add(textMesh);
                         }
                     }
+
+                    // Big rough-concrete mass crossing the middle third of the hall (photo):
+                    // flush with both mosaic walls, its footprint skewed in plan (diagonal),
+                    // the end faces leaning inward toward the bottom. Only the visible faces
+                    // are built — the underside and the two skewed ends, all in the same
+                    // exposed-aggregate texture as the ceiling; the top is closed by the
+                    // ceiling itself, the sides vanish flush into the walls.
+                    const rockMat = this.getWoehrderRockMat();
+                    const halfLen = platLength / 6;
+                    const skew = 5.0;   // plan diagonal: +s shift on the +offW wall, −s on the other
+                    const lean = 1.8;   // end faces lean: bottom edges pulled toward the centre
+                    const yBoxBot = cy + 4.7;
+                    const texM = 3.0;   // aggregate tiles every 3m
+                    const wallPt = (side, s, y) => {
+                        const p = this.sim.getTrackPosition(s);
+                        const t = this.sim.getTrackTangent(s);
+                        const nl = Math.hypot(-t.z, t.x) || 1;
+                        const off = side * offW(s);
+                        return stationGroup.worldToLocal(new THREE.Vector3(p.x + (-t.z / nl) * off, y, p.z + (t.x / nl) * off));
+                    };
+                    const kPos = [], kUv = [];
+                    const kTri = (a, b, c, ua, ub, uc) => {
+                        kPos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+                        kUv.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]);
+                    };
+                    const kQuad = (p0, p1, p2, p3, u0, u1, u2, u3) => { kTri(p0, p1, p2, u0, u1, u2); kTri(p0, p2, p3, u0, u2, u3); };
+
+                    // Underside: strip between the two walls over the skewed, leaned s-ranges
+                    const sc = station.position;
+                    const sL0 = sc - halfLen + skew + lean, sL1 = sc + halfLen + skew - lean;
+                    const sR0 = sc - halfLen - skew + lean, sR1 = sc + halfLen - skew - lean;
+                    const nR = 30;
+                    const rings = [];
+                    for (let r = 0; r <= nR; r++) {
+                        const t = r / nR;
+                        rings.push({
+                            L: wallPt(1, sL0 + (sL1 - sL0) * t, yBoxBot),
+                            R: wallPt(-1, sR0 + (sR1 - sR0) * t, yBoxBot)
+                        });
+                    }
+                    let kU = 0;
+                    for (let r = 0; r < nR; r++) {
+                        const A = rings[r], B = rings[r + 1];
+                        const kU1 = kU + A.L.distanceTo(B.L) / texM;
+                        const vA = A.L.distanceTo(A.R) / texM, vB = B.L.distanceTo(B.R) / texM;
+                        kQuad(A.L, A.R, B.R, B.L, [kU, 0], [kU, vA], [kU1, vB], [kU1, 0]);
+                        kU = kU1;
+                    }
+                    // Skewed end faces (top edge at the ceiling, bottom edge leaned inward)
+                    for (const endSign of [-1, 1]) {
+                        const sTop = sc + endSign * halfLen;
+                        const sBot = sTop - endSign * lean;
+                        const TL = wallPt(1, sTop + skew, yCeil);
+                        const TR = wallPt(-1, sTop - skew, yCeil);
+                        const BL = wallPt(1, sBot + skew, yBoxBot);
+                        const BR = wallPt(-1, sBot - skew, yBoxBot);
+                        const wFace = BL.distanceTo(BR) / texM;
+                        const hFace = (yCeil - yBoxBot) / texM;
+                        kQuad(BL, BR, TR, TL, [0, 0], [wFace, 0], [wFace, hFace], [0, hFace]);
+                    }
+                    const klotzGeom = new THREE.BufferGeometry();
+                    klotzGeom.setAttribute('position', new THREE.Float32BufferAttribute(kPos, 3));
+                    klotzGeom.setAttribute('uv', new THREE.Float32BufferAttribute(kUv, 2));
+                    klotzGeom.computeVertexNormals();
+                    const klotzMat = rockMat.clone();
+                    klotzMat.side = THREE.DoubleSide;
+                    stationGroup.add(new THREE.Mesh(klotzGeom, klotzMat));
                 }
             } else if (isRathenauplatz) {
                 if (j === 0) {
@@ -3524,6 +3848,737 @@ export class StationModel {
                         this.buildSweptWall(stationGroup, sA, sB, offS, cy + 1.15, cy + 1.17, grossreuthBeamMat, 1.2, 0, 1);
                     }
                 }
+            } else if (isFriedrichEbert) {
+                // Friedrich-Ebert-Platz (U3, Fotos): helle Sichtbeton-Wände mit
+                // dem orangefarbenen Flechtwerk-Relief (Korbgeflecht aus
+                // liegenden/stehenden Keramikriegeln im Schachbrett), orange
+                // Namenstafeln mit weißer Schrift, an beiden Deckenrändern ein
+                // Kamm aus Beton-Rippen mit durchlaufenden Neonröhren darunter,
+                // rot-oranger Terrazzoboden, orange Holzlattenbänke.
+                // Stützenfrei; Standardlampen aus.
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    const ceilY = 4.66;
+
+                    // 1. Wände: Beton mit Flechtwerk-Band (Kachel = 2.4 m)
+                    const wallMat = this.getFriedrichEbertWallMat();
+                    for (const sign of [1, -1]) {
+                        this.buildSweptWall(stationGroup, sA, sB, (s) => sign * offW(s), cy - 0.38, cy + ceilY, wallMat, 2.4, 0, 1);
+                    }
+
+                    // 2. Orange Namenstafeln alle 12 m auf beiden Wänden
+                    const signGeom = new THREE.PlaneGeometry(2.6, 0.4);
+                    const signMat = this.getFriedrichEbertSignMat();
+                    for (const sign of [1, -1]) {
+                        for (let z = -platLength / 2 + 6.0; z <= platLength / 2 - 6.0; z += 12.0) {
+                            const sT = station.position + z;
+                            const posT = this.sim.getTrackPosition(sT);
+                            const tanT = this.sim.getTrackTangent(sT);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pT = posT.clone().addScaledVector(normT, sign * (offW(sT) - 0.05));
+                            const mesh = new THREE.Mesh(signGeom, signMat);
+                            mesh.position.copy(stationGroup.worldToLocal(pT));
+                            mesh.position.y = 2.35;
+                            mesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(mesh);
+                        }
+                    }
+
+                    // 3. Beton-Rippenkamm an beiden Deckenrändern (Foto 2/3):
+                    // quer stehende Rippen alle 0.6 m über den Gleisen
+                    if (!this._friedrichEbertFinMat) {
+                        this._friedrichEbertFinMat = new THREE.MeshLambertMaterial({
+                            map: this.tunnelConcreteTexture, color: 0xffffff
+                        });
+                    }
+                    const finGeom = new THREE.BoxGeometry(1.0, 0.5, 0.15);
+                    const finM = [];
+                    for (let z = -platLength / 2 + 0.6; z <= platLength / 2 - 0.6; z += 0.6) {
+                        const sF = station.position + z;
+                        const posF = this.sim.getTrackPosition(sF);
+                        const tanF = this.sim.getTrackTangent(sF);
+                        const rotYF = Math.atan2(tanF.x, tanF.z) - centerAngle;
+                        const normF = new THREE.Vector3(-tanF.z, 0, tanF.x);
+                        const spacingF = this.sim.getTrackSpacing(sF);
+                        for (const sign of [1, -1]) {
+                            const lp = stationGroup.worldToLocal(posF.clone().addScaledVector(normF, sign * (spacingF / 2 + 0.9)));
+                            const m = new THREE.Matrix4().makeRotationY(rotYF);
+                            m.setPosition(lp.x, ceilY - 0.1 - 0.25, lp.z);
+                            finM.push(m);
+                        }
+                    }
+                    const finInst = new THREE.InstancedMesh(finGeom, this._friedrichEbertFinMat, finM.length);
+                    finM.forEach((m, i) => finInst.setMatrixAt(i, m));
+                    finInst.instanceMatrix.needsUpdate = true;
+                    finInst.computeBoundingSphere();
+                    if (finInst.boundingSphere) finInst.boundingSphere.radius *= 5;
+                    stationGroup.add(finInst);
+
+                    // 4. Durchlaufende Neonröhren unter dem Rippenkamm, zwei je Seite
+                    const tubeMats = [this.materials.lightTube, this.materials.lightTube];
+                    for (const sign of [1, -1]) {
+                        for (const off of [0.35, 1.45]) {
+                            this.buildSweptBar(stationGroup, sA + 0.5, sB - 0.5, () => 0.05,
+                                cy + ceilY - 0.38, cy + ceilY - 0.45, tubeMats, 1.2,
+                                (s) => sign * (this.sim.getTrackSpacing(s) / 2 + off));
+                        }
+                    }
+
+                    // 5. Orange Holzlattenbänke (Foto 2), versetzt auf dem Bahnsteig
+                    if (!this._friedrichEbertBenchMat) {
+                        this._friedrichEbertBenchMat = new THREE.MeshLambertMaterial({ color: '#b8622a' });
+                        this._friedrichEbertSlatMat = new THREE.MeshLambertMaterial({ color: '#d08a3a' });
+                    }
+                    [[-25, 1.8], [-10, -1.8], [10, 1.8], [25, -1.8]].forEach(([bz, bx]) => {
+                        const sBch = station.position + bz;
+                        const posBch = this.sim.getTrackPosition(sBch);
+                        const tanBch = this.sim.getTrackTangent(sBch);
+                        const rotYBch = Math.atan2(tanBch.x, tanBch.z) - centerAngle;
+                        const normBch = new THREE.Vector3(-tanBch.z, 0, tanBch.x);
+                        const g = new THREE.Group();
+                        g.position.copy(stationGroup.worldToLocal(posBch.clone().addScaledVector(normBch, bx)));
+                        g.position.y = 0.865;
+                        g.rotation.y = rotYBch;
+                        const base = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.38, 2.2), this._friedrichEbertBenchMat);
+                        base.position.y = 0.19;
+                        g.add(base);
+                        for (const sx of [-0.16, 0, 0.16]) {
+                            const slat = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.05, 2.2), this._friedrichEbertSlatMat);
+                            slat.position.set(sx, 0.405, 0);
+                            g.add(slat);
+                        }
+                        stationGroup.add(g);
+                    });
+                }
+            } else if (isNordwestring) {
+                // Nordwestring (U3, Fotos): helle Betonpaneel-Wände mit vertikalen
+                // Farbstreifen (+x-Seite rot, -x-Seite grün), weiße
+                // "NORDWESTRING"-Leuchtschilder, in der Deckenmitte die gezackte
+                // SPIEGELDECKE (Zickzack-Facetten mit verschwommener Reflexion des
+                // Bahnsteigs), seitlich helle Deckenplatten mit dunklen
+                // Randbändern, Beleuchtung wie Plärrer (inkl. Namensschildern auf
+                // den Trägern), Glasaufzug mitten auf dem Bahnsteig
+                // (elevatorSpecs). Stützenfrei; Standardlampen aus.
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    const ceilY = 4.76;
+
+                    // 1. Wände: helle Paneele mit Farbstreifen je Seite
+                    for (const sign of [1, -1]) {
+                        const mat = this.getNordwestringWallMat(sign > 0 ? '#c22a35' : '#2f7d4f');
+                        this.buildSweptWall(stationGroup, sA, sB, (s) => sign * offW(s), cy - 0.38, cy + ceilY, mat, 2.5, 0, 1);
+                    }
+
+                    // 2. Weiße Leuchtschilder "NORDWESTRING" alle 12 m
+                    const signGeom = new THREE.PlaneGeometry(2.2, 0.45);
+                    const signMat = this.getNordwestringSignMat();
+                    for (const sign of [1, -1]) {
+                        for (let z = -platLength / 2 + 6.0; z <= platLength / 2 - 6.0; z += 12.0) {
+                            const sT = station.position + z;
+                            const posT = this.sim.getTrackPosition(sT);
+                            const tanT = this.sim.getTrackTangent(sT);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pT = posT.clone().addScaledVector(normT, sign * (offW(sT) - 0.05));
+                            const mesh = new THREE.Mesh(signGeom, signMat);
+                            mesh.position.copy(stationGroup.worldToLocal(pT));
+                            mesh.position.y = 2.35;
+                            mesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(mesh);
+                        }
+                    }
+
+                    // 3. Decke: seitlich helle Betonplatten, dunkle Randbänder,
+                    // in der Mitte die gezackte Spiegeldecke. Der Zickzack ist
+                    // eine Dreieckswelle mit 2-m-Periode als botY-Funktion —
+                    // buildSweptBar setzt seine Ringe alle ~1 m, trifft die
+                    // Knickpunkte also exakt (kein Phasenrauschen).
+                    if (!this._nordwestringCeilSideMat) {
+                        this._nordwestringCeilSideMat = new THREE.MeshLambertMaterial({
+                            map: this.tunnelConcreteTexture, color: 0xffffff, side: THREE.DoubleSide
+                        });
+                        this._nordwestringDarkMat = new THREE.MeshLambertMaterial({ color: '#2e3033' });
+                    }
+                    const sideMats = [this._nordwestringCeilSideMat, this._nordwestringCeilSideMat];
+                    const darkMats = [this._nordwestringDarkMat, this._nordwestringDarkMat];
+                    const cHalfW = (s) => (this.sim.getTrackSpacing(s) + 3.66) / 2;
+                    for (const sign of [1, -1]) {
+                        this.buildSweptBar(stationGroup, sA, sB,
+                            (s) => (cHalfW(s) - 1.9) / 2, cy + ceilY, cy + ceilY - 0.2,
+                            sideMats, 1.2, (s) => sign * ((1.9 + cHalfW(s)) / 2), 1.2);
+                        this.buildSweptBar(stationGroup, sA, sB, () => 0.175,
+                            cy + ceilY, cy + ceilY - 0.24, darkMats, 1.2, (s) => sign * 1.725);
+                    }
+                    const mirrorMat = this.getNordwestringMirrorMat();
+                    const mirrorMats = [mirrorMat, mirrorMat];
+                    const zigBot = (s) => cy + 4.30 + 0.24 * Math.abs(((s - sA) % 2) - 1);
+                    this.buildSweptBar(stationGroup, sA, sB, () => 1.55,
+                        cy + ceilY, zigBot, mirrorMats, 2.0, () => 0, 3.1);
+
+                    // 4. Beleuchtung wie Plärrer (inkl. Stationsname auf den Trägern);
+                    // Abhänger enden an der Unterkante der seitlichen Deckenplatten
+                    this.buildPlaererLights(stationGroup, station, centerAngle, { sA, sB, cy, ceilY: 4.66 });
+                }
+            } else if (isRennweg) {
+                // Rennweg (U2, Fotos): dunkle Waschbeton-Kaverne, an den
+                // Gleiswänden große, gelb gerahmte Graffiti-Wandbilder mit
+                // abgerundeten Ecken, weinrotes Namensband "RENNWEG", an der
+                // Decke gelb gerahmte Ovale mit Weltall-Malerei, zwei lange
+                // silberne Lichtbalken mit Neonband auf Stelzen, weinrote
+                // Mittelbänke, weißer Fliesenboden. Stützenfrei; Standardlampen aus.
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const spacingR = this.sim.getTrackSpacing(station.position);
+                    const fixedOffW = spacingR / 2 + 1.83;
+                    const cy = centerPos.y;
+                    const ceilY = 4.66;
+                    const curveStartH = 3.46;
+                    const radiusR = ceilY - curveStartH;
+
+                    const cavePts = [];
+                    // Right wall bottom to curve start
+                    cavePts.push({ x: fixedOffW, y: -0.38 });
+                    cavePts.push({ x: fixedOffW, y: curveStartH });
+                    // Right curve
+                    for (let i = 1; i <= 8; i++) {
+                        const a = (i / 8) * Math.PI / 2;
+                        cavePts.push({ x: fixedOffW - radiusR * (1 - Math.cos(a)), y: curveStartH + radiusR * Math.sin(a) });
+                    }
+                    // Left curve (mirrored)
+                    for (let i = 7; i >= 0; i--) {
+                        const a = (i / 8) * Math.PI / 2;
+                        cavePts.push({ x: -(fixedOffW - radiusR * (1 - Math.cos(a))), y: curveStartH + radiusR * Math.sin(a) });
+                    }
+                    // Left curve start to wall bottom
+                    cavePts.push({ x: -fixedOffW, y: curveStartH });
+                    cavePts.push({ x: -fixedOffW, y: -0.38 });
+
+                    // 1. Waschbeton-Kavernenschale unified
+                    const aggMat = this.getRennwegAggregateMat();
+                    this.buildSweptProfile(stationGroup, sA, sB, cavePts, cy, null, aggMat, 3.0);
+
+                    // 2. Graffiti-Wandbilder: je 12 m breite Felder
+                    const graffA = this.getRennwegGraffitiMat(0);
+                    const graffB = this.getRennwegGraffitiMat(1);
+                    [-36, -18, 6, 24].forEach((z0, i) => {
+                        const mat = (i % 2 === 0) ? graffA : graffB;
+                        for (const sign of [1, -1]) {
+                            this.buildSweptWall(stationGroup, station.position + z0, station.position + z0 + 12,
+                                (s) => sign * (fixedOffW - 0.04), cy + 0.35, cy + 3.45, mat, 12.0, 0, 1);
+                        }
+                    });
+
+                    // 3. Weinrotes Namensband auf 2m Höhe (Mitte)
+                    const nameMat = this.getRennwegNameMat();
+                    for (const sign of [1, -1]) {
+                        this.buildSweptWall(stationGroup, sA, sB, (s) => sign * (fixedOffW - 0.03), cy + 1.875, cy + 2.125, nameMat, 3.0, 0, 1);
+                    }
+
+                    // 4. Gelbe vertikale Bänder an den Bildkanten, über die Decke verbunden
+                    if (!this._rennwegYellowMat) this._rennwegYellowMat = new THREE.MeshLambertMaterial({ color: '#e3c31f' });
+                    const yellowBandMat = this._rennwegYellowMat;
+                    const bandPts = cavePts.map(p => {
+                        let nx = 0, ny = 0;
+                        if (p.y < curveStartH - 0.01) {
+                            nx = p.x > 0 ? -1 : 1; // Vertical walls: shift horizontally
+                        } else if (p.y > ceilY - 0.01) {
+                            ny = -1; // Flat ceiling: shift downwards
+                        } else {
+                            // Rounded corners: shift along the inward radial normal
+                            const cx = (p.x > 0) ? (fixedOffW - radiusR) : -(fixedOffW - radiusR);
+                            const cy = curveStartH;
+                            const dx = p.x - cx, dy = p.y - cy;
+                            const mag = Math.hypot(dx, dy);
+                            if (mag > 0.001) { nx = -dx / mag; ny = -dy / mag; }
+                        }
+                        const off = 0.015; // 1.5 cm inward to avoid Z-fighting and be visible
+                        return { x: p.x + nx * off, y: p.y + ny * off };
+                    });
+                    const bandEdges = [-36, -24, -18, -6, 6, 18, 24, 36];
+                    bandEdges.forEach(ze => {
+                        const sE = station.position + ze;
+                        this.buildSweptProfile(stationGroup, sE - 0.2, sE + 0.2, bandPts, cy, null, yellowBandMat, 10);
+                    });
+
+                    // 5. Decken-Ovale mit Weltall-Malerei (gelber Rand, transparente
+                    // Ecken -> der Waschbeton scheint drumherum durch)
+                    const cosmicMat = this.getRennwegCosmicMat();
+                    const ovalGeom = new THREE.PlaneGeometry(9.0, 5.5);
+                    [-22, 0, 22].forEach(zc => {
+                        const sC = station.position + zc;
+                        const posC = this.sim.getTrackPosition(sC);
+                        const tanC = this.sim.getTrackTangent(sC);
+                        const rotYC = Math.atan2(tanC.x, tanC.z) - centerAngle;
+                        const oval = new THREE.Mesh(ovalGeom, cosmicMat);
+                        oval.position.copy(stationGroup.worldToLocal(posC.clone()));
+                        oval.position.y = ceilY - 0.12;
+                        oval.rotation.set(Math.PI / 2, rotYC, 0);
+                        oval.rotation.order = 'YXZ';
+                        stationGroup.add(oval);
+                    });
+
+                    // 6. Runde Standard-Tonnenleuchte (Wöhrder-Wiese-Modell) mit
+                    // Stationsnamen auf den Rundflächen, statt eigener Lichtbalken
+                    this.buildBarrelLights(stationGroup, {
+                        startS: sA + 3.0,
+                        endS: sB - 3.0,
+                        axisY: 3.775,
+                        centerPosY: cy,
+                        centerAngle,
+                        offFn: (s) => this.sim.getTrackSpacing(s) / 2 - 1.785,
+                        ceilY: 4.66,
+                        label: station.name,
+                    });
+
+                    // 7. Weinrote Mittelbänke (Fotos), Reihe entlang der Bahnsteigmitte
+                    if (!this._rennwegBenchMat) this._rennwegBenchMat = new THREE.MeshLambertMaterial({ color: '#7a2430' });
+                    for (let bz = -31.5; bz <= 31.5; bz += 9) {
+                        const sBch = station.position + bz;
+                        const posBch = this.sim.getTrackPosition(sBch);
+                        const tanBch = this.sim.getTrackTangent(sBch);
+                        const rotYBch = Math.atan2(tanBch.x, tanBch.z) - centerAngle;
+                        const g = new THREE.Group();
+                        g.position.copy(stationGroup.worldToLocal(posBch.clone()));
+                        g.position.y = 0.865;
+                        g.rotation.y = rotYBch;
+                        const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 1.8), this._rennwegBenchMat);
+                        seat.position.y = 0.46;
+                        g.add(seat);
+                        for (const e of [-0.6, 0.6]) {
+                            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.43, 0.08), this._rennwegBenchMat);
+                            leg.position.set(0, 0.215, e);
+                            g.add(leg);
+                        }
+                        stationGroup.add(g);
+                    }
+                }
+            } else if (isMaxfeld) {
+                // Maxfeld (U3, Fotos): horizontale Edelstahl-Lamellenwände mit
+                // Granitsockel, weiße Goethe-Zitattafeln, "MAXFELD"-Stahlschilder
+                // mit gelbgrünen Lettern, Goethe-Porträt mit Infotafel, silberne
+                // Halbrund-Röhre am Wandkopf, helle Decke mit durchgehenden
+                // Lichtbändern + Sägezahn-Blenden, Edelstahl-Mittelbank.
+                // Stützenfrei; eigene Lichtbänder statt der Standardlampen.
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    const ceilY = 4.66;
+
+                    // 1. Lamellenwände raumhoch (Kachel = 2 m, Granitsockel unten)
+                    const lamMat = this.getMaxfeldLamellenMat();
+                    for (const sign of [1, -1]) {
+                        this.buildSweptWall(stationGroup, sA, sB, (s) => sign * offW(s), cy - 0.38, cy + ceilY, lamMat, 2.0, 0, 1);
+                    }
+
+                    // 2. Silberne Hohlkehle am Wandkopf (Übergang Wand/Decke, nach innen gewölbt)
+                    if (!this._maxfeldCoveMat) this._maxfeldCoveMat = new THREE.MeshLambertMaterial({ color: '#c9cdd0' });
+                    const coveR = 0.80;
+                    const coveSteps = 16;
+                    const coveProfileL = [];
+                    // Konkave Kurve (Hohlkehle) von der Wand zur Decke, zentriert auf die Ecklinie (offW, ceilY)
+                    for (let k = 0; k <= coveSteps; k++) {
+                        const a = (k / coveSteps) * Math.PI / 2;
+                        coveProfileL.push({ x: -coveR * Math.sin(a), y: -coveR * Math.cos(a) });
+                    }
+                    const coveProfileR = coveProfileL.map(p => ({ x: -p.x, y: p.y }));
+                    this.buildSweptProfile(stationGroup, sA, sB, coveProfileL, cy + ceilY, (s) => offW(s), this._maxfeldCoveMat, 4);
+                    this.buildSweptProfile(stationGroup, sA, sB, coveProfileR, cy + ceilY, (s) => -offW(s), this._maxfeldCoveMat, 4);
+
+                    // 3. Wandtafeln: Zitat-Stapel, Namensschilder, Goethe-Ensemble
+                    const placePanel = (z, w, h, yMid, mat) => {
+                        const sP = station.position + z;
+                        const posP = this.sim.getTrackPosition(sP);
+                        const tanP = this.sim.getTrackTangent(sP);
+                        const rotYP = Math.atan2(tanP.x, tanP.z) - centerAngle;
+                        const normP = new THREE.Vector3(-tanP.z, 0, tanP.x);
+                        const geom = new THREE.PlaneGeometry(w, h);
+                        for (const sign of [1, -1]) {
+                            const pP = posP.clone().addScaledVector(normP, sign * (offW(sP) - 0.06));
+                            const mesh = new THREE.Mesh(geom, mat);
+                            mesh.position.copy(stationGroup.worldToLocal(pP));
+                            mesh.position.y = yMid;
+                            mesh.rotation.set(0, rotYP + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(mesh);
+                        }
+                    };
+                    const quoteA = this.getMaxfeldQuoteMat(0);
+                    const quoteB = this.getMaxfeldQuoteMat(1);
+                    [-36, -27, -9, 9, 27, 36].forEach((z, i) => {
+                        placePanel(z, 1.6, 2.6, 2.35, (i % 2 === 0) ? quoteA : quoteB);
+                    });
+                    [-13, 5, 23, 41].forEach(z => {
+                        placePanel(z, 3.0, 0.45, 2.0, this.getMaxfeldNameMat());
+                    });
+                    // Goethe-Porträt + Infotafel (Foto 2), einmal je Wand
+                    placePanel(-18, 1.3, 2.6, 2.25, this.getMaxfeldGoetheMat());
+
+                    // 4. Beleuchtung wie Plärrer (Standardmodell buildPlaererLights,
+                    // inkl. Stationsname in regelmäßigen Abständen auf den Trägern);
+                    // bündig mit der Deckenunterkante (keine Abhänger).
+                    this.buildPlaererLights(stationGroup, station, centerAngle, { sA, sB, cy, ceilY, flush: true });
+
+                    // 5. Edelstahl-Mittelbank (Foto 1): langer Doppelsitz-Rücken an
+                    // Rücken auf durchgehendem Sockel, mittig auf dem Bahnsteig
+                    if (!this._maxfeldBenchSeatMat) {
+                        this._maxfeldBenchSeatMat = new THREE.MeshLambertMaterial({ color: '#b4b8bc' });
+                        this._maxfeldBenchBaseMat = new THREE.MeshLambertMaterial({ color: '#7c8084' });
+                    }
+                    for (let bz = -6; bz <= 6; bz += 3) {
+                        const sBch = station.position + bz;
+                        const posBch = this.sim.getTrackPosition(sBch);
+                        const tanBch = this.sim.getTrackTangent(sBch);
+                        const rotYBch = Math.atan2(tanBch.x, tanBch.z) - centerAngle;
+                        const g = new THREE.Group();
+                        g.position.copy(stationGroup.worldToLocal(posBch.clone()));
+                        g.position.y = 0.865;
+                        g.rotation.y = rotYBch;
+                        const base = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.42, 2.95), this._maxfeldBenchBaseMat);
+                        base.position.y = 0.21;
+                        g.add(base);
+                        for (const sgn of [1, -1]) {
+                            const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.04, 2.95), this._maxfeldBenchSeatMat);
+                            seat.position.set(sgn * 0.33, 0.46, 0);
+                            seat.rotation.z = -sgn * 0.20;
+                            g.add(seat);
+                        }
+                        stationGroup.add(g);
+                    }
+                }
+            } else if (isFlughafen) {
+                // Flughafen (U2, Fotos): Sichtbeton-Wände mit horizontalem
+                // Aluprofil-Raster, blaue Kunstpaneele (Pfeilmotive), Dürer-
+                // Selbstbildnis + Infotafel, "Flughafen"/"Airport"-Leuchtschilder,
+                // gelbes Doppel-Handlaufrohr, Stahlraster-Decke mit ZWEI großen
+                // hellen Lichteinlässen (verglaste Atrien mit Tageslicht): einer
+                // mit Rolltreppenanlage, einer mit Glasaufzug (elevatorSpecs).
+                // Stützenfrei; eigene Lichtbänder statt der Standardlampen.
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    const ceilY = 5.0;        // Deckenunterkante (höher als Standard 4.66)
+                    const atriumTop = 7.8;    // Oberkante der beiden Lichteinlässe
+                    // Vertauscht ggü. der ersten Fassung: Rolltreppe jetzt im hinteren,
+                    // Aufzug im vorderen Lichteinlass. Die Rolltreppen-Öffnung ist breiter
+                    // (11 statt 6 m), weil eine einzelne Fahrspur mit ~26 Stufen a 0.3 m
+                    // Tiefe eine Lauflänge von knapp 8 m entlang der Gleisachse braucht.
+                    const escGap = [-27, -16];  // Lichteinlass 1: einzelne Rolltreppe
+                    const liftGap = [6, 12];    // Lichteinlass 2: Glasaufzug (elevatorSpecs)
+
+                    // 1. Wände: Sichtbeton mit Aluprofil-Raster (Kachel = 4 m)
+                    const wallMat = this.getFlughafenWallMat();
+                    for (const sign of [1, -1]) {
+                        this.buildSweptWall(stationGroup, sA, sB, (s) => sign * offW(s), cy - 0.38, cy + ceilY, wallMat, 4.0, 0, 1);
+                    }
+
+                    // 2. Gelbes Doppel-Handlaufrohr an beiden Wänden (Foto 4 unten)
+                    if (!this._flughafenYellowMat) this._flughafenYellowMat = new THREE.MeshLambertMaterial({ color: '#d9a52f' });
+                    const yMats = [this._flughafenYellowMat, this._flughafenYellowMat];
+                    for (const sign of [1, -1]) {
+                        for (const railY of [0.62, 0.82]) {
+                            this.buildSweptBar(stationGroup, sA, sB, () => 0.035,
+                                cy + railY + 0.07, cy + railY, yMats, 1.2, (s) => sign * (offW(s) - 0.14));
+                        }
+                    }
+
+                    // 3. Wandpaneele: Pfeilkunst-Gruppen, Dürer-Ensemble, Leuchtschilder
+                    const placePanel = (z, w, h, yMid, mat) => {
+                        const sP = station.position + z;
+                        const posP = this.sim.getTrackPosition(sP);
+                        const tanP = this.sim.getTrackTangent(sP);
+                        const rotYP = Math.atan2(tanP.x, tanP.z) - centerAngle;
+                        const normP = new THREE.Vector3(-tanP.z, 0, tanP.x);
+                        const geom = new THREE.PlaneGeometry(w, h);
+                        for (const sign of [1, -1]) {
+                            const pP = posP.clone().addScaledVector(normP, sign * (offW(sP) - 0.06));
+                            const mesh = new THREE.Mesh(geom, mat);
+                            mesh.position.copy(stationGroup.worldToLocal(pP));
+                            mesh.position.y = yMid;
+                            mesh.rotation.set(0, rotYP + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(mesh);
+                        }
+                    };
+                    const arrowMatA = this.getFlughafenArrowMat(0);
+                    const arrowMatB = this.getFlughafenArrowMat(1);
+                    [-40, -37, -34, -31, 24, 27, 30, 33].forEach((z, i) => {
+                        placePanel(z, 2.9, 3.2, 2.55, (i % 2 === 0) ? arrowMatA : arrowMatB);
+                    });
+                    // Dürer-Ensemble (Foto 4): Airport | Porträt | Infotafel | Flughafen
+                    placePanel(-11.5, 2.6, 0.55, 2.55, this.getFlughafenSignMat('Airport'));
+                    placePanel(-8.2, 2.6, 2.6, 2.55, this.getFlughafenDuererMat());
+                    placePanel(-5.4, 2.6, 2.6, 2.55, this.getFlughafenDuererTextMat());
+                    placePanel(-2.6, 2.6, 0.55, 2.55, this.getFlughafenSignMat('Flughafen'));
+                    placePanel(18, 2.6, 0.55, 2.55, this.getFlughafenSignMat('Flughafen'));
+                    placePanel(38, 2.6, 0.55, 2.55, this.getFlughafenSignMat('Airport'));
+                    placePanel(-43, 2.6, 0.55, 2.55, this.getFlughafenSignMat('Flughafen'));
+
+                    // 4. Stahlraster-Decke in drei Abschnitten; die Lücken sind die
+                    // beiden Lichteinlässe
+                    const ceilMat = this.getFlughafenCeilingMat();
+                    const cMats = [ceilMat, ceilMat];
+                    const cHalfW = (s) => (this.sim.getTrackSpacing(s) + 3.66) / 2;
+                    const sortedGaps = [escGap, liftGap].sort((a, b) => a[0] - b[0]);
+                    const sections = [
+                        [-platLength / 2, sortedGaps[0][0]],
+                        [sortedGaps[0][1], sortedGaps[1][0]],
+                        [sortedGaps[1][1], platLength / 2]
+                    ];
+                    for (const [z0, z1] of sections) {
+                        this.buildSweptBar(stationGroup, station.position + z0, station.position + z1,
+                            cHalfW, cy + ceilY + 0.1, cy + ceilY - 0.1, cMats, 1.2, () => 0, 1.2);
+                    }
+
+                    // 5. Die beiden Lichteinlässe: verglaste Schächte mit Stirnwänden
+                    // an den Schachtenden, oben ein strahlend heller Abschluss
+                    // (Tageslicht von oben). Die Stirnwände sind um 8 cm in den
+                    // Schacht eingerückt, damit sie NICHT in derselben Ebene wie
+                    // die automatischen Stirnkappen der Deckenabschnitte liegen
+                    // (das war das Z-Fighting-Flackern der ersten Fassung).
+                    const skyMat = this.getFlughafenSkylightMat();
+                    if (!this._flughafenDaylightMat) this._flughafenDaylightMat = new THREE.MeshBasicMaterial({ color: '#f2f7fa' });
+                    const dMats = [this._flughafenDaylightMat, this._flughafenDaylightMat];
+                    const skMats = [skyMat, skyMat];
+                    for (const [z0, z1] of [escGap, liftGap]) {
+                        const s0 = station.position + z0, s1 = station.position + z1;
+                        for (const sign of [1, -1]) {
+                            this.buildSweptBar(stationGroup, s0, s1, () => 0.06,
+                                cy + atriumTop, cy + ceilY - 0.1, skMats, 1.2, (s) => sign * (cHalfW(s) - 0.06), 1.2);
+                        }
+                        for (const [sEnd, dir] of [[s0, 1], [s1, -1]]) {
+                            const sW = sEnd + dir * 0.08;
+                            const posE = this.sim.getTrackPosition(sW);
+                            const tanE = this.sim.getTrackTangent(sW);
+                            const rotYE = Math.atan2(tanE.x, tanE.z) - centerAngle;
+                            const wE = 2 * cHalfW(sW);
+                            const hE = atriumTop - (ceilY - 0.1);
+                            const wallE = new THREE.Mesh(new THREE.BoxGeometry(wE, hE, 0.12), skyMat);
+                            wallE.position.copy(stationGroup.worldToLocal(posE.clone()));
+                            wallE.position.y = ceilY - 0.1 + hE / 2;
+                            wallE.rotation.y = rotYE;
+                            stationGroup.add(wallE);
+                        }
+                        this.buildSweptBar(stationGroup, s0, s1, cHalfW, cy + atriumTop + 0.1, cy + atriumTop, dMats, 1.2, () => 0, 1.2);
+                    }
+
+                    // 6. Beleuchtung: einfach lange, an dünnen Stäben hängende
+                    // Neonröhren (Foto 2) — zwei durchgehende Leuchtbänder je
+                    // Deckenabschnitt, nicht über die offenen Lichteinlässe hinweg.
+                    const tubeMats = [this.materials.lightTube, this.materials.lightTube];
+                    const neonHangerGeom = new THREE.CylinderGeometry(0.012, 0.012, 0.27, 6);
+                    for (const [z0, z1] of sections) {
+                        const s0 = station.position + z0 + 0.3, s1 = station.position + z1 - 0.3;
+                        if (s1 - s0 < 1.0) continue;
+                        for (const sign of [1, -1]) {
+                            this.buildSweptBar(stationGroup, s0, s1, () => 0.05,
+                                cy + ceilY - 0.37, cy + ceilY - 0.43, tubeMats, 1.2, (s) => sign * 2.5);
+                            for (let d = s0 + 2.5; d <= s1 - 2.0; d += 5.0) {
+                                const posH = this.sim.getTrackPosition(d);
+                                const tanH = this.sim.getTrackTangent(d);
+                                const rotYH = Math.atan2(tanH.x, tanH.z) - centerAngle;
+                                const normH = new THREE.Vector3(-tanH.z, 0, tanH.x);
+                                const hanger = new THREE.Mesh(neonHangerGeom, this.materials.boardHanger);
+                                hanger.position.copy(stationGroup.worldToLocal(posH.clone().addScaledVector(normH, sign * 2.5)));
+                                hanger.position.y = ceilY - 0.235;
+                                hanger.rotation.y = rotYH;
+                                stationGroup.add(hanger);
+                            }
+                        }
+                    }
+
+                    // 7. Einzelne Rolltreppe im Rolltreppen-Lichteinlass — NUR eine
+                    // Fahrspur, ohne Mitteltreppe und ohne zweite (Gegen-)Spur —,
+                    // steigt vom Bahnsteig durch die Deckenöffnung ins helle Atrium.
+                    {
+                        const riseTarget = ceilY + 0.1 - 0.865;
+                        const stepHeight = 0.16;
+                        const numSteps = Math.max(4, Math.round(riseTarget / stepHeight));
+                        const numTotalSteps = numSteps + 4;
+                        const stepDepth = 0.3;
+                        const run = numSteps * stepDepth;
+                        const actualRise = numSteps * stepHeight;
+                        const rampLength = Math.sqrt(actualRise * actualRise + run * run);
+                        const rampAngle = Math.atan2(actualRise, run);
+
+                        const escCenterZ = (escGap[0] + escGap[1]) / 2;
+                        const sBase = station.position + escCenterZ - run / 2;
+                        const posB = this.sim.getTrackPosition(sBase);
+                        const tanB = this.sim.getTrackTangent(sBase);
+                        const anchorRotY = Math.atan2(tanB.x, tanB.z) - centerAngle;
+
+                        // Geteilte Materialien (identisch zum Bauernfeind-Rezept; lazy,
+                        // weil jene Zweige auf der U2 nie laufen)
+                        this.materials.bauernfeindEscStep = this.materials.bauernfeindEscStep || new THREE.MeshLambertMaterial({
+                            map: (() => {
+                                const canvas = document.createElement('canvas');
+                                canvas.width = 64; canvas.height = 64;
+                                const ctx = canvas.getContext('2d');
+                                const stripeWidth = 2;
+                                for (let x = 0; x < 64; x += stripeWidth) {
+                                    ctx.fillStyle = (x % (stripeWidth * 2) === 0) ? '#475569' : '#94a3b8';
+                                    ctx.fillRect(x, 0, stripeWidth, 64);
+                                    ctx.fillStyle = '#334155'; ctx.fillRect(x, 0, 1, 64);
+                                    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(x + stripeWidth - 1, 0, 1, 64);
+                                }
+                                const texture = new THREE.CanvasTexture(canvas);
+                                texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                return texture;
+                            })()
+                        });
+                        this.materials.bauernfeindEdelstahl = this.materials.bauernfeindEdelstahl
+                            || StationBuilder.createBalustradeMaterial();
+                        this.materials.bauernfeindHandrail = this.materials.bauernfeindHandrail
+                            || new THREE.MeshBasicMaterial({ color: '#111111' });
+
+                        const core = new THREE.Group();
+                        core.position.copy(stationGroup.worldToLocal(posB.clone()));
+                        core.position.y = 0.865;
+                        core.rotation.y = anchorRotY;
+
+                        const escWidth = 1.0;
+                        const escStepGeom = new THREE.BoxGeometry(escWidth, stepHeight, stepDepth);
+                        const escInst = new THREE.InstancedMesh(escStepGeom, this.materials.bauernfeindEscStep, numTotalSteps);
+                        const dirAttr = new Float32Array(numTotalSteps * 3);
+                        for (let i = 0; i < numTotalSteps; i++) {
+                            dirAttr[i * 3 + 1] = stepHeight;
+                            dirAttr[i * 3 + 2] = stepDepth;
+                        }
+                        escStepGeom.setAttribute('aEscalatorDir', new THREE.InstancedBufferAttribute(dirAttr, 3));
+                        StationBuilder.setupEscalatorMaterial(this.materials.bauernfeindEscStep, this);
+                        const mStep = new THREE.Matrix4();
+                        for (let i = 0; i < numTotalSteps; i++) {
+                            const k2 = i - 2;
+                            const sy = k2 * stepHeight + stepHeight / 2, sz = k2 * stepDepth + stepDepth / 2;
+                            escInst.setMatrixAt(i, mStep.makeTranslation(0, sy, sz));
+                        }
+                        escInst.instanceMatrix.needsUpdate = true;
+                        this.registerEscalator(escInst, { numTotalSteps });
+                        escInst.computeBoundingSphere();
+                        if (escInst.boundingSphere) escInst.boundingSphere.radius *= 5;
+                        core.add(escInst);
+
+                        const midY = actualRise / 2, midZ = run / 2;
+                        // Fahrspur-Verkleidung + geschlossener Unterbau
+                        const casing = new THREE.Mesh(new THREE.BoxGeometry(escWidth, 0.1, rampLength), this.materials.bauernfeindEscStep);
+                        casing.position.set(0, midY - 0.15, midZ);
+                        casing.rotation.x = -rampAngle;
+                        core.add(casing);
+
+                        const under = new THREE.Mesh(new THREE.BoxGeometry(escWidth + 0.6, 0.5, rampLength), new THREE.MeshLambertMaterial({ color: '#7d8288' }));
+                        under.position.set(0, midY - 0.5, midZ);
+                        under.rotation.x = -rampAngle;
+                        core.add(under);
+                        // Balustraden + Handläufe, je eine links und rechts der einzelnen Spur
+                        const balGeom = new THREE.BoxGeometry(0.05, 0.9, rampLength + 0.6);
+                        const railGeom = new THREE.BoxGeometry(0.09, 0.09, rampLength + 0.7);
+                        for (const x of [-0.55, 0.55]) {
+                            const bal = new THREE.Mesh(balGeom, this.materials.bauernfeindEdelstahl);
+                            bal.position.set(x, midY + 0.45, midZ);
+                            bal.rotation.x = -rampAngle;
+                            core.add(bal);
+                            const rail = new THREE.Mesh(railGeom, this.materials.bauernfeindHandrail);
+                            rail.position.set(x, midY + 0.95, midZ);
+                            rail.rotation.x = -rampAngle;
+                            core.add(rail);
+                        }
+                        stationGroup.add(core);
+                    }
+                }
+            } else if (isKlinikumNord) {
+                // Klinikum Nord (U3, Fotos): goldgelb schimmernde Metallwände mit
+                // dunklen Wolken-Flecken und vertikalen Blechstößen, gesperrter
+                // grauer "KLINIKUM NORD"-Schriftzug, Mittelunterzug mit
+                // Fischgrät-Lochblechpaneelen unter der hellen Betondecke und
+                // Plärrer-Beleuchtung (Jakobinenstraße-Lichtbalken an beiden
+                // Bahnsteigkanten). Stützenfrei.
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
+                    const cy = centerPos.y;
+                    const ceilY = 4.66;
+
+                    // 1. Goldwände, raumhoch (Kachel = 8 m, volle Wandhöhe)
+                    const goldMat = this.getKlinikumNordGoldMat();
+                    for (const sign of [1, -1]) {
+                        const off = (s) => sign * offW(s);
+                        this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + ceilY, goldMat, 8.0, 0, 1);
+                    }
+
+                    // 2. Grauer Metall-Schriftzug alle 15 m auf beiden Wänden
+                    const textGeom = new THREE.PlaneGeometry(3.6, 0.36);
+                    const textMat = this.getKlinikumNordTextMat();
+                    for (const sign of [1, -1]) {
+                        const offS = (s) => sign * (offW(s) - 0.03);
+                        for (let z = -platLength / 2 + 7.5; z <= platLength / 2 - 7.5; z += 15.0) {
+                            const sT = station.position + z;
+                            const posT = this.sim.getTrackPosition(sT);
+                            const tanT = this.sim.getTrackTangent(sT);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            const pText = posT.clone().addScaledVector(normT, offS(sT));
+                            const textMesh = new THREE.Mesh(textGeom, textMat);
+                            textMesh.position.copy(stationGroup.worldToLocal(pText));
+                            textMesh.position.y = 2.35;
+                            textMesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(textMesh);
+                        }
+                    }
+
+                    // 3. Beton-Mittelunterzug längs unter der Decke (Foto 2)
+                    if (!this._klinikumNordBeamMat) {
+                        this._klinikumNordBeamMat = new THREE.MeshLambertMaterial({
+                            map: this.tunnelConcreteTexture, color: 0xffffff
+                        });
+                    }
+                    const beamMats = [this._klinikumNordBeamMat, this._klinikumNordBeamMat];
+                    this.buildSweptBar(stationGroup, sA, sB, () => 0.3, cy + ceilY - 0.1, cy + ceilY - 0.62, beamMats, 1.2, () => 0);
+
+                    // 4. Fischgrät-Lochblechpaneele beidseits des Unterzugs: lange
+                    // Achse quer, im Grundriss ±14° geschränkt (Fischgrät) und um
+                    // 8° zur Wand hin abfallend geneigt
+                    const panelMat = this.getKlinikumNordPanelMat();
+                    const panelStep = 2.3;
+                    const nPanels = Math.floor((platLength - 2.0) / panelStep);
+                    const panelGeom = new THREE.BoxGeometry(1, 0.05, 1.9); // X wird pro Instanz skaliert
+                    const panelInst = new THREE.InstancedMesh(panelGeom, panelMat, nPanels * 2);
+                    const tilt = 8 * Math.PI / 180;
+                    const chevron = 14 * Math.PI / 180;
+                    let pi = 0;
+                    for (let k = 0; k < nPanels; k++) {
+                        const sP = sA + 1.0 + (k + 0.5) * panelStep;
+                        const posP = this.sim.getTrackPosition(sP);
+                        const tanP = this.sim.getTrackTangent(sP);
+                        const rotYP = Math.atan2(tanP.x, tanP.z) - centerAngle;
+                        const normP = new THREE.Vector3(-tanP.z, 0, tanP.x);
+                        const wallOff = offW(sP);
+                        const panelLen = wallOff - 0.85;
+                        for (const sign of [1, -1]) {
+                            const latC = sign * (0.5 + panelLen / 2);
+                            const p = stationGroup.worldToLocal(posP.clone().addScaledVector(normP, latC));
+                            // Innenkante hängt auf 4.5 m, Außenkante fällt zur Wand ab
+                            const yC = ceilY - 0.16 - (panelLen / 2) * Math.sin(tilt);
+                            const m = new THREE.Matrix4().makeRotationY(rotYP + sign * chevron);
+                            m.multiply(new THREE.Matrix4().makeRotationZ(-sign * tilt));
+                            m.multiply(new THREE.Matrix4().makeScale(panelLen, 1, 1));
+                            m.setPosition(p.x, yC, p.z);
+                            panelInst.setMatrixAt(pi++, m);
+                        }
+                    }
+                    panelInst.instanceMatrix.needsUpdate = true;
+                    panelInst.computeBoundingSphere();
+                    if (panelInst.boundingSphere) panelInst.boundingSphere.radius *= 5;
+                    stationGroup.add(panelInst);
+
+                    // 5. Beleuchtung wie Plärrer (Standardmodell buildPlaererLights,
+                    // inkl. Stationsname in regelmäßigen Abständen auf den Trägern)
+                    this.buildPlaererLights(stationGroup, station, centerAngle, { sA, sB, cy, ceilY });
+                }
             } else {
                 // Generic outer walls: solid colour, so one continuous swept slab per side
                 // (built once on j===0), tapering its lateral offset with the inter-track gap.
@@ -3554,7 +4609,7 @@ export class StationModel {
         const tPillarBarGeom = new THREE.BoxGeometry(2.4, 0.25, 0.35);
  
         stationPillarZ.forEach((pz, idx) => {
-            if (["Hardhöhe", "Jakobinenstraße", "Röthenbach", "Hohe Marter", "Schweinau", "Rothenburger Straße", "Opernhaus", "Wöhrder Wiese", "Rathenauplatz", "Grossreuth bei Schweinau"].includes(station.name)) return; // column-free!
+            if (["Hardhöhe", "Jakobinenstraße", "Röthenbach", "Hohe Marter", "Schweinau", "Rothenburger Straße", "Opernhaus", "Wöhrder Wiese", "Rathenauplatz", "Grossreuth bei Schweinau", "Klinikum Nord", "Flughafen", "Maxfeld", "Rennweg", "Nordwestring", "Friedrich-Ebert-Platz"].includes(station.name)) return; // column-free!
             if (station.name === "Muggenhof") {
                 const s = station.position + pz;
                 const pos = this.sim.getTrackPosition(s);
@@ -4111,7 +5166,7 @@ export class StationModel {
 
             const isLwNord = (station.name === "Langwasser Nord");
             const boardY = 3.925; // Unterkante bei 3.60m (3.60 + 0.65/2)
-            const ceilY = (station.name === "Hardhöhe") ? 4.8 : (hasSlatCeiling ? 4.595 : (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name) ? 5.84 : 4.66));
+            const ceilY = (station.name === "Hardhöhe") ? 4.8 : (station.name === "Flughafen") ? 5.0 : (hasSlatCeiling ? 4.595 : (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name) ? 5.84 : 4.66));
             const hangerLen = ceilY - boardY;
             const hangerY = boardY + hangerLen / 2;
             const boardHangerGeom = new THREE.CylinderGeometry(0.015, 0.015, hangerLen, 6);
@@ -4277,9 +5332,23 @@ export class StationModel {
         }
 
         // 7. Lights (every 10 meters)
+        // Stations with the standard barrel light channel (Wöhrder-Wiese-Modell)
+        // instead of the plain light tubes:
+        if (["Hauptbahnhof", "Klinikum", "Stadthalle"].includes(station.name)) {
+            this.buildBarrelLights(stationGroup, {
+                startS: station.position - platLength / 2 + 3.0,
+                endS: station.position + platLength / 2 - 3.0,
+                axisY: 3.775,
+                centerPosY: centerPos.y,
+                centerAngle,
+                offFn: (s) => this.sim.getTrackSpacing(s) / 2 - 1.785,
+                ceilY: 4.66,
+                label: station.name,
+            });
+        }
         const lightZ = [-40, -30, -20, -10, 0, 10, 20, 30, 40];
         lightZ.forEach(lz => {
-            if (["Hardhöhe", "Maximilianstraße", "Bärenschanze", "Gostenhof", "Jakobinenstraße", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz", "Hasenbuck", "Frankenstraße", "Hohe Marter", "Schweinau", "St. Leonhard", "Rothenburger Straße", "Wöhrder Wiese", "Rathenauplatz"].includes(station.name)) return; // Skip standard lights
+            if (["Hardhöhe", "Maximilianstraße", "Bärenschanze", "Gostenhof", "Jakobinenstraße", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Aufseßplatz", "Maffeiplatz", "Hasenbuck", "Frankenstraße", "Hohe Marter", "Schweinau", "St. Leonhard", "Rothenburger Straße", "Wöhrder Wiese", "Rathenauplatz", "Hauptbahnhof", "Klinikum", "Stadthalle", "Klinikum Nord", "Flughafen", "Maxfeld", "Rennweg", "Nordwestring", "Friedrich-Ebert-Platz"].includes(station.name)) return; // Skip standard lights
             const s = station.position + lz;
             const pos = this.sim.getTrackPosition(s);
             const tangent = this.sim.getTrackTangent(s);
@@ -4803,7 +5872,7 @@ export class StationModel {
                         })()
                     });
                     this.materials.bauernfeindEdelstahl = this.materials.bauernfeindEdelstahl
-                        || new THREE.MeshStandardMaterial({ color: '#e8eaed', metalness: 0.9, roughness: 0.2 });
+                        || StationBuilder.createBalustradeMaterial();
                     this.materials.bauernfeindHandrail = this.materials.bauernfeindHandrail
                         || new THREE.MeshBasicMaterial({ color: '#111111' });
                     this.materials.bauernfeindLamp = this.materials.bauernfeindLamp
@@ -5382,7 +6451,7 @@ export class StationModel {
                 })()
             });
             this.materials.bauernfeindEdelstahl = this.materials.bauernfeindEdelstahl
-                || new THREE.MeshStandardMaterial({ color: '#e8eaed', metalness: 0.9, roughness: 0.2 });
+                || StationBuilder.createBalustradeMaterial();
             this.materials.bauernfeindHandrail = this.materials.bauernfeindHandrail
                 || new THREE.MeshBasicMaterial({ color: '#111111' });
             this.materials.bauernfeindLamp = this.materials.bauernfeindLamp
@@ -5625,6 +6694,24 @@ export class StationModel {
         // --- SPAWN PASSENGERS ---
         this.spawnPassengersForStation(station, stationGroup);
 
+        // --- AUFZÜGE (universelles Modell, buildElevator) ---
+        // Bewusst NACH Möblierung und Passagieren, damit _clearElevatorFootprint
+        // alles Berührte wegräumen kann. Testeinbau: hinteres Viertel von
+        // Langwasser Süd (Streckenanfang-Seite; Viertel = z -45..-22.6,
+        // Treppenanlage endet bei ca. -36.8, Säulen bei -37.5/-22.5).
+        // topY = Deckenunterkante der Station (Lamellendecke 4.59).
+        const elevatorSpecs = {
+            "Langwasser Süd": [{ dz: -27, topY: 4.59 }],
+            // Flughafen: Glasaufzug mitten im Aufzug-Lichteinlass (z 6..12), der
+            // Schacht steigt durch die Deckenöffnung bis knapp unter das helle
+            // Oberlicht (atriumTop 7.8). Position mit dem liftGap oben synchron.
+            "Flughafen": [{ dz: 9, topY: 7.7 }],
+            // Nordwestring: Glasaufzug mitten auf dem Bahnsteig (Foto 2), bis
+            // unter die seitlichen Deckenplatten (Unterkante 4.56).
+            "Nordwestring": [{ dz: 8, topY: 4.56 }]
+        };
+        (elevatorSpecs[station.name] || []).forEach(spec => this.buildElevator(stationGroup, station, centerAngle, spec));
+
         return stationGroup;
     }
 
@@ -5861,6 +6948,1176 @@ export class StationModel {
         texture.repeat.set(repeatX, 1);
 
         return new THREE.MeshBasicMaterial({ map: texture });
+    }
+
+    // ---- Klinikum Nord (U3): goldgelbe Metallwand, Schriftzug, Lochbleche ----
+    getKlinikumNordGoldMat() {
+        if (this._klinikumNordGoldMat) return this._klinikumNordGoldMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;   // Kachel = 8 m Wandlänge
+        canvas.height = 640;   // volle Wandhöhe (-0.38 .. 4.66 m)
+        const ctx = canvas.getContext('2d');
+
+        // Grundton: goldgelb gespritztes Blech mit leichtem Höhenverlauf
+        const base = ctx.createLinearGradient(0, 0, 0, 640);
+        base.addColorStop(0, '#c9a53c');
+        base.addColorStop(0.5, '#d3af45');
+        base.addColorStop(1, '#c09b35');
+        ctx.fillStyle = base;
+        ctx.fillRect(0, 0, 2048, 640);
+
+        // Deterministische Wolken-Flecken (dunkel) + wenige helle Glanzstellen;
+        // am Kachelrand umgebrochen gezeichnet, damit die 8-m-Kachel nahtlos kachelt
+        let seed = 7;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        const blot = (x, y, r, rgb, a) => {
+            for (const xo of [x - 2048, x, x + 2048]) {
+                const g = ctx.createRadialGradient(xo, y, 0, xo, y, r);
+                g.addColorStop(0, `rgba(${rgb},${a.toFixed(3)})`);
+                g.addColorStop(1, `rgba(${rgb},0)`);
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(xo, y, r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        };
+        for (let i = 0; i < 90; i++) {
+            blot(rand() * 2048, rand() * 640, 30 + rand() * 90, '110,88,20', 0.10 + rand() * 0.22);
+        }
+        for (let i = 0; i < 30; i++) {
+            blot(rand() * 2048, rand() * 640, 25 + rand() * 70, '255,235,170', 0.08 + rand() * 0.14);
+        }
+        // Feine Metallkörnung
+        for (let i = 0; i < 9000; i++) {
+            ctx.fillStyle = rand() < 0.5 ? 'rgba(90,70,15,0.10)' : 'rgba(255,240,190,0.10)';
+            ctx.fillRect(rand() * 2048, rand() * 640, 1.5, 1.5);
+        }
+        // Blechstöße: feine dunkle vertikale Fugen alle 2 m (512 px)
+        ctx.fillStyle = 'rgba(70,55,10,0.85)';
+        for (let x = 0; x < 2048; x += 512) ctx.fillRect(x, 0, 2, 640);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.anisotropy = 8;
+        this._klinikumNordGoldMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._klinikumNordGoldMat;
+    }
+
+    getKlinikumNordTextMat() {
+        if (this._klinikumNordTextMat) return this._klinikumNordTextMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;  // Fläche 3.6 m x 0.36 m
+        canvas.height = 102;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 1024, 102);
+        const label = 'KLINIKUM NORD';
+        ctx.font = 'bold 60px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        // Gesperrte Einzel-Lettern mit festem Vorschub (wie die Metallbuchstaben
+        // im Foto), dahinter ein dunkler Versatz als Schattenkante
+        const track = 74;
+        const x0 = 512 - ((label.length - 1) * track) / 2;
+        for (let i = 0; i < label.length; i++) {
+            const chX = x0 + i * track;
+            ctx.fillStyle = '#4a4c48';
+            ctx.fillText(label[i], chX + 3, 55);
+            ctx.fillStyle = '#9aa09e';
+            ctx.fillText(label[i], chX, 51);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        this._klinikumNordTextMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+        return this._klinikumNordTextMat;
+    }
+
+    getKlinikumNordPanelMat() {
+        if (this._klinikumNordPanelMat) return this._klinikumNordPanelMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#96988f';
+        ctx.fillRect(0, 0, 512, 128);
+        // Lochraster
+        ctx.fillStyle = '#6f716a';
+        for (let y = 10; y < 128; y += 12) {
+            for (let x = 10; x < 512; x += 12) {
+                ctx.beginPath();
+                ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        // heller Blechrahmen
+        ctx.strokeStyle = '#c3c5bd';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, 506, 122);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 4;
+        this._klinikumNordPanelMat = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide });
+        return this._klinikumNordPanelMat;
+    }
+
+    // ---- Flughafen (U2): Betonwand mit Aluraster, Kunstpaneele, Decke ----
+    getFlughafenWallMat() {
+        if (this._flughafenWallMat) return this._flughafenWallMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;  // Kachel = 4 m Wandlänge
+        canvas.height = 672;  // Wandhöhe -0.38 .. 5.0 m
+        const ctx = canvas.getContext('2d');
+
+        // Sichtbeton mit Flecken und feiner Körnung
+        ctx.fillStyle = '#b9bab6';
+        ctx.fillRect(0, 0, 1024, 672);
+        let seed = 3;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        for (let i = 0; i < 40; i++) {
+            const x = rand() * 1024, y = rand() * 672, r = 20 + rand() * 60;
+            const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+            g.addColorStop(0, rand() < 0.5 ? 'rgba(120,122,118,0.18)' : 'rgba(235,236,232,0.16)');
+            g.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        for (let i = 0; i < 2500; i++) {
+            ctx.fillStyle = rand() < 0.5 ? 'rgba(105,107,103,0.15)' : 'rgba(230,231,227,0.15)';
+            ctx.fillRect(rand() * 1024, rand() * 672, 1.5, 1.5);
+        }
+        // Horizontale Aluprofile (~alle 0.5 m) mit Schattenfuge darunter
+        for (let y = 24; y < 672; y += 64) {
+            ctx.fillStyle = '#3f4245';
+            ctx.fillRect(0, y + 8, 1024, 3);
+            const g = ctx.createLinearGradient(0, y, 0, y + 8);
+            g.addColorStop(0, '#d9dcdf');
+            g.addColorStop(0.5, '#aeb2b6');
+            g.addColorStop(1, '#84888c');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, y, 1024, 8);
+        }
+        // Vertikale Profile alle 2 m
+        for (const x of [0, 512]) {
+            ctx.fillStyle = '#84888c';
+            ctx.fillRect(x, 0, 5, 672);
+            ctx.fillStyle = '#d9dcdf';
+            ctx.fillRect(x + 5, 0, 2, 672);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.anisotropy = 8;
+        this._flughafenWallMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._flughafenWallMat;
+    }
+
+    getFlughafenArrowMat(variant) {
+        this._flughafenArrowMats = this._flughafenArrowMats || {};
+        if (this._flughafenArrowMats[variant]) return this._flughafenArrowMats[variant];
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;   // Paneel 2.9 x 3.2 m
+        canvas.height = 576;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#2f5fae';
+        ctx.fillRect(0, 0, 512, 576);
+        // Fliesenraster
+        ctx.strokeStyle = 'rgba(20,40,90,0.35)';
+        ctx.lineWidth = 2;
+        for (let x = 0; x <= 512; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 576); ctx.stroke(); }
+        for (let y = 0; y <= 576; y += 64) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke(); }
+        // Weißes geknicktes Pfeil-/Blitzmotiv (Fotovorbild)
+        const drawArrow = (cx, cyA, s, rot) => {
+            ctx.save();
+            ctx.translate(cx, cyA);
+            ctx.rotate(rot);
+            ctx.scale(s, s);
+            ctx.fillStyle = '#eef1f5';
+            ctx.beginPath();
+            ctx.moveTo(0, -90);
+            ctx.lineTo(55, -25);
+            ctx.lineTo(22, -25);
+            ctx.lineTo(52, 60);
+            ctx.lineTo(12, 90);
+            ctx.lineTo(-6, 20);
+            ctx.lineTo(-40, 45);
+            ctx.lineTo(-18, -35);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        };
+        if (variant === 0) {
+            drawArrow(210, 230, 1.6, -0.35);
+        } else {
+            drawArrow(310, 320, 1.35, 0.5);
+            drawArrow(130, 130, 0.75, -0.9);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 4;
+        this._flughafenArrowMats[variant] = new THREE.MeshLambertMaterial({ map: tex });
+        return this._flughafenArrowMats[variant];
+    }
+
+    getFlughafenSignMat(label) {
+        this._flughafenSignMats = this._flughafenSignMats || {};
+        if (this._flughafenSignMats[label]) return this._flughafenSignMats[label];
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;  // Leuchtkasten 2.6 x 0.55 m
+        canvas.height = 216;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#f6f4ee';
+        ctx.fillRect(0, 0, 1024, 216);
+        ctx.strokeStyle = '#c6c4be';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, 1018, 210);
+        ctx.fillStyle = '#7b8fc4';
+        ctx.font = '92px Georgia, "Times New Roman", serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, 512, 116);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        // Leuchtkasten: MeshBasic, damit das Schild selbst hell wirkt
+        this._flughafenSignMats[label] = new THREE.MeshBasicMaterial({ map: tex });
+        return this._flughafenSignMats[label];
+    }
+
+    getFlughafenDuererMat() {
+        if (this._flughafenDuererMat) return this._flughafenDuererMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // Tiefblauer Grund mit Vignette
+        const bg = ctx.createLinearGradient(0, 0, 0, 512);
+        bg.addColorStop(0, '#101f6e');
+        bg.addColorStop(0.5, '#1a34a0');
+        bg.addColorStop(1, '#0c1a5e');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Stilisiertes blaues Selbstbildnis: Gesicht als heller Kern
+        const face = ctx.createRadialGradient(256, 215, 20, 256, 225, 120);
+        face.addColorStop(0, '#9db4ea');
+        face.addColorStop(0.55, '#5f7ccd');
+        face.addColorStop(1, 'rgba(38,62,150,0)');
+        ctx.fillStyle = face;
+        ctx.beginPath();
+        ctx.ellipse(256, 225, 88, 118, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Lange gewellte Haarsträhnen beidseits
+        let seed = 11;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        for (let i = 0; i < 46; i++) {
+            const side = i % 2 === 0 ? 1 : -1;
+            const x0 = 256 + side * (55 + rand() * 55);
+            const y0 = 105 + rand() * 40;
+            ctx.strokeStyle = rand() < 0.5 ? 'rgba(120,150,220,0.45)' : 'rgba(30,50,130,0.55)';
+            ctx.lineWidth = 2.5 + rand() * 3;
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.bezierCurveTo(
+                x0 + side * (20 + rand() * 30), y0 + 90 + rand() * 40,
+                x0 + side * (5 + rand() * 40), y0 + 180 + rand() * 50,
+                x0 + side * (25 + rand() * 45), y0 + 280 + rand() * 60
+            );
+            ctx.stroke();
+        }
+
+        // Züge: Brauen, Augen, Nase, Mund, Bart — sparsam, druckgrafisch
+        ctx.strokeStyle = 'rgba(12,24,80,0.85)';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(213, 196); ctx.quadraticCurveTo(232, 188, 249, 196); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(265, 196); ctx.quadraticCurveTo(282, 188, 299, 196); ctx.stroke();
+        ctx.fillStyle = 'rgba(12,24,80,0.9)';
+        ctx.beginPath(); ctx.ellipse(231, 212, 9, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(281, 212, 9, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(12,24,80,0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(256, 218); ctx.lineTo(252, 262); ctx.quadraticCurveTo(256, 268, 262, 263); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(234, 292); ctx.quadraticCurveTo(256, 300, 278, 292); ctx.stroke();
+        // Schnurr- und Kinnbart
+        for (let i = 0; i < 14; i++) {
+            const t = i / 13;
+            ctx.strokeStyle = 'rgba(20,36,110,0.6)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(226 + t * 60, 302);
+            ctx.lineTo(222 + t * 68, 330 + Math.sin(t * Math.PI) * 14);
+            ctx.stroke();
+        }
+        // Dunkler Kragen/Gewand unten
+        ctx.fillStyle = 'rgba(8,16,60,0.85)';
+        ctx.beginPath();
+        ctx.moveTo(100, 512);
+        ctx.quadraticCurveTo(256, 360, 412, 512);
+        ctx.closePath();
+        ctx.fill();
+
+        // Glanz-Streifen wie die Spiegelungen auf dem Foto
+        for (const gy of [120, 190]) {
+            const gl = ctx.createLinearGradient(0, gy - 14, 0, gy + 14);
+            gl.addColorStop(0, 'rgba(255,255,255,0)');
+            gl.addColorStop(0.5, 'rgba(235,242,255,0.30)');
+            gl.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, gy - 14, 512, 28);
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 4;
+        this._flughafenDuererMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._flughafenDuererMat;
+    }
+
+    getFlughafenDuererTextMat() {
+        if (this._flughafenDuererTextMat) return this._flughafenDuererTextMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#14247d';
+        ctx.fillRect(0, 0, 512, 512);
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#f2f4fa';
+        ctx.font = 'bold 26px "Segoe UI", Arial, sans-serif';
+        ctx.fillText('Albrecht Dürer (1471 - 1528)', 48, 78);
+
+        ctx.font = '17px "Segoe UI", Arial, sans-serif';
+        const de = [
+            'Das wohl berühmteste Selbstbildnis',
+            'der europäischen Kunstgeschichte ist in',
+            'vieler Hinsicht noch immer ein ungelöstes',
+            'Rätsel. Zum eigentlichen Zweck dieses',
+            'Meisterwerks der Feinmalerei gibt es nur',
+            'Mutmaßungen.'
+        ];
+        de.forEach((line, i) => ctx.fillText(line, 48, 124 + i * 26));
+
+        ctx.font = 'italic 17px Georgia, serif';
+        const en = [
+            'What is possibly the most famous self-',
+            'portrait in European art history is still,',
+            'in many ways, an unsolved mystery.',
+            'The actual purpose of this masterpiece',
+            'remains a matter of speculation.'
+        ];
+        en.forEach((line, i) => ctx.fillText(line, 48, 306 + i * 26));
+
+        // Logo unten: Kreis-N + zweizeiliger Schriftzug
+        ctx.strokeStyle = '#f2f4fa';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(72, 460, 20, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.font = 'bold 24px "Segoe UI", Arial, sans-serif';
+        ctx.fillText('N', 64, 469);
+        ctx.font = 'bold 18px "Segoe UI", Arial, sans-serif';
+        ctx.fillText('ALBRECHT DÜRER', 108, 454);
+        ctx.fillText('AIRPORT NÜRNBERG', 108, 476);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 4;
+        this._flughafenDuererTextMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._flughafenDuererTextMat;
+    }
+
+    getFlughafenCeilingMat() {
+        if (this._flughafenCeilingMat) return this._flughafenCeilingMat;
+        // Stahl-Rippendecke wie auf den Fotos: dicht liegende schmale Rippen
+        // QUER zur Fahrtrichtung, dazwischen dunkle Schattenfugen, plus eine
+        // Längsträgerlinie. Auf der Decken-Oberseite läuft U (Canvas-x) quer
+        // zur Fahrtrichtung und V (Canvas-y) längs — die Rippen sind daher
+        // horizontale Bänder im Canvas. Kachel = 1.2 m.
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Dunkler Fugengrund
+        ctx.fillStyle = '#4b4f52';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Querrippen alle 0.3 m (64 px): helle Blechunterseite mit
+        // Lichtkante oben und Schattenkante unten
+        for (let y = 0; y < 256; y += 64) {
+            const g = ctx.createLinearGradient(0, y + 6, 0, y + 50);
+            g.addColorStop(0, '#94989c');
+            g.addColorStop(0.5, '#7e8286');
+            g.addColorStop(1, '#65696c');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, y + 6, 256, 44);
+            ctx.fillStyle = '#a8acb0';
+            ctx.fillRect(0, y + 6, 256, 3);
+            ctx.fillStyle = '#3a3e41';
+            ctx.fillRect(0, y + 50, 256, 3);
+        }
+
+        // Längsträgerlinie alle 1.2 m (Kachelbreite)
+        ctx.fillStyle = '#5b5f62';
+        ctx.fillRect(0, 0, 7, 256);
+        ctx.fillStyle = '#83878b';
+        ctx.fillRect(7, 0, 3, 256);
+
+        // Feine Blechkörnung
+        let seed = 5;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        for (let i = 0; i < 900; i++) {
+            ctx.fillStyle = rand() < 0.5 ? 'rgba(60,64,67,0.18)' : 'rgba(180,184,188,0.12)';
+            ctx.fillRect(rand() * 256, rand() * 256, 1.5, 1.5);
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.anisotropy = 4;
+        this._flughafenCeilingMat = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide });
+        return this._flughafenCeilingMat;
+    }
+
+    getFlughafenSkylightMat() {
+        if (this._flughafenSkylightMat) return this._flughafenSkylightMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        // Helle Glasflächen, nach oben leicht heller (Tageslicht)
+        const bg = ctx.createLinearGradient(0, 256, 0, 0);
+        bg.addColorStop(0, '#d3dfe8');
+        bg.addColorStop(1, '#e9f1f6');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, 256, 256);
+        // Weiße Pfosten-/Riegel-Sprossen mit Schattenkante
+        for (let x = 0; x < 256; x += 64) {
+            ctx.fillStyle = '#b9c6ce';
+            ctx.fillRect(x, 0, 2, 256);
+            ctx.fillStyle = '#f6fafc';
+            ctx.fillRect(x + 2, 0, 6, 256);
+        }
+        for (let y = 0; y < 256; y += 64) {
+            ctx.fillStyle = '#b9c6ce';
+            ctx.fillRect(0, y, 256, 2);
+            ctx.fillStyle = '#f6fafc';
+            ctx.fillRect(0, y + 2, 256, 6);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.anisotropy = 4;
+        // MeshBasic: die Atrium-Verglasung leuchtet selbst (Tageslicht)
+        this._flughafenSkylightMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+        return this._flughafenSkylightMat;
+    }
+
+    // ---- Maxfeld (U3): Lamellenwand, Zitattafeln, Namensschild, Goethe ----
+    getMaxfeldLamellenMat() {
+        if (this._maxfeldLamellenMat) return this._maxfeldLamellenMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;   // Kachel = 2 m Wandlänge
+        canvas.height = 640;  // Wandhöhe -0.38 .. 4.66 m (~127 px/m)
+        const ctx = canvas.getContext('2d');
+
+        // Granitsockel: unterste ~0.9 m hell gesprenkelt
+        const graniteH = 114;
+        ctx.fillStyle = '#b9b5ad';
+        ctx.fillRect(0, 640 - graniteH, 512, graniteH);
+        let seed = 9;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        for (let i = 0; i < 2600; i++) {
+            ctx.fillStyle = rand() < 0.5 ? 'rgba(90,86,80,0.35)' : 'rgba(240,238,232,0.35)';
+            ctx.fillRect(rand() * 512, 640 - graniteH + rand() * graniteH, 1.6, 1.6);
+        }
+        ctx.fillStyle = '#8f8b83'; // Fuge über dem Sockel
+        ctx.fillRect(0, 640 - graniteH, 512, 4);
+
+        // Horizontale Edelstahl-Lamellen (~0.42 m Zyklus): Panel mit
+        // Vertikalverlauf, oben helle Stahlschiene, darunter Schattenfuge
+        const cycle = 53;
+        for (let y = 0; y < 640 - graniteH; y += cycle) {
+            ctx.fillStyle = '#dfe2e5';                 // Stahlschiene
+            ctx.fillRect(0, y, 512, 3);
+            ctx.fillStyle = '#4e5254';                 // Schattenfuge
+            ctx.fillRect(0, y + 3, 512, 5);
+            const g = ctx.createLinearGradient(0, y + 8, 0, y + cycle);
+            g.addColorStop(0, '#c6c9cc');
+            g.addColorStop(0.55, '#aeb1b4');
+            g.addColorStop(1, '#8f9296');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, y + 8, 512, cycle - 8);
+        }
+        // Dezente vertikale Stoßfuge pro Kachel
+        ctx.fillStyle = 'rgba(70,74,76,0.45)';
+        ctx.fillRect(0, 0, 2, 640 - graniteH);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.anisotropy = 8;
+        this._maxfeldLamellenMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._maxfeldLamellenMat;
+    }
+
+    getMaxfeldQuoteMat(variant) {
+        this._maxfeldQuoteMats = this._maxfeldQuoteMats || {};
+        if (this._maxfeldQuoteMats[variant]) return this._maxfeldQuoteMats[variant];
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;   // Tafelstapel 1.6 x 2.6 m, Zwischenräume transparent
+        canvas.height = 832;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 512, 832);
+
+        // Goethe-Zitate wie an der echten Station (gemeinfrei)
+        const stacks = [
+            [
+                ['Mit Kleinen tut man kleine Taten,', 'mit Großen wird der Kleine groß.'],
+                ['Die Vernunft hat nur über das', 'Lebendige Herrschaft.'],
+                ["Wenn ihr's nicht fühlt,", "ihr werdet's nicht erjagen."],
+                ['Nur der verdient sich Freiheit,', 'der sie täglich neu erobern muss.'],
+                ['Wer sich der Einsamkeit ergibt,', 'ach, der ist bald allein.']
+            ],
+            [
+                ['Glücklich allein ist die Seele,', 'die liebt.'],
+                ['Es gibt eine Höflichkeit des Herzens;', 'sie ist der Liebe verwandt.', 'Aus ihr entspringt die bequemste', 'Höflichkeit des äußeren Betragens.'],
+                ['Gebraucht der Zeit, sie geht so', 'schnell von hinnen, doch Ordnung', 'lehrt euch Zeit gewinnen.']
+            ]
+        ];
+        const plates = stacks[variant % stacks.length];
+        const gap = 34;
+        const totalGap = gap * (plates.length - 1);
+        const plateH = Math.floor((832 - totalGap) / plates.length);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        plates.forEach((lines, i) => {
+            const y0 = i * (plateH + gap);
+            ctx.fillStyle = '#f2f1ec';
+            ctx.fillRect(0, y0, 512, plateH);
+            ctx.strokeStyle = '#c9c8c2';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(1.5, y0 + 1.5, 509, plateH - 3);
+            ctx.fillStyle = '#4a4c4e';
+            ctx.font = '21px Georgia, "Times New Roman", serif';
+            const lineH = 30;
+            const textY0 = y0 + plateH / 2 - (lines.length - 1) * lineH / 2;
+            lines.forEach((line, li) => {
+                // Leicht gestaffelte Einzüge wie auf den Fotos
+                ctx.fillText(line, 30 + li * 14, textY0 + li * lineH);
+            });
+        });
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        this._maxfeldQuoteMats[variant] = new THREE.MeshLambertMaterial({ map: tex, transparent: true });
+        return this._maxfeldQuoteMats[variant];
+    }
+
+    getMaxfeldNameMat() {
+        if (this._maxfeldNameMat) return this._maxfeldNameMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;  // Schild 3.0 x 0.45 m
+        canvas.height = 154;
+        const ctx = canvas.getContext('2d');
+        const g = ctx.createLinearGradient(0, 0, 0, 154);
+        g.addColorStop(0, '#dcdfe2');
+        g.addColorStop(0.5, '#c2c6c9');
+        g.addColorStop(1, '#a8adb1');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 1024, 154);
+        ctx.strokeStyle = '#84888c';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, 1018, 148);
+        // Gelbgrüne, gesperrte Lettern wie am Original
+        const label = 'MAXFELD';
+        ctx.font = 'bold 78px "Segoe UI", Arial, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        const track = 96;
+        const x0 = 512 - ((label.length - 1) * track) / 2;
+        ctx.fillStyle = '#b5c520';
+        for (let i = 0; i < label.length; i++) {
+            ctx.fillText(label[i], x0 + i * track, 84);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        this._maxfeldNameMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._maxfeldNameMat;
+    }
+
+    getMaxfeldGoetheMat() {
+        if (this._maxfeldGoetheMat) return this._maxfeldGoetheMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;   // Tafel 1.3 x 2.6 m: oben Porträt, unten Infotafel
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+
+        // --- Porträt (stilisiert nach dem Stieler-Gemälde) ---
+        const pH = 600;
+        const bg = ctx.createLinearGradient(0, 0, 0, pH);
+        bg.addColorStop(0, '#3a3733');
+        bg.addColorStop(1, '#57534c');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, 512, pH);
+        // Dunkler Rock/Mantel
+        ctx.fillStyle = '#2e2c29';
+        ctx.beginPath();
+        ctx.moveTo(40, pH);
+        ctx.quadraticCurveTo(120, 330, 256, 320);
+        ctx.quadraticCurveTo(392, 330, 472, pH);
+        ctx.closePath();
+        ctx.fill();
+        // Weißes Hemd/Kragen
+        ctx.fillStyle = '#e8e4da';
+        ctx.beginPath();
+        ctx.moveTo(216, 330);
+        ctx.lineTo(296, 330);
+        ctx.lineTo(276, 420);
+        ctx.lineTo(236, 420);
+        ctx.closePath();
+        ctx.fill();
+        // Gesicht
+        ctx.fillStyle = '#d9b894';
+        ctx.beginPath();
+        ctx.ellipse(256, 235, 78, 96, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Graues Haar seitlich und oben
+        ctx.fillStyle = '#b8b4ac';
+        ctx.beginPath();
+        ctx.ellipse(256, 165, 88, 52, 0, Math.PI, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(176, 230, 22, 58, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(336, 230, 22, 58, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        // Züge: Brauen, Augen, Nase, Mund — sparsam
+        ctx.strokeStyle = '#6b5138';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(214, 214); ctx.quadraticCurveTo(232, 206, 250, 214); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(262, 214); ctx.quadraticCurveTo(280, 206, 298, 214); ctx.stroke();
+        ctx.fillStyle = '#3f3226';
+        ctx.beginPath(); ctx.ellipse(231, 228, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(281, 228, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#b08a62';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(256, 232); ctx.lineTo(252, 272); ctx.quadraticCurveTo(256, 278, 262, 273); ctx.stroke();
+        ctx.strokeStyle = '#8a5f45';
+        ctx.beginPath(); ctx.moveTo(234, 298); ctx.quadraticCurveTo(256, 306, 278, 298); ctx.stroke();
+        // Brief in der Hand (unten links)
+        ctx.fillStyle = '#efece2';
+        ctx.save();
+        ctx.translate(150, 520);
+        ctx.rotate(-0.25);
+        ctx.fillRect(-45, -60, 90, 120);
+        ctx.restore();
+
+        // --- Infotafel unten ---
+        ctx.fillStyle = '#f2f0ea';
+        ctx.fillRect(0, pH, 512, 1024 - pH);
+        ctx.fillStyle = '#3d3f41';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 24px Georgia, "Times New Roman", serif';
+        ctx.fillText('Johann Wolfgang v. Goethe', 36, pH + 46);
+        ctx.fillText('1749 – 1832', 36, pH + 78);
+        ctx.font = '21px Georgia, "Times New Roman", serif';
+        const info = [
+            'weilte in Nürnberg im Juni 1788,',
+            'März 1790, vom 6. – 15. November 1797',
+            '',
+            '... "Die Stadt bietet mancherlei',
+            'Interessantes an, alte Kunstwerke,',
+            'mechanische Arbeiten, so wie sich',
+            'auch über politische Verhältnisse',
+            'manche Betrachtungen machen',
+            'lassen." ...'
+        ];
+        info.forEach((line, i) => ctx.fillText(line, 36, pH + 122 + i * 31));
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        this._maxfeldGoetheMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._maxfeldGoetheMat;
+    }
+
+    // ---- Rennweg (U2): Waschbeton, Graffiti-Felder, Weltall-Ovale ----
+    getRennwegAggregateMat() {
+        if (this._rennwegAggregateMat) return this._rennwegAggregateMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;   // Kachel = 3 m
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#4a4643';
+        ctx.fillRect(0, 0, 256, 256);
+        let seed = 13;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        // Grobe Zuschlagskörner in mehreren Grautönen
+        const stones = ['#6b665f', '#332f2c', '#7d786f', '#57534d', '#8a847a'];
+        for (let i = 0; i < 2400; i++) {
+            ctx.fillStyle = stones[Math.floor(rand() * stones.length)];
+            const r = 1 + rand() * 2.4;
+            ctx.beginPath();
+            ctx.arc(rand() * 256, rand() * 256, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.anisotropy = 4;
+        this._rennwegAggregateMat = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide });
+        return this._rennwegAggregateMat;
+    }
+
+    getRennwegGraffitiMat(variant) {
+        this._rennwegGraffitiMats = this._rennwegGraffitiMats || {};
+        if (this._rennwegGraffitiMats[variant]) return this._rennwegGraffitiMats[variant];
+        const W = 1536, H = 400; // Feld 12 x 3.1 m
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+
+        let seed = 21 + variant * 7;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        const rounded = (x, y, w, h, r) => {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        };
+
+        // Gelber Rahmen mit abgerundeten Ecken, außen transparent
+        rounded(6, 6, W - 12, H - 12, 90);
+        ctx.fillStyle = '#e3c31f';
+        ctx.fill();
+        rounded(32, 32, W - 64, H - 64, 68);
+        ctx.save();
+        ctx.clip();
+
+        // Hintergrund: Himmel-Verlauf
+        const bg = ctx.createLinearGradient(0, 32, 0, H - 32);
+        if (variant === 0) {
+            bg.addColorStop(0, '#f2a9c4');
+            bg.addColorStop(0.45, '#6fc8dd');
+            bg.addColorStop(1, '#3a5fa8');
+        } else {
+            bg.addColorStop(0, '#bfe3f2');
+            bg.addColorStop(0.5, '#7a8fd0');
+            bg.addColorStop(1, '#4a3f8f');
+        }
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Skyline: blaugrüne Türme mit weißen Kanten
+        for (let i = 0; i < 7; i++) {
+            const tw = 70 + rand() * 90;
+            const th = 120 + rand() * 170;
+            const tx = 40 + rand() * (W - 160);
+            ctx.fillStyle = rand() < 0.5 ? '#2f7f8f' : '#3fae74';
+            ctx.fillRect(tx, H - 40 - th, tw, th);
+            ctx.fillStyle = '#eef4f6';
+            ctx.fillRect(tx, H - 40 - th, 10, th);
+            ctx.fillRect(tx, H - 40 - th, tw, 8);
+        }
+
+        // Weißer Zug mit roter Bauchbinde und Fenstern
+        const trainY = H - 175, trainW = 460, trainX = variant === 0 ? W * 0.42 : W * 0.15;
+        ctx.fillStyle = '#f0f0ee';
+        rounded(trainX, trainY, trainW, 95, 26);
+        ctx.fill();
+        ctx.fillStyle = '#c22a2a';
+        ctx.fillRect(trainX + 6, trainY + 62, trainW - 12, 14);
+        ctx.fillStyle = '#20303c';
+        for (let wx = trainX + 26; wx < trainX + trainW - 40; wx += 58) {
+            ctx.fillRect(wx, trainY + 16, 38, 30);
+        }
+
+        // Graffiti-Buchstaben mit Don Graffiti Font (aus assets/ CSS geladen)
+        const word = variant === 0 ? 'RENNWEG' : 'NÜRNBERG';
+        ctx.font = '160px "Don Graffiti", "Arial Black", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round';
+        const wx0 = W / 2, wy0 = variant === 0 ? 130 : 210;
+        ctx.save();
+        ctx.rotate(-0.03);
+        ctx.fillStyle = 'rgba(40,20,60,0.55)';
+        ctx.fillText(word, wx0 + 10, wy0 + 12);
+        ctx.strokeStyle = '#2a1a3a';
+        ctx.lineWidth = 16;
+        ctx.strokeText(word, wx0, wy0);
+        const wordGrad = ctx.createLinearGradient(0, wy0 - 70, 0, wy0 + 70);
+        if (variant === 0) {
+            wordGrad.addColorStop(0, '#f2d24a');
+            wordGrad.addColorStop(1, '#d97a2a');
+        } else {
+            wordGrad.addColorStop(0, '#f2f2f0');
+            wordGrad.addColorStop(1, '#b8c4d8');
+        }
+        ctx.fillStyle = wordGrad;
+        ctx.fillText(word, wx0, wy0);
+        ctx.restore();
+
+        // Explosionsstern + Farbblasen
+        const star = (cx2, cy2, rOut, rIn, n, color) => {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            for (let i = 0; i < n * 2; i++) {
+                const rr = (i % 2 === 0) ? rOut : rIn;
+                const a = i * Math.PI / n;
+                ctx.lineTo(cx2 + rr * Math.cos(a), cy2 + rr * Math.sin(a));
+            }
+            ctx.closePath();
+            ctx.fill();
+        };
+        star(140 + rand() * 100, H - 130, 58, 24, 9, '#e33420');
+        star(140 + rand() * 100, H - 130, 30, 12, 9, '#f2d24a');
+        for (let i = 0; i < 14; i++) {
+            ctx.fillStyle = `hsla(${Math.floor(rand() * 360)}, 70%, 65%, 0.5)`;
+            ctx.beginPath();
+            ctx.arc(rand() * W, 40 + rand() * 90, 10 + rand() * 22, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        this._rennwegGraffitiMats[variant] = new THREE.MeshLambertMaterial({ map: tex, transparent: true });
+        return this._rennwegGraffitiMats[variant];
+    }
+
+    getRennwegCosmicMat() {
+        if (this._rennwegCosmicMat) return this._rennwegCosmicMat;
+        const W = 1152, H = 704; // Oval 9 x 5.5 m
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+
+        // Gelber Ovalrand
+        ctx.fillStyle = '#e3c31f';
+        ctx.beginPath();
+        ctx.ellipse(W / 2, H / 2, W / 2 - 4, H / 2 - 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(W / 2, H / 2, W / 2 - 34, H / 2 - 34, 0, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Tiefes Weltall
+        const bg = ctx.createLinearGradient(0, 0, W, H);
+        bg.addColorStop(0, '#101c50');
+        bg.addColorStop(0.55, '#25145e');
+        bg.addColorStop(1, '#0c1030');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Orange-rosa Nebel auf einer Seite (Foto 4)
+        const neb = ctx.createRadialGradient(W * 0.78, H * 0.45, 30, W * 0.78, H * 0.45, 300);
+        neb.addColorStop(0, 'rgba(240,170,60,0.95)');
+        neb.addColorStop(0.5, 'rgba(220,90,110,0.6)');
+        neb.addColorStop(1, 'rgba(220,90,110,0)');
+        ctx.fillStyle = neb;
+        ctx.fillRect(0, 0, W, H);
+
+        // Spiralgalaxie
+        let seed = 33;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        const gx = W * 0.3, gy = H * 0.42;
+        ctx.strokeStyle = 'rgba(235,240,255,0.8)';
+        for (let arm = 0; arm < 2; arm++) {
+            ctx.beginPath();
+            for (let t = 0; t < 2.6; t += 0.05) {
+                const rr = 12 + t * 46;
+                const a = t * 2.2 + arm * Math.PI;
+                const px2 = gx + rr * Math.cos(a), py2 = gy + rr * Math.sin(a) * 0.55;
+                if (t === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+            }
+            ctx.lineWidth = 10;
+            ctx.stroke();
+        }
+        ctx.fillStyle = '#f6f8ff';
+        ctx.beginPath();
+        ctx.ellipse(gx, gy, 24, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Planeten
+        const planet = (px2, py2, r, c1, c2) => {
+            const g = ctx.createRadialGradient(px2 - r / 3, py2 - r / 3, r / 5, px2, py2, r);
+            g.addColorStop(0, c1);
+            g.addColorStop(1, c2);
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(px2, py2, r, 0, Math.PI * 2);
+            ctx.fill();
+        };
+        planet(W * 0.55, H * 0.7, 44, '#e0995a', '#7a4420');
+        planet(W * 0.68, H * 0.25, 26, '#c05a3a', '#5e2414');
+        planet(W * 0.42, H * 0.2, 18, '#9ab8d8', '#3a5878');
+
+        // Sterne
+        for (let i = 0; i < 240; i++) {
+            ctx.fillStyle = `rgba(255,255,255,${(0.3 + rand() * 0.7).toFixed(2)})`;
+            const r = rand() < 0.9 ? 1.4 : 2.6;
+            ctx.fillRect(rand() * W, rand() * H, r, r);
+        }
+        ctx.restore();
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        this._rennwegCosmicMat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+        return this._rennwegCosmicMat;
+    }
+
+    getRennwegNameMat() {
+        if (this._rennwegNameMat) return this._rennwegNameMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 768;   // Kachel = 3 m, Band 0.25 m hoch
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#6f2233';
+        ctx.fillRect(0, 0, 768, 64);
+        ctx.fillStyle = '#e8e4de';
+        ctx.font = '30px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // Gesperrte Lettern wie am Original
+        const label = 'RENNWEG';
+        const track = 34;
+        const x0 = 384 - ((label.length - 1) * track) / 2;
+        for (let i = 0; i < label.length; i++) {
+            ctx.fillText(label[i], x0 + i * track, 34);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        this._rennwegNameMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._rennwegNameMat;
+    }
+
+    // ---- Nordwestring (U3): Paneelwand, Leuchtschild, Spiegel-Zickzack ----
+    getNordwestringWallMat(accentColor) {
+        this._nordwestringWallMats = this._nordwestringWallMats || {};
+        if (this._nordwestringWallMats[accentColor]) return this._nordwestringWallMats[accentColor];
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;   // Kachel = 2.5 m Wandlänge
+        canvas.height = 656;  // Wandhöhe -0.38 .. 4.76 m (~127 px/m)
+        const ctx = canvas.getContext('2d');
+
+        // Heller Sichtbeton mit feiner Körnung
+        ctx.fillStyle = '#c6c4be';
+        ctx.fillRect(0, 0, 640, 656);
+        let seed = 17;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        for (let i = 0; i < 2200; i++) {
+            ctx.fillStyle = rand() < 0.5 ? 'rgba(120,118,112,0.14)' : 'rgba(238,236,230,0.14)';
+            ctx.fillRect(rand() * 640, rand() * 656, 1.6, 1.6);
+        }
+        // Vertikale Paneelfugen alle 0.625 m
+        ctx.fillStyle = '#9c9a94';
+        for (let x = 0; x < 640; x += 160) ctx.fillRect(x, 0, 3, 656);
+        // Ein vertikaler Farbstreifen pro Kachel (alle 2.5 m)
+        ctx.fillStyle = accentColor;
+        ctx.fillRect(76, 32, 11, 656 - 32 - 42);
+        // Dunkles Kopfband oben und Sockelband unten
+        ctx.fillStyle = '#333537';
+        ctx.fillRect(0, 0, 640, 32);
+        ctx.fillStyle = '#3b3d3f';
+        ctx.fillRect(0, 656 - 42, 640, 42);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.anisotropy = 8;
+        this._nordwestringWallMats[accentColor] = new THREE.MeshLambertMaterial({ map: tex });
+        return this._nordwestringWallMats[accentColor];
+    }
+
+    getNordwestringSignMat() {
+        if (this._nordwestringSignMat) return this._nordwestringSignMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;  // Leuchtschild 2.2 x 0.45 m
+        canvas.height = 210;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#f4f4f0';
+        ctx.fillRect(0, 0, 1024, 210);
+        ctx.strokeStyle = '#c9c9c3';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, 1018, 204);
+        // Dunkelblaue, leicht gesperrte Lettern wie am Original
+        const label = 'NORDWESTRING';
+        ctx.font = 'bold 74px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#232a3a';
+        const track = 66;
+        const x0 = 512 - ((label.length - 1) * track) / 2;
+        for (let i = 0; i < label.length; i++) {
+            ctx.fillText(label[i], x0 + i * track, 112);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        // Leuchtkasten: MeshBasic, damit das Schild selbst hell wirkt
+        this._nordwestringSignMat = new THREE.MeshBasicMaterial({ map: tex });
+        return this._nordwestringSignMat;
+    }
+
+    getNordwestringMirrorMat() {
+        if (this._nordwestringMirrorMat) return this._nordwestringMirrorMat;
+        // Pseudo-Spiegelung: verschwommene vertikale Schlieren in den Farben des
+        // Bahnsteigs darunter (beiger Boden, graue Wände, dunkle Silhouetten) —
+        // U läuft quer über den Spiegelstreifen, die Schlieren variieren also
+        // über die Breite. Der Glanz kommt vom Phong-Highlight auf den Facetten.
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#b4ad9e';
+        ctx.fillRect(0, 0, 256, 256);
+        let seed = 27;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        const smear = ['#6b675e', '#8c867a', '#3a3c40', '#d9d4c8', '#54617a', '#7a4a3a', '#9aa0a8'];
+        for (let i = 0; i < 46; i++) {
+            const x = rand() * 256;
+            const w = 4 + rand() * 20;
+            const g = ctx.createLinearGradient(x - w, 0, x + w, 0);
+            const c = smear[Math.floor(rand() * smear.length)];
+            g.addColorStop(0, 'rgba(0,0,0,0)');
+            g.addColorStop(0.5, c);
+            g.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.globalAlpha = 0.22 + rand() * 0.2;
+            ctx.fillStyle = g;
+            ctx.fillRect(x - w, 0, w * 2, 256);
+        }
+        ctx.globalAlpha = 1;
+        // Dunklere Ränder (dort spiegeln sich die Gleiströge/Wände)
+        for (const [x0, x1] of [[0, 34], [222, 256]]) {
+            const g = ctx.createLinearGradient(x0, 0, x1, 0);
+            g.addColorStop(x0 === 0 ? 1 : 0, 'rgba(40,42,46,0)');
+            g.addColorStop(x0 === 0 ? 0 : 1, 'rgba(40,42,46,0.55)');
+            ctx.fillStyle = g;
+            ctx.fillRect(x0, 0, x1 - x0, 256);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.anisotropy = 4;
+        this._nordwestringMirrorMat = new THREE.MeshPhongMaterial({
+            map: tex,
+            shininess: 90,
+            specular: 0x9aa2aa,
+            side: THREE.DoubleSide
+        });
+        return this._nordwestringMirrorMat;
+    }
+
+    // ---- Friedrich-Ebert-Platz (U3): Flechtwerk-Wand, Namenstafel ----
+    getFriedrichEbertWallMat() {
+        if (this._friedrichEbertWallMat) return this._friedrichEbertWallMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;   // Kachel = 2.4 m Wandlänge
+        canvas.height = 646;  // Wandhöhe -0.38 .. 4.66 m (~128 px/m)
+        const ctx = canvas.getContext('2d');
+
+        // Heller Sichtbeton mit feiner Körnung
+        ctx.fillStyle = '#c6c3bc';
+        ctx.fillRect(0, 0, 512, 646);
+        let seed = 19;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        for (let i = 0; i < 2200; i++) {
+            ctx.fillStyle = rand() < 0.5 ? 'rgba(122,120,114,0.14)' : 'rgba(240,238,232,0.14)';
+            ctx.fillRect(rand() * 512, rand() * 646, 1.6, 1.6);
+        }
+
+        // Flechtwerk-Band (1.0 .. 3.6 m über Bahnsteig): Korbgeflecht aus
+        // orangen Keramikriegeln, im Schachbrett abwechselnd liegend/stehend,
+        // mit Schlagschatten fürs Relief. Canvas-Oberkante = Wandoberkante,
+        // Band also von y = (4.66-3.6)*128 bis (4.66-1.0)*128.
+        const bandTop = Math.round((4.66 - 3.6) * 128);   // ~136
+        const bandBot = Math.round((4.66 - 1.0) * 128);   // ~469
+        const cell = 64; // 0.3 m Raster, 8 Zellen pro Kachel
+        for (let gy = bandTop; gy + cell <= bandBot + 1; gy += cell) {
+            for (let gx = 0; gx < 512; gx += cell) {
+                const horizontal = (((gx / cell) + ((gy - bandTop) / cell)) % 2) === 0;
+                const bw = horizontal ? 46 : 22;
+                const bh = horizontal ? 22 : 46;
+                const bx = gx + (cell - bw) / 2;
+                const by = gy + (cell - bh) / 2;
+                // Schlagschatten (Relief)
+                ctx.fillStyle = 'rgba(60,45,30,0.35)';
+                ctx.fillRect(bx + 4, by + 5, bw, bh);
+                // Riegel mit leichter Farbvariation + heller Oberkante
+                const l = 48 + rand() * 8;
+                ctx.fillStyle = `hsl(24, 72%, ${Math.round(l)}%)`;
+                ctx.fillRect(bx, by, bw, bh);
+                ctx.fillStyle = 'rgba(255,220,170,0.45)';
+                ctx.fillRect(bx, by, bw, 3);
+            }
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.anisotropy = 8;
+        this._friedrichEbertWallMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._friedrichEbertWallMat;
+    }
+
+    getFriedrichEbertSignMat() {
+        if (this._friedrichEbertSignMat) return this._friedrichEbertSignMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;  // Tafel 2.6 x 0.4 m
+        canvas.height = 158;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#d97829';
+        ctx.fillRect(0, 0, 1024, 158);
+        ctx.strokeStyle = '#b45f1c';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(2.5, 2.5, 1019, 153);
+        const label = 'FRIEDRICH-EBERT-PLATZ';
+        ctx.font = 'bold 56px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#f6f2ea';
+        const track = 42;
+        const x0 = 512 - ((label.length - 1) * track) / 2;
+        for (let i = 0; i < label.length; i++) {
+            ctx.fillText(label[i], x0 + i * track, 84);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 8;
+        this._friedrichEbertSignMat = new THREE.MeshLambertMaterial({ map: tex });
+        return this._friedrichEbertSignMat;
     }
 
     /**
@@ -6672,6 +8929,193 @@ export class StationModel {
         });
     }
 
+    // ========================================================================
+    // AUFZUG — universelles Modell nach Vorbild der Nürnberger Glasaufzüge
+    // (Glasschacht mit dunklem Stahlrahmen, Edelstahlblende über den Türen,
+    // Glaskabine mit Lichtfeld; Türen beidseitig als Durchlader).
+    // Grundfläche fix 2.50 x 2.50 m; die Schachthöhe folgt spec.topY und passt
+    // sich damit unterschiedlichen Stationshöhen an. Nach dem Einbau räumt
+    // _clearElevatorFootprint alle berührten Einrichtungsobjekte (Säulen,
+    // Bänke, Mülleimer, Passagiere, Schilder ...) aus dem Grundriss.
+    // spec: { dz, xOff = 0, topY = 4.66, floorY = 0.865 }
+    //   dz/xOff in Metern relativ zur Stationsmitte bzw. Gleisachse.
+    // ========================================================================
+    buildElevator(stationGroup, station, centerAngle, spec) {
+        const floorY = spec.floorY !== undefined ? spec.floorY : 0.865;
+        const topY = spec.topY !== undefined ? spec.topY : 4.66;
+        const H = topY - floorY;   // Schachthöhe (bis Deckenunterkante)
+        const W = 2.5;             // Außenmaß 250 x 250 cm
+        const half = W / 2;
+
+        // Geteilte Materialien (einmal pro StationModel). Edelstahl als Phong,
+        // NICHT als metalness-Standardmaterial: ohne Environment-Map rendert
+        // hohe metalness fast schwarz (siehe Mülleimer-Kommentar im Konstruktor).
+        if (!this.materials.elevFrame) {
+            this.materials.elevFrame = new THREE.MeshLambertMaterial({ color: '#3d4249' });
+            this.materials.elevSteel = new THREE.MeshPhongMaterial({ color: 0xd6d9dd, shininess: 90, specular: 0x666666 });
+            this.materials.elevGlass = new THREE.MeshLambertMaterial({ color: '#9fb9c4', transparent: true, opacity: 0.30, side: THREE.DoubleSide });
+            this.materials.elevDoorGlass = new THREE.MeshLambertMaterial({ color: '#87a5b2', transparent: true, opacity: 0.42, side: THREE.DoubleSide });
+            this.materials.elevCabinFloor = new THREE.MeshLambertMaterial({ color: '#2e3238' });
+            this.materials.elevLamp = new THREE.MeshBasicMaterial({ color: '#fffbe8' });
+        }
+        const frameMat = this.materials.elevFrame;
+        const steelMat = this.materials.elevSteel;
+        const glassMat = this.materials.elevGlass;
+        const doorMat = this.materials.elevDoorGlass;
+
+        // Platzierung entlang der Gleisspline (gleiches Schema wie Säulen/Mülleimer)
+        const s = station.position + (spec.dz || 0);
+        const pos = this.sim.getTrackPosition(s);
+        const tangent = this.sim.getTrackTangent(s);
+        const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+        const worldPos = pos.clone().addScaledVector(normal, spec.xOff || 0);
+
+        const elev = new THREE.Group();
+        elev.position.copy(stationGroup.worldToLocal(worldPos));
+        elev.position.y = floorY;
+        elev.rotation.y = Math.atan2(tangent.x, tangent.z) - centerAngle;
+
+        const addBox = (w, h, d, x, y, z, mat) => {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            m.position.set(x, y, z);
+            elev.add(m);
+            return m;
+        };
+
+        const postT = 0.14;              // Eckpfosten-Kantenlänge
+        const postX = half - postT / 2;  // Pfostenmitte
+        const innerW = W - 2 * postT;    // lichte Breite zwischen den Pfosten
+        const doorTopY = Math.min(2.2, H - 0.4); // Türhöhe, bei sehr flachen Decken reduziert
+
+        // 1. Stahlrahmen: 4 Eckpfosten, Sockelring, Kopfring
+        for (const sx of [1, -1]) for (const sz of [1, -1]) {
+            addBox(postT, H, postT, sx * postX, H / 2, sz * postX, frameMat);
+        }
+        for (const [ringY, ringH] of [[0.05, 0.10], [H - 0.09, 0.18]]) {
+            addBox(W, ringH, postT, 0, ringY, postX, frameMat);
+            addBox(W, ringH, postT, 0, ringY, -postX, frameMat);
+            addBox(postT, ringH, innerW, postX, ringY, 0, frameMat);
+            addBox(postT, ringH, innerW, -postX, ringY, 0, frameMat);
+        }
+
+        // 2. Verglasung: Seitenflächen voll, Stirnseiten oberhalb der Türen
+        const sideGlassH = H - 0.28; // zwischen Sockel- (bis 0.10) und Kopfring (ab H-0.18)
+        const gY = 0.10 + sideGlassH / 2;
+        addBox(0.025, sideGlassH, innerW, postX, gY, 0, glassMat);
+        addBox(0.025, sideGlassH, innerW, -postX, gY, 0, glassMat);
+        const overH = H - 0.18 - (doorTopY + 0.12);
+        if (overH > 0.05) {
+            const oY = doorTopY + 0.12 + overH / 2;
+            addBox(innerW, overH, 0.025, 0, oY, postX, glassMat);
+            addBox(innerW, overH, 0.025, 0, oY, -postX, glassMat);
+        }
+
+        // Horizontale Sprossen auf den Seitenflächen; oberhalb der Tür alle
+        // 1.1 m eine weitere Ebene, damit hohe Schächte gegliedert bleiben
+        const mullionYs = [1.1, doorTopY];
+        for (let my = doorTopY + 1.1; my < H - 0.35; my += 1.1) mullionYs.push(my);
+        for (const my of mullionYs) {
+            addBox(0.06, 0.06, innerW, postX, my, 0, frameMat);
+            addBox(0.06, 0.06, innerW, -postX, my, 0, frameMat);
+        }
+
+        // 3. Türen beidseitig (Durchlader): zwei Glas-Schiebeflügel mit
+        // Mittelstoß und Edelstahl-Türsturz
+        const doorH = doorTopY - 0.10;
+        const doorCY = 0.10 + doorH / 2;
+        for (const sz of [1, -1]) {
+            const zP = sz * (postX - 0.02);
+            addBox(innerW / 2 - 0.04, doorH, 0.03, -innerW / 4, doorCY, zP, doorMat);
+            addBox(innerW / 2 - 0.04, doorH, 0.03, innerW / 4, doorCY, zP, doorMat);
+            addBox(0.06, doorH, 0.05, 0, doorCY, zP, frameMat); // Mittelstoß
+            addBox(innerW, 0.12, 0.10, 0, doorTopY + 0.06, zP, steelMat); // Türsturz
+        }
+
+        // 4. Edelstahlblende über den Türen (der markante umlaufende Kragen)
+        const collarY = doorTopY + 0.35;
+        if (collarY + 0.16 < H - 0.2) {
+            const cOut = half + 0.11;
+            addBox(W + 0.22, 0.32, 0.12, 0, collarY, cOut, steelMat);
+            addBox(W + 0.22, 0.32, 0.12, 0, collarY, -cOut, steelMat);
+            addBox(0.12, 0.32, W, cOut, collarY, 0, steelMat);
+            addBox(0.12, 0.32, W, -cOut, collarY, 0, steelMat);
+        }
+
+        // 5. Kabine: dunkler Boden, Edelstahldecke mit Lichtfeld,
+        // Innenverglasung + Handläufe an den geschlossenen Seiten
+        addBox(2.1, 0.06, 2.1, 0, 0.03, 0, this.materials.elevCabinFloor);
+        addBox(2.1, 0.10, 2.1, 0, doorTopY - 0.15, 0, steelMat);
+        addBox(1.5, 0.02, 1.5, 0, doorTopY - 0.21, 0, this.materials.elevLamp);
+        const cabGlassH = doorTopY - 0.36;
+        addBox(0.02, cabGlassH, 2.05, 1.02, 0.06 + cabGlassH / 2, 0, glassMat);
+        addBox(0.02, cabGlassH, 2.05, -1.02, 0.06 + cabGlassH / 2, 0, glassMat);
+        addBox(0.05, 0.05, 1.8, 0.96, 0.95, 0, steelMat);
+        addBox(0.05, 0.05, 1.8, -0.96, 0.95, 0, steelMat);
+
+        // 6. Anforderungssäulen neben den Türen (diagonal gegenüber)
+        for (const sz of [1, -1]) {
+            addBox(0.16, 1.10, 0.16, sz * 0.85, 0.55, sz * (half + 0.28), steelMat);
+            addBox(0.12, 0.18, 0.03, sz * 0.85, 1.02, sz * (half + 0.28 + 0.08), this.materials.elevLamp);
+        }
+
+        // Exakter Räum-Grundriss im Aufzug-eigenen Frame: nur der Schacht
+        // selbst (2.5 x 2.5) plus 2 cm Toleranz — Blendenüberstand und
+        // Anforderungssäulen räumen nichts, was nur daneben steht.
+        elev.userData.clearanceBox = new THREE.Box3(
+            new THREE.Vector3(-(half + 0.02), 0, -(half + 0.02)),
+            new THREE.Vector3(half + 0.02, H, half + 0.02)
+        );
+
+        stationGroup.add(elev);
+        this._clearElevatorFootprint(stationGroup, elev);
+        return elev;
+    }
+
+    // Entfernt alle Einrichtungsobjekte, deren Bounding-Box den Aufzug berührt
+    // (Säulen, Bänke, Mülleimer, Automaten, Passagiere, Schilder ...). Große,
+    // strukturelle Objekte (gesweepte Böden/Decken/Wände, Treppenanlagen)
+    // werden über ihre Grundriss-Ausdehnung (> 6 m) verschont — der Aufzug soll
+    // die Möblierung räumen, nicht die Station selbst.
+    // Alle Boxen werden in den Frame des AUFZUGS transformiert (nicht der
+    // Station): dort ist der Räum-Grundriss exakt achsparallel. Die Welt-AABB
+    // der Nachbarobjekte bläht sich beim Rücktransformieren nur um deren
+    // Verdrehung RELATIV zum Aufzug auf — auf derselben Gleistangente ist das
+    // praktisch null, während eine stations- oder weltbezogene AABB bei
+    // diagonal liegenden Stationen (z. B. Langwasser Süd, ~45°) den Grundriss
+    // auf das Doppelte aufblasen und zu viel wegräumen würde.
+    _clearElevatorFootprint(stationGroup, elevGroup) {
+        stationGroup.updateMatrixWorld(true);
+        const inv = new THREE.Matrix4().copy(elevGroup.matrixWorld).invert();
+        const zone = elevGroup.userData.clearanceBox;
+        if (!zone) return;
+        // Jede Geometrie einzeln über inv * matrixWorld in den Aufzug-Frame
+        // bringen — NICHT Box3.setFromObject (Welt-AABB) und dann rücktrans-
+        // formieren: das verdoppelt bei diagonal liegenden Stationen die Box
+        // und räumt Objekte weg, die den Schacht gar nicht berühren.
+        const rel = new THREE.Matrix4();
+        const tmp = new THREE.Box3();
+        const boxInElevFrame = (obj) => {
+            const box = new THREE.Box3();
+            obj.traverse(node => {
+                if (!node.isMesh || !node.geometry) return;
+                if (node.geometry.boundingBox === null) node.geometry.computeBoundingBox();
+                rel.multiplyMatrices(inv, node.matrixWorld);
+                tmp.copy(node.geometry.boundingBox).applyMatrix4(rel);
+                box.union(tmp);
+            });
+            return box;
+        };
+        const doomed = [];
+        for (const child of stationGroup.children) {
+            if (child === elevGroup) continue;
+            const box = boxInElevFrame(child);
+            if (box.isEmpty()) continue;
+            if (box.max.x - box.min.x > 6 || box.max.z - box.min.z > 6) continue;
+            if (box.intersectsBox(zone)) doomed.push(child);
+        }
+        for (const child of doomed) stationGroup.remove(child);
+    }
+
     spawnPassengersForStation(station, stationGroup) {
         if (station.name === "Messe") {
             // Preservation: Messe passengers are pre-defined in the original buildStation method
@@ -6861,7 +9305,7 @@ export class StationModel {
         const wallMat = this.createRoughConcreteMaterial();
         const handrailMat = new THREE.MeshBasicMaterial({ color: '#111111' });
         const glassMat = this.materials.muggenhofGlass || new THREE.MeshLambertMaterial({ color: '#14b8a6', transparent: true, opacity: 0.5, side: THREE.DoubleSide });
-        const edelstahlMat = new THREE.MeshStandardMaterial({ color: '#e8eaed', metalness: 0.9, roughness: 0.2 });
+        const edelstahlMat = StationBuilder.createBalustradeMaterial();
         const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
         
         const stairWidth = 2.0;
@@ -7100,7 +9544,7 @@ export class StationModel {
         const wallMat = this.createRoughConcreteMaterial();
         const handrailMat = new THREE.MeshBasicMaterial({ color: '#111111' });
         const glassMat = this.materials.muggenhofGlass || new THREE.MeshLambertMaterial({ color: '#14b8a6', transparent: true, opacity: 0.5, side: THREE.DoubleSide });
-        const edelstahlMat = new THREE.MeshStandardMaterial({ color: '#e8eaed', metalness: 0.9, roughness: 0.2 });
+        const edelstahlMat = StationBuilder.createBalustradeMaterial();
         const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffe0', side: THREE.DoubleSide });
         
         const stairWidth = 2.0;
@@ -7890,14 +10334,29 @@ export class StationModel {
 
     getWoehrderCirclesMat() {
         if (!this._woehrderCirclesMat) {
+            // Mosaic mural (photos): big FLAT overlapping circles — chartreuse, grass green,
+            // blue, navy, violet, pale grey-blue — on a teal small-tile field, no outlines,
+            // plus sparse small signal-red dots. A tile-joint grid + per-tile shade jitter
+            // sells the ~10cm mosaic without a separate bump map.
+            const W = 2048, H = 512;
+            const worldW = 20.0, worldH = 4.8;
             const canvas = document.createElement('canvas');
-            canvas.width = 1024;
-            canvas.height = 512;
+            canvas.width = W;
+            canvas.height = H;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#1e2022';
-            ctx.fillRect(0, 0, 1024, 512);
-            
-            const colors = ['#7B746D', '#1D2C46', '#435966', '#77A387', '#CCD196', '#272E2D'];
+            ctx.fillStyle = '#3d7e92';
+            ctx.fillRect(0, 0, W, H);
+
+            const palette = [
+                '#c3cf52', '#c3cf52',   // chartreuse yellow-green
+                '#4f9d5c', '#4f9d5c',   // grass green
+                '#77b287',              // pale green
+                '#4a7ab8', '#4a7ab8',   // mid blue
+                '#24386e', '#24386e',   // navy
+                '#3c3168',              // dark violet
+                '#a2b8c6',              // pale grey-blue
+                '#2a5a6b'               // dark petrol
+            ];
             let seed = 98765;
             const random = () => {
                 const x = Math.sin(seed++) * 10000;
@@ -7905,57 +10364,177 @@ export class StationModel {
             };
             const drawCircle = (cx, cy, r, color) => {
                 ctx.fillStyle = color;
-                ctx.strokeStyle = '#1e2022';
-                ctx.lineWidth = 3;
                 for (let ox = -1; ox <= 1; ox++) {
                     for (let oy = -1; oy <= 1; oy++) {
                         ctx.beginPath();
-                        ctx.arc(cx + ox * 1024, cy + oy * 512, r, 0, Math.PI * 2);
+                        ctx.arc(cx + ox * W, cy + oy * H, r, 0, Math.PI * 2);
                         ctx.fill();
-                        ctx.stroke();
                     }
                 }
             };
-            const scale = 1024 / 16.0;
-            for (let i = 0; i < 100; i++) {
-                const cx = random() * 1024;
-                const cy = random() * 512;
-                const r = (0.25 + random() * 1.25) * scale;
-                const color = colors[Math.floor(random() * colors.length)];
-                drawCircle(cx, cy, r, color);
+            const scale = W / worldW;
+            const circles = [];
+            for (let i = 0; i < 30; i++) {
+                circles.push({
+                    cx: random() * W,
+                    cy: random() * H,
+                    r: (0.7 + random() * 1.5) * scale,
+                    color: palette[Math.floor(random() * palette.length)]
+                });
             }
+            circles.sort((a, b) => b.r - a.r); // big ones first, small ones read on top
+            circles.forEach(c => drawCircle(c.cx, c.cy, c.r, c.color));
+            for (let i = 0; i < 8; i++) {
+                drawCircle(random() * W, random() * H, (0.12 + random() * 0.14) * scale, '#c8342c');
+            }
+
+            // Mosaic tile joints + per-tile shade jitter
+            const cell = 10;
+            for (let y = 0; y < H; y += cell) {
+                for (let x = 0; x < W; x += cell) {
+                    const v = random();
+                    ctx.fillStyle = (v < 0.5)
+                        ? `rgba(255,255,255,${(v * 0.14).toFixed(3)})`
+                        : `rgba(0,20,30,${((v - 0.5) * 0.16).toFixed(3)})`;
+                    ctx.fillRect(x, y, cell, cell);
+                }
+            }
+            ctx.strokeStyle = 'rgba(15,35,40,0.28)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = 0.5; x <= W; x += cell) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+            for (let y = 0.5; y <= H; y += cell) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+            ctx.stroke();
+
             const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
             texture.colorSpace = THREE.SRGBColorSpace;
-            texture.userData = { worldW: 16.0, worldH: 8.0 };
-            
+            texture.userData = { worldW, worldH };
+
             this._woehrderCirclesMat = new THREE.MeshLambertMaterial({ map: texture });
         }
         return this._woehrderCirclesMat;
     }
 
-    getWoehrderTextMat() {
-        if (!this._woehrderTextMat) {
+    getWoehrderRockMat() {
+        if (!this._woehrderRockMat) {
+            // Dark rough rock/shotcrete cavern ceiling. Tiled at 6m over the 10m-high
+            // hall, so the features are drawn coarse: big uneven patches first, then
+            // finer speckle on top.
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+            // Grey-brown exposed-aggregate tones measured from the station photo
+            ctx.fillStyle = '#48433a';
+            ctx.fillRect(0, 0, 1024, 1024);
+            let seed = 24680;
+            const random = () => {
+                const x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            };
+            // Large uneven patches (warm grey-brown)
+            for (let i = 0; i < 260; i++) {
+                const g = Math.floor(44 + random() * 46);
+                ctx.fillStyle = `rgba(${g + 6},${g + 2},${g - 8},${(0.20 + random() * 0.35).toFixed(2)})`;
+                const r = 30 + random() * 110;
+                ctx.beginPath();
+                ctx.ellipse(random() * 1024, random() * 1024, r, r * (0.35 + random() * 0.55), random() * Math.PI, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // Finer aggregate speckle: mix of pale beige grains and dark pores
+            for (let i = 0; i < 1600; i++) {
+                const light = random() < 0.45;
+                const g = light ? Math.floor(100 + random() * 55) : Math.floor(24 + random() * 30);
+                ctx.fillStyle = `rgba(${g + 8},${g + 3},${g - 8},${(0.25 + random() * 0.40).toFixed(2)})`;
+                const r = 3 + random() * 18;
+                ctx.beginPath();
+                ctx.ellipse(random() * 1024, random() * 1024, r, r * (0.4 + random() * 0.6), random() * Math.PI, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            this._woehrderRockMat = new THREE.MeshLambertMaterial({ map: texture });
+        }
+        return this._woehrderRockMat;
+    }
+
+    getWoehrderChannelMat(chanR) {
+        if (!this._woehrderChannelMat) {
+            // Aluminium barrel of the suspended light channel, with a shading fade
+            // baked around the circumference so the swept cylinder reads as round
+            // under the flat ambient light. buildSweptProfile maps V once around
+            // the profile (arc length), so repeat.y = 1/circumference stretches the
+            // gradient exactly once around; keepWrapAndRepeat preserves that through
+            // the profile builder's material clone. The profile starts at the right
+            // side (angle 0) and runs counter-clockwise, so V=0.25 is the barrel top.
+            const H = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = 4;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgb(194,199,203)';
+            ctx.fillRect(0, 0, 4, H);
+            // Same fade recipe as _makeCylinderPillarMat: dark flanks with narrow
+            // bright highlight bands, multiply-blended over the aluminium base.
+            // Here the bands sit at V=0 (right flank) and V=0.5 (left flank),
+            // so the highlights run along the barrel sides, not top/bottom.
+            ctx.globalCompositeOperation = 'multiply';
+            const grad = ctx.createLinearGradient(0, H, 0, 0); // canvas bottom = V0 (flipY)
+            grad.addColorStop(0,    '#F4F2FB'); // right flank (bright, wraps at V=1)
+            grad.addColorStop(0.07, '#7A7975');
+            grad.addColorStop(0.43, '#7A7975');
+            grad.addColorStop(0.5,  '#F4F2FB'); // left flank (bright)
+            grad.addColorStop(0.57, '#7A7975');
+            grad.addColorStop(0.93, '#7A7975');
+            grad.addColorStop(1,    '#F4F2FB');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 4, H);
+            ctx.globalCompositeOperation = 'source-over';
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1 / (Math.PI * 2 * chanR));
+            this._woehrderChannelMat = new THREE.MeshLambertMaterial({ map: texture });
+            this._woehrderChannelMat.userData.keepWrapAndRepeat = true;
+        }
+        return this._woehrderChannelMat;
+    }
+
+    getBarrelTextMat(name) {
+        // Near-black station name for the standard barrel light channel,
+        // cached per station name.
+        this._barrelTextMats = this._barrelTextMats || {};
+        if (!this._barrelTextMats[name]) {
+            const label = name.toUpperCase();
             const canvas = document.createElement('canvas');
             canvas.width = 1024;
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, 1024, 128);
-            ctx.fillStyle = '#374151';
-            ctx.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            const fontFor = (px) => `bold ${px}px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif`;
+            let fontPx = 72;
+            ctx.font = fontFor(fontPx);
+            const w = ctx.measureText(label).width;
+            if (w > 960) {
+                fontPx = Math.floor(72 * 960 / w);
+                ctx.font = fontFor(fontPx);
+            }
+            ctx.fillStyle = '#141416';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText("WÖHRDER WIESE", 512, 64);
-            ctx.strokeStyle = '#374151';
+            ctx.fillText(label, 512, 64);
+            ctx.strokeStyle = '#141416';
             ctx.lineWidth = 1.8;
-            ctx.strokeText("WÖHRDER WIESE", 512, 64);
-            
+            ctx.strokeText(label, 512, 64);
+
             const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
             texture.anisotropy = 8;
-            this._woehrderTextMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+            this._barrelTextMats[name] = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
         }
-        return this._woehrderTextMat;
+        return this._barrelTextMats[name];
     }
 
     getRathenauTileMat() {

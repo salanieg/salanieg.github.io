@@ -149,7 +149,12 @@ export class TrainModel {
             cockpitCeiling: cheapMaterial({ color: '#666666', roughness: 0.8, side: THREE.DoubleSide }), // G1 interior cockpit ceiling (#333333)
             floorGrey: this.createFloorMaterial(),
             fabricRed: this.createFabricMaterial(),
-            ceilingGreyG1: cheapMaterial({ color: '#8c8482', metalness: 0.1, roughness: 0.8, side: THREE.DoubleSide }),
+            ceilingGreyG1: cheapMaterial({ color: '#8D8B8B', metalness: 0.1, roughness: 0.8, side: THREE.DoubleSide }),
+            interiorWallG1: cheapMaterial({ color: '#BFC1C0', metalness: 0.1, roughness: 0.8, side: THREE.DoubleSide }), // G1 interior wall lining (window band frames, panels)
+            // Args swapped vs. the texture's own defaults: canvas top (offset 0) ends up at v=1 (the
+            // fillet's ceiling/top edge) after three's default flipY, so passing the light color first
+            // puts it up top and the dark color - at offset 1/canvas bottom - down at v=0 (the wall edge).
+            g1WallCeilingFillet: new THREE.MeshBasicMaterial({ map: this.createWallCeilingFilletTexture('#C1BFC5', '#524F50'), side: THREE.DoubleSide, fog: false }), // rounded wall-to-ceiling coving, dark at the wall fading to light at the ceiling
             cockpitFloor: cheapMaterial({ color: '#bcbcbc', metalness: 0.1, roughness: 0.8 }),
             currentCollectorYellow: cheapMaterial({ color: '#ffcc00', metalness: 0.1, roughness: 0.5 }), // Stromabnehmer yellow
             skirtGrey: cheapMaterial({ color: '#53565f', metalness: 0.1, roughness: 0.5 }), // G1 dark grey skirt stripe
@@ -485,8 +490,8 @@ export class TrainModel {
             return { length: carLength, startOffset: startOffsets[i] };
         } else {
             const carLength = 18.575;
-            const middleGapOffset = 1.24;
-            const startOffset = -i * carLength - (i >= 2 ? middleGapOffset : 0);
+            let startOffset = -i * carLength;
+            if (i >= 2) startOffset -= 1.20; // 1.20 m extra gap between the two double-units
             return { length: carLength, startOffset: startOffset };
         }
     }
@@ -662,7 +667,8 @@ export class TrainModel {
             const bodyPosZ = (bounds.front + bounds.rear) / 2;
             
             const wallMaterial = this.materials.bodyRedG1;
-            const whiteMaterial = this.materials.bodyWhite;
+            const whiteMaterial = this.materials.bodyWhite; // exterior middle stripe only
+            const interiorWhiteMaterial = this.materials.interiorWallG1; // interior-facing linings/frames
             const darkGreyMaterial = this.materials.bodyGlossBlack; // G1 window band is glossy black (see photos)
             const roofMaterial = this.materials.bodyDarkGrey;
             const floorMaterial = this.materials.floorGrey;
@@ -724,12 +730,12 @@ export class TrainModel {
  
                     // --- Interior Wall Linings (Light Grey/Off-white on inside face) ---
                     // Bottom interior panel (covers Y = 0.375 to 1.20)
-                    const intBottom = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.825, zLength), whiteMaterial);
+                    const intBottom = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.825, zLength), interiorWhiteMaterial);
                     intBottom.position.set(xSign * 1.40, 0.7875, zCenter);
                     carGroup.add(intBottom);
 
                     // Top interior panel (covers Y = 2.55 to 2.85)
-                    const intTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.30, zLength), whiteMaterial);
+                    const intTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.30, zLength), interiorWhiteMaterial);
                     intTop.position.set(xSign * 1.40, 2.70, zCenter);
                     carGroup.add(intTop);
 
@@ -737,14 +743,14 @@ export class TrainModel {
                     // Bottom rail: split into outer (dark grey) and inner (white/hellgrau)
                     const bottomRailOuter = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, zLength), darkGreyMaterial);
                     bottomRailOuter.position.set(xSign * 1.44, 1.275, zCenter);
-                    const bottomRailInner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, zLength), whiteMaterial);
+                    const bottomRailInner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, zLength), interiorWhiteMaterial);
                     bottomRailInner.position.set(xSign * 1.41, 1.275, zCenter);
                     carGroup.add(bottomRailOuter, bottomRailInner);
 
                     // Top rail: split into outer (dark grey) and inner (white/hellgrau)
                     const topRailOuter = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.20, zLength), darkGreyMaterial);
                     topRailOuter.position.set(xSign * 1.44, 2.45, zCenter);
-                    const topRailInner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.20, zLength), whiteMaterial);
+                    const topRailInner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.20, zLength), interiorWhiteMaterial);
                     topRailInner.position.set(xSign * 1.41, 2.45, zCenter);
                     carGroup.add(topRailOuter, topRailInner);
  
@@ -777,7 +783,7 @@ export class TrainModel {
 
                         const frameLeftOuter = new THREE.Mesh(new THREE.BoxGeometry(0.02, wHeight, 0.05), darkGreyMaterial);
                         frameLeftOuter.position.set(xSign * 1.44, 1.85, w.start);
-                        const frameLeftInner = new THREE.Mesh(new THREE.BoxGeometry(0.02, wHeight, 0.05), whiteMaterial);
+                        const frameLeftInner = new THREE.Mesh(new THREE.BoxGeometry(0.02, wHeight, 0.05), interiorWhiteMaterial);
                         frameLeftInner.position.set(xSign * 1.41, 1.85, w.start);
 
                         const frameRightOuter = frameLeftOuter.clone();
@@ -795,7 +801,7 @@ export class TrainModel {
                         if (pWidth <= 0.001) return;
                         const pillarOuter = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.00, pWidth), darkGreyMaterial);
                         pillarOuter.position.set(xSign * 1.44, 1.85, pCenter);
-                        const pillarInner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.00, pWidth), whiteMaterial);
+                        const pillarInner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.00, pWidth), interiorWhiteMaterial);
                         pillarInner.position.set(xSign * 1.41, 1.85, pCenter);
                         carGroup.add(pillarOuter, pillarInner);
                     });
@@ -824,13 +830,14 @@ export class TrainModel {
             chassis.position.set(0, 0.34, bodyPosZ);
             carGroup.add(chassis);
 
-            // Visual Glowing Ceiling Light Fixtures (split left and right)
-            const lightCount = 5;
-            for (let j = 0; j < lightCount; j++) {
-                const zRatio = (j + 0.5) / lightCount;
-                const fixtureZ = bodyPosZ - bodyLength / 2 + zRatio * bodyLength;
-
-                const fixtureGeom = new THREE.BoxGeometry(0.15, 0.02, 2.0);
+            // Visual Glowing Ceiling Light Fixtures: one per side window (left row
+            // + right row, both aligned in Z with the same 6 window centers from
+            // g1WindowRects), each fixture as long as a standard side window
+            // (1.364m) - 12 fixtures per car.
+            const standardWindowLength = 1.364;
+            const fixtureGeom = new THREE.BoxGeometry(0.15, 0.02, standardWindowLength);
+            g1WindowRects.forEach(w => {
+                const fixtureZ = (w.start + w.end) / 2;
 
                 const fixtureL = new THREE.Mesh(fixtureGeom, this.materials.lightGlowWhite);
                 fixtureL.position.set(-0.6, 2.80, fixtureZ);
@@ -839,6 +846,27 @@ export class TrainModel {
                 fixtureR.position.set(0.6, 2.80, fixtureZ);
 
                 carGroup.add(fixtureL, fixtureR);
+            });
+
+            // Transverse entry-area lamps: 2 per door (one flanking each side of
+            // the doorway), curving toward the door as they sweep across the
+            // car width - each slightly longer than a standard window lamp.
+            this.getG1DoorPositions(i).forEach(doorZ => {
+                this.buildG1CurvedTransverseLamp(carGroup, doorZ - 0.75, 1);
+                this.buildG1CurvedTransverseLamp(carGroup, doorZ + 0.75, -1);
+            });
+
+            // Rounded coving connecting the side walls to the ceiling, starting
+            // at the door-top height (2.45m) and rounding a 20cm bend inward to
+            // meet the ceiling, with a #524F50 -> #C1BFC5 color fade.
+            for (const xSign of [-1, 1]) {
+                const fillet = new THREE.Mesh(
+                    this.createG1WallCeilingFilletGeometry(xSign),
+                    this.materials.g1WallCeilingFillet
+                );
+                fillet.scale.z = bodyLength;
+                fillet.position.set(0, 0, bodyPosZ);
+                carGroup.add(fillet);
             }
 
             // Benches (Red seats)
@@ -3877,23 +3905,23 @@ export class TrainModel {
     }
 
     updateDestinationSign(isReversing) {
-        if (this.trainType === 'DT3') {
-            if (this.lastReversing === isReversing) return;
-            this.lastReversing = isReversing;
-            this.updateDT3DestinationSign(isReversing);
-            return;
-        }
-
         const lineName = this.sim.track.lineId || 'U1';
         const destStation = isReversing ? this.sim.stations[0] : this.sim.stations[this.sim.stations.length - 1];
         let destName = destStation ? destStation.name : 'Terminal';
         if (destName === 'Hardhöhe') destName = 'Fürth Hardhöhe';
 
+        // Performance guard: only redraw if the destination or line actually changed
+        const destKey = `${lineName}_${destName}_${this.trainType}`;
+        if (this.lastDestKey === destKey) return;
+        this.lastDestKey = destKey;
+
+        if (this.trainType === 'DT3') {
+            this.updateDT3DestinationSign(lineName, destName);
+            return;
+        }
+
         if (this.trainType === 'DT1') {
             if (!this.dt1DestScreenMat || !this.dt1DestScreenMat.map) return;
-            if (this.lastReversing === isReversing) return;
-            this.lastReversing = isReversing;
-
             const canvas = this.dt1DestScreenMat.map.image;
             if (!canvas) return;
 
@@ -3902,10 +3930,10 @@ export class TrainModel {
             ctx.fillStyle = '#0a0a0c';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            let boxColor = '#002b5c';
-            if (lineName === 'U1') boxColor = '#f97316';
-            else if (lineName === 'U2') boxColor = '#ef4444';
-            else if (lineName === 'U3') boxColor = '#06b6d4';
+            let boxColor = '#005da7'; // Nürnberger U1 Blue
+            if (lineName === 'U2') boxColor = '#cc070e'; // Nürnberger U2 Red
+            else if (lineName === 'U3') boxColor = '#2ea3ab'; // Nürnberger U3 Turquoise
+            else if (lineName === 'U11') boxColor = '#f97316'; // Nuremberg Orange
 
             ctx.fillStyle = boxColor;
             ctx.fillRect(canvas.width / 2 - 132, canvas.height / 2 - 28, 84, 56);
@@ -3925,9 +3953,6 @@ export class TrainModel {
         }
 
         if (!this.destScreenMat || !this.destScreenMat.map) return;
-        if (this.lastReversing === isReversing) return;
-        this.lastReversing = isReversing;
-        
         const canvas = this.destScreenMat.map.image;
         if (!canvas) return;
         
@@ -3984,14 +4009,26 @@ export class TrainModel {
 
             const isG1 = this.trainType === 'G1';
             ctx.fillStyle = '#ffffff'; // White text color
-            if (isG1) {
-                ctx.font = 'bold 54px "Doto Bold"';
-            } else {
-                ctx.font = 'bold 36px monospace';
-            }
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            if (isG1) {
+                // 1/3 smaller than the original 54px (=36px), then stretched
+                // vertically via a canvas scale so the glyphs still nearly fill
+                // the board's full height instead of leaving it half-empty.
+                const fontSize = 36;
+                const vScale = 2.85;
+                ctx.font = `bold ${fontSize}px "Doto Bold"`;
+                ctx.letterSpacing = `${fontSize * 0.1}px`; // +10% letter spacing
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.scale(1, vScale);
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+                ctx.letterSpacing = '0px';
+            } else {
+                ctx.font = 'bold 36px monospace';
+                ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            }
 
             // Draw exit side triangles for G1
             if (isG1) {
@@ -4018,7 +4055,7 @@ export class TrainModel {
                     }
                 };
 
-                const margin = 92; // 20cm from wall (approx)
+                const margin = 340; // moved further inward from the board edges so the arrows stay visible
                 const triW = 40;
                 const triH = 50;
 
@@ -4528,11 +4565,11 @@ export class TrainModel {
         ctx.fillStyle = '#0b0f19'; // very dark slate/navy
         ctx.fillRect(0, 0, w, h);
 
-        const lineName = this.sim.track.lineId || 'U3';
-        let lineColor = '#10b981'; // emerald green
-        if (lineName === 'U1') lineColor = '#f97316'; // orange
-        else if (lineName === 'U2') lineColor = '#ef4444'; // red
-        else if (lineName === 'U3') lineColor = '#06b6d4'; // turquoise
+        const lineName = this.sim.track.lineId || 'U1';
+        let lineColor = '#10b981'; // status dot
+        if (lineName === 'U1') lineColor = '#005da7'; // Blue
+        else if (lineName === 'U2') lineColor = '#cc070e'; // Red
+        else if (lineName === 'U3') lineColor = '#2ea3ab'; // Turquoise
 
         // Draw header
         ctx.fillStyle = '#1e293b';
@@ -4642,7 +4679,7 @@ export class TrainModel {
         this.dt3MonitorTexture.needsUpdate = true;
     }
 
-    updateDT3DestinationSign(isReversing) {
+    updateDT3DestinationSign(lineName, destName) {
         if (!this.dt3DestCanvas) return;
         
         const canvas = this.dt3DestCanvas;
@@ -4651,21 +4688,34 @@ export class TrainModel {
         // Clear background with raw color #14100f
         ctx.fillStyle = '#14100f';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        const lineName = this.sim.track.lineId || 'U3';
-        const destStation = isReversing ? this.sim.stations[0] : this.sim.stations[this.sim.stations.length - 1];
-        let destName = destStation ? destStation.name : 'Terminal';
-        if (destName === 'Hardhöhe') {
-            destName = 'Fürth Hardhöhe';
-        }
-        
-        const text = lineName + ' ' + destName;
-        
-        ctx.fillStyle = '#30571a';
-        ctx.font = 'bold 52px sans-serif';
-        ctx.textAlign = 'center';
+
+        // New font "Doto Bold" and color #74BA33 (VAG green)
+        // Note: No Caps Lock (mixed case) as requested.
+        ctx.fillStyle = '#74BA33';
+        ctx.font = '54px "Doto Bold", sans-serif';
         ctx.textBaseline = 'middle';
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        
+        // 1. Draw Line (e.g. "U1") left-aligned with a small margin
+        ctx.textAlign = 'left';
+        const paddingLeft = 24;
+        ctx.fillText(lineName, paddingLeft, canvas.height / 2 + 5);
+
+        // 2. Center the destination name in the remaining space to the right
+        const lineMetrics = ctx.measureText(lineName);
+        const lineEnd = paddingLeft + lineMetrics.width;
+
+        const destMetrics = ctx.measureText(destName);
+        const remainingWidth = canvas.width - lineEnd - 24; // margin
+
+        ctx.textAlign = 'center';
+        const centerX = lineEnd + (canvas.width - lineEnd) / 2;
+
+        if (destMetrics.width > remainingWidth && destMetrics.width > 0) {
+            // Compress text horizontally if it doesn't fit the remaining area
+            this.fillTextNarrow(ctx, destName, centerX, canvas.height / 2 + 5, remainingWidth / destMetrics.width);
+        } else {
+            ctx.fillText(destName, centerX, canvas.height / 2 + 5);
+        }
         
         this.dt3DestTexture.needsUpdate = true;
     }
@@ -4884,7 +4934,11 @@ export class TrainModel {
 
         // Throttle levers: tilt forward/backward based on throttle
         this.throttleLevers.forEach(lever => {
-            const targetLeverRot = - throttle * 0.45 * lever.cabDir * (lever.invert ? -1 : 1);
+            let val = throttle;
+            if (lever.type === 'gas') val = Math.max(0, throttle);
+            else if (lever.type === 'brake') val = Math.min(0, throttle);
+
+            const targetLeverRot = - val * 0.45 * lever.cabDir * (lever.invert ? -1 : 1);
             lever.mesh.rotation.x += (targetLeverRot - lever.mesh.rotation.x) * 0.2;
         });
 
@@ -5550,6 +5604,12 @@ export class TrainModel {
         this.createDT1FrontGeometries();
         for (const plateGeom of this.geometries.dt1FacePlate) {
             faceGroup.add(new THREE.Mesh(plateGeom, this.materials.bodyRedDT1));
+
+            // Interior lining for the front plate (grey metal look)
+            // Offset 2.5cm inward to stay inside the 4cm red plate
+            const plateInt = new THREE.Mesh(plateGeom, this.materials.cockpitInteriorDark);
+            plateInt.position.z = -0.025;
+            faceGroup.add(plateInt);
         }
 
         // 2. Single flat windshield pane spanning the full flat width (no
@@ -5569,7 +5629,12 @@ export class TrainModel {
         for (const dx of [-0.718, 0.718]) {
             const divider = new THREE.Mesh(new THREE.BoxGeometry(0.02, G.dt1PaneH, 0.01), this.materials.bodyRedDT1);
             divider.position.set(dx, paneCenterY, 0.115);
-            faceGroup.add(divider);
+
+            // Interior counterpart for the divider line
+            const dividerInt = new THREE.Mesh(new THREE.BoxGeometry(0.02, G.dt1PaneH, 0.01), this.materials.cockpitInteriorDark);
+            dividerInt.position.set(dx, paneCenterY, 0.085);
+
+            faceGroup.add(divider, dividerInt);
         }
 
         for (const sx of [-1, 1]) {
@@ -5602,8 +5667,8 @@ export class TrainModel {
                 { y0: 0.73, y1: 0.85, rOff: 0.005, mat: this.materials.bodyWhite }, // accent stripe
                 { y0: 0.85, y1: G.dt1PaneY, rOff: 0, mat: this.materials.bodyRedDT1 }, // up to the glass corner
                 { y0: G.dt1PaneY + G.dt1PaneH, y1: 2.425, rOff: 0, mat: this.materials.bodyRedDT1 }, // glass corner up to the roofline
-                { y0: 0, y1: G.dt1PaneY, rOff: -0.03, mat: this.materials.dt1Wall }, // interior lining, lower
-                { y0: G.dt1PaneY + G.dt1PaneH, y1: 2.425, rOff: -0.03, mat: this.materials.dt1Wall } // interior lining, upper
+                { y0: 0, y1: G.dt1PaneY, rOff: -0.03, mat: this.materials.cockpitInteriorDark }, // interior lining, lower
+                { y0: G.dt1PaneY + G.dt1PaneH, y1: 2.425, rOff: -0.03, mat: this.materials.cockpitInteriorDark } // interior lining, upper
             ];
             for (const band of cornerBands) {
                 const cornerMesh = new THREE.Mesh(
@@ -5735,40 +5800,63 @@ export class TrainModel {
         const unscaledWidth = 2.82;
 
         const consoleDarkGrey = cheapMaterial({ color: '#2b2e35', roughness: 0.8, metalness: 0.2 });
-        const deskMat = cheapMaterial({ color: '#5d879b', roughness: 0.8 });
+        const deskMat = cheapMaterial({ color: '#5a5a58', roughness: 0.8 });
 
-        // Vertical back wall bulkhead (grey)
+        // Vertical back wall bulkhead (grey metal look)
         // Width narrowed to 2.81m to fit inside; Height reduced to 0.85m and lifted to start at Y=0.40 (floor)
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(2.81, 0.85, 0.02), cheapMaterial({ color: '#7a8086', roughness: 0.9 }));
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(2.81, 0.85, 0.02), this.materials.cockpitTrim);
         backWall.position.set(0, 0.825, noseZ - cabDir * 0.01);
         cockpitGroup.add(backWall);
 
-        // Horizontal desk plate. Raised so its top surface sits flush with the
-        // cab window's sill (matches the front windshield / side window cutout
-        // bottom, dt1PaneY + 0.35 world Y - see cabWinY0 in buildDT1Cockpit's
-        // flank code below); the dashboard panels are raised by the same amount
-        // so they keep sitting on the desk exactly as before.
+        // Horizontal desk plate. Moved 30cm forward.
         const deskTopY = this.geometries.dt1PaneY + 0.35;
-        const deskLift = deskTopY - 0.01 - 1.13; // 1.13 was the old desk center height
-        // Width kept clear of the interior wall lining (buildIntLining sits at
-        // xSign*1.40, spanning 1.395-1.405): at the old 2.81m width the desk's
-        // own half-width (1.405) reached exactly into that lining panel's
-        // footprint, and the desk's Y/Z range at that edge sat fully inside the
-        // lining's own Y/Z range too - the two materials were overlapping in a
-        // real volume there, not just touching. 2.78m keeps a 5mm clearance.
-        const deskPlate = new THREE.Mesh(new THREE.BoxGeometry(2.78, 0.02, 0.6), deskMat);
-        deskPlate.position.set(0, deskTopY - 0.01, noseZ - cabDir * 0.31);
+
+        // Custom shape for the desk to fit the rounded window
+        const deskShape = new THREE.Shape();
+        const dBackY = 0.31;  // Local Z = -0.31 (facing driver)
+        const dFrontY = -0.29; // Local Z = 0.29 (facing window)
+        const dHalf = 1.38;   // Slightly narrower to clear side walls
+        // Window curve parameters from createDT1FrontGeometries: flat part half-width 1.25m,
+        // corner radius 0.192m, nose position faceZOffset 0.22m.
+        const x0w = 1.25, rcw = 0.192, fzOff = 0.22, czw = 0.12 - 0.192;
+        const getZWin = (x) => {
+            const absX = Math.abs(x);
+            const margin = 0.03; // 3cm safety margin to stay inside the faceted window mesh
+            if (absX <= x0w) return fzOff + 0.12 - margin;
+            const a = Math.asin(Math.min(1, (absX - x0w) / rcw));
+            const t = a / (Math.PI / 2);
+            // Ruled surface interpolation matches createDT1TwistedCornerGeometry
+            return (fzOff + (czw + rcw * Math.cos(a)) - margin) * (1 - t);
+        };
+
+        deskShape.moveTo(-dHalf, dBackY);
+        for (let x = -dHalf; x <= dHalf; x += 0.01) {
+            // Desk ends at the window or at its max depth, whichever is closer to the driver.
+            // Shape Y maps to -Z in world space.
+            deskShape.lineTo(x, Math.max(dFrontY, -getZWin(x)));
+        }
+        deskShape.lineTo(dHalf, dBackY);
+        deskShape.closePath();
+
+        const deskGeom = new THREE.ExtrudeGeometry(deskShape, { depth: 0.02, bevelEnabled: false });
+        deskGeom.rotateX(-Math.PI / 2);
+        const deskPlate = new THREE.Mesh(deskGeom, deskMat);
+        // Position at noseZ, and rotate for rear cab
+        deskPlate.position.set(0, deskTopY - 0.01, noseZ);
+        if (cabDir === -1) deskPlate.rotation.y = Math.PI;
         cockpitGroup.add(deskPlate);
+
+        const deskLift = deskTopY - 0.01 - 1.13; // 1.13 was the old desk center height
 
         // Slanted panel layout for dashboard
         const panelWidth = 0.40;
         const panelHeight = 0.33; // 50% higher (was 0.22)
         const panelThickness = 0.08;
         const panelGeom = new THREE.BoxGeometry(panelWidth, panelHeight, panelThickness);
-        const panelMat = cheapMaterial({ color: '#5d879b', roughness: 0.7, metalness: 0.2 });
+        const panelMat = cheapMaterial({ color: '#747472', roughness: 0.7, metalness: 0.2 });
 
         const cameraZ = noseZ - cabDir * 1.2;
-        const R = 1.0; // pushed to the far end of the desk (near the windshield), away from the driver's seat at cabDir*0.72 further back
+        const R = 1.3; // moved 30cm forward (was 1.0)
         const W_spacing = 0.37;
 
         const panelConfigs = [
@@ -5796,6 +5884,20 @@ export class TrainModel {
         });
 
         this.populateDT1Panels(panelMeshes, cabDir);
+
+        // Single light-grey holder for both driving levers with slots
+        const holderMat = cheapMaterial({ color: '#bbbbbb', roughness: 0.6 });
+        const holderH = 0.04;
+        const holder = new THREE.Mesh(new THREE.BoxGeometry(0.32, holderH, 0.22), holderMat);
+        holder.position.set(cabDir * -0.4, 1.14 + deskLift + holderH / 2, noseZ - cabDir * 0.18);
+        cockpitGroup.add(holder);
+
+        const slotMat = cheapMaterial({ color: '#1a1a1a', roughness: 0.9 });
+        [-0.5, -0.3].forEach(sx => {
+            const slot = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.002, 0.18), slotMat);
+            slot.position.set(cabDir * sx, 1.14 + deskLift + holderH + 0.001, noseZ - cabDir * 0.18);
+            cockpitGroup.add(slot);
+        });
 
         // Speedometer Dial Face on Panel 3 (Center)
         const speedDialCanvas = document.createElement('canvas');
@@ -5878,45 +5980,32 @@ export class TrainModel {
         cap.position.set(0, 0, 0.005);
         speedDialMesh.add(cap);
 
-        // Physical Retro Driving Handle (Fahrschalterrad / Lever) - sits on the desk,
-        // so it rises with it too (1.14 was the old desk top height)
-        const leverGroup = new THREE.Group();
-        leverGroup.position.set(-0.55, 1.14 + deskLift, noseZ - cabDir * 0.38);
-        cockpitGroup.add(leverGroup);
+        // Physical Retro Driving Handle (Fahrschalterrad / Lever) - now two levers.
+        // Sits on the desk, so it rises with it too.
+        const buildLever = (xPos, type) => {
+            const lGrp = new THREE.Group();
+            lGrp.position.set(cabDir * xPos, 1.14 + deskLift, noseZ - cabDir * 0.18);
+            cockpitGroup.add(lGrp);
 
-        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.06, 12), consoleDarkGrey);
-        base.position.y = 0.03;
-        leverGroup.add(base);
+            const handleRod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 8), this.materials.chromeMetal);
+            handleRod.geometry.translate(0, 0.08, 0);
 
-        const handleRod = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.16, 8), this.materials.chromeMetal);
-        handleRod.geometry.translate(0, 0.08, 0);
-        handleRod.rotation.z = 0.3;
-        
-        const handleBall = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 12), cheapMaterial({ color: '#111111', roughness: 0.9 }));
-        handleBall.position.set(-0.024, 0.16, 0);
-        
-        const rodGroup = new THREE.Group();
-        rodGroup.add(handleRod, handleBall);
-        leverGroup.add(rodGroup);
+            // Knob directly on top of the stick
+            const handleBall = new THREE.Mesh(new THREE.SphereGeometry(0.028, 12, 12), cheapMaterial({ color: '#111111', roughness: 0.9 }));
+            handleBall.position.set(0, 0.16, 0);
 
-        this.throttleLevers.push({ mesh: rodGroup, cabDir: cabDir });
+            const rGrp = new THREE.Group();
+            rGrp.add(handleRod, handleBall);
+            lGrp.add(rGrp);
 
-        // Driver's seat
-        const seatGroup = new THREE.Group();
-        seatGroup.position.set(-0.25, 0.38, noseZ - cabDir * 0.72);
-        cockpitGroup.add(seatGroup);
+            this.throttleLevers.push({ mesh: rGrp, cabDir: cabDir, invert: true, type: type });
+        };
 
-        const seatPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.45, 8), this.materials.chromeMetal);
-        seatPedestal.position.y = 0.225;
-        
-        const seatBase = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.06, 0.44), this.materials.dt1SeatGreen);
-        seatBase.position.y = 0.48;
-        
-        // Seat backrest always positioned behind the driver based on cabDir
-        const seatBack = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.44, 0.06), this.materials.dt1SeatGreen);
-        seatBack.position.set(0, 0.70, -cabDir * 0.19);
-        
-        seatGroup.add(seatPedestal, seatBase, seatBack);
+        buildLever(-0.5, 'gas');
+        buildLever(-0.3, 'brake');
+
+        // Driver's seat: more ergonomic and aesthetic design with a texture fade
+        this.buildDT1DriverSeat(cockpitGroup, noseZ, cabDir);
 
         // Hollow Cab Enclosures (Side walls, floor, roof cover)
         const cockFloorGeom = new THREE.BoxGeometry(unscaledWidth, 0.05, 1.44);
@@ -5971,9 +6060,9 @@ export class TrainModel {
             return [bottomRed, midWhite, bottomRail, topRail, topRed];
         };
         const buildIntLining = (posX, zCenter, zLen) => {
-            const intBottom = new THREE.Mesh(new THREE.BoxGeometry(0.01, cabWinY0 - 0.375, zLen), this.materials.dt1Wall);
+            const intBottom = new THREE.Mesh(new THREE.BoxGeometry(0.01, cabWinY0 - 0.375, zLen), this.materials.cockpitInteriorDark);
             intBottom.position.set(posX, (0.375 + cabWinY0) / 2, zCenter);
-            const intTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 2.775 - cabWinY1, zLen), this.materials.dt1Wall);
+            const intTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 2.775 - cabWinY1, zLen), this.materials.cockpitInteriorDark);
             intTop.position.set(posX, (cabWinY1 + 2.775) / 2, zCenter);
             return [intBottom, intTop];
         };
@@ -6083,58 +6172,154 @@ export class TrainModel {
         // (dt1Ceiling box is 2.80 wide) for the same flush-seam reason as above.
         const cabCeilingLining = new THREE.Mesh(
             this.createDT1RoofGeometry(G.dt1FlatHalf - 0.01, G.dt1Rc, faceOffset, G.dt1ZFront, roofRearZ, 0.01, 1.40),
-            this.materials.bodyWhite
+            this.materials.cockpitCeiling
         );
         cabCeilingLining.position.set(0, 2.77, 0);
         roofGroup.add(cabCeilingLining);
 
-        // Cabin Rear Wall partition (retro golden wood grain panels)
+        // Cabin Rear Wall partition (retro golden wood grain panels on cabin side, light grey on cockpit side)
         const partitionWallMat = this.materials.dt1Wall;
+        const cockpitWallMat = this.materials.interiorWallG1;
+        const frameLineMat = this.materials.bodyDarkGrey;
         const chromeMat = this.materials.chromeMetal;
 
-        const partitionL = new THREE.Mesh(new THREE.BoxGeometry(1.01, 2.075, 0.05), partitionWallMat);
-        partitionL.position.set(-0.905, 1.4125, noseZ - cabDir * 1.44);
+        const buildPartitionMesh = (w, h, x, y, z) => {
+            const group = new THREE.Group();
+            group.position.set(x, y, z);
+
+            // Grey side (facing cockpit)
+            const grey = new THREE.Mesh(new THREE.PlaneGeometry(w, h), cockpitWallMat);
+            grey.position.z = cabDir * 0.025;
+            grey.rotation.y = (cabDir === 1) ? 0 : Math.PI;
+
+            // Wood side (facing passenger cabin)
+            const wood = new THREE.Mesh(new THREE.PlaneGeometry(w, h), partitionWallMat);
+            wood.position.z = -cabDir * 0.025;
+            wood.rotation.y = (cabDir === 1) ? Math.PI : 0;
+
+            // Edge filler
+            const fill = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.048), partitionWallMat);
+
+            group.add(grey, wood, fill);
+            return group;
+        };
+
+        const partPosZ = noseZ - cabDir * 1.44;
+        const partitionL = buildPartitionMesh(1.01, 2.075, -0.905, 1.4125, partPosZ);
+        const partitionR = buildPartitionMesh(1.01, 2.075, 0.905, 1.4125, partPosZ);
+        const partitionTop = buildPartitionMesh(2.82, 0.325, 0, 2.6125, partPosZ);
         
-        const partitionR = new THREE.Mesh(new THREE.BoxGeometry(1.01, 2.075, 0.05), partitionWallMat);
-        partitionR.position.set(0.905, 1.4125, noseZ - cabDir * 1.44);
-        
-        const partitionTop = new THREE.Mesh(new THREE.BoxGeometry(2.82, 0.325, 0.05), partitionWallMat);
-        partitionTop.position.set(0, 2.6125, noseZ - cabDir * 1.44);
-        
-        // Wood cabin door with rounded window
+        // Cabin door (dual-sided: grey/frame on cockpit, wood on cabin)
         const cabinDoorGroup = new THREE.Group();
-        cabinDoorGroup.position.set(0, 1.4125, noseZ - cabDir * 1.44);
+        cabinDoorGroup.position.set(0, 1.4125, partPosZ);
+
+        // Grey side + dark frame line (2mm border) - facing COCKPIT
+        const doorFrame = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 2.075), frameLineMat);
+        doorFrame.position.z = cabDir * 0.0245;
+        doorFrame.rotation.y = (cabDir === 1) ? 0 : Math.PI;
+
+        const doorGrey = new THREE.Mesh(new THREE.PlaneGeometry(0.796, 2.071), cockpitWallMat);
+        doorGrey.position.z = cabDir * 0.025;
+        doorGrey.rotation.y = (cabDir === 1) ? 0 : Math.PI;
+
+        // Wood side - facing PASSENGER CABIN
+        const doorWood = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 2.075), partitionWallMat);
+        doorWood.position.z = -cabDir * 0.025;
+        doorWood.rotation.y = (cabDir === 1) ? Math.PI : 0;
+
+        const doorFill = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.075, 0.048), partitionWallMat);
+        cabinDoorGroup.add(doorWood, doorFrame, doorGrey, doorFill);
+
+        // Door handles (Klinken) on both sides at ergonomic height (~1.1m from floor)
+        const handleGeom = new THREE.BoxGeometry(0.12, 0.02, 0.03);
+        const handleY = 1.48 - 1.4125;
+
+        const handleCockpit = new THREE.Mesh(handleGeom, chromeMat);
+        handleCockpit.position.set(-0.32, handleY, cabDir * 0.045);
+
+        const handleCabin = new THREE.Mesh(handleGeom, chromeMat);
+        handleCabin.position.set(-0.32, handleY, -cabDir * 0.045);
+
+        cabinDoorGroup.add(handleCockpit, handleCabin);
         cockpitGroup.add(cabinDoorGroup);
-
-        // Door frame panels (wood)
-        const doorL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 2.075, 0.05), partitionWallMat);
-        doorL.position.set(-0.29, 0, 0);
-        const doorR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 2.075, 0.05), partitionWallMat);
-        doorR.position.set(0.29, 0, 0);
-        const doorB = new THREE.Mesh(new THREE.BoxGeometry(0.36, 1.0, 0.05), partitionWallMat);
-        doorB.position.set(0, -0.5375, 0);
-        const doorT = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.175, 0.05), partitionWallMat);
-        doorT.position.set(0, 0.95, 0);
-        cabinDoorGroup.add(doorL, doorR, doorB, doorT);
-
-        // Rounded door glass
-        const doorGlassGeom = this.createRoundedBoxGeometry(0.36, 0.90, 0.02, 0.06);
-        const doorGlass = new THREE.Mesh(doorGlassGeom, this.materials.windowGlass);
-        doorGlass.position.set(0, 0.4125, 0);
-        cabinDoorGroup.add(doorGlass);
-
-        // Chrome bezel (hollow frame geometry to ensure transparency)
-        const doorBezelGeom = this.createRoundedFrameGeometry(0.38, 0.66, 0.025, 0.07, 0.02);
-        const doorBezel = new THREE.Mesh(doorBezelGeom, chromeMat);
-        doorBezel.position.set(0, 0.32, 0.005);
-        cabinDoorGroup.add(doorBezel);
-
-        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 0.12), chromeMat);
-        handle.position.set(-0.37, 1.25, noseZ - cabDir * (1.44 - 0.03));
-
-        cockpitGroup.add(partitionL, partitionR, partitionTop, handle);
+        cockpitGroup.add(partitionL, partitionR, partitionTop);
 
         // Interior station display removed for DT1.
+    }
+
+    // Canvas-based upholstery material with a green gradient fade and
+    // subtle "retro" quilting pattern for the DT1 cockpit chair.
+    getDT1CockpitSeatMaterial() {
+        if (this._dt1CockpitSeatMat) return this._dt1CockpitSeatMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        const grad = ctx.createLinearGradient(0, 0, 0, 128);
+        grad.addColorStop(0, '#2d4a2d'); // slightly brighter green top
+        grad.addColorStop(1, '#1a2e1a'); // dark green bottom
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 128, 128);
+
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 128; i += 16) {
+            ctx.beginPath();
+            ctx.moveTo(0, i); ctx.lineTo(128, i);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(i, 0); ctx.lineTo(i, 128);
+            ctx.stroke();
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+
+        this._dt1CockpitSeatMat = new THREE.MeshBasicMaterial({ map: tex, fog: false });
+        return this._dt1CockpitSeatMat;
+    }
+
+    // Ergonomic driver's chair for the DT1: features a rounded cushion,
+    // segmented backrest with lumbar support, a separate headrest and
+    // integrated armrests. Replaces the old three-box placeholder.
+    buildDT1DriverSeat(cockpitGroup, noseZ, cabDir) {
+        const seatMat = this.getDT1CockpitSeatMaterial();
+        const frameMat = cheapMaterial({ color: '#333333', roughness: 0.6, metalness: 0.3 });
+
+        const seatGroup = new THREE.Group();
+        // Positioned slightly off-center and retracted for legroom
+        seatGroup.position.set(cabDir * -0.25, 0.38, noseZ - cabDir * 0.88);
+        cockpitGroup.add(seatGroup);
+
+        const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.45, 8), this.materials.chromeMetal);
+        pedestal.position.y = 0.225;
+        seatGroup.add(pedestal);
+
+        const cushionGeom = this.createRoundedBoxGeometry(0.48, 0.10, 0.50, 0.06);
+        const cushion = new THREE.Mesh(cushionGeom, seatMat);
+        cushion.position.y = 0.48;
+        seatGroup.add(cushion);
+
+        const backrestGroup = new THREE.Group();
+        backrestGroup.position.set(0, 0.52, -cabDir * 0.20);
+        backrestGroup.rotation.x = -cabDir * 0.15;
+        seatGroup.add(backrestGroup);
+
+        const lowerBackGeom = this.createRoundedBoxGeometry(0.44, 0.40, 0.08, 0.06);
+        const lowerBack = new THREE.Mesh(lowerBackGeom, seatMat);
+        lowerBack.position.y = 0.20;
+        backrestGroup.add(lowerBack);
+
+        const armPadGeom = this.createRoundedBoxGeometry(0.06, 0.04, 0.28, 0.02);
+        for (const ax of [-1, 1]) {
+            const armSupport = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.18, 0.03), frameMat);
+            armSupport.position.set(ax * 0.26, 0.58, -0.05);
+            const armPad = new THREE.Mesh(armPadGeom, seatMat);
+            armPad.position.set(ax * 0.26, 0.67, -0.05);
+            seatGroup.add(armSupport, armPad);
+        }
     }
 
     drawDT1LeftScreen(screen) {
@@ -6775,6 +6960,21 @@ export class TrainModel {
         return texture;
     }
 
+    createWallCeilingFilletTexture(color1 = '#524F50', color2 = '#C1BFC5') {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 32);
+        grad.addColorStop(0, color1);
+        grad.addColorStop(1, color2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 32, 32);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return texture;
+    }
+
     createSeatGradientTexture(color1 = '#393C43', color2 = '#0F1628') {
         const canvas = document.createElement('canvas');
         canvas.width = 32;
@@ -7023,6 +7223,93 @@ export class TrainModel {
         geom.rotateY(sign < 0 ? -Math.PI / 2 : Math.PI / 2);
         geom.translate(sign * xBase, 0, 0);
         return geom;
+    }
+
+    // G1 transverse (X-axis) entry-area ceiling lamp: a single solid bar swept
+    // along the mathematical parabola z(x) = dir*bow*(x/halfWidth)^2 (vertex
+    // at x=0, both ends bowing toward +dir as they reach the car's side
+    // walls). Built as one continuous ring-swept box (same top/bottom/side/
+    // end-cap technique as StationModel.buildSweptBar) instead of chained
+    // straight segments, so it reads as a single cast piece with no facet
+    // seams - the ring normal at each sample is the true curve normal
+    // (perpendicular to the analytic tangent dz/dx), not a per-segment secant
+    // approximation.
+    createG1CurvedTransverseLampGeometry(dir, halfWidth, bow, thickness = 0.15, height = 0.02, segments = 24) {
+        const hw = thickness / 2, hh = height / 2;
+        const rings = [];
+        for (let r = 0; r <= segments; r++) {
+            const x = -halfWidth + (2 * halfWidth) * r / segments;
+            const z = dir * bow * (x / halfWidth) ** 2;
+            const slope = dir * bow * 2 * x / (halfWidth * halfWidth); // dz/dx
+            const tlen = Math.hypot(1, slope);
+            const nX = -slope / tlen, nZ = 1 / tlen; // in-plane normal, perpendicular to the tangent
+            const mk = (lat, y) => new THREE.Vector3(x + nX * lat, y, z + nZ * lat);
+            rings.push({ bl: mk(-hw, -hh), br: mk(hw, -hh), tr: mk(hw, hh), tl: mk(-hw, hh) });
+        }
+        const pos = [];
+        const tri = (a, b, c) => pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+        const quad = (p0, p1, p2, p3) => { tri(p0, p1, p2); tri(p0, p2, p3); };
+        for (let r = 0; r < segments; r++) {
+            const A = rings[r], B = rings[r + 1];
+            quad(A.tl, A.tr, B.tr, B.tl); // top
+            quad(A.br, A.bl, B.bl, B.br); // bottom
+            quad(A.bl, A.tl, B.tl, B.bl); // -lat side
+            quad(A.tr, A.br, B.br, B.tr); // +lat side
+        }
+        const c0 = rings[0], cN = rings[segments];
+        quad(c0.bl, c0.br, c0.tr, c0.tl); // start cap
+        quad(cN.tl, cN.tr, cN.br, cN.bl); // end cap
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        g.computeVertexNormals();
+        return g;
+    }
+
+    buildG1CurvedTransverseLamp(carGroup, baseZ, dir, halfWidth = 0.6375, bow = 0.20) {
+        const lamp = new THREE.Mesh(
+            this.createG1CurvedTransverseLampGeometry(dir, halfWidth, bow),
+            this.materials.lightGlowWhite
+        );
+        lamp.position.set(0, 2.80, baseZ);
+        carGroup.add(lamp);
+    }
+
+    // G1 rounded coving connecting the side wall to the ceiling, running the
+    // full car length. Convex quarter-ellipse centered on the sharp wall/
+    // ceiling corner (wallX, ceilingY) - it bulges outward into the cabin
+    // (like a rounded trim bead applied over the corner) rather than hugging
+    // the corner in a recessed cove. Starts flush with the wall at the
+    // door-top height and ends flush with the ceiling 60cm in from the wall.
+    // An ellipse (not a circle) since the vertical rise (door top to ceiling)
+    // and the 60cm horizontal protrusion aren't equal. The color fade is
+    // baked into the map (createWallCeilingFilletTexture), sampled via v=t;
+    // MeshBasicMaterial is unlit so no normals are needed for shading - only
+    // DoubleSide for visibility regardless of winding.
+    createG1WallCeilingFilletGeometry(sign, segments = 12) {
+        const wallX = 1.40, doorTopY = 2.45, ceilingY = 2.846, protrusion = 0.60;
+        const rx = protrusion, ry = ceilingY - doorTopY;
+        const pos = [], uv = [], idx = [];
+        for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const a = t * Math.PI / 2;
+            const x = sign * (wallX - rx * Math.sin(a));
+            const y = ceilingY - ry * Math.cos(a);
+            for (const z of [-0.5, 0.5]) {
+                pos.push(x, y, z);
+                uv.push(z + 0.5, t);
+            }
+        }
+        for (let i = 0; i < segments; i++) {
+            const b = i * 2;
+            if (sign > 0) idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3);
+            else idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2);
+        }
+        const g = new THREE.BufferGeometry();
+        g.setIndex(idx);
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+        g.computeVertexNormals();
+        return g;
     }
 
     // Vertical quarter-round corner column: outward-facing ruled strip sweeping
@@ -7800,55 +8087,140 @@ export class TrainModel {
                     const xOffsetOuter = xSign * 0.005;
                     const xOffsetInner = -xSign * 0.005;
 
-                    // Outer panels (thickness 0.01, shifted outwards)
-                    const sidePanelGeomOuter = new THREE.BoxGeometry(t, 0.93, 0.32625);
-                    const panelLOuter = new THREE.Mesh(sidePanelGeomOuter, this.materials.dt3WhiteOuter);
-                    panelLOuter.position.set(xOffsetOuter, 0.325, isLeft ? 0.273 : -0.273);
-                    const panelROuter = new THREE.Mesh(sidePanelGeomOuter, this.materials.dt3WhiteOuter);
-                    panelROuter.position.set(xOffsetOuter, 0.325, isLeft ? -0.273 : 0.273);
+                    // Window parameters (DT3 pointed window, 10cm gap to edges)
+                    const wW = 0.6725;
+                    const wH_vert = 0.93;
+                    const wP = 0.20; // additional slant depth
+                    const wR = 0.06; // top radius
+                    const wY_top = 0.79; // Y of window top
+                    const wY_bot_outer = -0.14; // Y of outer bottom corner
+                    const wY_bot_gap = -0.14 - wP; // Y of gap-side bottom corner
 
-                    const topPanelGeomOuter = new THREE.BoxGeometry(t, 0.285, 0.8725);
-                    const panelTopOuter = new THREE.Mesh(topPanelGeomOuter, this.materials.dt3WhiteOuter);
+                    const sideW = 0.1; // 10cm gap at edges
+                    // Slant down towards Outer Side (away from door gap)
+                    const zGap = isLeft ? 0.38625 : -0.38625;
+                    const zOuter = isLeft ? -0.38625 : 0.38625;
+
+                    // Outer panels (thickness 0.01, shifted outwards)
+                    const panelLOuter = new THREE.Mesh(new THREE.BoxGeometry(t, wH_vert + wP, sideW), this.materials.dt3WhiteOuter);
+                    panelLOuter.position.set(xOffsetOuter, (wY_top + wY_bot_gap) / 2, zOuter); // Outer side is longer
+
+                    const panelROuter = new THREE.Mesh(new THREE.BoxGeometry(t, wH_vert, sideW), this.materials.dt3WhiteOuter);
+                    panelROuter.position.set(xOffsetOuter, 0.325, zGap); // Gap side is shorter
+
+                    const panelTopOuter = new THREE.Mesh(new THREE.BoxGeometry(t, 0.285, 0.8725), this.materials.dt3WhiteOuter);
                     panelTopOuter.position.set(xOffsetOuter, 0.9325, 0);
 
-                    const stripeGeomOuter = new THREE.BoxGeometry(t, 0.225, 0.8725);
-                    const panelStripeOuter = new THREE.Mesh(stripeGeomOuter, this.materials.dt3Red);
+                    const panelStripeOuter = new THREE.Mesh(new THREE.BoxGeometry(t, 0.225, 0.8725), this.materials.dt3Red);
                     panelStripeOuter.position.set(xOffsetOuter, -0.9625, 0);
 
-                    const whiteBottomGeomOuter = new THREE.BoxGeometry(t, 0.71, 0.8725);
+                    // Bottom panel with slanted top cutout
+                    const bpShape = new THREE.Shape();
+                    const bp_yBot = -0.85;
+                    const bp_zOuter = -leafWidth/2;
+                    const bp_zGap = leafWidth/2;
+                    const bp_winZOuter = -wW/2;
+                    const bp_winZGap = wW/2;
+
+                    if (isLeft) {
+                        // Slant down towards Outer (-Z)
+                        bpShape.moveTo(bp_zOuter, wY_bot_gap);
+                        bpShape.lineTo(bp_winZOuter, wY_bot_gap);
+                        bpShape.lineTo(bp_winZGap, wY_bot_outer);
+                        bpShape.lineTo(bp_zGap, wY_bot_outer);
+                        bpShape.lineTo(bp_zGap, bp_yBot);
+                        bpShape.lineTo(bp_zOuter, bp_yBot);
+                    } else {
+                        // Slant down towards Outer (+Z)
+                        bpShape.moveTo(bp_zGap, wY_bot_gap);
+                        bpShape.lineTo(bp_winZGap, wY_bot_gap);
+                        bpShape.lineTo(bp_winZOuter, wY_bot_outer);
+                        bpShape.lineTo(bp_zOuter, wY_bot_outer);
+                        bpShape.lineTo(bp_zOuter, bp_yBot);
+                        bpShape.lineTo(bp_zGap, bp_yBot);
+                    }
+                    bpShape.closePath();
+
+                    const whiteBottomGeomOuter = new THREE.ExtrudeGeometry(bpShape, { depth: t, bevelEnabled: false });
+                    whiteBottomGeomOuter.translate(0, 0, -t/2);
+                    whiteBottomGeomOuter.rotateY(Math.PI / 2);
                     const panelBottomOuter = new THREE.Mesh(whiteBottomGeomOuter, this.materials.dt3WhiteOuter);
-                    panelBottomOuter.position.set(xOffsetOuter, -0.495, 0);
+                    panelBottomOuter.position.set(xOffsetOuter, 0, 0);
 
                     // Inner panels (thickness 0.01, shifted inwards, using dt3DoorInner)
-                    const sidePanelGeomInner = new THREE.BoxGeometry(t, 0.93, 0.32625);
-                    const panelLInner = new THREE.Mesh(sidePanelGeomInner, this.materials.dt3DoorInner);
-                    panelLInner.position.set(xOffsetInner, 0.325, isLeft ? 0.273 : -0.273);
-                    const panelRInner = new THREE.Mesh(sidePanelGeomInner, this.materials.dt3DoorInner);
-                    panelRInner.position.set(xOffsetInner, 0.325, isLeft ? -0.273 : 0.273);
+                    const panelLInner = new THREE.Mesh(new THREE.BoxGeometry(t, wH_vert + wP, sideW), this.materials.dt3DoorInner);
+                    panelLInner.position.set(xOffsetInner, (wY_top + wY_bot_gap) / 2, zOuter);
 
-                    const topPanelGeomInner = new THREE.BoxGeometry(t, 0.285, 0.8725);
-                    const panelTopInner = new THREE.Mesh(topPanelGeomInner, this.materials.dt3DoorInner);
+                    const panelRInner = new THREE.Mesh(new THREE.BoxGeometry(t, wH_vert, sideW), this.materials.dt3DoorInner);
+                    panelRInner.position.set(xOffsetInner, 0.325, zGap);
+
+                    const panelTopInner = new THREE.Mesh(new THREE.BoxGeometry(t, 0.285, 0.8725), this.materials.dt3DoorInner);
                     panelTopInner.position.set(xOffsetInner, 0.9325, 0);
 
-                    const stripeGeomInner = new THREE.BoxGeometry(t, 0.225, 0.8725);
-                    const panelStripeInner = new THREE.Mesh(stripeGeomInner, this.materials.dt3DoorInner);
+                    const panelStripeInner = new THREE.Mesh(new THREE.BoxGeometry(t, 0.225, 0.8725), this.materials.dt3DoorInner);
                     panelStripeInner.position.set(xOffsetInner, -0.9625, 0);
 
-                    const whiteBottomGeomInner = new THREE.BoxGeometry(t, 0.71, 0.8725);
-                    const panelBottomInner = new THREE.Mesh(whiteBottomGeomInner, this.materials.dt3DoorInner);
-                    panelBottomInner.position.set(xOffsetInner, -0.495, 0);
+                    const panelBottomInner = new THREE.Mesh(whiteBottomGeomOuter, this.materials.dt3DoorInner);
+                    panelBottomInner.position.set(xOffsetInner, 0, 0);
 
-                    // Glass (narrow window, same height/position as side windows)
-                    const glassGeom = this.createRoundedBoxGeometry(0.22, 0.93, 0.01, 0.06);
+                    // Glass (pointed window) - slightly oversized to prevent hairline gaps
+                    const gO = 0.01;
+                    const glassShape = new THREE.Shape();
+                    glassShape.moveTo(-wW/2 - gO + wR, wY_top + gO);
+                    glassShape.lineTo(wW/2 + gO - wR, wY_top + gO);
+                    glassShape.quadraticCurveTo(wW/2 + gO, wY_top + gO, wW/2 + gO, wY_top + gO - wR);
+                    if (isLeft) {
+                        glassShape.lineTo(wW/2 + gO, wY_bot_outer - gO);
+                        glassShape.lineTo(-wW/2 - gO, wY_bot_gap - gO);
+                    } else {
+                        glassShape.lineTo(wW/2 + gO, wY_bot_gap - gO);
+                        glassShape.lineTo(-wW/2 - gO, wY_bot_outer - gO);
+                    }
+                    glassShape.lineTo(-wW/2 - gO, wY_top + gO - wR);
+                    glassShape.quadraticCurveTo(-wW/2 - gO, wY_top + gO, -wW/2 - gO + wR, wY_top + gO);
+                    glassShape.closePath();
+
+                    const glassGeom = new THREE.ExtrudeGeometry(glassShape, { depth: 0.006, bevelEnabled: false });
                     glassGeom.rotateY(Math.PI / 2);
                     const glass = new THREE.Mesh(glassGeom, this.materials.windowGlass);
-                    glass.position.set(0.005, 0.325, 0);
+                    glass.position.set(0, 0, 0);
 
                     // Bezel (black bezel around window)
-                    const bezelGeom = this.createRoundedFrameGeometry(0.24, 0.95, 0.015, 0.07, 0.015);
+                    const bO = 0.035; // increased offset to 3.5cm
+                    const bezelShape = new THREE.Shape();
+                    // Outer boundary: Rectangular at top corners to safely cover panel corners
+                    bezelShape.moveTo(-wW/2 - bO, wY_top + bO);
+                    bezelShape.lineTo(wW/2 + bO, wY_top + bO);
+                    if (isLeft) {
+                        bezelShape.lineTo(wW/2 + bO, wY_bot_outer - bO);
+                        bezelShape.lineTo(-wW/2 - bO, wY_bot_gap - bO);
+                    } else {
+                        bezelShape.lineTo(wW/2 + bO, wY_bot_gap - bO);
+                        bezelShape.lineTo(-wW/2 - bO, wY_bot_outer - bO);
+                    }
+                    bezelShape.closePath();
+
+                    const hole = new THREE.Path();
+                    hole.moveTo(-wW/2 + wR, wY_top);
+                    hole.lineTo(wW/2 - wR, wY_top);
+                    hole.quadraticCurveTo(wW/2, wY_top, wW/2, wY_top - wR);
+                    if (isLeft) {
+                        hole.lineTo(wW/2, wY_bot_outer);
+                        hole.lineTo(-wW/2, wY_bot_gap);
+                    } else {
+                        hole.lineTo(wW/2, wY_bot_gap);
+                        hole.lineTo(-wW/2, wY_bot_outer);
+                    }
+                    hole.lineTo(-wW/2, wY_top - wR);
+                    hole.quadraticCurveTo(-wW/2, wY_top, -wW/2 + wR, wY_top);
+                    bezelShape.holes.push(hole);
+
+                    const bD = 0.035; // 3.5cm deep
+                    const bezelGeom = new THREE.ExtrudeGeometry(bezelShape, { depth: bD, bevelEnabled: false });
+                    bezelGeom.translate(0, 0, -bD/2);
                     bezelGeom.rotateY(Math.PI / 2);
                     const bezel = new THREE.Mesh(bezelGeom, this.materials.bodyGlossBlack);
-                    bezel.position.set(0, 0.325, 0);
+                    bezel.position.set(0, 0, 0);
 
                     leafGroup.add(
                         panelLOuter, panelROuter, panelTopOuter, panelStripeOuter, panelBottomOuter,
@@ -7865,6 +8237,7 @@ export class TrainModel {
                     doorL.position.set(xSign * 1.43, 1.475, zCenter - closedOffset);
                     doorR.position.set(xSign * 1.43, 1.475, zCenter + closedOffset);
                     carGroup.add(doorL, doorR);
+
 
                     this.doors.push({
                         meshL: doorL,

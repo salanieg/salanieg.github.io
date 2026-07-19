@@ -4,9 +4,11 @@
 // Frame-Loop (animate).
 //
 // KI-LANDKARTE (wo bearbeite ich was):
-//   - Ladevorgang/Ladebalken: startLoadingPipeline() (echte Bauschritte
-//     treiben den Balken) -> loadCityModel() (GLB-Download mit echtem %)
-//     -> warmUpEverything() (GPU-Upload hinter dem Splash).
+//   - Ladevorgang/Ladebalken: startCityModelDownload() (GLB-Download, läuft
+//     parallel ab init()) + startLoadingPipeline() (echte Bauschritte treiben
+//     den Balken, zeitbudgetiert pro rAF-Tick) -> finishAfterCityModel()
+//     (wartet ggf. auf den Download) -> warmUpEverythingIncremental()
+//     (GPU-Upload in Batches hinter dem Splash).
 //   - Linien-Verwaltung: buildLineRig/adoptRig/switchLine. Genau EINE Linie
 //     ist aktiv; this.sim/trackManager/stationModel/trainModel sind Aliase
 //     auf das aktive Rig. Geteilte Bauten (Plärrer-Halle, Stammstrecke,
@@ -21,8 +23,8 @@
 import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=66';
 import { WorldManager } from './simulator/WorldManager.js?v=67';
-import { TrackManager } from './simulator/TrackManager.js?v=76';
-import { StationModel } from './simulator/StationModel.js?v=73';
+import { TrackManager } from './simulator/TrackManager.js?v=78';
+import { StationModel } from './simulator/StationModel.js?v=86';
 import { TrainModel } from './simulator/TrainModel.js?v=88';
 import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=10';
 import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=10';
@@ -89,6 +91,13 @@ class App {
         // which switchLine() keeps in sync via this.world.sim).
         const canvasContainer = document.getElementById('canvas3d');
         this.world = new WorldManager(canvasContainer, null);
+
+        // Stadtmodell-Download SOFORT anstoßen: der GLB-Download (~4.7 MB)
+        // läuft übers Netzwerk parallel zu den CPU-gebundenen Bauschritten
+        // der Lade-Pipeline. Im Normalfall ist er längst fertig, wenn die
+        // Bauschritte durch sind — die Download-Zeit verschwindet aus dem
+        // Ladebalken statt sequenziell hintendran zu hängen.
+        this.startCityModelDownload();
 
         // Der komplette Szenenaufbau (U1-Rig, Plärrer, Stammstrecke, Weichen,
         // Chunk-Vorbau, Stadtmodell, GPU-Upload) läuft schrittweise über die
@@ -648,27 +657,39 @@ class App {
         });
 
         // ---- Executor ----
-        const BUILD_SLICE = 0.72; // Bauschritte belegen 0..72 % des Balkens
+        // Zeitbudget statt "ein Quantum pro Frame": innerhalb eines rAF-Ticks
+        // wird so lange weitergearbeitet, bis das Frame-Budget verbraucht ist.
+        // Vorher kostete jedes noch so billige Quantum (eine Station, 5 Chunks)
+        // eine volle vsync-Periode Wanduhrzeit — die Ladezeit hing damit sogar
+        // an der Monitor-Frequenz. Balken/Text zeichnen weiterhin jeden Frame.
+        const BUILD_SLICE = 0.72;      // Bauschritte belegen 0..72 % des Balkens
+        const FRAME_BUDGET_MS = 12;    // Rest der ~16.7 ms bleibt fürs Neuzeichnen
         const totalWeight = steps.reduce((a, s) => a + s.weight, 0);
         let doneWeight = 0;
         let idx = 0;
         setText(steps[0].label);
         setBar(0);
         const pump = () => {
-            const step = steps[idx];
-            setText(step.label);
-            let frac = step.tick();
-            if (frac === true) frac = 1;
-            if (frac >= 1) {
-                doneWeight += step.weight;
-                idx++;
-                frac = 0;
+            const start = performance.now();
+            let frac = 0;
+            while (idx < steps.length) {
+                const step = steps[idx];
+                frac = step.tick();
+                if (frac === true) frac = 1;
+                if (frac >= 1) {
+                    doneWeight += step.weight;
+                    idx++;
+                    frac = 0;
+                }
+                if (performance.now() - start >= FRAME_BUDGET_MS) break;
             }
-            setBar(((doneWeight + step.weight * frac) / totalWeight) * BUILD_SLICE);
             if (idx < steps.length) {
+                setText(steps[idx].label);
+                setBar(((doneWeight + steps[idx].weight * frac) / totalWeight) * BUILD_SLICE);
                 requestAnimationFrame(pump);
             } else {
-                this.loadCityModel(BUILD_SLICE, 0.25); // 72..97 %; GPU-Upload = Rest
+                setBar(BUILD_SLICE);
+                this.finishAfterCityModel(BUILD_SLICE, 0.25); // 72..97 %; GPU-Upload = Rest
             }
         };
         requestAnimationFrame(pump);
@@ -695,35 +716,15 @@ class App {
         this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
     }
 
-    // Lädt das Stadtmodell-GLB mit echtem Download-Fortschritt. `baseFrac` ist
-    // der Balkenstand beim Start, `slice` der Balken-Anteil des Downloads;
-    // danach folgt der GPU-Upload (warmUpEverything) bis 100 %.
-    loadCityModel(baseFrac = 0, slice = 0.25) {
-        const btnStart = this.dom.btnStart;
-        const setText = this._setLoadText || (() => {});
-        const setBar = this._setLoadBar || (() => {});
-
-        setText('LADE STADTMODELL');
-        setBar(baseFrac);
-
+    // Stößt den Stadtmodell-GLB-Download an — läuft parallel zu den CPU-
+    // gebundenen Bauschritten der Lade-Pipeline (siehe init()). Fortschritt
+    // und Ergebnis landen in this._cityDl; finishAfterCityModel() wartet
+    // darauf und schließt den Ladevorgang ab.
+    startCityModelDownload() {
         // Fallback-Gesamtgröße, falls der Server keine Content-Length liefert
         // (z. B. bei gzip-Transfer): city_model.glb ist ~4.7 MB groß.
         const FALLBACK_TOTAL_BYTES = 4.8 * 1024 * 1024;
-
-        const finishLoading = () => {
-            // GPU-Upload: alles (Stadt, alle Stationen, alle Chunks, Zug) noch
-            // hinter dem Splash auf die GPU schieben — sonst ruckelt der erste
-            // Rundumblick, wenn ~1900 Buffer lazy hochgeladen werden.
-            setText('GPU-UPLOAD');
-            setBar(baseFrac + slice);
-            requestAnimationFrame(() => {
-                this.warmUpEverything();
-                setBar(1);
-                btnStart.classList.add('loaded');
-                btnStart.disabled = false;
-                setText('Simulation starten');
-            });
-        };
+        this._cityDl = { frac: 0, totalMB: '4.8', done: false, error: null };
 
         const loader = new GLTFLoader();
         loader.setMeshoptDecoder(MeshoptDecoder);
@@ -760,14 +761,12 @@ class App {
                 this.cityModel = model;
 
                 console.log('City model loaded successfully.');
-                finishLoading();
+                this._cityDl.done = true;
             },
             (xhr) => {
                 const total = xhr.lengthComputable ? xhr.total : FALLBACK_TOTAL_BYTES;
-                const frac = Math.min(1, xhr.loaded / total);
-                const totalMB = (total / (1024 * 1024)).toFixed(1);
-                setText(`LADE STADTMODELL (${totalMB} MB)`);
-                setBar(baseFrac + slice * frac);
+                this._cityDl.frac = Math.min(1, xhr.loaded / total);
+                this._cityDl.totalMB = (total / (1024 * 1024)).toFixed(1);
             },
             (error) => {
                 console.error('Error loading city model:', error);
@@ -782,30 +781,77 @@ class App {
                 if (window.location.protocol === 'file:') {
                     errorMsg = 'Browser blockiert lokale Dateien (CORS).';
                 }
-
-                // Auch ohne Stadtmodell Zug/Stationen jetzt hochladen, damit der
-                // erste Rundumblick nicht ruckelt
-                this.warmUpEverything();
-
-                const bar = document.getElementById('btn-loading-bar');
-                if (bar) {
-                    bar.style.width = '100%';
-                    bar.style.backgroundColor = '#ef4444';
-                }
-                btnStart.classList.add('loaded');
-                btnStart.disabled = false;
-                setText(`Simulation starten (Fehler: ${errorMsg})`);
+                this._cityDl.error = errorMsg;
             }
         );
     }
 
-    // GPU-Warm-up für ALLES: hängt vorübergehend auch die aktuell weggekullten
-    // Stationsgruppen und alle vorgebauten (aber nicht aktiven) Chunks in die
-    // Szene, rendert einen Frame ohne Frustum-Culling (warmUpRenderer) und
-    // entfernt sie wieder. So sind sämtliche Geometrien/Texturen/Shader schon
-    // auf der GPU, bevor der Spieler losfährt — kein Upload-Hitch beim ersten
-    // Einfahren in neue Abschnitte.
-    warmUpEverything() {
+    // Schlussphase der Lade-Pipeline: wartet (falls nötig) auf den parallel
+    // gestarteten Stadtmodell-Download und zeigt dessen ECHTEN Fortschritt im
+    // Balken-Anteil `slice` (baseFrac..baseFrac+slice); danach GPU-Upload
+    // (warmUpEverything) bis 100 %. Ist der Download schon fertig, geht es
+    // ohne Wartezeit direkt zum GPU-Upload.
+    finishAfterCityModel(baseFrac = 0, slice = 0.25) {
+        const btnStart = this.dom.btnStart;
+        const setText = this._setLoadText || (() => {});
+        const setBar = this._setLoadBar || (() => {});
+
+        const poll = () => {
+            const dl = this._cityDl;
+            if (dl.error) {
+                // Auch ohne Stadtmodell Zug/Stationen jetzt hochladen, damit
+                // der erste Rundumblick nicht ruckelt
+                setText('GPU-UPLOAD');
+                this.warmUpEverythingIncremental(() => {}, () => {
+                    const bar = document.getElementById('btn-loading-bar');
+                    if (bar) {
+                        bar.style.width = '100%';
+                        bar.style.backgroundColor = '#ef4444';
+                    }
+                    btnStart.classList.add('loaded');
+                    btnStart.disabled = false;
+                    setText(`Simulation starten (Fehler: ${dl.error})`);
+                });
+                return;
+            }
+            if (!dl.done) {
+                setText(`LADE STADTMODELL (${dl.totalMB} MB)`);
+                setBar(baseFrac + slice * dl.frac);
+                requestAnimationFrame(poll);
+                return;
+            }
+            // GPU-Upload: alles (Stadt, alle Stationen, alle Chunks, Zug) noch
+            // hinter dem Splash auf die GPU schieben — sonst ruckelt der erste
+            // Rundumblick, wenn ~1900 Buffer lazy hochgeladen werden. Läuft
+            // gebatcht über mehrere Frames; der Balken füllt den Rest bis 100 %.
+            setText('GPU-UPLOAD');
+            setBar(baseFrac + slice);
+            const gpuBase = baseFrac + slice;
+            this.warmUpEverythingIncremental(
+                (f) => setBar(gpuBase + (1 - gpuBase) * f),
+                () => {
+                    setBar(1);
+                    btnStart.classList.add('loaded');
+                    btnStart.disabled = false;
+                    setText('Simulation starten');
+                }
+            );
+        };
+        poll();
+    }
+
+    // GPU-Warm-up für ALLES — in Batches über mehrere Frames verteilt statt in
+    // einem einzigen Riesen-Frame. (Der One-Shot-Vorgänger hing sekundenlang:
+    // sämtliche Shader-Kompilierungen + ~1900 Buffer-Uploads + Stadtmodell-
+    // Texturen in EINEM synchronen render()-Aufruf.) Hängt vorübergehend die
+    // weggekullten Stationsgruppen und alle vorgebauten (aber nicht aktiven)
+    // Chunks in die Szene und schaltet dann pro Frame für einen Batch Meshes
+    // das Frustum-Culling aus, damit der Renderer genau deren Geometrie/
+    // Texturen/Shader hochlädt. Danach ist alles auf der GPU, bevor der
+    // Spieler losfährt — kein Upload-Hitch beim ersten Einfahren in neue
+    // Abschnitte. `setBar` bekommt den Fortschritt 0..1, `onDone` läuft nach
+    // Env-Map-Bake und Aufräumen.
+    warmUpEverythingIncremental(setBar, onDone) {
         const tm = this.trackManager;
         const sm = this.stationModel;
         const tempAdded = [];
@@ -825,8 +871,41 @@ class App {
                 }
             });
         }
-        this.warmUpRenderer();
-        for (const [parent, obj] of tempAdded) parent.remove(obj);
+
+        const meshes = [];
+        this.world.scene.traverse(o => { if (o.isMesh) meshes.push(o); });
+
+        let i = 0;
+        let batch = 64;
+        const tick = () => {
+            const t0 = performance.now();
+            const end = Math.min(meshes.length, i + batch);
+            const restore = [];
+            for (; i < end; i++) {
+                const m = meshes[i];
+                if (m.frustumCulled) { m.frustumCulled = false; restore.push(m); }
+            }
+            this.world.renderer.render(this.world.scene, this.world.activeCamera);
+            restore.forEach(m => m.frustumCulled = true);
+            setBar(meshes.length ? i / meshes.length : 1);
+
+            // Batchgröße an die gemessene Frame-Dauer anpassen: zügig
+            // durchlaufen, aber keine sekundenlangen Einzel-Frames erzeugen
+            const dt = performance.now() - t0;
+            if (dt > 150) batch = Math.max(16, batch >> 1);
+            else if (dt < 50) batch = Math.min(1024, batch << 1);
+
+            if (i < meshes.length) {
+                requestAnimationFrame(tick);
+            } else {
+                // Interieur-Schnappschuss für die Faux-Glas-Reflexionen — jetzt
+                // ist alles warm, der Bake selbst kostet nur noch einen Frame
+                this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
+                for (const [parent, obj] of tempAdded) parent.remove(obj);
+                onDone();
+            }
+        };
+        requestAnimationFrame(tick);
     }
 
     toggleCityDebugHud() {

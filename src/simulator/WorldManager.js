@@ -655,7 +655,8 @@ export class WorldManager {
         const direction = this.sim.isReversing ? -1 : 1;
         const isG1 = (this.sim.trainModelType === 'G1');
         const isDT3 = (this.sim.trainModelType === 'DT3');
-        const trainLength = isG1 ? 76.170 : (isDT3 ? 38.085 : 76.0); // 1:1 – volle Zuglänge in Metern
+        const isDT1 = (this.sim.trainModelType === 'DT1');
+        const trainLength = isG1 ? 76.170 : (isDT3 ? 38.085 : 75.5); // 1:1 – volle Zuglänge in Metern
         
         // Train front is at trainZ, rear is at trainZ - direction * trainLength
         const frontZ = trainZ;
@@ -667,7 +668,7 @@ export class WorldManager {
 
         // Update headlight position (always at the front of the train, relative to active leading carriage)
         const activeCabCar = train3D.carriages[this.sim.isReversing ? (train3D.carriages.length - 1) : 0];
-        const activeCarLength = isG1 ? 19.270 : (isDT3 ? 19.0425 : 19.0);
+        const activeCarLength = isG1 ? 19.270 : (isDT3 ? 19.0425 : 18.575);
         
         const headLocalPos = this.sim.isReversing ? _wmHeadPos.set(0, 1.2, -activeCarLength - 0.5) : _wmHeadPos.set(0, 1.2, 0.5);
         const headLocalTarget = this.sim.isReversing ? _wmHeadTarget.set(0, 0.2, -40.5) : _wmHeadTarget.set(0, 0.2, 40.5);
@@ -678,7 +679,8 @@ export class WorldManager {
         switch (this.activeCameraType) {
             case 'cab': {
                 // Driver's perspective inside the active leading carriage
-                const cabLocalPos = this.sim.isReversing ? _wmLocal.set(0, 2.00, -activeCarLength + 1.1) : _wmLocal.set(0, 2.00, -1.1);
+                const cabOffset = isDT1 ? 1.2 : 1.1;
+                const cabLocalPos = this.sim.isReversing ? _wmLocal.set(0, 2.00, -activeCarLength + cabOffset) : _wmLocal.set(0, 2.00, -cabOffset);
 
                 // Calculate local direction vector with relative yaw/pitch (smoothed
                 // towards the touch/mouse-driven target so drag jitter isn't jarring)

@@ -258,10 +258,10 @@ export class Simulation {
     }
  
     get trainHalfLength() {
-        // Maßstab 1:1 – 1 Einheit = 1 Meter. Halbe Gesamtzuglänge (G1 = 76,170 m, DT1 ≈ 74,3 m, DT3 ≈ 38,085 m).
+        // Maßstab 1:1 – 1 Einheit = 1 Meter. Halbe Gesamtzuglänge (G1 = 76,170 m, DT1 ≈ 75,5 m, DT3 ≈ 38,085 m).
         if (this.trainModelType === 'G1') return 38.085;
         if (this.trainModelType === 'DT3') return 19.0425;
-        return 37.15; // DT1
+        return 37.75; // DT1 (74.3m + 1.2m extra gap in the middle)
     }
 
     // True, wenn `dist` in einer Weichen-Übergangszone liegt (dort ersetzt der
