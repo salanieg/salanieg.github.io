@@ -11,16 +11,25 @@
 // stations + connecting track exist exactly once in the scene instead of once per line.
 // WICHTIG: ?v= muss mit main.js/StationModel.js übereinstimmen (sonst wird die
 // große TrackDataU2-Datei unter zwei URLs doppelt geladen und geparst).
-import { TRACK_DATA_U2 } from './TrackDataU2.js?v=10';
+import { TRACK_DATA_U2 } from './TrackDataU2.js?v=11';
 
 const TRUNK_STATION_NAMES = ['Rothenburger Straße', 'Opernhaus', 'Hauptbahnhof', 'Wöhrder Wiese', 'Rathenauplatz'];
-// Must stay inside the real switch distance (~73-76m past each station's centre --
-// halfLength+30 past the platform edge) AND inside the splice's own guaranteed-identical
-// range (scratch/gen_topology_u23.mjs's crossfade completes ~15m before each station, given
-// TRUNK_MARGIN=65/BLEND=10). 40m clears the +-25m worst-case chunk-boundary slop (see
-// Simulation.isTrunkZone's cutoff, which must be smaller than this) without reaching the
-// switch or the still-converging part of the crossfade.
-const EXTRACT_MARGIN = 40;
+// LOWER BOUND (this was 40 and caused the "Längs-Lücke am Portal" bug): the margin is
+// measured from each station's CENTRE, but the two boundary stations' hulls are built by
+// this rig and sweep out to ± their halfLength (Rothenburger 43.09, Rathenauplatz 46.36),
+// and Rathenauplatz's numSub-grid ceiling even reaches ~47.5m from centre. If the slice
+// ends before that, those swept rings sample arc lengths past the sliced sim's `total` --
+// and Simulation._sampleTrack CLAMPS out-of-range arc to [0,total], so the rings collapse
+// onto the end point and the switch-side walls/ceiling/deck/portal simply don't get built
+// (rails + bed still come from the un-clamped per-line sim / the switch piece, hence the
+// classic "Schienen connecten, Betonplatte ragt raus, aber Hülle fehlt"). So EXTRACT_MARGIN
+// MUST exceed ~47.5. The trunk rig also must NOT render its generic tube past the platform
+// edge into the switch throat -- that is suppressed via isSwitchZone in TrackManager
+// (createChunk / _clampInterval), so the extra data past ±halfLength is unused padding.
+// UPPER BOUND: stay short of the real switch (~73-76m past centre) and inside the splice's
+// guaranteed-identical range (~65m, TRUNK_MARGIN=65/BLEND=10 in gen_topology_u23.mjs).
+// 55 sits comfortably between 47.5 and 65.
+const EXTRACT_MARGIN = 55;
 
 function buildTrunkData() {
     const td = TRACK_DATA_U2;

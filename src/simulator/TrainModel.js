@@ -8087,8 +8087,8 @@ export class TrainModel {
                     const xOffsetOuter = xSign * 0.005;
                     const xOffsetInner = -xSign * 0.005;
 
-                    // Window parameters (DT3 pointed window, 10cm gap to edges)
-                    const wW = 0.6725;
+                    // Window parameters (DT3 pointed window, 17.5cm gap to edges)
+                    const wW = 0.5225;
                     const wH_vert = 0.93;
                     const wP = 0.20; // additional slant depth
                     const wR = 0.06; // top radius
@@ -8096,17 +8096,17 @@ export class TrainModel {
                     const wY_bot_outer = -0.14; // Y of outer bottom corner
                     const wY_bot_gap = -0.14 - wP; // Y of gap-side bottom corner
 
-                    const sideW = 0.1; // 10cm gap at edges
+                    const sideW = 0.175; // 17.5cm gap at edges
                     // Slant down towards Outer Side (away from door gap)
-                    const zGap = isLeft ? 0.38625 : -0.38625;
-                    const zOuter = isLeft ? -0.38625 : 0.38625;
+                    const zGap = isLeft ? 0.34875 : -0.34875;
+                    const zOuter = isLeft ? -0.34875 : 0.34875;
 
                     // Outer panels (thickness 0.01, shifted outwards)
                     const panelLOuter = new THREE.Mesh(new THREE.BoxGeometry(t, wH_vert + wP, sideW), this.materials.dt3WhiteOuter);
-                    panelLOuter.position.set(xOffsetOuter, (wY_top + wY_bot_gap) / 2, zOuter); // Outer side is longer
+                    panelLOuter.position.set(xOffsetOuter, (wY_top + wY_bot_gap) / 2, zGap); // Gap side is longer
 
                     const panelROuter = new THREE.Mesh(new THREE.BoxGeometry(t, wH_vert, sideW), this.materials.dt3WhiteOuter);
-                    panelROuter.position.set(xOffsetOuter, 0.325, zGap); // Gap side is shorter
+                    panelROuter.position.set(xOffsetOuter, 0.325, zOuter); // Outer side is shorter
 
                     const panelTopOuter = new THREE.Mesh(new THREE.BoxGeometry(t, 0.285, 0.8725), this.materials.dt3WhiteOuter);
                     panelTopOuter.position.set(xOffsetOuter, 0.9325, 0);
@@ -8149,10 +8149,10 @@ export class TrainModel {
 
                     // Inner panels (thickness 0.01, shifted inwards, using dt3DoorInner)
                     const panelLInner = new THREE.Mesh(new THREE.BoxGeometry(t, wH_vert + wP, sideW), this.materials.dt3DoorInner);
-                    panelLInner.position.set(xOffsetInner, (wY_top + wY_bot_gap) / 2, zOuter);
+                    panelLInner.position.set(xOffsetInner, (wY_top + wY_bot_gap) / 2, zGap);
 
                     const panelRInner = new THREE.Mesh(new THREE.BoxGeometry(t, wH_vert, sideW), this.materials.dt3DoorInner);
-                    panelRInner.position.set(xOffsetInner, 0.325, zGap);
+                    panelRInner.position.set(xOffsetInner, 0.325, zOuter);
 
                     const panelTopInner = new THREE.Mesh(new THREE.BoxGeometry(t, 0.285, 0.8725), this.materials.dt3DoorInner);
                     panelTopInner.position.set(xOffsetInner, 0.9325, 0);
@@ -8193,9 +8193,13 @@ export class TrainModel {
                     bezelShape.lineTo(wW/2 + bO, wY_top + bO);
                     if (isLeft) {
                         bezelShape.lineTo(wW/2 + bO, wY_bot_outer - bO);
+                        bezelShape.lineTo(wW/2, wY_bot_outer - bO);
+                        bezelShape.lineTo(-wW/2, wY_bot_gap - bO);
                         bezelShape.lineTo(-wW/2 - bO, wY_bot_gap - bO);
                     } else {
                         bezelShape.lineTo(wW/2 + bO, wY_bot_gap - bO);
+                        bezelShape.lineTo(wW/2, wY_bot_gap - bO);
+                        bezelShape.lineTo(-wW/2, wY_bot_outer - bO);
                         bezelShape.lineTo(-wW/2 - bO, wY_bot_outer - bO);
                     }
                     bezelShape.closePath();

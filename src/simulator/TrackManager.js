@@ -395,9 +395,9 @@ export class TrackManager {
             }
             hideWallFlags.push(flag);
         }
-        
+
         this._buildPolylineTunnel(group, pts, (i) => 3.1, -2.0, 4.6, hideWallFlags);
-        
+
         // Build concrete track bed
         const bedMesh = this._buildPolylineTunnel(group, pts, (i) => 1.6, -0.7, -0.3);
         if (bedMesh) {
@@ -613,7 +613,9 @@ export class TrackManager {
         const dive = (d) => sim.getLowerLevelOffset(d);
         const samplePath = (latFn, yFn, d0, d1, ds = 5) => {
             const pts = [];
-            for (let d = d0; d <= d1 + 0.01; d += ds) {
+            const nSeg = Math.max(1, Math.ceil((d1 - d0) / ds));
+            for (let i = 0; i <= nSeg; i++) {
+                const d = i === nSeg ? d1 : d0 + i * ds;
                 const c = sim.getTrackPosition(d);
                 const tan = sim.getTrackTangent(d);
                 const pt = c.clone().addScaledVector(new THREE.Vector3(-tan.z, 0, tan.x), latFn(d));
@@ -623,71 +625,18 @@ export class TrackManager {
             return pts;
         };
 
-        if (!this._plTubeGeom) this._plTubeGeom = new THREE.CylinderGeometry(1, 1, 1, 20, 1, true).rotateX(Math.PI / 2);
-        if (!this._plNeonGeom) this._plNeonGeom = new THREE.CylinderGeometry(0.04, 0.04, 1, 8).rotateX(Math.PI / 2);
-        if (!this._plHaloGeom) {
-            // Edge-peaking halo geometry: peak is at thetaStart (U=0).
-            // Start at 180deg (-Z) so that after rotateX(PI/2) it starts at +Y (Top).
-            this._plHaloGeom = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true, Math.PI, 0.8).rotateX(Math.PI / 2);
-        }
-        const TUBE_R = 3.7;
-        const up = new THREE.Vector3(0, 1, 0);
-        const tubeM = [], neonM = [], haloM = [];
-        const renderTube = (pts) => {
-            for (let i = 0; i < pts.length - 1; i++) {
-                const prev = pts[i], cur = pts[i + 1];
-                const dir = new THREE.Vector3().subVectors(cur, prev);
-                const len = dir.length();
-                if (len < 0.01) continue;
-                dir.normalize();
-                const right = new THREE.Vector3().crossVectors(up, dir).normalize();
-                const aUp = new THREE.Vector3().crossVectors(dir, right).normalize();
-                const mid = new THREE.Vector3().addVectors(prev, cur).multiplyScalar(0.5);
-                mid.y += 0.8;
-                const m = new THREE.Matrix4().makeBasis(right, aUp, dir);
-                m.setPosition(mid);
-                m.multiply(new THREE.Matrix4().makeScale(TUBE_R, TUBE_R, len));
-                tubeM.push(m);
-
-                // Single neon tube at the crown center (3m length every 10m)
-                const nm = new THREE.Matrix4().makeBasis(right, aUp, dir);
-                nm.setPosition(mid.clone().addScaledVector(aUp, TUBE_R - 0.04));
-                nm.multiply(new THREE.Matrix4().makeScale(1, 1, 3.0));
-                neonM.push(nm);
-
-                // Two curved halos meeting at the neon lamp, shining down the sides
-                const haloScale = TUBE_R * 0.98;
-                // Halo 1 (Left): CCW from top center
-                const hm1 = new THREE.Matrix4().makeBasis(right, aUp, dir);
-                hm1.setPosition(mid.clone().addScaledVector(aUp, 0.02).addScaledVector(dir, 0.001)); // Shifted up "bis zum Anschlag"
-                hm1.multiply(new THREE.Matrix4().makeScale(haloScale, haloScale, 3.0));
-                haloM.push(hm1);
-
-                // Halo 2 (Right): CW from top center (mirrored basis)
-                const rightFlipped = right.clone().multiplyScalar(-1);
-                const hm2 = new THREE.Matrix4().makeBasis(rightFlipped, aUp, dir);
-                hm2.setPosition(mid.clone().addScaledVector(aUp, 0.02).addScaledVector(dir, -0.001)); // Shifted up "bis zum Anschlag"
-                hm2.multiply(new THREE.Matrix4().makeScale(haloScale, haloScale, 3.0));
-                haloM.push(hm2);
-            }
-        };
-
         const coll = this._newTrackCollectors();
         for (const sign of [-1, 1]) {
             const d0 = sign < 0 ? P - zoneHalf : P + innerHalf;
             const d1 = sign < 0 ? P - innerHalf : P + zoneHalf;
-            // Forward (+sp/2) rides the LOWER Gleis 4 slot for U2/U3; reverse the upper.
-            // Power rail at -1.1 for both: matches the hall's mock stubs, whose renderTrack
-            // placed it at +1.1 in U1's (anti-parallel) frame.
-            this._collectTrackRun(coll, samplePath((d) => sp(d) / 2, dive, d0, d1), { powerSide: -1, sleepers: true });
-            this._collectTrackRun(coll, samplePath((d) => -sp(d) / 2, () => 0, d0, d1), { powerSide: -1, sleepers: true });
-            renderTube(samplePath((d) => sp(d) / 2, dive, d0, d1, 10));
-            renderTube(samplePath((d) => -sp(d) / 2, () => 0, d0, d1, 10));
+
+            const lowerPts = samplePath((d) => sp(d) / 2, dive, d0, d1, 5);
+            const upperPts = samplePath((d) => -sp(d) / 2, () => 0, d0, d1, 5);
+
+            this._buildSingleTrackBranch(group, coll, lowerPts, sim, false);
+            this._buildSingleTrackBranch(group, coll, upperPts, sim, false);
         }
         this._emitTrackCollectors(group, coll);
-        this._addInstanced(group, this._plTubeGeom, this.materials.tunnelWall, tubeM);
-        this._addInstanced(group, this._plNeonGeom, this.materials.tunnelGlow, neonM);
-        this._addInstanced(group, this._plHaloGeom, this.materials.plaerrerHaloMat, haloM);
         this.scene.add(group);
     }
 
@@ -1724,69 +1673,6 @@ export class TrackManager {
         // standard portal frames the transition into the generic double-track tunnel. A matching
         // portal at each platform end makes the tube join the station hall flush ("bündig").
         const tubeMat = this.materials.tunnelWall;
-        const TUBE_R = 3.7;
-        if (!this._plTubeGeom) this._plTubeGeom = new THREE.CylinderGeometry(1, 1, 1, 20, 1, true).rotateX(Math.PI / 2);
-        if (!this._plNeonGeom) this._plNeonGeom = new THREE.CylinderGeometry(0.04, 0.04, 1, 8).rotateX(Math.PI / 2);
-        if (!this._plHaloGeom) {
-            // Start at 180deg (-Z) so that after rotateX(PI/2) it starts at +Y (Top).
-            this._plHaloGeom = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true, Math.PI, 0.8).rotateX(Math.PI / 2);
-        }
-        // Tube segments + their crown lamp strips only collect matrices here; they become
-        // InstancedMeshes after the loop.
-        const tubeM = [], neonM = [], haloM = [];
-        const renderTube = (latFn, yFn, d0, d1) => {
-            const ds = 10, R = TUBE_R;
-            // The last ring must land EXACTLY on d1: with a plain `d += ds` loop the tube
-            // stopped up to ds short of the end wall / zone boundary whenever (d1-d0) is not
-            // a multiple of ds — the "tube doesn't reach the cutout" gap.
-            const nSeg = Math.max(1, Math.ceil((d1 - d0) / ds));
-            let prev = null;
-            for (let i = 0; i <= nSeg; i++) {
-                const d = i === nSeg ? d1 : d0 + i * ds;
-                const c = sim.getTrackPosition(d);
-                const tan = sim.getTrackTangent(d);
-                const nrm = new THREE.Vector3(-tan.z, 0, tan.x);
-                const cur = c.clone().addScaledVector(nrm, latFn(d));
-                cur.y = c.y + yFn(d) + 0.8;
-                if (prev) {
-                    const dir = new THREE.Vector3().subVectors(cur, prev);
-                    const len = dir.length();
-                    if (len > 0.01) {
-                        dir.normalize();
-                        const right = new THREE.Vector3().crossVectors(up, dir).normalize();
-                        const aUp = new THREE.Vector3().crossVectors(dir, right).normalize();
-                        const mid = new THREE.Vector3().addVectors(prev, cur).multiplyScalar(0.5);
-                        const m = new THREE.Matrix4().makeBasis(right, aUp, dir);
-                        m.setPosition(mid);
-                        m.multiply(new THREE.Matrix4().makeScale(R, R, len));
-                        tubeM.push(m);
-
-                        // Single neon tube at the crown center (3m length every 10m)
-                        const nm = new THREE.Matrix4().makeBasis(right, aUp, dir);
-                        nm.setPosition(mid.clone().addScaledVector(aUp, R - 0.04));
-                        nm.multiply(new THREE.Matrix4().makeScale(1, 1, 3.0));
-                        neonM.push(nm);
-
-                        // Two curved halos meeting at the neon lamp, shining down the sides
-                        const haloScale = R * 0.98;
-                        // Halo 1 (Left): CCW from top center
-                        const hm1 = new THREE.Matrix4().makeBasis(right, aUp, dir);
-                        hm1.setPosition(mid.clone().addScaledVector(aUp, 0.02).addScaledVector(dir, 0.001)); // Shifted up "bis zum Anschlag"
-                        hm1.multiply(new THREE.Matrix4().makeScale(haloScale, haloScale, 3.0));
-                        haloM.push(hm1);
-
-                        // Halo 2 (Right): CW from top center (mirrored basis)
-                        const rightFlipped = right.clone().multiplyScalar(-1);
-                        const hm2 = new THREE.Matrix4().makeBasis(rightFlipped, aUp, dir);
-                        hm2.setPosition(mid.clone().addScaledVector(aUp, 0.02).addScaledVector(dir, -0.001)); // Shifted up "bis zum Anschlag"
-                        hm2.multiply(new THREE.Matrix4().makeScale(haloScale, haloScale, 3.0));
-                        haloM.push(hm2);
-                    }
-                }
-                prev = cur;
-            }
-        };
-
         const buildEndWall = (d, lat, yc, mat, uLeft, uRight, vBot, vTop, noHole) => {
             const shape = new THREE.Shape();
             shape.moveTo(uLeft, vBot);
@@ -1796,70 +1682,82 @@ export class TrackManager {
             shape.lineTo(uLeft, vBot);
             if (!noHole) {
                 const hole = new THREE.Path();
-                hole.absarc(0, 0, TUBE_R + 0.05, 0, Math.PI * 2, true);
+                const hw = 3.15;
+                const hBot = -2.0;
+                const hTop = 3.8;
+                hole.moveTo(-hw, hBot);
+                hole.lineTo(hw, hBot);
+                hole.lineTo(hw, hTop);
+                hole.lineTo(-hw, hTop);
+                hole.lineTo(-hw, hBot);
                 shape.holes.push(hole);
             }
             const f = frameAt(d);
             const pp = f.c.clone().addScaledVector(f.nrm, lat);
             const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), mat);
             mesh.position.set(pp.x, yc, pp.z);
-            // rotY alone maps the shape's local +X to -nrm, i.e. the u-coordinates (designed
-            // in +nrm lateral coords like every other lateral offset here) would come out
-            // MIRRORED about the track axis: the asymmetric panels then overshoot one side
-            // wall and leave the middle of the end wall wide open. The extra half turn flips
-            // local +X onto +nrm (the tube hole is centred at u=0, so it stays aligned; the
-            // materials are DoubleSide, so the flipped facing is irrelevant).
             mesh.rotation.y = f.rotY + Math.PI;
             group.add(mesh);
         };
 
+        const samplePlaerrerPath = (latFn, yFn, d0, d1, ds = 5) => {
+            const pts = [];
+            const nSeg = Math.max(1, Math.ceil((d1 - d0) / ds));
+            for (let i = 0; i <= nSeg; i++) {
+                const d = i === nSeg ? d1 : d0 + i * ds;
+                const c = sim.getTrackPosition(d);
+                const tan = sim.getTrackTangent(d);
+                const pt = c.clone().addScaledVector(new THREE.Vector3(-tan.z, 0, tan.x), latFn(d));
+                pt.y = c.y + yFn(d);
+                pts.push(pt);
+            }
+            return pts;
+        };
+
+        const coll = this._newTrackCollectors();
         for (const sign of [-1, 1]) {
             const inner = P + sign * platHalf;     // platform end (joins the station)
             const outer = P + sign * zoneHalf;     // zone boundary (joins the generic tunnel)
             const r0 = Math.min(inner, outer), r1 = Math.max(inner, outer);
             
-            // Running tracks tubes
-            renderTube(d => sp(d) / 2, () => 0, r0, r1);     // upper running (Hardhöhe)
-            renderTube(d => -sp(d) / 2, dive, r0, r1);        // lower running (Langwasser)
+            // Build single-track branches for all 4 track corridors (running + opposite)
+            // spanning the full zone from platform end (inner) to zone boundary (outer)
+            const upperRunPts = samplePlaerrerPath(d => sp(d) / 2, () => 0, r0, r1);
+            const lowerRunPts = samplePlaerrerPath(d => -sp(d) / 2, dive, r0, r1);
+            const upperOppPts = samplePlaerrerPath(d => sp(d) / 2 - 18.08, () => 0, r0, r1);
+            const lowerOppPts = samplePlaerrerPath(d => -sp(d) / 2 - 18.08, dive, r0, r1);
 
-            // Future track connection tubes (running 20 meters from platform ends into the darkness)
-            const oppR0 = Math.min(inner, inner + sign * 20.0);
-            const oppR1 = Math.max(inner, inner + sign * 20.0);
-            
-            // Draw upper and lower opposite mock tubes at both ends
-            renderTube(d => sp(d) / 2 - 18.08, () => 0, oppR0, oppR1);     // upper opposite
-            renderTube(d => -sp(d) / 2 - 18.08, dive, oppR0, oppR1);        // lower opposite
+            this._buildSingleTrackBranch(group, coll, upperRunPts, sim, false);
+            this._buildSingleTrackBranch(group, coll, lowerRunPts, sim, false);
+            this._buildSingleTrackBranch(group, coll, upperOppPts, sim, false);
+            this._buildSingleTrackBranch(group, coll, lowerOppPts, sim, false);
+
             const baseYi = sim.getTrackPosition(inner).y;
 
             // Upper portals
             if (sign === 1) {
                 // Hardhöhe end: fully closed — left upper end wall with opposite track hole
-                // (covers -21.88 to -8.75 absolute)
                 buildEndWall(inner, sp(inner) / 2 - 18.08, baseYi + 0.8, endWallUpperMat,
                              -4.1, 9.03, -3.8, hallHeight + 0.07);
-                // Hardhöhe end: right upper end wall with running track hole (covers -8.75 to 3.9 absolute)
+                // Hardhöhe end: right upper end wall with running track hole
                 buildEndWall(inner, sp(inner) / 2, baseYi + 0.8, endWallUpperMat,
                              -9.05, 3.6, -3.8, hallHeight + 0.07);
             } else {
-                // Langwasser end: left upper end wall with opposite track hole, leaving the wide
-                // stair/escalator opening to the mezzanine (covers -21.88 to -14.5 absolute;
-                // -14.5 to -3.5 stays open for the bank built above)
+                // Langwasser end: left upper end wall with opposite track hole
                 buildEndWall(inner, sp(inner) / 2 - 18.08, baseYi + 0.8, endWallUpperMat,
                              -4.1, 3.28, -3.8, hallHeight + 0.07);
-                // Langwasser end: right upper end wall with running track hole (covers -3.5 to 3.9 absolute)
+                // Langwasser end: right upper end wall with running track hole
                 buildEndWall(inner, sp(inner) / 2, baseYi + 0.8, endWallUpperMat,
                              -3.8, 3.6, -3.8, hallHeight + 0.07);
             }
 
             // Lower portals (Split into 2 panels, each with a tube hole)
             buildEndWall(inner, -sp(inner) / 2, baseYi + dive(inner) + 0.8, endWallLowerMat,
-                         -9.05, 4.1, -3.8, LOWER_CLEAR + platTopY - 0.85);        // right lower end wall (running track - covers -9.35 to 3.8 absolute)
+                         -9.05, 4.1, -3.8, LOWER_CLEAR + platTopY - 0.85);        // right lower end wall
             buildEndWall(inner, -sp(inner) / 2 - 18.08, baseYi + dive(inner) + 0.8, endWallLowerMat,
-                         -3.6, 9.03, -3.8, LOWER_CLEAR + platTopY - 0.85);        // left lower end wall (opposite track - covers -21.98 to -9.35 absolute)
+                         -3.6, 9.03, -3.8, LOWER_CLEAR + platTopY - 0.85);        // left lower end wall
         }
-        addI(this._plTubeGeom, tubeMat, tubeM);
-        addI(this._plNeonGeom, this.materials.tunnelGlow, neonM);
-        addI(this._plHaloGeom, this.materials.plaerrerHaloMat, haloM);
+        this._emitTrackCollectors(group, coll);
 
         // ---------- DEPARTURE BOARDS ----------
         const createBoardMat = (trackLabel, row1, row2) => {
@@ -2559,18 +2457,25 @@ export class TrackManager {
         if (s1 > this.sim.totalLength) s1 = this.sim.totalLength;
         if (s0 < 0) s0 = 0;
 
-        if (lineId !== 'U2' && lineId !== 'U3') {
+        const isU23 = (lineId === 'U2' || lineId === 'U3');
+        // U1 (and any other plain line) has no trunk/switch zones -- pass through unchanged.
+        // The shared trunk rig (lineId 'TRUNK') is EXEMPT from trunk-zone suppression (it MUST
+        // build the trunk itself) but IS subject to switch-zone suppression: the hand-authored
+        // switch piece owns the throat geometry, so the trunk tube must stop at the platform
+        // edge just like the per-line tubes do (otherwise, now that EXTRACT_MARGIN reaches past
+        // the platform, it would poke into the switch and z-fight the branch tubes).
+        if (!isU23 && lineId !== 'TRUNK') {
             if (s0 >= s1) return null;
             return [s0, s1];
         }
-        
-        if (this.sim.trunkZone) {
+
+        if (isU23 && this.sim.trunkZone) {
             const [tz0, tz1] = this.sim.trunkZone;
             if (s0 >= tz0 && s1 <= tz1) return null;
             if (s0 < tz1 && s1 > tz1) s0 = tz1;
             else if (s0 < tz0 && s1 > tz0) s1 = tz0;
         }
-        
+
         if (this.sim.switchZones) {
             for (const z of this.sim.switchZones) {
                 const [sz0, sz1] = z.range;
@@ -2579,7 +2484,7 @@ export class TrackManager {
                 else if (s0 < sz0 && s1 > sz0) s1 = sz0;
             }
         }
-        
+
         if (s0 >= s1) return null;
         return [s0, s1];
     }
@@ -2776,6 +2681,9 @@ export class TrackManager {
 
             if (this.sim.isPlaerrerZone(s_mid)) { flushBedRun(); continue; }
             if ((lineId === 'U2' || lineId === 'U3') && (this.sim.isTrunkZone(s_mid) || this.sim.isSwitchZone(s_mid))) { flushBedRun(); continue; }
+            // Trunk rig: skip the switch throat (the switch piece owns tube/bed/rails there);
+            // it stays exempt from the trunk-zone skip since it must build the trunk itself.
+            if (lineId === 'TRUNK' && this.sim.isSwitchZone(s_mid)) { flushBedRun(); continue; }
             
             const clamped = this._clampInterval(raw_s_start, raw_s_end, lineId);
             if (!clamped) { flushBedRun(); continue; }

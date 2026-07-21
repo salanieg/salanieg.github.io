@@ -7,8 +7,11 @@
 //   - Ladevorgang/Ladebalken: startCityModelDownload() (GLB-Download, läuft
 //     parallel ab init()) + startLoadingPipeline() (echte Bauschritte treiben
 //     den Balken, zeitbudgetiert pro rAF-Tick) -> finishAfterCityModel()
-//     (wartet ggf. auf den Download) -> warmUpEverythingIncremental()
-//     (GPU-Upload in Batches hinter dem Splash).
+//     (wartet ggf. auf den Download) -> warmUpSpawn() (GPU-Upload NUR der
+//     Spawn-Umgebung hinter dem Splash). Der Rest der Linie wird danach im
+//     Hintergrund während des Spielens nachgeladen: _beginBackgroundResidency
+//     + _residencyPrep/_residencyFinish (pro Frame ein kleiner Batch, das der
+//     Zugposition nächste Ziel zuerst); Teleport -> _ensureResidentNow.
 //   - Linien-Verwaltung: buildLineRig/adoptRig/switchLine. Genau EINE Linie
 //     ist aktiv; this.sim/trackManager/stationModel/trainModel sind Aliase
 //     auf das aktive Rig. Geteilte Bauten (Plärrer-Halle, Stammstrecke,
@@ -23,12 +26,12 @@
 import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=66';
 import { WorldManager } from './simulator/WorldManager.js?v=67';
-import { TrackManager } from './simulator/TrackManager.js?v=78';
-import { StationModel } from './simulator/StationModel.js?v=86';
+import { TrackManager } from './simulator/TrackManager.js?v=79';
+import { StationModel } from './simulator/StationModel.js?v=87';
 import { TrainModel } from './simulator/TrainModel.js?v=88';
-import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=10';
-import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=10';
-import { TRACK_DATA_TRUNK } from './simulator/TrackDataTrunk.js?v=3';
+import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=11';
+import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=11';
+import { TRACK_DATA_TRUNK } from './simulator/TrackDataTrunk.js?v=5';
 import { AudioManager } from './audio/AudioManager.js?v=40';
 import { RadioManager } from './audio/RadioManager.js?v=2';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -476,6 +479,16 @@ class App {
         this.trainModel.update(0);
         this.world.update(0, this.trainModel);
         this.warmUpRenderer();
+
+        // Hintergrund-Residency auf die neue Linie umstellen (Chunk-/Stations-
+        // Indizes gelten pro Linie): frisch aufsetzen, damit der Rest DIESER
+        // Linie nachgeladen wird. Bereits residente Geometrie erzeugt beim
+        // erneuten Warmlauf keinen Upload mehr (die Buffer bleiben auf der GPU).
+        this._resChunks = new Set();
+        this._resStations = new Set();
+        this._seedResidencyFromLiveScene();
+        this._beginBackgroundResidency();
+
         if (this.world.activeCameraType === 'cab') this.world.setCamera('cab');
         if (this.world.activeCameraType === 'platform') this.world.setCamera('platform');
         this.audio.playCabSwitch();
@@ -528,12 +541,20 @@ class App {
             const el = document.getElementById('btn-text');
             if (el) el.textContent = t;
         };
+        // setBar setzt nur noch das ZIEL; die tatsächliche Balkenbreite wird von
+        // _startLoadBarAnimator() jeden Frame weich nachgezogen (und kriecht in
+        // Wartephasen langsam weiter) — so bleibt der Balken nie stehen.
+        // Math.max hält den Fortschritt monoton (kein Zurückspringen).
         const setBar = (f) => {
-            const el = document.getElementById('btn-loading-bar');
-            if (el) el.style.width = (Math.max(0, Math.min(1, f)) * 100).toFixed(1) + '%';
+            const v = Math.max(0, Math.min(1, f));
+            this._loadTargetFrac = Math.max(this._loadTargetFrac || 0, v);
         };
         this._setLoadText = setText;
         this._setLoadBar = setBar;
+        this._loadTargetFrac = 0;
+        this._loadShownFrac = 0;
+        this._loadBarDone = false;
+        this._startLoadBarAnimator();
 
         const steps = [];
         const once = (label, weight, fn) => steps.push({ label, weight, tick: () => { fn(); return 1; } });
@@ -627,22 +648,12 @@ class App {
             }
         });
 
-        // U1-Strecke komplett vorbauen: füllt den Chunk-Cache für die GANZE
-        // Linie, damit während der Fahrt keine createChunk-Hitches mehr
-        // auftreten (der Cache ist ohnehin permanent — das hier verlagert die
-        // Baukosten nur ehrlich in den Ladebalken).
-        steps.push({ label: 'BAUE TUNNEL & STRECKE', weight: 22, tick: () => {
-            const tm = this.trackManager;
-            const total = Math.floor(this.sim.totalLength / tm.chunkSize);
-            if (this._prebuildIdx === undefined) this._prebuildIdx = 0;
-            const end = Math.min(total, this._prebuildIdx + 5);
-            for (; this._prebuildIdx <= end; this._prebuildIdx++) {
-                if (!tm.chunkCache.has(this._prebuildIdx)) {
-                    tm.chunkCache.set(this._prebuildIdx, tm.createChunk(this._prebuildIdx));
-                }
-            }
-            return this._prebuildIdx > total ? 1 : this._prebuildIdx / (total + 1);
-        } });
+        // (Früher wurde hier die GANZE U1-Strecke vorgebaut — alle Chunks in den
+        // Cache, plus anschließend alle auf die GPU. Das war der Löwenanteil der
+        // Ladezeit. Jetzt nur noch die Spawn-Umgebung: das Kulling-Update in
+        // 'AKTIVIERE SZENE' baut das Startfenster on demand, warmUpSpawn lädt es
+        // hoch, und _beginBackgroundResidency baut/lädt den Rest der Linie
+        // während des Spielens proximity-geordnet nach.)
 
         // Szene scharfschalten: Kulling-Erstlauf, Teleport-UI, Render-Loop.
         once('AKTIVIERE SZENE', 1, () => {
@@ -693,6 +704,32 @@ class App {
             }
         };
         requestAnimationFrame(pump);
+    }
+
+    // Treibt die sichtbare Balkenbreite jeden Frame, entkoppelt vom echten
+    // Fortschritt (den setBar als this._loadTargetFrac ablegt):
+    //  - liegt das Ziel vorn: weich, aber mit Mindesttempo aufschließen;
+    //  - ist das Ziel eingeholt (Wartephase: Kompilieren / GLB-Download): ganz
+    //    langsam asymptotisch weiterkriechen, damit der Balken NIE stillsteht.
+    // Läuft bis this._loadBarDone (in finishAfterCityModel gesetzt), dann steht
+    // die Breite fix auf 100 %.
+    _startLoadBarAnimator() {
+        const step = () => {
+            if (this._loadBarDone) return;
+            const target = this._loadTargetFrac || 0;
+            let shown = this._loadShownFrac || 0;
+            if (shown < target) {
+                shown += (target - shown) * 0.18 + 0.0008;
+                if (shown > target) shown = target;
+            } else if (shown < 0.995) {
+                shown += (1 - shown) * 0.0015;
+            }
+            this._loadShownFrac = shown;
+            const el = document.getElementById('btn-loading-bar');
+            if (el) el.style.width = (Math.min(1, shown) * 100).toFixed(1) + '%';
+            requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
     }
 
     // Renders one frame with frustum culling disabled on every object, so all
@@ -801,8 +838,9 @@ class App {
             if (dl.error) {
                 // Auch ohne Stadtmodell Zug/Stationen jetzt hochladen, damit
                 // der erste Rundumblick nicht ruckelt
-                setText('GPU-UPLOAD');
-                this.warmUpEverythingIncremental(() => {}, () => {
+                setText('BEREITE GRAFIK VOR');
+                this.warmUpSpawn(() => {}, () => {
+                    this._loadBarDone = true; // Animator stoppen, bevor wir die Breite fix setzen
                     const bar = document.getElementById('btn-loading-bar');
                     if (bar) {
                         bar.style.width = '100%';
@@ -820,17 +858,24 @@ class App {
                 requestAnimationFrame(poll);
                 return;
             }
-            // GPU-Upload: alles (Stadt, alle Stationen, alle Chunks, Zug) noch
-            // hinter dem Splash auf die GPU schieben — sonst ruckelt der erste
-            // Rundumblick, wenn ~1900 Buffer lazy hochgeladen werden. Läuft
-            // gebatcht über mehrere Frames; der Balken füllt den Rest bis 100 %.
-            setText('GPU-UPLOAD');
+            // GPU-Upload der Spawn-Umgebung (Stadt, Startbahnhof, Startfenster,
+            // Zug) hinter dem Splash — sonst ruckelt der erste Rundumblick, wenn
+            // diese Buffer lazy hochgeladen werden. Der Rest der Linie folgt nach
+            // dem Start im Hintergrund. Läuft gebatcht über mehrere Frames; der
+            // Balken füllt den Rest bis 100 %.
+            setText('BEREITE GRAFIK VOR');
             setBar(baseFrac + slice);
             const gpuBase = baseFrac + slice;
-            this.warmUpEverythingIncremental(
+            this.warmUpSpawn(
                 (f) => setBar(gpuBase + (1 - gpuBase) * f),
                 () => {
                     setBar(1);
+                    // kurz weich auf 100 % laufen lassen, dann Animator stoppen
+                    setTimeout(() => {
+                        this._loadBarDone = true;
+                        const bar = document.getElementById('btn-loading-bar');
+                        if (bar) bar.style.width = '100%';
+                    }, 350);
                     btnStart.classList.add('loaded');
                     btnStart.disabled = false;
                     setText('Simulation starten');
@@ -840,72 +885,224 @@ class App {
         poll();
     }
 
-    // GPU-Warm-up für ALLES — in Batches über mehrere Frames verteilt statt in
-    // einem einzigen Riesen-Frame. (Der One-Shot-Vorgänger hing sekundenlang:
-    // sämtliche Shader-Kompilierungen + ~1900 Buffer-Uploads + Stadtmodell-
-    // Texturen in EINEM synchronen render()-Aufruf.) Hängt vorübergehend die
-    // weggekullten Stationsgruppen und alle vorgebauten (aber nicht aktiven)
-    // Chunks in die Szene und schaltet dann pro Frame für einen Batch Meshes
-    // das Frustum-Culling aus, damit der Renderer genau deren Geometrie/
-    // Texturen/Shader hochlädt. Danach ist alles auf der GPU, bevor der
-    // Spieler losfährt — kein Upload-Hitch beim ersten Einfahren in neue
-    // Abschnitte. `setBar` bekommt den Fortschritt 0..1, `onDone` läuft nach
-    // Env-Map-Bake und Aufräumen.
-    warmUpEverythingIncremental(setBar, onDone) {
-        const tm = this.trackManager;
-        const sm = this.stationModel;
-        const tempAdded = [];
-        if (tm) {
-            for (const [i, chunk] of tm.chunkCache) {
-                if (!tm.activeChunks.has(i)) {
-                    tm.scene.add(chunk);
-                    tempAdded.push([tm.scene, chunk]);
-                }
-            }
-        }
-        if (sm) {
-            sm.stationsList.forEach((g, idx) => {
-                if (!sm.loadedStations.has(idx)) {
-                    sm.scene.add(g);
-                    tempAdded.push([sm.scene, g]);
-                }
-            });
-        }
-
+    // GPU-Warm-up NUR für die Spawn-Umgebung — also die Szene, die nach dem
+    // Kulling-Erstlauf ohnehin schon live ist: Zug, Stadtmodell, Stammstrecke,
+    // Plärrer, das Chunk-Startfenster und die nahen Stationen. In Batches über
+    // mehrere Frames verteilt (der One-Shot-Vorgänger hing sekundenlang), damit
+    // der erste Rundumblick am Startbahnhof ruckelfrei ist.
+    //
+    // Früher lud diese Funktion die GANZE Linie hoch (alle Chunks + alle
+    // Stationen temporär in die Szene) — das war der Hauptgrund für die lange
+    // Ladezeit. Der Rest der Strecke wird jetzt NACH dem Start im Hintergrund
+    // während des Spielens resident gemacht (_beginBackgroundResidency), in
+    // winzigen Häppchen von der Zugposition aus nach außen. Einmal hochgeladene
+    // Geometrie bleibt dauerhaft auf der GPU (Chunks/Stationen werden nie
+    // disposed), deshalb genügt es, jeden Abschnitt einmal kurz zu rendern.
+    // `setBar` bekommt den Fortschritt 0..1, `onDone` läuft nach Env-Map-Bake.
+    warmUpSpawn(setBar, onDone) {
         const meshes = [];
         this.world.scene.traverse(o => { if (o.isMesh) meshes.push(o); });
 
-        let i = 0;
-        let batch = 64;
-        const tick = () => {
-            const t0 = performance.now();
-            const end = Math.min(meshes.length, i + batch);
-            const restore = [];
-            for (; i < end; i++) {
-                const m = meshes[i];
-                if (m.frustumCulled) { m.frustumCulled = false; restore.push(m); }
-            }
-            this.world.renderer.render(this.world.scene, this.world.activeCamera);
-            restore.forEach(m => m.frustumCulled = true);
-            setBar(meshes.length ? i / meshes.length : 1);
+        // Phase 2 (unten): Geometrie-Buffer gebatcht auf die GPU laden. Der
+        // Balken-Anteil dieser Funktion (0..1) spiegelt den echten Upload-
+        // Fortschritt; die vorgelagerte Compile-Wartephase deckt der globale
+        // Balken-Animator mit seinem Weiterkriechen ab (kein eigener Fake-Wert).
+        const startUploadLoop = () => {
+            let i = 0;
+            let batch = 64;
+            const tick = () => {
+                const t0 = performance.now();
+                const end = Math.min(meshes.length, i + batch);
+                const restore = [];
+                for (; i < end; i++) {
+                    const m = meshes[i];
+                    if (m.frustumCulled) { m.frustumCulled = false; restore.push(m); }
+                }
+                this.world.renderer.render(this.world.scene, this.world.activeCamera);
+                restore.forEach(m => m.frustumCulled = true);
+                setBar(meshes.length ? i / meshes.length : 1);
 
-            // Batchgröße an die gemessene Frame-Dauer anpassen: zügig
-            // durchlaufen, aber keine sekundenlangen Einzel-Frames erzeugen
-            const dt = performance.now() - t0;
-            if (dt > 150) batch = Math.max(16, batch >> 1);
-            else if (dt < 50) batch = Math.min(1024, batch << 1);
+                // Batchgröße an die gemessene Frame-Dauer anpassen: zügig
+                // durchlaufen, aber keine sekundenlangen Einzel-Frames erzeugen
+                const dt = performance.now() - t0;
+                if (dt > 150) batch = Math.max(16, batch >> 1);
+                else if (dt < 50) batch = Math.min(1024, batch << 1);
 
-            if (i < meshes.length) {
-                requestAnimationFrame(tick);
-            } else {
-                // Interieur-Schnappschuss für die Faux-Glas-Reflexionen — jetzt
-                // ist alles warm, der Bake selbst kostet nur noch einen Frame
-                this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
-                for (const [parent, obj] of tempAdded) parent.remove(obj);
-                onDone();
-            }
+                if (i < meshes.length) {
+                    requestAnimationFrame(tick);
+                } else {
+                    // Interieur-Schnappschuss für die Faux-Glas-Reflexionen — jetzt
+                    // ist die Spawn-Umgebung warm, der Bake kostet nur einen Frame
+                    this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
+                    // Alles gerade Hochgeladene als resident merken und den
+                    // Hintergrund-Lader für den Rest der Linie scharfschalten.
+                    this._seedResidencyFromLiveScene();
+                    this._beginBackgroundResidency();
+                    onDone();
+                }
+            };
+            requestAnimationFrame(tick);
         };
-        requestAnimationFrame(tick);
+
+        // Phase 1: Alle Shader-Programme parallel im Grafiktreiber kompilieren
+        // (KHR_parallel_shader_compile via compileAsync). Vorher lief das seriell
+        // und blockierend über die render()-Aufrufe der Upload-Schleife — der
+        // teuerste Teil des Warm-ups. Jetzt sind beim Upload-Durchlauf unten alle
+        // "Rezepte" schon fertig, die Frames werden dadurch deutlich kürzer.
+        // Während des (evtl. kurzen) Wartens hält der globale Balken-Animator
+        // die Bewegung aufrecht.
+        const renderer = this.world.renderer;
+        if (typeof renderer.compileAsync === 'function') {
+            let started = false;
+            const startOnce = () => { if (!started) { started = true; startUploadLoop(); } };
+            renderer.compileAsync(this.world.scene, this.world.activeCamera)
+                .then(startOnce)
+                .catch(startOnce);
+        } else {
+            // Ältere Renderer ohne compileAsync: direkt zum Upload-Durchlauf,
+            // der die Shader dann (wie früher) synchron mitkompiliert.
+            startUploadLoop();
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // Hintergrund-Residency: Rest der Linie während des Spielens nachladen
+    // ------------------------------------------------------------------------
+    // Nach warmUpSpawn ist nur die Startumgebung auf der GPU. Diese Methoden
+    // bauen + laden den Rest der U1-Strecke (Chunks + Stationen) in winzigen,
+    // zeitbudgetierten Häppchen nach — immer das der Zugposition nächste offene
+    // Ziel zuerst —, sodass beim Fahren nie ein ungeladener Abschnitt auftaucht,
+    // ohne dass ein einzelner Frame spürbar hakt ("Flüssigkeit zuerst").
+    //
+    // Trick: Ein Objekt muss nur EINMAL kurz mit abgeschaltetem Frustum-Culling
+    // gerendert werden, damit seine Geometrie/Texturen auf die GPU wandern —
+    // danach bleiben die Buffer dort (Chunks/Stationen werden nie disposed).
+    // Statt eines eigenen render()-Aufrufs hängen wir die Meshes des Ziels VOR
+    // dem normalen Frame-Render in die Szene (Culling aus) und räumen sie danach
+    // wieder weg ("Piggyback" auf den einen ohnehin laufenden Render pro Frame).
+
+    // Merkt sich alles, was gerade live (und damit schon hochgeladen) ist, als
+    // resident. Läuft nach dem Spawn-Warm-up und nach jedem Teleport.
+    _seedResidencyFromLiveScene() {
+        if (!this._resChunks) this._resChunks = new Set();
+        if (!this._resStations) this._resStations = new Set();
+        const tm = this.trackManager, sm = this.stationModel;
+        if (tm) for (const idx of tm.activeChunks.keys()) this._resChunks.add(idx);
+        if (sm) for (const idx of sm.loadedStations.keys()) this._resStations.add(idx);
+    }
+
+    // Startet den Hintergrund-Lader (nur Zustand; die Arbeit passiert in
+    // _residencyPrep/_residencyFinish, die animate() pro Frame aufruft).
+    _beginBackgroundResidency() {
+        const tm = this.trackManager, sm = this.stationModel;
+        if (!tm || !sm) return;
+        this._residency = {
+            totalChunks: Math.floor(this.sim.totalLength / tm.chunkSize),
+            numStations: sm.stationsList.length,
+            done: false,
+            pending: null, // aktuell zum Upload eingehängtes Ziel (siehe _residencyPrep)
+        };
+    }
+
+    // Wie viele Meshes pro Frame hochgeladen werden. Klein halten ("Flüssigkeit
+    // zuerst") — eine große Station wird so über mehrere Frames verteilt, statt
+    // ihre vielen Texturen in einem einzigen Frame hochzuladen.
+    static get RESIDENCY_BATCH() { return 48; }
+
+    // Vor dem Frame-Render (in animate, direkt vor world.update): wählt das der
+    // Zugposition nächste offene Ziel und hängt einen kleinen Batch seiner Meshes
+    // mit abgeschaltetem Culling in die Szene, damit der folgende Render genau
+    // die hochlädt. Ein Ziel wird über mehrere Frames abgearbeitet; fehlende
+    // Chunks werden zuerst gebaut (eigener Frame ohne Upload).
+    _residencyPrep() {
+        const r = this._residency;
+        if (!r || r.done) return;
+        const tm = this.trackManager, sm = this.stationModel;
+        if (!tm || !sm) return;
+
+        // Kein Ziel in Arbeit? -> das nächste per Distanz zur Zugposition suchen.
+        if (!r.pending) {
+            const trainZ = this.sim.position;
+            let best = null, bestDist = Infinity;
+            for (let i = 0; i <= r.totalChunks; i++) {
+                if (this._resChunks.has(i)) continue;
+                const d = Math.abs((i + 0.5) * tm.chunkSize - trainZ);
+                if (d < bestDist) { bestDist = d; best = { kind: 'chunk', idx: i }; }
+            }
+            for (let i = 0; i < r.numStations; i++) {
+                if (this._resStations.has(i)) continue;
+                const st = this.sim.stations[i];
+                if (!st) { this._resStations.add(i); continue; }
+                const d = Math.abs(st.position - trainZ);
+                if (d < bestDist) { bestDist = d; best = { kind: 'station', idx: i }; }
+            }
+            if (!best) { r.done = true; return; }
+
+            let obj, parent, owned;
+            if (best.kind === 'chunk') {
+                obj = tm.chunkCache.get(best.idx);
+                if (!obj) {
+                    // Bauen kostet CPU -> dieser Frame nur bauen, Upload ab dem nächsten.
+                    obj = tm.createChunk(best.idx);
+                    tm.chunkCache.set(best.idx, obj);
+                    return;
+                }
+                owned = tm.activeChunks.has(best.idx); // vom Streaming schon in der Szene?
+                parent = tm.scene;
+            } else {
+                obj = sm.stationsList[best.idx];
+                if (!obj) { this._resStations.add(best.idx); return; }
+                owned = sm.loadedStations.has(best.idx);
+                parent = sm.scene;
+            }
+            if (!owned) parent.add(obj);
+            const allMeshes = [];
+            obj.traverse(o => { if (o.isMesh) allMeshes.push(o); });
+            r.pending = { kind: best.kind, idx: best.idx, obj, parent, allMeshes, cursor: 0, uncculled: [] };
+        }
+
+        // Nächsten Batch Meshes dieses Ziels entkullen (die kommen im folgenden
+        // Render auf die GPU); zum Zurücksetzen nach dem Render merken.
+        const p = r.pending;
+        p.uncculled = [];
+        const end = Math.min(p.allMeshes.length, p.cursor + App.RESIDENCY_BATCH);
+        for (; p.cursor < end; p.cursor++) {
+            const m = p.allMeshes[p.cursor];
+            if (m.frustumCulled) { m.frustumCulled = false; p.uncculled.push(m); }
+        }
+    }
+
+    // Nach dem Frame-Render (in animate, direkt nach world.update): Culling des
+    // gerade hochgeladenen Batches zurücksetzen. Ist das Ziel komplett, wird es
+    // ggf. wieder aus der Szene genommen (die GPU-Buffer bleiben erhalten) und
+    // als resident markiert.
+    _residencyFinish() {
+        const r = this._residency;
+        if (!r || !r.pending) return;
+        const p = r.pending;
+        for (const m of p.uncculled) m.frustumCulled = true;
+        p.uncculled = [];
+        if (p.cursor < p.allMeshes.length) return; // Ziel noch nicht fertig
+
+        // Nur entfernen, wenn das Streaming das Objekt inzwischen nicht selbst
+        // eingeblendet hat (sonst würde es mitten im Bild verschwinden).
+        const owned = p.kind === 'chunk'
+            ? this.trackManager.activeChunks.has(p.idx)
+            : this.stationModel.loadedStations.has(p.idx);
+        if (!owned) p.parent.remove(p.obj);
+        if (p.kind === 'chunk') this._resChunks.add(p.idx);
+        else this._resStations.add(p.idx);
+        r.pending = null;
+    }
+
+    // Teleport-Fall "kurz vorladen, dann zeigen": die vom Teleport frisch
+    // eingeblendete Zielumgebung sofort synchron auf die GPU schieben (ein
+    // kontrollierter Kurz-Hänger statt eines Überraschungs-Rucklers beim ersten
+    // Frame am Ziel), danach als resident markieren.
+    _ensureResidentNow() {
+        if (!this.world || !this.world.renderer) return;
+        this.warmUpRenderer(); // rendert die aktuelle Live-Szene einmal Culling-aus
+        this._seedResidencyFromLiveScene();
     }
 
     toggleCityDebugHud() {
@@ -1564,7 +1761,12 @@ class App {
         this.stationModel.update(this.sim.position);
         this.stationModel.tick(dt, time);
         this.trainModel.update(dt);
+
+        // Hintergrund-Residency: nächstes Ziel VOR dem Render einhängen (Culling
+        // aus), damit world.update()'s Render es hochlädt, danach wieder wegräumen.
+        this._residencyPrep();
         this.world.update(dt, this.trainModel);
+        this._residencyFinish();
 
         // Performance HUD (Taste O): FPS + Renderer-Statistiken, 2x pro Sekunde aktualisiert
         if (this.perfHudVisible) {
@@ -1698,6 +1900,11 @@ class App {
         this.stationModel.update(this.sim.position);
         this.trainModel.update(0);
         this.world.update(0, this.trainModel);
+
+        // "Kurz vorladen, dann zeigen": die frisch eingeblendete Zielumgebung
+        // sofort auf die GPU schieben, falls der Hintergrund-Lader sie noch nicht
+        // erreicht hatte — verhindert einen Ruckler beim ersten Frame am Ziel.
+        this._ensureResidentNow();
 
         // If orbit camera is active, update orbit controls target
         if (this.world.activeCameraType === 'orbit') {

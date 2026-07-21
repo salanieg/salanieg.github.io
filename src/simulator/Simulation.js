@@ -143,9 +143,11 @@ export class Simulation {
         // in gen_topology_u23.mjs completes ~15m before each station) and well short of the
         // real switch (~73-76m out) -- extending this out to the switch was what made U2/U3's
         // centerlines get force-blended together right where they're meant to diverge, which
-        // is what made the junctions look "wild". TrackDataTrunk.js's own EXTRACT_MARGIN (40m)
-        // stays a bit wider than this cutoff so the shared rig's geometry always covers
-        // slightly more than what each line skips (avoiding a gap at the 50m chunk grain).
+        // is what made the junctions look "wild". TrackDataTrunk.js's own EXTRACT_MARGIN (55m)
+        // stays wider than this cutoff so the shared rig's geometry always covers slightly more
+        // than what each line skips (avoiding a gap at the 50m chunk grain) AND -- crucially --
+        // reaches past the two boundary stations' halfLength so their swept hulls don't run off
+        // the sliced sim's clamped end (see the EXTRACT_MARGIN note in TrackDataTrunk.js).
         const TRUNK_STATION_NAMES = ['Rothenburger Straße', 'Opernhaus', 'Hauptbahnhof', 'Wöhrder Wiese', 'Rathenauplatz'];
         const trunkPositions = TRUNK_STATION_NAMES.map(nm => this.stations.find(s => s.name === nm)?.position);
         this.trunkZone = trunkPositions.every(p => p !== undefined)

@@ -34,8 +34,8 @@ import { PASSENGER_DATA } from './people/PassengerData.js';
 import { tagCanvasTextureSRGBKeepLook } from './TextureUtils.js';
 import { TrainModel } from './TrainModel.js?v=88';
 import { TRACK_DATA as TRACK_DATA_U1 } from './TrackDataU1.js?v=55';
-import { TRACK_DATA_U2 } from './TrackDataU2.js?v=10';
-import { TRACK_DATA_U3 } from './TrackDataU3.js?v=10';
+import { TRACK_DATA_U2 } from './TrackDataU2.js?v=11';
+import { TRACK_DATA_U3 } from './TrackDataU3.js?v=11';
 
 // Mixes a hex color toward white by `amount` (0..1). Used to brighten the
 // platform floor tile texture itself, independent of scene ambient light,
@@ -3852,9 +3852,10 @@ export class StationModel {
                 // Friedrich-Ebert-Platz (U3, Fotos): helle Sichtbeton-Wände mit
                 // dem orangefarbenen Flechtwerk-Relief (Korbgeflecht aus
                 // liegenden/stehenden Keramikriegeln im Schachbrett), orange
-                // Namenstafeln mit weißer Schrift, an beiden Deckenrändern ein
-                // Kamm aus Beton-Rippen mit durchlaufenden Neonröhren darunter,
-                // rot-oranger Terrazzoboden, orange Holzlattenbänke.
+                // Namenstafeln mit weißer Schrift, durchgehende ORANGE Deckenfläche
+                // mit einem hellen Rippenkamm + Neonband entlang beider Kanten
+                // (Fotos 2-4), rot-oranger Terrazzoboden, wuchtige orange
+                // Terrazzo-Bänke mit dunkler Sitzkante, orange Werbestelen.
                 // Stützenfrei; Standardlampen aus.
                 if (j === 0) {
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
@@ -3887,8 +3888,17 @@ export class StationModel {
                         }
                     }
 
-                    // 3. Beton-Rippenkamm an beiden Deckenrändern (Foto 2/3):
-                    // quer stehende Rippen alle 0.6 m über den Gleisen
+                    // 3. Durchgehende ORANGE Deckenfläche (Fotos: satt orange,
+                    // dominiert den Raum) — vorher fehlte hier eine echte
+                    // Deckenplatte, nur die Randdetails waren da.
+                    const ceilMat = this.getFriedrichEbertCeilingMat();
+                    const cMats = [ceilMat, ceilMat];
+                    const cHalfW = (s) => (this.sim.getTrackSpacing(s) + 3.66) / 2;
+                    this.buildSweptBar(stationGroup, sA, sB, cHalfW, cy + ceilY + 0.1, cy + ceilY - 0.1, cMats, 1.2, () => 0, 1.2);
+
+                    // 4. Heller Rippenkamm + Neonband an beiden Deckenrändern
+                    // (Fotos 2-4): quer stehende Betonrippen alle 0.6 m über den
+                    // Gleisen, mit dem Neon direkt darunter versteckt.
                     if (!this._friedrichEbertFinMat) {
                         this._friedrichEbertFinMat = new THREE.MeshLambertMaterial({
                             map: this.tunnelConcreteTexture, color: 0xffffff
@@ -3917,7 +3927,6 @@ export class StationModel {
                     if (finInst.boundingSphere) finInst.boundingSphere.radius *= 5;
                     stationGroup.add(finInst);
 
-                    // 4. Durchlaufende Neonröhren unter dem Rippenkamm, zwei je Seite
                     const tubeMats = [this.materials.lightTube, this.materials.lightTube];
                     for (const sign of [1, -1]) {
                         for (const off of [0.35, 1.45]) {
@@ -3927,10 +3936,11 @@ export class StationModel {
                         }
                     }
 
-                    // 5. Orange Holzlattenbänke (Foto 2), versetzt auf dem Bahnsteig
+                    // 5. Wuchtige orange Terrazzo-Bänke mit dunkler Sitzkante
+                    // (Fotos 1/4: solider Block, kein Lattenrost)
                     if (!this._friedrichEbertBenchMat) {
-                        this._friedrichEbertBenchMat = new THREE.MeshLambertMaterial({ color: '#b8622a' });
-                        this._friedrichEbertSlatMat = new THREE.MeshLambertMaterial({ color: '#d08a3a' });
+                        this._friedrichEbertBenchMat = new THREE.MeshLambertMaterial({ color: '#c8622f' });
+                        this._friedrichEbertBenchCapMat = new THREE.MeshLambertMaterial({ color: '#453833' });
                     }
                     [[-25, 1.8], [-10, -1.8], [10, 1.8], [25, -1.8]].forEach(([bz, bx]) => {
                         const sBch = station.position + bz;
@@ -3942,13 +3952,39 @@ export class StationModel {
                         g.position.copy(stationGroup.worldToLocal(posBch.clone().addScaledVector(normBch, bx)));
                         g.position.y = 0.865;
                         g.rotation.y = rotYBch;
-                        const base = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.38, 2.2), this._friedrichEbertBenchMat);
-                        base.position.y = 0.19;
+                        const base = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.42, 2.2), this._friedrichEbertBenchMat);
+                        base.position.y = 0.21;
                         g.add(base);
-                        for (const sx of [-0.16, 0, 0.16]) {
-                            const slat = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.05, 2.2), this._friedrichEbertSlatMat);
-                            slat.position.set(sx, 0.405, 0);
-                            g.add(slat);
+                        const cap = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 2.2), this._friedrichEbertBenchCapMat);
+                        cap.position.y = 0.445;
+                        g.add(cap);
+                        stationGroup.add(g);
+                    });
+
+                    // 6. Orange Werbestelen mit Posterfläche (Fotos), neben je
+                    // einer Bank
+                    if (!this._friedrichEbertKioskMat) {
+                        this._friedrichEbertKioskMat = new THREE.MeshLambertMaterial({ color: '#c8622f' });
+                        this._friedrichEbertPosterMat = new THREE.MeshLambertMaterial({ color: '#e8e6df' });
+                    }
+                    [[-17, 1.8], [17, -1.8]].forEach(([kz, kx]) => {
+                        const sK = station.position + kz;
+                        const posK = this.sim.getTrackPosition(sK);
+                        const tanK = this.sim.getTrackTangent(sK);
+                        const rotYK = Math.atan2(tanK.x, tanK.z) - centerAngle;
+                        const normK = new THREE.Vector3(-tanK.z, 0, tanK.x);
+                        const g = new THREE.Group();
+                        g.position.copy(stationGroup.worldToLocal(posK.clone().addScaledVector(normK, kx)));
+                        g.position.y = 0.865;
+                        g.rotation.y = rotYK;
+                        const stele = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.9, 0.5), this._friedrichEbertKioskMat);
+                        stele.position.y = 0.95;
+                        g.add(stele);
+                        for (const face of [1, -1]) {
+                            const poster = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.6), this._friedrichEbertPosterMat);
+                            poster.position.set(face * 0.26, 1.35, 0);
+                            poster.rotation.y = face > 0 ? Math.PI / 2 : -Math.PI / 2;
+                            g.add(poster);
                         }
                         stationGroup.add(g);
                     });
@@ -8118,6 +8154,36 @@ export class StationModel {
         tex.anisotropy = 8;
         this._friedrichEbertSignMat = new THREE.MeshLambertMaterial({ map: tex });
         return this._friedrichEbertSignMat;
+    }
+
+    getFriedrichEbertCeilingMat() {
+        if (this._friedrichEbertCeilMat) return this._friedrichEbertCeilMat;
+        // Satt orange gestrichene Betondecke (Fotos) mit leichter Wolkigkeit
+        // aus der Anstrichstruktur, keine Fototextur nötig.
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#d9772a';
+        ctx.fillRect(0, 0, 256, 256);
+        let seed = 41;
+        const rand = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+        for (let i = 0; i < 40; i++) {
+            const x = rand() * 256, y = rand() * 256, r = 20 + rand() * 50;
+            const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+            g.addColorStop(0, rand() < 0.5 ? 'rgba(180,110,40,0.18)' : 'rgba(240,180,110,0.16)');
+            g.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.anisotropy = 4;
+        this._friedrichEbertCeilMat = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide });
+        return this._friedrichEbertCeilMat;
     }
 
     /**
