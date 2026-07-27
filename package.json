@@ -1,0 +1,9 @@
+{
+  "name": "salanieg-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev_server.mjs"
+  }
+}

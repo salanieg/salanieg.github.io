@@ -1,100 +1,67 @@
 // ============================================================================
-// TrainRide — the DT1 carries the visitor home through the loop tunnel.
+// TrainRide — the doors of the subway transition, both cars.
 //
-// After boarding at the platform (doors close behind you via the existing
-// crossing trigger), the whole DT1_Root is moved along the camera rail so the
-// visitor's seat stays fixed inside the carriage while the tunnel slides by.
-// At the plaza portal the train parks, the doors open, and the camera glides
-// out while the rear gangway is opened up. Everything is stateless in s, so
-// scrolling backwards rewinds the ride, and after the loop seam the train is
-// quietly back at the platform.
+// Both DT1 cars (WP4 cavern, WP1 atrium terminus) are static. The camera rides
+// to the seat inside the mine car, its doors close, the rig cuts across the
+// teleport to the identical seat inside the plaza car — and those doors open so
+// the visitor can step out onto the terminus.
+//
+// The whole cycle is scrubbed off the path position, exactly like the atrium
+// banner: no one-shot triggers, so scrubbing back re-plays the close/open in
+// reverse and the pose is a pure function of `rig.u`. Timing is anchored to the
+// two seat samples (rig.uIn / rig.uOut) and expressed in rail samples, because
+// that is what "how far has the visitor actually moved" means here — ~0.41 m per
+// sample on the approach, ~0.105 m on the walk out of the plaza car.
+//
+// One clip per car, never both: `mine_doors_close` runs 0 = open → 1 = shut,
+// `plaza_doors_open` runs 0 = shut → 1 = open. The opposing pair is left unplayed
+// in interactions.js (CONFLICT_CLIPS) so nothing fights over the same leaves.
 // ============================================================================
-import * as THREE from 'three';
 
-const _pos = new THREE.Vector3();
-const _quat = new THREE.Quaternion();
-const _tan = new THREE.Vector3();
-const _m = new THREE.Matrix4();
-const _zero = new THREE.Vector3();
-const _up = new THREE.Vector3(0, 1, 0);
-const _seatWorld = new THREE.Vector3();
+// offsets in rail samples from the seat each phase belongs to
+const MINE_SHUT_FROM = -6;    // camera is past the door plane, inside the car
+const MINE_SHUT_TO = -2;      // fully shut ~0.8 m short of the cut
+const PLAZA_OPEN_FROM = 4;    // a beat seated in the closed car at the terminus
+const PLAZA_OPEN_TO = 24;     // wide open ~2.5 m before the visitor reaches it
+const RESET_FROM = 55;        // behind the loop seam: plaza shuts, mine re-opens
+const RESET_TO = 63;
 
 export class TrainRide {
     constructor(scene, rig, actions) {
         this.root = scene.getObjectByName('DT1_Root');
         this.rig = rig;
         this.actions = actions;
+        // fall back to the old constants if cam_path.json predates the
+        // teleport metadata
+        const du = 1 / rig.count;
+        const uIn = rig.uIn > 0 ? rig.uIn : 0.9077;
+        const uOut = rig.uOut > 0 ? rig.uOut : 0.9091;
+        this.mineShut = [uIn + MINE_SHUT_FROM * du, uIn + MINE_SHUT_TO * du];
+        this.plazaOpen = [uOut + PLAZA_OPEN_FROM * du, uOut + PLAZA_OPEN_TO * du];
+        this.reset = [uOut + RESET_FROM * du, uOut + RESET_TO * du];
+    }
+
+    update(_t) {
         if (!this.root) return;
-        this.staticPos = this.root.position.clone();
-        this.staticQuat = this.root.quaternion.clone();
-        const inside = rig.stops.find((s) => s.name === 'contact_inside');
-        const exit = rig.stops.find((s) => s.name === '__exit');
-        // engage once the rider is settled in the rear carriage (path space,
-        // then inverted into scroll space — the tunnel is scroll-compressed)
-        const uStart = inside.u + 0.012;
-        this.sStart = rig.uToS(uStart);
-        this.sEnd = exit.s;
-        this.uEnd = exit.u;
-        // seat = rail point at ride start, expressed in the parked train's
-        // frame (parked rotation is identity, so a plain offset suffices)
-        rig.sample(uStart, _pos, _quat);
-        this.seatLocal = _pos.clone().sub(this.staticPos);
-        // gangway/end walls open up so the exit reads as walking out the back
-        this.gangwayParts = ['DT1_Car1_EndWall_R', 'DT1_Car1_EndWin_R',
-                             'DT1_Car2_EndWall_F', 'DT1_Car2_EndWall_R',
-                             'DT1_Car2_EndWin_R']
-            .map((n) => scene.getObjectByName(n)).filter(Boolean);
-        // warm interior lighting so the ride is readable in the dark tunnel
-        for (const zLocal of [204, 210, 216, 226]) {
-            const li = new THREE.PointLight(0xfff2da, 7, 9, 1.6);
-            li.position.set(0, 3.2, zLocal);
-            this.root.add(li);
-        }
-        this.exitDoorsFired = false;
-        this.riding = false;
+        const u = ((this.rig.u % 1) + 1) % 1;
+        const back = ramp(u, this.reset[0], this.reset[1]);
+        // mine: open all the way in, shut from just inside the door to the cut,
+        // re-opened behind the loop seam so the next lap arrives at open doors
+        scrub(this.actions.mine_doors_close,
+              ramp(u, this.mineShut[0], this.mineShut[1]) - back);
+        // plaza: shut on arrival, opening as the visitor rises from the seat,
+        // shut again behind them once they are clear of the doorway
+        scrub(this.actions.plaza_doors_open,
+              ramp(u, this.plazaOpen[0], this.plazaOpen[1]) - back);
     }
+}
 
-    _poseAt(u, tSway) {
-        this.rig.sample(u, _pos, _quat);
-        this.rig.tangent(u, _tan);
-        // rigid unit entered tail-first: local +Z stays on the travel tangent
-        _m.lookAt(_zero, _tan.clone().negate(), _up);
-        _quat.setFromRotationMatrix(_m);
-        _seatWorld.copy(this.seatLocal).applyQuaternion(_quat);
-        _pos.sub(_seatWorld);
-        if (tSway) {
-            _pos.y += Math.sin(tSway * 6.3) * 0.02;
-        }
-        this.root.position.copy(_pos);
-        this.root.quaternion.copy(_quat);
-    }
+function scrub(action, p) {
+    if (!action) return;
+    action.time = Math.max(0, Math.min(1, p)) * action.getClip().duration;
+}
 
-    update(t) {
-        if (!this.root) return;
-        const s = ((this.rig.current % 1) + 1) % 1;
-        if (s >= this.sStart && s < this.sEnd) {
-            this._poseAt(this.rig.u, t);
-            this.riding = true;
-            this._gangway(false);
-        } else if (s >= this.sEnd && s < 0.9985) {
-            this._poseAt(this.uEnd, 0);
-            if (!this.exitDoorsFired) {
-                this.exitDoorsFired = true;
-                const a = this.actions.doors_open;
-                if (a) a.reset().play();
-            }
-            this.riding = false;
-            this._gangway(true);
-        } else {
-            this.root.position.copy(this.staticPos);
-            this.root.quaternion.copy(this.staticQuat);
-            this.exitDoorsFired = false;
-            this.riding = false;
-            this._gangway(false);
-        }
-    }
-
-    _gangway(open) {
-        for (const part of this.gangwayParts) part.visible = !open;
-    }
+function ramp(x, a, b) {
+    const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
 }

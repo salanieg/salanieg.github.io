@@ -7,10 +7,10 @@ A continuous 3D world with four thematic waypoints on one looping camera rail:
 | 1 | Brutalist Atrium | Home / quote | `(0, 0, 0)` | `cam_wp1_home` | `home` |
 | 2 | Elysian Garden | Projects (column + boat) | `(0, -50, 0)` | `cam_wp2_projects`, `cam_wp2_boat_seat` | `projects`, `projects_boat` |
 | 3 | Western Desert | About (saloon + menu book) | `(0, -120, -10)` | `cam_wp3_about` | `about` |
-| 4 | Metro Cavern | Contact (DT1 train) | `(0, -200, -30)` | `cam_wp4_contact`, `cam_wp4_inside_train` | `contact`, `contact_inside` |
+| 4 | Metro Station | Contact (DT1 train) | `(-4, -205, -32)` | `cam_wp4_contact`, `cam_wp4_inside_train` | `contact`, `contact_inside` |
 
-A dark transit tunnel loops from the cavern back to the atrium plaza, so the
-camera path is a **closed 680 m loop** (travel direction −Y, Z up in Blender).
+The mine shaft's rails end at the mouth of the bore and turn into the balustrade of a short stair down into a built U-Bahn station (§3.6). Instead of a long dark transit tunnel, the camera then enters the single DT1 subway car, doors close, teleports inside the identical DT1 single car at the Atrium plaza, doors open, and steps out onto the plaza.
+The camera path forms a continuous closed loop.
 
 ---
 
@@ -32,14 +32,20 @@ Outputs in `blender/output/`:
 | `cam_path.json` | 500 uniform camera-rail samples + waypoint anchors for scroll control |
 | `previews/*.png` | EEVEE validation renders from every waypoint + overviews |
 
+**Do not run this against the shipped `world.blend`** — it is hand-finished and
+must never be regenerated (see §3.5, §4.2). Targeted, idempotent edit passes
+over the existing file (`wp3_rework.py`, `sky_and_light.py`) are the supported
+way to change it.
+
 Flags: `--only wp1,wp3` builds a subset, `--no-cam` skips the rail,
 `--out DIR` redirects output. Module files: `lib_common.py` (toolkit),
 `wp1_atrium.py`, `wp2_garden.py`, `wp3_desert.py`, `wp4_metro.py`,
 `camera_rig.py`, `exporter.py`. `inspect_glb.py` prints a GLB summary
 (animations, extras, cameras) without needing Blender.
 
-Current stats: **976 meshes, ~226 k triangles, 76 materials, 6 glTF
-animations** — comfortable for web after meshopt compression (§5).
+Current stats (world.blend as shipped, after the WP4 station rebuild): **2412
+objects, ~316 k triangles, 13 glTF clips, 4 embedded textures** — 19.1 MB GLB
+→ **4.65 MB** after Draco (§5).
 
 ---
 
@@ -174,13 +180,116 @@ bio/resume canvas textures; the leather cover and page stacks are separate
 so you can animate a page-turn later. Keep `cam_wp3_about` ~1 m in front of
 and 0.7 m above the book looking straight down at it.
 
-### 3.6 Split-flap board + clock (WP4 › `WP4_Board_*`, `WP4_Clock_*`)
+**Landscape + props (2026-07-26 rework, `wp3_rework.py`).** The generator's
+stacked-box cliffs and tube cacti are gone; `blender/wp3_rework.py` is the
+source of truth for what stands in the bowl now and is safe to re-run (it
+deletes everything it owns first, and rebuilds the terrain from
+`wp3_desert._terrain_fn` + its own displacement rather than adding to it):
 
-The board is a housing box + 5×14 instanced flap cells (two materials, ~1/3
-"lit") parented to a tilted root, plus a framed analog clock (12 instanced
-ticks + 3 hands, each hand a separate object with `interactive_type:
-clock_hand` so JS can spin them to the real time). To animate flaps, swap
-cell materials in JS — do not model per-flap geometry.
+* `WP3_Butte_*` — Monument-Valley towers: steep talus cone whose three lowest
+  rings are pinned *below the live terrain surface* (they stand on hill tops;
+  a free-hanging cone leaves a gap you can see through into the hollow shell),
+  near-vertical wall with hard alternating flutes (crisp vertical columns at
+  ~700 tris), slightly overhanging caprock. The horizontal strata are
+  **COLOR_0 bands, not geometry** — geometry ledges read as stacked tin cans.
+  The skirt is built top-down so a sunk ring can never end up above the ring
+  above it, and the mesh is created with `recalc=False`: the ring winding is
+  outward by construction, and `recalc_face_normals` inverts the *whole* shell
+  when the skirt self-intersects (butte 9 shipped inside-out exactly once).
+* `WP3_Saguaro_*` — ribbed trunk + parallel-transported arm frames (rings built
+  in the plane perpendicular to the path, otherwise the arms come out as flat
+  ribbons), skinned with the generated `blender/textures/wp3_cactus_skin.png`
+  (256², 7 ribs across U aligned to the 14-vertex rings, areole rows along V).
+* `WP3_Rock_*`, `WP3_Bush_*`, `WP3_Tuft_*`, `WP3_Pear_*` — instanced scatter,
+  auto-`settle()`d off steep ground.
+* `WP3_Wagon_*` (parented to `WP3_Wagon_Root`), `WP3_Barrel_*`, `WP3_Crate_*`.
+* Terrain: low dunes + butte pedestals, skipped inside 7 m of the camera rail,
+  inside the built-up discs, and inside the 4 m cells that were sculpted by
+  hand around the mine mountain (latched into the scene property
+  `wp3_hand_cells` on the first run — re-deriving it later would freeze the
+  new dunes in place). `Desert_Sand`'s COLOR_0 is rebuilt absolutely, blending
+  toward exposed rock by slope.
+
+Two traps worth remembering: `l.to_node is bsdf` and friends are **unreliable**
+on bpy structs (use `==`), and a `bpy.data.images.new()` image that is only
+`pack()`ed renders flat white in EEVEE and gives the exporter nothing — save it
+to `blender/textures/` and `images.load()` it back.
+
+Placement safety: every new object is checked against `cam_path.json`
+(`assert_clear`), so nothing crowds the rail and the rail itself never moves —
+`cam_path.json` does not need regenerating after this pass.
+
+### 3.6 The metro station + contact board (WP4, `wp4_station.py`)
+
+**2026-07-27 rebuild.** The rock cavern is gone. `blender/wp4_station.py` is a
+targeted, idempotent edit pass (same contract as `wp3_rework.py`) and is the
+source of truth for everything in WP4 south of the mine shaft:
+
+```bash
+"…/blender.exe" -b blender/output/world.blend -P blender/wp4_station.py \
+    -- --save --export --shots v1
+```
+
+It wipes and rebuilds everything named `WP4_Stn_*`, `WP4_Board_*`,
+`WP4_Clock_*`, `WP4_Turnstile_*`; it wipes `WP4_Cavern_Shell/Floor`,
+`WP4_Stalactite/Stalagmite*` and `WP4_Station_Portal` **without** rebuilding
+them. Every move is absolute, so running it twice equals running it once.
+
+* **The rails stop at the mouth of the bore** (`y = -184.2`, where the ballast
+  was already cut) and *become the stair*: the two rail sweeps rise off the
+  sleepers, splay apart and ride the pitch of an 11-riser flight down into the
+  hall as its balustrade (`WP4_Stn_RailToStair_W/E`). That is the whole point
+  of the waypoint's arrival and it only reads if the rail profile, the
+  railhead height (`LAND_Z`) and the concourse floor stay flush.
+* **The station sits 2.0 m lower and 4.0 m west** than the old cavern
+  (`DATUM = -32.20`, `TRACK_X = -4.0`), which is what turns the shaft mouth
+  into a mezzanine above the hall and lets the stair land on the platform
+  instead of on the track. `DT1_Root` is simply moved; the door clips are in
+  root-local space and are unaffected.
+* **The hall** is a closed box (`HALL_*`): marble floor with inlay bands, a
+  track trench, geometric stone wall panelling with yellow joints, five
+  riveted terracotta columns, painted steel tubes and — the hero — a canopy of
+  169 coloured rhombus panels on two interleaved diamond lattices. The panels
+  are cut 10 % over size (`D = 3.30` at `S = 3.00` spacing) so the random tilt
+  makes them *overlap* instead of opening gaps that show the black soffit at
+  grazing angles, and they are wound **normal-down** because they are
+  single-sided and only ever seen from below.
+* **Do not put the rock shell back.** `WP4_Cavern_Shell`'s surface cuts
+  straight through the hall's north end and reads as a black slab from the top
+  of the stair — that is why the pass deletes it. The station is fully
+  enclosed on its own.
+* **Six lamps, no more.** The runtime pool holds 10 and the atrium already
+  needs all 10; sweeping the station the peak is 8 in reach at once. Every new
+  lamp carries `web_intensity`/`web_distance`/`web_decay`.
+
+`WP4_Board_*` is a **suspended departure board whose five rows are the real
+links** (`interactive_type: link` + `link_id` on `WP4_Board_Row0..4` →
+contact / researchgate / hinterstube / kenopsium / soon1), placed off the
+`contact` framing rather than by eye: from `cam_wp4_contact` the whole board
+sits 3°–34° left of the view axis and the DT1's KONTAKT sign 34° right, both
+inside the web camera's 85° horizontal field with ~5° of margin. The analog
+clock hangs off it and **its dimensions are load-bearing** — `interactions.js`
+re-pivots the three hands with hardcoded lengths (0.09 / 0.13 / 0.15) and face
+offsets, so `WP4_Clock_Face`'s 0.36 radius and the three hand boxes must not
+change size.
+
+**The camera rail is edited, not regenerated.** `wp4_station.camera_rail()`
+re-authors only samples 580…639 of `cam_path.json` (shaft mouth → the seat in
+the mine car) from its own control polyline, splices them into the file that is
+already on disk and rebakes `Cam_Main` from the result. Everything before 580
+and the teleport cut at 639 are byte-for-byte untouched, and the anchors come
+out identical run after run. Do **not** reach for `rework_teleport.camera_rail()`
+instead: `camera_rig.control_points()` was edited after the rail was baked, so
+`path_controls()` now reproduces it ~8.9 m adrift (`publish_world.py` says the
+same). `make_cam_path.py`, which seeds off `Cam_Path_Curve`, stays valid — the
+pass rebuilds that curve from the new samples with the same 2-spline layout.
+
+Hygiene fixed in the same pass, found by auditing the .blend: the KONTAKT
+destination sign was **12 672 polygons** of flat letter face on a 58 cm sign
+(limited dissolve → 594, silhouette unchanged; same for `WP3_Text_UeberMich`,
+7034 → 2236), `WP2_Cypress` and `WP2_Tree_Canopy` were instancing sources left
+*visible* 400 m under the garden, and `WP2_FallsBoulder_L_0.001` was a stale
+duplicate sitting inside its own original.
 
 ---
 
@@ -248,6 +357,111 @@ emissives bloom.
 5. Keep the sun/lights in Blender identical to the web lighting rig, or bake
    only AO (Bake type AO) and multiply it in the shader instead.
 
+### 4.2 Sky panoramas + the zone light rig (`sky_and_light.py`)
+
+The atmosphere of all four waypoints is authored in `world.blend` and baked
+out; nothing about it is hardcoded in JS. `blender/sky_and_light.py` is a
+*targeted edit pass* — it only ever touches worlds, lights and its own
+`SKY_Bake` scene, never geometry, materials or the rail:
+
+```bash
+"…/blender.exe" -b blender/output/world.blend -P blender/sky_and_light.py
+# --build  edit + save the .blend only     --render  bake + rig only
+# --no-save  dry run (renders, leaves the .blend alone)
+```
+
+**The four skies** live as World datablocks — `Sky_WP1_Atrium`,
+`Sky_WP2_Garden`, `Sky_WP3_Desert`, `Sky_WP4_Cavern` — each a Sky Texture
+(physical/Nishita) plus a procedural cloud deck, a cirrus layer and a horizon
+haze band. They carry `use_fake_user` because a scene can only reference one
+world at a time and Blender purges the other three on save otherwise. Pick one
+in the World dropdown to look at it; edit the Sky Texture and re-run
+`--render` and the browser follows.
+
+The cloud deck projects the view ray onto a plane — `(X, Y) / Z` — which is
+what makes clouds bunch towards the horizon, with the radius squashed through
+`r' = R·r/(R+r)` so the singularity at the horizon becomes a clean converging
+band instead of high-frequency mush. Cloud colours are multiplied by
+`lit_gain` / `shadow_gain`: the sky around them is physical radiance in the
+2..12 range, so an albedo-valued cloud mixed in raw comes out as dark smoke.
+
+**Baking** renders each world through an equirectangular Cycles camera into
+`assets/world/sky/sky_wp{n}.jpg` (2048×1024, ~100–130 kB each). Two things are
+measured rather than assumed, and both cost an afternoon if you get them
+wrong:
+
+* *Camera orientation.* `(90°, 0, −90°)` puts u=0.00 on −X, 0.25 on +Y, 0.50
+  on +X, 0.75 on −Y with row 0 at the nadir — exactly three.js' `equirectUv()`.
+* *Sun azimuth.* `sun_rotation` is measured **from +Y towards +X** (0 = +Y,
+  90 = +X). The node's own `sun_direction` property never updates and cannot
+  be read back; `sun_vector()` encodes the convention that was verified by
+  locating the rendered sun disc for known angles.
+
+Exposure is solved, not eyeballed: `auto_exposure()` renders a 512×256 linear
+EXR probe and picks the stop that lands the 98th percentile of the sky half on
+the zone's `auto_target` (a *linear* luminance — 0.012 for the cavern is what
+keeps underground underground). The sun disc is far too small to reach that
+percentile, so it goes on clipping to white the way a sun should.
+
+**The rig** — `assets/world/sky_rig.json` — is written from the same pass: per
+zone the sun direction (derived from the Sky Texture, so lamp and painted sun
+can never disagree), sun/hemisphere/fill/fog colours and levels, and exposure.
+Rules learned the hard way, all encoded in `_normalize_tint()`:
+
+* the key light is tinted **explicitly** (`sun_color` in the zone spec), never
+  sampled — the sky around a high sun is blue and sampling it paints the whole
+  world blue;
+* `hemi_sky` is pulled most of the way to white, or every up-facing surface
+  goes blue; `hemi_ground` is scaled down to ~0.4, or every down-facing
+  surface lights up (the atrium ceiling glowed orange for exactly this reason);
+* the fog colour samples strictly *above* the horizon row — straddling it
+  averages in the panorama's dark ground slab and the fog turns muddy grey.
+
+**There is exactly one sun** — `SUN_ELEVATION` / `SUN_ROTATION` at the top of
+the module — and all four skies bake it. Not a simplification for its own
+sake: the runtime draws one *static* shadow map for the whole world (§6), so a
+per-zone sun direction would leave shadows pointing one way and the light
+coming from another. The zones stay distinct through atmosphere (air / dust /
+ozone), cloud palette, sun colour and level, fog and exposure — none of which
+can move a shadow.
+
+**The angle is constrained by the geometry, not by taste.** Every facade on
+this rail — arch, gate, saloon front, train nose — faces +Y, and the runtime
+has no bounce light, so a facade that loses the sun goes flat. Worse, the
+desert bowl is ringed by 40 m buttes: ray-casting the sun from the saloon, the
+porch and the bowl floor shows that anything below ~27° elevation, or more
+than ~10° off +Y, leaves the whole hero waypoint in the shadow of its own rim.
+Hence −9° / 30°. Re-run a ray-cast sweep before touching either number.
+
+`shadow_box` in the rig is the world-space box that shadow map has to cover,
+measured from the daylit collections (WP4 is underground and excluded) with
+the Z extent clamped — a couple of stray meshes hang hundreds of metres below
+the garden and would otherwise eat the shadow camera's whole depth range. It
+is measured rather than hardcoded so the box grows when the world is edited.
+
+**Lights.** The pass retunes the existing lamps and adds twelve `*_Fill_*`
+point lights (atrium nave and wall bounces, garden column and lake, saloon
+book/back-bar/doorway, cavern vault and rim). Each lamp carries
+`web_intensity` / `web_distance` / `web_decay` custom properties that ride
+along in the glTF extras, so `fx.js` applies Blender's numbers instead of
+guessing one value for every point light. New fills are checked against
+`cam_path.json` with `assert_clear_of_rail()` — note it calls
+`view_layer.update()` first, because a freshly created object still has an
+identity `matrix_world` and the check silently passes otherwise.
+
+**Keep interiors below the daylight outside.** Point lights cast no shadows,
+so an interior fill that is too strong both out-shines the sun *and* leaks
+through the wall to wash the facade — the atrium once read as brighter inside
+than out, with the same wall measuring 1.26 indoors against 0.30 outdoors.
+Budget it by irradiance rather than by eye; the shipped balance in the atrium
+zone is roughly: sunlit facade 2.5, plaza floor 1.3, interior floor 0.9,
+interior wall 0.75, shaded exterior wall 0.5. There is a probe for this in the
+session notes — sum sun (with a ray-cast visibility test) + hemisphere + fill
++ pooled lamps at a surface point and compare inside against outside.
+
+Changing light *energies* or adding fills means re-exporting the GLB (§5).
+Changing only skies or rig values does not — just re-run `--render`.
+
 ---
 
 ## 5. glTF export settings
@@ -305,9 +519,10 @@ U-Bahn simulator already uses — no build step, GitHub-Pages friendly):
 | `world.html` | page shell: importmap, splash, HUD (nav / titles / toast / hint) |
 | `src/world/main.js` | renderer, loaders (meshopt), scene assembly, frame loop |
 | `src/world/ScrollRig.js` | wheel/touch/drag/keys → scroll s → path u; waypoint stop poses; `cam_path.json` sampling with Z-up→Y-up conversion |
-| `src/world/fx.js` | water / waterfall / mist shaders; per-zone fog, sky, exposure, light mix; light normalization |
+| `src/world/fx.js` | water / waterfall / mist shaders; cross-fading sky dome; per-zone fog, exposure, sun/hemisphere/fill mix; static sun shadow; lamp pool; quality tiers |
 | `src/world/interactions.js` | raycast links, crossing-triggered animations, book/banner canvas textures, real-time clock, billboards |
 | `assets/world/world.glb` + `cam_path.json` | runtime assets (regenerate via §1 + compression above) |
+| `assets/world/sky_rig.json` + `sky/*.jpg` | the four skies and the zone light rig (regenerate via §4.2) |
 
 Local preview: `node scripts/dev_server.mjs 8123` → http://localhost:8123/
 (index.html *is* the world since 2026-07-22; the old homepage lives on as
@@ -327,6 +542,67 @@ Runtime choreography (all in `src/world/`):
   back. Stateless in scroll position — scrubbing backwards rewinds it.
 * **Lanterns** — `WP4_Lantern_*` pivots sway in JS with a warm PointLight.
 * **Freecam** — `F` toggles WASD/QE + drag-look (rig input suspended).
+* **Sky** — an inverted sphere drawn first with depth test off and the view
+  matrix' translation stripped, so it sits at infinity and can never intersect
+  the rail. It samples *two* panoramas and cross-fades them: `ambiencePoints()`
+  keys a zone per path-u, and every value between two keys — sky mix, sun
+  direction and tint, hemisphere, fill, fog, exposure — is interpolated. The
+  keys are placed so neighbouring zones only ever differ across a stretch the
+  geometry hides (the gate, the canyon, the mine mouth), which is what makes
+  the change of world read as a dissolve rather than a cut. The one hard cut
+  is the teleport, which is meant to be one. Below the horizon the dome goes to
+  the fog colour outright, so the panorama's flat ground half can never show
+  through a gap in the terrain.
+* **Shadows — one static map, rendered once.** The world has one sun, so its
+  shadow map covers the whole daylit world (`shadow_box`, §4.2) in a single
+  pass on frame 1; `shadowMap.autoUpdate` is off and nothing ever invalidates
+  it again. `fitShadowToBox()` fits the ortho frustum tightly to the box in
+  light space (a bounding-sphere fit wastes ~40 % here), giving ~4 cm texels at
+  4096 — sharper than the old camera-following ±38 m box managed at 2048.
+  Three things fall out of this: shadows are perfectly still instead of
+  crawling as a moving shadow box slides under them, the per-frame shadow cost
+  is zero, and `castShadow` is never toggled. That last one mattered: toggling
+  it at the mine portal recompiled every material for a **1.1 s freeze**.
+  The DT1 is excluded from casting — it drives along the rail, and a static
+  map would nail its shadow to wherever it was parked on frame 1.
+  Since three r160 has no `light.shadow.intensity` and there is no GI, a
+  second shadowless directional "bounce" light aimed back from the sun's far
+  side models the shadowed sides instead of just raising them.
+* **Lamp pool** — the GLB ships 23 punctual lights and the mine lanterns add 4
+  more, and three.js has no light culling: every one is evaluated in every
+  fragment of every material. So the authored lamps are demoted to data behind
+  an `Object3D` anchor (kept in the hierarchy, so lamps on the train or on a
+  swaying lantern still move) and a fixed-size pool of real lights is
+  retargeted each frame to whichever ones actually reach the camera. The light
+  *count* never changes, so the shaders never recompile. Blender stays the only
+  place lighting is authored — add a lamp there and the pool picks it up.
+
+  Two things about this are load-bearing and were both got wrong first time:
+
+  1. **Do not dim a lamp by how near it is.** An early version multiplied
+     intensity by a proximity falloff *on top of* three.js' own `distance`
+     attenuation. Every lamp then ramped up as you approached, and the atrium
+     visibly lit itself in stages as you drove in. Lamps must keep exactly the
+     intensity Blender gave them.
+  2. **A lamp at its cutoff radius is not dark.** Measured: a lamp sitting at
+     25.8 m of its 26 m range still accounted for ~11 % of the frame's
+     brightness, so simply dropping it when `dist >= distance` pops hard. The
+     fix is a `gate` that is flat 1.0 over the inner 78 % of the range and
+     smoothsteps to 0 over the last 22 % — a cutoff softener, *not* a
+     proximity ramp.
+
+  Sweeping the whole ride, at most 9 lamps are ever in reach at once, so the
+  high tier's pool of 10 can never overflow. Verify a change with the freeze
+  test: render frame N and N+1 with the pool held at frame N's assignment; if
+  the luminance step is the same either way, the pool is not the cause.
+* **Quality tiers** — `high` (4096 shadow map, PCFSoft, 10 lamps, DPR ≤ 2) and
+  `low` (2048, PCF, 6 lamps, DPR ≤ 1.25), chosen once from UA / core count /
+  device memory **before the first frame** and never changed, because shadow
+  type, shadow flag and light counts are all baked into every shader program.
+  Force either with `?quality=low` / `?quality=high`. Measured end to end over
+  the whole ride: ~8 ms/frame average, ~14 ms worst, no spikes, zero
+  recompiles after startup. The cheap tier keeps its shadows — a map that is
+  rendered once costs only the lookup.
 
 ## 7. Using it from R3F instead
 

@@ -253,6 +253,12 @@ def build(ctx):
     _benches(coll, m)
     _entrance(coll, m)
 
+    # Place identical single DT1 subway car on the Atrium plaza
+    import wp4_metro
+    dt1_mats = wp4_metro._mats()
+    wp4_metro.build_single_dt1_car(coll, dt1_mats, "DT1_Atrium_Car1", y0=38.0, x_off=-3.2)
+
     wp = L.empty("cam_wp1_home", (0, 8.5, 2.6), look_at=(0, -15, 4.8),
                  coll=coll, props={"camera_waypoint": "home"})
     ctx["waypoints"]["home"] = wp
+

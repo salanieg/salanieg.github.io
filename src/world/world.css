@@ -27,6 +27,13 @@ html, body {
     font-weight: 900; font-size: clamp(2.2rem, 7vw, 4rem);
     letter-spacing: .12em;
 }
+.splash-logo {
+    max-width: min(340px, 85vw);
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
 .splash-sub {
     margin-top: .6rem; letter-spacing: .28em; font-size: .78rem;
     text-transform: uppercase; opacity: .65;

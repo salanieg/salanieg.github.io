@@ -32,6 +32,15 @@ export class ScrollRig {
         this.count = this.positions.length;
         this.anchors = anchors;
 
+        // The rail is cut in two: sample `cut` is the seat inside the mine car,
+        // `cut + 1` the identical seat inside the plaza car 240 m away. The
+        // visitor is teleported across, so that one segment must never be
+        // interpolated — lerping it smears the camera through the void.
+        this.cut = Number.isInteger(pathData.cut) ? pathData.cut : -1;
+        this.teleport = pathData.teleport || null;
+        this.uIn = this.teleport ? this.teleport.u_in : -1;
+        this.uOut = this.teleport ? this.teleport.u_out : -1;
+
         // scroll-space plan: [waypoint key, scroll fraction]; u comes from the GLB
         const plan = [
             ['__start', 0.00, 0.0],
@@ -40,8 +49,8 @@ export class ScrollRig {
             ['projects_boat', 0.36, anchors.projects_boat],
             ['about', 0.60, anchors.about],
             ['contact', 0.82, anchors.contact],
-            ['contact_inside', 0.875, anchors.contact_inside],
-            ['__exit', 0.97, 0.975],      // train arrival at the plaza portal
+            ['contact_inside', 0.88, anchors.contact_inside],
+            ['__exit', 0.96, 0.97],
             ['__loop', 1.00, 1.0],
         ];
         this.stops = plan.map(([name, s, u]) => ({ name, s, u }));
@@ -177,8 +186,17 @@ export class ScrollRig {
 
     tangent(u, out) {
         const eps = 1.5 / this.count;
-        this.sample(u - eps, _ta, _qa);
-        this.sample(u + eps, _tb, _qb);
+        let a = u - eps;
+        let b = u + eps;
+        // keep the finite difference on one side of the teleport, otherwise the
+        // chord spans both cars and the direction is meaningless
+        if (this.cut >= 0) {
+            const seam = (this.cut + 0.5) / this.count;
+            if (mod1(u) <= seam && mod1(b) > seam) { b = u; a = u - 2 * eps; }
+            else if (mod1(u) > seam && mod1(a) < seam) { a = u; b = u + 2 * eps; }
+        }
+        this.sample(a, _ta, _qa);
+        this.sample(b, _tb, _qb);
         out.subVectors(_tb, _ta);
         return out.length() > 1e-6 ? out.normalize() : out.set(0, 0, 1);
     }
@@ -187,7 +205,10 @@ export class ScrollRig {
         const f = mod1(u) * this.count;
         const i0 = Math.floor(f) % this.count;
         const i1 = (i0 + 1) % this.count;
-        const t = f - Math.floor(f);
+        let t = f - Math.floor(f);
+        // across the teleport there is nothing to interpolate: snap to whichever
+        // car we are nearer, so the jump reads as a hard cut
+        if (i0 === this.cut) t = t < 0.5 ? 0 : 1;
         outPos.lerpVectors(this.positions[i0], this.positions[i1], t);
         _qa.copy(this.quats[i0]);
         _qb.copy(this.quats[i1]);
@@ -210,9 +231,15 @@ export class ScrollRig {
         this.sample(this.u, this.pos, this.quat);
         // near a waypoint, ease into the exact framing authored on its empty
         const s = mod1(this.current);
+        // which carriage are we in? A stop on the far side of the teleport must
+        // not pull the camera towards its pose — `contact_inside` sits in the
+        // mine car and would otherwise drag the framing 240 m back through the
+        // void for the first metres of the walk out of the plaza car.
+        const sideNow = this.cut >= 0 && mod1(this.u) > this.uIn ? 1 : 0;
         for (const st of this.stops) {
             const pose = this.stopPoses[st.name];
             if (!pose) continue;
+            if (this.cut >= 0 && (st.u > this.uIn ? 1 : 0) !== sideNow) continue;
             const d = Math.min(Math.abs(st.s - s), 1 - Math.abs(st.s - s));
             const R = 0.045;
             if (d < R) {

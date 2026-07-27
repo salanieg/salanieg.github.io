@@ -19,14 +19,14 @@ from mathutils import Vector
 import lib_common as L
 import wp4_metro as M4
 
-N_SAMPLES = 1500
+N_SAMPLES = 1000
 FRAMES = 3600
 KEY_STEP = 6
 
 
 def control_points():
     pts = [
-        (0.0, 30.0, 2.4),        # seam — heading -Y through the plaza gate
+        (0.0, 28.0, 2.4),        # seam — heading -Y through the plaza gate
         (0.0, 22.0, 2.4),
         (0.0, 13.0, 2.5),
         (0.0, 3.0, 2.7),
@@ -71,16 +71,12 @@ def control_points():
         (1.2, -203.5, -27.55),   # into door 1
         (0.2, -204.8, -27.55),
         (0.0, -207.0, -27.5),    # cam_wp4_inside_train
-        (0.0, -212.0, -27.6),
-        (0.0, -218.5, -27.7),
-        (0.0, -226.0, -27.85),
-        (0.0, -234.0, -28.0),
-        (0.0, -242.0, -28.3),
-    ]
-    pts += [(x, y, z + 1.9) for (x, y, z) in M4.TUNNEL_CTRL[2:16]]
-    pts += [
-        (12.0, 24.0, 2.3),
-        (4.0, 33.5, 2.4),
+        (0.0, -209.5, -27.55),   # inside WP4 train (doors close)
+        # Teleport to Atrium DT1 single car
+        (-3.2, 31.0, 1.45),      # inside Atrium train (doors open)
+        (-2.0, 31.0, 1.45),      # exiting door 1
+        (-1.45, 31.0, 1.45),
+        (-0.5, 31.0, 2.0),       # onto Atrium plaza
     ]
     return pts
 

@@ -767,7 +767,7 @@ class App {
         loader.setMeshoptDecoder(MeshoptDecoder);
 
         loader.load(
-            './city_model.glb',
+            './assets/models/city_model.glb',
             (gltf) => {
                 const model = gltf.scene;
 

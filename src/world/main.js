@@ -98,17 +98,38 @@ const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
 loader.setMeshoptDecoder(MeshoptDecoder);
 
+// The four sky panoramas and the light rig that goes with them are baked out
+// of world.blend by blender/sky_and_light.py — see PIPELINE.md §4.2. If they
+// are missing the world still lights itself from fx.js' fallback rig, so a
+// failed sky fetch must never take the whole scene down with it.
+const imageLoader = new THREE.ImageLoader(manager);
+const loadSky = fetch('./assets/world/sky_rig.json')
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+    .then(async (skyRig) => {
+        const images = {};
+        await Promise.all(skyRig.zones.map((z) =>
+            new Promise((res) => imageLoader.load(
+                z.texture, (img) => { images[z.key] = img; res(); },
+                undefined, () => res()))));
+        return { skyRig, images };
+    })
+    .catch((err) => {
+        console.warn('[world] sky rig unavailable, using fallback ambience', err);
+        return { skyRig: null, images: null };
+    });
+
 Promise.all([
     new Promise((res, rej) => loader.load('./assets/world/world.glb', res, undefined, rej)),
     fetch('./assets/world/cam_path.json').then((r) => r.json()),
-]).then(([gltf, pathData]) => init(gltf, pathData))
+    loadSky,
+]).then(([gltf, pathData, sky]) => init(gltf, pathData, sky))
     .catch((err) => {
         console.error('[world] load failed', err);
         enterBtn.textContent = 'FEHLER BEIM LADEN';
     });
 
 // ------------------------------------------------------------------- init --
-function init(gltf, pathData) {
+function init(gltf, pathData, sky) {
     scene.add(gltf.scene);
 
     // camera waypoint anchors (path_u) from the GLB extras
@@ -138,12 +159,14 @@ function init(gltf, pathData) {
         }
     });
     rig.setStopPoses(stopPoses);
-    const fx = setupFX(scene, renderer, gltf.scene, anchors);
+    const fx = setupFX(scene, renderer, gltf.scene, anchors, rig,
+                       sky && sky.skyRig, sky && sky.images);
     const mixer = new THREE.AnimationMixer(gltf.scene);
     const inter = new Interactions({
         scene, camera, rig, mixer,
         clips: gltf.animations.filter((c) => c.name !== 'cam_fly_through'),
         dom: renderer.domElement,
+        lampPool: fx.lampPool,
     });
     const ride = new TrainRide(scene, rig, inter.actions);
     const freecam = new Freecam(camera, renderer.domElement);
@@ -176,7 +199,7 @@ function init(gltf, pathData) {
             camera.quaternion.copy(rig.quat);
         }
         mixer.update(dt);
-        fx.update(t, rig.u);
+        fx.update(t, rig.u, camera.position);
         if (started) inter.update(dt);
         renderer.render(scene, camera);
         requestAnimationFrame(tick);

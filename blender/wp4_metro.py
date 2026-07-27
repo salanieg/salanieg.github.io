@@ -410,24 +410,92 @@ def _display_board(coll, m):
 
 
 # ------------------------------------------------------------------- train --
-def _car_shell(coll, m, car, y0, is_cab_front):
-    """One DT1 car; origin convention: world coords, car spans y0 .. y0-CAR_LEN,
-    +Y = towards the platform entrance (front cab looks +Y). Track datum z."""
+def _cab_front(coll, m, name, y0, x_off=0.0):
+    z_floor, z_top = 1.1, 3.38
+    half_w = CAR_W / 2
+    L.box(f"{name}_Front", (CAR_W - 0.14, 0.16, z_top - z_floor),
+          location=(x_off, y0 - 0.08, (z_floor + z_top) / 2),
+          rotation=(-0.05, 0, 0), coll=coll, mat=m["red"])
+    for wi, wx in enumerate((-0.95, 0.0, 0.95)):
+        proud = 0.055 if wi == 1 else 0.015
+        L.plane(f"{name}_Windshield{wi}", 0.72, 0.85,
+                location=(x_off + wx, y0 + proud, 2.62),
+                rotation=(math.pi / 2 - 0.05, 0, math.pi),
+                coll=coll, mat=m["glass"])
+        L.box(f"{name}_WinFrame{wi}", (0.8, 0.03, 0.93),
+              location=(x_off + wx, y0 - 0.005 + proud - 0.015, 2.62),
+              rotation=(-0.05, 0, 0), coll=coll, mat=m["rubber"])
+    L.box(f"{name}_EmergencyDoor", (0.88, 0.04, 1.95),
+          location=(x_off, y0 + 0.02, 2.12), rotation=(-0.05, 0, 0), coll=coll,
+          mat=m["red"])
+    for sx in (-1, 1):
+        L.cylinder(f"{name}_Headlamp{'L' if sx < 0 else 'R'}",
+                   0.11, 0.1, segs=12, rotation=(math.pi / 2, 0, 0),
+                   location=(x_off + sx * 0.95, y0 + 0.06, 1.62), coll=coll,
+                   mat=m["lamp"])
+        L.cylinder(f"{name}_Marker{'L' if sx < 0 else 'R'}", 0.07, 0.08,
+                   segs=10, rotation=(math.pi / 2, 0, 0),
+                   location=(x_off + sx * 0.95, y0 + 0.05, 1.32), coll=coll,
+                   mat=m["marker"])
+    spot = bpy.data.lights.new(f"{name}_HeadlightSpot", type='SPOT')
+    spot.energy = 900.0
+    spot.color = (1.0, 0.93, 0.8)
+    spot.spot_size = 1.0
+    lo = bpy.data.objects.new(f"{name}_HeadlightSpot", spot)
+    lo.location = (x_off, y0 + 0.2, 1.7)
+    lo.rotation_euler = (math.pi / 2 + 0.08, 0, math.pi)
+    L.link(lo, coll)
+    L.box(f"{name}_DestBox", (1.05, 0.14, 0.3),
+          location=(x_off, y0 - 0.02, 3.16), coll=coll, mat=m["sign"])
+    txt = L.text_mesh(f"{name}_DestText", "KONTAKT", font="matrix", size=0.17,
+                      extrude=0.015, coll=coll, mat=m["sign_t"],
+                      rotation=(math.pi / 2, 0, math.pi))
+    txt.location = (x_off, y0 + 0.055, 3.10)
+    L.set_props(txt, interactive_type="link", link_id="contact")
+    L.box(f"{name}_CabRoofCap", (CAR_W - 0.3, 0.9, 0.16),
+          location=(x_off, y0 - 0.45, z_top + 0.1), coll=coll, mat=m["roof"])
+
+
+def _cab_rear(coll, m, name, y_rear, x_off=0.0):
+    z_floor, z_top = 1.1, 3.38
+    L.box(f"{name}_RearFront", (CAR_W - 0.14, 0.16, z_top - z_floor),
+          location=(x_off, y_rear + 0.08, (z_floor + z_top) / 2),
+          rotation=(0.05, 0, 0), coll=coll, mat=m["red"])
+    for wi, wx in enumerate((-0.95, 0.0, 0.95)):
+        proud = -0.055 if wi == 1 else -0.015
+        L.plane(f"{name}_RearWindshield{wi}", 0.72, 0.85,
+                location=(x_off + wx, y_rear + proud, 2.62),
+                rotation=(math.pi / 2 + 0.05, 0, 0),
+                coll=coll, mat=m["glass"])
+        L.box(f"{name}_RearWinFrame{wi}", (0.8, 0.03, 0.93),
+              location=(x_off + wx, y_rear + 0.005 + proud + 0.015, 2.62),
+              rotation=(0.05, 0, 0), coll=coll, mat=m["rubber"])
+    for sx in (-1, 1):
+        L.cylinder(f"{name}_RearMarker{'L' if sx < 0 else 'R'}", 0.07, 0.08,
+                   segs=10, rotation=(-math.pi / 2, 0, 0),
+                   location=(x_off + sx * 0.95, y_rear - 0.05, 1.32), coll=coll,
+                   mat=m["marker"])
+    L.box(f"{name}_RearRoofCap", (CAR_W - 0.3, 0.9, 0.16),
+          location=(x_off, y_rear + 0.45, z_top + 0.1), coll=coll, mat=m["roof"])
+
+
+def build_single_dt1_car(coll, m, name, y0, x_off=0.0):
+    """Generates a single, beautiful standalone DT1 subway car."""
     z_floor = 1.1
     z_win0, z_win1 = 2.12, 3.02
     z_top = 3.38
     half_w = CAR_W / 2
-    name = f"DT1_Car{car}"
     door_centers = [2.9, CAR_LEN / 2, CAR_LEN - 2.9]
     door_w = 1.32
 
-    # underframe + floor
+    # Underframe + Floor
     L.box(f"{name}_Underframe", (CAR_W - 0.35, CAR_LEN - 0.5, 0.38),
-          location=(0, y0 - CAR_LEN / 2, 0.86), coll=coll, mat=m["under"])
+          location=(x_off, y0 - CAR_LEN / 2, 0.86), coll=coll, mat=m["under"])
     L.box(f"{name}_Floor", (CAR_W - 0.16, CAR_LEN - 0.2, 0.1),
-          location=(0, y0 - CAR_LEN / 2, z_floor + 0.05), coll=coll,
+          location=(x_off, y0 - CAR_LEN / 2, z_floor + 0.05), coll=coll,
           mat=m["under"])
-    # side walls: panels between doorways, lower band / window band / upper band
+
+    # Side walls
     spans = []
     cursor = 0.35
     for dc in door_centers:
@@ -439,18 +507,18 @@ def _car_shell(coll, m, car, y0, is_cab_front):
             ln = b - a
             yc = y0 - (a + b) / 2
             L.box(f"{name}_{tag}_Lower{si}", (0.09, ln, z_win0 - z_floor - 0.12),
-                  location=(side * (half_w - 0.05), yc,
+                  location=(x_off + side * (half_w - 0.05), yc,
                             (z_floor + z_win0 - 0.12) / 2 + 0.06),
                   coll=coll, mat=m["red"])
             L.box(f"{name}_{tag}_Stripe{si}", (0.12, ln, 0.12),
-                  location=(side * (half_w - 0.038), yc, z_win0 - 0.06),
+                  location=(x_off + side * (half_w - 0.038), yc, z_win0 - 0.06),
                   coll=coll, mat=m["white_b"])
             L.box(f"{name}_{tag}_Upper{si}", (0.09, ln, z_top - z_win1),
-                  location=(side * (half_w - 0.05), yc,
+                  location=(x_off + side * (half_w - 0.05), yc,
                             (z_win1 + z_top) / 2),
                   coll=coll, mat=m["red"])
             L.plane(f"{name}_{tag}_Glass{si}", ln - 0.24, z_win1 - z_win0,
-                    location=(side * (half_w - 0.10), yc,
+                    location=(x_off + side * (half_w - 0.10), yc,
                               (z_win0 + z_win1) / 2),
                     rotation=(math.pi / 2, 0, math.pi / 2 + (0 if side > 0
                                                              else math.pi)),
@@ -460,36 +528,29 @@ def _car_shell(coll, m, car, y0, is_cab_front):
                 py = a + (b - a) * (pk + 1) / (n_pillars + 1)
                 L.box(f"{name}_{tag}_Pillar{si}_{pk}", (0.08, 0.14,
                                                         z_win1 - z_win0),
-                      location=(side * (half_w - 0.06), y0 - py,
+                      location=(x_off + side * (half_w - 0.06), y0 - py,
                                 (z_win0 + z_win1) / 2),
                       coll=coll, mat=m["red"])
-    # roof
+
+    # Roof
     arc = [(-half_w + 0.12, 0.0)]
     for i in range(9):
-        a = math.pi * i / 8
-        arc.append((-math.cos(a) * (half_w - 0.12), 0.38 * math.sin(a)))
+        ang = math.pi * i / 8
+        arc.append((-math.cos(ang) * (half_w - 0.12), 0.38 * math.sin(ang)))
     arc.append((half_w - 0.12, 0.0))
     roof_prof = arc + [(half_w - 0.12, -0.06), (-half_w + 0.12, -0.06)]
     L.sweep(f"{name}_Roof", roof_prof,
-            [(0, y0 - 0.3, z_top), (0, y0 - CAR_LEN + 0.3, z_top)],
+            [(x_off, y0 - 0.3, z_top), (x_off, y0 - CAR_LEN + 0.3, z_top)],
             coll=coll, mat=m["roof"], smooth_angle=math.radians(35))
     for vi, vy in enumerate((4.5, 9.3, 14.0)):
         L.box(f"{name}_RoofVent{vi}", (1.1, 1.8, 0.16),
-              location=(0, y0 - vy, z_top + 0.42), coll=coll, mat=m["roof"])
-    # end walls
-    if is_cab_front:
-        _cab_front(coll, m, name, y0)
-    else:
-        L.box(f"{name}_EndWall_F", (CAR_W - 0.2, 0.1, z_top - z_floor),
-              location=(0, y0 - 0.15, (z_floor + z_top) / 2), coll=coll,
-              mat=m["red"])
-    L.box(f"{name}_EndWall_R", (CAR_W - 0.2, 0.1, z_top - z_floor),
-          location=(0, y0 - CAR_LEN + 0.15, (z_floor + z_top) / 2), coll=coll,
-          mat=m["red"])
-    L.plane(f"{name}_EndWin_R", 0.9, 0.8,
-            location=(0, y0 - CAR_LEN + 0.09, 2.5),
-            rotation=(math.pi / 2, 0, 0), coll=coll, mat=m["glass"])
-    # doors (platform side +X animated; -X side static closed)
+              location=(x_off, y0 - vy, z_top + 0.42), coll=coll, mat=m["roof"])
+
+    # Cabs at both ends for a single car unit
+    _cab_front(coll, m, name, y0, x_off=x_off)
+    _cab_rear(coll, m, name, y0 - CAR_LEN, x_off=x_off)
+
+    # Doors with smooth, beautiful Bezier animation
     for side, tag in ((1, "E"), (-1, "W")):
         for di, dc in enumerate(door_centers):
             for leaf_dir, leaf_tag in ((-1, "L"), (1, "R")):
@@ -497,7 +558,7 @@ def _car_shell(coll, m, car, y0, is_cab_front):
                              (0.07, door_w / 2 - 0.02, z_top - z_floor - 0.16),
                              coll=coll, mat=m["red"], bevel=0.012)
                 base_y = y0 - dc + leaf_dir * door_w / 4
-                leaf.location = (side * (half_w - 0.075), base_y,
+                leaf.location = (x_off + side * (half_w - 0.075), base_y,
                                  (z_floor + z_top) / 2 - 0.02)
                 rub = L.box(f"{name}_Door{di + 1}_{tag}{leaf_tag}_Rub",
                             (0.075, 0.035, z_top - z_floor - 0.2),
@@ -511,84 +572,45 @@ def _car_shell(coll, m, car, y0, is_cab_front):
                              coll=coll, mat=m["glass"])
                 gl.parent = leaf
                 gl.location = (side * 0.045, 0, 0.55)
+
                 if side > 0:
                     slide = leaf_dir * (door_w / 2 + 0.06)
-                    L.make_action(leaf, "doors_open",
-                                  [("location", 1,
-                                    [(1, base_y), (34, base_y + slide)], None)])
-                    L.make_action(leaf, "doors_close",
-                                  [("location", 1,
-                                    [(1, base_y + slide), (34, base_y)], None)])
+                    # Smooth S-curve easing keyframes for opening and closing
+                    open_keys = [
+                        (1, base_y),
+                        (8, base_y + slide * 0.08),
+                        (20, base_y + slide * 0.50),
+                        (30, base_y + slide * 0.92),
+                        (36, base_y + slide),
+                    ]
+                    close_keys = [
+                        (1, base_y + slide),
+                        (8, base_y + slide * 0.92),
+                        (20, base_y + slide * 0.50),
+                        (30, base_y + slide * 0.08),
+                        (36, base_y),
+                    ]
+                    L.make_action(leaf, "doors_open", [("location", 1, open_keys, 'BEZIER')])
+                    L.make_action(leaf, "doors_close", [("location", 1, close_keys, 'BEZIER')])
                     leaf.location.y = base_y
-    # bogies
+
+    # Bogies
     for bi, by in enumerate((3.1, CAR_LEN - 3.1)):
         L.box(f"{name}_Bogie{bi}", (2.0, 2.7, 0.5),
-              location=(0, y0 - by, 0.5), coll=coll, mat=m["under"])
+              location=(x_off, y0 - by, 0.5), coll=coll, mat=m["under"])
         for wx in (-1, 1):
             for wy in (-0.85, 0.85):
                 L.cylinder(f"{name}_Wheel{bi}_{wx}_{int(wy * 100)}", 0.38, 0.14,
                            segs=14, rotation=(0, math.pi / 2, 0),
-                           location=(wx * RAIL_HALF, y0 - by + wy, 0.38),
+                           location=(x_off + wx * RAIL_HALF, y0 - by + wy, 0.38),
                            coll=coll, mat=m["under"])
-    L.box(f"{name}_Coupler", (0.3, 0.5, 0.25),
-          location=(0, y0 - CAR_LEN - 0.02, 0.72), coll=coll, mat=m["under"])
+
+    # Interior
+    _interior(coll, m, name, y0, x_off=x_off)
     return name
 
 
-def _cab_front(coll, m, name, y0):
-    z_floor, z_top = 1.1, 3.38
-    half_w = CAR_W / 2
-    # front mask: slight rake, three window panes over a red face
-    L.box(f"{name}_Front", (CAR_W - 0.14, 0.16, z_top - z_floor),
-          location=(0, y0 - 0.08, (z_floor + z_top) / 2),
-          rotation=(-0.05, 0, 0), coll=coll, mat=m["red"])
-    for wi, wx in enumerate((-0.95, 0.0, 0.95)):
-        proud = 0.055 if wi == 1 else 0.015
-        L.plane(f"{name}_Windshield{wi}", 0.72, 0.85,
-                location=(wx, y0 + proud, 2.62), rotation=(math.pi / 2 - 0.05,
-                                                           0, math.pi),
-                coll=coll, mat=m["glass"])
-        L.box(f"{name}_WinFrame{wi}", (0.8, 0.03, 0.93),
-              location=(wx, y0 - 0.005 + proud - 0.015, 2.62),
-              rotation=(-0.05, 0, 0), coll=coll, mat=m["rubber"])
-    # emergency door outline; its window is the proud center windshield pane
-    L.box(f"{name}_EmergencyDoor", (0.88, 0.04, 1.95),
-          location=(0, y0 + 0.02, 2.12), rotation=(-0.05, 0, 0), coll=coll,
-          mat=m["red"])
-    # headlamps + red markers
-    for sx in (-1, 1):
-        for li, lz in enumerate((1.62,)):
-            L.cylinder(f"{name}_Headlamp{'L' if sx < 0 else 'R'}{li}",
-                       0.11, 0.1, segs=12, rotation=(math.pi / 2, 0, 0),
-                       location=(sx * 0.95, y0 + 0.06, lz), coll=coll,
-                       mat=m["lamp"])
-        L.cylinder(f"{name}_Marker{'L' if sx < 0 else 'R'}", 0.07, 0.08,
-                   segs=10, rotation=(math.pi / 2, 0, 0),
-                   location=(sx * 0.95, y0 + 0.05, 1.32), coll=coll,
-                   mat=m["marker"])
-    spot = bpy.data.lights.new(f"{name}_HeadlightSpot", type='SPOT')
-    spot.energy = 900.0
-    spot.color = (1.0, 0.93, 0.8)
-    spot.spot_size = 1.0
-    lo = bpy.data.objects.new(f"{name}_HeadlightSpot", spot)
-    lo.location = (0, y0 + 0.2, 1.7)
-    lo.rotation_euler = (math.pi / 2 + 0.08, 0, math.pi)
-    L.link(lo, L.collection("WP4_Metro"))
-    # destination sign
-    L.box(f"{name}_DestBox", (1.05, 0.14, 0.3),
-          location=(0, y0 - 0.02, 3.16), coll=coll, mat=m["sign"])
-    txt = L.text_mesh(f"{name}_DestText", "KONTAKT", font="matrix", size=0.17,
-                      extrude=0.015, coll=coll, mat=m["sign_t"],
-                      rotation=(math.pi / 2, 0, math.pi))
-    txt.location = (0, y0 + 0.055, 3.10)
-    L.set_props(txt, interactive_type="link", link_id="contact")
-    # roof cap over the cab
-    L.box(f"{name}_CabRoofCap", (CAR_W - 0.3, 0.9, 0.16),
-          location=(0, y0 - 0.45, z_top + 0.1), coll=coll, mat=m["roof"])
-
-
-def _interior(coll, m, car, y0):
-    name = f"DT1_Car{car}"
+def _interior(coll, m, name, y0, x_off=0.0):
     z_floor = 1.2
     half_w = CAR_W / 2
     bench_spans = [(4.0, 7.6), (10.4, 14.2)]
@@ -599,54 +621,57 @@ def _interior(coll, m, car, y0):
             yc = y0 - (a + b) / 2
             if seat_src is None:
                 seat_src = L.box("DT1_Seat_Pad", (0.46, ln, 0.1),
-                                 location=(side * (half_w - 0.34), yc,
+                                 location=(x_off + side * (half_w - 0.34), yc,
                                            z_floor + 0.42),
                                  coll=coll, mat=m["seat"], bevel=0.02)
                 back_src = L.box("DT1_Seat_Back", (0.09, ln, 0.5),
-                                 location=(side * (half_w - 0.13), yc,
+                                 location=(x_off + side * (half_w - 0.13), yc,
                                            z_floor + 0.78),
                                  rotation=(0, side * -0.12, 0),
                                  coll=coll, mat=m["seat"], bevel=0.02)
                 L.box("DT1_Seat_Base", (0.4, ln, 0.4),
-                      location=(side * (half_w - 0.34), yc, z_floor + 0.2),
+                      location=(x_off + side * (half_w - 0.34), yc, z_floor + 0.2),
                       coll=coll, mat=m["wood_i"])
             else:
                 L.inst(seat_src, f"{name}_Seat{side}_{si}",
-                       (side * (half_w - 0.34), yc, z_floor + 0.42), coll=coll)
+                       (x_off + side * (half_w - 0.34), yc, z_floor + 0.42), coll=coll)
                 L.inst(back_src, f"{name}_SeatBack{side}_{si}",
-                       (side * (half_w - 0.13), yc, z_floor + 0.78),
+                       (x_off + side * (half_w - 0.13), yc, z_floor + 0.78),
                        rotation=(0, side * -0.12, 0), coll=coll)
                 L.box(f"{name}_SeatBase{side}_{si}", (0.4, ln, 0.4),
-                      location=(side * (half_w - 0.34), yc, z_floor + 0.2),
+                      location=(x_off + side * (half_w - 0.34), yc, z_floor + 0.2),
                       coll=coll, mat=m["wood_i"])
-    # interior liner below the window band hides the hollow shell look
+
     for side in (-1, 1):
         L.box(f"{name}_Liner{side}", (0.05, CAR_LEN - 0.9, 0.95),
-              location=(side * (half_w - 0.16), y0 - CAR_LEN / 2,
+              location=(x_off + side * (half_w - 0.16), y0 - CAR_LEN / 2,
                         z_floor + 0.475 + 0.1),
               coll=coll, mat=m["wood_i"])
+
     pole_src = None
     for pi, py in enumerate((3.6, 8.2, 9.6, 13.4, 15.2, 16.8)):
-        loc = ((-1) ** pi * 0.55, y0 - py, 2.25)
+        loc = (x_off + (-1) ** pi * 0.55, y0 - py, 2.25)
         if pole_src is None:
             pole_src = L.cylinder("DT1_Pole", 0.024, 2.15, segs=8,
                                   location=loc, coll=coll, mat=m["pole"])
         else:
             L.inst(pole_src, f"{name}_Pole{pi}", loc, coll=coll)
+
     L.box(f"{name}_Ceiling", (CAR_W - 0.5, CAR_LEN - 0.8, 0.05),
-          location=(0, y0 - CAR_LEN / 2, 3.32), coll=coll, mat=m["beige"])
+          location=(x_off, y0 - CAR_LEN / 2, 3.32), coll=coll, mat=m["beige"])
     for si, sx in enumerate((-0.6, 0.6)):
         L.box(f"{name}_LightStrip{si}", (0.16, CAR_LEN - 2.0, 0.04),
-              location=(sx, y0 - CAR_LEN / 2, 3.30), coll=coll, mat=m["strip"])
-    # driver cab partition (front car only)
-    if car == 1:
-        L.box(f"{name}_CabWall", (CAR_W - 0.2, 0.08, 2.28),
-              location=(0, y0 - 2.1, 2.24), coll=coll, mat=m["wood_i"])
-        L.plane(f"{name}_CabWall_Win", 0.7, 0.7,
-                location=(0.5, y0 - 2.06, 2.6), rotation=(math.pi / 2, 0, 0),
-                coll=coll, mat=m["glass"])
-        L.box(f"{name}_CabConsole", (1.6, 0.6, 0.5),
-              location=(0, y0 - 1.1, 1.85), coll=coll, mat=m["under"])
+              location=(x_off + sx, y0 - CAR_LEN / 2, 3.30), coll=coll, mat=m["strip"])
+
+    for cy_off in (2.1, CAR_LEN - 2.1):
+        L.box(f"{name}_CabWall_{int(cy_off)}", (CAR_W - 0.2, 0.08, 2.28),
+              location=(x_off, y0 - cy_off, 2.24), coll=coll, mat=m["wood_i"])
+        L.plane(f"{name}_CabWall_Win_{int(cy_off)}", 0.7, 0.7,
+                location=(x_off + 0.5, y0 - cy_off + (0.04 if cy_off < 5 else -0.04), 2.6),
+                rotation=(math.pi / 2, 0, 0), coll=coll, mat=m["glass"])
+        L.box(f"{name}_CabConsole_{int(cy_off)}", (1.6, 0.6, 0.5),
+              location=(x_off, y0 - cy_off + (1.0 if cy_off < 5 else -1.0), 1.85),
+              coll=coll, mat=m["under"])
 
 
 def _train(coll, m, ctx):
@@ -654,13 +679,13 @@ def _train(coll, m, ctx):
     root = L.empty("DT1_Root", (0, 0, datum), coll=coll, size=0.5)
     L.set_props(root, interactive_type="train", train_type="DT1")
     prev = set(bpy.data.objects)
-    _car_shell(coll, m, 1, TRAIN_FRONT_Y, True)
-    _interior(coll, m, 1, TRAIN_FRONT_Y)
-    _car_shell(coll, m, 2, TRAIN_FRONT_Y - CAR_LEN - 0.45, False)
-    _interior(coll, m, 2, TRAIN_FRONT_Y - CAR_LEN - 0.45)
+
+    build_single_dt1_car(coll, m, "DT1_Car1", TRAIN_FRONT_Y)
+
     for obj in set(bpy.data.objects) - prev:
         if obj.parent is None and obj.type in ('MESH', 'LIGHT'):
             obj.parent = root
+
     wp = L.empty("cam_wp4_contact", (3.4, -196.2, -27.3),
                  look_at=(0, TRAIN_FRONT_Y, -27.9), coll=coll,
                  props={"camera_waypoint": "contact"})
@@ -669,36 +694,6 @@ def _train(coll, m, ctx):
                   look_at=(0, -215.0, -27.9), coll=coll,
                   props={"camera_waypoint": "contact_inside"})
     ctx["waypoints"]["contact_inside"] = wp2
-
-
-# ------------------------------------------------------------- loop tunnel --
-TUNNEL_CTRL = [
-    (0.0, -240.0, -30.2), (0.0, -252.0, -29.8), (14.0, -262.0, -28.0),
-    (34.0, -264.0, -26.0), (52.0, -256.0, -23.0), (64.0, -240.0, -20.0),
-    (72.0, -218.0, -17.5), (76.0, -192.0, -16.0), (76.0, -164.0, -16.5),
-    (74.0, -136.0, -17.5), (70.0, -108.0, -18.0), (64.0, -80.0, -18.0),
-    (56.0, -54.0, -16.0), (46.0, -30.0, -12.0), (34.0, -8.0, -7.0),
-    (22.0, 10.0, -2.0), (12.0, 24.0, 0.9), (5.0, 32.0, 2.0), (0.0, 35.5, 2.25),
-]
-
-
-def _loop_tunnel(coll, m):
-    pts = L.catmull_rom(TUNNEL_CTRL, closed=False, samples_per_seg=6)
-    L.tube("WP4_Loop_Tunnel", pts, 3.5, segs=10, coll=coll, mat=m["rock_d"],
-           cap=False, smooth_angle=math.radians(80),
-           taper=lambda t: 1.0 - 0.28 * L.smoothstep(0.85, 1.0, t))
-    # exit portal onto the atrium plaza
-    for side in (-1, 1):
-        L.box(f"WP4_LoopPortal_Pier{side}", (1.0, 1.0, 4.6),
-              location=(side * 2.6, 36.5, 2.3 - 0.3), coll=coll,
-              mat=L.material("Brutalist_Concrete_Dark", (0.45, 0.44, 0.42),
-                             rough=0.95))
-    L.box("WP4_LoopPortal_Lintel", (7.2, 1.2, 1.2),
-          location=(0, 36.5, 4.8), coll=coll,
-          mat=L.material("Brutalist_Concrete", (0.58, 0.56, 0.53), rough=0.92))
-    L.box("WP4_LoopPortal_Slab", (9.0, 14.0, 0.3), location=(0, 32.0, -0.17),
-          coll=coll, mat=L.material("Brutalist_Concrete", (0.58, 0.56, 0.53),
-                                    rough=0.92))
 
 
 def build(ctx):
@@ -711,4 +706,4 @@ def build(ctx):
     _turnstile(coll, m, ctx)
     _display_board(coll, m)
     _train(coll, m, ctx)
-    _loop_tunnel(coll, m)
+

@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 
-const PORT = Number(process.argv[2] || 8123);
+const PORT = Number(process.argv[2] || process.env.PORT || 8123);
 const ROOT = process.cwd();
 const MIME = {
     '.html': 'text/html; charset=utf-8',
