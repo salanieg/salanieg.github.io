@@ -4,255 +4,172 @@
     <meta charset="UTF-8">
     <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+    <meta name="description" content="Impressum & Datenschutzerklärung | Dennis Münch">
     <title>Impressum | Dennis Münch</title>
 
     <link rel="icon" type="image/png" href="images/favicon/favicon-48x48.png" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="images/favicon/favicon.svg">
     <link rel="shortcut icon" href="images/favicon/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="images/favicon/site.webmanifest">
 
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-            --bg: #00524a;
-            --fg: #fff;
-            --silver: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
-            --chrome: linear-gradient(180deg, #ebebeb 0%, #c4c4c4 18%, #a2a2a2 42%, #b6b6b6 62%, #d9d9d9 82%, #f0f0f0 100%);
-            --chrome-border-top: 2px solid #b8b8b8;
-            --chrome-border-bottom: 2px solid #555;
-            --chrome-border-side: 1px solid #888;
-            --chrome-text-shadow: 0 1px 0 #f2f2f2, 0 -1px 0 #888;
-        }
-
-        @font-face {
-            font-family: 'Alien';
-            src: url('fonts/Alien/Alien Edifice Bold 10 20 .ttf') format('truetype');
-            font-display: swap;
-        }
-        @font-face {
-            font-family: 'Geist';
-            src: url('fonts/Geist/Geist-Light.woff2') format('woff2'),
-                 url('fonts/Geist/Geist-Light.ttf') format('truetype');
-            font-display: swap;
-        }
-
-        html, body {
-            background: var(--bg);
-            color: var(--fg);
-            font-family: 'Geist', Arial, sans-serif;
-            font-size: 1rem;
-            line-height: 1.7;
-            min-height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        ::selection { background: #fff; color: #000; }
-
-        /* ── CHROME NAV ── */
-        nav {
-            display: flex;
-            flex-shrink: 0;
-            border-top: var(--chrome-border-top);
-            border-bottom: var(--chrome-border-bottom);
-            background: var(--chrome);
-        }
-
-        nav a {
-            flex: 1;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-right: var(--chrome-border-side);
-            font-family: 'Alien', Courier, sans-serif;
-            font-size: 0.7rem;
-            letter-spacing: 0.13em;
-            text-transform: uppercase;
-            color: #1a1a1a;
-            font-weight: 700;
-            text-shadow: var(--chrome-text-shadow);
-            text-decoration: none;
-            transition: background 0.12s;
-            user-select: none;
-        }
-
-        nav a:last-child { border-right: none; }
-        nav a:hover { background: rgba(0, 0, 0, 0.07); color: #1a1a1a; }
-
-        /* ── MAIN ── */
-        main {
-            flex: 1;
-            max-width: 680px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 2.2rem 1.5rem 3rem;
-        }
-
-        /* ── TYPOGRAPHY ── */
-        h1 {
-            font-family: 'Alien', Courier, sans-serif;
-            font-size: 1.4rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            margin: 2rem 0 1.2rem;
-            background: var(--silver);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        h1:first-child { margin-top: 0; }
-
-        h2 {
-            font-family: 'Alien', Courier, sans-serif;
-            font-size: 0.95rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin: 1.6rem 0 0.6rem;
-            color: rgba(255, 255, 255, 0.75);
-        }
-
-        h3 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin: 1.2rem 0 0.4rem;
-            color: rgba(255, 255, 255, 0.65);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        h4 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin: 0.8rem 0 0.3rem;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        p {
-            color: var(--fg);
-            margin-bottom: 0.9rem;
-            hyphens: auto;
-            letter-spacing: 0.02em;
-            font-size: 0.9rem;
-            line-height: 1.65;
-        }
-
-        a { color: #bbb; }
-        a:hover { color: #fff; }
-
-        ul { padding-left: 1.5rem; margin-bottom: 0.9rem; }
-        li { color: var(--fg); margin-bottom: 0.3rem; font-size: 0.9rem; }
-
-        hr {
-            border: none;
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            margin: 2rem 0;
-        }
-
-        /* ── FOOTER ── */
-        footer {
-            flex-shrink: 0;
-            padding: 0.65rem 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
-            font-size: 0.7rem;
-            text-align: center;
-        }
-
-        footer a { color: var(--fg); }
-        footer a:hover { color: #888; }
-
-        @media (max-width: 520px) {
-            main { padding: 1.4rem 1rem 2rem; }
-        }
-    </style>
+    <link rel="stylesheet" href="styles/theme.css">
+    <script defer src="common.js"></script>
 </head>
 <body>
 
-<nav>
-    <a href="/">Startseite</a>
-    <a href="/impressum.html">Impressum</a>
-</nav>
+<div id="app">
 
-<main>
-    <h1>Impressum</h1>
-    <p>Dennis Luca M&uuml;nch<br>
-    Otto-Seeling-Promenade 16<br>
-    90762 F&uuml;rth</p>
+    <header id="site-header">
+        <a href="index.html"><img class="logo" src="images/headertext.svg" alt="Dennis Münch" width="240" height="55"></a>
+        <div class="header-subtitle">Impressum</div>
+    </header>
 
-    <h2>Kontakt</h2>
-    <p>Telefon: +4916093825495<br>
-    E-Mail: den.muench[at]gmail.com</p>
+    <nav id="tilenav">
+        <a class="tile" href="index.html">← Startseite</a>
+        <a class="tile active" href="#">Impressum</a>
+    </nav>
 
-    <h2>Redaktionell verantwortlich</h2>
-    <p>Dennis Luca M&uuml;nch<br>
-    Otto-Seeling-Promenade 16<br>
-    90762 F&uuml;rth<br>
-    E-Mail: den.muench[at]gmail.com</p>
-    <p>Quelle: <a href="https://www.e-recht24.de">e-recht24.de</a></p>
+    <main id="stage">
 
-    <hr>
+        <section class="section-block">
+            <h2>Impressum</h2>
+            <p><strong>Dennis Luca Münch</strong><br>
+            Otto-Seeling-Promenade 16<br>
+            90762 Fürth</p>
 
-    <h1>Datenschutzerkl&auml;rung</h1>
+            <h3>Kontakt</h3>
+            <p>Telefon: +4916093825495<br>
+            E-Mail: den.muench[at]gmail.com</p>
 
-    <h2>1. Datenschutz auf einen Blick</h2>
-    <h3>Allgemeine Hinweise</h3>
-    <p>Die folgenden Hinweise geben einen einfachen &Uuml;berblick dar&uuml;ber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie pers&ouml;nlich identifiziert werden k&ouml;nnen.</p>
+            <h3>Redaktionell verantwortlich</h3>
+            <p>Dennis Luca Münch<br>
+            Otto-Seeling-Promenade 16<br>
+            90762 Fürth<br>
+            E-Mail: den.muench[at]gmail.com</p>
+            <p>Quelle: <a href="https://www.e-recht24.de" target="_blank" rel="noopener noreferrer">e-recht24.de</a></p>
+        </section>
 
-    <h3>Datenerfassung auf dieser Website</h3>
-    <h4>Wer ist verantwortlich f&uuml;r die Datenerfassung?</h4>
-    <p>Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten k&ouml;nnen Sie dem Abschnitt &bdquo;Hinweis zur Verantwortlichen Stelle&ldquo; in dieser Datenschutzerkl&auml;rung entnehmen.</p>
+        <section class="section-block">
+            <h2>Datenschutz&shy;erkl&auml;rung</h2>
 
-    <h4>Wie erfassen wir Ihre Daten?</h4>
-    <p>Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Andere Daten werden automatisch oder nach Ihrer Einwilligung beim Besuch der Website durch unsere IT-Systeme erfasst. Das sind vor allem technische Daten (z.&nbsp;B. Internetbrowser, Betriebssystem oder Uhrzeit des Seitenaufrufs).</p>
+            <h3>1. Datenschutz auf einen Blick</h3>
+            <h4>Allgemeine Hinweise</h4>
+            <p>Die folgenden Hinweise geben einen einfachen &Uuml;berblick dar&uuml;ber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie pers&ouml;nlich identifiziert werden k&ouml;nnen. Ausf&uuml;hrliche Informationen zum Thema Datenschutz entnehmen Sie unserer unter diesem Text aufgef&uuml;hrten Datenschutzerkl&auml;rung.</p>
 
-    <h4>Welche Rechte haben Sie bez&uuml;glich Ihrer Daten?</h4>
-    <p>Sie haben jederzeit das Recht, unentgeltlich Auskunft &uuml;ber Herkunft, Empf&auml;nger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben au&szlig;erdem ein Recht auf Berichtigung oder L&ouml;schung dieser Daten. Hierzu sowie zu weiteren Fragen zum Thema Datenschutz k&ouml;nnen Sie sich jederzeit an uns wenden.</p>
+            <h4>Datenerfassung auf dieser Website</h4>
+            <p><strong>Wer ist verantwortlich f&uuml;r die Datenerfassung auf dieser Website?</strong><br>
+            Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten k&ouml;nnen Sie dem Abschnitt &bdquo;Hinweis zur Verantwortlichen Stelle&ldquo; in dieser Datenschutzerkl&auml;rung entnehmen.</p>
 
-    <h2>2. Hosting</h2>
-    <h3>Externes Hosting</h3>
-    <p>Diese Website wird extern gehostet. Wir setzen folgenden Hoster ein:</p>
-    <p>IONOS SE<br>
-    Elgendorfer Str. 57<br>
-    56410 Montabaur<br>
-    HRB 24498 beim Amtsgericht Montabaur</p>
+            <p><strong>Wie erfassen wir Ihre Daten?</strong><br>
+            Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Hierbei kann es sich z.&nbsp;B. um Daten handeln, die Sie in ein Kontaktformular eingeben.<br>
+            Andere Daten werden automatisch oder nach Ihrer Einwilligung beim Besuch der Website durch unsere IT-Systeme erfasst. Das sind vor allem technische Daten (z.&nbsp;B. Internetbrowser, Betriebssystem oder Uhrzeit des Seitenaufrufs). Die Erfassung dieser Daten erfolgt automatisch, sobald Sie diese Website betreten.</p>
 
-    <h2>3. Allgemeine Hinweise und Pflichtinformationen</h2>
-    <h3>Datenschutz</h3>
-    <p>Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerkl&auml;rung.</p>
+            <p><strong>Wof&uuml;r nutzen wir Ihre Daten?</strong><br>
+            Ein Teil der Daten wird erhoben, um eine fehlerfreie Bereitstellung der Website zu gew&auml;hrleisten. Andere Daten k&ouml;nnen zur Analyse Ihres Nutzerverhaltens verwendet werden. Sofern &uuml;ber die Website Vertr&auml;ge geschlossen oder angebahnt werden k&ouml;nnen, werden die &uuml;bermittelten Daten auch f&uuml;r Vertragsangebote, Bestellungen oder sonstige Auftragsanfragen verarbeitet.</p>
 
-    <h3>Hinweis zur verantwortlichen Stelle</h3>
-    <p>Dennis Luca M&uuml;nch<br>
-    Otto-Seeling-Promenade 16<br>
-    90762 F&uuml;rth<br>
-    E-Mail: den.muench[at]gmail.com</p>
+            <p><strong>Welche Rechte haben Sie bez&uuml;glich Ihrer Daten?</strong><br>
+            Sie haben jederzeit das Recht, unentgeltlich Auskunft &uuml;ber Herkunft, Empf&auml;nger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben au&szlig;erdem ein Recht, die Berichtigung oder L&ouml;schung dieser Daten zu verlangen. Wenn Sie eine Einwilligung zur Datenverarbeitung erteilt haben, k&ouml;nnen Sie diese Einwilligung jederzeit f&uuml;r die Zukunft widerrufen. Au&szlig;erdem haben Sie das Recht, unter bestimmten Umst&auml;nden die Einschr&auml;nkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen. Des Weiteren steht Ihnen ein Beschwerderecht bei der zust&auml;ndigen Aufsichtsbeh&ouml;rde zu.<br>
+            Hierzu sowie zu weiteren Fragen zum Thema Datenschutz k&ouml;nnen Sie sich jederzeit an uns wenden.</p>
 
-    <h3>Speicherdauer</h3>
-    <p>Soweit innerhalb dieser Datenschutzerkl&auml;rung keine speziellere Speicherdauer genannt wurde, verbleiben Ihre personenbezogenen Daten bei uns, bis der Zweck f&uuml;r die Datenverarbeitung entf&auml;llt.</p>
+            <h4>Analyse-Tools und Tools von Dritt&shy;anbietern</h4>
+            <p>Beim Besuch dieser Website kann Ihr Surf-Verhalten statistisch ausgewertet werden. Das geschieht vor allem mit sogenannten Analyseprogrammen.</p>
+            <p>Detaillierte Informationen zu diesen Analyseprogrammen finden Sie in der folgenden Datenschutzerkl&auml;rung.</p>
+        </section>
 
-    <h3>Widerruf Ihrer Einwilligung zur Datenverarbeitung</h3>
-    <p>Viele Datenverarbeitungsvorg&auml;nge sind nur mit Ihrer ausdr&uuml;cklichen Einwilligung m&ouml;glich. Sie k&ouml;nnen eine bereits erteilte Einwilligung jederzeit widerrufen.</p>
+        <section class="section-block">
+            <h2>2. Hosting</h2>
+            <p>Wir hosten die Inhalte unserer Website bei folgendem Anbieter:</p>
+            <h3>IONOS</h3>
+            <p>Anbieter ist die IONOS SE, Elgendorfer Str. 57, 56410 Montabaur (nachfolgend IONOS). Wenn Sie unsere Website besuchen, erfasst IONOS verschiedene Logfiles inklusive Ihrer IP-Adressen. Details entnehmen Sie der Datenschutzerkl&auml;rung von IONOS: <a href="https://www.ionos.de/terms-gtc/terms-privacy" target="_blank" rel="noopener noreferrer">https://www.ionos.de/terms-gtc/terms-privacy</a>.</p>
+            <p>Die Verwendung von IONOS erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Wir haben ein berechtigtes Interesse an einer m&ouml;glichst zuverl&auml;ssigen Darstellung unserer Website. Sofern eine entsprechende Einwilligung abgefragt wurde, erfolgt die Verarbeitung ausschlie&szlig;lich auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO und &sect; 25 Abs. 1 TDDDG, soweit die Einwilligung die Speicherung von Cookies oder den Zugriff auf Informationen im Endger&auml;t des Nutzers (z.&nbsp;B. Device-Fingerprinting) im Sinne des TDDDG umfasst. Die Einwilligung ist jederzeit widerrufbar.</p>
 
-    <h3>SSL- bzw. TLS-Verschl&uuml;sselung</h3>
-    <p>Diese Seite nutzt aus Sicherheitsgr&uuml;nden eine SSL- bzw. TLS-Verschl&uuml;sselung. Eine verschl&uuml;sselte Verbindung erkennen Sie daran, dass die Adresszeile des Browsers von &bdquo;http://&ldquo; auf &bdquo;https://&ldquo; wechselt.</p>
+            <h4>Auftragsverarbeitung</h4>
+            <p>Wir haben einen Vertrag &uuml;ber Auftragsverarbeitung (AVV) zur Nutzung des oben genannten Dienstes geschlossen. Hierbei handelt es sich um einen datenschutzrechtlich vorgeschriebenen Vertrag, der gew&auml;hrleistet, dass dieser die personenbezogenen Daten unserer Websitebesucher nur nach unseren Weisungen und unter Einhaltung der DSGVO verarbeitet.</p>
+        </section>
 
-    <h2>4. Datenerfassung auf dieser Website</h2>
-    <h3>Cookies</h3>
-    <p>Diese Website verwendet technisch notwendige Cookies. Sie k&ouml;nnen Ihren Browser so einstellen, dass Sie &uuml;ber das Setzen von Cookies informiert werden und Cookies nur im Einzelfall erlauben.</p>
+        <section class="section-block">
+            <h2>3. Allgemeine Hinweise und Pflicht&shy;informationen</h2>
+            <h3>Datenschutz</h3>
+            <p>Die Betreiber dieser Seiten nehmen den Schutz Ihrer pers&ouml;nlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerkl&auml;rung.</p>
+            <p>Wenn Sie diese Website benutzen, werden verschiedene personenbezogene Daten erhoben. Personenbezogene Daten sind Daten, mit denen Sie pers&ouml;nlich identifiziert werden k&ouml;nnen. Die vorliegende Datenschutzerkl&auml;rung erl&auml;utert, welche Daten wir erheben und wof&uuml;r wir sie nutzen. Sie erl&auml;utert auch, wie und zu welchem Zweck das geschieht.</p>
+            <p>Wir weisen darauf hin, dass die Daten&uuml;bertragung im Internet (z.&nbsp;B. bei der Kommunikation per E-Mail) Sicherheitsl&uuml;cken aufweisen kann. Ein l&uuml;ckenloser Schutz der Daten vor dem Zugriff durch Dritte ist nicht m&ouml;glich.</p>
 
-    <h3>Anfrage per E-Mail</h3>
-    <p>Wenn Sie uns per E-Mail kontaktieren, wird Ihre Anfrage inklusive aller daraus hervorgehenden personenbezogenen Daten zum Zwecke der Bearbeitung Ihres Anliegens bei uns gespeichert und verarbeitet. Diese Daten geben wir nicht ohne Ihre Einwilligung weiter.</p>
+            <h3>Hinweis zur verantwortlichen Stelle</h3>
+            <p>Die verantwortliche Stelle f&uuml;r die Datenverarbeitung auf dieser Website ist:</p>
+            <p>Dennis Luca M&uuml;nch<br>
+            Otto-Seeling-Promenade 16<br>
+            90762 F&uuml;rth</p>
+            <p>Telefon: +4916093825495<br>
+            E-Mail: den.muench[at]gmail.com</p>
+            <p>Verantwortliche Stelle ist die nat&uuml;rliche oder juristische Person, die allein oder gemeinsam mit anderen &uuml;ber die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten (z.&nbsp;B. Namen, E-Mail-Adressen o. &Auml;.) entscheidet.</p>
 
-    <h2>5. Plugins und Tools</h2>
-    <h3>Spotify</h3>
-    <p>Auf dieser Website sind Funktionen des Musik-Dienstes Spotify eingebunden (Spotify AB, Birger Jarlsgatan 61, 113 56 Stockholm, Schweden). Die Einbindung erfolgt nur nach Ihrer ausdr&uuml;cklichen Zustimmung. Weitere Informationen: <a href="https://www.spotify.com/de/legal/privacy-policy/" target="_blank" rel="noopener noreferrer">Spotify Datenschutzerkl&auml;rung</a>.</p>
+            <h3>Speicherdauer</h3>
+            <p>Soweit innerhalb dieser Datenschutzerkl&auml;rung keine speziellere Speicherdauer genannt wurde, verbleiben Ihre personenbezogenen Daten bei uns, bis der Zweck f&uuml;r die Datenverarbeitung entf&auml;llt. Wenn Sie ein berechtigtes L&ouml;schersuchen geltend machen oder eine Einwilligung zur Datenverarbeitung widerrufen, werden Ihre Daten gel&ouml;scht, sofern wir keine anderen rechtlich zul&auml;ssigen Gr&uuml;nde f&uuml;r die Speicherung Ihrer personenbezogenen Daten haben (z.&nbsp;B. steuer- oder handelsrechtliche Aufbewahrungsfristen); im letztgenannten Fall erfolgt die L&ouml;schung nach Fortfall dieser Gr&uuml;nde.</p>
 
-    <p>Quelle: <a href="https://www.e-recht24.de">e-recht24.de</a></p>
-</main>
+            <h3>Allgemeine Hinweise zu den Rechtsgrundlagen der Datenverarbeitung auf dieser Website</h3>
+            <p>Sofern Sie in die Datenverarbeitung eingewilligt haben, verarbeiten wir Ihre personenbezogenen Daten auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO bzw. Art. 9 Abs. 2 lit. a DSGVO, sofern besondere Datenkategorien nach Art. 9 Abs. 1 DSGVO verarbeitet werden. Im Falle einer ausdr&uuml;cklichen Einwilligung in die &Uuml;bertragung personenbezogener Daten in Drittstaaten erfolgt die Datenverarbeitung au&szlig;erdem auf Grundlage von Art. 49 Abs. 1 lit. a DSGVO. Sofern Sie in die Speicherung von Cookies oder in den Zugriff auf Informationen in Ihr Endger&auml;t (z.&nbsp;B. via Device-Fingerprinting) eingewilligt haben, erfolgt die Datenverarbeitung zus&auml;tzlich auf Grundlage von &sect; 25 Abs. 1 TDDDG. Die Einwilligung ist jederzeit widerrufbar. Sind Ihre Daten zur Vertragserf&uuml;llung oder zur Durchf&uuml;hrung vorvertraglicher Ma&szlig;nahmen erforderlich, verarbeiten wir Ihre Daten auf Grundlage des Art. 6 Abs. 1 lit. b DSGVO. Des Weiteren verarbeiten wir Ihre Daten, sofern diese zur Erf&uuml;llung einer rechtlichen Verpflichtung erforderlich sind auf Grundlage von Art. 6 Abs. 1 lit. c DSGVO. Die Datenverarbeitung kann ferner auf Grundlage unseres berechtigten Interesses nach Art. 6 Abs. 1 lit. f DSGVO erfolgen. &Uuml;ber die jeweils im Einzelfall einschl&auml;gigen Rechtsgrundlagen wird in den folgenden Abs&auml;tzen dieser Datenschutzerkl&auml;rung informiert.</p>
 
-<footer>
-    <span>© 2026 Dennis Münch &nbsp;·&nbsp; <a href="/">Startseite</a></span>
-</footer>
+            <h3>Empf&auml;nger von personenbezogenen Daten</h3>
+            <p>Im Rahmen unserer Gesch&auml;ftst&auml;tigkeit arbeiten wir mit verschiedenen externen Stellen zusammen. Dabei ist teilweise auch eine &Uuml;bermittlung von personenbezogenen Daten an diese externen Stellen erforderlich. Wir geben personenbezogene Daten nur dann an externe Stellen weiter, wenn dies im Rahmen einer Vertragserf&uuml;llung erforderlich ist, wenn wir gesetzlich hierzu verpflichtet sind (z.&nbsp;B. Weitergabe von Daten an Steuerbeh&ouml;rden), wenn wir ein berechtigtes Interesse nach Art. 6 Abs. 1 lit. f DSGVO an der Weitergabe haben oder wenn eine sonstige Rechtsgrundlage die Datenweitergabe erlaubt. Beim Einsatz von Auftragsverarbeitern geben wir personenbezogene Daten unserer Kunden nur auf Grundlage eines g&auml;ngigen Vertrags &uuml;ber Auftragsverarbeitung weiter. Im Falle einer gemeinsamen Verarbeitung wird ein Vertrag &uuml;ber gemeinsame Verarbeitung geschlossen.</p>
+
+            <h3>Widerruf Ihrer Einwilligung zur Datenverarbeitung</h3>
+            <p>Viele Datenverarbeitungsvorg&auml;nge sind nur mit Ihrer ausdr&uuml;cklichen Einwilligung m&ouml;glich. Sie k&ouml;nnen eine bereits erteilte Einwilligung jederzeit widerrufen. Die Rechtm&auml;&szlig;igkeit der bis zum Widerruf erfolgten Datenverarbeitung bleibt vom Widerruf unber&uuml;hrt.</p>
+
+            <h3>Widerspruchsrecht gegen die Datenerhebung in besonderen F&auml;llen sowie gegen Direktwerbung (Art. 21 DSGVO)</h3>
+            <p>WENN DIE DATENVERARBEITUNG AUF GRUNDLAGE VON ART. 6 ABS. 1 LIT. E ODER F DSGVO ERFOLGT, HABEN SIE JEDERZEIT DAS RECHT, AUS GR&Uuml;NDEN, DIE SICH AUS IHRER BESONDEREN SITUATION ERGEBEN, GEGEN DIE VERARBEITUNG IHRER PERSONENBEZOGENEN DATEN WIDERSPRUCH EINZULEGEN; DIES GILT AUCH F&Uuml;R EIN AUF DIESE BESTIMMUNGEN GEST&UTZTES PROFILING. DIE JEWEILIGE RECHTSGRUNDLAGE, AUF DENEN EINE VERARBEITUNG BERUHT, ENTNEHMEN SIE DIESER DATENSCHUTZERKL&Auml;RUNG. WENN SIE WIDERSPRUCH EINLEGEN, WERDEN WIR IHRE BETROFFENEN PERSONENBEZOGENEN DATEN NICHT MEHR VERARBEITEN, ES SEI DENN, WIR K&Ouml;NNEN ZWINGENDE SCHUTZW&Uuml;RDIGE GR&Uuml;NDE F&Uuml;R DIE VERARBEITUNG NACHWEISEN, DIE IHRE INTERESSEN, RECHTE UND FREIHEITEN &Uuml;BERWIEGEN ODER DIE VERARBEITUNG DIENT DER GELTENDMACHUNG, AUS&Uuml;BUNG ODER VERTEIDIGUNG VON RECHTSANSPR&Uuml;CHEN (WIDERSPRUCH NACH ART. 21 ABS. 1 DSGVO).</p>
+            <p>WERDEN IHRE PERSONENBEZOGENEN DATEN VERARBEITET, UM DIREKTWERBUNG ZU BETREIBEN, SO HABEN SIE DAS RECHT, JEDERZEIT WIDERSPRUCH GEGEN DIE VERARBEITUNG SIE BETREFFENDER PERSONENBEZOGENES DATEN ZUM ZWECKE DERARTIGER WERBUNG EINZULEGEN; DIES GILT AUCH F&Uuml;R DAS PROFILING, SOWEIT ES MIT SOLCHER DIREKTWERBUNG IN VERBINDUNG STEHT. WENN SIE WIDERSPRECHEN, WERDEN IHRE PERSONENBEZOGENEN DATEN ANSCHLIESSEND NICHT MEHR ZUM ZWECKE DER DIREKTWERBUNG VERWENDET (WIDERSPRUCH NACH ART. 21 ABS. 2 DSGVO).</p>
+
+            <h3>Beschwerde&shy;recht bei der zust&auml;ndigen Aufsichts&shy;beh&ouml;rde</h3>
+            <p>Im Falle von Verst&ouml;&szlig;en gegen die DSGVO steht den Betroffenen ein Beschwerderecht bei einer Aufsichtsbeh&ouml;rde, insbesondere in dem Mitgliedstaat ihres gew&ouml;hnlichen Aufenthalts, ihres Arbeitsplatzes oder des Orts des mutma&szlig;lichen Versto&szlig;es zu. Das Beschwerderecht besteht unbeschadet anderweitiger verwaltungsrechtlicher oder gerichtlicher Rechtsbehelfe.</p>
+
+            <h3>Recht auf Daten&shy;&uuml;bertrag&shy;barkeit</h3>
+            <p>Sie haben das Recht, Daten, die wir auf Grundlage Ihrer Einwilligung oder in Erf&uuml;llung eines Vertrags automatisiert verarbeiten, an sich oder an einen Dritten in einem g&auml;ngigen, maschinenlesbaren Format aush&auml;ndigen zu lassen. Sofern Sie die direkte &Uuml;bertragung der Daten an einen anderen Verantwortlichen verlangen, erfolgt dies nur, soweit es technisch machbar ist.</p>
+
+            <h3>Auskunft, Berichtigung und L&ouml;schung</h3>
+            <p>Sie haben im Rahmen der geltenden gesetzlichen Bestimmungen jederzeit das Recht auf unentgeltliche Auskunft &uuml;ber Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empf&auml;nger und den Zweck der Datenverarbeitung und ggf. ein Recht auf Berichtigung oder L&ouml;schung dieser Daten. Hierzu sowie zu weiteren Fragen zum Thema personenbezogene Daten k&ouml;nnen Sie sich jederzeit an uns wenden.</p>
+
+            <h3>Recht auf Einschr&auml;nkung der Verarbeitung</h3>
+            <p>Sie haben das Recht, die Einschr&auml;nkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen. Hierzu k&ouml;nnen Sie sich jederzeit an uns wenden. Das Recht auf Einschr&auml;nkung der Verarbeitung besteht in folgenden F&auml;llen:</p>
+            <ul>
+                <li>Wenn Sie die Richtigkeit Ihrer bei uns gespeicherten personenbezogenen Daten bestreiten, ben&ouml;tigen wir in der Regel Zeit, um dies zu &uuml;berpr&uuml;fen. F&uuml;r die Dauer der Pr&uuml;fung haben Sie das Recht, die Einschr&auml;nkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen.</li>
+                <li>Wenn die Verarbeitung Ihrer personenbezogenen Daten unrechtm&auml;&szlig;ig geschah/geschieht, k&ouml;nnen Sie statt der L&ouml;schung die Einschr&auml;nkung der Datenverarbeitung verlangen.</li>
+                <li>Wenn wir Ihre personenbezogenen Daten nicht mehr ben&ouml;tigen, Sie sie jedoch zur Aus&uuml;bung, Verteidigung oder Geltendmachung von Rechtsanspr&uuml;chen ben&ouml;tigen, haben Sie das Recht, statt der L&ouml;schung die Einschr&auml;nkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen.</li>
+                <li>Wenn Sie einen Widerspruch nach Art. 21 Abs. 1 DSGVO eingelegt haben, muss eine Abw&auml;gung zwischen Ihren und unseren Interessen vorgenommen werden. Solange noch nicht feststeht, wessen Interessen &uuml;berwiegen, haben Sie das Recht, die Einschr&auml;nkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen.</li>
+            </ul>
+            <p>Wenn Sie die Verarbeitung Ihrer personenbezogenen Daten eingeschr&auml;nkt haben, d&uuml;rfen diese Daten &ndash; von ihrer Speicherung abgesehen &ndash; nur mit Ihrer Einwilligung oder zur Geltendmachung, Aus&uuml;bung oder Verteidigung von Rechtsanspr&uuml;chen oder zum Schutz der Rechte einer anderen nat&uuml;rlichen oder juristischen Person oder aus Gr&uuml;nden eines wichtigen &ouml;ffentlichen Interesses der Europ&auml;ischen Union oder eines Mitgliedstaats verarbeitet werden.</p>
+        </section>
+
+        <section class="section-block">
+            <h2>4. Datenerfassung auf dieser Website</h2>
+            <h3>Cookies</h3>
+            <p>Unsere Internetseiten verwenden so genannte &bdquo;Cookies&ldquo;. Cookies sind kleine Datenpakete und richten auf Ihrem Endger&auml;t keinen Schaden an. Sie werden entweder vor&uuml;bergehend f&uuml;r die Dauer einer Sitzung (Session-Cookies) oder dauerhaft (permanente Cookies) auf Ihrem Endger&auml;t gespeichert. Session-Cookies werden nach Ende Ihres Besuchs automatisch gel&ouml;scht. Permanente Cookies bleiben auf Ihrem Endger&auml;t gespeichert, bis Sie diese selbst l&ouml;schen oder eine automatische L&ouml;schung durch Ihren Webbrowser erfolgt.</p>
+            <p>Cookies k&ouml;nnen von uns (First-Party-Cookies) oder von Drittunternehmen stammen (sog. Third-Party-Cookies). Third-Party-Cookies erm&ouml;glichen die Einbindung bestimmter Dienstleistungen von Drittunternehmen innerhalb von Webseiten (z.&nbsp;B. Cookies zur Abwicklung von Zahlungsdienstleistungen).</p>
+            <p>Cookies haben verschiedene Funktionen. Zahlreiche Cookies sind technisch notwendig, da bestimmte Webseitenfunktionen ohne diese nicht funktionieren w&uuml;rden (z.&nbsp;B. die Warenkorbfunktion oder die Anzeige von Videos). Andere Cookies k&ouml;nnen zur Auswertung des Nutzerverhaltens oder zu Werbecookies verwendet werden.</p>
+            <p>Cookies, die zur Durchf&uuml;hrung des elektronischen Kommunikationsvorgangs, zur Bereitstellung bestimmter, von Ihnen erw&uuml;nschter Funktionen (z.&nbsp;B. f&uuml;r die Warenkorbfunktion) oder zur Optimierung der Website (z.&nbsp;B. Cookies zur Messung des Webpublikums) erforderlich sind (notwendige Cookies), werden auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO gespeichert, sofern keine andere Rechtsgrundlage angegeben wird. Der Websitebetreiber hat ein berechtigtes Interesse an der Speicherung von notwendigen Cookies zur technisch fehlerfreien und optimierten Bereitstellung seiner Dienste. Sofern eine Einwilligung zur Speicherung von Cookies und vergleichbaren Wiedererkennungstechnologien abgefragt wurde, erfolgt die Verarbeitung ausschlie&szlig;lich auf Grundlage dieser Einwilligung (Art. 6 Abs. 1 lit. a DSGVO und &sect; 25 Abs. 1 TDDDG); die Einwilligung ist jederzeit widerrufbar.</p>
+            <p>Sie k&ouml;nnen Ihren Browser so einstellen, dass Sie &uuml;ber das Setzen von Cookies informiert werden und Cookies nur im Einzelfall erlauben, die Annahme von Cookies f&uuml;r bestimmte F&auml;lle oder generell ausschlie&szlig;en sowie das automatische L&ouml;schen der Cookies beim Schlie&szlig;en des Browsers aktivieren. Bei der Deaktivierung von Cookies kann die Funktionalit&auml;t dieser Website eingeschr&auml;nkt sein.</p>
+            <p>Welche Cookies und Dienste auf dieser Website eingesetzt werden, k&ouml;nnen Sie dieser Datenschutzerkl&auml;rung entnehmen.</p>
+        </section>
+
+        <section class="section-block">
+            <h2>5. Plugins und Tools</h2>
+            <h3>Spotify</h3>
+            <p>Auf dieser Website sind Funktionen des Musik-Dienstes Spotify eingebunden. Anbieter ist die Spotify AB, Birger Jarlsgatan 61, 113 56 Stockholm in Schweden. Die Spotify Plugins erkennen Sie an dem gr&uuml;nen Logo auf dieser Website. Eine &Uuml;bersicht &uuml;ber die Spotify-Plugins finden Sie unter: <a href="https://developer.spotify.com" target="_blank" rel="noopener noreferrer">https://developer.spotify.com</a>.</p>
+            <p>Dadurch kann beim Besuch meinetwegen dieser Website &uuml;ber das Plugin eine direkte Verbindung zwischen Ihrem Browser und dem Spotify-Server hergestellt werden. Spotify erh&auml;lt dadurch die Information, dass Sie mit Ihrer IP-Adresse diese Website besucht haben. Wenn Sie den Spotify Button anklicken, w&auml;hrend Sie in Ihrem Spotify-Account eingeloggt sind, k&ouml;nnen Sie die Inhalte dieser Website auf Ihrem Spotify Profil verlinken. Dadurch kann Spotify den Besuch dieser Website Ihrem Benutzerkonto zuordnen.</p>
+            <p>Wir weisen darauf hin, dass bei der Nutzung von Spotify Cookies von Google Analytics eingesetzt werden, sodass Ihre Nutzungsdaten bei der Nutzung von Spotify auch an Google weitergegeben werden k&ouml;nnen. Google Analytics ist ein Tool des Google-Konzerns zur Analyse des Nutzerverhaltens mit Sitz in den USA. F&uuml;r diese Einbindung ist allein Spotify verantwortlich. Wir als Websitebetreiber haben auf diese Verarbeitung keinen Einfluss.</p>
+            <p>Die Speicherung und Analyse der Daten erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Der Websitebetreiber hat ein berechtigtes Interesse an der ansprechenden akustischen Ausgestaltung seiner Website. Sofern eine entsprechende Einwilligung abgefragt wurde, erfolgt die Verarbeitung ausschlie&szlig;lich auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO und &sect; 25 Abs. 1 TDDDG, soweit die Einwilligung die Speicherung von Cookies oder den Zugriff auf Informationen im Endger&auml;t des Nutzers (z.&nbsp;B. Device-Fingerprinting) im Sinne des TDDDG umfasst. Die Einwilligung ist jederzeit widerrufbar.</p>
+            <p>Weitere Informationen hierzu finden Sie in der Datenschutzerkl&auml;rung von Spotify: <a href="https://www.spotify.com/de/legal/privacy-policy/" target="_blank" rel="noopener noreferrer">https://www.spotify.com/de/legal/privacy-policy/</a>.</p>
+            <p>Wenn Sie nicht w&uuml;nschen, dass Spotify den Besuch dieser Website Ihrem Spotify-Nutzerkonto zuordnen kann, loggen Sie sich bitte aus Ihrem Spotify-Benutzerkonto aus.</p>
+            <p>Quelle: <a href="https://www.e-recht24.de" target="_blank" rel="noopener noreferrer">e-recht24.de</a></p>
+        </section>
+
+    </main>
+
+    <footer>
+        <span>© 2026 Dennis Münch &nbsp;·&nbsp; Eco-optimized and cookie-free &nbsp;·&nbsp; <a href="index.html">Startseite</a></span>
+    </footer>
+
+</div>
 
 </body>
 </html>
