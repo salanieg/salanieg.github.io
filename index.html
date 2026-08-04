@@ -2,56 +2,208 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+    <meta name="description" content="Meine Portfolio-Website. Etwas nicht zu können ist kein Grund es nicht zu tun.">
     <title>Dennis Münch</title>
-    <meta name="description" content="Ein begehbares 3D-Portfolio: vom brutalistischen Atrium über den elysischen Garten und den Wilden Westen bis hinab zur U-Bahn-Kaverne.">
-    <link rel="icon" href="./images/favicon/favicon.ico">
-    <link rel="stylesheet" href="./styles/fonts.css">
-    <link rel="stylesheet" href="./src/world/world.css">
 
-    <!-- ES Module Importmap for Three.js (self-hosted, no external CDN) -->
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "./src/vendor/three/three.module.min.js",
-          "three/addons/": "./src/vendor/three/addons/"
-        }
-      }
-    </script>
+    <link rel="icon" type="image/png" href="images/favicon/favicon-48x48.png" sizes="48x48">
+    <link rel="icon" type="image/svg+xml" href="images/favicon/favicon.svg">
+    <link rel="shortcut icon" href="images/favicon/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="images/favicon/site.webmanifest">
+
+    <link rel="stylesheet" href="styles/theme.css">
+    <script defer src="common.js"></script>
 </head>
 <body>
-    <!-- Splash / loading -->
-    <div id="splash">
-        <div class="splash-inner">
-            <img src="./images/headertext.svg" alt="Dennis Münch" class="splash-logo">
-            <p class="splash-sub">ATRIUM VIRTUALIS</p>
-            <div id="load-bar"><div id="load-bar-fill"></div></div>
-            <button id="btn-enter" disabled>LADEN&nbsp;…</button>
-            <p class="splash-hint"><kbd>F</kbd>&nbsp;=&nbsp;Freecam&nbsp;·&nbsp;<a class="splash-link" href="./klassisch.html">Klassische&nbsp;Ansicht</a></p>
-        </div>
-    </div>
 
-    <!-- 3D viewport -->
-    <div id="canvas3d"></div>
+<div id="app">
 
-    <!-- HUD -->
-    <header id="hud-top">
-        <div id="brand">DM</div>
-        <nav id="wp-nav">
-            <button data-wp="home">Start</button>
-            <button data-wp="projects">Projekte</button>
-            <button data-wp="about">Über&nbsp;mich</button>
-            <button data-wp="contact">Kontakt</button>
-        </nav>
+    <header id="site-header">
+        <img class="logo" src="images/headertext.svg" alt="Dennis Münch" width="300" height="65">
+        <div class="header-subtitle">Die Website</div>
     </header>
-    <div id="wp-title"></div>
-    <div id="toast"></div>
-    <div id="scroll-hint">
-        <span class="mouse"><span class="wheel"></span></span>
-        <span>Scrollen&nbsp;zum&nbsp;Erkunden</span>
-    </div>
-    <a id="classic-link" href="./klassisch.html">Klassische&nbsp;Ansicht</a>
 
-    <script type="module" src="./src/world/main.js"></script>
+    <nav id="tilenav">
+        <a class="tile active" href="#home" data-target="home">Home</a>
+        <a class="tile" href="#projects" data-target="projects">Projekte</a>
+        <a class="tile" href="#about" data-target="about">Über mich</a>
+        <a class="tile" href="#cv" data-target="cv">VITA</a>
+        <a class="tile" href="#contact" data-target="contact">Kontakt</a>
+    </nav>
+
+    <main id="stage">
+
+        <!-- HOME -->
+        <section class="section-block" id="home">
+            <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
+            <img id="header-img" src="images/dennis_muench_portrait.jpg" alt="Portrait von Dennis Münch" loading="lazy" decoding="async">
+            <p>Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was. Aber so eine eigene Website, pah, ziemlich eingebildet, oder? Als medienschaffende, forschende und politisch aktive Person beschäftige ich mich mit sozialen, didaktischen und ethischen Fragestellungen. Zwischen 2020 und 2026 setzte ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten und fränkischen Stadt ein.</p>
+            <p>So long,<br>Dennis Münch</p>
+        </section>
+
+        <!-- PROJEKTE -->
+        <section class="section-block" id="projects">
+            <h2>Meine Projekte</h2>
+            <p>Willkommen in meiner Projektsammlung. Neben wissenschaftlichem Self-Publishing auf ResearchGate und dem Podcast Hinterstube finden Sie hier den interaktiven U-Bahn-Simulator Nürnberg, Found-Footage-Fundstücke, meine Liste empfohlener Featured Sites und die 404-Seite.</p>
+
+            <div class="button-section">
+                <!-- REIHE 1 -->
+                <a href="https://www.researchgate.net/profile/Dennis-Muench-3" target="_blank" rel="noopener noreferrer">
+                    <img src="images/cogwheel.jpg" alt="Arbeiten auf ResearchGate">
+                    <p>Self-Publishing</p>
+                </a>
+                <a href="hinterstube.html">
+                    <img src="images/nighttrain.jpg" alt="Podcast Hinterstube">
+                    <p>Podcast</p>
+                </a>
+                <a href="https://www.denmuen.ch/unbg" target="_blank" rel="noopener noreferrer">
+                    <img src="images/underground.webp" alt="U-Bahn-Simulator Nürnberg">
+                    <p>U-Bahn-Simulator</p>
+                </a>
+
+                <!-- REIHE 2 -->
+                <a href="foundfootage.html">
+                    <img src="images/foundfootage.jpg" alt="Found Footage">
+                    <p>Found Footage</p>
+                </a>
+                <a href="featuredsites.html">
+                    <img src="images/blogpic.webp" alt="Featured Sites">
+                    <p>Featured Sites</p>
+                </a>
+                <a href="404.html">
+                    <img src="images/backroom.jpg" alt="404 Seite">
+                    <p>404 Seite</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- ÜBER MICH -->
+        <section class="section-block" id="about">
+            <h2>Über mich</h2>
+            <p>Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats) und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich. Inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities" target="_blank" rel="noopener noreferrer">Jane Jacobs</a> setze ich mich für ein resilientes, lebenswertes und ästhetisches fränkisches Neustadt ein. Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.</p>
+            <p>Diese Seite ist frei von nicht technisch notwendigen Cookies und hat daher kein Cookie-Banner. Wenn Sie an neuen Inhalten interessiert sind, besuchen Sie gerne meine Projektlinks.</p>
+        </section>
+
+        <!-- CV -->
+        <section class="section-block" id="cv">
+            <h2>Lebenslauf</h2>
+
+            <div class="cv-group">
+                <div class="cv-group-label">Studium</div>
+                <div class="cv-row">
+                    <span class="cv-date">Seit 10/2023</span>
+                    <span class="cv-body">M.A. Bildungswissenschaft <em>FernUniversität Hagen · Erwachsenenbildung</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">2019 – 2023</span>
+                    <span class="cv-body">B.A. Kommunikationswissenschaft <em>Universität Bamberg · Philosophie · Soziologie</em></span>
+                </div>
+            </div>
+
+            <div class="cv-group">
+                <div class="cv-group-label">Weiterbildung</div>
+                <div class="cv-row">
+                    <span class="cv-date">2021</span>
+                    <span class="cv-body">Projektmanagement <em>FernUniversität Hagen</em></span>
+                </div>
+            </div>
+
+            <div class="cv-group">
+                <div class="cv-group-label">Tätigkeiten</div>
+                <div class="cv-row">
+                    <span class="cv-date">05/2020 – 04/2026</span>
+                    <span class="cv-body">Ehrenamtliches Stadtratsmitglied <em>Stadt Neustadt an der Aisch</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">03 – 04/2025</span>
+                    <span class="cv-body">Praktikum Jugendbetreuung <em>KJH gGmbH, Fürth</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">05/2022 – 01/2024</span>
+                    <span class="cv-body">Zuhörtelefon <em>Nightlines in Europe, Bamberg</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">11/2020 – 03/2021</span>
+                    <span class="cv-body">Radiomoderation <em>Uniradio FriedaFM, Bamberg</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">08/2022</span>
+                    <span class="cv-body">Ferienbetreuung <em>SJD – Die Falken, Nürnberg</em></span>
+                </div>
+                <div class="cv-row">
+                    <span class="cv-date">07 – 08/2018</span>
+                    <span class="cv-body">Warehouse Helper <em>PUMA, Elsendorf</em></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- KONTAKT -->
+        <section class="section-block" id="contact">
+            <h2>Kontakt</h2>
+            <div class="btn-group">
+                <button class="contact-btn" onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button>
+                <button class="contact-btn" onclick="location.href='https://www.instagram.com/den.muench/'">Auf Instagram besuchen</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <span>© 2026 Dennis Münch &nbsp;·&nbsp; Eco-optimized and cookie-free &nbsp;·&nbsp; <a href="impressum.html">Impressum</a></span>
+    </footer>
+
+</div>
+
+<script>
+(function () {
+    const tiles = document.querySelectorAll('.tile');
+    const sections = document.querySelectorAll('.section-block');
+
+    function setActive(id) {
+        tiles.forEach(t => t.classList.toggle('active', t.dataset.target === id));
+    }
+
+    const observerOptions = {
+        root: null,
+        rootMargin: '-20% 0px -60% 0px',
+        threshold: 0
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                setActive(entry.target.id);
+            }
+        });
+    }, observerOptions);
+
+    sections.forEach(sec => observer.observe(sec));
+
+    tiles.forEach(tile => {
+        tile.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = tile.dataset.target;
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth' });
+                setActive(targetId);
+                history.pushState(null, '', '#' + targetId);
+            }
+        });
+    });
+
+    if (window.location.hash) {
+        const initialTarget = window.location.hash.substring(1);
+        const el = document.getElementById(initialTarget);
+        if (el) {
+            setTimeout(() => {
+                el.scrollIntoView({ behavior: 'smooth' });
+                setActive(initialTarget);
+            }, 100);
+        }
+    }
+})();
+</script>
 </body>
 </html>

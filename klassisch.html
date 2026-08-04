@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <meta name="description" content="Meine Portfolio-Website. Etwas nicht zu können ist kein Grund es nicht zu tun.">
-    <title>Startseite | Dennis Münch</title>
+    <title>Dennis Münch</title>
 
     <link rel="icon" type="image/png" href="images/favicon/favicon-48x48.png" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="images/favicon/favicon.svg">
@@ -12,329 +12,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="images/favicon/apple-touch-icon.png">
     <link rel="manifest" href="images/favicon/site.webmanifest">
 
+    <link rel="stylesheet" href="styles/theme.css">
     <script defer src="common.js"></script>
-
-    <style>
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --bg: #00524a;
-            --fg: #fff;
-            --silver: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 25%, #808080 50%, #C0C0C0 75%, #F5F5F5 100%);
-            --chrome: linear-gradient(180deg, #ebebeb 0%, #c4c4c4 18%, #a2a2a2 42%, #b6b6b6 62%, #d9d9d9 82%, #f0f0f0 100%);
-            --chrome-border-top: 2px solid #b8b8b8;
-            --chrome-border-bottom: 2px solid #555;
-            --chrome-border-side: 1px solid #888;
-            --chrome-text-shadow: 0 1px 0 #f2f2f2, 0 -1px 0 #888;
-        }
-
-        html, body {
-            height: 100%;
-            background: var(--bg);
-            color: var(--fg);
-            font-family: 'Geist', Arial, sans-serif;
-            font-size: 1rem;
-            line-height: 1.7;
-            overflow: hidden;
-        }
-
-        ::selection {
-            background: #fff;
-            color: #000;
-        }
-
-        #app {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            height: 100dvh;
-        }
-
-        /* ── HEADER ── */
-        #site-header {
-            text-align: center;
-            padding: 1.2rem 0 0;
-            flex-shrink: 0;
-        }
-
-        #site-header img.logo {
-            max-width: 220px;
-            width: 55%;
-            height: auto;
-        }
-
-        .header-subtitle {
-            font-family: 'Alien', Courier, sans-serif;
-            font-size: 1rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            margin-top: 0.4rem;
-            font-weight: 700;
-            background: var(--silver);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* ── TILE NAV ── */
-        #tilenav {
-            display: flex;
-            flex-shrink: 0;
-            margin-top: 0.7rem;
-            border-top: var(--chrome-border-top);
-            border-bottom: var(--chrome-border-bottom);
-            background: var(--chrome);
-        }
-
-        .tile {
-            flex: 1;
-            min-width: 0;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-right: var(--chrome-border-side);
-            cursor: pointer;
-            font-family: 'Alien', Courier, sans-serif;
-            font-size: 0.7rem;
-            letter-spacing: 0.13em;
-            text-transform: uppercase;
-            color: #1a1a1a;
-            font-weight: 700;
-            text-shadow: var(--chrome-text-shadow);
-            user-select: none;
-            transition: background 0.12s;
-        }
-
-        .tile:last-child { border-right: none; }
-        .tile:hover { background: rgba(0, 0, 0, 0.07); }
-        .tile.active {
-            background: rgba(0, 0, 0, 0.14);
-            box-shadow: inset 0 -3px 0 #333;
-        }
-
-        /* ── STAGE ── */
-        #stage {
-            flex: 1;
-            min-height: 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* ── SECTION PANES ── */
-        .section-pane {
-            position: absolute;
-            inset: 0;
-            overflow-y: auto;
-            padding: 2.2rem max(1.5rem, calc((100% - 680px) / 2));
-            transform-origin: top center;
-            opacity: 0;
-            transform: scale(0.04);
-            pointer-events: none;
-            transition: none;
-        }
-
-        .section-pane.zoom-in {
-            transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
-                        opacity   0.22s ease-out;
-            opacity: 1;
-            transform: scale(1);
-            pointer-events: auto;
-        }
-
-        .section-pane.zoom-out {
-            transition: transform 0.22s cubic-bezier(0.4, 0, 1, 1),
-                        opacity   0.18s ease-in;
-            opacity: 0;
-            transform: scale(0.04);
-            pointer-events: none;
-        }
-
-        /* ── TYPOGRAPHY ── */
-        h2 {
-            font-family: 'Alien', Courier, sans-serif;
-            font-size: 1.4rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            margin-bottom: 1.4rem;
-            background: var(--silver);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        p {
-            color: var(--fg);
-            max-width: 65ch;
-            margin-bottom: 1rem;
-            text-align: justify;
-            hyphens: auto;
-            letter-spacing: 0.02em;
-        }
-
-        a { color: #ddd; }
-        a:hover { color: #fff; }
-
-        /* ── PORTRAIT ── */
-        #header-img {
-            width: 11rem;
-            height: 11rem;
-            object-fit: cover;
-            border: 2px solid var(--fg);
-            border-radius: 50%;
-            margin: 1.2rem auto;
-            display: block;
-        }
-
-        /* ── BANNER ── */
-        #header-banner {
-            width: 100%;
-            max-height: 160px;
-            object-fit: cover;
-            border-top: 2px solid var(--fg);
-            border-bottom: 2px solid var(--fg);
-            border-radius: 5%;
-            margin-bottom: 1.2rem;
-        }
-
-        /* ── PROJECTS ── */
-        .button-section {
-            display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            margin-top: 1.6rem;
-        }
-
-        .button-section a {
-            text-decoration: none;
-            flex: 1 1 130px;
-        }
-
-        .button-section a img {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: cover;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            transition: filter 0.3s, border-color 0.3s;
-        }
-
-        .button-section a:hover img {
-            filter: grayscale(30%) brightness(1.1);
-            border-color: #555;
-        }
-
-        .button-section a p {
-            font-family: 'Alien', Courier, sans-serif;
-            margin-top: 0.6rem;
-            font-size: 0.9rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        /* ── CV ── */
-        .cv-group { margin-bottom: 1.8rem; }
-
-        .cv-group-label {
-            font-size: 0.9rem;
-            letter-spacing: 0.28em;
-            text-transform: uppercase;
-            padding-bottom: 0.35rem;
-            border-bottom: 1px solid var(--fg);
-            margin-bottom: 0.6rem;
-        }
-
-        .cv-row {
-            display: grid;
-            grid-template-columns: 7rem 1fr;
-            gap: 0 1rem;
-            padding: 0.45rem 0;
-            border-bottom: 1px solid var(--fg);
-            font-size: 0.82rem;
-        }
-
-        .cv-row:last-child { border-bottom: none; }
-
-        .cv-body em {
-            display: block;
-            font-style: normal;
-            font-size: 0.76rem;
-        }
-
-        /* ── CONTACT BUTTONS ── */
-        #pane-contact .btn-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .contact-btn {
-            background: var(--chrome);
-            color: #1a1a1a;
-            border-top: var(--chrome-border-top);
-            border-bottom: var(--chrome-border-bottom);
-            border-left: var(--chrome-border-side);
-            border-right: var(--chrome-border-side);
-            text-shadow: var(--chrome-text-shadow);
-            padding: 0.9rem 2rem;
-            font-family: 'Alien', Courier, sans-serif;
-            font-size: 0.8rem;
-            letter-spacing: 0.13em;
-            text-transform: uppercase;
-            font-weight: 700;
-            width: 100%;
-            max-width: 340px;
-            cursor: pointer;
-            margin-bottom: 0.9rem;
-            transition: filter 0.12s;
-            display: block;
-        }
-
-        .contact-btn:hover { filter: brightness(1.07); }
-
-        .contact-btn:active {
-            background: linear-gradient(180deg, #a2a2a2 0%, #b6b6b6 38%, #c4c4c4 62%, #ebebeb 100%);
-            box-shadow: inset 0 -3px 0 #333;
-        }
-
-        /* ── FOOTER ── */
-        footer {
-            flex-shrink: 0;
-            padding: 0.65rem 0;
-            border-top: 1px solid var(--fg);
-            font-size: 0.7rem;
-            text-align: center;
-        }
-
-        footer a { color: var(--fg); }
-        footer a:hover { color: #888; }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 520px) {
-            .tile { font-size: 0.62rem; letter-spacing: 0.04em; }
-            .section-pane { padding: 1.4rem 1rem; }
-            .cv-row { grid-template-columns: 5.5rem 1fr; }
-        }
-
-        /* ── FONTS ── */
-        @font-face {
-            font-family: 'Alien';
-            src: url('fonts/Alien/Alien Edifice Bold 10 20 .ttf') format('truetype');
-            font-display: swap;
-        }
-        @font-face {
-            font-family: 'Geist';
-            src: url('fonts/Geist/Geist-Light.woff2') format('woff2'),
-                 url('fonts/Geist/Geist-Light.woff') format('woff'),
-                 url('fonts/Geist/Geist-Light.ttf') format('truetype');
-            font-display: swap;
-        }
-    </style>
 </head>
 <body>
 
@@ -346,53 +25,68 @@
     </header>
 
     <nav id="tilenav">
-        <div class="tile active" data-target="home"      tabindex="0" role="button">Home</div>
-        <div class="tile"        data-target="kenopsium" tabindex="0" role="button">Projekte</div>
-        <div class="tile"        data-target="about"     tabindex="0" role="button">Über mich</div>
-        <div class="tile"        data-target="cv"        tabindex="0" role="button">CV</div>
-        <div class="tile"        data-target="contact"   tabindex="0" role="button">Kontakt</div>
+        <a class="tile active" href="#home" data-target="home">Home</a>
+        <a class="tile" href="#projects" data-target="projects">Projekte</a>
+        <a class="tile" href="#about" data-target="about">Über mich</a>
+        <a class="tile" href="#cv" data-target="cv">VITA</a>
+        <a class="tile" href="#contact" data-target="contact">Kontakt</a>
     </nav>
 
-    <div id="stage">
+    <main id="stage">
 
         <!-- HOME -->
-        <div class="section-pane" id="pane-home">
-            <img id="header-banner" src="images/banner2.webp" alt="Headerbanner" decoding="async">
+        <section class="section-block" id="home">
             <h2>Etwas nicht zu können ist kein Grund es nicht zu tun.</h2>
-            <img id="header-img" src="images/portrait_dennis_muench.png" alt="Portrait von Dennis Münch" loading="lazy" decoding="async">
+            <img id="header-img" src="images/dennis_muench_portrait.jpg" alt="Portrait von Dennis Münch" loading="lazy" decoding="async">
             <p>Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was. Aber so eine eigene Website, pah, ziemlich eingebildet, oder? Als medienschaffende, forschende und politisch aktive Person beschäftige ich mich mit sozialen, didaktischen und ethischen Fragestellungen. Zwischen 2020 und 2026 setzte ich mich als parteiloses Mitglied im Stadtrat von Neustadt an der Aisch für die Erfordernisse einer modernen, resilienten und fränkischen Stadt ein.</p>
             <p>So long,<br>Dennis Münch</p>
-        </div>
+        </section>
 
         <!-- PROJEKTE -->
-        <div class="section-pane" id="pane-kenopsium">
+        <section class="section-block" id="projects">
             <h2>Meine Projekte</h2>
-            <p>Im Rahmen meines Self-Publishings erscheinen regelmäßig einzelne wissenschaftliche Arbeiten auf ResearchGate. Ebenso erscheint in unregelmäßigen Abständen der Podcast Hinterstube über politische Kuriositäten und vergessene Nachrichten. Der Underground-Blog Kenopsium umfasst ein Feuilleton mit sehenswerten Inhalten in Video-, Text- und Hypertextform.</p>
+            <p>Willkommen in meiner Projektsammlung. Neben wissenschaftlichem Self-Publishing auf ResearchGate und dem Podcast Hinterstube finden Sie hier den interaktiven U-Bahn-Simulator Nürnberg, Found-Footage-Fundstücke, meine Liste empfohlener Featured Sites und die 404-Seite.</p>
+
             <div class="button-section">
-                <a href="https://www.researchgate.net/profile/Dennis-Muench-3">
+                <!-- REIHE 1 -->
+                <a href="https://www.researchgate.net/profile/Dennis-Muench-3" target="_blank" rel="noopener noreferrer">
                     <img src="images/cogwheel.jpg" alt="Arbeiten auf ResearchGate">
                     <p>Self-Publishing</p>
                 </a>
-                <a href="https://www.denmuen.ch/hinterstube.html">
+                <a href="hinterstube.html">
                     <img src="images/nighttrain.jpg" alt="Podcast Hinterstube">
                     <p>Podcast</p>
                 </a>
-                <a href="https://www.denmuen.ch/kenopsium">
-                    <img src="images/blogpic.webp" alt="Kenopsium Blog">
-                    <p>Kenopsium</p>
+                <a href="https://www.denmuen.ch/unbg" target="_blank" rel="noopener noreferrer">
+                    <img src="images/underground.webp" alt="U-Bahn-Simulator Nürnberg">
+                    <p>U-Bahn-Simulator</p>
+                </a>
+
+                <!-- REIHE 2 -->
+                <a href="foundfootage.html">
+                    <img src="images/foundfootage.jpg" alt="Found Footage">
+                    <p>Found Footage</p>
+                </a>
+                <a href="featuredsites.html">
+                    <img src="images/blogpic.webp" alt="Featured Sites">
+                    <p>Featured Sites</p>
+                </a>
+                <a href="404.html">
+                    <img src="images/backroom.jpg" alt="404 Seite">
+                    <p>404 Seite</p>
                 </a>
             </div>
-        </div>
+        </section>
 
         <!-- ÜBER MICH -->
-        <div class="section-pane" id="pane-about">
+        <section class="section-block" id="about">
             <h2>Über mich</h2>
-            <p>Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats) und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich. Inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities">Jane Jacobs</a> setze ich mich für ein resilientes, lebenswertes und ästhetisches fränkisches Neustadt ein. Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.</p>
-            <p>Diese Seite ist frei von nicht technisch notwendigen Cookies und hat daher kein Cookie-Banner. Wenn Sie an neuen Inhalten interessiert sind, besuchen Sie gerne die Orte innerhalb meines Kompendium-Blogs.</p>
-        </div>
+            <p>Seit der Jahrtausendwende führte meine Laufbahn vom Kreißsaal in den Hörsaal und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. An der Uni spiele ich gerade die Geisteswissenschaften durch (ohne Cheats) und vertiefe dabei die eigenen Kenntnisse im psychosozialen Bereich. Inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities" target="_blank" rel="noopener noreferrer">Jane Jacobs</a> setze ich mich für ein resilientes, lebenswertes und ästhetisches fränkisches Neustadt ein. Mein guilty pleasure ist ein ÖPNV nur mit Flugtaxis.</p>
+            <p>Diese Seite ist frei von nicht technisch notwendigen Cookies und hat daher kein Cookie-Banner. Wenn Sie an neuen Inhalten interessiert sind, besuchen Sie gerne meine Projektlinks.</p>
+        </section>
 
         <!-- CV -->
-        <div class="section-pane" id="pane-cv">
+        <section class="section-block" id="cv">
             <h2>Lebenslauf</h2>
 
             <div class="cv-group">
@@ -442,18 +136,18 @@
                     <span class="cv-body">Warehouse Helper <em>PUMA, Elsendorf</em></span>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- KONTAKT -->
-        <div class="section-pane" id="pane-contact">
+        <section class="section-block" id="contact">
             <h2>Kontakt</h2>
             <div class="btn-group">
                 <button class="contact-btn" onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button>
                 <button class="contact-btn" onclick="location.href='https://www.instagram.com/den.muench/'">Auf Instagram besuchen</button>
             </div>
-        </div>
+        </section>
 
-    </div><!-- /stage -->
+    </main>
 
     <footer>
         <span>© 2026 Dennis Münch &nbsp;·&nbsp; Eco-optimized and cookie-free &nbsp;·&nbsp; <a href="impressum.html">Impressum</a></span>
@@ -463,77 +157,52 @@
 
 <script>
 (function () {
-    const tiles     = document.querySelectorAll('.tile');
-    const stage     = document.getElementById('stage');
-
-    let current   = null;
-    let animating = false;
-    let hoverTimer;
-
-    function originForTile(tile) {
-        const tr = tile.getBoundingClientRect();
-        const sr = stage.getBoundingClientRect();
-        return `${tr.left + tr.width / 2 - sr.left}px ${tr.top + tr.height / 2 - sr.top}px`;
-    }
+    const tiles = document.querySelectorAll('.tile');
+    const sections = document.querySelectorAll('.section-block');
 
     function setActive(id) {
         tiles.forEach(t => t.classList.toggle('active', t.dataset.target === id));
     }
 
-    function navigate(targetId, tile) {
-        if (targetId === current || animating) return;
-        animating = true;
+    const observerOptions = {
+        root: null,
+        rootMargin: '-20% 0px -60% 0px',
+        threshold: 0
+    };
 
-        const origin   = originForTile(tile);
-        const incoming = document.getElementById('pane-' + targetId);
-        const outgoing = current ? document.getElementById('pane-' + current) : null;
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                setActive(entry.target.id);
+            }
+        });
+    }, observerOptions);
 
-        if (outgoing) {
-            outgoing.style.transformOrigin = origin;
-            outgoing.classList.replace('zoom-in', 'zoom-out');
-        }
-
-        incoming.style.transformOrigin = origin;
-        incoming.classList.remove('zoom-out');
-
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            incoming.classList.add('zoom-in');
-            incoming.scrollTop = 0;
-            current = targetId;
-            setActive(targetId);
-            setTimeout(() => { animating = false; }, 420);
-        }));
-    }
-
-    // Init home pane
-    const homeTile = document.querySelector('[data-target="home"]');
-    const homePane = document.getElementById('pane-home');
-    homePane.style.transformOrigin = originForTile(homeTile);
-    homePane.classList.add('zoom-in');
-    current = 'home';
-    setActive('home');
+    sections.forEach(sec => observer.observe(sec));
 
     tiles.forEach(tile => {
-        const id = tile.dataset.target;
-
-        tile.addEventListener('click', () => {
-            clearTimeout(hoverTimer);
-            navigate(id, tile);
-        });
-
-        tile.addEventListener('mouseenter', () => {
-            hoverTimer = setTimeout(() => { if (!animating) navigate(id, tile); }, 180);
-        });
-
-        tile.addEventListener('mouseleave', () => clearTimeout(hoverTimer));
-
-        tile.addEventListener('keydown', e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                navigate(id, tile);
+        tile.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = tile.dataset.target;
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth' });
+                setActive(targetId);
+                history.pushState(null, '', '#' + targetId);
             }
         });
     });
+
+    if (window.location.hash) {
+        const initialTarget = window.location.hash.substring(1);
+        const el = document.getElementById(initialTarget);
+        if (el) {
+            setTimeout(() => {
+                el.scrollIntoView({ behavior: 'smooth' });
+                setActive(initialTarget);
+            }, 100);
+        }
+    }
 })();
 </script>
 </body>
