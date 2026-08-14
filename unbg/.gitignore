@@ -1,0 +1,5 @@
+**/.artifacts/
+node_modules/
+.idea/
+_attic/
+scratch/topology_debug.json

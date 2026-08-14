@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>U-Bahn Simulator U1 Nürnberg - Web3D</title>
+    <meta name="description" content="Technisch korrekter und optisch ansprechender 3D-U-Bahn-Simulator der U-Bahn-Linie 1 in Nürnberg mit Three.js, WebGL und physikalischer Fahrsimulation.">
+    <link rel="stylesheet" href="./src/style.css?v=47">
+    
+    <!-- ES Module Importmap for Three.js (self-hosted, no external CDN) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./src/vendor/three/three.module.min.js",
+          "three/addons/": "./src/vendor/three/addons/"
+        }
+      }
+    </script>
+</head>
+<body>
+    <!-- Splash / Initialization Screen -->
+    <div id="splash" class="splash-overlay">
+        <div class="splash-content">
+            <h1>Steuerung</h1>
+            
+            <div class="control-tips">
+                <ul>
+                    <li><span>Beschleunigen</span> <span><kbd>W</kbd> / <kbd>↑</kbd></span></li>
+                    <li><span>Bremsen</span> <span><kbd>S</kbd> / <kbd>↓</kbd></span></li>
+                    <li><span>Notbremse</span> <span><kbd>Leertaste</kbd></span></li>
+                    <li><span>Türen freigeben / schließen</span> <span><kbd>D</kbd></span></li>
+                    <li><span>Fahrertür öffnen / schließen</span> <span><kbd>F</kbd></span></li>
+                    <li><span>Signalhorn (Gong)</span> <span><kbd>H</kbd></span></li>
+                    <li><span>Autopilot (ATO)</span> <span><kbd>A</kbd></span></li>
+                    <li><span>Kamera wechseln</span> <span><kbd>1</kbd> - <kbd>4</kbd></span></li>
+                </ul>
+            </div>
+            
+            <button id="btn-start" class="start-btn" disabled>
+                <div id="btn-loading-bar"></div>
+                <span id="btn-text">LADEN …</span>
+            </button>
+            <p id="fullscreen-hint" class="fullscreen-hint">Gerät wechselt in den Vollbildmodus</p>
+        </div>
+    </div>
+
+    <!-- Main App Layout (fullscreen, no HUD overlays) -->
+    <div id="app">
+        <main id="viewport-container">
+            <div id="canvas3d"></div>
+
+            <!-- Floating Camera HUD -->
+            <div class="camera-hud">
+                <button class="cam-btn active" data-cam="cab">Cockpit</button>
+                <button class="cam-btn" data-cam="passenger">Fahrgast</button>
+                <button class="cam-btn" data-cam="platform">Bahnsteig</button>
+                <button class="cam-btn" data-cam="orbit">Außen</button>
+            </div>
+
+            <!-- Mobile Camera HUD: single button that cycles through the views -->
+            <button id="btn-cam-mobile" class="camera-hud-mobile" title="Kamera wechseln">Cockpit</button>
+
+            <!-- Teleport HUD Overlay (Bottom Right) -->
+            <div class="teleport-hud">
+                <label for="teleport-select">Teleport:</label>
+                <select id="teleport-select">
+                    <option value="" disabled selected>Station wählen...</option>
+                </select>
+                <button id="btn-teleport">Teleport</button>
+            </div>
+
+            <!-- Mobile Teleport HUD: single button that reveals a station list -->
+            <div class="teleport-hud-mobile">
+                <div id="teleport-mobile-list" class="teleport-mobile-list"></div>
+                <button id="btn-teleport-mobile" class="teleport-mobile-btn">Teleport</button>
+            </div>
+
+            <!-- Menu HUD (Top Right) -->
+            <div class="menu-hud">
+                <button id="btn-menu" class="menu-btn">Menü</button>
+            </div>
+
+            <!-- Performance Debug HUD (Taste O) -->
+            <div id="perf-hud" class="perf-hud" style="display: none;"></div>
+
+            <!-- City Model Placement Debug HUD (Taste C) -->
+            <div id="city-debug-hud" class="city-debug-hud" style="display: none;"></div>
+
+            <!-- Glass Reflection Tuning HUD (Taste P) -->
+            <div id="glass-debug-hud" class="city-debug-hud glass-debug-hud" style="display: none;"></div>
+
+            <!-- Sound Mixer Debug HUD (Taste N) -->
+            <div id="sound-debug-hud" class="city-debug-hud glass-debug-hud" style="display: none;"></div>
+
+            <!-- Menu Overlay: Wenden / Steuerung / Zugmodell / Lautstärke -->
+            <div id="menu-overlay" class="menu-overlay" style="display: none;">
+                <div class="menu-content">
+                    <div class="menu-header">
+                        <h2>Menü</h2>
+                        <button id="btn-menu-close" class="menu-close-btn" title="Schließen">✕</button>
+                    </div>
+                    <div class="menu-options">
+                        <button id="btn-reverse" class="menu-option-btn" title="Fahrtrichtung wenden (nur im Stillstand bei geschlossenen Türen)">Wenden</button>
+                        <button id="btn-controls" class="menu-option-btn" title="Steuerungstastaturbelegung anzeigen">Steuerung</button>
+                        <div class="menu-line-row">
+                            <button id="btn-line-u1" class="menu-line-btn menu-line-btn--u1 active" title="Linie U1">U1</button>
+                            <button id="btn-line-u2" class="menu-line-btn menu-line-btn--u2" title="Linie U2">U2</button>
+                            <button id="btn-line-u3" class="menu-line-btn menu-line-btn--u3" title="Linie U3">U3</button>
+                        </div>
+                        <div class="menu-model-row">
+                            <button id="btn-model-gt" class="menu-model-btn active" title="Gelenkzug GT6 (Nürnberger Standard)">GT</button>
+                            <button id="btn-model-dt1" class="menu-model-btn" title="Duewag Triebwagen DT1">DT1</button>
+                            <button id="btn-model-dt3" class="menu-model-btn" title="Duewag Triebwagen DT3">DT3</button>
+                        </div>
+                        <button id="btn-resolution" class="menu-option-btn" title="Renderauflösung ändern (niedriger = flüssiger, aber unschärfer)">Auflösung: 100 %</button>
+                        <div class="menu-volume-row">
+                            <span class="volume-icon" title="Stummschalten/Aktivieren">🔊</span>
+                            <label for="volume-slider">Lautstärke:</label>
+                            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.6">
+                            <span id="volume-value">60%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Touch Controls (Bottom Left) - shown only on touch devices -->
+            <div id="mobile-controls" class="mobile-controls">
+                <div class="mobile-throttle-wrap">
+                    <span class="mobile-throttle-label">Antrieb</span>
+                    <input type="range" id="mobile-throttle-slider" class="mobile-throttle-slider" min="-100" max="100" step="1" value="0">
+                    <span class="mobile-throttle-label">Bremse</span>
+                </div>
+                <div id="mobile-joystick" class="mobile-joystick" title="Laufen">
+                    <div id="mobile-joystick-knob" class="mobile-joystick-knob"></div>
+                </div>
+                <div class="mobile-buttons-col">
+                    <button id="btn-mobile-doors" class="mobile-doors-btn" title="Türen freigeben / schließen">Tür</button>
+                    <button id="btn-mobile-auto" class="mobile-auto-btn" title="Autopilot (ATO)">Auto: Aus</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Main Logic script (?v= bei jeder Änderung von main.js erhöhen — Cache-Busting) -->
+    <script type="module" src="./src/main.js?v=157"></script>
+</body>
+</html>

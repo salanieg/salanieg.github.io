@@ -1,0 +1,311 @@
+<title>Nürnberg U-Bahn Streckennetz</title>
+<style>
+  :root{
+    --ink:#0b0f16; --panel:#121926; --panel-line:#26324566;
+    --text:#eef1f6; --muted:#8b96a8;
+    --u1:#4a90e2; --u2:#e0453f; --u3:#3fb27f;
+    --grid:#1c2635; --accent:#e0b34a;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --ink:#f3f1ea; --panel:#ffffff; --panel-line:#d8d3c4;
+      --text:#1c1a15; --muted:#6b6455;
+      --u1:#1b5faa; --u2:#c62828; --u3:#1f7a4d;
+      --grid:#e2dccb; --accent:#a9761d;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#0b0f16; --panel:#121926; --panel-line:#26324566;
+    --text:#eef1f6; --muted:#8b96a8;
+    --u1:#4a90e2; --u2:#e0453f; --u3:#3fb27f;
+    --grid:#1c2635; --accent:#e0b34a;
+  }
+  :root[data-theme="light"]{
+    --ink:#f3f1ea; --panel:#ffffff; --panel-line:#d8d3c4;
+    --text:#1c1a15; --muted:#6b6455;
+    --u1:#1b5faa; --u2:#c62828; --u3:#1f7a4d;
+    --grid:#e2dccb; --accent:#a9761d;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);}
+  #wrap{position:relative;width:100vw;height:100vh;}
+  svg#map{width:100%;height:100%;display:block;cursor:grab;touch-action:none;}
+  svg#map.dragging{cursor:grabbing;}
+  svg#map.rotating{cursor:ew-resize;}
+  .track{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;}
+  .track-u1{stroke:var(--u1);}
+  .track-u2{stroke:var(--u2);}
+  .track-u3{stroke:var(--u3);}
+  .track-halo{stroke:var(--ink);opacity:.55;}
+  circle.stop{stroke:var(--ink);}
+  circle.stop.interchange{fill:var(--ink);stroke:var(--text);}
+  text.label{fill:var(--text);font-size:12px;font-weight:600;paint-order:stroke;
+    stroke:var(--ink);stroke-width:3px;stroke-linejoin:round;pointer-events:none;}
+  header{position:absolute;top:0;left:0;right:0;padding:18px 22px 14px;
+    background:linear-gradient(to bottom, color-mix(in srgb, var(--ink) 88%, transparent), transparent);
+    pointer-events:none;}
+  h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.02em;}
+  h1 .u{color:var(--accent);}
+  p.sub{margin:4px 0 0;font-size:12.5px;color:var(--muted);max-width:520px;}
+  #legend{position:absolute;top:18px;right:20px;background:var(--panel);
+    border:1px solid var(--panel-line);border-radius:10px;padding:12px 14px;
+    font-size:12px;min-width:172px;backdrop-filter:blur(6px);}
+  #legend .row{display:flex;align-items:center;gap:9px;margin:5px 0;}
+  #legend .swatch{width:16px;height:4px;border-radius:2px;flex:none;}
+  #legend .row span.name{font-weight:700;}
+  #legend .row span.len{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums;font-size:11px;}
+  #legend hr{border:none;border-top:1px solid var(--panel-line);margin:8px 0;}
+  #legend .meta{color:var(--muted);font-size:11px;line-height:1.5;}
+  #hint{position:absolute;bottom:16px;right:20px;font-size:11px;color:var(--muted);
+    background:var(--panel);border:1px solid var(--panel-line);border-radius:8px;
+    padding:6px 10px;pointer-events:none;}
+  #scalebar{position:absolute;bottom:16px;left:20px;display:flex;align-items:center;gap:8px;
+    background:var(--panel);border:1px solid var(--panel-line);border-radius:8px;
+    padding:6px 12px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;}
+  #scalebar .bar{height:3px;background:var(--text);border-radius:1px;}
+  #tooltip{position:absolute;pointer-events:none;background:var(--panel);
+    border:1px solid var(--panel-line);border-radius:8px;padding:7px 10px;font-size:12.5px;
+    display:none;transform:translate(-50%,-130%);white-space:nowrap;box-shadow:0 4px 14px #0004;}
+  #tooltip .lines{display:flex;gap:4px;margin-top:3px;}
+  #tooltip .chip{width:14px;height:4px;border-radius:2px;}
+  #tooltip b{font-size:13px;}
+  #rotWrap{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:2px;background:var(--panel);
+    border:1px solid var(--panel-line);border-radius:8px;padding:4px;}
+  #rotWrap button{width:28px;height:28px;border:none;border-radius:6px;background:transparent;
+    color:var(--text);font-size:15px;cursor:pointer;line-height:1;}
+  #rotWrap button:hover{background:var(--panel-line);}
+  #rotWrap #rotDeg{font-size:11px;color:var(--muted);width:38px;text-align:center;
+    font-variant-numeric:tabular-nums;}
+</style>
+<div id="wrap">
+  <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+  <header>
+    <h1>N&uuml;rnberg <span class="u">U-Bahn</span> &mdash; Streckennetz</h1>
+    <p class="sub">Exakte Trassenf&uuml;hrung aus den Simulator-Rohdaten (GPS-vermessene Gleisachsen), alle drei Linien im gemeinsamen Weltkoordinatensystem.</p>
+  </header>
+  <div id="legend"></div>
+  <div id="scalebar"></div>
+  <div id="rotWrap">
+    <button id="rotCCW" title="Gegen den Uhrzeigersinn drehen">&#8634;</button>
+    <span id="rotDeg">0&deg;</span>
+    <button id="rotCW" title="Im Uhrzeigersinn drehen">&#8635;</button>
+    <button id="rotReset" title="Nach Norden ausrichten">N</button>
+  </div>
+  <div id="hint">Scrollen = Zoom &middot; Ziehen = Verschieben &middot; Rechtsklick-Ziehen = Drehen</div>
+  <div id="tooltip"></div>
+</div>
+<script>
+var DATA = __DATA__;
+var LINE_META = {
+  U1: {hex:'#4a90e2', label:'U1', desc:'Langwasser Sud - Hardhohe'},
+  U2: {hex:'#e0453f', label:'U2', desc:'Rothenbach - Flughafen'},
+  U3: {hex:'#3fb27f', label:'U3', desc:'Grossreuth b. Schweinau - Nordwestring'}
+};
+var LINE_LEN = { U1: 18525, U2: 13230, U3: 9270 };
+
+var svg = document.getElementById('map');
+var NS = 'http://www.w3.org/2000/svg';
+
+var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+Object.keys(DATA.lines).forEach(function(lid){
+  DATA.lines[lid].forEach(function(pt){
+    var x=pt[0], y=pt[1];
+    if (x<minX) minX=x; if (x>maxX) maxX=x;
+    if (y<minY) minY=y; if (y>maxY) maxY=y;
+  });
+});
+var pad = (maxX-minX) * 0.08;
+var worldX0 = minX - pad, worldY0 = minY - pad;
+var worldW = (maxX - minX) + pad*2, worldH = (maxY - minY) + pad*2;
+
+// World frame is a mirror of the source GPS projection (see project notes on
+// gen_centerline.ps1 negating GPS Y before fitting), and SVG's own y-down axis
+// is itself a second mirror relative to standard north-up map convention -- the
+// two cancel out, so plotting cx/cz straight (no extra axis flip here) is what
+// actually comes out correctly chiral and north-up. Verified against the raw
+// GPS relation coordinates in railspline.geojson (shoelace-sign chirality check).
+function toScreen(x, y) { return [x - worldX0, y - worldY0]; }
+
+var vb = { x:0, y:0, w:worldW, h:worldH };
+
+function setVB() {
+  svg.setAttribute('viewBox', [vb.x, vb.y, vb.w, vb.h].join(' '));
+}
+setVB();
+
+var rotGroup = document.createElementNS(NS,'g');
+var groupTracks = document.createElementNS(NS,'g');
+var groupStations = document.createElementNS(NS,'g');
+svg.appendChild(rotGroup);
+rotGroup.appendChild(groupTracks);
+rotGroup.appendChild(groupStations);
+var pivot = [worldW/2, worldH/2];
+var rot = 0;
+
+function pathFor(lid) {
+  var pts = DATA.lines[lid];
+  var d = '';
+  for (var i=0;i<pts.length;i++) {
+    var p = toScreen(pts[i][0], pts[i][1]);
+    d += (i===0?'M':'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' ';
+  }
+  return d;
+}
+
+['U1','U2','U3'].forEach(function(lid){
+  var halo = document.createElementNS(NS,'path');
+  halo.setAttribute('d', pathFor(lid));
+  halo.setAttribute('class','track track-halo');
+  halo.setAttribute('stroke-width','7');
+  groupTracks.appendChild(halo);
+});
+['U1','U2','U3'].forEach(function(lid){
+  var p = document.createElementNS(NS,'path');
+  p.setAttribute('d', pathFor(lid));
+  p.setAttribute('class', 'track track-'+lid.toLowerCase());
+  p.setAttribute('stroke-width','3.4');
+  groupTracks.appendChild(p);
+});
+
+var tooltip = document.getElementById('tooltip');
+var stationEls = [];
+DATA.stations.forEach(function(s){
+  var sc = toScreen(s.x, s.y !== undefined ? s.y : s.z);
+  var sx = sc[0], sy = sc[1];
+  var g = document.createElementNS(NS,'g');
+  g.setAttribute('transform', 'translate(' + sx + ',' + sy + ')');
+  var interchange = s.lines.length > 1;
+  var c = document.createElementNS(NS,'circle');
+  c.setAttribute('class','stop' + (interchange?' interchange':''));
+  c.setAttribute('r', interchange ? 6 : 4);
+  c.setAttribute('stroke-width', interchange ? 2.2 : 1.6);
+  if (!interchange) c.setAttribute('fill', LINE_META[s.lines[0]].hex);
+  g.appendChild(c);
+  var labelHolder = document.createElementNS(NS,'g');
+  labelHolder.setAttribute('class','labelHolder');
+  var t = document.createElementNS(NS,'text');
+  t.setAttribute('class','label');
+  t.setAttribute('x','9'); t.setAttribute('y','4');
+  t.textContent = s.name;
+  labelHolder.appendChild(t);
+  g.appendChild(labelHolder);
+  g.addEventListener('mouseenter', function(ev){ showTip(ev,s); });
+  g.addEventListener('mousemove', function(ev){ positionTip(ev); });
+  g.addEventListener('mouseleave', function(){ tooltip.style.display='none'; });
+  groupStations.appendChild(g);
+  stationEls.push({g:g, c:c, t:t, labelHolder:labelHolder, sx:sx, sy:sy, interchange:interchange});
+});
+
+function showTip(ev, s) {
+  var chips = s.lines.map(function(l){
+    return '<span class="chip" style="background:'+LINE_META[l].hex+'"></span>';
+  }).join('');
+  tooltip.innerHTML = '<b>'+s.name+'</b><div class="lines">' + chips + '</div>';
+  tooltip.style.display = 'block';
+  positionTip(ev);
+}
+function positionTip(ev) {
+  var r = svg.getBoundingClientRect();
+  tooltip.style.left = (ev.clientX - r.left) + 'px';
+  tooltip.style.top = (ev.clientY - r.top) + 'px';
+}
+
+function applyRotation() {
+  rot = ((rot % 360) + 360) % 360;
+  rotGroup.setAttribute('transform', 'rotate(' + rot + ',' + pivot[0] + ',' + pivot[1] + ')');
+  stationEls.forEach(function(st){
+    st.labelHolder.setAttribute('transform', 'rotate(' + (-rot) + ')');
+  });
+  document.getElementById('rotDeg').textContent = Math.round(rot) + '°';
+}
+
+function applyViewBox() {
+  setVB();
+  rescaleMarkers();
+  updateScalebar();
+}
+function rescaleMarkers() {
+  var rect = svg.getBoundingClientRect();
+  if (!rect.width) return;
+  var pxPerUnit = rect.width / vb.w;
+  var k = 1 / pxPerUnit;
+  var showLabels = pxPerUnit > 0.11;
+  stationEls.forEach(function(st){
+    st.g.setAttribute('transform', 'translate(' + st.sx + ',' + st.sy + ') scale(' + k + ')');
+    st.t.style.display = showLabels ? '' : 'none';
+  });
+}
+function updateScalebar() {
+  var rect = svg.getBoundingClientRect();
+  if (!rect.width) return;
+  var pxPerUnit = rect.width / vb.w;
+  var niceSteps = [10,20,50,100,200,500,1000,2000,5000,10000];
+  var target = 140 / pxPerUnit;
+  var val = niceSteps.reduce(function(best,s){
+    return Math.abs(s-target) < Math.abs(best-target) ? s : best;
+  }, niceSteps[0]);
+  var px = val * pxPerUnit;
+  var label = val >= 1000 ? (val/1000)+' km' : val+' m';
+  document.getElementById('scalebar').innerHTML =
+    '<div class="bar" style="width:'+px.toFixed(0)+'px"></div><span>'+label+'</span>';
+}
+
+svg.addEventListener('wheel', function(ev){
+  ev.preventDefault();
+  var rect = svg.getBoundingClientRect();
+  var mx = vb.x + (ev.clientX-rect.left)/rect.width * vb.w;
+  var my = vb.y + (ev.clientY-rect.top)/rect.height * vb.h;
+  var factor = Math.exp(ev.deltaY * 0.0015);
+  var newW = Math.min(worldW*1.4, Math.max(worldW*0.01, vb.w*factor));
+  var newH = newW * (vb.h/vb.w);
+  vb.x = mx - (mx-vb.x) * (newW/vb.w);
+  vb.y = my - (my-vb.y) * (newH/vb.h);
+  vb.w = newW; vb.h = newH;
+  applyViewBox();
+}, {passive:false});
+
+svg.addEventListener('contextmenu', function(ev){ ev.preventDefault(); });
+
+var mode=null, lastX=0, lastY=0;
+svg.addEventListener('pointerdown', function(ev){
+  mode = ev.button === 2 ? 'rotate' : 'pan';
+  lastX=ev.clientX; lastY=ev.clientY;
+  svg.classList.add(mode === 'pan' ? 'dragging' : 'rotating');
+  svg.setPointerCapture(ev.pointerId);
+});
+svg.addEventListener('pointermove', function(ev){
+  if (!mode) return;
+  if (mode === 'pan') {
+    var rect = svg.getBoundingClientRect();
+    var dx = (ev.clientX-lastX) / rect.width * vb.w;
+    var dy = (ev.clientY-lastY) / rect.height * vb.h;
+    vb.x -= dx; vb.y -= dy;
+    applyViewBox();
+  } else {
+    rot += (ev.clientX-lastX) * 0.4;
+    applyRotation();
+  }
+  lastX=ev.clientX; lastY=ev.clientY;
+});
+svg.addEventListener('pointerup', function(){mode=null; svg.classList.remove('dragging','rotating');});
+svg.addEventListener('pointerleave', function(){mode=null; svg.classList.remove('dragging','rotating');});
+
+document.getElementById('rotCCW').addEventListener('click', function(){ rot -= 15; applyRotation(); });
+document.getElementById('rotCW').addEventListener('click', function(){ rot += 15; applyRotation(); });
+document.getElementById('rotReset').addEventListener('click', function(){ rot = 0; applyRotation(); });
+
+window.addEventListener('resize', function(){ rescaleMarkers(); updateScalebar(); });
+
+var legend = document.getElementById('legend');
+var totalKm = (Object.keys(LINE_LEN).reduce(function(a,k){return a+LINE_LEN[k];},0)/1000).toFixed(1);
+legend.innerHTML = Object.keys(LINE_META).map(function(lid){
+  var m = LINE_META[lid];
+  return '<div class="row"><span class="swatch" style="background:'+m.hex+'"></span>'+
+    '<span class="name">'+m.label+'</span><span class="len">'+(LINE_LEN[lid]/1000).toFixed(1)+' km</span></div>'+
+    '<div class="meta" style="margin:-2px 0 6px 25px;">'+m.desc+'</div>';
+}).join('') + '<hr><div class="meta">'+DATA.stations.length+' Stationen &middot; '+totalKm+' km Streckenlaenge (inkl. Stammstrecke)</div>';
+
+requestAnimationFrame(function(){ rescaleMarkers(); updateScalebar(); });
+</script>

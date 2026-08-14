@@ -1,0 +1,7098 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-07-12T22:16:59Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/30881164",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0867165,
+            49.4516499
+          ],
+          [
+            11.08673,
+            49.4517713
+          ],
+          [
+            11.0867371,
+            49.4518075
+          ],
+          [
+            11.0867568,
+            49.4519081
+          ],
+          [
+            11.0867743,
+            49.4520032
+          ],
+          [
+            11.0868015,
+            49.4521008
+          ],
+          [
+            11.086949,
+            49.4524901
+          ],
+          [
+            11.0870962,
+            49.4528786
+          ],
+          [
+            11.0871645,
+            49.453018
+          ],
+          [
+            11.087237,
+            49.4531418
+          ],
+          [
+            11.0873188,
+            49.4532673
+          ],
+          [
+            11.0873943,
+            49.4533723
+          ]
+        ]
+      },
+      "id": "way/30881164"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/62064382",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "60",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0314914,
+            49.4208325
+          ],
+          [
+            11.0320979,
+            49.4208558
+          ],
+          [
+            11.0327317,
+            49.4208891
+          ]
+        ]
+      },
+      "id": "way/62064382"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76635200",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1040616,
+            49.4872478
+          ],
+          [
+            11.1041693,
+            49.487051
+          ],
+          [
+            11.1042351,
+            49.4869161
+          ],
+          [
+            11.1043267,
+            49.4867131
+          ],
+          [
+            11.1044201,
+            49.486498
+          ],
+          [
+            11.1045018,
+            49.4863192
+          ]
+        ]
+      },
+      "id": "way/76635200"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76705924",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Lorenzkirche U Bahn Gleis 1",
+        "height": "1",
+        "level": "-2",
+        "platform:width": "4.8",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:505:11:2",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0755263,
+            49.4468534
+          ],
+          [
+            11.0755288,
+            49.4468666
+          ],
+          [
+            11.0754794,
+            49.4468706
+          ],
+          [
+            11.0751148,
+            49.4468997
+          ],
+          [
+            11.0748956,
+            49.4469172
+          ],
+          [
+            11.0747425,
+            49.4469294
+          ],
+          [
+            11.0743556,
+            49.4469603
+          ],
+          [
+            11.0743054,
+            49.4469643
+          ],
+          [
+            11.0743032,
+            49.4469512
+          ]
+        ]
+      },
+      "id": "way/76705924"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76705927",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Lorenzkirche U Bahn Gleis 3",
+        "height": "1",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Plärrer",
+        "note": "There are two platforms vertically aligned, but on different levels. Please don't merge their nodes, or else you'll damage routing functionality.",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "3",
+        "ref:IFOPT": "de:09564:704:8:3",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0656163,
+            49.4482173
+          ],
+          [
+            11.0656163,
+            49.4482124
+          ],
+          [
+            11.0655921,
+            49.4482144
+          ],
+          [
+            11.065558,
+            49.4482175
+          ],
+          [
+            11.0654907,
+            49.4482242
+          ],
+          [
+            11.0654435,
+            49.4482289
+          ],
+          [
+            11.0653872,
+            49.4482344
+          ],
+          [
+            11.0651132,
+            49.4482611
+          ],
+          [
+            11.0649144,
+            49.4482799
+          ],
+          [
+            11.0647359,
+            49.4482964
+          ],
+          [
+            11.0647181,
+            49.448298
+          ],
+          [
+            11.0646719,
+            49.4483022
+          ],
+          [
+            11.0645559,
+            49.4483126
+          ],
+          [
+            11.0643832,
+            49.4483275
+          ],
+          [
+            11.0642471,
+            49.4483386
+          ],
+          [
+            11.0642358,
+            49.4483395
+          ],
+          [
+            11.0642402,
+            49.4483525
+          ]
+        ]
+      },
+      "id": "way/76705927"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76705929",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0606619,
+            49.4489291
+          ],
+          [
+            11.0604832,
+            49.4489296
+          ],
+          [
+            11.0603112,
+            49.4489197
+          ],
+          [
+            11.0601392,
+            49.4489048
+          ],
+          [
+            11.0600987,
+            49.4488994
+          ],
+          [
+            11.0599434,
+            49.4488786
+          ],
+          [
+            11.059702,
+            49.4488315
+          ],
+          [
+            11.0594789,
+            49.4487868
+          ],
+          [
+            11.0593198,
+            49.4487435
+          ],
+          [
+            11.0591603,
+            49.4486958
+          ],
+          [
+            11.0590328,
+            49.4486467
+          ],
+          [
+            11.0589281,
+            49.4485912
+          ],
+          [
+            11.0588089,
+            49.4485229
+          ],
+          [
+            11.0587563,
+            49.4484875
+          ],
+          [
+            11.0587037,
+            49.4484522
+          ],
+          [
+            11.058593,
+            49.4483773
+          ],
+          [
+            11.0584998,
+            49.448303
+          ],
+          [
+            11.0583918,
+            49.4482003
+          ],
+          [
+            11.0582912,
+            49.4480899
+          ],
+          [
+            11.0580941,
+            49.4477922
+          ],
+          [
+            11.0579336,
+            49.4475014
+          ],
+          [
+            11.0578071,
+            49.4472717
+          ],
+          [
+            11.0576811,
+            49.4470724
+          ],
+          [
+            11.057583,
+            49.4469216
+          ],
+          [
+            11.0575408,
+            49.4468648
+          ],
+          [
+            11.0574521,
+            49.4467454
+          ],
+          [
+            11.057328,
+            49.446559
+          ],
+          [
+            11.0569635,
+            49.4461068
+          ],
+          [
+            11.0568384,
+            49.4459742
+          ],
+          [
+            11.0565085,
+            49.4456246
+          ],
+          [
+            11.056286,
+            49.4454251
+          ],
+          [
+            11.056035,
+            49.4452
+          ],
+          [
+            11.0558331,
+            49.4450388
+          ]
+        ]
+      },
+      "id": "way/76705929"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76705986",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "60",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0627498,
+            49.4485921
+          ],
+          [
+            11.0631283,
+            49.448504
+          ],
+          [
+            11.0634908,
+            49.4484229
+          ],
+          [
+            11.0637021,
+            49.4483894
+          ],
+          [
+            11.0638755,
+            49.4483654
+          ],
+          [
+            11.0642221,
+            49.4483211
+          ],
+          [
+            11.0642309,
+            49.4483204
+          ],
+          [
+            11.0642418,
+            49.4483195
+          ],
+          [
+            11.0643915,
+            49.4483073
+          ],
+          [
+            11.0645653,
+            49.4482922
+          ],
+          [
+            11.0647449,
+            49.448276
+          ],
+          [
+            11.0649329,
+            49.4482587
+          ],
+          [
+            11.0650936,
+            49.4482433
+          ],
+          [
+            11.0652486,
+            49.4482284
+          ],
+          [
+            11.0653814,
+            49.4482154
+          ],
+          [
+            11.0654849,
+            49.4482051
+          ],
+          [
+            11.0655521,
+            49.4481984
+          ],
+          [
+            11.0656111,
+            49.4481925
+          ]
+        ]
+      },
+      "id": "way/76705986"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76883340",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0506109,
+            49.4407499
+          ],
+          [
+            11.0502496,
+            49.4400216
+          ],
+          [
+            11.0500751,
+            49.4395258
+          ],
+          [
+            11.0499755,
+            49.4391864
+          ],
+          [
+            11.0498672,
+            49.4387938
+          ],
+          [
+            11.049759,
+            49.4384013
+          ],
+          [
+            11.0489831,
+            49.4356019
+          ],
+          [
+            11.0488854,
+            49.435353
+          ],
+          [
+            11.0487732,
+            49.4350987
+          ]
+        ]
+      },
+      "id": "way/76883340"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76907413",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0482532,
+            49.4342992
+          ],
+          [
+            11.0481977,
+            49.4342256
+          ],
+          [
+            11.0481526,
+            49.4341649
+          ],
+          [
+            11.0481161,
+            49.4341152
+          ],
+          [
+            11.0480867,
+            49.4340749
+          ],
+          [
+            11.0480627,
+            49.4340422
+          ],
+          [
+            11.0480425,
+            49.4340154
+          ],
+          [
+            11.0480245,
+            49.4339928
+          ],
+          [
+            11.048007,
+            49.4339725
+          ],
+          [
+            11.0479884,
+            49.4339529
+          ],
+          [
+            11.0479671,
+            49.4339323
+          ],
+          [
+            11.0476874,
+            49.4336774
+          ],
+          [
+            11.0474015,
+            49.4333968
+          ],
+          [
+            11.047026,
+            49.432945
+          ],
+          [
+            11.0466882,
+            49.4325008
+          ],
+          [
+            11.0458654,
+            49.4314104
+          ],
+          [
+            11.0453235,
+            49.4307661
+          ],
+          [
+            11.0448888,
+            49.4302268
+          ],
+          [
+            11.0447301,
+            49.4300342
+          ]
+        ]
+      },
+      "id": "way/76907413"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76907418",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0478149,
+            49.4336115
+          ],
+          [
+            11.048091,
+            49.4338746
+          ],
+          [
+            11.0481382,
+            49.4339235
+          ],
+          [
+            11.0481772,
+            49.4339683
+          ],
+          [
+            11.0482096,
+            49.4340096
+          ],
+          [
+            11.0482373,
+            49.4340484
+          ],
+          [
+            11.0482626,
+            49.4340835
+          ],
+          [
+            11.0482892,
+            49.4341198
+          ],
+          [
+            11.0484056,
+            49.4342708
+          ],
+          [
+            11.0484408,
+            49.4343177
+          ],
+          [
+            11.0484799,
+            49.4343638
+          ],
+          [
+            11.0485173,
+            49.4344099
+          ],
+          [
+            11.0485522,
+            49.4344545
+          ],
+          [
+            11.048584,
+            49.4344962
+          ],
+          [
+            11.0486082,
+            49.4345289
+          ],
+          [
+            11.0486346,
+            49.4345651
+          ],
+          [
+            11.048652,
+            49.4345895
+          ],
+          [
+            11.0486677,
+            49.4346123
+          ],
+          [
+            11.0487513,
+            49.4347425
+          ],
+          [
+            11.04893,
+            49.4350879
+          ]
+        ]
+      },
+      "id": "way/76907418"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76907425",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0487732,
+            49.4350987
+          ],
+          [
+            11.0486561,
+            49.434862
+          ],
+          [
+            11.0486025,
+            49.4347661
+          ],
+          [
+            11.04853,
+            49.4346543
+          ],
+          [
+            11.0485208,
+            49.4346431
+          ],
+          [
+            11.0485088,
+            49.4346284
+          ],
+          [
+            11.0484913,
+            49.4346067
+          ],
+          [
+            11.0484664,
+            49.4345753
+          ],
+          [
+            11.0484387,
+            49.4345403
+          ],
+          [
+            11.0484029,
+            49.4344944
+          ],
+          [
+            11.0483603,
+            49.4344393
+          ],
+          [
+            11.0483105,
+            49.4343744
+          ],
+          [
+            11.0482532,
+            49.4342992
+          ]
+        ]
+      },
+      "id": "way/76907425"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/76907432",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.04893,
+            49.4350879
+          ],
+          [
+            11.0490182,
+            49.4353024
+          ],
+          [
+            11.0490862,
+            49.4355071
+          ],
+          [
+            11.0498594,
+            49.4382204
+          ],
+          [
+            11.0499056,
+            49.4383854
+          ],
+          [
+            11.0500094,
+            49.4387766
+          ],
+          [
+            11.0501137,
+            49.43917
+          ],
+          [
+            11.0501514,
+            49.4393107
+          ],
+          [
+            11.050174,
+            49.4394032
+          ],
+          [
+            11.0502252,
+            49.4396129
+          ],
+          [
+            11.0502775,
+            49.4398178
+          ],
+          [
+            11.0503231,
+            49.4399905
+          ],
+          [
+            11.0504044,
+            49.4402065
+          ],
+          [
+            11.0506586,
+            49.4407356
+          ]
+        ]
+      },
+      "id": "way/76907432"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77347751",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0447301,
+            49.4300342
+          ],
+          [
+            11.0440421,
+            49.4292305
+          ],
+          [
+            11.0438458,
+            49.4289963
+          ],
+          [
+            11.0434638,
+            49.4285404
+          ],
+          [
+            11.0432231,
+            49.4282296
+          ],
+          [
+            11.0429202,
+            49.4278445
+          ]
+        ]
+      },
+      "id": "way/77347751"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77347758",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0449189,
+            49.4300251
+          ],
+          [
+            11.0450511,
+            49.4301829
+          ],
+          [
+            11.0455737,
+            49.4307868
+          ],
+          [
+            11.0460745,
+            49.4314198
+          ],
+          [
+            11.0468378,
+            49.4324056
+          ],
+          [
+            11.0471938,
+            49.4328811
+          ],
+          [
+            11.0475613,
+            49.4333294
+          ],
+          [
+            11.0478149,
+            49.4336115
+          ]
+        ]
+      },
+      "id": "way/77347758"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77347763",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0430324,
+            49.4277579
+          ],
+          [
+            11.0433356,
+            49.4281837
+          ],
+          [
+            11.043609,
+            49.4284889
+          ],
+          [
+            11.0439945,
+            49.428949
+          ],
+          [
+            11.0441873,
+            49.4291791
+          ],
+          [
+            11.0449189,
+            49.4300251
+          ]
+        ]
+      },
+      "id": "way/77347763"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77347768",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0429202,
+            49.4278445
+          ],
+          [
+            11.0425182,
+            49.4274154
+          ],
+          [
+            11.0417021,
+            49.426776
+          ],
+          [
+            11.0411694,
+            49.4264115
+          ],
+          [
+            11.0409397,
+            49.4262544
+          ],
+          [
+            11.0400651,
+            49.4256906
+          ],
+          [
+            11.0389964,
+            49.4249944
+          ],
+          [
+            11.038761,
+            49.4247866
+          ],
+          [
+            11.0380482,
+            49.4241574
+          ],
+          [
+            11.037835,
+            49.4239238
+          ],
+          [
+            11.0372456,
+            49.4232781
+          ],
+          [
+            11.0367906,
+            49.4228067
+          ],
+          [
+            11.0362964,
+            49.422281
+          ],
+          [
+            11.035789,
+            49.4219191
+          ],
+          [
+            11.0351243,
+            49.4215873
+          ],
+          [
+            11.0347598,
+            49.4214547
+          ],
+          [
+            11.0344891,
+            49.4213571
+          ],
+          [
+            11.0341889,
+            49.4212633
+          ],
+          [
+            11.0338639,
+            49.4211726
+          ]
+        ]
+      },
+      "id": "way/77347768"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77347952",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0327317,
+            49.4208891
+          ],
+          [
+            11.0330061,
+            49.4209169
+          ],
+          [
+            11.0332474,
+            49.4209441
+          ],
+          [
+            11.0335895,
+            49.4210007
+          ],
+          [
+            11.0338941,
+            49.4210696
+          ],
+          [
+            11.0342479,
+            49.4211656
+          ],
+          [
+            11.0345854,
+            49.4212619
+          ],
+          [
+            11.0352031,
+            49.4214926
+          ],
+          [
+            11.0358959,
+            49.421841
+          ],
+          [
+            11.0364098,
+            49.4222084
+          ],
+          [
+            11.0369233,
+            49.4227363
+          ],
+          [
+            11.0373941,
+            49.4232202
+          ],
+          [
+            11.0379925,
+            49.423871
+          ],
+          [
+            11.0382156,
+            49.4241137
+          ],
+          [
+            11.0388927,
+            49.4247205
+          ],
+          [
+            11.0390969,
+            49.4249035
+          ],
+          [
+            11.0401847,
+            49.4256083
+          ],
+          [
+            11.0411269,
+            49.4262151
+          ],
+          [
+            11.0412878,
+            49.4263246
+          ],
+          [
+            11.0418294,
+            49.4266932
+          ],
+          [
+            11.0426656,
+            49.4273471
+          ],
+          [
+            11.0430324,
+            49.4277579
+          ]
+        ]
+      },
+      "id": "way/77347952"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77347954",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "60",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0338639,
+            49.4211726
+          ],
+          [
+            11.0335345,
+            49.4211089
+          ],
+          [
+            11.0331936,
+            49.4210501
+          ],
+          [
+            11.032927,
+            49.4210173
+          ],
+          [
+            11.0326221,
+            49.4209906
+          ],
+          [
+            11.032247,
+            49.4209723
+          ]
+        ]
+      },
+      "id": "way/77347954"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77353070",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0872174,
+            49.4534236
+          ],
+          [
+            11.087127,
+            49.4532935
+          ],
+          [
+            11.087064,
+            49.4531793
+          ],
+          [
+            11.0869889,
+            49.4530555
+          ],
+          [
+            11.0869201,
+            49.4529082
+          ],
+          [
+            11.0867638,
+            49.4525178
+          ],
+          [
+            11.0866098,
+            49.4521329
+          ],
+          [
+            11.0865704,
+            49.4520145
+          ],
+          [
+            11.0865409,
+            49.4519151
+          ],
+          [
+            11.0865061,
+            49.4517887
+          ],
+          [
+            11.0864883,
+            49.4516893
+          ]
+        ]
+      },
+      "id": "way/77353070"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77353076",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0873943,
+            49.4533723
+          ],
+          [
+            11.0878309,
+            49.4539661
+          ],
+          [
+            11.0882632,
+            49.4544217
+          ],
+          [
+            11.0886898,
+            49.4547296
+          ],
+          [
+            11.0889546,
+            49.4549628
+          ],
+          [
+            11.0891603,
+            49.455212
+          ],
+          [
+            11.0892578,
+            49.4553569
+          ],
+          [
+            11.0893367,
+            49.4554979
+          ],
+          [
+            11.0894093,
+            49.4556367
+          ],
+          [
+            11.0894711,
+            49.455783
+          ],
+          [
+            11.0895126,
+            49.4559043
+          ],
+          [
+            11.0895372,
+            49.4560262
+          ],
+          [
+            11.0895475,
+            49.4561118
+          ],
+          [
+            11.0895582,
+            49.4562112
+          ],
+          [
+            11.0895629,
+            49.4563949
+          ],
+          [
+            11.0895669,
+            49.4568556
+          ],
+          [
+            11.0895721,
+            49.4572198
+          ],
+          [
+            11.0895751,
+            49.4574297
+          ],
+          [
+            11.08964,
+            49.4579145
+          ]
+        ]
+      },
+      "id": "way/77353076"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77353082",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "source:maxspeed": "'Geschwindigkeitssignal' für 60 km/h nordöstlich des Bahnsteigbeginns",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0864883,
+            49.4516893
+          ],
+          [
+            11.086453,
+            49.451429
+          ],
+          [
+            11.0864441,
+            49.4508376
+          ],
+          [
+            11.0864876,
+            49.4497501
+          ],
+          [
+            11.0865038,
+            49.4491959
+          ],
+          [
+            11.0864116,
+            49.4488711
+          ],
+          [
+            11.0862027,
+            49.4484652
+          ],
+          [
+            11.085924,
+            49.448245
+          ],
+          [
+            11.0856757,
+            49.4481221
+          ],
+          [
+            11.0852544,
+            49.4479346
+          ],
+          [
+            11.0841383,
+            49.4475438
+          ],
+          [
+            11.083734,
+            49.4474252
+          ],
+          [
+            11.0834036,
+            49.4473454
+          ],
+          [
+            11.0833042,
+            49.4473242
+          ]
+        ]
+      },
+      "id": "way/77353082"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77355735",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Rathenauplatz U-Bahn Gleis 1",
+        "height": "1",
+        "indoor": "yes",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Rathenauplatz",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:332:11:1",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.089439,
+            49.4563953
+          ],
+          [
+            11.0894247,
+            49.4563953
+          ],
+          [
+            11.0894249,
+            49.4564167
+          ],
+          [
+            11.0894324,
+            49.4570808
+          ],
+          [
+            11.089432,
+            49.4572021
+          ],
+          [
+            11.0894321,
+            49.4572182
+          ],
+          [
+            11.0894453,
+            49.4572182
+          ]
+        ]
+      },
+      "id": "way/77355735"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77356818",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0894004,
+            49.4563954
+          ],
+          [
+            11.0893852,
+            49.456219
+          ],
+          [
+            11.0893772,
+            49.4561353
+          ],
+          [
+            11.0893681,
+            49.4560523
+          ],
+          [
+            11.0893503,
+            49.4559287
+          ],
+          [
+            11.089313,
+            49.4558028
+          ],
+          [
+            11.0892497,
+            49.4556541
+          ],
+          [
+            11.089173,
+            49.4555051
+          ],
+          [
+            11.0891009,
+            49.4553752
+          ],
+          [
+            11.0890108,
+            49.4552441
+          ],
+          [
+            11.0888159,
+            49.454991
+          ],
+          [
+            11.0885791,
+            49.4547952
+          ],
+          [
+            11.0880366,
+            49.4544337
+          ],
+          [
+            11.0876183,
+            49.4540187
+          ],
+          [
+            11.0872174,
+            49.4534236
+          ]
+        ]
+      },
+      "id": "way/77356818"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77360745",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Rennweg U-Bahn Gleis 1",
+        "height": "1",
+        "indoor": "yes",
+        "layer": "-1",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Rennweg",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:340:11:1",
+        "shelter": "no",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0929742,
+            49.4608781
+          ],
+          [
+            11.0929924,
+            49.4608849
+          ],
+          [
+            11.0930901,
+            49.4609217
+          ],
+          [
+            11.0939934,
+            49.4612616
+          ],
+          [
+            11.0940165,
+            49.4612703
+          ]
+        ]
+      },
+      "id": "way/77360745"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77360746",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0929614,
+            49.4608925
+          ],
+          [
+            11.0926826,
+            49.4607712
+          ],
+          [
+            11.0924102,
+            49.4606604
+          ],
+          [
+            11.0920648,
+            49.4605047
+          ],
+          [
+            11.0917173,
+            49.4603379
+          ],
+          [
+            11.0912141,
+            49.4600645
+          ],
+          [
+            11.090692,
+            49.4597549
+          ],
+          [
+            11.0903651,
+            49.4595432
+          ],
+          [
+            11.0901099,
+            49.4593401
+          ],
+          [
+            11.0898991,
+            49.4591499
+          ],
+          [
+            11.0897558,
+            49.458961
+          ],
+          [
+            11.0896336,
+            49.4587765
+          ],
+          [
+            11.0895334,
+            49.4585793
+          ]
+        ]
+      },
+      "id": "way/77360746"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77360758",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-2",
+        "maxspeed": "70",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0944486,
+            49.4614477
+          ],
+          [
+            11.0940037,
+            49.4612847
+          ],
+          [
+            11.0934826,
+            49.4610886
+          ],
+          [
+            11.0929614,
+            49.4608925
+          ]
+        ]
+      },
+      "id": "way/77360758"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77377419",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1046319,
+            49.4863404
+          ],
+          [
+            11.1043496,
+            49.4868602
+          ],
+          [
+            11.1042221,
+            49.4870458
+          ],
+          [
+            11.1040616,
+            49.4872478
+          ]
+        ]
+      },
+      "id": "way/77377419"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77377736",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-1",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1040616,
+            49.4872478
+          ],
+          [
+            11.1036762,
+            49.4877583
+          ],
+          [
+            11.1034776,
+            49.4879683
+          ],
+          [
+            11.1031342,
+            49.4882707
+          ],
+          [
+            11.1026401,
+            49.4885434
+          ],
+          [
+            11.1020636,
+            49.4887344
+          ],
+          [
+            11.1010491,
+            49.4889303
+          ],
+          [
+            11.1009651,
+            49.4889375
+          ],
+          [
+            11.0996979,
+            49.4890354
+          ],
+          [
+            11.099438,
+            49.4890345
+          ],
+          [
+            11.098404,
+            49.4890311
+          ],
+          [
+            11.0981748,
+            49.4890304
+          ],
+          [
+            11.0974421,
+            49.4890629
+          ],
+          [
+            11.0972206,
+            49.4890727
+          ],
+          [
+            11.0969123,
+            49.4890864
+          ],
+          [
+            11.0945118,
+            49.4891928
+          ],
+          [
+            11.0928765,
+            49.4892652
+          ],
+          [
+            11.091472,
+            49.4893275
+          ],
+          [
+            11.0907319,
+            49.4893881
+          ],
+          [
+            11.0894476,
+            49.4894934
+          ],
+          [
+            11.0878329,
+            49.489781
+          ],
+          [
+            11.0877614,
+            49.4897937
+          ],
+          [
+            11.0875004,
+            49.4898619
+          ],
+          [
+            11.0866873,
+            49.4900745
+          ],
+          [
+            11.0865707,
+            49.4901148
+          ],
+          [
+            11.086134,
+            49.4902659
+          ],
+          [
+            11.0857409,
+            49.4905059
+          ],
+          [
+            11.085398,
+            49.4907764
+          ],
+          [
+            11.0850656,
+            49.4912894
+          ],
+          [
+            11.0848638,
+            49.4916008
+          ],
+          [
+            11.0845534,
+            49.4922479
+          ],
+          [
+            11.0841048,
+            49.4926321
+          ],
+          [
+            11.0839507,
+            49.4927288
+          ],
+          [
+            11.0831335,
+            49.4932416
+          ],
+          [
+            11.0828072,
+            49.4933569
+          ]
+        ]
+      },
+      "id": "way/77377736"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77377737",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1054537,
+            49.4845866
+          ],
+          [
+            11.105624,
+            49.4843902
+          ],
+          [
+            11.1057769,
+            49.4842438
+          ],
+          [
+            11.1059311,
+            49.4841111
+          ],
+          [
+            11.1061001,
+            49.483965
+          ],
+          [
+            11.1062932,
+            49.4838134
+          ],
+          [
+            11.1063468,
+            49.4837744
+          ],
+          [
+            11.1064756,
+            49.4836809
+          ],
+          [
+            11.1066333,
+            49.4835952
+          ],
+          [
+            11.1068029,
+            49.4835189
+          ],
+          [
+            11.1069745,
+            49.4834422
+          ],
+          [
+            11.1071676,
+            49.483376
+          ],
+          [
+            11.1073528,
+            49.4833338
+          ],
+          [
+            11.1084876,
+            49.4830783
+          ],
+          [
+            11.1092046,
+            49.4828371
+          ],
+          [
+            11.1098118,
+            49.4825897
+          ],
+          [
+            11.1102816,
+            49.4822584
+          ],
+          [
+            11.1106503,
+            49.481869
+          ]
+        ]
+      },
+      "id": "way/77377737"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77377740",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1047285,
+            49.4858362
+          ],
+          [
+            11.1048459,
+            49.4856161
+          ],
+          [
+            11.104905,
+            49.4855052
+          ],
+          [
+            11.1049116,
+            49.4854919
+          ],
+          [
+            11.1049302,
+            49.4854547
+          ],
+          [
+            11.1049593,
+            49.4853975
+          ],
+          [
+            11.1049974,
+            49.485324
+          ],
+          [
+            11.105043,
+            49.4852382
+          ],
+          [
+            11.1050944,
+            49.4851439
+          ],
+          [
+            11.1051519,
+            49.4850418
+          ],
+          [
+            11.1052086,
+            49.4849452
+          ],
+          [
+            11.1052685,
+            49.4848484
+          ],
+          [
+            11.1053111,
+            49.4847842
+          ],
+          [
+            11.1053278,
+            49.484759
+          ],
+          [
+            11.1054537,
+            49.4845866
+          ]
+        ]
+      },
+      "id": "way/77377740"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77379552",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-1",
+        "maxspeed:backward": "40",
+        "maxspeed:forward": "60",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0788468,
+            49.4938827
+          ],
+          [
+            11.0789714,
+            49.4938714
+          ],
+          [
+            11.0792255,
+            49.4938574
+          ],
+          [
+            11.0793991,
+            49.4938534
+          ],
+          [
+            11.0795603,
+            49.4938506
+          ],
+          [
+            11.0798607,
+            49.4938444
+          ],
+          [
+            11.0800768,
+            49.493835
+          ]
+        ]
+      },
+      "id": "way/77379552"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77499562",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1087644,
+            49.4774464
+          ],
+          [
+            11.1092942,
+            49.477889
+          ],
+          [
+            11.1096121,
+            49.4781475
+          ],
+          [
+            11.1096307,
+            49.4781617
+          ],
+          [
+            11.1097332,
+            49.4782402
+          ],
+          [
+            11.1098518,
+            49.4783371
+          ],
+          [
+            11.1099649,
+            49.4784346
+          ],
+          [
+            11.1100435,
+            49.4785053
+          ],
+          [
+            11.1100708,
+            49.4785299
+          ],
+          [
+            11.110166,
+            49.4786187
+          ],
+          [
+            11.1102494,
+            49.4786988
+          ],
+          [
+            11.1103182,
+            49.4787667
+          ],
+          [
+            11.1103702,
+            49.4788192
+          ],
+          [
+            11.1104022,
+            49.4788521
+          ],
+          [
+            11.1104147,
+            49.4788652
+          ],
+          [
+            11.1105379,
+            49.4789938
+          ],
+          [
+            11.110639,
+            49.479123
+          ],
+          [
+            11.1107323,
+            49.4792563
+          ]
+        ]
+      },
+      "id": "way/77499562"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77499563",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2 / U21",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1086204,
+            49.4775305
+          ],
+          [
+            11.1084131,
+            49.4773541
+          ],
+          [
+            11.1081787,
+            49.4771545
+          ],
+          [
+            11.1077955,
+            49.4768196
+          ],
+          [
+            11.1075582,
+            49.4766246
+          ],
+          [
+            11.1072345,
+            49.4763601
+          ],
+          [
+            11.1068685,
+            49.4760739
+          ],
+          [
+            11.1064865,
+            49.4757887
+          ],
+          [
+            11.1063026,
+            49.4756583
+          ],
+          [
+            11.1061363,
+            49.4755311
+          ],
+          [
+            11.1058922,
+            49.4753045
+          ],
+          [
+            11.1056539,
+            49.4750552
+          ],
+          [
+            11.1051559,
+            49.474464
+          ],
+          [
+            11.1049593,
+            49.4742185
+          ],
+          [
+            11.1048783,
+            49.474088
+          ],
+          [
+            11.104822,
+            49.4739681
+          ],
+          [
+            11.1047278,
+            49.4737692
+          ],
+          [
+            11.104712,
+            49.4737359
+          ],
+          [
+            11.1046321,
+            49.4734915
+          ],
+          [
+            11.1045509,
+            49.4731009
+          ],
+          [
+            11.1044892,
+            49.4727713
+          ],
+          [
+            11.1044532,
+            49.4725774
+          ],
+          [
+            11.1043827,
+            49.4721818
+          ],
+          [
+            11.1043128,
+            49.4717893
+          ],
+          [
+            11.1042359,
+            49.4713568
+          ],
+          [
+            11.1041242,
+            49.470842
+          ],
+          [
+            11.1039427,
+            49.4702352
+          ],
+          [
+            11.1038296,
+            49.4699049
+          ],
+          [
+            11.1036826,
+            49.4695715
+          ],
+          [
+            11.1035919,
+            49.4693858
+          ],
+          [
+            11.1033789,
+            49.4688992
+          ],
+          [
+            11.1031152,
+            49.468348
+          ],
+          [
+            11.1029444,
+            49.468066
+          ],
+          [
+            11.1027743,
+            49.4677825
+          ],
+          [
+            11.1025598,
+            49.4674988
+          ],
+          [
+            11.1023206,
+            49.4672413
+          ],
+          [
+            11.1018405,
+            49.4667148
+          ],
+          [
+            11.1014648,
+            49.4662758
+          ],
+          [
+            11.100912,
+            49.4655542
+          ],
+          [
+            11.1008205,
+            49.4654363
+          ],
+          [
+            11.1007333,
+            49.4653187
+          ],
+          [
+            11.100685,
+            49.4652542
+          ],
+          [
+            11.1006264,
+            49.465164
+          ],
+          [
+            11.1005294,
+            49.4649751
+          ],
+          [
+            11.1005053,
+            49.4649273
+          ],
+          [
+            11.1004766,
+            49.4648727
+          ],
+          [
+            11.1004385,
+            49.4648022
+          ],
+          [
+            11.1003924,
+            49.4647191
+          ],
+          [
+            11.1003395,
+            49.4646268
+          ],
+          [
+            11.100281,
+            49.4645289
+          ],
+          [
+            11.1002182,
+            49.4644287
+          ],
+          [
+            11.1001524,
+            49.4643297
+          ],
+          [
+            11.1000845,
+            49.4642347
+          ],
+          [
+            11.0999443,
+            49.4640347
+          ],
+          [
+            11.0998227,
+            49.4638927
+          ],
+          [
+            11.0997221,
+            49.4637942
+          ],
+          [
+            11.0995898,
+            49.4636644
+          ],
+          [
+            11.0993721,
+            49.4634691
+          ],
+          [
+            11.0992581,
+            49.4633715
+          ],
+          [
+            11.099132,
+            49.4632752
+          ],
+          [
+            11.0989469,
+            49.4631553
+          ],
+          [
+            11.098845,
+            49.4630952
+          ],
+          [
+            11.0987161,
+            49.4630309
+          ],
+          [
+            11.0984427,
+            49.462913
+          ],
+          [
+            11.0978252,
+            49.4626905
+          ],
+          [
+            11.0955233,
+            49.4618389
+          ],
+          [
+            11.095095,
+            49.4616885
+          ],
+          [
+            11.0948354,
+            49.4615974
+          ]
+        ]
+      },
+      "id": "way/77499563"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77499564",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1107992,
+            49.4819081
+          ],
+          [
+            11.1103986,
+            49.48231
+          ],
+          [
+            11.1099048,
+            49.4826475
+          ],
+          [
+            11.1096729,
+            49.4827409
+          ],
+          [
+            11.109243,
+            49.482914
+          ],
+          [
+            11.1085169,
+            49.4831414
+          ],
+          [
+            11.107386,
+            49.4833914
+          ],
+          [
+            11.1071972,
+            49.4834457
+          ],
+          [
+            11.1070121,
+            49.4835137
+          ],
+          [
+            11.1068431,
+            49.4835869
+          ],
+          [
+            11.1066623,
+            49.4836782
+          ],
+          [
+            11.1065051,
+            49.4837768
+          ],
+          [
+            11.1063496,
+            49.4839005
+          ],
+          [
+            11.1061886,
+            49.4840417
+          ],
+          [
+            11.1060323,
+            49.4841848
+          ],
+          [
+            11.1059097,
+            49.4843074
+          ],
+          [
+            11.1058059,
+            49.4844195
+          ]
+        ]
+      },
+      "id": "way/77499564"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77499565",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1105906,
+            49.479281
+          ],
+          [
+            11.1104995,
+            49.4791666
+          ],
+          [
+            11.1104056,
+            49.4790542
+          ],
+          [
+            11.1102871,
+            49.478911
+          ],
+          [
+            11.1102782,
+            49.4789027
+          ],
+          [
+            11.1102518,
+            49.4788784
+          ],
+          [
+            11.1102086,
+            49.4788389
+          ],
+          [
+            11.110149,
+            49.4787852
+          ],
+          [
+            11.1100737,
+            49.4787181
+          ],
+          [
+            11.1099833,
+            49.4786387
+          ],
+          [
+            11.1098784,
+            49.4785477
+          ],
+          [
+            11.1097597,
+            49.4784462
+          ],
+          [
+            11.1096276,
+            49.4783351
+          ],
+          [
+            11.1094827,
+            49.4782151
+          ],
+          [
+            11.1091405,
+            49.4779459
+          ],
+          [
+            11.1086204,
+            49.4775305
+          ]
+        ]
+      },
+      "id": "way/77499565"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/77503414",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Nordbahnhof U-Bahn Gleis 2",
+        "height": "1",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Nordostbahnhof",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:1335:11:2",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "wheelchair": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1045898,
+            49.4725671
+          ],
+          [
+            11.104587,
+            49.4725512
+          ],
+          [
+            11.1045555,
+            49.4723719
+          ],
+          [
+            11.1045239,
+            49.4721925
+          ],
+          [
+            11.1044537,
+            49.4717934
+          ],
+          [
+            11.1044511,
+            49.4717785
+          ]
+        ]
+      },
+      "id": "way/77503414"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/97737594",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "40",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0800565,
+            49.4938669
+          ],
+          [
+            11.0797885,
+            49.4938949
+          ],
+          [
+            11.079116,
+            49.4939656
+          ],
+          [
+            11.07884,
+            49.4939932
+          ],
+          [
+            11.0786907,
+            49.4940072
+          ]
+        ]
+      },
+      "id": "way/97737594"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/135934766",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2 / U21",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.08964,
+            49.4579145
+          ],
+          [
+            11.0896755,
+            49.4581549
+          ],
+          [
+            11.0897317,
+            49.4584658
+          ],
+          [
+            11.0897907,
+            49.4586321
+          ],
+          [
+            11.0898742,
+            49.4587889
+          ],
+          [
+            11.089984,
+            49.4589679
+          ],
+          [
+            11.0901259,
+            49.4591519
+          ],
+          [
+            11.0903073,
+            49.4593365
+          ],
+          [
+            11.0905503,
+            49.4595288
+          ],
+          [
+            11.0909215,
+            49.4597609
+          ],
+          [
+            11.0913008,
+            49.4599811
+          ],
+          [
+            11.0917345,
+            49.4602241
+          ],
+          [
+            11.0921244,
+            49.4604167
+          ],
+          [
+            11.0925326,
+            49.4605986
+          ],
+          [
+            11.0930341,
+            49.4608137
+          ],
+          [
+            11.0935559,
+            49.46101
+          ],
+          [
+            11.0940764,
+            49.4612058
+          ],
+          [
+            11.0949107,
+            49.4615277
+          ],
+          [
+            11.0978843,
+            49.4626364
+          ],
+          [
+            11.0985111,
+            49.4628624
+          ],
+          [
+            11.0987847,
+            49.4629792
+          ],
+          [
+            11.0989067,
+            49.4630368
+          ],
+          [
+            11.099014,
+            49.4630969
+          ],
+          [
+            11.0992195,
+            49.463223
+          ],
+          [
+            11.0993533,
+            49.4633166
+          ],
+          [
+            11.0994767,
+            49.4634116
+          ],
+          [
+            11.0996904,
+            49.463614
+          ],
+          [
+            11.0998441,
+            49.4637724
+          ],
+          [
+            11.0999991,
+            49.4639294
+          ],
+          [
+            11.1001164,
+            49.4640636
+          ],
+          [
+            11.1002119,
+            49.4641947
+          ],
+          [
+            11.1002873,
+            49.4642886
+          ],
+          [
+            11.1003583,
+            49.4643886
+          ],
+          [
+            11.1004235,
+            49.4644902
+          ],
+          [
+            11.100482,
+            49.4645895
+          ],
+          [
+            11.100534,
+            49.4646843
+          ],
+          [
+            11.100578,
+            49.4647696
+          ],
+          [
+            11.1006133,
+            49.4648421
+          ],
+          [
+            11.1006395,
+            49.4648984
+          ],
+          [
+            11.1006608,
+            49.4649481
+          ],
+          [
+            11.1007386,
+            49.4651161
+          ],
+          [
+            11.1007802,
+            49.4651932
+          ],
+          [
+            11.1008312,
+            49.4652768
+          ],
+          [
+            11.1009277,
+            49.4654023
+          ],
+          [
+            11.101013,
+            49.4655193
+          ],
+          [
+            11.1015595,
+            49.4662429
+          ],
+          [
+            11.1020041,
+            49.4667633
+          ],
+          [
+            11.1024421,
+            49.4672411
+          ],
+          [
+            11.1026437,
+            49.4674717
+          ],
+          [
+            11.1028592,
+            49.4677562
+          ],
+          [
+            11.1032047,
+            49.4682716
+          ],
+          [
+            11.1034916,
+            49.4688085
+          ],
+          [
+            11.1037451,
+            49.4693302
+          ],
+          [
+            11.1039853,
+            49.4698848
+          ],
+          [
+            11.1041082,
+            49.47023
+          ],
+          [
+            11.1042654,
+            49.4708033
+          ],
+          [
+            11.1043742,
+            49.4713417
+          ],
+          [
+            11.1044759,
+            49.4717766
+          ],
+          [
+            11.1045453,
+            49.4721711
+          ],
+          [
+            11.1046146,
+            49.4725652
+          ],
+          [
+            11.1046487,
+            49.4727549
+          ],
+          [
+            11.1047037,
+            49.4730859
+          ],
+          [
+            11.1047584,
+            49.4733239
+          ],
+          [
+            11.1047922,
+            49.4734569
+          ],
+          [
+            11.1048432,
+            49.4735967
+          ],
+          [
+            11.1049113,
+            49.4737867
+          ],
+          [
+            11.1049734,
+            49.4739338
+          ],
+          [
+            11.105053,
+            49.4740961
+          ],
+          [
+            11.1051388,
+            49.474229
+          ],
+          [
+            11.1052934,
+            49.4744351
+          ],
+          [
+            11.1057705,
+            49.4750206
+          ],
+          [
+            11.1060086,
+            49.47527
+          ],
+          [
+            11.1062596,
+            49.4755084
+          ],
+          [
+            11.1064206,
+            49.4756269
+          ],
+          [
+            11.1065968,
+            49.4757535
+          ],
+          [
+            11.1069758,
+            49.476033
+          ],
+          [
+            11.1073306,
+            49.476298
+          ],
+          [
+            11.1079205,
+            49.4767761
+          ],
+          [
+            11.1083102,
+            49.4770874
+          ],
+          [
+            11.1087644,
+            49.4774464
+          ]
+        ]
+      },
+      "id": "way/135934766"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/138398480",
+        "bench": "yes",
+        "bin": "yes",
+        "covered": "yes",
+        "description": "Schoppershof U-Bahn Gleis 1",
+        "height": "1",
+        "layer": "-1",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Schoppershof",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:341:11:1",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "width": "5.3"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1005658,
+            49.4649673
+          ],
+          [
+            11.1005531,
+            49.46497
+          ],
+          [
+            11.1005467,
+            49.4649575
+          ],
+          [
+            11.1005286,
+            49.4649222
+          ],
+          [
+            11.1005172,
+            49.4649006
+          ],
+          [
+            11.1004998,
+            49.4648674
+          ],
+          [
+            11.1004617,
+            49.4647967
+          ],
+          [
+            11.1004154,
+            49.4647135
+          ],
+          [
+            11.1003624,
+            49.4646211
+          ],
+          [
+            11.1003038,
+            49.4645229
+          ],
+          [
+            11.1002408,
+            49.4644224
+          ],
+          [
+            11.1001747,
+            49.4643229
+          ],
+          [
+            11.1001156,
+            49.4642402
+          ],
+          [
+            11.1001068,
+            49.4642279
+          ],
+          [
+            11.1001193,
+            49.4642241
+          ]
+        ]
+      },
+      "id": "way/138398480"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/139534038",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0543524,
+            49.4437317
+          ],
+          [
+            11.0548793,
+            49.4441716
+          ],
+          [
+            11.055279,
+            49.444459
+          ],
+          [
+            11.0557192,
+            49.4447601
+          ],
+          [
+            11.056176,
+            49.4450933
+          ],
+          [
+            11.0564995,
+            49.4453778
+          ],
+          [
+            11.0567696,
+            49.445616
+          ],
+          [
+            11.0570869,
+            49.4459655
+          ],
+          [
+            11.0571833,
+            49.4460974
+          ],
+          [
+            11.0574562,
+            49.4464707
+          ],
+          [
+            11.0576421,
+            49.4467817
+          ],
+          [
+            11.0578257,
+            49.4470648
+          ],
+          [
+            11.057897,
+            49.4471812
+          ],
+          [
+            11.0579385,
+            49.447249
+          ],
+          [
+            11.0580629,
+            49.4474593
+          ],
+          [
+            11.0582282,
+            49.4477582
+          ],
+          [
+            11.0584226,
+            49.4480517
+          ],
+          [
+            11.058491,
+            49.4481349
+          ],
+          [
+            11.0586003,
+            49.4482392
+          ],
+          [
+            11.0586642,
+            49.4482929
+          ],
+          [
+            11.0586962,
+            49.4483197
+          ],
+          [
+            11.0587961,
+            49.4483867
+          ],
+          [
+            11.0589121,
+            49.448461
+          ],
+          [
+            11.0590202,
+            49.4485213
+          ],
+          [
+            11.0591227,
+            49.4485752
+          ],
+          [
+            11.05924,
+            49.4486214
+          ],
+          [
+            11.0593627,
+            49.4486641
+          ],
+          [
+            11.0594991,
+            49.448707
+          ],
+          [
+            11.0596688,
+            49.44875
+          ],
+          [
+            11.0598355,
+            49.4487878
+          ],
+          [
+            11.0600715,
+            49.4488289
+          ],
+          [
+            11.0602492,
+            49.4488594
+          ],
+          [
+            11.0604158,
+            49.448881
+          ],
+          [
+            11.0605349,
+            49.4488934
+          ],
+          [
+            11.0606462,
+            49.4488982
+          ]
+        ]
+      },
+      "id": "way/139534038"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/228604131",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0664415,
+            49.4480136
+          ],
+          [
+            11.0671879,
+            49.4477976
+          ],
+          [
+            11.0680939,
+            49.4474918
+          ],
+          [
+            11.0682907,
+            49.4474341
+          ],
+          [
+            11.0684877,
+            49.4473807
+          ],
+          [
+            11.0687869,
+            49.4473129
+          ],
+          [
+            11.0690745,
+            49.4472553
+          ],
+          [
+            11.0693153,
+            49.4472249
+          ],
+          [
+            11.0697364,
+            49.4471874
+          ],
+          [
+            11.0703403,
+            49.4471459
+          ],
+          [
+            11.070993,
+            49.4470984
+          ],
+          [
+            11.0715811,
+            49.4470528
+          ],
+          [
+            11.0736019,
+            49.4469172
+          ],
+          [
+            11.0739629,
+            49.4468948
+          ],
+          [
+            11.0742892,
+            49.4468764
+          ],
+          [
+            11.0749122,
+            49.4468267
+          ],
+          [
+            11.0755123,
+            49.4467788
+          ],
+          [
+            11.0763824,
+            49.4466999
+          ],
+          [
+            11.0782819,
+            49.446537
+          ],
+          [
+            11.0788304,
+            49.4465134
+          ],
+          [
+            11.0793073,
+            49.4465124
+          ],
+          [
+            11.0797255,
+            49.4465265
+          ],
+          [
+            11.079906,
+            49.4465326
+          ],
+          [
+            11.0803773,
+            49.4465792
+          ],
+          [
+            11.0811045,
+            49.4466651
+          ]
+        ]
+      },
+      "id": "way/228604131"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/255909841",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0837984,
+            49.4473519
+          ],
+          [
+            11.0841462,
+            49.4474475
+          ],
+          [
+            11.0856773,
+            49.4479862
+          ],
+          [
+            11.0860598,
+            49.4481549
+          ],
+          [
+            11.0863611,
+            49.4484048
+          ],
+          [
+            11.0866083,
+            49.4488153
+          ],
+          [
+            11.086715,
+            49.4493597
+          ],
+          [
+            11.0866601,
+            49.4497293
+          ],
+          [
+            11.0865976,
+            49.4503671
+          ],
+          [
+            11.086623,
+            49.4508332
+          ],
+          [
+            11.0866821,
+            49.4513573
+          ],
+          [
+            11.0867165,
+            49.4516499
+          ]
+        ]
+      },
+      "id": "way/255909841"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/255909842",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0737842,
+            49.4470151
+          ],
+          [
+            11.0735906,
+            49.4470293
+          ],
+          [
+            11.0725994,
+            49.4470875
+          ],
+          [
+            11.0715951,
+            49.4471466
+          ],
+          [
+            11.0704874,
+            49.4472231
+          ],
+          [
+            11.0699335,
+            49.4472615
+          ],
+          [
+            11.0693796,
+            49.4473077
+          ],
+          [
+            11.0692522,
+            49.4473208
+          ],
+          [
+            11.0691072,
+            49.4473405
+          ],
+          [
+            11.068984,
+            49.4473618
+          ],
+          [
+            11.0688526,
+            49.4473818
+          ],
+          [
+            11.068693,
+            49.4474097
+          ],
+          [
+            11.0685487,
+            49.4474395
+          ],
+          [
+            11.0683403,
+            49.4474917
+          ],
+          [
+            11.0681292,
+            49.4475494
+          ],
+          [
+            11.0672717,
+            49.4478024
+          ],
+          [
+            11.0664438,
+            49.4480175
+          ]
+        ]
+      },
+      "id": "way/255909842"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/255909843",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "60",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "source:maxspeed": "'Geschwindigkeitssignal' für 60 km/h nordöstlich des Bahnsteigbeginns",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0833042,
+            49.4473242
+          ],
+          [
+            11.0827548,
+            49.4472067
+          ],
+          [
+            11.0827381,
+            49.447203
+          ],
+          [
+            11.0821716,
+            49.4470777
+          ],
+          [
+            11.0819514,
+            49.447029
+          ],
+          [
+            11.0815586,
+            49.446942
+          ]
+        ]
+      },
+      "id": "way/255909843"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/255909844",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "60",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0811045,
+            49.4466651
+          ],
+          [
+            11.0814454,
+            49.4467268
+          ],
+          [
+            11.0816475,
+            49.4467722
+          ],
+          [
+            11.0816558,
+            49.446774
+          ],
+          [
+            11.0818324,
+            49.4468133
+          ],
+          [
+            11.082009,
+            49.446857
+          ],
+          [
+            11.082107,
+            49.4468834
+          ],
+          [
+            11.0821748,
+            49.4469017
+          ],
+          [
+            11.0822518,
+            49.446924
+          ],
+          [
+            11.0823269,
+            49.4469458
+          ],
+          [
+            11.0824629,
+            49.4469876
+          ],
+          [
+            11.0825801,
+            49.4470255
+          ],
+          [
+            11.0826758,
+            49.4470578
+          ],
+          [
+            11.0827475,
+            49.4470829
+          ],
+          [
+            11.0827924,
+            49.4470992
+          ],
+          [
+            11.0828079,
+            49.447105
+          ]
+        ]
+      },
+      "id": "way/255909844"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/433854030",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Lorenzkirche U Bahn Gleis 4",
+        "height": "1.00",
+        "level": "-3",
+        "lit": "yes",
+        "name": "Plärrer",
+        "note": "There are two platforms vertically aligned, but on different levels. Please don't merge their nodes, or else you'll damage routing functionality.",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "4",
+        "ref:IFOPT": "de:09564:704:9:4",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0656163,
+            49.4482173
+          ],
+          [
+            11.0656163,
+            49.4482124
+          ],
+          [
+            11.0655798,
+            49.4482155
+          ],
+          [
+            11.0655433,
+            49.448219
+          ],
+          [
+            11.0654771,
+            49.4482255
+          ],
+          [
+            11.0653724,
+            49.4482359
+          ],
+          [
+            11.0650994,
+            49.4482624
+          ],
+          [
+            11.0650914,
+            49.4482631
+          ],
+          [
+            11.0649419,
+            49.4482773
+          ],
+          [
+            11.0649291,
+            49.4482785
+          ],
+          [
+            11.0647506,
+            49.4482951
+          ],
+          [
+            11.0646201,
+            49.4483069
+          ],
+          [
+            11.0645708,
+            49.4483113
+          ],
+          [
+            11.0643969,
+            49.4483264
+          ],
+          [
+            11.0642358,
+            49.4483395
+          ],
+          [
+            11.0642509,
+            49.4483836
+          ]
+        ]
+      },
+      "id": "way/433854030"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/433859720",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0642244,
+            49.448325
+          ],
+          [
+            11.0638778,
+            49.4483693
+          ],
+          [
+            11.0637044,
+            49.4483933
+          ],
+          [
+            11.0634931,
+            49.4484268
+          ],
+          [
+            11.0631306,
+            49.4485079
+          ],
+          [
+            11.0627707,
+            49.44859
+          ],
+          [
+            11.0625206,
+            49.4486498
+          ],
+          [
+            11.0622883,
+            49.4486961
+          ],
+          [
+            11.0619316,
+            49.4487809
+          ],
+          [
+            11.0615657,
+            49.4488539
+          ],
+          [
+            11.0612812,
+            49.4488891
+          ],
+          [
+            11.0609891,
+            49.4489128
+          ],
+          [
+            11.0608205,
+            49.4489244
+          ],
+          [
+            11.0606619,
+            49.4489291
+          ]
+        ]
+      },
+      "id": "way/433859720"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/434361414",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Lorenzkirche U Bahn Gleis 2",
+        "height": "1",
+        "level": "-2",
+        "platform:width": "4.8",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:505:11:1",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0742957,
+            49.4469063
+          ],
+          [
+            11.0742934,
+            49.4468925
+          ],
+          [
+            11.0743436,
+            49.4468885
+          ],
+          [
+            11.0747139,
+            49.4468589
+          ],
+          [
+            11.0747289,
+            49.4468577
+          ],
+          [
+            11.074882,
+            49.4468455
+          ],
+          [
+            11.0751013,
+            49.446828
+          ],
+          [
+            11.0754659,
+            49.4467989
+          ],
+          [
+            11.0755153,
+            49.4467949
+          ],
+          [
+            11.0755179,
+            49.4468089
+          ]
+        ]
+      },
+      "id": "way/434361414"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/435285024",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Wöhrder Wiese U-Bahn Gleis 1",
+        "height": "1",
+        "layer": "-2",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Wöhrder Wiese",
+        "public_transport": "platform",
+        "railway": "platform_edge",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:333:11:1",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "width": "6.2"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0866334,
+            49.452129
+          ],
+          [
+            11.086705,
+            49.4523079
+          ],
+          [
+            11.0867462,
+            49.452411
+          ],
+          [
+            11.0867751,
+            49.452483
+          ],
+          [
+            11.0869372,
+            49.4528881
+          ],
+          [
+            11.0869436,
+            49.4529042
+          ]
+        ]
+      },
+      "id": "way/435285024"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/435285088",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Wöhrder Wiese U-Bahn Gleis 2",
+        "height": "1",
+        "layer": "-2",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Wöhrder Wiese",
+        "public_transport": "platform",
+        "railway": "platform_edge",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:333:11:2",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "width": "6.2"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0870722,
+            49.4528825
+          ],
+          [
+            11.0870665,
+            49.4528674
+          ],
+          [
+            11.0869267,
+            49.4524986
+          ],
+          [
+            11.086912,
+            49.4524598
+          ],
+          [
+            11.0868846,
+            49.4523875
+          ],
+          [
+            11.0868791,
+            49.452373
+          ],
+          [
+            11.0868455,
+            49.4522842
+          ],
+          [
+            11.0868406,
+            49.4522714
+          ],
+          [
+            11.0868109,
+            49.4521928
+          ],
+          [
+            11.0867779,
+            49.4521058
+          ]
+        ]
+      },
+      "id": "way/435285088"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/435429569",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Rathenauplatz U-Bahn Gleis 2",
+        "height": "1",
+        "indoor": "yes",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Rathenauplatz",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:332:11:1",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0895311,
+            49.4572179
+          ],
+          [
+            11.0895454,
+            49.4572179
+          ],
+          [
+            11.0895453,
+            49.4572017
+          ],
+          [
+            11.0895458,
+            49.4570803
+          ],
+          [
+            11.0895385,
+            49.4564163
+          ],
+          [
+            11.0895383,
+            49.456395
+          ],
+          [
+            11.0895248,
+            49.456395
+          ]
+        ]
+      },
+      "id": "way/435429569"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/435454172",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Rennweg U-Bahn Gleis 2",
+        "height": "1",
+        "indoor": "yes",
+        "layer": "-1",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Rennweg",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:340:11:2",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0940642,
+            49.4612195
+          ],
+          [
+            11.0940392,
+            49.4612101
+          ],
+          [
+            11.0931359,
+            49.4608703
+          ],
+          [
+            11.0930382,
+            49.4608335
+          ],
+          [
+            11.0930219,
+            49.4608274
+          ]
+        ]
+      },
+      "id": "way/435454172"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/435606669",
+        "bench": "yes",
+        "bin": "yes",
+        "covered": "yes",
+        "description": "Schoppershof U-Bahn Gleis 2",
+        "height": "1",
+        "layer": "-1",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Schoppershof",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:341:11:2",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "width": "5.3"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1006244,
+            49.4649552
+          ],
+          [
+            11.1006372,
+            49.4649524
+          ],
+          [
+            11.1006317,
+            49.4649395
+          ],
+          [
+            11.1006155,
+            49.4649031
+          ],
+          [
+            11.1006053,
+            49.4648811
+          ],
+          [
+            11.1005894,
+            49.464847
+          ],
+          [
+            11.1005542,
+            49.4647747
+          ],
+          [
+            11.1005104,
+            49.4646897
+          ],
+          [
+            11.1004589,
+            49.4645958
+          ],
+          [
+            11.1004004,
+            49.4644965
+          ],
+          [
+            11.1003355,
+            49.4643954
+          ],
+          [
+            11.100265,
+            49.4642961
+          ],
+          [
+            11.1001997,
+            49.4642148
+          ],
+          [
+            11.1001897,
+            49.4642023
+          ],
+          [
+            11.1001766,
+            49.4642063
+          ]
+        ]
+      },
+      "id": "way/435606669"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/435638376",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Nordbahnhof U-Bahn Gleis 1",
+        "height": "1",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Nordostbahnhof",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:1335:2:1",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "wheelchair": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1044777,
+            49.4725755
+          ],
+          [
+            11.1044748,
+            49.4725597
+          ],
+          [
+            11.1044429,
+            49.4723804
+          ],
+          [
+            11.1044109,
+            49.4722009
+          ],
+          [
+            11.1043399,
+            49.4718019
+          ],
+          [
+            11.1043372,
+            49.4717869
+          ]
+        ]
+      },
+      "id": "way/435638376"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/437456538",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Herrnhütte U-Bahn Gleis 1",
+        "height": "1",
+        "layer": "-1",
+        "level": "-2",
+        "name": "Herrnhütte",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:1324:11:1",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1095025,
+            49.478205
+          ],
+          [
+            11.1095201,
+            49.4782197
+          ],
+          [
+            11.1096473,
+            49.478325
+          ],
+          [
+            11.1097393,
+            49.4784024
+          ],
+          [
+            11.1097795,
+            49.4784363
+          ],
+          [
+            11.1098984,
+            49.4785378
+          ],
+          [
+            11.1099258,
+            49.4785616
+          ],
+          [
+            11.1100034,
+            49.4786289
+          ],
+          [
+            11.1100939,
+            49.4787084
+          ],
+          [
+            11.1101693,
+            49.4787755
+          ],
+          [
+            11.1102289,
+            49.4788294
+          ],
+          [
+            11.1102723,
+            49.4788689
+          ],
+          [
+            11.1102944,
+            49.4788893
+          ],
+          [
+            11.1102988,
+            49.4788933
+          ],
+          [
+            11.1103077,
+            49.4789017
+          ]
+        ]
+      },
+      "id": "way/437456538"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/437456539",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Herrnhütte U-Bahn Gleis 2",
+        "height": "1",
+        "layer": "-1",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Herrnhütte",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:1324:11:2",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1095927,
+            49.4781582
+          ],
+          [
+            11.1096112,
+            49.4781724
+          ],
+          [
+            11.1097137,
+            49.4782509
+          ],
+          [
+            11.1098318,
+            49.4783474
+          ],
+          [
+            11.1098373,
+            49.4783521
+          ],
+          [
+            11.1099446,
+            49.4784446
+          ],
+          [
+            11.1100229,
+            49.478515
+          ],
+          [
+            11.1100498,
+            49.4785392
+          ],
+          [
+            11.1101451,
+            49.4786281
+          ],
+          [
+            11.1102282,
+            49.4787081
+          ],
+          [
+            11.1102969,
+            49.4787758
+          ],
+          [
+            11.1103488,
+            49.4788282
+          ],
+          [
+            11.1103806,
+            49.4788609
+          ],
+          [
+            11.1103816,
+            49.478862
+          ],
+          [
+            11.1103931,
+            49.478874
+          ]
+        ]
+      },
+      "id": "way/437456539"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/437464392",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1107323,
+            49.4792563
+          ],
+          [
+            11.1108508,
+            49.479435
+          ],
+          [
+            11.1109844,
+            49.4796326
+          ],
+          [
+            11.111103,
+            49.4798201
+          ],
+          [
+            11.1111698,
+            49.4799723
+          ],
+          [
+            11.1111969,
+            49.4801198
+          ],
+          [
+            11.111217,
+            49.4803211
+          ],
+          [
+            11.1111828,
+            49.4805909
+          ],
+          [
+            11.1111164,
+            49.4809528
+          ],
+          [
+            11.1109893,
+            49.4813714
+          ],
+          [
+            11.1107992,
+            49.4819081
+          ]
+        ]
+      },
+      "id": "way/437464392"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/437464393",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1106503,
+            49.481869
+          ],
+          [
+            11.1106931,
+            49.4817398
+          ],
+          [
+            11.1108255,
+            49.4813394
+          ],
+          [
+            11.1109367,
+            49.4809302
+          ],
+          [
+            11.1109926,
+            49.4805985
+          ],
+          [
+            11.1110252,
+            49.4803133
+          ],
+          [
+            11.1110225,
+            49.4801495
+          ],
+          [
+            11.1109816,
+            49.4799924
+          ],
+          [
+            11.110942,
+            49.4798436
+          ],
+          [
+            11.1108555,
+            49.479661
+          ],
+          [
+            11.1107141,
+            49.4794611
+          ],
+          [
+            11.1105906,
+            49.479281
+          ]
+        ]
+      },
+      "id": "way/437464393"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/437548203",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Ziegelstein U-Bahn Gleis 2",
+        "height": "1",
+        "layer": "-1",
+        "level": "-1",
+        "lit": "yes",
+        "name": "Ziegelstein",
+        "passenger_information_display": "yes",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:1320:11:2",
+        "shelter": "yes",
+        "subway": "yes",
+        "surface": "paved",
+        "tactile_paving": "yes",
+        "width": "4.7"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1050238,
+            49.4855305
+          ],
+          [
+            11.1050316,
+            49.4855172
+          ],
+          [
+            11.1050533,
+            49.4854799
+          ],
+          [
+            11.1050869,
+            49.4854228
+          ],
+          [
+            11.10513,
+            49.4853497
+          ],
+          [
+            11.1051804,
+            49.4852646
+          ],
+          [
+            11.105236,
+            49.4851717
+          ],
+          [
+            11.1052923,
+            49.4850786
+          ],
+          [
+            11.1052945,
+            49.4850749
+          ],
+          [
+            11.1053537,
+            49.4849782
+          ],
+          [
+            11.1054113,
+            49.4848857
+          ],
+          [
+            11.1054506,
+            49.4848241
+          ],
+          [
+            11.1054652,
+            49.4848012
+          ]
+        ]
+      },
+      "id": "way/437548203"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/437548205",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Ziegelstein U-Bahn Gleis 1",
+        "height": "1",
+        "layer": "-1",
+        "level": "-1",
+        "name": "Ziegelstein",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:1320:11:1",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "width": "4.7"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1049286,
+            49.4855101
+          ],
+          [
+            11.1049351,
+            49.4854969
+          ],
+          [
+            11.1049537,
+            49.4854597
+          ],
+          [
+            11.1049828,
+            49.4854026
+          ],
+          [
+            11.1050208,
+            49.4853293
+          ],
+          [
+            11.1050663,
+            49.4852436
+          ],
+          [
+            11.1051176,
+            49.4851495
+          ],
+          [
+            11.1051733,
+            49.4850507
+          ],
+          [
+            11.1051751,
+            49.4850476
+          ],
+          [
+            11.1052317,
+            49.4849512
+          ],
+          [
+            11.1052913,
+            49.4848548
+          ],
+          [
+            11.1053339,
+            49.4847906
+          ],
+          [
+            11.1053507,
+            49.4847653
+          ]
+        ]
+      },
+      "id": "way/437548205"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/437558456",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Flughafen U-Bahn Gleis 1",
+        "level": "-1",
+        "lit": "yes",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0788217,
+            49.49391
+          ],
+          [
+            11.0788199,
+            49.4939015
+          ],
+          [
+            11.0787713,
+            49.4939059
+          ],
+          [
+            11.0780725,
+            49.4939698
+          ],
+          [
+            11.0778061,
+            49.4939942
+          ],
+          [
+            11.0776061,
+            49.4940125
+          ],
+          [
+            11.0775781,
+            49.4940151
+          ],
+          [
+            11.0775801,
+            49.4940244
+          ]
+        ]
+      },
+      "id": "way/437558456"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/437558457",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Flughafen U-Bahn Gleis 2",
+        "level": "-1",
+        "lit": "yes",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0775936,
+            49.4940848
+          ],
+          [
+            11.0775955,
+            49.4940937
+          ],
+          [
+            11.0776231,
+            49.4940911
+          ],
+          [
+            11.0778233,
+            49.4940724
+          ],
+          [
+            11.0780894,
+            49.4940475
+          ],
+          [
+            11.0787879,
+            49.493982
+          ],
+          [
+            11.0788365,
+            49.4939775
+          ],
+          [
+            11.0788346,
+            49.4939687
+          ]
+        ]
+      },
+      "id": "way/437558457"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438508593",
+        "bench": "yes",
+        "description": "Rothenburger Straße U-Bahn Gleis 2",
+        "level": "-3",
+        "name": "Rothenburger Straße",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:710:11:2",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.055662,
+            49.4447501
+          ],
+          [
+            11.0556408,
+            49.4447354
+          ],
+          [
+            11.0548846,
+            49.4442055
+          ],
+          [
+            11.0548621,
+            49.4441897
+          ]
+        ]
+      },
+      "id": "way/438508593"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438508594",
+        "bench": "yes",
+        "description": "Rothenburger Straße U-Bahn Gleis 1",
+        "level": "-3",
+        "name": "Rothenburger Straße",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:710:11:1",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0555651,
+            49.4448031
+          ],
+          [
+            11.0555483,
+            49.4447913
+          ],
+          [
+            11.0547905,
+            49.4442624
+          ],
+          [
+            11.0547645,
+            49.4442442
+          ]
+        ]
+      },
+      "id": "way/438508594"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438536194",
+        "bench": "yes",
+        "bin": "yes",
+        "check_date": "2025-01-04",
+        "check_date:bin": "2025-01-04",
+        "description": "St. Leonhard U-Bahn Gleis 1",
+        "height": "1",
+        "layer": "-1",
+        "level": "-1",
+        "name": "St. Leonhard",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:602:11:1",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "width": "5.7"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0499986,
+            49.4391837
+          ],
+          [
+            11.0499941,
+            49.4391672
+          ],
+          [
+            11.049819,
+            49.4385241
+          ],
+          [
+            11.0497912,
+            49.4384219
+          ],
+          [
+            11.0497852,
+            49.4384
+          ]
+        ]
+      },
+      "id": "way/438536194"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438536195",
+        "bench": "yes",
+        "bin": "yes",
+        "check_date": "2025-01-04",
+        "check_date:bin": "2025-01-04",
+        "description": "St. Leonhard U-Bahn Gleis 2",
+        "height": "1",
+        "layer": "-1",
+        "level": "-1",
+        "name": "St. Leonhard",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:602:11:2",
+        "subway": "yes",
+        "tactile_paving": "yes",
+        "width": "5.7"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0498784,
+            49.4383886
+          ],
+          [
+            11.0498846,
+            49.4384111
+          ],
+          [
+            11.0499125,
+            49.4385137
+          ],
+          [
+            11.0500875,
+            49.4391566
+          ],
+          [
+            11.0500918,
+            49.4391725
+          ]
+        ]
+      },
+      "id": "way/438536195"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438538880",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.053051,
+            49.4429121
+          ],
+          [
+            11.0543524,
+            49.4437317
+          ]
+        ]
+      },
+      "id": "way/438538880"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438538881",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0546139,
+            49.4441582
+          ],
+          [
+            11.0532943,
+            49.443135
+          ]
+        ]
+      },
+      "id": "way/438538881"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438538882",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0520968,
+            49.4422082
+          ],
+          [
+            11.0525931,
+            49.4425941
+          ],
+          [
+            11.053051,
+            49.4429121
+          ]
+        ]
+      },
+      "id": "way/438538882"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438538883",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0532943,
+            49.443135
+          ],
+          [
+            11.0525449,
+            49.4426109
+          ],
+          [
+            11.0517431,
+            49.4419794
+          ]
+        ]
+      },
+      "id": "way/438538883"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438538884",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0506586,
+            49.4407356
+          ],
+          [
+            11.0507006,
+            49.4407898
+          ],
+          [
+            11.0510362,
+            49.4412232
+          ],
+          [
+            11.0512458,
+            49.441445
+          ],
+          [
+            11.0513789,
+            49.4415765
+          ],
+          [
+            11.0514523,
+            49.4416491
+          ],
+          [
+            11.0517811,
+            49.4419469
+          ],
+          [
+            11.0520968,
+            49.4422082
+          ]
+        ]
+      },
+      "id": "way/438538884"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438538885",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0517431,
+            49.4419794
+          ],
+          [
+            11.0514116,
+            49.4416824
+          ],
+          [
+            11.0511922,
+            49.4414607
+          ],
+          [
+            11.0509931,
+            49.4412408
+          ],
+          [
+            11.0506109,
+            49.4407499
+          ]
+        ]
+      },
+      "id": "way/438538885"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438547336",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Schweinau U-Bahn Gleis 2",
+        "height": "1",
+        "layer": "-1",
+        "level": "-2",
+        "name": "Schweinau",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:601:11:2",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.048644,
+            49.4346174
+          ],
+          [
+            11.0486341,
+            49.4346033
+          ],
+          [
+            11.0486292,
+            49.4345963
+          ],
+          [
+            11.0486119,
+            49.434572
+          ],
+          [
+            11.048589,
+            49.4345405
+          ],
+          [
+            11.0485857,
+            49.434536
+          ],
+          [
+            11.0485778,
+            49.4345253
+          ],
+          [
+            11.0485614,
+            49.4345033
+          ],
+          [
+            11.0485298,
+            49.4344617
+          ],
+          [
+            11.048495,
+            49.4344173
+          ],
+          [
+            11.0484578,
+            49.4343714
+          ],
+          [
+            11.0484189,
+            49.4343255
+          ],
+          [
+            11.048343,
+            49.4342255
+          ],
+          [
+            11.0482662,
+            49.4341263
+          ],
+          [
+            11.0482396,
+            49.4340898
+          ],
+          [
+            11.0482144,
+            49.4340548
+          ],
+          [
+            11.048187,
+            49.4340165
+          ],
+          [
+            11.048155,
+            49.4339756
+          ],
+          [
+            11.0481166,
+            49.4339315
+          ],
+          [
+            11.0480903,
+            49.4339043
+          ],
+          [
+            11.04807,
+            49.4338832
+          ]
+        ]
+      },
+      "id": "way/438547336"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438547337",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Schweinau U-Bahn Gleis 1",
+        "height": "1",
+        "layer": "-1",
+        "level": "-2",
+        "name": "Schweinau",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:601:11:1",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0485515,
+            49.4346449
+          ],
+          [
+            11.0485423,
+            49.4346338
+          ],
+          [
+            11.0485302,
+            49.434619
+          ],
+          [
+            11.0485127,
+            49.4345973
+          ],
+          [
+            11.0484895,
+            49.4345681
+          ],
+          [
+            11.0484878,
+            49.434566
+          ],
+          [
+            11.0484799,
+            49.434556
+          ],
+          [
+            11.0484602,
+            49.4345309
+          ],
+          [
+            11.0484243,
+            49.434485
+          ],
+          [
+            11.0483817,
+            49.43443
+          ],
+          [
+            11.0483319,
+            49.4343651
+          ],
+          [
+            11.0482746,
+            49.4342899
+          ],
+          [
+            11.0482192,
+            49.4342163
+          ],
+          [
+            11.048174,
+            49.4341555
+          ],
+          [
+            11.0481376,
+            49.4341059
+          ],
+          [
+            11.0481081,
+            49.4340656
+          ],
+          [
+            11.0480841,
+            49.4340329
+          ],
+          [
+            11.0480639,
+            49.4340061
+          ],
+          [
+            11.0480459,
+            49.4339834
+          ],
+          [
+            11.0480284,
+            49.4339632
+          ],
+          [
+            11.0480098,
+            49.4339436
+          ],
+          [
+            11.0479885,
+            49.4339229
+          ]
+        ]
+      },
+      "id": "way/438547337"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438833204",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Röthenbach U-Bahn Gleis 1",
+        "height": "1",
+        "indoor": "yes",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Röthenbach",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "1",
+        "ref:IFOPT": "de:09564:1970:11:1",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0320904,
+            49.4209398
+          ],
+          [
+            11.0320896,
+            49.4209489
+          ],
+          [
+            11.032068,
+            49.420948
+          ],
+          [
+            11.0319662,
+            49.4209436
+          ],
+          [
+            11.0309307,
+            49.4208986
+          ],
+          [
+            11.0308779,
+            49.4208963
+          ]
+        ]
+      },
+      "id": "way/438833204"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/438833206",
+        "bench": "yes",
+        "bin": "yes",
+        "description": "Röthenbach U-Bahn Gleis 2",
+        "height": "1",
+        "indoor": "yes",
+        "level": "-2",
+        "lit": "yes",
+        "name": "Röthenbach",
+        "public_transport": "platform",
+        "railway": "platform",
+        "ref": "2",
+        "ref:IFOPT": "de:09564:1970:11:2",
+        "shelter": "yes",
+        "subway": "yes",
+        "tactile_paving": "yes"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0320956,
+            49.4208808
+          ],
+          [
+            11.0320964,
+            49.4208721
+          ],
+          [
+            11.0320759,
+            49.4208714
+          ],
+          [
+            11.0319734,
+            49.4208674
+          ],
+          [
+            11.0309366,
+            49.4208277
+          ],
+          [
+            11.0308837,
+            49.4208257
+          ],
+          [
+            11.030883,
+            49.4208348
+          ]
+        ]
+      },
+      "id": "way/438833206"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1232768938",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "40",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.032247,
+            49.4209723
+          ],
+          [
+            11.032088,
+            49.4209646
+          ],
+          [
+            11.0314774,
+            49.4209381
+          ]
+        ]
+      },
+      "id": "way/1232768938"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1234786558",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-1",
+        "maxspeed": "20",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0783604,
+            49.4939272
+          ],
+          [
+            11.0784011,
+            49.4939235
+          ],
+          [
+            11.0786675,
+            49.4938991
+          ]
+        ]
+      },
+      "id": "way/1234786558"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1234786559",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "20",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0786907,
+            49.4940072
+          ],
+          [
+            11.0783828,
+            49.494036
+          ]
+        ]
+      },
+      "id": "way/1234786559"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1234786560",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "60",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0807627,
+            49.4937874
+          ],
+          [
+            11.0802554,
+            49.4938462
+          ],
+          [
+            11.0800565,
+            49.4938669
+          ]
+        ]
+      },
+      "id": "way/1234786560"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1234786561",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-1",
+        "maxspeed": "60",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0800768,
+            49.493835
+          ],
+          [
+            11.0802906,
+            49.4938221
+          ],
+          [
+            11.0807627,
+            49.4937874
+          ]
+        ]
+      },
+      "id": "way/1234786561"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1234786562",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-1",
+        "maxspeed": "60",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0828072,
+            49.4933569
+          ],
+          [
+            11.0823757,
+            49.4935093
+          ],
+          [
+            11.081635,
+            49.493667
+          ],
+          [
+            11.0807627,
+            49.4937874
+          ]
+        ]
+      },
+      "id": "way/1234786562"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1234786563",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-1",
+        "maxspeed": "40",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0786675,
+            49.4938991
+          ],
+          [
+            11.0788164,
+            49.4938855
+          ],
+          [
+            11.0788468,
+            49.4938827
+          ]
+        ]
+      },
+      "id": "way/1234786563"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316955",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0948354,
+            49.4615974
+          ],
+          [
+            11.0944486,
+            49.4614477
+          ]
+        ]
+      },
+      "id": "way/1236316955"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316956",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0895334,
+            49.4585793
+          ],
+          [
+            11.0895123,
+            49.458487
+          ],
+          [
+            11.0894655,
+            49.4582822
+          ],
+          [
+            11.089441,
+            49.4580719
+          ],
+          [
+            11.0894145,
+            49.4575339
+          ],
+          [
+            11.0894137,
+            49.4574807
+          ]
+        ]
+      },
+      "id": "way/1236316956"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316957",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "60",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0894137,
+            49.4574807
+          ],
+          [
+            11.0894098,
+            49.457218
+          ],
+          [
+            11.0894045,
+            49.4568557
+          ],
+          [
+            11.0894004,
+            49.4563954
+          ]
+        ]
+      },
+      "id": "way/1236316957"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316958",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0815586,
+            49.446942
+          ],
+          [
+            11.0813631,
+            49.4469006
+          ],
+          [
+            11.0810499,
+            49.4468298
+          ]
+        ]
+      },
+      "id": "way/1236316958"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316959",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0828079,
+            49.447105
+          ],
+          [
+            11.0829848,
+            49.4471548
+          ],
+          [
+            11.0831583,
+            49.4471995
+          ],
+          [
+            11.0837984,
+            49.4473519
+          ]
+        ]
+      },
+      "id": "way/1236316959"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316960",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0810499,
+            49.4468298
+          ],
+          [
+            11.0804265,
+            49.4467197
+          ],
+          [
+            11.0801983,
+            49.4466895
+          ],
+          [
+            11.079899,
+            49.4466561
+          ],
+          [
+            11.079517,
+            49.4466354
+          ],
+          [
+            11.0790653,
+            49.446627
+          ],
+          [
+            11.0787553,
+            49.4466285
+          ],
+          [
+            11.0783671,
+            49.4466475
+          ],
+          [
+            11.0773942,
+            49.4467286
+          ],
+          [
+            11.0769636,
+            49.4467645
+          ],
+          [
+            11.0761342,
+            49.4468329
+          ]
+        ]
+      },
+      "id": "way/1236316960"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316961",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "60",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0761342,
+            49.4468329
+          ],
+          [
+            11.0755319,
+            49.4468826
+          ],
+          [
+            11.0749498,
+            49.4469291
+          ],
+          [
+            11.0743084,
+            49.4469803
+          ],
+          [
+            11.0739622,
+            49.4470021
+          ],
+          [
+            11.0737842,
+            49.4470151
+          ]
+        ]
+      },
+      "id": "way/1236316961"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316962",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0606462,
+            49.4488982
+          ],
+          [
+            11.0607317,
+            49.4488991
+          ],
+          [
+            11.0608172,
+            49.4489
+          ],
+          [
+            11.0609814,
+            49.448898
+          ],
+          [
+            11.0611392,
+            49.4488907
+          ],
+          [
+            11.0612758,
+            49.4488843
+          ],
+          [
+            11.0615634,
+            49.44885
+          ],
+          [
+            11.0619316,
+            49.4487744
+          ],
+          [
+            11.062286,
+            49.4486922
+          ],
+          [
+            11.0625183,
+            49.4486459
+          ],
+          [
+            11.0627498,
+            49.4485921
+          ]
+        ]
+      },
+      "id": "way/1236316962"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316963",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-3",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0656111,
+            49.4481925
+          ],
+          [
+            11.0656222,
+            49.4481908
+          ],
+          [
+            11.0658197,
+            49.4481606
+          ],
+          [
+            11.0660691,
+            49.4481065
+          ],
+          [
+            11.0662542,
+            49.4480612
+          ],
+          [
+            11.0664415,
+            49.4480136
+          ]
+        ]
+      },
+      "id": "way/1236316963"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316964",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0664438,
+            49.4480175
+          ],
+          [
+            11.0662565,
+            49.4480651
+          ],
+          [
+            11.0660714,
+            49.4481104
+          ],
+          [
+            11.0659105,
+            49.4481453
+          ]
+        ]
+      },
+      "id": "way/1236316964"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1236316965",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-2",
+        "level": "-2",
+        "maxspeed": "60",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0659105,
+            49.4481453
+          ],
+          [
+            11.065822,
+            49.4481645
+          ],
+          [
+            11.0656319,
+            49.4481936
+          ],
+          [
+            11.0656257,
+            49.4481945
+          ],
+          [
+            11.0656134,
+            49.4481964
+          ],
+          [
+            11.0655544,
+            49.4482023
+          ],
+          [
+            11.0654872,
+            49.448209
+          ],
+          [
+            11.0653837,
+            49.4482193
+          ],
+          [
+            11.0652509,
+            49.4482323
+          ],
+          [
+            11.0650959,
+            49.4482472
+          ],
+          [
+            11.0649257,
+            49.4482634
+          ],
+          [
+            11.0647472,
+            49.4482799
+          ],
+          [
+            11.0645676,
+            49.4482961
+          ],
+          [
+            11.0643938,
+            49.4483112
+          ],
+          [
+            11.0642441,
+            49.4483234
+          ],
+          [
+            11.0642313,
+            49.4483244
+          ],
+          [
+            11.0642244,
+            49.448325
+          ]
+        ]
+      },
+      "id": "way/1236316965"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1297693062",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-1",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1045018,
+            49.4863192
+          ],
+          [
+            11.1045836,
+            49.4861404
+          ],
+          [
+            11.1047285,
+            49.4858362
+          ]
+        ]
+      },
+      "id": "way/1297693062"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1340673486",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "55",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.1058059,
+            49.4844195
+          ],
+          [
+            11.1057863,
+            49.4844407
+          ],
+          [
+            11.1056127,
+            49.4846286
+          ],
+          [
+            11.1055503,
+            49.4847143
+          ],
+          [
+            11.1054881,
+            49.4848074
+          ],
+          [
+            11.1054736,
+            49.4848302
+          ],
+          [
+            11.1054343,
+            49.4848917
+          ],
+          [
+            11.1053768,
+            49.4849842
+          ],
+          [
+            11.1053176,
+            49.4850808
+          ],
+          [
+            11.1052592,
+            49.4851776
+          ],
+          [
+            11.1052036,
+            49.4852704
+          ],
+          [
+            11.1051532,
+            49.4853554
+          ],
+          [
+            11.1051101,
+            49.4854285
+          ],
+          [
+            11.1050765,
+            49.4854857
+          ],
+          [
+            11.1050548,
+            49.4855229
+          ],
+          [
+            11.105047,
+            49.4855362
+          ]
+        ]
+      },
+      "id": "way/1340673486"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1340673487",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "layer": "-1",
+        "level": "-1",
+        "maxspeed": "80",
+        "name": "U2",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.105047,
+            49.4855362
+          ],
+          [
+            11.104993,
+            49.4856447
+          ],
+          [
+            11.1048835,
+            49.4858646
+          ],
+          [
+            11.1046319,
+            49.4863404
+          ]
+        ]
+      },
+      "id": "way/1340673487"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1340673488",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-3",
+        "maxspeed": "60",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0558331,
+            49.4450388
+          ],
+          [
+            11.0555811,
+            49.4448376
+          ],
+          [
+            11.0551483,
+            49.4445345
+          ],
+          [
+            11.0547404,
+            49.4442508
+          ]
+        ]
+      },
+      "id": "way/1340673488"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1340673489",
+        "electrified": "rail",
+        "frequency": "0",
+        "gauge": "1435",
+        "level": "-3",
+        "maxspeed": "80",
+        "name": "U2/U3",
+        "operator": "VAG Verkehrs-Aktiengesellschaft Nürnberg",
+        "railway": "subway",
+        "railway:lzb": "yes",
+        "source": "extrapolation",
+        "tunnel": "yes",
+        "voltage": "750"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.0547404,
+            49.4442508
+          ],
+          [
+            11.0546139,
+            49.4441582
+          ]
+        ]
+      },
+      "id": "way/1340673489"
+    }
+  ]
+}
