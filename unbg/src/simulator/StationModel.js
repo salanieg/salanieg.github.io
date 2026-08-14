@@ -280,16 +280,37 @@ export class StationModel {
         }
     }
 
-    // Baut die nächste noch fehlende Station (Index = stationsList.length).
+    // Baut die nächste noch fehlende Station von vorne nach hinten (Index-Reihenfolge).
     // Gibt true zurück, solange noch weitere Stationen fehlen.
     buildNextStation() {
-        const idx = this.stationsList.length;
         const stations = this.sim.stations;
+        let idx = 0;
+        while (idx < stations.length && this.stationsList[idx]) {
+            idx++;
+        }
         if (idx >= stations.length) return false;
-        const group = this.buildStation(stations[idx]);
-        this.stationsList.push(group);
+        
+        this.buildStationAtIndex(idx);
+        
+        // Prüfen, ob danach noch unfertige übrig sind
+        let nextIdx = idx + 1;
+        while (nextIdx < stations.length && this.stationsList[nextIdx]) {
+            nextIdx++;
+        }
+        return nextIdx < stations.length;
+    }
+
+    // Erlaubt das on-demand Bauen einer bestimmten Station anhand ihres Index.
+    buildStationAtIndex(idx) {
+        if (this.stationsList[idx]) return this.stationsList[idx]; // Schon fertig
+        
+        const station = this.sim.stations[idx];
+        if (!station) return null;
+        
+        const group = this.buildStation(station);
+        this.stationsList[idx] = group;
         this._applyToneMappingExemption(group);
-        return this.stationsList.length < stations.length;
+        return group;
     }
 
     buildAllStations() {
@@ -318,12 +339,12 @@ export class StationModel {
             const isLoaded = this.loadedStations.has(idx);
 
             if (dist < this.stationCullDist[idx]) {
-                if (!isLoaded) {
+                if (!isLoaded && this.stationsList[idx]) {
                     this.scene.add(this.stationsList[idx]);
                     this.loadedStations.set(idx, true);
                 }
             } else {
-                if (isLoaded) {
+                if (isLoaded && this.stationsList[idx]) {
                     this.scene.remove(this.stationsList[idx]);
                     this.loadedStations.delete(idx);
                 }

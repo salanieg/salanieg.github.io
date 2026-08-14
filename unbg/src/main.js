@@ -27,7 +27,7 @@ import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=66';
 import { WorldManager } from './simulator/WorldManager.js?v=67';
 import { TrackManager } from './simulator/TrackManager.js?v=79';
-import { StationModel } from './simulator/StationModel.js?v=87';
+import { StationModel } from './simulator/StationModel.js?v=88';
 import { TrainModel } from './simulator/TrainModel.js?v=88';
 import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=11';
 import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=11';
@@ -571,9 +571,11 @@ class App {
             const ctx = this._loadCtx;
             if (!ctx.stationModel) {
                 ctx.stationModel = new StationModel(ctx.lineRoot, ctx.sim, { deferBuild: true });
+                return 0.5;
             }
-            const more = ctx.stationModel.buildNextStation();
-            return more ? ctx.stationModel.stationsList.length / ctx.sim.stations.length : 1;
+            if (!ctx.stationModel.stationsList[0]) ctx.stationModel.buildStationAtIndex(0);
+            if (!ctx.stationModel.stationsList[1]) ctx.stationModel.buildStationAtIndex(1);
+            return 1;
         } });
         once('BAUE ZUG', 9, () => {
             const ctx = this._loadCtx;
@@ -607,33 +609,15 @@ class App {
             };
             this._trunkSim = sim;
         });
-        steps.push({ label: 'BAUE STAMMSTRECKE', weight: 6, tick: () => {
+        steps.push({ label: 'BAUE STAMMSTRECKE', weight: 13, tick: () => {
             const t = this._trunkCtx;
             if (!t.stationModel) {
                 t.stationModel = new StationModel(t.root, t.sim, { deferBuild: true });
-                return 0.05;
             }
-            const more = t.stationModel.buildNextStation();
-            return more ? 0.05 + 0.95 * (t.stationModel.stationsList.length / t.sim.stations.length) : 1;
-        } });
-        steps.push({ label: 'BAUE STAMMSTRECKE', weight: 7, tick: () => {
-            const t = this._trunkCtx;
-            const totalChunks = Math.ceil(t.sim.totalLength / t.trackManager.chunkSize);
-            const end = Math.min(totalChunks, t.chunkIdx + 15);
-            for (; t.chunkIdx <= end; t.chunkIdx++) {
-                const chunk = t.trackManager.createChunk(t.chunkIdx);
-                t.trackManager.chunkCache.set(t.chunkIdx, chunk);
-                t.trackManager.activeChunks.set(t.chunkIdx, chunk);
-                t.root.add(chunk);
-            }
-            if (t.chunkIdx > totalChunks) {
-                t.stationModel.stationsList.forEach(g => t.root.add(g));
-                this._trunkStationModel = t.stationModel; // für die Rolltreppen-Ambience
-                this.trunkGroup = t.root;
-                this.world.scene.add(t.root);
-                return 1;
-            }
-            return t.chunkIdx / (totalChunks + 1);
+            this._trunkStationModel = t.stationModel; // für die Rolltreppen-Ambience
+            this.trunkGroup = t.root;
+            this.world.scene.add(t.root);
+            return 1;
         } });
 
         // Weichen-Übergänge (Rothenburger Straße / Rathenauplatz): einmalig,
@@ -1020,10 +1004,14 @@ class App {
         const tm = this.trackManager, sm = this.stationModel;
         if (!tm || !sm) return;
 
+        const trunkTm = this._trunkCtx ? this._trunkCtx.trackManager : null;
+        const trunkSm = this._trunkCtx ? this._trunkCtx.stationModel : null;
+
         // Kein Ziel in Arbeit? -> das nächste per Distanz zur Zugposition suchen.
         if (!r.pending) {
             const trainZ = this.sim.position;
             let best = null, bestDist = Infinity;
+            
             for (let i = 0; i <= r.totalChunks; i++) {
                 if (this._resChunks.has(i)) continue;
                 const d = Math.abs((i + 0.5) * tm.chunkSize - trainZ);
@@ -1036,25 +1024,78 @@ class App {
                 const d = Math.abs(st.position - trainZ);
                 if (d < bestDist) { bestDist = d; best = { kind: 'station', idx: i }; }
             }
+            
+            // Trunk Chunks und Stationen nur bauen, wenn in der Nähe nichts dringenderes anliegt 
+            // (oder wir der Stammstrecke nahe kommen, was nur bei U2/U3 passiert)
+            if (trunkTm && !r.trunkDone) {
+                if (!this._resTrunkChunks) this._resTrunkChunks = new Set();
+                const trunkTotalChunks = Math.ceil(this._trunkSim.totalLength / trunkTm.chunkSize);
+                let foundTrunk = false;
+                for (let i = 0; i <= trunkTotalChunks; i++) {
+                    if (!this._resTrunkChunks.has(i)) {
+                        const d = 5000; // Fake-Distanz, damit aktive Linie Vorrang hat
+                        if (d < bestDist) { bestDist = d; best = { kind: 'trunkChunk', idx: i }; }
+                        foundTrunk = true;
+                        break;
+                    }
+                }
+                if (!foundTrunk) {
+                    if (!this._resTrunkStations) this._resTrunkStations = new Set();
+                    let foundStation = false;
+                    for (let i = 0; i < trunkSm.sim.stations.length; i++) {
+                        if (!this._resTrunkStations.has(i)) {
+                            const d = 5000;
+                            if (d < bestDist) { bestDist = d; best = { kind: 'trunkStation', idx: i }; }
+                            foundStation = true;
+                            break;
+                        }
+                    }
+                    if (!foundStation) r.trunkDone = true;
+                }
+            }
+
             if (!best) { r.done = true; return; }
 
             let obj, parent, owned;
             if (best.kind === 'chunk') {
                 obj = tm.chunkCache.get(best.idx);
                 if (!obj) {
-                    // Bauen kostet CPU -> dieser Frame nur bauen, Upload ab dem nächsten.
                     obj = tm.createChunk(best.idx);
                     tm.chunkCache.set(best.idx, obj);
                     return;
                 }
-                owned = tm.activeChunks.has(best.idx); // vom Streaming schon in der Szene?
+                owned = tm.activeChunks.has(best.idx);
                 parent = tm.scene;
-            } else {
+            } else if (best.kind === 'station') {
                 obj = sm.stationsList[best.idx];
-                if (!obj) { this._resStations.add(best.idx); return; }
+                if (!obj) {
+                    obj = sm.buildStationAtIndex(best.idx);
+                    return;
+                }
                 owned = sm.loadedStations.has(best.idx);
                 parent = sm.scene;
+            } else if (best.kind === 'trunkChunk') {
+                obj = trunkTm.chunkCache.get(best.idx);
+                if (!obj) {
+                    obj = trunkTm.createChunk(best.idx);
+                    trunkTm.chunkCache.set(best.idx, obj);
+                    trunkTm.activeChunks.set(best.idx, obj);
+                    trunkTm.scene.add(obj); // direkt dauerhaft einhängen
+                    return;
+                }
+                owned = true;
+                parent = trunkTm.scene;
+            } else if (best.kind === 'trunkStation') {
+                obj = trunkSm.stationsList[best.idx];
+                if (!obj) {
+                    obj = trunkSm.buildStationAtIndex(best.idx);
+                    trunkSm.scene.add(obj); // direkt dauerhaft einhängen
+                    return;
+                }
+                owned = true;
+                parent = trunkSm.scene;
             }
+            
             if (!owned) parent.add(obj);
             const allMeshes = [];
             obj.traverse(o => { if (o.isMesh) allMeshes.push(o); });
@@ -1086,12 +1127,20 @@ class App {
 
         // Nur entfernen, wenn das Streaming das Objekt inzwischen nicht selbst
         // eingeblendet hat (sonst würde es mitten im Bild verschwinden).
-        const owned = p.kind === 'chunk'
-            ? this.trackManager.activeChunks.has(p.idx)
-            : this.stationModel.loadedStations.has(p.idx);
+        let owned = true;
+        if (p.kind === 'chunk') {
+            owned = this.trackManager.activeChunks.has(p.idx);
+        } else if (p.kind === 'station') {
+            owned = this.stationModel.loadedStations.has(p.idx);
+        }
+        
         if (!owned) p.parent.remove(p.obj);
+        
         if (p.kind === 'chunk') this._resChunks.add(p.idx);
-        else this._resStations.add(p.idx);
+        else if (p.kind === 'station') this._resStations.add(p.idx);
+        else if (p.kind === 'trunkChunk') this._resTrunkChunks.add(p.idx);
+        else if (p.kind === 'trunkStation') this._resTrunkStations.add(p.idx);
+        
         r.pending = null;
     }
 
