@@ -601,13 +601,17 @@ class App {
             const sim = new Simulation(TRACK_DATA_TRUNK);
             const root = new THREE.Group();
             root.name = 'trunkRoot';
+            const tm = new TrackManager(root, sim);
             this._trunkCtx = {
                 sim, root,
-                trackManager: new TrackManager(root, sim),
+                trackManager: tm,
                 stationModel: null,
                 chunkIdx: 0
             };
             this._trunkSim = sim;
+            if (tm.plaerrerApproachGroup) {
+                this.world.scene.add(tm.plaerrerApproachGroup);
+            }
         });
         steps.push({ label: 'BAUE STAMMSTRECKE', weight: 13, tick: () => {
             const t = this._trunkCtx;

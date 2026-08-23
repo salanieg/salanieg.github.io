@@ -227,7 +227,7 @@ export class TrackManager {
 
         // U2/U3 only: bespoke stacked approach tracks + tubes through this line's own
         // Plärrer zone, meeting the permanent shared hall's Gleis 3/4 mock stubs flush.
-        this.buildPlaerrerApproach();
+        this.plaerrerApproachGroup = this.buildPlaerrerApproach();
     }
 
     // ---------- shared low-level helpers for bespoke (non-chunk) track rendering ----------
@@ -602,7 +602,7 @@ export class TrackManager {
     buildPlaerrerApproach() {
         const sim = this.sim;
         const p = sim.plaerrer;
-        if (!p || !sim.track.lineId || sim.track.lineId !== 'TRUNK') return;
+        if (!p || !sim.track.lineId || sim.track.lineId !== 'TRUNK') return null;
         const P = p.position;
         const zoneHalf = sim.plStackHalf + sim.plRamp;
         const innerHalf = p.halfLength + 20; // where the hall's mock Gleis 3/4 stubs end
@@ -637,7 +637,7 @@ export class TrackManager {
             this._buildSingleTrackBranch(group, coll, upperPts, sim, false);
         }
         this._emitTrackCollectors(group, coll);
-        this.scene.add(group);
+        return group;
     }
 
     // Per-side tunnel half-width: sideSign +1 = positive lateral (normal (-tz, 0, tx))
