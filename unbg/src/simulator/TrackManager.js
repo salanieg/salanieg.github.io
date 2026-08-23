@@ -602,7 +602,7 @@ export class TrackManager {
     buildPlaerrerApproach() {
         const sim = this.sim;
         const p = sim.plaerrer;
-        if (!p || !sim.track.lineId || sim.track.lineId === 'U1') return;
+        if (!p || !sim.track.lineId || sim.track.lineId !== 'TRUNK') return;
         const P = p.position;
         const zoneHalf = sim.plStackHalf + sim.plRamp;
         const innerHalf = p.halfLength + 20; // where the hall's mock Gleis 3/4 stubs end
