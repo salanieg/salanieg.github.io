@@ -1557,7 +1557,7 @@ export class StationModel {
         // Slat ceiling in the Aufseßplatz look, shared by the three Langwasser-branch
         // stations as well. The plates between the slat field and the side walls use the
         // rough concrete of the tunnel portals / Plärrer walls (not plain dark grey).
-        const hasSlatCeiling = ["Aufseßplatz", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Hasenbuck", "Frankenstraße", "Maffeiplatz", "St. Leonhard"].includes(station.name);
+        const hasSlatCeiling = ["Weißer Turm", "Aufseßplatz", "Langwasser Süd", "Gemeinschaftshaus", "Langwasser Mitte", "Hasenbuck", "Frankenstraße", "Maffeiplatz", "St. Leonhard"].includes(station.name);
         let slatCeilingConcreteMat = null;
         if (hasSlatCeiling) {
             // Slat texture canvas: 80% slat (#e2e8f0), 20% gap (#111111)
@@ -2860,6 +2860,10 @@ export class StationModel {
                         sandH = wallMat.map.userData.worldH;
                     } else if (station.name === "Opernhaus") {
                         wallMat = this.getOpernhausStoneMat();
+                        sandW = wallMat.map.userData.worldW;
+                        sandH = wallMat.map.userData.worldH;
+                    } else if (station.name === "Weißer Turm") {
+                        wallMat = this.getWeisserTurmWallMat();
                         sandW = wallMat.map.userData.worldW;
                         sandH = wallMat.map.userData.worldH;
                     }
@@ -4636,6 +4640,39 @@ export class StationModel {
                     // inkl. Stationsname in regelmäßigen Abständen auf den Trägern)
                     this.buildPlaererLights(stationGroup, station, centerAngle, { sA, sB, cy, ceilY });
                 }
+            } else if (station.name === "Weißer Turm") {
+                if (j === 0) {
+                    const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
+                    const wallInset = isSideStation ? 5.55 : 1.83;
+                    const offW = (s) => this.sim.getTrackSpacing(s) / 2 + wallInset;
+                    const cy = centerPos.y;
+                    const ceilY = 4.595; // Slat ceiling height
+                    
+                    const wallMat = this.getWeisserTurmWallMat();
+                    const textMat = this.getWeisserTurmTextMat();
+                    
+                    for (const sign of [1, -1]) {
+                        // 1. Rusticated dark red wall
+                        this.buildSweptWall(stationGroup, sA, sB, (s) => sign * offW(s), cy - 0.38, cy + ceilY, wallMat, wallMat.map.userData.worldW, cy - 0.38, cy + ceilY);
+                        
+                        // 2. Nameplates
+                        const offS = (s) => sign * (offW(s) - 0.05);
+                        for (let z = -platLength / 2 + 10; z <= platLength / 2 - 10; z += 20.0) {
+                            const sT = station.position + z;
+                            const posT = this.sim.getTrackPosition(sT);
+                            const tanT = this.sim.getTrackTangent(sT);
+                            const rotYT = Math.atan2(tanT.x, tanT.z) - centerAngle;
+                            const normT = new THREE.Vector3(-tanT.z, 0, tanT.x);
+                            
+                            const pText = posT.clone().addScaledVector(normT, offS(sT));
+                            const textMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 0.45), textMat);
+                            textMesh.position.copy(stationGroup.worldToLocal(pText));
+                            textMesh.position.y = 2.0;
+                            textMesh.rotation.set(0, rotYT + (sign > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+                            stationGroup.add(textMesh);
+                        }
+                    }
+                }
             } else {
                 // Generic outer walls: solid colour, so one continuous swept slab per side
                 // (built once on j===0), tapering its lateral offset with the inter-track gap.
@@ -4980,6 +5017,23 @@ export class StationModel {
                     pillarR.rotation.y = rotY;
 
                     stationGroup.add(pillarL, pillarR);
+                } else if (station.name === "Weißer Turm") {
+                    const cacheKey = `pillarGeom_${station.name}`;
+                    if (!this[cacheKey]) {
+                        const geom = new THREE.CylinderGeometry(0.42, 0.42, pHeight, 16);
+                        const mat = this._makeCylinderPillarMat(this.getWeisserTurmPillarMat());
+                        mat.map.repeat.set(2, pHeight / 1.3194);
+                        if (mat.bumpMap) {
+                            mat.bumpMap.repeat.set(2, pHeight / 1.3194);
+                        }
+                        this[cacheKey] = { geom, mat };
+                    }
+                    const pData = this[cacheKey];
+                    const pillar = new THREE.Mesh(pData.geom, pData.mat);
+                    pillar.position.copy(stationGroup.worldToLocal(pos.clone()));
+                    pillar.position.y = pY;
+                    pillar.rotation.y = rotY;
+                    stationGroup.add(pillar);
                 } else if (station.name === "Bauernfeindstraße") {
                     // Double-diameter pillars with a fine concrete texture (Langwasser-Nord-style
                     // island platform, but with fatter, textured columns).
@@ -8246,12 +8300,9 @@ export class StationModel {
         ctx.globalCompositeOperation = 'multiply';
         const grad = ctx.createLinearGradient(0, 0, W, 0);
         grad.addColorStop(0,    '#7A7975'); // flank (dark)
-        grad.addColorStop(0.18, '#7A7975');
-        grad.addColorStop(0.25, '#F4F2FB'); // front face (bright)
-        grad.addColorStop(0.32, '#7A7975');
-        grad.addColorStop(0.68, '#7A7975');
-        grad.addColorStop(0.75, '#F4F2FB'); // back face (bright)
-        grad.addColorStop(0.82, '#7A7975');
+        grad.addColorStop(0.36, '#7A7975');
+        grad.addColorStop(0.50, '#F4F2FB'); // face (bright)
+        grad.addColorStop(0.64, '#7A7975');
         grad.addColorStop(1,    '#7A7975');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
@@ -8266,6 +8317,8 @@ export class StationModel {
             newTex.repeat.copy(sourceMat.map.repeat);
             newTex.offset.copy(sourceMat.map.offset);
         }
+        // Force horizontal repeat to 2 so the single reflection becomes two (front and back)
+        newTex.repeat.x = 2;
         newTex.colorSpace = THREE.SRGBColorSpace;
 
         newMat.map = newTex;
@@ -10119,6 +10172,78 @@ export class StationModel {
             }
         }
         return this._schweinauStripeMat;
+    }
+    getWeisserTurmWallMat() {
+        if (!this._wtWallMat) {
+            const WORLD_W = 2.4, WORLD_H = 1.2;
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const pxPerMX = canvas.width / WORLD_W;
+            const pxPerMY = canvas.height / WORLD_H;
+            const joint = 2.0;
+            ctx.fillStyle = '#1a1012'; // dark mortar
+            ctx.fillRect(0, 0, 256, 256);
+            
+            const tones = ['#5a3a3a', '#4a2f2f', '#664242', '#3f2a2a', '#4f3535'];
+            let y = 0, row = 0;
+            while (y < canvas.height) {
+                const h = Math.round(0.4 * pxPerMY); // roughly 40cm high blocks
+                const w1 = Math.round(0.8 * pxPerMX);
+                const w2 = Math.round(1.2 * pxPerMX);
+                const offset = (row % 2 === 0) ? 0 : -Math.round(w1 / 2);
+                for (let x = offset; x < canvas.width; x += (Math.random() > 0.5 ? w1 : w2)) {
+                    const bw = (Math.random() > 0.5 ? w1 : w2);
+                    ctx.fillStyle = tones[(Math.random() * tones.length) | 0];
+                    ctx.fillRect(x + joint, y + joint, bw - joint * 2, Math.max(1, h - joint * 2));
+                    
+                    // add some noise to the stone
+                    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                    ctx.fillRect(x + joint, y + joint, bw - joint * 2, 4);
+                    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                    ctx.fillRect(x + joint, y + h - joint - 4, bw - joint * 2, 4);
+                }
+                y += h;
+                row++;
+            }
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.userData = { worldW: WORLD_W, worldH: WORLD_H };
+            
+            this._wtWallMat = new THREE.MeshLambertMaterial({ map: texture, roughness: 0.9 });
+        }
+        return this._wtWallMat;
+    }
+
+    getWeisserTurmTextMat() {
+        if (!this._wtTextMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 1024, 128);
+            ctx.fillStyle = '#1a1a1a';
+            ctx.font = 'bold 72px "Jost Regular", "Geist", "Inter", "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("WEISSER TURM", 512, 64);
+            
+            const texture = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(canvas));
+            texture.anisotropy = 8;
+            this._wtTextMat = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+        }
+        return this._wtTextMat;
+    }
+
+    getWeisserTurmPillarMat() {
+        if (!this._wtPillarMat) {
+            this._wtPillarMat = this.createTiledMaterial('#3e892e', '#cbd5e1', 0.15);
+        }
+        return this._wtPillarMat;
     }
 
     getStLeonhardStoneMat() {

@@ -602,10 +602,10 @@ export class TrackManager {
     buildPlaerrerApproach() {
         const sim = this.sim;
         const p = sim.plaerrer;
-        if (!p || !sim.track.lineId || sim.track.lineId !== 'TRUNK') return;
+        if (!p || sim.track.lineId !== 'TRUNK') return;
         const P = p.position;
         const zoneHalf = sim.plStackHalf + sim.plRamp;
-        const innerHalf = p.halfLength + 20; // where the hall's mock Gleis 3/4 stubs end
+        const innerHalf = p.halfLength; // flush with the station end
         const group = new THREE.Group();
         group.name = `plaerrerApproach_${sim.track.lineId}`;
 
@@ -625,13 +625,16 @@ export class TrackManager {
             return pts;
         };
 
+        const isTrunk = sim.track.lineId === 'TRUNK';
+        const fwdUpper = !isTrunk; // U1 forward is UPPER, TRUNK forward is LOWER
+
         const coll = this._newTrackCollectors();
         for (const sign of [-1, 1]) {
             const d0 = sign < 0 ? P - zoneHalf : P + innerHalf;
             const d1 = sign < 0 ? P - innerHalf : P + zoneHalf;
 
-            const lowerPts = samplePath((d) => sp(d) / 2, dive, d0, d1, 5);
-            const upperPts = samplePath((d) => -sp(d) / 2, () => 0, d0, d1, 5);
+            const upperPts = samplePath((d) => (fwdUpper ? 1 : -1) * sp(d) / 2, () => 0, d0, d1, 5);
+            const lowerPts = samplePath((d) => (fwdUpper ? -1 : 1) * sp(d) / 2, dive, d0, d1, 5);
 
             this._buildSingleTrackBranch(group, coll, lowerPts, sim, false);
             this._buildSingleTrackBranch(group, coll, upperPts, sim, false);
@@ -726,9 +729,9 @@ export class TrackManager {
         // Gleis 2 (reverse / Langwasser, LOWER) at -spacing/2, dives – directly under Gleis 1.
         renderTrack(samplePath(d => -sp(d) / 2, dive, P - zoneHalf, P + zoneHalf));
         // Gleis 3 (opposite UPPER) at sp(d)/2 - 18.08, base level
-        renderTrack(samplePath(d => sp(d) / 2 - 18.08, () => 0, P - platHalf - 20, P + platHalf + 20));
+        renderTrack(samplePath(d => sp(d) / 2 - 18.08, () => 0, P - platHalf, P + platHalf));
         // Gleis 4 (opposite LOWER) at -sp(d)/2 - 18.08, dives
-        renderTrack(samplePath(d => -sp(d) / 2 - 18.08, dive, P - platHalf - 20, P + platHalf + 20));
+        renderTrack(samplePath(d => -sp(d) / 2 - 18.08, dive, P - platHalf, P + platHalf));
 
         const bedGeom = new THREE.BoxGeometry(3.6, 0.15, 1.0);
         const addI = (geom, mat, arr) => {
@@ -1724,13 +1727,9 @@ export class TrackManager {
             // spanning the full zone from platform end (inner) to zone boundary (outer)
             const upperRunPts = samplePlaerrerPath(d => sp(d) / 2, () => 0, r0, r1);
             const lowerRunPts = samplePlaerrerPath(d => -sp(d) / 2, dive, r0, r1);
-            const upperOppPts = samplePlaerrerPath(d => sp(d) / 2 - 18.08, () => 0, r0, r1);
-            const lowerOppPts = samplePlaerrerPath(d => -sp(d) / 2 - 18.08, dive, r0, r1);
 
             this._buildSingleTrackBranch(group, coll, upperRunPts, sim, false);
             this._buildSingleTrackBranch(group, coll, lowerRunPts, sim, false);
-            this._buildSingleTrackBranch(group, coll, upperOppPts, sim, false);
-            this._buildSingleTrackBranch(group, coll, lowerOppPts, sim, false);
 
             const baseYi = sim.getTrackPosition(inner).y;
 
@@ -1753,9 +1752,9 @@ export class TrackManager {
 
             // Lower portals (Split into 2 panels, each with a tube hole)
             buildEndWall(inner, -sp(inner) / 2, baseYi + dive(inner) + 0.8, endWallLowerMat,
-                         -9.05, 4.1, -3.8, LOWER_CLEAR + platTopY - 0.85);        // right lower end wall
+                         -9.05, 4.1, -3.8, LOWER_CLEAR + platTopY);        // right lower end wall
             buildEndWall(inner, -sp(inner) / 2 - 18.08, baseYi + dive(inner) + 0.8, endWallLowerMat,
-                         -3.6, 9.03, -3.8, LOWER_CLEAR + platTopY - 0.85);        // left lower end wall
+                         -3.6, 9.03, -3.8, LOWER_CLEAR + platTopY);        // left lower end wall
         }
         this._emitTrackCollectors(group, coll);
 

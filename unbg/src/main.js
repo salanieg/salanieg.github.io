@@ -420,7 +420,9 @@ class App {
     updateTrunkVisibility() {
         if (!this.trunkGroup) return;
         const zone = this.sim.trunkZone;
-        this.trunkGroup.visible = !!zone && this.sim.position >= zone[0] - 600 && this.sim.position <= zone[1] + 600;
+        const pz = this.sim.plaerrer;
+        const nearPlaerrer = pz && this.sim.position >= pz.position - 600 && this.sim.position <= pz.position + 600;
+        this.trunkGroup.visible = (!!zone && this.sim.position >= zone[0] - 600 && this.sim.position <= zone[1] + 600) || nearPlaerrer;
     }
 
     // Same idiom, per switch-transition piece (each is keyed by station name so it lines up
@@ -601,17 +603,13 @@ class App {
             const sim = new Simulation(TRACK_DATA_TRUNK);
             const root = new THREE.Group();
             root.name = 'trunkRoot';
-            const tm = new TrackManager(root, sim);
             this._trunkCtx = {
                 sim, root,
-                trackManager: tm,
+                trackManager: new TrackManager(root, sim),
                 stationModel: null,
                 chunkIdx: 0
             };
             this._trunkSim = sim;
-            if (tm.plaerrerApproachGroup) {
-                this.world.scene.add(tm.plaerrerApproachGroup);
-            }
         });
         steps.push({ label: 'BAUE STAMMSTRECKE', weight: 13, tick: () => {
             const t = this._trunkCtx;
