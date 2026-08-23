@@ -1724,9 +1724,13 @@ export class TrackManager {
             // spanning the full zone from platform end (inner) to zone boundary (outer)
             const upperRunPts = samplePlaerrerPath(d => sp(d) / 2, () => 0, r0, r1);
             const lowerRunPts = samplePlaerrerPath(d => -sp(d) / 2, dive, r0, r1);
+            const upperOppPts = samplePlaerrerPath(d => sp(d) / 2 - 18.08, () => 0, r0, r1);
+            const lowerOppPts = samplePlaerrerPath(d => -sp(d) / 2 - 18.08, dive, r0, r1);
 
             this._buildSingleTrackBranch(group, coll, upperRunPts, sim, false);
             this._buildSingleTrackBranch(group, coll, lowerRunPts, sim, false);
+            this._buildSingleTrackBranch(group, coll, upperOppPts, sim, false);
+            this._buildSingleTrackBranch(group, coll, lowerOppPts, sim, false);
 
             const baseYi = sim.getTrackPosition(inner).y;
 
@@ -2738,12 +2742,20 @@ export class TrackManager {
                     }
                     pieces = next;
                 }
+                const pz = this.sim.plaerrer;
+                if (pz) {
+                    const a = pz.position - (this.sim.plStackHalf + this.sim.plRamp);
+                    const b = pz.position + (this.sim.plStackHalf + this.sim.plRamp);
+                    const next = [];
+                    for (const [p0, p1] of pieces) {
+                        if (b <= p0 || a >= p1) { next.push([p0, p1]); continue; }
+                        if (p0 < a) next.push([p0, a]);
+                        if (p1 > b) next.push([b, p1]);
+                    }
+                    pieces = next;
+                }
                 for (const [p0, p1] of pieces) {
                     if (p1 - p0 < 1e-4) continue;
-                    // Plärrer is enclosed by a bespoke rectangular hall (buildPlaerrer),
-                    // so suppress the generic tube there (it is too small to reach
-                    // the lower level anyway).
-                    if (this.sim.isPlaerrerZone((p0 + p1) / 2)) continue;
                     tunnelWallSegs.push([p0, p1]);
                 }
             });
