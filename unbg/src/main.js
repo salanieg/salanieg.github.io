@@ -982,7 +982,7 @@ class App {
         if (!tm || !sm) return;
         this._residency = {
             totalChunks: Math.floor(this.sim.totalLength / tm.chunkSize),
-            numStations: sm.stationsList.length,
+            numStations: sm.sim.stations.length,
             done: false,
             pending: null, // aktuell zum Upload eingehängtes Ziel (siehe _residencyPrep)
         };
