@@ -227,7 +227,7 @@ export class TrackManager {
 
         // U2/U3 only: bespoke stacked approach tracks + tubes through this line's own
         // Plärrer zone, meeting the permanent shared hall's Gleis 3/4 mock stubs flush.
-        this.plaerrerApproachGroup = this.buildPlaerrerApproach();
+        this.buildPlaerrerApproach();
     }
 
     // ---------- shared low-level helpers for bespoke (non-chunk) track rendering ----------
@@ -602,7 +602,7 @@ export class TrackManager {
     buildPlaerrerApproach() {
         const sim = this.sim;
         const p = sim.plaerrer;
-        if (!p || !sim.track.lineId || sim.track.lineId !== 'TRUNK') return null;
+        if (!p || !sim.track.lineId || sim.track.lineId !== 'TRUNK') return;
         const P = p.position;
         const zoneHalf = sim.plStackHalf + sim.plRamp;
         const innerHalf = p.halfLength + 20; // where the hall's mock Gleis 3/4 stubs end
@@ -637,7 +637,7 @@ export class TrackManager {
             this._buildSingleTrackBranch(group, coll, upperPts, sim, false);
         }
         this._emitTrackCollectors(group, coll);
-        return group;
+        this.scene.add(group);
     }
 
     // Per-side tunnel half-width: sideSign +1 = positive lateral (normal (-tz, 0, tx))
@@ -1724,13 +1724,9 @@ export class TrackManager {
             // spanning the full zone from platform end (inner) to zone boundary (outer)
             const upperRunPts = samplePlaerrerPath(d => sp(d) / 2, () => 0, r0, r1);
             const lowerRunPts = samplePlaerrerPath(d => -sp(d) / 2, dive, r0, r1);
-            const upperOppPts = samplePlaerrerPath(d => sp(d) / 2 - 18.08, () => 0, r0, r1);
-            const lowerOppPts = samplePlaerrerPath(d => -sp(d) / 2 - 18.08, dive, r0, r1);
 
             this._buildSingleTrackBranch(group, coll, upperRunPts, sim, false);
             this._buildSingleTrackBranch(group, coll, lowerRunPts, sim, false);
-            this._buildSingleTrackBranch(group, coll, upperOppPts, sim, false);
-            this._buildSingleTrackBranch(group, coll, lowerOppPts, sim, false);
 
             const baseYi = sim.getTrackPosition(inner).y;
 
