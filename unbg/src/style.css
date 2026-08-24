@@ -545,9 +545,31 @@ body.is-mobile .fullscreen-hint {
     left: 0;
     bottom: 0;
     width: 0%;
-    background: #c21d2c; /* Nuremberg G1 red loading bar */
+    background: linear-gradient(to bottom, #98f5a6 0%, #30cc4a 45%, #18a62f 50%, #0d8021 100%);
+    box-shadow: inset 0px 1px 3px rgba(255, 255, 255, 0.9), inset 0px -2px 5px rgba(0, 0, 0, 0.2);
     z-index: 1;
     transition: width 0.1s ease-out, opacity 0.3s ease;
+}
+
+#btn-loading-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-20deg);
+    animation: frutiger-sweep 1.5s infinite linear;
+}
+
+@keyframes frutiger-sweep {
+    0% {
+        left: -50%;
+    }
+    100% {
+        left: 150%;
+    }
 }
 
 .start-btn.loaded #btn-loading-bar {
