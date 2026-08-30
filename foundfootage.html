@@ -13,7 +13,6 @@
     <link rel="manifest" href="images/favicon/site.webmanifest">
 
     <link rel="stylesheet" href="styles/theme.css">
-    <script defer src="common.js"></script>
 </head>
 <body>
 
@@ -100,5 +99,13 @@
 
 </div>
 
+<script src="scripts/lenis.min.js"></script>
+<script>
+if (typeof Lenis !== 'undefined') {
+    const lenis = new Lenis({ duration: 0.55, wheelMultiplier: 1.6, touchMultiplier: 2.0, smoothWheel: true });
+    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf);
+}
+</script>
 </body>
 </html>
