@@ -13,6 +13,10 @@
     <link rel="manifest" href="images/favicon/site.webmanifest">
 
     <link rel="stylesheet" href="styles/theme.css">
+    <link rel="preload" href="fonts/DonGraffiti/DonGraffiti.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/Genos-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/Jost-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/syne.bold.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
 
@@ -39,7 +43,7 @@
                 <span class="hero-line quote-main quote-line-1">ist kein Grund,</span>
                 <span class="hero-line quote-main quote-line-2">es nicht zu tun.</span>
             </h1>
-            <img id="header-img" src="images/Portrait_Dennis_Muench.png" alt="Portrait von Dennis Münch" loading="lazy" decoding="async">
+            <img id="header-img" src="images/Portrait_Dennis_Muench.webp" alt="Portrait von Dennis Münch" width="260" height="260" fetchpriority="high" decoding="async">
             <p>Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was. Aber so eine eigene Website, pah, ziemlich eingebildet, oder?</p>
         </section>
 
@@ -57,29 +61,29 @@
             <div class="button-section">
                 <!-- REIHE 1 -->
                 <a href="https://www.researchgate.net/profile/Dennis-Muench-3" target="_blank" rel="noopener noreferrer">
-                    <img src="images/cogwheel.jpg" alt="Arbeiten auf ResearchGate">
+                    <img src="images/cogwheel.webp" alt="Arbeiten auf ResearchGate" width="200" height="200" loading="lazy" decoding="async">
                     <p>Self-Publishing</p>
                 </a>
                 <a href="hinterstube.html">
-                    <img src="images/nighttrain.jpg" alt="Podcast Hinterstube">
+                    <img src="images/nighttrain.webp" alt="Podcast Hinterstube" width="200" height="200" loading="lazy" decoding="async">
                     <p>Podcast</p>
                 </a>
                 <a href="https://www.denmuen.ch/unbg" target="_blank" rel="noopener noreferrer">
-                    <img src="images/underground.webp" alt="U-Bahn-Simulator Nürnberg">
+                    <img src="images/underground.webp" alt="U-Bahn-Simulator Nürnberg" width="200" height="200" loading="lazy" decoding="async">
                     <p>U-Bahn-Simulator</p>
                 </a>
 
                 <!-- REIHE 2 -->
                 <a href="foundfootage.html">
-                    <img src="images/foundfootage.jpg" alt="Found Footage">
+                    <img src="images/foundfootage.webp" alt="Found Footage" width="200" height="200" loading="lazy" decoding="async">
                     <p>Found Footage</p>
                 </a>
                 <a href="featuredsites.html">
-                    <img src="images/blogpic.webp" alt="Featured Sites">
+                    <img src="images/blogpic.webp" alt="Featured Sites" width="200" height="200" loading="lazy" decoding="async">
                     <p>Featured Sites</p>
                 </a>
                 <a href="404.html">
-                    <img src="images/backroom.jpg" alt="404 Seite">
+                    <img src="images/backroom.webp" alt="404 Seite" width="200" height="200" loading="lazy" decoding="async">
                     <p>404 Seite</p>
                 </a>
             </div>
@@ -155,7 +159,7 @@
 
 </div>
 
-<script src="scripts/lenis.min.js"></script>
+<script src="scripts/lenis.min.js" defer></script>
 <script>
 (function () {
     // ── SMOOTH SCROLL (LENIS) ──
