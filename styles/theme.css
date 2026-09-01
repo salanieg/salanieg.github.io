@@ -37,36 +37,150 @@
     --chrome-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95), 0 -1px 0 rgba(0, 0, 0, 0.35);
     --platinum: linear-gradient(180deg, 
         #ffffff 0%, 
-        #f4f7fb 12%, 
-        #dbe4ed 28%, 
-        #8b9caa 46%, 
-        #ffffff 50%, 
-        #cad7e3 68%, 
-        #657688 100%);
+        #f1f4f8 20%, 
+        #d8e1ea 48%, 
+        #b0c1d0 75%, 
+        #7b8e9f 100%);
+    --graffiti-platinum: linear-gradient(180deg, 
+        #9072BF 0%, 
+        #a487cf 28%, 
+        #bc9fe1 58%, 
+        #D2A2E9 85%, 
+        #f5ebfc 100%);
     --cloud: var(--platinum);
 }
 
 /* ── LOCAL FONTS ── */
 @font-face {
-    font-family: 'Goldman';
-    src: url('../fonts/Goldman-Bold.ttf') format('truetype');
-    font-weight: 700 900;
+    font-family: 'DonGraffiti';
+    src: url('../fonts/DonGraffiti/DonGraffiti.woff2') format('woff2'),
+         url('../fonts/DonGraffiti/DonGraffiti.woff') format('woff'),
+         url('../fonts/DonGraffiti/DonGraffiti.ttf') format('truetype');
+    font-weight: 400 900;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'Goldman';
-    src: url('../fonts/Goldman-Regular.ttf') format('truetype');
-    font-weight: 400 600;
+    font-family: 'Genos';
+    src: url('../fonts/Genos-SemiBold.ttf') format('truetype');
+    font-weight: 600 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Genos';
+    src: url('../fonts/Genos-Regular.ttf') format('truetype');
+    font-weight: 400 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Newsreader';
+    src: url('../fonts/Newsreader.ttf') format('truetype');
+    font-weight: 200 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Newsreader';
+    src: url('../fonts/Newsreader-Italic.ttf') format('truetype');
+    font-weight: 200 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geo';
+    src: url('../fonts/Geo-Italic.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geo';
+    src: url('../fonts/Geo-Italic.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Syne';
+    src: url('../fonts/syne.regular.ttf') format('truetype');
+    font-weight: 400 500;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
     font-family: 'Syne';
+    src: url('../fonts/syne.italic.ttf') format('truetype');
+    font-weight: 400 500;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Syne';
     src: url('../fonts/syne.bold.ttf') format('truetype');
-    font-weight: 100 900;
+    font-weight: 700 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Syne';
+    src: url('../fonts/syne.extra.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Jost';
+    src: url('../fonts/Jost-Regular.ttf') format('truetype');
+    font-weight: 400 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('../fonts/Geist/Geist-Regular.woff2') format('woff2'),
+         url('../fonts/Geist/Geist-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('../fonts/Geist/Geist-Medium.woff2') format('woff2'),
+         url('../fonts/Geist/Geist-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('../fonts/Geist/Geist-SemiBold.woff2') format('woff2'),
+         url('../fonts/Geist/Geist-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist';
+    src: url('../fonts/Geist/Geist-Bold.woff2') format('woff2'),
+         url('../fonts/Geist/Geist-Bold.ttf') format('truetype');
+    font-weight: 700 800;
     font-style: normal;
     font-display: swap;
 }
@@ -75,6 +189,8 @@
     font-family: 'Geist';
     src: url('../fonts/Geist/Geist-Light.woff2') format('woff2'),
          url('../fonts/Geist/Geist-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
     font-display: swap;
 }
 
@@ -90,9 +206,9 @@ html {
     scroll-behavior: auto;
     background: transparent;
     color: var(--fg);
-    font-family: 'Geist', Arial, sans-serif;
-    font-size: 1.155rem;
-    line-height: 1.75;
+    font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.15rem;
+    line-height: 1.78;
 }
 
 html.lenis, html.lenis body {
@@ -171,9 +287,38 @@ body::before {
 /* ── HEADER ── */
 #site-header {
     text-align: center;
-    padding: 1.2rem 0 0.35rem;
+    padding: 1.4rem 0 0;
+    margin-bottom: 2.2rem;
     flex-shrink: 0;
     background: transparent;
+}
+
+.header-logo-text {
+    font-family: 'DonGraffiti', cursive, sans-serif;
+    font-size: clamp(2.4rem, 6.8vw, 4.4rem);
+    font-weight: normal;
+    line-height: 1.15;
+    letter-spacing: 0.03em;
+    color: transparent;
+    background: var(--graffiti-platinum);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    -webkit-text-stroke: 0px transparent;
+    text-decoration: none;
+    display: inline-block;
+    filter: 
+        drop-shadow(0 4px 12px rgba(0, 0, 0, 0.75))
+        drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    user-select: none;
+    pointer-events: none;
+    cursor: default;
 }
 
 #site-header img.logo {
@@ -215,7 +360,7 @@ body::before {
     display: flex;
     max-width: 820px;
     width: calc(100% - 2rem);
-    margin: 0.4rem auto 0;
+    margin: 0 auto 0;
     border-radius: 14px;
     background: var(--chrome);
     border: 1px solid rgba(120, 120, 130, 0.5);
@@ -291,17 +436,17 @@ body::before {
     padding-bottom: 0;
 }
 
-/* ── PLASTISCHER 3D-PLATIN-LOOK MIT COMIC-RAHMEN (GOLDMAN) ── */
+/* ── PLASTISCHER 3D-PLATIN-LOOK MIT COMIC-RAHMEN (GENOS) ── */
 .hero-quote {
-    font-family: 'Goldman', 'Syne', sans-serif;
-    text-transform: uppercase;
+    font-family: 'Genos', 'Syne', sans-serif;
+    text-transform: none;
     text-align: left;
     margin: 2.2rem 0;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 0;
     background: none !important;
     -webkit-background-clip: border-box !important;
     background-clip: border-box !important;
@@ -313,53 +458,82 @@ body::before {
 .hero-quote .hero-line {
     display: inline-block;
     white-space: nowrap;
-    font-size: clamp(1.15rem, 3.1vw, 2.25rem);
-    font-weight: 700;
-    line-height: 1.28;
-    letter-spacing: 0.05em;
     text-align: left;
     color: transparent;
     background: var(--platinum);
-    background-size: 100% 1.28em;
-    background-repeat: repeat-y;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
-    -webkit-text-stroke: 0.5px #000000;
+    -webkit-text-stroke: 0px transparent;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    filter: 
-        drop-shadow(0 2px 0 #000000)
-        drop-shadow(0 4px 7px rgba(0, 0, 0, 0.8));
     user-select: none;
+    margin: 0;
+    padding: 0 0.05em 0 0;
+}
+
+/* 1. Normal geschriebene Einleitung */
+.hero-quote .quote-intro {
+    font-size: clamp(1.4rem, 4.2vw, 3.05rem);
+    font-weight: 400;
+    line-height: 0.86;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    filter: 
+        drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9))
+        drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65));
+    margin-bottom: -0.08em;
+}
+
+/* 2. Große, fette Hauptaussage */
+.hero-quote .quote-main {
+    font-size: clamp(2.35rem, 7.3vw, 5.25rem);
+    font-weight: 600;
+    line-height: 0.78;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    filter: 
+        drop-shadow(0 3px 6px rgba(0, 0, 0, 0.95))
+        drop-shadow(0 6px 12px rgba(0, 0, 0, 0.75));
+    margin: 0;
+}
+
+.hero-quote .quote-main + .quote-main {
+    margin-top: -0.06em;
 }
 
 h1:not(.hero-quote), h2 {
-    font-family: 'Goldman', 'Syne', sans-serif;
-    font-size: clamp(1.65rem, 3.6vw, 2.35rem);
-    font-weight: 700;
-    line-height: 1.28;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin: 1.4rem auto 1.8rem;
+    font-family: 'Genos', 'Syne', sans-serif;
+    font-size: clamp(2.4rem, 6.2vw, 3.85rem);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0.03em;
+    text-transform: none;
+    margin: 2.4rem auto 2.0rem;
     display: table;
     width: fit-content;
     max-width: 100%;
     color: transparent;
     background: var(--platinum);
-    background-size: 100% 1.28em;
-    background-repeat: repeat-y;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
-    -webkit-text-stroke: 0.5px #000000;
+    -webkit-text-stroke: 0px transparent;
     filter: 
-        drop-shadow(0 2px 0 #000000)
-        drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8));
+        drop-shadow(0 3px 6px rgba(0, 0, 0, 0.9))
+        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.7));
     text-align: center;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
@@ -368,8 +542,10 @@ h1:not(.hero-quote), h2 {
 
 p {
     color: var(--fg);
-    font-size: 1.16rem;
-    line-height: 1.75;
+    font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.18rem;
+    font-weight: 400;
+    line-height: 1.8;
     max-width: 65ch;
     margin-bottom: 1.2rem;
     text-align: justify;
@@ -383,22 +559,22 @@ a:hover { color: #fff; text-decoration: underline; }
 
 /* ── SUBHEADINGS, LISTS & HR ── */
 h3 {
-    font-family: 'Syne', Arial, sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    font-family: 'Genos', 'Syne', sans-serif;
+    font-size: clamp(1.45rem, 3.6vw, 2.15rem);
+    font-weight: 600;
+    letter-spacing: 0.04em;
     color: #ffffff;
-    margin: 1.8rem 0 0.8rem;
+    margin: 2.2rem 0 0.8rem;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 h4 {
-    font-family: 'Syne', Arial, sans-serif;
-    font-size: 0.98rem;
+    font-family: 'Jost', Arial, sans-serif;
+    font-size: clamp(1.15rem, 2.6vw, 1.45rem);
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.01em;
     color: rgba(255, 255, 255, 0.9);
-    margin: 1.4rem 0 0.6rem;
+    margin: 1.6rem 0 0.6rem;
 }
 
 ul {
@@ -408,9 +584,12 @@ ul {
 
 li {
     color: var(--fg);
-    font-size: 1.16rem;
+    font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.15rem;
+    font-weight: 400;
     line-height: 1.75;
     margin-bottom: 0.5rem;
+    letter-spacing: 0.01em;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.85);
 }
 
@@ -420,7 +599,7 @@ hr {
     margin: 2.5rem 0;
 }
 
-/* ── PORTRAIT (ROUND WITHOUT BORDER, LARGER, NO HOVER EFFECT) ── */
+/* ── PORTRAIT (ACHTECKIG / OCTAGONAL) ── */
 #header-img {
     width: 15rem;
     max-width: 260px;
@@ -429,13 +608,16 @@ hr {
     height: auto;
     object-fit: cover;
     border: none;
-    border-radius: 50%;
+    border-radius: 0;
+    -webkit-clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
     margin: 0 auto 1.8rem;
     display: block;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.75));
 }
 
 /* ── PROJECTS (6 SHARP SQUARE B&W BUTTON CARDS) ── */
+/* ── PROJECTS (6 ACHTECKIGE BUTTONS) ── */
 .button-section {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -449,55 +631,72 @@ hr {
     aspect-ratio: 1 / 1;
     width: 100%;
     text-decoration: none;
-    border-radius: 0;
-    overflow: hidden;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-    transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    -webkit-clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    background: rgba(255, 255, 255, 0.85);
+    padding: 2.5px;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+    transition: filter 0.2s, background 0.2s;
+    user-select: none;
 }
 
 .button-section a:hover {
-    border-color: #ffffff;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    background: #D2A2E9;
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.75));
 }
 
 .button-section a img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: grayscale(100%) contrast(1.1) brightness(0.5);
-    transition: filter 0.3s, transform 0.35s ease;
+    -webkit-clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    filter: grayscale(100%) contrast(1.15) brightness(0.65);
+    transition: filter 0.2s;
 }
 
 .button-section a:hover img {
-    filter: grayscale(100%) contrast(1.25) brightness(0.75);
-    transform: scale(1.06);
+    filter: grayscale(100%) contrast(1.2) brightness(0.85);
 }
 
 .button-section a p {
     position: absolute;
-    inset: 0;
+    inset: 2.5px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0;
-    padding: 0.4rem;
+    padding: 0.6rem;
     font-family: 'Syne', Arial, sans-serif;
-    font-size: 0.88rem;
-    font-weight: 700;
+    font-size: clamp(0.72rem, 1.6vw, 0.95rem);
+    font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     text-align: center;
     color: #ffffff;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(0, 0, 0, 0.9);
+    text-shadow: 
+        -1px -1px 0 #000000,
+         1px -1px 0 #000000,
+        -1px  1px 0 #000000,
+         1px  1px 0 #000000,
+         0 -1.5px 1px #000000,
+         0 2.5px 5px rgba(0, 0, 0, 0.95);
     background: rgba(0, 0, 0, 0.28);
-    transition: background 0.3s;
+    -webkit-clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    transition: background 0.2s, text-shadow 0.2s;
     pointer-events: none;
 }
 
 .button-section a:hover p {
     background: rgba(0, 0, 0, 0.12);
+    text-shadow: 
+        -1px -1px 0 #000000,
+         1px -1px 0 #000000,
+        -1px  1px 0 #000000,
+         1px  1px 0 #000000,
+         0 -1.5px 1px #000000,
+         0 3px 8px rgba(0, 0, 0, 1);
 }
 
 /* ── SUBPAGE LINK BUTTONS (METALLIC 3D RETRO LOOK) ── */
@@ -560,11 +759,13 @@ hr {
 }
 
 .item-button-desc {
-    font-family: 'Geist', Arial, sans-serif;
-    font-size: 1.155rem;
-    line-height: 1.75;
+    font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.08rem;
+    font-weight: 400;
+    line-height: 1.68;
     color: #1c1c1c;
     margin: 0;
+    letter-spacing: 0.01em;
     text-shadow: none;
 }
 
@@ -573,7 +774,7 @@ hr {
 
 .cv-group-label {
     font-family: 'Syne', Arial, sans-serif;
-    font-size: 0.95rem;
+    font-size: 1.02rem;
     font-weight: 700;
     letter-spacing: 0.25em;
     text-transform: uppercase;
@@ -584,13 +785,15 @@ hr {
 }
 
 .cv-row {
+    font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     display: grid;
     grid-template-columns: 8rem 1fr;
     gap: 0 1.2rem;
     padding: 0.65rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-    font-size: 1.08rem;
-    line-height: 1.6;
+    font-size: 1.12rem;
+    line-height: 1.65;
+    letter-spacing: 0.01em;
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
@@ -665,64 +868,178 @@ footer a:hover { color: #aaa; }
 /* ── RESPONSIVE MEDIA QUERIES ── */
 @media (max-width: 580px) {
     html { font-size: 1.1rem; }
+    
+    #site-header {
+        padding: 1.0rem 0 0;
+        margin-bottom: 1.6rem;
+    }
+    
+    .header-logo-text {
+        font-size: clamp(2.2rem, 8.4vw, 3.6rem);
+    }
+    
+    .header-subtitle {
+        font-size: clamp(1.05rem, 3.8vw, 1.25rem);
+        letter-spacing: 0.18em;
+    }
+
     #tilenav, .chrome-nav {
         width: calc(100% - 1rem);
-        margin: 0.4rem auto 0;
+        margin: 0 auto 0;
         border-radius: 10px;
     }
+    
     .tile, .chrome-nav a { 
-        font-size: clamp(0.52rem, 2.7vw, 0.72rem); 
-        letter-spacing: 0.02em; 
+        font-size: clamp(0.5rem, 2.65vw, 0.72rem); 
+        letter-spacing: 0.01em; 
         height: 42px;
         white-space: nowrap;
         padding: 0 2px;
     }
-    #stage, main.stage-main { padding: 0 1.1rem 2rem; gap: 2.8rem; }
-    .section-block { scroll-margin-top: 70px; }
-    .cv-row { grid-template-columns: 6.2rem 1fr; font-size: 0.98rem; }
-    .button-section { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
-    .button-section a p { 
-        font-size: clamp(0.44rem, 2.3vw, 0.65rem); 
-        letter-spacing: 0.02em; 
-        padding: 0 0.2rem;
-        white-space: nowrap;
+
+    /* 2-tile navigation for subpages on mobile */
+    #tilenav:has(> :nth-child(2):last-child) .tile,
+    .chrome-nav:has(> :nth-child(2):last-child) a {
+        font-size: clamp(0.72rem, 3.5vw, 0.88rem);
+        letter-spacing: 0.06em;
+        padding: 0 10px;
     }
-    #header-img { width: 11rem; max-width: 190px; margin: 0 auto 1.4rem; }
-    .item-button { padding: 1.1rem 1.3rem; border-radius: 10px; }
-    .item-button-title { font-size: 0.98rem; }
-    .item-button-desc { font-size: 1.08rem; line-height: 1.6; }
+
+    #stage, main.stage-main { 
+        padding: 0 clamp(0.85rem, 3.8vw, 1.3rem) 2.2rem; 
+        gap: 2.6rem; 
+    }
+    
+    .section-block { 
+        scroll-margin-top: 70px; 
+        padding-bottom: 2.2rem;
+    }
+
+    /* Full-width responsive quote alignment without right gap */
     .hero-quote {
         margin: 1.6rem 0;
-        gap: 0.4rem;
+        gap: 0;
         width: 100%;
         max-width: 100%;
         align-items: flex-start;
         text-align: left;
     }
+    
     .hero-quote .hero-line {
         display: inline-block;
         width: fit-content;
         max-width: 100%;
-        white-space: normal;
-        text-wrap: balance;
-        font-size: clamp(1.15rem, 5.6vw, 1.65rem);
-        line-height: 1.28;
-        letter-spacing: 0.04em;
+        white-space: nowrap;
         text-align: left;
-        background-size: 100% 1.28em;
-        background-repeat: repeat-y;
         -webkit-box-decoration-break: clone;
         box-decoration-break: clone;
-        -webkit-text-stroke: 0.45px #000000;
+        -webkit-text-stroke: 0px transparent;
         margin: 0;
-        padding: 0;
-        filter: 
-            drop-shadow(0 1.5px 0 #000000)
-            drop-shadow(0 3px 5px rgba(0, 0, 0, 0.8));
+        padding: 0 0.05em 0 0;
     }
+    
+    .hero-quote .quote-intro {
+        font-size: clamp(1.26rem, 7.6vw, 2.35rem);
+        font-weight: 400;
+        line-height: 0.86;
+        letter-spacing: 0.01em;
+        text-transform: none;
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        filter: 
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9))
+            drop-shadow(0 3px 6px rgba(0, 0, 0, 0.65));
+        margin-bottom: -0.08em;
+    }
+    
+    .hero-quote .quote-main {
+        font-size: clamp(1.92rem, 11.25vw, 3.65rem);
+        line-height: 0.78;
+        letter-spacing: 0.005em;
+        text-transform: uppercase;
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        filter: 
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95))
+            drop-shadow(0 4px 8px rgba(0, 0, 0, 0.75));
+        margin: 0;
+    }
+    
+    .hero-quote .quote-main + .quote-main {
+        margin-top: -0.06em;
+    }
+
+    #header-img { 
+        width: clamp(9.5rem, 42vw, 12.5rem); 
+        max-width: 200px; 
+        margin: 0 auto 1.5rem; 
+    }
+
     h1:not(.hero-quote), h2 {
-        font-size: clamp(1.35rem, 5.8vw, 1.85rem);
-        margin: 1.1rem auto 1.5rem;
-        -webkit-text-stroke: 0.45px #000000;
+        font-size: clamp(1.85rem, 8.4vw, 2.85rem);
+        line-height: 1.1;
+        margin: 1.6rem auto 1.4rem;
+        -webkit-text-stroke: 0px transparent;
+        text-transform: none;
+    }
+
+    h3 {
+        font-size: clamp(1.3rem, 5.2vw, 1.8rem);
+        margin: 1.8rem 0 0.6rem;
+    }
+
+    p {
+        font-size: clamp(1.02rem, 3.6vw, 1.14rem);
+        line-height: 1.72;
+    }
+
+    /* Projects Grid */
+    .button-section { 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: clamp(0.5rem, 2.4vw, 0.85rem);
+        margin-top: 1.4rem;
+    }
+    
+    .button-section a {
+        padding: 2px;
+        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
+    }
+    
+    .button-section a p { 
+        inset: 2px;
+        font-size: clamp(0.48rem, 2.3vw, 0.68rem); 
+        letter-spacing: 0.02em; 
+        padding: 0.15rem;
+        white-space: nowrap;
+    }
+
+    /* CV / Vita */
+    .cv-group { margin-bottom: 1.8rem; }
+    .cv-group-label { font-size: 0.96rem; letter-spacing: 0.22em; }
+    .cv-row { 
+        grid-template-columns: clamp(5.6rem, 22vw, 6.8rem) 1fr; 
+        gap: 0 0.8rem;
+        padding: 0.55rem 0;
+        font-size: clamp(0.98rem, 3.4vw, 1.08rem); 
+        line-height: 1.6;
+    }
+
+    /* Subpages Link Items */
+    .item-button { 
+        padding: 1.1rem 1.25rem; 
+        border-radius: 12px; 
+        margin-bottom: 1rem;
+    }
+    .item-button-title { font-size: clamp(0.98rem, 3.8vw, 1.1rem); }
+    .item-button-desc { font-size: clamp(0.95rem, 3.4vw, 1.05rem); line-height: 1.62; }
+
+    /* Contact Buttons */
+    .contact-btn {
+        width: 100%;
+        max-width: 380px;
+        height: 48px;
+        font-size: clamp(0.85rem, 3.4vw, 0.95rem);
+        letter-spacing: 0.06em;
+        margin: 0 auto 0.9rem;
     }
 }
