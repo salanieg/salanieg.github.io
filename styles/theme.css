@@ -671,15 +671,22 @@ footer a:hover { color: #aaa; }
         border-radius: 10px;
     }
     .tile, .chrome-nav a { 
-        font-size: 0.72rem; 
-        letter-spacing: 0.05em; 
+        font-size: clamp(0.52rem, 2.7vw, 0.72rem); 
+        letter-spacing: 0.02em; 
         height: 42px;
+        white-space: nowrap;
+        padding: 0 2px;
     }
     #stage, main.stage-main { padding: 0 1.1rem 2rem; gap: 2.8rem; }
     .section-block { scroll-margin-top: 70px; }
     .cv-row { grid-template-columns: 6.2rem 1fr; font-size: 0.98rem; }
     .button-section { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
-    .button-section a p { font-size: 0.72rem; letter-spacing: 0.04em; padding: 0.2rem; }
+    .button-section a p { 
+        font-size: clamp(0.44rem, 2.3vw, 0.65rem); 
+        letter-spacing: 0.02em; 
+        padding: 0 0.2rem;
+        white-space: nowrap;
+    }
     #header-img { width: 11rem; max-width: 190px; margin: 0 auto 1.4rem; }
     .item-button { padding: 1.1rem 1.3rem; border-radius: 10px; }
     .item-button-title { font-size: 0.98rem; }
