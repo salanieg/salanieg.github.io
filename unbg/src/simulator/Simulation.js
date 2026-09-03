@@ -229,6 +229,7 @@ export class Simulation {
 
         // Safety
         this.emergencyBrake = false;
+        this.onEmergencyBrakeChange = null;
 
         // Environment variables
         this.trainMass = MASS_KG; 
@@ -822,7 +823,7 @@ export class Simulation {
         // Check if train is approaching or inside a station
         const trainCenter = this.isReversing ? (this.position + this.trainHalfLength) : (this.position - this.trainHalfLength);
         const nextStation = this.stations[this.nextStationIdx];
-        const distToNext = Math.abs(trainCenter - nextStation.position);
+        const distToNext = Math.abs(trainCenter - this.getStationStopPosition(nextStation));
 
         if (distToNext < 100) {
             limit = 40; // station approach limit 40 km/h
@@ -917,10 +918,21 @@ export class Simulation {
         }
     }
 
+    getStationStopPosition(station) {
+        if (!station) return 0;
+        let pos = station.position;
+        if (station.name === "Scharfreiterring") {
+            // Scharfreiterring: Stop shifted +18m into the open platform area,
+            // so trains are not covered/obscured by the southern escalator building (Rolltreppenbau).
+            pos += 18.0;
+        }
+        return pos;
+    }
+
     getSideForStation(idx) {
         const station = this.stations[idx];
         if (!station) return 'left';
-        const isRightExit = station.side || station.name === "Scharfreiterring";
+        const isRightExit = station.side;
         const side = isRightExit ? 'right' : 'left';
         if (this.isReversing) {
             return side;
@@ -936,18 +948,17 @@ export class Simulation {
         let station = this.stations[this.nextStationIdx];
         const currentStation = this.stations[this.currentStationIdx];
         if (currentStation) {
-            const dNext = Math.abs(trainCenter - station.position);
-            const dCurr = Math.abs(trainCenter - currentStation.position);
+            const dNext = Math.abs(trainCenter - this.getStationStopPosition(station));
+            const dCurr = Math.abs(trainCenter - this.getStationStopPosition(currentStation));
             if (dCurr < dNext) station = currentStation;
         }
 
         if (!station) return 'left';
 
-        // Nuremberg U1 rules (from the perspective of travel towards Langwasser Süd / Reverse):
-        // 1. Scharfreiterring uses outer tracks -> Right exit.
-        // 2. Side platforms (Muggenhof, Stadtgrenze) -> Right exit.
-        // 3. Island platforms (all others) -> Left exit.
-        const isRightExit = station.side || station.name === "Scharfreiterring";
+        // Nuremberg U1 rules:
+        // 1. Side platforms (Muggenhof, Stadtgrenze: station.side === true) -> Right exit in reverse, Left exit in forward.
+        // 2. Island platforms & Scharfreiterring (between running tracks) -> Left exit in reverse, Right exit in forward.
+        const isRightExit = station.side;
         const side = isRightExit ? 'right' : 'left';
 
         // The simulator drives on different tracks for different directions.
@@ -984,7 +995,8 @@ export class Simulation {
     updateStationCheck(dt) {
         const trainCenter = this.isReversing ? (this.position + this.trainHalfLength) : (this.position - this.trainHalfLength);
         const nextStation = this.stations[this.nextStationIdx];
-        const distToStation = Math.abs(trainCenter - nextStation.position);
+        const stopPos = this.getStationStopPosition(nextStation);
+        const distToStation = Math.abs(trainCenter - stopPos);
         const isAtPlatform = distToStation < 12;
 
         if (isAtPlatform) {
@@ -1001,8 +1013,8 @@ export class Simulation {
             this.stopWaitTime = 0;
 
             // If we have driven past the platform center of the next station, auto-advance it!
-            const passedForward = !this.isReversing && (trainCenter > nextStation.position + 12);
-            const passedReverse = this.isReversing && (trainCenter < nextStation.position - 12);
+            const passedForward = !this.isReversing && (trainCenter > stopPos + 12);
+            const passedReverse = this.isReversing && (trainCenter < stopPos - 12);
             if (passedForward || passedReverse) {
                 this.advanceNextStation();
             }
@@ -1020,7 +1032,8 @@ export class Simulation {
             const prevStation = this.stations[this.currentStationIdx];
             if (prevStation) {
                 const trainCenter = this.isReversing ? (this.position + this.trainHalfLength) : (this.position - this.trainHalfLength);
-                const distFromPrev = Math.abs(trainCenter - prevStation.position);
+                const prevStopPos = this.getStationStopPosition(prevStation);
+                const distFromPrev = Math.abs(trainCenter - prevStopPos);
                 if (distFromPrev > 20) {
                     this.displayNextStationIdx = this.nextStationIdx;
                     this.pendingDisplayAdvance = false;
@@ -1058,7 +1071,8 @@ export class Simulation {
     runATO(dt) {
         const nextStation = this.stations[this.nextStationIdx];
         const trainCenter = this.isReversing ? (this.position + this.trainHalfLength) : (this.position - this.trainHalfLength);
-        const distToStation = Math.abs(trainCenter - nextStation.position);
+        const stopPos = this.getStationStopPosition(nextStation);
+        const distToStation = Math.abs(trainCenter - stopPos);
         const dir = this.isReversing ? -1 : 1;
 
         // --- Stopped precisely at the platform ---
@@ -1153,9 +1167,13 @@ export class Simulation {
     // Vollbremsung gelegt; beim Lösen bleibt er bewusst dort (Fahrer muss
     // selbst wieder aufschalten).
     triggerEmergencyBrake() {
+        const wasActive = this.emergencyBrake;
         this.emergencyBrake = !this.emergencyBrake;
         if (this.emergencyBrake) {
             this.throttle = -1;
+        }
+        if (this.onEmergencyBrakeChange && wasActive !== this.emergencyBrake) {
+            this.onEmergencyBrakeChange(this.emergencyBrake);
         }
     }
 

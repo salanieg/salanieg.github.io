@@ -24,18 +24,19 @@
 //     Datei erhöhen (und modulübergreifend identisch halten!).
 // ============================================================================
 import * as THREE from 'three';
-import { Simulation } from './simulator/Simulation.js?v=66';
-import { WorldManager } from './simulator/WorldManager.js?v=67';
+import { Simulation } from './simulator/Simulation.js?v=67';
+import { WorldManager } from './simulator/WorldManager.js?v=74';
 import { TrackManager } from './simulator/TrackManager.js?v=79';
-import { StationModel } from './simulator/StationModel.js?v=88';
-import { TrainModel } from './simulator/TrainModel.js?v=88';
+import { StationModel } from './simulator/StationModel.js?v=98';
+import { TrainModel } from './simulator/TrainModel.js?v=99';
 import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=11';
 import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=11';
 import { TRACK_DATA_TRUNK } from './simulator/TrackDataTrunk.js?v=5';
-import { AudioManager } from './audio/AudioManager.js?v=40';
+import { AudioManager } from './audio/AudioManager.js?v=49';
 import { RadioManager } from './audio/RadioManager.js?v=2';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { SpaceIntro } from './simulator/SpaceIntro.js?v=2';
 
 // Wiederverwendbare Temp-Vektoren für den Frame-Loop (kein GC-Druck)
 const _escPlayerPos = new THREE.Vector3();
@@ -82,40 +83,76 @@ class App {
 
         this.dom = {
             splash: document.getElementById('splash'),
-            btnStart: document.getElementById('btn-start')
+            btnSplashClose: document.getElementById('btn-splash-close'),
+            btnSplashDismiss: document.getElementById('btn-splash-dismiss'),
+            introStatusContainer: document.getElementById('intro-status-container'),
+            introLoadingStatus: document.getElementById('intro-loading-status'),
+            btnPlayGame: document.getElementById('btn-play-game')
         };
+        this.isSpaceIntro = true;
+        this.isReadyToStart = false;
+        this._isTransitioning = false;
         
         this.init();
     }
 
     init() {
-        // Build 3D world manager (WorldManager owns the renderer/canvas/cameras -- it is the
-        // one true singleton; it just needs telling which line's Simulation to read from,
-        // which switchLine() keeps in sync via this.world.sim).
+        // Build 3D world manager (WorldManager owns the renderer/canvas/cameras)
         const canvasContainer = document.getElementById('canvas3d');
         this.world = new WorldManager(canvasContainer, null);
 
-        // Stadtmodell-Download SOFORT anstoßen: der GLB-Download (~4.7 MB)
-        // läuft übers Netzwerk parallel zu den CPU-gebundenen Bauschritten
-        // der Lade-Pipeline. Im Normalfall ist er längst fertig, wenn die
-        // Bauschritte durch sind — die Download-Zeit verschwindet aus dem
-        // Ladebalken statt sequenziell hintendran zu hängen.
-        this.startCityModelDownload();
+        // Instant Space Intro: Starfield particle system and cosmic lighting
+        this.spaceIntro = new SpaceIntro(this.world.scene, this.world.activeCamera);
+        this.world.isSpaceIntro = true;
 
-        // Der komplette Szenenaufbau (U1-Rig, Plärrer, Stammstrecke, Weichen,
-        // Chunk-Vorbau, Stadtmodell, GPU-Upload) läuft schrittweise über die
-        // Lade-Pipeline, damit der Ladebalken ECHTEN Fortschritt anzeigt und
-        // die Seite während des Aufbaus nicht einfriert.
-        this.startLoadingPipeline();
+        // Instant G1 TrainModel in the space scene (isolated in trainRoot)
+        const sim = this.getOrCreateSim('U1');
+        this.trainRoot = new THREE.Group();
+        this.trainRoot.name = 'trainRoot';
+        this.world.scene.add(this.trainRoot);
+
+        // Separate lineRoot for subway tracks & stations (strictly hidden during space intro)
+        const lineRoot = new THREE.Group();
+        lineRoot.name = 'lineRoot_U1';
+        lineRoot.visible = false;
+        this.world.scene.add(lineRoot);
+        this.lineRoot = lineRoot;
+        this._loadCtx = { sim, lineRoot };
+
+        this.trainModel = new TrainModel(this.trainRoot, sim);
+        this.trainModel.isStraight = true;
+        this.trainModel.alignStraight();
+        this.sim = sim;
+        this.world.sim = sim;
+        this.world.train3D = this.trainModel;
+        this.world.setCamera('cab');
+
+        // Setup dismissable Steuerung modal (for in-game controls menu)
+        const hideControls = () => {
+            if (this.dom.splash) this.dom.splash.style.display = 'none';
+        };
+        if (this.dom.btnSplashClose) this.dom.btnSplashClose.addEventListener('click', hideControls);
+        if (this.dom.btnSplashDismiss) this.dom.btnSplashDismiss.addEventListener('click', hideControls);
+        if (this.dom.splash) {
+            this.dom.splash.addEventListener('click', (e) => {
+                if (e.target === this.dom.splash) hideControls();
+            });
+        }
+
+        // Bind Play Game handler
+        if (this.dom.btnPlayGame) this.dom.btnPlayGame.addEventListener('click', () => this.launchGame());
 
         // Bind Footsteps from WorldManager to AudioManager
         this.world.onFootstep = (vol) => {
-            const isPlatform = this.world.activeCameraType === 'platform';
-            this.audio.playFootstep(vol, isPlatform);
+            this.audio.playFootstep(vol);
         };
 
-        // Bind Start Button
-        this.dom.btnStart.addEventListener('click', this.startSimulation.bind(this));
+        // Start render loop immediately on Frame 1!
+        requestAnimationFrame(this.animate.bind(this));
+
+        // Start background downloads & building
+        this.startCityModelDownload();
+        this.startBackgroundLoadingPipeline();
 
         // (Das Teleport-Dropdown wird von der Lade-Pipeline befüllt, sobald das
         // aktive Rig existiert — siehe Schritt 'AKTIVIERE SZENE'.)
@@ -208,9 +245,7 @@ class App {
 
         // Steuerung Button event listener
         document.getElementById('btn-controls').addEventListener('click', (e) => {
-            const startBtn = document.getElementById('btn-start');
-            startBtn.textContent = "Schließen";
-            this.dom.splash.style.display = 'flex';
+            if (this.dom.splash) this.dom.splash.style.display = 'flex';
             e.target.blur();
         });
 
@@ -237,15 +272,20 @@ class App {
                     // Rebuild the 3D train model
                     this.trainModel.setTrainModel(modelId);
 
-                    // Upload the freshly built model to the GPU in this frame (one
-                    // controlled hitch on the selection instead of a surprise hitch
-                    // when the new train first comes into view)
-                    this.warmUpRenderer();
+                    if (this.isSpaceIntro) {
+                        this.trainModel.isStraight = true;
+                        this.trainModel.alignStraight();
+                        this.trainModel.updateLights(false);
+                    } else {
+                        // Upload the freshly built model to the GPU in this frame
+                        this.warmUpRenderer();
+                    }
 
                     // Update cameras to make sure they are aligned
                     if (this.world.activeCameraType === 'cab') {
                         this.world.setCamera('cab');
                     }
+                    this.world.update(0.016, this.trainModel);
 
                     // Play feedback click sound
                     this.audio.playCabSwitch();
@@ -380,7 +420,17 @@ class App {
         if (!this._simCache) this._simCache = {};
         if (!this._simCache[lineId]) {
             const trackDataByLine = { U2: TRACK_DATA_U2, U3: TRACK_DATA_U3 };
-            this._simCache[lineId] = trackDataByLine[lineId] ? new Simulation(trackDataByLine[lineId]) : new Simulation();
+            const sim = trackDataByLine[lineId] ? new Simulation(trackDataByLine[lineId]) : new Simulation();
+            sim.onEmergencyBrakeChange = (isActive) => {
+                if (this.audio) {
+                    if (isActive) {
+                        this.audio.playEmergencyBrakeAlarm();
+                    } else {
+                        this.audio.playEmergencyBrakeRelease();
+                    }
+                }
+            };
+            this._simCache[lineId] = sim;
         }
         return this._simCache[lineId];
     }
@@ -448,6 +498,21 @@ class App {
         this.stationModel = rig.stationModel;
         this.trainModel = rig.trainModel;
         this.world.sim = rig.sim;
+
+        if (this.stationModel && this.world) {
+            this.stationModel.onPassengerVisibility = (passengers, active) => {
+                this.world.setPassengersActive(passengers, active);
+            };
+            for (const idx of this.stationModel.loadedStations.keys()) {
+                this.world.setPassengersActive(this.stationModel.stationPassengers.get(idx), true);
+            }
+        }
+
+        if (this.cityModel && this.world && this.sim) {
+            this.world.cityModel = this.cityModel;
+            const isUnderground = (this.world.getChunkTypeAtDistance(this.sim.position) === 'underground');
+            this.cityModel.visible = !isUnderground;
+        }
     }
 
     switchLine(lineId) {
@@ -538,184 +603,159 @@ class App {
     // voran, statt die Seite sekundenlang einzufrieren.
     // Aufteilung des Balkens: Bauschritte 0..72 %, Stadtmodell-Download
     // 72..97 % (echter XHR-Fortschritt), GPU-Upload 97..100 %.
-    startLoadingPipeline() {
-        const setText = (t) => {
-            const el = document.getElementById('btn-text');
-            if (el) el.textContent = t;
-        };
-        // setBar setzt nur noch das ZIEL; die tatsächliche Balkenbreite wird von
-        // _startLoadBarAnimator() jeden Frame weich nachgezogen (und kriecht in
-        // Wartephasen langsam weiter) — so bleibt der Balken nie stehen.
-        // Math.max hält den Fortschritt monoton (kein Zurückspringen).
-        const setBar = (f) => {
-            const v = Math.max(0, Math.min(1, f));
-            this._loadTargetFrac = Math.max(this._loadTargetFrac || 0, v);
-        };
-        this._setLoadText = setText;
-        this._setLoadBar = setBar;
-        this._loadTargetFrac = 0;
-        this._loadShownFrac = 0;
-        this._loadBarDone = false;
-        this._startLoadBarAnimator();
-
-        const steps = [];
-        const once = (label, weight, fn) => steps.push({ label, weight, tick: () => { fn(); return 1; } });
-
-        // ---- U1-Rig in Einzelschritten (inhaltlich identisch zu buildLineRig('U1')) ----
-        once('LADE STRECKE', 3, () => {
-            const sim = this.getOrCreateSim('U1');
-            const lineRoot = new THREE.Group();
-            lineRoot.name = 'lineRoot_U1';
-            this.world.scene.add(lineRoot);
-            this._loadCtx = { sim, lineRoot, trackManager: new TrackManager(lineRoot, sim) };
-        });
-        steps.push({ label: 'BAUE STATIONEN', weight: 26, tick: () => {
-            const ctx = this._loadCtx;
-            if (!ctx.stationModel) {
-                ctx.stationModel = new StationModel(ctx.lineRoot, ctx.sim, { deferBuild: true });
-                return 0.5;
-            }
-            if (!ctx.stationModel.stationsList[0]) ctx.stationModel.buildStationAtIndex(0);
-            if (!ctx.stationModel.stationsList[1]) ctx.stationModel.buildStationAtIndex(1);
-            return 1;
-        } });
-        once('BAUE ZUG', 9, () => {
-            const ctx = this._loadCtx;
-            ctx.trainModel = new TrainModel(ctx.lineRoot, ctx.sim);
-            const rig = {
-                lineId: 'U1', sim: ctx.sim, trackManager: ctx.trackManager,
-                stationModel: ctx.stationModel, trainModel: ctx.trainModel, lineRoot: ctx.lineRoot
-            };
-            this.lineRigs.U1 = rig;
-            this.adoptRig(rig);
-        });
-
-        // Plärrer: gemeinsamer Sonderbau aller drei Linien, dauerhaft in der
-        // Welt-Szene (buildPlaerrer setzt auch trackManager.plaerrerGroup).
-        once('BAUE PLÄRRER-HALLE', 8, () => {
-            this.plaerrerGroup = this.trackManager.buildPlaerrer(this.stationModel);
-            this.world.scene.add(this.plaerrerGroup); // Object3D.add() reparented automatisch
-        });
-
-        // Stammstrecke (U2/U3): kurz (~75 Chunks) und dauerhaft resident,
-        // deshalb werden alle Chunks direkt gebaut statt über update()-Streaming.
-        once('BAUE STAMMSTRECKE', 2, () => {
-            const sim = new Simulation(TRACK_DATA_TRUNK);
-            const root = new THREE.Group();
-            root.name = 'trunkRoot';
-            this._trunkCtx = {
-                sim, root,
-                trackManager: new TrackManager(root, sim),
-                stationModel: null,
-                chunkIdx: 0
-            };
-            this._trunkSim = sim;
-        });
-        steps.push({ label: 'BAUE STAMMSTRECKE', weight: 13, tick: () => {
-            const t = this._trunkCtx;
-            if (!t.stationModel) {
-                t.stationModel = new StationModel(t.root, t.sim, { deferBuild: true });
-            }
-            this._trunkStationModel = t.stationModel; // für die Rolltreppen-Ambience
-            this.trunkGroup = t.root;
-            this.world.scene.add(t.root);
-            return 1;
-        } });
-
-        // Weichen-Übergänge (Rothenburger Straße / Rathenauplatz): einmalig,
-        // von U2 und U3 gemeinsam genutzt. Braucht funktionierende U2/U3-
-        // Simulationen (billig), obwohl deren volle Rigs lazy bleiben.
-        once('BAUE WEICHEN', 3, () => {
-            const u2Sim = this.getOrCreateSim('U2'), u3Sim = this.getOrCreateSim('U3');
-            this.switchGroups = {};
-            for (const name of ['Rothenburger Straße', 'Rathenauplatz']) {
-                const g = this.trackManager.buildSwitchTransition(u2Sim, u3Sim, name, name);
-                if (g) { this.switchGroups[name] = g; this.world.scene.add(g); }
-            }
-        });
-
-        // (Früher wurde hier die GANZE U1-Strecke vorgebaut — alle Chunks in den
-        // Cache, plus anschließend alle auf die GPU. Das war der Löwenanteil der
-        // Ladezeit. Jetzt nur noch die Spawn-Umgebung: das Kulling-Update in
-        // 'AKTIVIERE SZENE' baut das Startfenster on demand, warmUpSpawn lädt es
-        // hoch, und _beginBackgroundResidency baut/lädt den Rest der Linie
-        // während des Spielens proximity-geordnet nach.)
-
-        // Szene scharfschalten: Kulling-Erstlauf, Teleport-UI, Render-Loop.
-        once('AKTIVIERE SZENE', 1, () => {
-            this.rebuildTeleportUI();
-            this.trackManager.update(this.sim.position);
-            this.updateTrunkVisibility();
-            this.updateSwitchVisibility();
-            this.stationModel.update(this.sim.position);
-            this.trainModel.update(0);
-            // Render-Loop starten (zeichnet die statische Szene hinter dem Splash)
-            requestAnimationFrame(this.animate.bind(this));
-        });
-
-        // ---- Executor ----
-        // Zeitbudget statt "ein Quantum pro Frame": innerhalb eines rAF-Ticks
-        // wird so lange weitergearbeitet, bis das Frame-Budget verbraucht ist.
-        // Vorher kostete jedes noch so billige Quantum (eine Station, 5 Chunks)
-        // eine volle vsync-Periode Wanduhrzeit — die Ladezeit hing damit sogar
-        // an der Monitor-Frequenz. Balken/Text zeichnen weiterhin jeden Frame.
-        const BUILD_SLICE = 0.72;      // Bauschritte belegen 0..72 % des Balkens
-        const FRAME_BUDGET_MS = 12;    // Rest der ~16.7 ms bleibt fürs Neuzeichnen
-        const totalWeight = steps.reduce((a, s) => a + s.weight, 0);
-        let doneWeight = 0;
-        let idx = 0;
-        setText(steps[0].label);
-        setBar(0);
-        const pump = () => {
-            const start = performance.now();
-            let frac = 0;
-            while (idx < steps.length) {
-                const step = steps[idx];
-                frac = step.tick();
-                if (frac === true) frac = 1;
-                if (frac >= 1) {
-                    doneWeight += step.weight;
-                    idx++;
-                    frac = 0;
+    // ------------------------------------------------------------------------
+    // Hintergrund-Lade-Pipeline:
+    // Die Strecke, Bahnhöfe, Stammstrecke, Weichen, Stadtmodell und GPU-Shader
+    // werden asynchron im Hintergrund geladen, während der Spieler im Cockpit
+    // bereits das schwebende Sternenfeld genießt.
+    // ------------------------------------------------------------------------
+    startBackgroundLoadingPipeline() {
+        const steps = [
+            () => {
+                this._loadCtx.trackManager = new TrackManager(this._loadCtx.lineRoot, this._loadCtx.sim);
+            },
+            () => {
+                this._loadCtx.stationModel = new StationModel(this._loadCtx.lineRoot, this._loadCtx.sim, { deferBuild: true });
+            },
+            () => {
+                if (this._loadCtx.stationModel) this._loadCtx.stationModel.buildStationAtIndex(0);
+            },
+            () => {
+                if (this._loadCtx.stationModel) this._loadCtx.stationModel.buildStationAtIndex(1);
+            },
+            () => {
+                const ctx = this._loadCtx;
+                const rig = {
+                    lineId: 'U1', sim: ctx.sim, trackManager: ctx.trackManager,
+                    stationModel: ctx.stationModel, trainModel: this.trainModel, lineRoot: ctx.lineRoot
+                };
+                this.lineRigs.U1 = rig;
+                this.adoptRig(rig);
+            },
+            () => {
+                this.plaerrerGroup = this._loadCtx.trackManager.buildPlaerrer(this._loadCtx.stationModel);
+                if (this.plaerrerGroup) {
+                    this.plaerrerGroup.visible = false;
+                    this.world.scene.add(this.plaerrerGroup);
                 }
-                if (performance.now() - start >= FRAME_BUDGET_MS) break;
+            },
+            () => {
+                const sim = new Simulation(TRACK_DATA_TRUNK);
+                const root = new THREE.Group();
+                root.name = 'trunkRoot';
+                root.visible = false;
+                this._trunkCtx = {
+                    sim, root,
+                    trackManager: new TrackManager(root, sim),
+                    stationModel: new StationModel(root, sim, { deferBuild: true })
+                };
+                this._trunkSim = sim;
+                this._trunkStationModel = this._trunkCtx.stationModel;
+                this.trunkGroup = root;
+                this.world.scene.add(root);
+            },
+            () => {
+                const u2Sim = this.getOrCreateSim('U2'), u3Sim = this.getOrCreateSim('U3');
+                this.switchGroups = {};
+                for (const name of ['Rothenburger Straße', 'Rathenauplatz']) {
+                    const g = this._loadCtx.trackManager.buildSwitchTransition(u2Sim, u3Sim, name, name);
+                    if (g) { g.visible = false; this.switchGroups[name] = g; this.world.scene.add(g); }
+                }
+            },
+            () => {
+                this.rebuildTeleportUI();
+            }
+        ];
+
+        let idx = 0;
+        const pump = () => {
+            const startT = performance.now();
+            while (idx < steps.length && (performance.now() - startT < 10)) {
+                try {
+                    steps[idx]();
+                } catch (err) {
+                    console.error('Error in background loading step', idx, err);
+                }
+                idx++;
+                this._loadPipelineStepIdx = idx;
             }
             if (idx < steps.length) {
-                setText(steps[idx].label);
-                setBar(((doneWeight + steps[idx].weight * frac) / totalWeight) * BUILD_SLICE);
                 requestAnimationFrame(pump);
             } else {
-                setBar(BUILD_SLICE);
-                this.finishAfterCityModel(BUILD_SLICE, 0.25); // 72..97 %; GPU-Upload = Rest
+                // Initial rigs are built! Start residency for ALL remaining chunks and stations!
+                this._seedResidencyFromLiveScene();
+                this._beginBackgroundResidency();
             }
         };
         requestAnimationFrame(pump);
     }
 
-    // Treibt die sichtbare Balkenbreite jeden Frame, entkoppelt vom echten
-    // Fortschritt (den setBar als this._loadTargetFrac ablegt):
-    //  - liegt das Ziel vorn: weich, aber mit Mindesttempo aufschließen;
-    //  - ist das Ziel eingeholt (Wartephase: Kompilieren / GLB-Download): ganz
-    //    langsam asymptotisch weiterkriechen, damit der Balken NIE stillsteht.
-    // Läuft bis this._loadBarDone (in finishAfterCityModel gesetzt), dann steht
-    // die Breite fix auf 100 %.
-    _startLoadBarAnimator() {
-        const step = () => {
-            if (this._loadBarDone) return;
-            const target = this._loadTargetFrac || 0;
-            let shown = this._loadShownFrac || 0;
-            if (shown < target) {
-                shown += (target - shown) * 0.18 + 0.0008;
-                if (shown > target) shown = target;
-            } else if (shown < 0.995) {
-                shown += (1 - shown) * 0.0015;
+    onBackgroundLoadingComplete() {
+        this.isReadyToStart = true;
+        console.log('Background loading complete! 100% of all chunks & stations are on GPU. "Spiel starten!" is ready.');
+
+        if (this.dom.introLoadingStatus) {
+            this.dom.introLoadingStatus.textContent = '100 % geladen';
+            setTimeout(() => {
+                if (this.dom.introLoadingStatus) this.dom.introLoadingStatus.style.display = 'none';
+                if (this.dom.btnPlayGame) {
+                    this.dom.btnPlayGame.style.display = 'inline-flex';
+                    this.dom.btnPlayGame.style.opacity = '0';
+                    requestAnimationFrame(() => {
+                        this.dom.btnPlayGame.style.opacity = '1';
+                    });
+                }
+            }, 300);
+        } else if (this.dom.btnPlayGame) {
+            this.dom.btnPlayGame.style.display = 'inline-flex';
+        }
+    }
+
+    _updateIntroLoadingProgress() {
+        if (this.isReadyToStart) return;
+
+        let pct = 0;
+        // Step 1: Initial pipeline setup steps (0..12%)
+        const pipelineSteps = 8;
+        const currentStep = this._loadPipelineStepIdx || 0;
+        pct += Math.min(12, Math.floor((currentStep / pipelineSteps) * 12));
+
+        // Step 2: City model download (0..20%)
+        if (this._cityDl) {
+            if (this._cityDl.done || this._cityDl.error) {
+                pct += 20;
+            } else if (this._cityDl.progress) {
+                pct += Math.floor(this._cityDl.progress * 20);
             }
-            this._loadShownFrac = shown;
-            const el = document.getElementById('btn-loading-bar');
-            if (el) el.style.width = (Math.min(1, shown) * 100).toFixed(1) + '%';
-            requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
+        }
+
+        // Step 3: Chunks & stations residency upload (0..68%)
+        if (this._residency) {
+            const total = (this._residency.totalChunks || 370) + (this._residency.numStations || 27);
+            const loaded = (this._resChunks ? this._resChunks.size : 0) + (this._resStations ? this._resStations.size : 0);
+            if (this._residency.done) {
+                pct += 68;
+            } else {
+                pct += Math.floor(Math.min(1, loaded / Math.max(1, total)) * 68);
+            }
+        }
+
+        pct = Math.min(99, Math.max(0, pct));
+        if (this._isStartingWarmup) {
+            pct = 100;
+        }
+
+        this._displayProgress = Math.max(this._displayProgress || 0, pct);
+        if (this.dom.introLoadingStatus) {
+            this.dom.introLoadingStatus.textContent = `${this._displayProgress} % geladen`;
+        }
+    }
+
+    _isEverythingFullyLoaded() {
+        if (this._isStartingWarmup) return false;
+        const cityDone = !this._cityDl || this._cityDl.done || !!this._cityDl.error;
+        const residencyDone = this._residency && this._residency.done;
+        return cityDone && residencyDone;
     }
 
     // Renders one frame with frustum culling disabled on every object, so all
@@ -782,6 +822,13 @@ class App {
                 model.matrixWorldAutoUpdate = false;
 
                 this.cityModel = model;
+                if (this.world) {
+                    this.world.cityModel = model;
+                    const isUnderground = (this.sim && this.world.sim)
+                        ? (this.world.getChunkTypeAtDistance(this.sim.position) === 'underground')
+                        : true;
+                    this.cityModel.visible = this.isSpaceIntro ? false : !isUnderground;
+                }
 
                 console.log('City model loaded successfully.');
                 this._cityDl.done = true;
@@ -811,60 +858,23 @@ class App {
 
     // Schlussphase der Lade-Pipeline: wartet (falls nötig) auf den parallel
     // gestarteten Stadtmodell-Download und zeigt dessen ECHTEN Fortschritt im
-    // Balken-Anteil `slice` (baseFrac..baseFrac+slice); danach GPU-Upload
-    // (warmUpEverything) bis 100 %. Ist der Download schon fertig, geht es
-    // ohne Wartezeit direkt zum GPU-Upload.
-    finishAfterCityModel(baseFrac = 0, slice = 0.25) {
-        const btnStart = this.dom.btnStart;
-        const setText = this._setLoadText || (() => {});
-        const setBar = this._setLoadBar || (() => {});
-
+    finishAfterCityModel() {
         const poll = () => {
             const dl = this._cityDl;
-            if (dl.error) {
-                // Auch ohne Stadtmodell Zug/Stationen jetzt hochladen, damit
-                // der erste Rundumblick nicht ruckelt
-                setText('BEREITE GRAFIK VOR');
+            if (dl && dl.error) {
                 this.warmUpSpawn(() => {}, () => {
-                    this._loadBarDone = true; // Animator stoppen, bevor wir die Breite fix setzen
-                    const bar = document.getElementById('btn-loading-bar');
-                    if (bar) {
-                        bar.style.width = '100%';
-                        bar.style.backgroundColor = '#ef4444';
-                    }
-                    btnStart.classList.add('loaded');
-                    btnStart.disabled = false;
-                    setText(`Simulation starten (Fehler: ${dl.error})`);
+                    this.onBackgroundLoadingComplete();
                 });
                 return;
             }
-            if (!dl.done) {
-                setText(`LADE STADTMODELL (${dl.totalMB} MB)`);
-                setBar(baseFrac + slice * dl.frac);
+            if (dl && !dl.done) {
                 requestAnimationFrame(poll);
                 return;
             }
-            // GPU-Upload der Spawn-Umgebung (Stadt, Startbahnhof, Startfenster,
-            // Zug) hinter dem Splash — sonst ruckelt der erste Rundumblick, wenn
-            // diese Buffer lazy hochgeladen werden. Der Rest der Linie folgt nach
-            // dem Start im Hintergrund. Läuft gebatcht über mehrere Frames; der
-            // Balken füllt den Rest bis 100 %.
-            setText('BEREITE GRAFIK VOR');
-            setBar(baseFrac + slice);
-            const gpuBase = baseFrac + slice;
             this.warmUpSpawn(
-                (f) => setBar(gpuBase + (1 - gpuBase) * f),
+                () => {},
                 () => {
-                    setBar(1);
-                    // kurz weich auf 100 % laufen lassen, dann Animator stoppen
-                    setTimeout(() => {
-                        this._loadBarDone = true;
-                        const bar = document.getElementById('btn-loading-bar');
-                        if (bar) bar.style.width = '100%';
-                    }, 350);
-                    btnStart.classList.add('loaded');
-                    btnStart.disabled = false;
-                    setText('Simulation starten');
+                    this.onBackgroundLoadingComplete();
                 }
             );
         };
@@ -886,6 +896,16 @@ class App {
     // disposed), deshalb genügt es, jeden Abschnitt einmal kurz zu rendern.
     // `setBar` bekommt den Fortschritt 0..1, `onDone` läuft nach Env-Map-Bake.
     warmUpSpawn(setBar, onDone) {
+        if (this.isSpaceIntro) {
+            // In Space Intro, geometry is already uploaded via offscreen residency.
+            // Only bake the faux glass reflections for the interior:
+            if (this.trainModel) {
+                this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
+            }
+            if (onDone) onDone();
+            return;
+        }
+
         const meshes = [];
         this.world.scene.traverse(o => { if (o.isMesh) meshes.push(o); });
 
@@ -1000,7 +1020,7 @@ class App {
     // mit abgeschaltetem Culling in die Szene, damit der folgende Render genau
     // die hochlädt. Ein Ziel wird über mehrere Frames abgearbeitet; fehlende
     // Chunks werden zuerst gebaut (eigener Frame ohne Upload).
-    _residencyPrep() {
+    _residencyPrep(batchLimit) {
         const r = this._residency;
         if (!r || r.done) return;
         const tm = this.trackManager, sm = this.stationModel;
@@ -1009,8 +1029,133 @@ class App {
         const trunkTm = this._trunkCtx ? this._trunkCtx.trackManager : null;
         const trunkSm = this._trunkCtx ? this._trunkCtx.stationModel : null;
 
-        // Kein Ziel in Arbeit? -> das nächste per Distanz zur Zugposition suchen.
-        if (!r.pending) {
+        const startT = performance.now();
+        const TIME_BUDGET_MS = this.isSpaceIntro ? 10 : 2;
+
+        if (this.isSpaceIntro) {
+            if (!this._offscreenTarget) {
+                this._offscreenTarget = new THREE.WebGLRenderTarget(4, 4);
+                this._offscreenScene = new THREE.Scene();
+                this._offscreenCam = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+            }
+
+            while (performance.now() - startT < TIME_BUDGET_MS) {
+                if (!r.pending) {
+                    const trainZ = this.sim.position;
+                    let best = null, bestDist = Infinity;
+                    
+                    for (let i = 0; i <= r.totalChunks; i++) {
+                        if (this._resChunks.has(i)) continue;
+                        const d = Math.abs((i + 0.5) * tm.chunkSize - trainZ);
+                        if (d < bestDist) { bestDist = d; best = { kind: 'chunk', idx: i }; }
+                    }
+                    for (let i = 0; i < r.numStations; i++) {
+                        if (this._resStations.has(i)) continue;
+                        const st = this.sim.stations[i];
+                        if (!st) { this._resStations.add(i); continue; }
+                        const d = Math.abs(st.position - trainZ);
+                        if (d < bestDist) { bestDist = d; best = { kind: 'station', idx: i }; }
+                    }
+                    
+                    if (trunkTm && !r.trunkDone) {
+                        if (!this._resTrunkChunks) this._resTrunkChunks = new Set();
+                        const trunkTotalChunks = Math.ceil(this._trunkSim.totalLength / trunkTm.chunkSize);
+                        let foundTrunk = false;
+                        for (let i = 0; i <= trunkTotalChunks; i++) {
+                            if (!this._resTrunkChunks.has(i)) {
+                                const d = 5000;
+                                if (d < bestDist) { bestDist = d; best = { kind: 'trunkChunk', idx: i }; }
+                                foundTrunk = true;
+                                break;
+                            }
+                        }
+                        if (!foundTrunk) {
+                            if (!this._resTrunkStations) this._resTrunkStations = new Set();
+                            let foundStation = false;
+                            for (let i = 0; i < trunkSm.sim.stations.length; i++) {
+                                if (!this._resTrunkStations.has(i)) {
+                                    const d = 5000;
+                                    if (d < bestDist) { bestDist = d; best = { kind: 'trunkStation', idx: i }; }
+                                    foundStation = true;
+                                    break;
+                                }
+                            }
+                            if (!foundStation) r.trunkDone = true;
+                        }
+                    }
+
+                    if (!best) { r.done = true; return; }
+
+                    let obj, parent;
+                    if (best.kind === 'chunk') {
+                        obj = tm.chunkCache.get(best.idx);
+                        if (!obj) {
+                            obj = tm.createChunk(best.idx);
+                            tm.chunkCache.set(best.idx, obj);
+                        }
+                        parent = tm.scene;
+                    } else if (best.kind === 'station') {
+                        obj = sm.stationsList[best.idx];
+                        if (!obj) {
+                            obj = sm.buildStationAtIndex(best.idx);
+                        }
+                        parent = sm.scene;
+                    } else if (best.kind === 'trunkChunk') {
+                        obj = trunkTm.chunkCache.get(best.idx);
+                        if (!obj) {
+                            obj = trunkTm.createChunk(best.idx);
+                            trunkTm.chunkCache.set(best.idx, obj);
+                            trunkTm.activeChunks.set(best.idx, obj);
+                            trunkTm.scene.add(obj);
+                        }
+                        parent = trunkTm.scene;
+                    } else if (best.kind === 'trunkStation') {
+                        obj = trunkSm.stationsList[best.idx];
+                        if (!obj) {
+                            obj = trunkSm.buildStationAtIndex(best.idx);
+                            trunkSm.scene.add(obj);
+                        }
+                        parent = trunkSm.scene;
+                    }
+                    
+                    const allMeshes = [];
+                    obj.traverse(o => { if (o.isMesh) allMeshes.push(o); });
+                    r.pending = { kind: best.kind, idx: best.idx, obj, parent, allMeshes, cursor: 0, uncculled: [] };
+                }
+
+                // Upload pending meshes
+                const p = r.pending;
+                const maxBatch = 128;
+                const end = Math.min(p.allMeshes.length, p.cursor + maxBatch);
+
+                this._offscreenScene.add(p.obj);
+                for (let i = p.cursor; i < end; i++) {
+                    const m = p.allMeshes[i];
+                    if (m.frustumCulled) { m.frustumCulled = false; p.uncculled.push(m); }
+                }
+                this.world.renderer.setRenderTarget(this._offscreenTarget);
+                this.world.renderer.render(this._offscreenScene, this._offscreenCam);
+                this.world.renderer.setRenderTarget(null);
+                this._offscreenScene.remove(p.obj);
+
+                for (const m of p.uncculled) m.frustumCulled = true;
+                p.uncculled = [];
+                p.cursor = end;
+
+                if (p.cursor >= p.allMeshes.length) {
+                    if (p.kind === 'chunk') this._resChunks.add(p.idx);
+                    else if (p.kind === 'station') this._resStations.add(p.idx);
+                    else if (p.kind === 'trunkChunk') this._resTrunkChunks.add(p.idx);
+                    else if (p.kind === 'trunkStation') this._resTrunkStations.add(p.idx);
+                    r.pending = null;
+                } else {
+                    break;
+                }
+            }
+            return;
+        }
+
+        while (!r.pending && (performance.now() - startT < TIME_BUDGET_MS)) {
             const trainZ = this.sim.position;
             let best = null, bestDist = Infinity;
             
@@ -1027,15 +1172,13 @@ class App {
                 if (d < bestDist) { bestDist = d; best = { kind: 'station', idx: i }; }
             }
             
-            // Trunk Chunks und Stationen nur bauen, wenn in der Nähe nichts dringenderes anliegt 
-            // (oder wir der Stammstrecke nahe kommen, was nur bei U2/U3 passiert)
             if (trunkTm && !r.trunkDone) {
                 if (!this._resTrunkChunks) this._resTrunkChunks = new Set();
                 const trunkTotalChunks = Math.ceil(this._trunkSim.totalLength / trunkTm.chunkSize);
                 let foundTrunk = false;
                 for (let i = 0; i <= trunkTotalChunks; i++) {
                     if (!this._resTrunkChunks.has(i)) {
-                        const d = 5000; // Fake-Distanz, damit aktive Linie Vorrang hat
+                        const d = 5000;
                         if (d < bestDist) { bestDist = d; best = { kind: 'trunkChunk', idx: i }; }
                         foundTrunk = true;
                         break;
@@ -1064,7 +1207,7 @@ class App {
                 if (!obj) {
                     obj = tm.createChunk(best.idx);
                     tm.chunkCache.set(best.idx, obj);
-                    return;
+                    continue;
                 }
                 owned = tm.activeChunks.has(best.idx);
                 parent = tm.scene;
@@ -1072,7 +1215,7 @@ class App {
                 obj = sm.stationsList[best.idx];
                 if (!obj) {
                     obj = sm.buildStationAtIndex(best.idx);
-                    return;
+                    continue;
                 }
                 owned = sm.loadedStations.has(best.idx);
                 parent = sm.scene;
@@ -1082,8 +1225,8 @@ class App {
                     obj = trunkTm.createChunk(best.idx);
                     trunkTm.chunkCache.set(best.idx, obj);
                     trunkTm.activeChunks.set(best.idx, obj);
-                    trunkTm.scene.add(obj); // direkt dauerhaft einhängen
-                    return;
+                    trunkTm.scene.add(obj);
+                    continue;
                 }
                 owned = true;
                 parent = trunkTm.scene;
@@ -1091,8 +1234,8 @@ class App {
                 obj = trunkSm.stationsList[best.idx];
                 if (!obj) {
                     obj = trunkSm.buildStationAtIndex(best.idx);
-                    trunkSm.scene.add(obj); // direkt dauerhaft einhängen
-                    return;
+                    trunkSm.scene.add(obj);
+                    continue;
                 }
                 owned = true;
                 parent = trunkSm.scene;
@@ -1102,13 +1245,16 @@ class App {
             const allMeshes = [];
             obj.traverse(o => { if (o.isMesh) allMeshes.push(o); });
             r.pending = { kind: best.kind, idx: best.idx, obj, parent, allMeshes, cursor: 0, uncculled: [] };
+            break;
         }
 
-        // Nächsten Batch Meshes dieses Ziels entkullen (die kommen im folgenden
-        // Render auf die GPU); zum Zurücksetzen nach dem Render merken.
+        if (!r.pending) return;
+
+        // Normal in-game residency (if ever needed):
         const p = r.pending;
         p.uncculled = [];
-        const end = Math.min(p.allMeshes.length, p.cursor + App.RESIDENCY_BATCH);
+        const maxBatch = batchLimit || App.RESIDENCY_BATCH;
+        const end = Math.min(p.allMeshes.length, p.cursor + maxBatch);
         for (; p.cursor < end; p.cursor++) {
             const m = p.allMeshes[p.cursor];
             if (m.frustumCulled) { m.frustumCulled = false; p.uncculled.push(m); }
@@ -1127,16 +1273,15 @@ class App {
         p.uncculled = [];
         if (p.cursor < p.allMeshes.length) return; // Ziel noch nicht fertig
 
-        // Nur entfernen, wenn das Streaming das Objekt inzwischen nicht selbst
-        // eingeblendet hat (sonst würde es mitten im Bild verschwinden).
-        let owned = true;
-        if (p.kind === 'chunk') {
-            owned = this.trackManager.activeChunks.has(p.idx);
-        } else if (p.kind === 'station') {
-            owned = this.stationModel.loadedStations.has(p.idx);
+        if (!this.isSpaceIntro) {
+            let owned = true;
+            if (p.kind === 'chunk') {
+                owned = this.trackManager.activeChunks.has(p.idx);
+            } else if (p.kind === 'station') {
+                owned = this.stationModel.loadedStations.has(p.idx);
+            }
+            if (!owned) p.parent.remove(p.obj);
         }
-        
-        if (!owned) p.parent.remove(p.obj);
         
         if (p.kind === 'chunk') this._resChunks.add(p.idx);
         else if (p.kind === 'station') this._resStations.add(p.idx);
@@ -1427,7 +1572,8 @@ class App {
             { key: 'dt1Growl', label: 'DT1-Growl' },
             { key: 'startupSing', label: 'Anfahr-Singen (G1)' },
             { key: 'brake', label: 'Bremsquietschen' },
-            { key: 'rolling', label: 'Rollgeräusch (Schienen)' }
+            { key: 'rolling', label: 'Rollgeräusch (Schienen)' },
+            { key: 'ambiance', label: 'Ambiance (Zug & Station)' }
         ];
 
         let html = '<div class="cd-title">Sound-Mixer (Taste N zum Schließen)</div>';
@@ -1471,22 +1617,84 @@ class App {
         }
     }
 
-    startSimulation() {
-        // Hide splash screen
-        this.dom.splash.style.display = 'none';
+    launchGame() {
+        if (!this.isReadyToStart || this._isTransitioning) return;
+        this._isTransitioning = true;
 
-        // On mobile, switch to fullscreen (must happen synchronously within
-        // this click handler, otherwise browsers refuse the request)
+        if (this.dom.splash) this.dom.splash.style.display = 'none';
+        if (this.dom.btnPlayGame) this.dom.btnPlayGame.style.display = 'none';
+        if (this.dom.introLoadingStatus) this.dom.introLoadingStatus.style.display = 'none';
+        if (this.dom.introStatusContainer) this.dom.introStatusContainer.style.display = 'none';
+
         if (document.body.classList.contains('is-mobile')) {
             this.requestFullscreen();
         }
 
-        // Initialize Audio Context (requires user gesture)
+        // Initialize Audio Context (user gesture)
         this.audio.init();
 
-        // Focus container and start loop
+        // Trigger warp acceleration effect
+        if (this.spaceIntro) {
+            this.spaceIntro.triggerWarp(() => {
+                this._completeGameLaunch();
+            });
+        } else {
+            this._completeGameLaunch();
+        }
+    }
+
+    _completeGameLaunch() {
+        if (this.spaceIntro) {
+            this.spaceIntro.dispose();
+            this.spaceIntro = null;
+        }
+        this.world.isSpaceIntro = false;
+        this.isSpaceIntro = false;
+        this._isTransitioning = false;
+
+        // Reparent train into lineRoot and remove temporary space trainRoot
+        if (this.trainModel && this.lineRoot) {
+            this.lineRoot.add(this.trainModel.group);
+            if (this.trainRoot && this.trainRoot.parent) {
+                this.trainRoot.parent.remove(this.trainRoot);
+            }
+        }
+
+        // Make the entire subway line and active rig visible!
+        if (this.lineRoot) this.lineRoot.visible = true;
+        if (this.lineRigs && this.lineRigs[this.activeLineId] && this.lineRigs[this.activeLineId].lineRoot) {
+            this.lineRigs[this.activeLineId].lineRoot.visible = true;
+        }
+        if (this.plaerrerGroup) this.plaerrerGroup.visible = true;
+        if (this.trunkGroup) this.trunkGroup.visible = true;
+
+        // Exit straight cosmos mode so carriages align with real track curves
+        if (this.trainModel) {
+            this.trainModel.isStraight = false;
+        }
+
+        // Activate initial position at start station
+        this.trackManager.update(this.sim.position);
+        this.updateTrunkVisibility();
+        this.updateSwitchVisibility();
+        this.stationModel.update(this.sim.position);
+        this.trainModel.update(0);
+
+        // Force camera and environment lighting update to the station
+        this.world.update(0.016, this.trainModel);
+        this.world.updateEnvironmentLighting(this.sim.position, 0.016);
+
+        // Restore sky/environment
+        if (this.world.skyTexture) {
+            this.world.scene.background = this.world.skyTexture;
+        }
+
         this.isRunning = true;
-        this.clock.getDelta(); // reset clock delta
+        this.clock.getDelta();
+    }
+
+    startSimulation() {
+        this.launchGame();
     }
 
     requestFullscreen() {
@@ -1715,7 +1923,8 @@ class App {
         
         const nextStation = this.sim.stations[this.sim.nextStationIdx];
         const trainCenter = this.sim.isReversing ? (this.sim.position + this.sim.trainHalfLength) : (this.sim.position - this.sim.trainHalfLength);
-        const distToStation = Math.abs(trainCenter - nextStation.position);
+        const stopPos = this.sim.getStationStopPosition ? this.sim.getStationStopPosition(nextStation) : nextStation.position;
+        const distToStation = Math.abs(trainCenter - stopPos);
         const isAtPlatform = distToStation < 12;
 
         if (this.sim.doorState === 0 || this.sim.doorState === 3) {
@@ -1737,9 +1946,49 @@ class App {
 
         const dt = Math.min(this.clock.getDelta(), 0.1); // cap max delta at 0.1s
 
+        if (this.isSpaceIntro) {
+            if (this.spaceIntro) {
+                this.spaceIntro.update(dt);
+            }
+            if (this.trainModel) {
+                this.trainModel.update(dt);
+            }
+
+            // Update loading progress display ("XX % geladen")
+            this._updateIntroLoadingProgress();
+
+            // Pump full line residency in background: builds and uploads ALL 27 stations and ALL 370 chunks!
+            if (this._residency && !this._residency.done) {
+                this._residencyPrep(128);
+                this.world.update(dt, this.trainModel);
+                this._residencyFinish();
+            } else {
+                this.world.update(dt, this.trainModel);
+            }
+
+            // Check if EVERYTHING (city model + 100% of all chunks and stations) is fully loaded!
+            if (!this.isReadyToStart && this._isEverythingFullyLoaded()) {
+                this._isStartingWarmup = true;
+                this.warmUpSpawn(() => {}, () => {
+                    this.onBackgroundLoadingComplete();
+                });
+            }
+            return;
+        }
+
         if (this.isRunning) {
-            // 1. Physics Engine Update
-            this.sim.update(dt);
+            // 1. Physics Engine Update (Deterministic 60 Hz Fixed Timestep Accumulator)
+            const FIXED_DT = 1 / 60;
+            this._physicsAccumulator = (this._physicsAccumulator || 0) + dt;
+            let substeps = 0;
+            while (this._physicsAccumulator >= FIXED_DT && substeps < 5) {
+                this.sim.update(FIXED_DT);
+                this._physicsAccumulator -= FIXED_DT;
+                substeps++;
+            }
+            if (this._physicsAccumulator > FIXED_DT * 2) {
+                this._physicsAccumulator = 0; // prevent spiral of death on long browser hitches
+            }
 
             // Play door close warning if requested by simulation
             if (this.sim.wantsDoorWarning) {
@@ -1765,7 +2014,9 @@ class App {
 
             // 2. Web Audio Synthesis Update
             const isInside = this.world.isCurrentViewReverberant();
-            this.audio.update(this.sim.speed, this.sim.throttle, this.sim.brakeCylinderPressure, dt, isInside);
+            const isPlatform = (this.world.activeCameraType === 'platform');
+            const stationDist = isPlatform ? 0 : this.getDistanceToNearestStation();
+            this.audio.update(this.sim.speed, this.sim.throttle, this.sim.brakeCylinderPressure, dt, isInside, stationDist, isPlatform);
 
             // Escalator proximity sounds
             this.updateEscalatorAmbience(dt);
@@ -1897,6 +2148,17 @@ class App {
         this.audio.updateEscalatorSound(intensity, dt);
     }
 
+    getDistanceToNearestStation() {
+        if (!this.sim || !this.sim.stations || this.sim.stations.length === 0) return Infinity;
+        const pos = this.sim.position;
+        let minDist = Infinity;
+        for (let i = 0; i < this.sim.stations.length; i++) {
+            const d = Math.abs(this.sim.stations[i].position - pos);
+            if (d < minDist) minDist = d;
+        }
+        return minDist;
+    }
+
     teleportToStation(stationIdx) {
         const station = this.sim.stations[stationIdx];
         if (!station) return;
@@ -1906,7 +2168,12 @@ class App {
         this.sim.acceleration = 0;
         this.sim.throttle = -0.5; // Apply holding brakes
         this.sim.brakeCylinderPressure = 2.25; // Matching the holding brake pressure
-        this.sim.emergencyBrake = false;
+        if (this.sim.emergencyBrake) {
+            this.sim.emergencyBrake = false;
+            if (this.sim.onEmergencyBrakeChange) {
+                this.sim.onEmergencyBrakeChange(false);
+            }
+        }
 
         // Reset door status
         this.sim.doorsOpen = false;
@@ -1915,7 +2182,8 @@ class App {
         this.sim.doorWarningActive = false;
 
         // Teleport position to the station platform center (offset by trainHalfLength to center the train)
-        this.sim.position = station.position + (this.sim.isReversing ? -this.sim.trainHalfLength : this.sim.trainHalfLength);
+        const stopPos = this.sim.getStationStopPosition ? this.sim.getStationStopPosition(station) : station.position;
+        this.sim.position = stopPos + (this.sim.isReversing ? -this.sim.trainHalfLength : this.sim.trainHalfLength);
 
         // Set correct current and next station indexes
         this.sim.nextStationIdx = stationIdx;

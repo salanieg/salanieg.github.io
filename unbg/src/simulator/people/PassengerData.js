@@ -133,7 +133,7 @@ export const PASSENGER_DATA = {
         { name: "Der Fürther Altbau-Liebhaber", shirtColor: "#854d0e", scarfColor: "#ffffff", item: "tuerknauf" },
         { name: "Die gemütliche Oststadt-Fürtherin", shirtColor: "#fef08a", item: "baecker_tuete" },
         { name: "Der Pendler zum Fürther Bahnhof", hairStyle: "headphones_in", item: "ereader" },
-        { name: "Der Stadtpark-Spaziergänger", shirtColor: "#stone_green", shoesColor: "#1e3a8a", item: "regenschirm_holz" }
+        { name: "Der Stadtpark-Spaziergänger", shirtColor: "#607d6b", shoesColor: "#1e3a8a", item: "regenschirm_holz" }
     ],
     "Fürth Hauptbahnhof": [
         { name: "Der SpVgg Greuther Fürth (\"Kleeblatt\") Fan", shirtColor: "#008000", shirtStyle: "greuther", item: "kleeblatt_fahne" },

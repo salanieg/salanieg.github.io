@@ -54,18 +54,35 @@ export class AudioManager {
         this.rollingFilter = null;
         this.rollingGain = null;
 
-        // Escalator nodes
+        // Escalator nodes (Motor drone, roller track rush, handrail glide, pre-rendered step clacks)
         this.escMasterGain = null;
-        this.escNoiseGain = null;
+        this.escMotorGain = null;
+        this.escTrackGain = null;
         this.escPercGain = null;
-        this.escTimer = 0;
-        this.escStepIdx = 0; // 0, 1, 2, 3 (Klick, Klick, Klock, Pause)
+        this.escNextClickTime = 0;
+        this.escStepIdx = 0;
+        this.escKlickBuffer = null;
+        this.escKlockBuffer = null;
+
+        // Master Mobile Phone Speaker Processing Nodes
+        this.phoneHighpass = null;
+        this.phoneWarmth = null;
+        this.phonePresence = null;
+        this.phoneCompressor = null;
+
+        // Constant Ambiance Synths (Train & Station)
+        this.trainAmbianceGain = null;
+        this.stationAmbianceGain = null;
+        this.trainAirSource = null;
+        this.trainIdleOsc1 = null;
+        this.trainIdleOsc2 = null;
+        this.stationNoiseSource = null;
+        this.stationResOsc = null;
 
         this.initialized = false;
-        this.footstepBufferNormal = null;
-        this.footstepBufferPlatform = null;
+        this._footstepStepIdx = 0;
 
-        this.trainType = 'G1'; // 'G1' or 'DT1'
+        this.trainType = 'G1'; // 'G1', 'DT1', or 'DT3'
         this.dt1RumbleOsc = null;
         this.dt1RumbleGain = null;
         this.dt1GrowlOsc = null;
@@ -81,12 +98,22 @@ export class AudioManager {
             dt1Growl: 1,
             startupSing: 1,
             brake: 1,
-            rolling: 1
+            rolling: 1,
+            ambiance: 1
         };
     }
 
     setTrainType(type) {
         this.trainType = type;
+        if (this.ctx && this.trainIdleOsc1 && this.trainIdleOsc2) {
+            if (type === 'DT1') {
+                this.trainIdleOsc1.frequency.setTargetAtTime(50, this.ctx.currentTime, 0.2);
+                this.trainIdleOsc2.frequency.setTargetAtTime(100, this.ctx.currentTime, 0.2);
+            } else {
+                this.trainIdleOsc1.frequency.setTargetAtTime(100, this.ctx.currentTime, 0.2);
+                this.trainIdleOsc2.frequency.setTargetAtTime(200, this.ctx.currentTime, 0.2);
+            }
+        }
     }
 
     init() {
@@ -116,31 +143,24 @@ export class AudioManager {
             this.masterVolume.connect(this.reverbNode);
             this.reverbNode.connect(this.reverbGain);
 
-            this.dryGain.connect(this.ctx.destination);
-            this.reverbGain.connect(this.ctx.destination);
+            // Connect Dry & Reverb through Mobile Phone Speaker Processing
+            this.setupMasterProcessing();
 
             // Setup motor hum
             this.setupMotorSynth();
-
 
             // Setup brake squeal
             this.setupBrakeSynth();
 
             this.createNoiseBuffer();
+            this.createEscalatorBuffers();
             this.setupRollingNoise();
 
             this.setupEscalatorSynth();
+            this.setupAmbianceSynths();
 
             this.initialized = true;
             this.ctx.resume();
-
-            this.preRenderFootstep(false).then(buffer => {
-                this.footstepBufferNormal = buffer;
-            }).catch(err => console.error("Error pre-rendering normal footstep:", err));
-
-            this.preRenderFootstep(true).then(buffer => {
-                this.footstepBufferPlatform = buffer;
-            }).catch(err => console.error("Error pre-rendering platform footstep:", err));
         } catch (e) {
             console.error("Failed to initialize Web Audio API:", e);
         }
@@ -158,6 +178,51 @@ export class AudioManager {
             right[i] = (Math.random() * 2 - 1) * decay;
         }
         this.reverbNode.buffer = buffer;
+    }
+
+    setupMasterProcessing() {
+        // 1. Highpass filter: 95 Hz, Q = 0.7
+        // Cuts sub-bass rumble (<90 Hz) that mobile speaker drivers cannot physically reproduce,
+        // eliminating speaker rattling/flapping and saving acoustic amplifier headroom.
+        this.phoneHighpass = this.ctx.createBiquadFilter();
+        this.phoneHighpass.type = 'highpass';
+        this.phoneHighpass.frequency.value = 95;
+        this.phoneHighpass.Q.value = 0.7;
+
+        // 2. Warmth Peaking filter: 320 Hz, +2.2 dB, Q = 1.0
+        // Adds body, warmth and weight in the low-mid spectrum where mobile speakers CAN vibrate.
+        this.phoneWarmth = this.ctx.createBiquadFilter();
+        this.phoneWarmth.type = 'peaking';
+        this.phoneWarmth.frequency.value = 320;
+        this.phoneWarmth.Q.value = 1.0;
+        this.phoneWarmth.gain.value = 2.2;
+
+        // 3. Presence Peaking filter: 2400 Hz, +3.0 dB, Q = 1.1
+        // Boosts intelligibility of motor inverters, chimes, switches, bells and airflow on phone speakers.
+        this.phonePresence = this.ctx.createBiquadFilter();
+        this.phonePresence.type = 'peaking';
+        this.phonePresence.frequency.value = 2400;
+        this.phonePresence.Q.value = 1.1;
+        this.phonePresence.gain.value = 3.0;
+
+        // 4. Master Dynamics Compressor / Limiter
+        // Compresses wide dynamic range so quiet ambiences are clearly audible on small phone speakers
+        // without loud horns or door slams clipping.
+        this.phoneCompressor = this.ctx.createDynamicsCompressor();
+        this.phoneCompressor.threshold.value = -14;
+        this.phoneCompressor.knee.value = 8;
+        this.phoneCompressor.ratio.value = 3.5;
+        this.phoneCompressor.attack.value = 0.003;
+        this.phoneCompressor.release.value = 0.15;
+
+        // Connect chain:
+        // dryGain + reverbGain -> phoneHighpass -> phoneWarmth -> phonePresence -> phoneCompressor -> destination
+        this.dryGain.connect(this.phoneHighpass);
+        this.reverbGain.connect(this.phoneHighpass);
+        this.phoneHighpass.connect(this.phoneWarmth);
+        this.phoneWarmth.connect(this.phonePresence);
+        this.phonePresence.connect(this.phoneCompressor);
+        this.phoneCompressor.connect(this.ctx.destination);
     }
 
     setupMotorSynth() {
@@ -321,6 +386,54 @@ export class AudioManager {
         }
     }
 
+    createEscalatorBuffers() {
+        const sampleRate = this.ctx.sampleRate || 44100;
+        const length = Math.floor(sampleRate * 0.16); // 160ms pro Stufenanschlag
+
+        const generate = (isKlock) => {
+            const buffer = this.ctx.createBuffer(1, length, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < length; i++) {
+                const t = i / sampleRate;
+
+                // 1. Tiefer mechanischer Bass-Thump & satter Struktur-Rumble (bassig & rumplig)
+                const baseFreq = isKlock ? 88 : 125;
+                const endFreq = isKlock ? 52 : 80;
+                const freqDecay = Math.exp(-t * (isKlock ? 18 : 22));
+                const instFreq = endFreq + (baseFreq - endFreq) * freqDecay;
+                const phase = 2 * Math.PI * instFreq * t;
+
+                const bodyEnv = Math.exp(-t * (isKlock ? 28 : 36));
+                const body = Math.sin(phase) * (isKlock ? 0.65 : 0.48) * bodyEnv;
+                const bodyHarmonic = Math.sin(phase * 2.0) * (isKlock ? 0.28 : 0.22) * Math.exp(-t * 38);
+
+                // Mechanische Rumpel-Textur (geformtes Rumpelrauschen der Stufenführung)
+                const noise = (Math.sin(i * 12.9898) * 43758.5453 % 1);
+                const rumbleEnv = Math.exp(-t * (isKlock ? 32 : 45));
+                const rumble = noise * (isKlock ? 0.22 : 0.16) * rumbleEnv;
+
+                // 2. Solider metallischer Plattenklank (etwas dumpfer & wärmer abgestimmt)
+                const plateFreq1 = isKlock ? 320 : 420;
+                const plateFreq2 = isKlock ? 580 : 760;
+                const ring1 = Math.sin(2 * Math.PI * plateFreq1 * t) * (isKlock ? 0.32 : 0.26) * Math.exp(-t * 45);
+                const ring2 = Math.sin(2 * Math.PI * plateFreq2 * t) * (isKlock ? 0.15 : 0.12) * Math.exp(-t * 65);
+
+                // 3. Gedämpfter Kammblech-Impuls (sanfter und dumpfer)
+                const transFreq = isKlock ? 1200 : 1500;
+                const transient = Math.sin(2 * Math.PI * transFreq * t) * 0.10 * Math.exp(-t * 120);
+
+                // Warme, physische Sättigung
+                const raw = body + bodyHarmonic + rumble + ring1 + ring2 + transient;
+                data[i] = Math.tanh(raw * 1.1) * 0.85;
+            }
+            return buffer;
+        };
+
+        this.escKlickBuffer = generate(false);
+        this.escKlockBuffer = generate(true);
+    }
+
     setupRollingNoise() {
         // Rollgeräusch (Schienen) konfigurieren
         this.rollingNoiseSource = this.ctx.createBufferSource();
@@ -344,116 +457,267 @@ export class AudioManager {
         this.escMasterGain = this.ctx.createGain();
         this.escMasterGain.gain.value = 0;
 
-        // 1. Dark quiet rush (Noise)
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = this.noiseBuffer;
-        noise.loop = true;
+        // Hochpass auf 45 Hz abgesenkt, damit der satte, rumplige Bass der Stufen voll durchdringt
+        const escHP = this.ctx.createBiquadFilter();
+        escHP.type = 'highpass';
+        escHP.frequency.value = 45;
 
-        const noiseFilter = this.ctx.createBiquadFilter();
-        noiseFilter.type = 'lowpass';
-        noiseFilter.frequency.value = 150; // Very dark
+        // ----------------------------------------------------
+        // 1. Motor & Gearbox Drive (Der Rolltreppen-Antrieb)
+        // ----------------------------------------------------
+        // Continuous AC induction motor running at ~98 Hz (50Hz grid / 100Hz motor hum)
+        const motorOsc = this.ctx.createOscillator();
+        motorOsc.type = 'triangle';
+        motorOsc.frequency.value = 98;
 
-        this.escNoiseGain = this.ctx.createGain();
-        this.escNoiseGain.gain.value = 0.45; // Base level for the rush
+        const motorFilter = this.ctx.createBiquadFilter();
+        motorFilter.type = 'lowpass';
+        motorFilter.frequency.value = 260;
 
-        noise.connect(noiseFilter);
-        noiseFilter.connect(this.escNoiseGain);
-        this.escNoiseGain.connect(this.escMasterGain);
-        noise.start();
+        // Gearbox whine (Worm gear tooth meshing ~588 Hz)
+        const gearOsc = this.ctx.createOscillator();
+        gearOsc.type = 'sine';
+        gearOsc.frequency.value = 588;
 
-        // 2. Rhythmic clicks (Percussion)
+        const gearFilter = this.ctx.createBiquadFilter();
+        gearFilter.type = 'bandpass';
+        gearFilter.frequency.value = 588;
+        gearFilter.Q.value = 4.0;
+
+        const gearGain = this.ctx.createGain();
+        gearGain.gain.value = 0.01; // 1/4 volume: subtle, characteristic mechanical drone
+
+        gearOsc.connect(gearFilter);
+        gearFilter.connect(gearGain);
+
+        this.escMotorGain = this.ctx.createGain();
+        this.escMotorGain.gain.value = 0.04; // 1/4 volume: soft background hum
+
+        motorOsc.connect(motorFilter);
+        motorFilter.connect(this.escMotorGain);
+        gearGain.connect(this.escMotorGain);
+
+        this.escMotorGain.connect(escHP);
+        motorOsc.start();
+        gearOsc.start();
+
+        // ----------------------------------------------------
+        // 2. Track Rollers & Chain Rushing (Kettenlauf & Rollen)
+        // ----------------------------------------------------
+        const trackNoise = this.ctx.createBufferSource();
+        trackNoise.buffer = this.noiseBuffer;
+        trackNoise.loop = true;
+
+        // Bandpass to capture the metallic roller rush (600 - 1600 Hz)
+        const trackBP = this.ctx.createBiquadFilter();
+        trackBP.type = 'bandpass';
+        trackBP.frequency.value = 920;
+        trackBP.Q.value = 1.5;
+
+        // Handrail friction glide (soft hiss around 2200 Hz)
+        const handrailNoise = this.ctx.createBufferSource();
+        handrailNoise.buffer = this.noiseBuffer;
+        handrailNoise.loop = true;
+
+        const handrailHP = this.ctx.createBiquadFilter();
+        handrailHP.type = 'highpass';
+        handrailHP.frequency.value = 2200;
+
+        const handrailGain = this.ctx.createGain();
+        handrailGain.gain.value = 0.02;
+
+        handrailNoise.connect(handrailHP);
+        handrailHP.connect(handrailGain);
+
+        this.escTrackGain = this.ctx.createGain();
+        this.escTrackGain.gain.value = 0.08;
+
+        trackNoise.connect(trackBP);
+        trackBP.connect(this.escTrackGain);
+        handrailGain.connect(this.escTrackGain);
+
+        this.escTrackGain.connect(escHP);
+        trackNoise.start();
+        handrailNoise.start();
+
+        // ----------------------------------------------------
+        // 3. Step Clacks & Comb Plate Clicks (Kammblech & Stufen)
+        // ----------------------------------------------------
+        // Sanfter Tiefpass-Filter (1600 Hz) für ein angenehm dumpferes, realistisches Rolltreppen-Klappern
+        const escPercLP = this.ctx.createBiquadFilter();
+        escPercLP.type = 'lowpass';
+        escPercLP.frequency.value = 1600;
+
         this.escPercGain = this.ctx.createGain();
-        this.escPercGain.gain.value = 0.25;
-        this.escPercGain.connect(this.escMasterGain);
+        this.escPercGain.gain.value = 0.105; // Halb so laut wie zuvor (0.21 / 2 = 0.105)
 
+        this.escPercGain.connect(escPercLP);
+        escPercLP.connect(escHP);
+
+        escHP.connect(this.escMasterGain);
         this.escMasterGain.connect(this.masterVolume);
     }
 
-    playEscClick(isKlock) {
-        if (!this.initialized) return;
-        const now = this.ctx.currentTime;
+    setupAmbianceSynths() {
+        // 1. Constant Train Ambiance Synth:
+        // Always present, subtle room tone inside the train:
+        // Soft HVAC / blower airflow + gentle 100/200 Hz electrical idling drone.
+        this.trainAmbianceGain = this.ctx.createGain();
+        this.trainAmbianceGain.gain.value = 0.038;
 
-        // 1. Dull Impact (Triangle wave for softer overtones)
-        // Physical gain is now identical for all clicks
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(isKlock ? 140 : 220, now);
-        osc.frequency.exponentialRampToValueAtTime(1, now + 0.12);
+        // Airflow (HVAC / ventilation blower)
+        const trainAirSource = this.ctx.createBufferSource();
+        trainAirSource.buffer = this.noiseBuffer;
+        trainAirSource.loop = true;
 
-        const impactGain = 1.3;
-        gain.gain.setValueAtTime(impactGain, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        const trainAirFilter = this.ctx.createBiquadFilter();
+        trainAirFilter.type = 'bandpass';
+        trainAirFilter.frequency.value = 820;
+        trainAirFilter.Q.value = 1.6;
 
-        osc.connect(gain);
-        gain.connect(this.escPercGain);
-        osc.start(now);
-        osc.stop(now + 0.12);
+        const trainAirGain = this.ctx.createGain();
+        trainAirGain.gain.value = 0.020;
 
-        // 2. Heavy Rumbling Thump (Lower frequency sine sweep)
-        const thump = this.ctx.createOscillator();
-        const thumpGain = this.ctx.createGain();
-        thump.type = 'sine';
-        thump.frequency.setValueAtTime(isKlock ? 40 : 48, now);
-        thump.frequency.exponentialRampToValueAtTime(5, now + 0.18);
+        trainAirSource.connect(trainAirFilter);
+        trainAirFilter.connect(trainAirGain);
+        trainAirGain.connect(this.trainAmbianceGain);
+        trainAirSource.start(0);
+        this.trainAirSource = trainAirSource;
 
-        const tGain = 2.0;
-        thumpGain.gain.setValueAtTime(tGain, now);
-        thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        // Idling Transformer & Auxiliary Converter drone (100 Hz fundamental + 200 Hz harmonic)
+        this.trainIdleOsc1 = this.ctx.createOscillator();
+        this.trainIdleOsc1.type = 'sine';
+        this.trainIdleOsc1.frequency.value = (this.trainType === 'DT1') ? 50 : 100;
 
-        thump.connect(thumpGain);
-        thumpGain.connect(this.escPercGain);
-        thump.start(now);
-        thump.stop(now + 0.18);
+        this.trainIdleOsc2 = this.ctx.createOscillator();
+        this.trainIdleOsc2.type = 'triangle';
+        this.trainIdleOsc2.frequency.value = (this.trainType === 'DT1') ? 100 : 200;
 
-        // 3. Muffled Mechanical Scuff (Lower Filtered Noise)
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = this.noiseBuffer;
-        const nFilter = this.ctx.createBiquadFilter();
-        nFilter.type = 'lowpass';
-        nFilter.frequency.value = isKlock ? 200 : 350;
+        const trainIdleGain1 = this.ctx.createGain();
+        trainIdleGain1.gain.value = 0.016;
 
-        const noiseVol = 0.85;
-        const nGain = this.ctx.createGain();
-        nGain.gain.setValueAtTime(noiseVol, now);
-        nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        const trainIdleGain2 = this.ctx.createGain();
+        trainIdleGain2.gain.value = 0.008;
 
-        noise.connect(nFilter);
-        nFilter.connect(nGain);
-        nGain.connect(this.escPercGain);
-        noise.start(now);
-        noise.stop(now + 0.1);
+        this.trainIdleOsc1.connect(trainIdleGain1);
+        this.trainIdleOsc2.connect(trainIdleGain2);
+        trainIdleGain1.connect(this.trainAmbianceGain);
+        trainIdleGain2.connect(this.trainAmbianceGain);
+
+        this.trainIdleOsc1.start(0);
+        this.trainIdleOsc2.start(0);
+
+        this.trainAmbianceGain.connect(this.masterVolume);
+
+        // 2. Constant Station Ambiance Synth:
+        // Atmospheric underground acoustic cavern rumble, draft & architectural hall resonance.
+        // Fades gracefully when near or at stations.
+        this.stationAmbianceGain = this.ctx.createGain();
+        this.stationAmbianceGain.gain.value = 0.032;
+
+        const stationNoiseSource = this.ctx.createBufferSource();
+        stationNoiseSource.buffer = this.noiseBuffer;
+        stationNoiseSource.loop = true;
+
+        // Deep hall bandpass (220 Hz)
+        const stationBandpass1 = this.ctx.createBiquadFilter();
+        stationBandpass1.type = 'bandpass';
+        stationBandpass1.frequency.value = 220;
+        stationBandpass1.Q.value = 2.4;
+
+        // Mid-air draft bandpass (600 Hz)
+        const stationBandpass2 = this.ctx.createBiquadFilter();
+        stationBandpass2.type = 'bandpass';
+        stationBandpass2.frequency.value = 600;
+        stationBandpass2.Q.value = 1.8;
+
+        const stationGain1 = this.ctx.createGain();
+        stationGain1.gain.value = 0.022;
+
+        const stationGain2 = this.ctx.createGain();
+        stationGain2.gain.value = 0.014;
+
+        stationNoiseSource.connect(stationBandpass1);
+        stationBandpass1.connect(stationGain1);
+        stationGain1.connect(this.stationAmbianceGain);
+
+        stationNoiseSource.connect(stationBandpass2);
+        stationBandpass2.connect(stationGain2);
+        stationGain2.connect(this.stationAmbianceGain);
+
+        stationNoiseSource.start(0);
+        this.stationNoiseSource = stationNoiseSource;
+
+        // Cavern room resonance
+        this.stationResOsc = this.ctx.createOscillator();
+        this.stationResOsc.type = 'sine';
+        this.stationResOsc.frequency.value = 75;
+
+        const stationResGain = this.ctx.createGain();
+        stationResGain.gain.value = 0.012;
+
+        this.stationResOsc.connect(stationResGain);
+        stationResGain.connect(this.stationAmbianceGain);
+        this.stationResOsc.start(0);
+
+        this.stationAmbianceGain.connect(this.masterVolume);
+
+        // Send a portion to the reverb node to create depth
+        const stationReverbSend = this.ctx.createGain();
+        stationReverbSend.gain.value = 0.35;
+        this.stationAmbianceGain.connect(stationReverbSend);
+        stationReverbSend.connect(this.reverbNode);
+    }
+
+    playEscClick(isKlock = false, time) {
+        if (!this.initialized || !this.escKlickBuffer) return;
+        const now = (typeof time === 'number' && time > 0) ? time : this.ctx.currentTime;
+        const src = this.ctx.createBufferSource();
+        src.buffer = isKlock ? this.escKlockBuffer : this.escKlickBuffer;
+        src.connect(this.escPercGain);
+        src.start(now);
     }
 
     updateEscalatorSound(intensity, dt) {
         if (!this.initialized) return;
 
-        // Set volume based on proximity (increased multiplier for loudness)
-        this.escMasterGain.gain.setTargetAtTime(intensity * 0.45, this.ctx.currentTime, 0.1);
+        // Smoothly fade master volume based on proximity
+        const targetVol = Math.max(0, Math.min(1, intensity)) * 0.42;
+        this.escMasterGain.gain.setTargetAtTime(targetVol, this.ctx.currentTime, 0.08);
 
         if (intensity < 0.01) {
-            this.escTimer = 0;
+            this.escNextClickTime = 0;
             return;
         }
 
-        // Mechanical rhythm cycle (0: Klick, 1: Klick, 2: Klock, 3: Pause)
-        // Fixed cycle: 1 second for all 4 beats
-        this.escTimer += dt;
-        const stepDuration = 0.25;
+        const now = this.ctx.currentTime;
+        const stepInterval = 0.25; // 0.25s Takt -> 1.0s pro 4er-Zyklus (Klick, Klick, Klock, Pause)
 
-        if (this.escTimer >= stepDuration) {
-            this.escTimer -= stepDuration;
+        // Initialisiere die Audio-Timeline beim Starten oder Wiederannähern
+        if (!this.escNextClickTime || this.escNextClickTime < now) {
+            this.escNextClickTime = now + 0.02;
+        }
 
-            if (this.escStepIdx === 0) this.playEscClick(false); // Klick
-            else if (this.escStepIdx === 1) this.playEscClick(false); // Klick
-            else if (this.escStepIdx === 2) this.playEscClick(true); // Klock
-            // index 3 is Pause
+        // Hardware-präzises Lookahead-Scheduling auf der Audio-Clock:
+        // Beat 0: Klick
+        // Beat 1: Klick
+        // Beat 2: Klock (tiefer, satter Bass-Thump & Rumpeln!)
+        // Beat 3: Pause
+        while (this.escNextClickTime < now + 0.12) {
+            const beat = this.escStepIdx % 4;
+            if (beat === 0 || beat === 1) {
+                this.playEscClick(false, this.escNextClickTime); // Klick
+            } else if (beat === 2) {
+                this.playEscClick(true, this.escNextClickTime);  // Klock (bassig & rumplig)
+            }
+            // beat === 3 ist die kurze mechanische Pause vor dem nächsten Umlauf
 
-            this.escStepIdx = (this.escStepIdx + 1) % 4;
+            this.escStepIdx++;
+            this.escNextClickTime += stepInterval;
         }
     }
 
-    update(speed, throttle, brakePressure, dt, isInside = false) {
+    update(speed, throttle, brakePressure, dt, isInside = false, stationDistance = Infinity, isPlatform = false) {
         if (!this.initialized) return;
         if (this.ctx.state === 'suspended') this.ctx.resume();
 
@@ -538,8 +802,10 @@ export class AudioManager {
                     : Math.max(0, Math.min(1, (speedKmh - 15) / 5));
 
                 const fadeOut = Math.max(0, Math.min(1, (80 - speedKmh) / 60));
-
-                const inverterVolMultiplier = 0.10;
+ 
+                // Der Sound ab ca. 20 km/h soll etwas lauter sein (von 0.10 auf 0.18 erhöht)
+                // Beim Bremsen dezent leiser halten (0.06 statt 0.10)
+                const inverterVolMultiplier = isBraking ? 0.06 : 0.18;
                 targetInverterVol = (effort > 0.02
                     ? effort * inverterVolMultiplier * fadeIn * fadeOut
                     : 0) * this.debugMix.inverter;
@@ -588,8 +854,8 @@ export class AudioManager {
             else if (speedKmh < 7.0) startupVolume = 1.0;
             else startupVolume = 1.0 - (speedKmh - 7.0) / 13.0;
 
-            // Double the original volume (0.025 -> 0.05)
-            startupVolume *= Math.min(1.0, Math.abs(throttle) * 1.5) * 0.05 * this.debugMix.startupSing;
+            // Lautes, hohes Invertersirren (3200 Hz) etwas leiser machen (0.05 -> 0.025)
+            startupVolume *= Math.min(1.0, Math.abs(throttle) * 1.5) * 0.025 * this.debugMix.startupSing;
 
             const lfoSpeed = 6.0 + (speedKmh * 0.85);
             this.startupSingLFO.frequency.setTargetAtTime(lfoSpeed, this.ctx.currentTime, 0.1);
@@ -609,10 +875,11 @@ export class AudioManager {
         this.startupSphericalGain.gain.setTargetAtTime(sphericalVol, this.ctx.currentTime, 0.15);
 
 
-        // Brake squeal
+        // Brake squeal (beim G1 und generell etwas leiser: 0.08 -> 0.04)
         if (speedKmh > 0.5 && speedKmh < 18 && brakePressure > 1.5) {
             const speedFactor = 1 - Math.abs(speedKmh - 6) / 10;
-            const volume = Math.max(0, speedFactor) * (brakePressure / 5) * 0.08 * this.debugMix.brake;
+            const brakeBaseVol = (this.trainType === 'G1') ? 0.035 : 0.045;
+            const volume = Math.max(0, speedFactor) * (brakePressure / 5) * brakeBaseVol * this.debugMix.brake;
             this.brakeGain.gain.setTargetAtTime(volume, this.ctx.currentTime, 0.1);
             // DT1 brake squeal is slightly lower pitched
             const pitch = (isDT1 ? 1400 : 1800) + speedKmh * 80;
@@ -635,6 +902,29 @@ export class AudioManager {
             this.rollingFilter.frequency.setTargetAtTime(cutoffFreq, this.ctx.currentTime, 0.2);
         } else {
             this.rollingGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.2);
+        }
+
+        // --- AMBIANCE (Zug & Station) ---
+        const ambMult = (this.debugMix && this.debugMix.ambiance !== undefined) ? this.debugMix.ambiance : 1.0;
+
+        // 1. Station Ambiance:
+        // Cavernous underground room tone and drafts; increases smoothly when approaching/at station
+        if (this.stationAmbianceGain) {
+            let targetStationVol = 0.012; // subtle baseline tunnel acoustics
+            if (isPlatform || stationDistance < 45) {
+                targetStationVol = 0.034; // clear atmospheric station presence
+            } else if (stationDistance < 130) {
+                const frac = 1.0 - (stationDistance - 45) / 85;
+                targetStationVol = 0.012 + 0.022 * frac;
+            }
+            this.stationAmbianceGain.gain.setTargetAtTime(targetStationVol * ambMult, this.ctx.currentTime, 0.4);
+        }
+
+        // 2. Train Ambiance:
+        // Always consistent ("immer gleichbleibend"), subtle electrical idling and ventilation presence
+        if (this.trainAmbianceGain) {
+            const baseTrainVol = isInside ? 0.038 : 0.022;
+            this.trainAmbianceGain.gain.setTargetAtTime(baseTrainVol * ambMult, this.ctx.currentTime, 0.3);
         }
     }
 
@@ -1005,78 +1295,197 @@ export class AudioManager {
         osc.stop(time + duration + 0.1);
     }
 
-    preRenderFootstep(isPlatform) {
-        return new Promise((resolve, reject) => {
-            try {
-                const sampleRate = this.ctx.sampleRate;
-                const duration = 0.2;
-                const length = Math.floor(sampleRate * duration);
-                const OfflineAudioContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-                const offlineCtx = new OfflineAudioContextClass(1, length, sampleRate);
+    playFootstep(volume = 0.24) {
+        if (!this.initialized || !this.ctx) return;
+        const now = this.ctx.currentTime;
 
-                // 1. Thump sweep
-                const osc = offlineCtx.createOscillator();
-                const gain = offlineCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(isPlatform ? 60 : 80, 0);
-                osc.frequency.exponentialRampToValueAtTime(isPlatform ? 25 : 30, duration - 0.05);
-                gain.gain.setValueAtTime(1.5, 0);
-                gain.gain.exponentialRampToValueAtTime(0.001, duration - 0.05);
-                osc.connect(gain);
-                gain.connect(offlineCtx.destination);
+        // Wechselnder Schritt-Index für organische links/rechts Variation
+        this._footstepStepIdx = (this._footstepStepIdx || 0) + 1;
+        const isLeft = (this._footstepStepIdx % 2 === 0);
 
-                // 2. Noise scuff
-                const noiseSize = Math.floor(sampleRate * 0.1);
-                const noiseBuffer = offlineCtx.createBuffer(1, noiseSize, sampleRate);
-                const data = noiseBuffer.getChannelData(0);
-                for (let i = 0; i < noiseSize; i++) data[i] = Math.random() * 2 - 1;
+        // Feine organische Tonhöhen- und Klangfarben-Variation
+        const pitchVar = isLeft ? 1.02 : 0.98;
+        const microVar = 1.0 + (Math.random() * 0.06 - 0.03);
+        const totalPitch = pitchVar * microVar;
 
-                const noise = offlineCtx.createBufferSource();
-                noise.buffer = noiseBuffer;
-                const filter = offlineCtx.createBiquadFilter();
-                if (isPlatform) {
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(250, 0);
-                } else {
-                    filter.type = 'bandpass';
-                    filter.frequency.setValueAtTime(800, 0);
-                }
+        // Master-Gain für diesen Einzelschritt
+        const stepGain = this.ctx.createGain();
+        stepGain.gain.setValueAtTime(volume, now);
 
-                const gainNoise = offlineCtx.createGain();
-                gainNoise.gain.setValueAtTime(isPlatform ? 0.35 : 0.7, 0);
-                gainNoise.gain.exponentialRampToValueAtTime(0.001, 0.08);
+        // 1. Knackiger Fersen-Absatz-Klick (Schuhabsatz trifft Boden)
+        const heelOsc = this.ctx.createOscillator();
+        heelOsc.type = 'triangle';
+        heelOsc.frequency.setValueAtTime(1450 * totalPitch, now);
+        heelOsc.frequency.exponentialRampToValueAtTime(360 * totalPitch, now + 0.025);
 
-                noise.connect(filter);
-                filter.connect(gainNoise);
-                gainNoise.connect(offlineCtx.destination);
+        const heelFilter = this.ctx.createBiquadFilter();
+        heelFilter.type = 'bandpass';
+        heelFilter.frequency.setValueAtTime(2250 * totalPitch, now);
+        heelFilter.Q.setValueAtTime(2.2, now);
 
-                osc.start(0);
-                osc.stop(duration);
-                noise.start(0);
-                noise.stop(0.1);
+        const heelGain = this.ctx.createGain();
+        heelGain.gain.setValueAtTime(0.0001, now);
+        heelGain.gain.linearRampToValueAtTime(0.70, now + 0.002);
+        heelGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
 
-                offlineCtx.startRendering().then(resolve).catch(reject);
-            } catch (e) {
-                reject(e);
-            }
-        });
+        heelOsc.connect(heelFilter);
+        heelFilter.connect(heelGain);
+        heelGain.connect(stepGain);
+
+        heelOsc.start(now);
+        heelOsc.stop(now + 0.04);
+
+        // 2. Tiefer Körperschall-Druck (Gewichtsübertragung beim Auftreten)
+        const bodyOsc = this.ctx.createOscillator();
+        bodyOsc.type = 'sine';
+        bodyOsc.frequency.setValueAtTime(160 * totalPitch, now);
+        bodyOsc.frequency.exponentialRampToValueAtTime(48 * totalPitch, now + 0.07);
+
+        const bodyGain = this.ctx.createGain();
+        bodyGain.gain.setValueAtTime(0.0001, now);
+        bodyGain.gain.linearRampToValueAtTime(0.55, now + 0.004);
+        bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        bodyOsc.connect(bodyGain);
+        bodyGain.connect(stepGain);
+
+        bodyOsc.start(now);
+        bodyOsc.stop(now + 0.09);
+
+        // 3. Körniger Sohlenabrieb / Reibungs-Textur beim Abrollen
+        if (this.noiseBuffer) {
+            const scuff = this.ctx.createBufferSource();
+            scuff.buffer = this.noiseBuffer;
+            const scuffFilter = this.ctx.createBiquadFilter();
+            scuffFilter.type = 'bandpass';
+            scuffFilter.frequency.setValueAtTime(1800 * totalPitch, now);
+            scuffFilter.Q.setValueAtTime(1.8, now);
+
+            const scuffGain = this.ctx.createGain();
+            scuffGain.gain.setValueAtTime(0.0001, now);
+            scuffGain.gain.linearRampToValueAtTime(0.28, now + 0.005);
+            scuffGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+            scuff.connect(scuffFilter);
+            scuffFilter.connect(scuffGain);
+            scuffGain.connect(stepGain);
+
+            scuff.start(now);
+            scuff.stop(now + 0.05);
+        }
+
+        // Routing: Einheitlich trocken ins Master + dezenter natürlicher Raumhall
+        stepGain.connect(this.masterVolume);
+        if (this.reverbNode) {
+            const reverbSend = this.ctx.createGain();
+            reverbSend.gain.setValueAtTime(0.25, now);
+            stepGain.connect(reverbSend);
+            reverbSend.connect(this.reverbNode);
+        }
     }
 
-    playFootstep(volume = 0.25, isPlatform = false) {
+    playEmergencyBrakeAlarm() {
         if (!this.initialized) return;
-        const buffer = isPlatform ? this.footstepBufferPlatform : this.footstepBufferNormal;
-        if (!buffer) return;
-
         const now = this.ctx.currentTime;
-        const source = this.ctx.createBufferSource();
-        source.buffer = buffer;
+        const strikes = 6;
+        const interval = 0.105; // 6x schnell hintereinander (~0.6s gesamt)
 
-        const gainNode = this.ctx.createGain();
-        gainNode.gain.setValueAtTime(volume, now);
+        for (let i = 0; i < strikes; i++) {
+            const t = now + i * interval;
+            this._playBimmelStrike(t);
+        }
+    }
 
-        source.connect(gainNode);
-        gainNode.connect(this.masterVolume);
-        source.start(now);
+    _playBimmelStrike(time) {
+        // Helles, durchdringendes Warnglocken-Bimmeln mit harmonischen Obertönen (halbierte Lautstärke)
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const osc3 = this.ctx.createOscillator();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(1760, time); // A6 (Hauptglocke)
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(2489, time); // D#7 (chime-Oberton)
+
+        osc3.type = 'triangle';
+        osc3.frequency.setValueAtTime(3520, time); // A7 (Attack-Sparkle)
+
+        const gain1 = this.ctx.createGain();
+        const gain2 = this.ctx.createGain();
+        const gain3 = this.ctx.createGain();
+
+        // Knackige Anschlag-Hüllkurve (auf Wunsch halb so laut)
+        gain1.gain.setValueAtTime(0.0001, time);
+        gain1.gain.linearRampToValueAtTime(0.175, time + 0.003);
+        gain1.gain.exponentialRampToValueAtTime(0.001, time + 0.090);
+
+        gain2.gain.setValueAtTime(0.0001, time);
+        gain2.gain.linearRampToValueAtTime(0.09, time + 0.003);
+        gain2.gain.exponentialRampToValueAtTime(0.001, time + 0.075);
+
+        gain3.gain.setValueAtTime(0.0001, time);
+        gain3.gain.linearRampToValueAtTime(0.06, time + 0.002);
+        gain3.gain.exponentialRampToValueAtTime(0.001, time + 0.045);
+
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+
+        gain1.connect(this.masterVolume);
+        gain2.connect(this.masterVolume);
+        gain3.connect(this.masterVolume);
+
+        osc1.start(time);
+        osc2.start(time);
+        osc3.start(time);
+
+        osc1.stop(time + 0.10);
+        osc2.stop(time + 0.10);
+        osc3.stop(time + 0.10);
+    }
+
+    playEmergencyBrakeRelease() {
+        if (!this.initialized) return;
+        const now = this.ctx.currentTime;
+        const duration = 2.0; // Exakt 2,0 Sekunden durchgehendes Piepen
+
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1174.66, now); // D6 (1175 Hz - Standard-Führerstand-Quittungston)
+
+        // Subtiler 2. Oberton für Durchsetzungsfähigkeit auf Handylautsprechern
+        const osc2 = this.ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(2349.32, now);
+
+        const gain = this.ctx.createGain();
+        const gain2 = this.ctx.createGain();
+
+        // 20ms weicher Attack gegen Knacken (auf Wunsch halb so laut)
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+        // Solider Haltepegel für 1.95s
+        gain.gain.setValueAtTime(0.12, now + 1.96);
+        // 40ms weicher Release auf 0 bei genau 2.0s
+        gain.gain.linearRampToValueAtTime(0.0001, now + duration);
+
+        gain2.gain.setValueAtTime(0.0001, now);
+        gain2.gain.linearRampToValueAtTime(0.03, now + 0.02);
+        gain2.gain.setValueAtTime(0.03, now + 1.96);
+        gain2.gain.linearRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        osc2.connect(gain2);
+
+        gain.connect(this.masterVolume);
+        gain2.connect(this.masterVolume);
+
+        osc.start(now);
+        osc2.start(now);
+
+        osc.stop(now + duration + 0.05);
+        osc2.stop(now + duration + 0.05);
     }
 
     setVolume(volume) {

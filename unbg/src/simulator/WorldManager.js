@@ -144,6 +144,9 @@ export class WorldManager {
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         this.train3D = null; // set each frame in update(); source of radio raycast targets
+        this.activePassengers = new Set(); // Flat registry of currently active station passengers
+        this.cityModel = null; // Link to aboveground city model for underground culling
+        this.isSpaceIntro = false; // When true, space starfield and cosmos lighting are preserved
 
         this.init();
     }
@@ -427,7 +430,8 @@ export class WorldManager {
         };
 
         // Footstep tracking
-        this.footstepDistance = 0;
+        this.footstepDistance = 1.0;
+        this.lastFootstepTime = 0;
         this.onFootstep = null; // Callback
 
         // Programmatic retro speech bubble overlay
@@ -487,27 +491,29 @@ export class WorldManager {
         window.addEventListener('keyup', this.onKeyUp);
     }
 
+    setPassengersActive(passengers, active) {
+        if (!passengers) return;
+        for (const p of passengers) {
+            if (active) this.activePassengers.add(p);
+            else this.activePassengers.delete(p);
+        }
+    }
+
     handleSceneClick(e) {
+        if (this.activePassengers.size === 0) return;
+
         // Calculate mouse position in normalized device coordinates relative to the canvas bounding rect
         const rect = this.renderer.domElement.getBoundingClientRect();
-        const mouse = new THREE.Vector2(
+        this.mouse.set(
             ((e.clientX - rect.left) / rect.width) * 2 - 1,
             -((e.clientY - rect.top) / rect.height) * 2 + 1
         );
 
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, this.activeCamera);
+        this.raycaster.setFromCamera(this.mouse, this.activeCamera);
 
-        // Collect all active passenger groups in the scene
-        const passengers = [];
-        this.scene.traverse(child => {
-            if (child.userData && child.userData.isPassenger) {
-                passengers.push(child);
-            }
-        });
-
-        // Raycast ONLY against passenger groups to avoid any interference/blocking by other meshes (like train carriages or platform structures)
-        const intersects = raycaster.intersectObjects(passengers, true);
+        // Raycast ONLY against currently active passenger groups (flat list, no full-scene traversal)
+        const passengers = Array.from(this.activePassengers);
+        const intersects = this.raycaster.intersectObjects(passengers, true);
 
         let clickedPassenger = null;
         if (intersects.length > 0) {
@@ -647,7 +653,7 @@ export class WorldManager {
     }
 
     update(dt, train3D) {
-        if (!train3D) return;
+        if (!train3D || !this.sim) return;
         this.train3D = train3D;
 
         // Get train coordinates
@@ -711,7 +717,7 @@ export class WorldManager {
 
                 // Handle walking inside the carriage (arrow keys and/or mobile joystick)
                 this._smoothRotation(this.passengerRotationView, this.passengerRotation, dt);
-                const walkSpeed = 4.5 * dt; // Brisk walking speed inside the train
+                const walkSpeed = 5.0 * dt; // 5 m/s walking speed (identical on platform and in train)
                 const yaw = this.passengerRotationView.yaw;
                 const forward = _wmFwd.set(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
                 const right = _wmRight.crossVectors(forward, _wmUp).normalize();
@@ -732,11 +738,15 @@ export class WorldManager {
                     const moveLen = moveVec.length();
                     this.passengerLocalPos.add(moveVec);
 
-                    // Footstep sound triggering (slower, more intense)
+                    // Footstep sound triggering:
+                    // walkSpeed is 5.0 m/s. For a natural human walking cadence (~110-115 steps/min = ~520ms/step),
+                    // distance threshold is 2.65m, with minimum 0.45s cooldown (identical on platform and in train).
                     this.footstepDistance += moveLen;
-                    if (this.footstepDistance > 1.4) {
-                        if (this.onFootstep) this.onFootstep(0.12);
+                    const now = performance.now() * 0.001;
+                    if (this.footstepDistance >= 2.65 && (now - this.lastFootstepTime >= 0.45)) {
+                        if (this.onFootstep) this.onFootstep(0.24);
                         this.footstepDistance = 0;
+                        this.lastFootstepTime = now;
                     }
                 }
 
@@ -790,20 +800,22 @@ export class WorldManager {
                 // Determine which station to focus the platform camera on
                 const currentStation = this.sim.stations[this.sim.currentStationIdx];
                 const nextStation = this.sim.stations[this.sim.nextStationIdx];
-                const distToNext = Math.abs(trainZ - nextStation.position);
+                const stopPosNext = this.sim.getStationStopPosition ? this.sim.getStationStopPosition(nextStation) : nextStation.position;
+                const distToNext = Math.abs(trainZ - stopPosNext);
                 
                 // Focus on next station if we are close (within 120m), otherwise focus on the station we just left
                 const targetStation = (distToNext < 120) ? nextStation : currentStation;
+                const targetStopPos = this.sim.getStationStopPosition ? this.sim.getStationStopPosition(targetStation) : targetStation.position;
                 
                 // If the target station has changed, reset the platform camera position
                 if (this.platformCameraStationIdx !== targetStation.index) {
                     this.platformCameraStationIdx = targetStation.index;
                     
                     const direction = this.sim.isReversing ? -1 : 1;
-                    const camZ = targetStation.position - direction * 20.0;
-                    const statPos = this.sim.getTrackPosition(camZ);
-                    const statTangent = this.sim.getTrackTangent(camZ);
-                    const statNormal = new THREE.Vector3(-statTangent.z, 0, statTangent.x);
+                    const camZ = targetStopPos - direction * 20.0;
+                    const statPos = this.sim.getTrackPosition(camZ, _wmPos);
+                    const statTangent = this.sim.getTrackTangent(camZ, _wmDir);
+                    const statNormal = _wmRight.set(-statTangent.z, 0, statTangent.x);
                     
                     const isSideStation = targetStation && targetStation.side;
                     const isScharfreiterring = targetStation && (targetStation.name === "Scharfreiterring");
@@ -824,15 +836,15 @@ export class WorldManager {
                     
                     const levelY = this.sim.getTrackElevationOffset(camZ, this.sim.isReversing);
 
-                    const defaultPos = statPos.clone().addScaledVector(statNormal, localX);
+                    const defaultPos = _wmTarget.copy(statPos).addScaledVector(statNormal, localX);
                     defaultPos.y = statPos.y + levelY + 2.575;
                     
                     this.cameras.platform.position.copy(defaultPos);
                     
                     // Point camera at the train's cab
-                    const trainCabinLocalPos = this.sim.isReversing ? new THREE.Vector3(0, 1.2, -activeCarLength) : new THREE.Vector3(0, 1.2, 0.0);
+                    const trainCabinLocalPos = _wmLocal.set(0, 1.2, this.sim.isReversing ? -activeCarLength : 0.0);
                     const trainWorldPos = activeCabCar.localToWorld(trainCabinLocalPos);
-                    const dir = new THREE.Vector3().subVectors(trainWorldPos, defaultPos).normalize();
+                    const dir = _wmFwd.subVectors(trainWorldPos, defaultPos).normalize();
                     
                     this.platformRotation.yaw = Math.atan2(dir.x, dir.z);
                     this.platformRotation.pitch = Math.asin(dir.y);
@@ -866,11 +878,15 @@ export class WorldManager {
                     const moveLen = moveVec.length();
                     this.cameras.platform.position.add(moveVec);
 
-                    // Footstep sound triggering (slower, more intense)
+                    // Footstep sound triggering:
+                    // walkSpeed is 5.0 m/s. For a natural human walking cadence (~110-115 steps/min = ~520ms/step),
+                    // distance threshold is 2.65m, with minimum 0.45s cooldown (identical on platform and in train).
                     this.footstepDistance += moveLen;
-                    if (this.footstepDistance > 2.2) {
-                        if (this.onFootstep) this.onFootstep(0.25);
+                    const now = performance.now() * 0.001;
+                    if (this.footstepDistance >= 2.65 && (now - this.lastFootstepTime >= 0.45)) {
+                        if (this.onFootstep) this.onFootstep(0.24);
                         this.footstepDistance = 0;
+                        this.lastFootstepTime = now;
                     }
                 }
 
@@ -998,6 +1014,7 @@ export class WorldManager {
         }
     }
     updateEnvironmentLighting(trainZ, dt) {
+        if (this.isSpaceIntro) return;
         const direction = this.sim.isReversing ? -1 : 1;
         let cameraTrackZ = trainZ;
 
@@ -1043,6 +1060,10 @@ export class WorldManager {
             this._targetSun        = 2.5;
             this._targetHeadlight  = 1.0;
             this._targetFogDensity = 0.0015;
+
+            if (this.cityModel && !this.cityModel.visible) {
+                this.cityModel.visible = true;
+            }
         } else {
             // Tunnel environment
             this.scene.background = this.tunnelColor;
@@ -1060,6 +1081,10 @@ export class WorldManager {
                 this._targetSun        = 0.0;
                 this._targetHeadlight  = 20.0;
                 this._targetFogDensity = 0.0;
+            }
+
+            if (this.cityModel && this.cityModel.visible) {
+                this.cityModel.visible = false;
             }
         }
 
@@ -1096,10 +1121,11 @@ export class WorldManager {
     }
 
     getChunkTypeAtDistance(z) {
-        return this.sim.getChunkType(z);
+        return (this.sim && typeof this.sim.getChunkType === 'function') ? this.sim.getChunkType(z) : 'underground';
     }
 
     isInsideStationPlatform(z) {
+        if (!this.sim || !this.sim.stations) return false;
         for (let i = 0; i < this.sim.stations.length; i++) {
             const s = this.sim.stations[i];
             if (Math.abs(z - s.position) <= s.halfLength + 1) { // platform half-length + a tiny margin
@@ -1110,17 +1136,18 @@ export class WorldManager {
     }
 
     isCurrentViewReverberant() {
-        if (this.activeCameraType !== 'platform') {
+        if (this.activeCameraType !== 'platform' || !this.sim || !this.sim.stations) {
             return false;
         }
 
         const currentStation = this.sim.stations[this.sim.currentStationIdx];
         const nextStation = this.sim.stations[this.sim.nextStationIdx];
+        if (!currentStation || !nextStation) return false;
         const trainZ = this.sim.position;
         const distToNext = Math.abs(trainZ - nextStation.position);
         const targetStation = (distToNext < 120) ? nextStation : currentStation;
 
-        const chunkType = this.sim.getChunkType(targetStation.position);
+        const chunkType = (typeof this.sim.getChunkType === 'function') ? this.sim.getChunkType(targetStation.position) : 'underground';
         return chunkType === 'underground' || chunkType === 'shaft';
     }
 }

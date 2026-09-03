@@ -28,11 +28,11 @@
 import * as THREE from 'three';
 import { StationBuilder } from './stations/StationBuilder.js?v=69';
 import { RathausBuilder } from './stations/RathausBuilder.js?v=51';
-import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=49';
-import { PassengerBuilder } from './people/PassengerBuilder.js';
-import { PASSENGER_DATA } from './people/PassengerData.js';
+import { LorenzkircheBuilder } from './stations/LorenzkircheBuilder.js?v=50';
+import { PassengerBuilder } from './people/PassengerBuilder.js?v=5';
+import { PASSENGER_DATA } from './people/PassengerData.js?v=3';
 import { tagCanvasTextureSRGBKeepLook } from './TextureUtils.js';
-import { TrainModel } from './TrainModel.js?v=88';
+import { TrainModel } from './TrainModel.js?v=97';
 import { TRACK_DATA as TRACK_DATA_U1 } from './TrackDataU1.js?v=55';
 import { TRACK_DATA_U2 } from './TrackDataU2.js?v=11';
 import { TRACK_DATA_U3 } from './TrackDataU3.js?v=11';
@@ -220,7 +220,9 @@ export class StationModel {
             bench: new THREE.BoxGeometry(0.6, 0.4, 2.5),
             stairs: new THREE.BoxGeometry(2.5, 3.0, 6.0),
             boardCasing: new THREE.BoxGeometry(2.53, 0.65, 0.25),
-            boardHanger: new THREE.CylinderGeometry(0.015, 0.015, 0.6, 6)
+            boardHanger: new THREE.CylinderGeometry(0.015, 0.015, 0.6, 6),
+            nameSignCasing: new THREE.BoxGeometry(0.0795, 0.6495, 10.005),
+            nameSignFace: new THREE.PlaneGeometry(10.005, 0.6495)
         };
         
         // Maximilianstraße custom ceiling material matching tunnel walls
@@ -275,6 +277,8 @@ export class StationModel {
         // Fortschritt anzeigen kann.
         this._toneMappedOff = new Set();
         this.stationsList = [];
+        this.stationPassengers = new Map(); // stationIdx -> passengerGroup[]
+        this.onPassengerVisibility = null; // callback (passengers, isVisible) => {}
         if (!options.deferBuild) {
             this.buildAllStations();
         }
@@ -342,11 +346,17 @@ export class StationModel {
                 if (!isLoaded && this.stationsList[idx]) {
                     this.scene.add(this.stationsList[idx]);
                     this.loadedStations.set(idx, true);
+                    if (this.onPassengerVisibility) {
+                        this.onPassengerVisibility(this.stationPassengers.get(idx), true);
+                    }
                 }
             } else {
                 if (isLoaded && this.stationsList[idx]) {
                     this.scene.remove(this.stationsList[idx]);
                     this.loadedStations.delete(idx);
+                    if (this.onPassengerVisibility) {
+                        this.onPassengerVisibility(this.stationPassengers.get(idx), false);
+                    }
                 }
             }
         });
@@ -5382,65 +5392,12 @@ export class StationModel {
             }
         });
 
-        // Bauernfeindstraße: long station-name signs hanging from the ceiling in
-        // every second inter-pillar gap. Pillars sit at ±7.5/±22.5/±37.5, so the
-        // five gaps are centred at -30/-15/0/15/30; every second gap → -30/0/30,
-        // the same rhythm as the departure boards. Same centre height as the
-        // boards (3.925, Unterkante 3.60) so the signage reads as one row.
-        if (station.name === "Bauernfeindstraße") {
-            if (!this._bauernfeindNameSignMat) {
-                const canvas = document.createElement('canvas');
-                canvas.width = 2048;
-                canvas.height = 128;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#817B7F';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#050407';
-                ctx.font = 'bold 96px Arial, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('BAUERNFEINDSTRASSE', canvas.width / 2, canvas.height / 2 + 4);
-                const tex = new THREE.CanvasTexture(canvas);
-                tex.colorSpace = THREE.SRGBColorSpace;
-                this._bauernfeindNameSignMat = new THREE.MeshBasicMaterial({ map: tex });
-                this._bauernfeindNameSignCasingMat = new THREE.MeshLambertMaterial({ color: '#817B7F' });
-            }
-            // 2/3 of the departure-board proportions ("1/3 kleiner")
-            const signLen = 6.67, signH = 0.433, signT = 0.053;
-            const signY = 3.925;    // departure-board centre height
-            const ceilYSign = 4.66; // this station's flat slab height
-            const faceGeom = new THREE.PlaneGeometry(signLen, signH);
-            const casingGeom = new THREE.BoxGeometry(signT, signH, signLen);
-            const signHangerLen = ceilYSign - signY;
-            const signHangerGeom = new THREE.CylinderGeometry(0.015, 0.015, signHangerLen, 6);
-            for (const bz of [-30, 0, 30]) {
-                const sSign = station.position + bz;
-                const posSign = this.sim.getTrackPosition(sSign);
-                const tanSign = this.sim.getTrackTangent(sSign);
-                const rotYSign = Math.atan2(tanSign.x, tanSign.z) - centerAngle;
-
-                const signGroup = new THREE.Group();
-                signGroup.position.copy(stationGroup.worldToLocal(posSign.clone()));
-                signGroup.position.y = signY;
-                signGroup.rotation.y = rotYSign;
-
-                signGroup.add(new THREE.Mesh(casingGeom, this._bauernfeindNameSignCasingMat));
-                for (const faceSign of [1, -1]) {
-                    // rotY = +faceSign*π/2 puts each plane's front (and a correctly
-                    // reading, unmirrored texture) toward its own platform side.
-                    const face = new THREE.Mesh(faceGeom, this._bauernfeindNameSignMat);
-                    face.position.x = faceSign * (signT / 2 + 0.002);
-                    face.rotation.y = faceSign * Math.PI / 2;
-                    signGroup.add(face);
-                }
-                for (const hz of [-2.7, 2.7]) {
-                    const hang = new THREE.Mesh(signHangerGeom, this.materials.boardHanger);
-                    hang.position.set(0, signHangerLen / 2, hz);
-                    signGroup.add(hang);
-                }
-                stationGroup.add(signGroup);
-            }
-        }
+        // 6c. Station-name signs:
+        // Design based on Bauernfeindstraße (6.67m x 0.433m x 0.053m, #817B7F casing & bg, #050407 text).
+        // - Mittelbahnsteig: hanging from the ceiling above the platform centerline, double-sided, at signY = 3.925m.
+        // - Seitenbahnsteig (Muggenhof, Stadtgrenze): mounted on both outer walls at signY = 3.925m, facing inward.
+        // Excluded: Plärrer and tubular stations (Lorenzkirche, Rathaus, Schweinau, Rothenburger Straße).
+        this.buildStationNameSigns(station, stationGroup, centerPos, centerAngle, platLength, hasSlatCeiling);
 
         // 7. Lights (every 10 meters)
         // Stations with the standard barrel light channel (Wöhrder-Wiese-Modell)
@@ -8765,6 +8722,485 @@ export class StationModel {
         return new THREE.MeshBasicMaterial({ map: texture });
     }
 
+    getSignDimensions(stationName) {
+        const text = stationName.toUpperCase().replace(/\u00DF/g, 'SS');
+        let textWidthPx = 0;
+        if (typeof document !== 'undefined') {
+            const c = document.createElement('canvas');
+            const ctx = c.getContext('2d');
+            if (ctx) {
+                ctx.font = 'bold 96px Arial, sans-serif';
+                const m = ctx.measureText(text);
+                if (m && m.width > 50) {
+                    textWidthPx = m.width;
+                }
+            }
+        }
+        if (textWidthPx === 0) {
+            for (const ch of text) {
+                if ('I .:,-\''.includes(ch)) textWidthPx += 32;
+                else if ('MW'.includes(ch)) textWidthPx += 88;
+                else if ('ABCDEFGHJKLMNOPQRSTUVXYZ0123456789'.includes(ch)) textWidthPx += 68;
+                else textWidthPx += 65;
+            }
+        }
+        const metersPerPx = 0.6495 / 128;
+        const textWidthM = textWidthPx * metersPerPx;
+        const signLen = Math.max(2.8, Math.min(10.0, Math.round((textWidthM + 1.2) * 100) / 100));
+        return { signLen, signH: 0.6495, signT: 0.0795, textWidthPx };
+    }
+
+    getStationNameSignMaterial(stationName, signLen) {
+        if (!this._stationNameSignMaterials) {
+            this._stationNameSignMaterials = new Map();
+        }
+        const key = `${stationName}_${signLen ? signLen.toFixed(2) : 'auto'}`;
+        if (this._stationNameSignMaterials.has(key)) {
+            return this._stationNameSignMaterials.get(key);
+        }
+
+        const dims = this.getSignDimensions(stationName);
+        const effectiveLen = signLen || dims.signLen;
+        const canvas = document.createElement('canvas');
+        const canvasWidth = Math.max(512, Math.round(effectiveLen * (128 / 0.6495)));
+        canvas.width = canvasWidth;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#817B7F';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#050407';
+
+        const text = stationName.toUpperCase().replace(/\u00DF/g, 'SS');
+        let fontSize = 96;
+        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+        const textWidth = ctx.measureText(text).width;
+        if (textWidth > canvas.width - 64) {
+            fontSize = Math.floor(fontSize * ((canvas.width - 64) / textWidth));
+            ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 4);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const mat = new THREE.MeshBasicMaterial({ map: tex });
+        this._stationNameSignMaterials.set(key, mat);
+        if (!this._stationNameSignMaterials.has(stationName)) {
+            this._stationNameSignMaterials.set(stationName, mat);
+        }
+        return mat;
+    }
+
+    getStationNameSignCasingMaterial() {
+        if (!this._nameSignCasingMat) {
+            this._nameSignCasingMat = new THREE.MeshLambertMaterial({ color: '#817B7F' });
+        }
+        return this._nameSignCasingMat;
+    }
+
+    getFlatSignGeometries(signLen, signH = 0.6495, signT = 0.0795) {
+        if (!this._flatSignGeoms) this._flatSignGeoms = new Map();
+        const key = `${signLen.toFixed(2)}_${signH.toFixed(3)}_${signT.toFixed(3)}`;
+        if (this._flatSignGeoms.has(key)) return this._flatSignGeoms.get(key);
+
+        const casing = new THREE.BoxGeometry(signT, signH, signLen);
+        const face = new THREE.PlaneGeometry(signLen, signH);
+        const geoms = { casing, face };
+        this._flatSignGeoms.set(key, geoms);
+        return geoms;
+    }
+
+    getDoppelschildGeometries(signLen, signH = 0.6495, signT = 0.06, apexX = 0.51) {
+        if (!this._doppelschildGeoms) this._doppelschildGeoms = new Map();
+        const key = `${signLen.toFixed(2)}_${signH.toFixed(3)}_${signT.toFixed(3)}_${apexX.toFixed(2)}`;
+        if (this._doppelschildGeoms.has(key)) return this._doppelschildGeoms.get(key);
+
+        const N = 24;
+        const halfL = signLen / 2;
+        const halfH = signH / 2;
+        const halfT = signT / 2;
+
+        function buildBranch(sideSign) {
+            const outerPts = [];
+            const innerPts = [];
+
+            for (let i = 0; i <= N; i++) {
+                const t = i / N;
+                const z = -halfL + t * signLen;
+                const x = sideSign * apexX * Math.cos((Math.PI * z) / signLen);
+                const dxdz = -sideSign * apexX * (Math.PI / signLen) * Math.sin((Math.PI * z) / signLen);
+                const len = Math.sqrt(1 + dxdz * dxdz);
+                const nx = (sideSign * 1.0) / len;
+                const nz = (-sideSign * dxdz) / len;
+
+                if (i === 0 || i === N) {
+                    outerPts.push(new THREE.Vector3(0, 0, z));
+                    innerPts.push(new THREE.Vector3(0, 0, z));
+                } else {
+                    outerPts.push(new THREE.Vector3(x + nx * halfT, 0, z + nz * halfT));
+                    innerPts.push(new THREE.Vector3(x - nx * halfT, 0, z - nz * halfT));
+                }
+            }
+
+            const casingGeom = new THREE.BufferGeometry();
+            const positions = [];
+            const normals = [];
+
+            function addQuad(p1, p2, p3, p4, norm) {
+                positions.push(p1.x, p1.y, p1.z,  p2.x, p2.y, p2.z,  p3.x, p3.y, p3.z);
+                normals.push(norm.x, norm.y, norm.z, norm.x, norm.y, norm.z, norm.x, norm.y, norm.z);
+                positions.push(p1.x, p1.y, p1.z,  p3.x, p3.y, p3.z,  p4.x, p4.y, p4.z);
+                normals.push(norm.x, norm.y, norm.z, norm.x, norm.y, norm.z, norm.x, norm.y, norm.z);
+            }
+
+            const up = new THREE.Vector3(0, 1, 0);
+            const down = new THREE.Vector3(0, -1, 0);
+
+            for (let i = 0; i < N; i++) {
+                const o1 = outerPts[i], o2 = outerPts[i + 1];
+                const in1 = innerPts[i], in2 = innerPts[i + 1];
+
+                const tO1 = new THREE.Vector3(o1.x, halfH, o1.z);
+                const tO2 = new THREE.Vector3(o2.x, halfH, o2.z);
+                const tI1 = new THREE.Vector3(in1.x, halfH, in1.z);
+                const tI2 = new THREE.Vector3(in2.x, halfH, in2.z);
+
+                const bO1 = new THREE.Vector3(o1.x, -halfH, o1.z);
+                const bO2 = new THREE.Vector3(o2.x, -halfH, o2.z);
+                const bI1 = new THREE.Vector3(in1.x, -halfH, in1.z);
+                const bI2 = new THREE.Vector3(in2.x, -halfH, in2.z);
+
+                // Top lid
+                if (sideSign > 0) addQuad(tO1, tO2, tI2, tI1, up);
+                else addQuad(tI1, tI2, tO2, tO1, up);
+
+                // Bottom lid
+                if (sideSign > 0) addQuad(bI1, bI2, bO2, bO1, down);
+                else addQuad(bO1, bO2, bI2, bI1, down);
+
+                // Inner wall (facing opening)
+                const inNorm = new THREE.Vector3(-sideSign, 0, 0);
+                if (sideSign > 0) addQuad(tI1, tI2, bI2, bI1, inNorm);
+                else addQuad(tI2, tI1, bI1, bI2, inNorm);
+
+                // Outer wall (behind sign face)
+                const outNorm = new THREE.Vector3(sideSign, 0, 0);
+                if (sideSign > 0) addQuad(tO2, tO1, bO1, bO2, outNorm);
+                else addQuad(tO1, tO2, bO2, bO1, outNorm);
+            }
+
+            casingGeom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            casingGeom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+
+            // Face geometry for text
+            const faceGeom = new THREE.BufferGeometry();
+            const facePos = [];
+            const faceNorms = [];
+            const faceUvs = [];
+
+            for (let i = 0; i < N; i++) {
+                const o1 = outerPts[i], o2 = outerPts[i + 1];
+                const t1 = i / N, t2 = (i + 1) / N;
+                // Reading direction: from +X side (+Track 1), text starts at +Z (left) and ends at -Z (right) -> 1 - t
+                // From -X side (+Track 2), text starts at -Z (left) and ends at +Z (right) -> t
+                const u1 = (sideSign > 0) ? (1 - t1) : t1;
+                const u2 = (sideSign > 0) ? (1 - t2) : t2;
+
+                const nOffset = 0.0015 * sideSign;
+                const vTL = new THREE.Vector3(o1.x + nOffset, halfH, o1.z);
+                const vBL = new THREE.Vector3(o1.x + nOffset, -halfH, o1.z);
+                const vTR = new THREE.Vector3(o2.x + nOffset, halfH, o2.z);
+                const vBR = new THREE.Vector3(o2.x + nOffset, -halfH, o2.z);
+
+                const fn = new THREE.Vector3(sideSign, 0, 0);
+
+                if (sideSign > 0) {
+                    facePos.push(vTL.x, vTL.y, vTL.z,  vTR.x, vTR.y, vTR.z,  vBR.x, vBR.y, vBR.z);
+                    faceNorms.push(fn.x, fn.y, fn.z, fn.x, fn.y, fn.z, fn.x, fn.y, fn.z);
+                    faceUvs.push(u1, 1,  u2, 1,  u2, 0);
+
+                    facePos.push(vTL.x, vTL.y, vTL.z,  vBR.x, vBR.y, vBR.z,  vBL.x, vBL.y, vBL.z);
+                    faceNorms.push(fn.x, fn.y, fn.z, fn.x, fn.y, fn.z, fn.x, fn.y, fn.z);
+                    faceUvs.push(u1, 1,  u2, 0,  u1, 0);
+                } else {
+                    facePos.push(vTR.x, vTR.y, vTR.z,  vTL.x, vTL.y, vTL.z,  vBL.x, vBL.y, vBL.z);
+                    faceNorms.push(fn.x, fn.y, fn.z, fn.x, fn.y, fn.z, fn.x, fn.y, fn.z);
+                    faceUvs.push(u2, 1,  u1, 1,  u1, 0);
+
+                    facePos.push(vTR.x, vTR.y, vTR.z,  vBL.x, vBL.y, vBL.z,  vBR.x, vBR.y, vBR.z);
+                    faceNorms.push(fn.x, fn.y, fn.z, fn.x, fn.y, fn.z, fn.x, fn.y, fn.z);
+                    faceUvs.push(u2, 1,  u1, 0,  u2, 0);
+                }
+            }
+
+            faceGeom.setAttribute('position', new THREE.Float32BufferAttribute(facePos, 3));
+            faceGeom.setAttribute('normal', new THREE.Float32BufferAttribute(faceNorms, 3));
+            faceGeom.setAttribute('uv', new THREE.Float32BufferAttribute(faceUvs, 2));
+
+            return { casingGeom, faceGeom };
+        }
+
+        const geoms = {
+            branchR: buildBranch(1),
+            branchL: buildBranch(-1)
+        };
+        this._doppelschildGeoms.set(key, geoms);
+        return geoms;
+    }
+
+    getStationPillars(stationName) {
+        if (["Hardhöhe", "Jakobinenstraße", "Röthenbach", "Hohe Marter", "Opernhaus", "Wöhrder Wiese", "Rathenauplatz", "Grossreuth bei Schweinau", "Klinikum Nord", "Flughafen", "Maxfeld", "Rennweg", "Nordwestring", "Friedrich-Ebert-Platz"].includes(stationName)) {
+            return [];
+        }
+        if (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(stationName)) {
+            return [-33, -27, -21, -15, -9, -3, 3, 9, 15, 21, 27, 33];
+        }
+        if (stationName === "St. Leonhard" || stationName === "Aufseßplatz" || stationName === "Hauptbahnhof") {
+            return [-32, -24, -16, -8, 0, 8, 16, 24, 32];
+        }
+        return [-37.5, -22.5, -7.5, 7.5, 22.5, 37.5];
+    }
+
+    buildStationNameSigns(station, stationGroup, centerPos, centerAngle, platLength, hasSlatCeiling) {
+        const EXCLUDED_SIGN_STATIONS = [
+            "Plärrer",
+            "Lorenzkirche",
+            "Rathaus",
+            "Schweinau",
+            "Rothenburger Straße"
+        ];
+        if (EXCLUDED_SIGN_STATIONS.includes(station.name)) return;
+
+        const isSideStation = station.side;
+        const isScharfreiterring = (station.name === "Scharfreiterring");
+        const { signLen, signH, signT } = this.getSignDimensions(station.name);
+        const signMat = this.getStationNameSignMaterial(station.name, signLen);
+        const casingMat = this.getStationNameSignCasingMaterial();
+
+        const signY = 3.81675; // Oberkante bleibt unverändert bei 4.1415m (3.81675 + 0.6495 / 2 = 4.1415m)
+
+        if (isSideStation) {
+            // Seitenbahnsteige (Muggenhof, Stadtgrenze):
+            // Schilder an den beiden Außenwänden auf Höhe signY = 3.81675m,
+            // ca. 4 cm nach innen gerückt, sodass die Beschriftung zum Bahnsteig/Gleis blickt.
+            const fGeom = this.getFlatSignGeometries(signLen, signH, signT);
+            const signZs = [-30, 0, 30];
+
+            for (const bz of signZs) {
+                const sSign = station.position + bz;
+                const posSign = this.sim.getTrackPosition(sSign);
+                const tanSign = this.sim.getTrackTangent(sSign);
+                const normal = new THREE.Vector3(-tanSign.z, 0, tanSign.x);
+                const spacing = this.sim.getTrackSpacing(sSign);
+                const rotYSign = Math.atan2(tanSign.x, tanSign.z) - centerAngle;
+
+                // 1. Linke Außenwand (Gleis 2 Seite, positive X; normal.x < 0 -> -normal)
+                const wallLeftOffset = (spacing / 2 + 5.55) - (signT / 2 + 0.04);
+                const pLeft = posSign.clone().addScaledVector(normal, -wallLeftOffset);
+                const signGroupLeft = new THREE.Group();
+                signGroupLeft.position.copy(stationGroup.worldToLocal(pLeft.clone()));
+                signGroupLeft.position.y = signY;
+                signGroupLeft.rotation.y = rotYSign;
+
+                signGroupLeft.add(new THREE.Mesh(fGeom.casing, casingMat));
+                // Textfläche blickt nach innen zum Bahnsteig (-X Richtung)
+                const faceLeft = new THREE.Mesh(fGeom.face, signMat);
+                faceLeft.position.x = -(signT / 2 + 0.002);
+                faceLeft.rotation.y = -Math.PI / 2;
+                signGroupLeft.add(faceLeft);
+
+                stationGroup.add(signGroupLeft);
+
+                // 2. Rechte Außenwand (Gleis 1 Seite, negative X; normal.x < 0 -> +normal)
+                const wallRightOffset = (spacing / 2 + 5.55) - (signT / 2 + 0.04);
+                const pRight = posSign.clone().addScaledVector(normal, wallRightOffset);
+                const signGroupRight = new THREE.Group();
+                signGroupRight.position.copy(stationGroup.worldToLocal(pRight.clone()));
+                signGroupRight.position.y = signY;
+                signGroupRight.rotation.y = rotYSign;
+
+                signGroupRight.add(new THREE.Mesh(fGeom.casing, casingMat));
+                // Textfläche blickt nach innen zum Bahnsteig (+X Richtung)
+                const faceRight = new THREE.Mesh(fGeom.face, signMat);
+                faceRight.position.x = (signT / 2 + 0.002);
+                faceRight.rotation.y = Math.PI / 2;
+                signGroupRight.add(faceRight);
+
+                stationGroup.add(signGroupRight);
+            }
+        } else if (isScharfreiterring) {
+            // Scharfreiterring: 2 separate Bahnsteige (links & rechts) mit Abstellgleisen in der Mitte.
+            // Schilder hängen mittig über dem linken und rechten Bahnsteig zwischen den T-Stützen!
+            let ceilYSign = 4.66;
+            const signHangerLen = Math.max(0.2, ceilYSign - signY);
+            const signHangerGeom = new THREE.CylinderGeometry(0.015, 0.015, signHangerLen, 6);
+            const fGeom = this.getFlatSignGeometries(signLen, signH, signT);
+            const signZs = [-30, 0, 30];
+            const hangerOffsetZ = signLen * 0.38;
+
+            for (const bz of signZs) {
+                const sSign = station.position + bz;
+                const posSign = this.sim.getTrackPosition(sSign);
+                const tanSign = this.sim.getTrackTangent(sSign);
+                const normal = new THREE.Vector3(-tanSign.z, 0, tanSign.x);
+                const spacing = this.sim.getTrackSpacing(sSign);
+                const rotYSign = Math.atan2(tanSign.x, tanSign.z) - centerAngle;
+                const localSchPlatCenter = spacing / 2 - 5.03;
+                const offset = localSchPlatCenter;
+
+                for (const sideSign of [-1, 1]) {
+                    const pSch = posSign.clone().addScaledVector(normal, sideSign * offset);
+                    const signGroup = new THREE.Group();
+                    signGroup.position.copy(stationGroup.worldToLocal(pSch.clone()));
+                    signGroup.position.y = signY;
+                    signGroup.rotation.y = rotYSign;
+
+                    signGroup.add(new THREE.Mesh(fGeom.casing, casingMat));
+                    for (const faceSign of [1, -1]) {
+                        const face = new THREE.Mesh(fGeom.face, signMat);
+                        face.position.x = faceSign * (signT / 2 + 0.002);
+                        face.rotation.y = faceSign * Math.PI / 2;
+                        signGroup.add(face);
+                    }
+                    for (const hz of [-hangerOffsetZ, hangerOffsetZ]) {
+                        const hang = new THREE.Mesh(signHangerGeom, this.materials.boardHanger);
+                        hang.position.set(0, signHangerLen / 2, hz);
+                        signGroup.add(hang);
+                    }
+                    stationGroup.add(signGroup);
+                }
+            }
+        } else {
+            // Mittelbahnsteige: Deckenabhängung mittig über dem Bahnsteig.
+            // Prüfung auf Säulenkollisionen:
+            // Entweder zwischen den Säulen, oder - wenn nicht möglich - als gekrümmtes Doppelschild um die Säule!
+            let ceilYSign = 4.66;
+            if (station.name === "Hardhöhe") ceilYSign = 4.8;
+            else if (station.name === "Flughafen") ceilYSign = 5.0;
+            else if (hasSlatCeiling) ceilYSign = 4.595;
+            else if (["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name)) ceilYSign = 5.84;
+            else if (station.name === "Eberhardshof") ceilYSign = 4.8;
+
+            const signHangerLen = Math.max(0.2, ceilYSign - signY);
+            const signHangerGeom = new THREE.CylinderGeometry(0.015, 0.015, signHangerLen, 6);
+            const hangerOffsetZ = signLen * 0.38;
+
+            // Finde Platzierungen und Schild-Typen
+            let signConfigs = [];
+            if (station.name === "Messe") {
+                signConfigs = [-42.5, -17.5, 42.5].map(z => ({ z, isDouble: false }));
+            } else {
+                const pillars = this.getStationPillars(station.name);
+                if (pillars.length === 0) {
+                    signConfigs = [-30, 0, 30].map(z => ({ z, isDouble: false }));
+                } else {
+                    const targetZs = [-30, 0, 30];
+                    for (const targetZ of targetZs) {
+                        // Prüfe, ob ein Säulenzwischenraum das Schild aufnehmen kann
+                        let bestGap = null;
+                        let bestGapDist = Infinity;
+                        for (let i = 0; i < pillars.length - 1; i++) {
+                            const p1 = pillars[i], p2 = pillars[i + 1];
+                            const mid = (p1 + p2) / 2;
+                            const clearSpace = (p2 - p1) - 0.84; // 0.84m Säulendurchmesser
+                            if (signLen <= clearSpace - 0.3) {
+                                const d = Math.abs(mid - targetZ);
+                                if (d < bestGapDist) {
+                                    bestGapDist = d;
+                                    bestGap = { mid, clearSpace };
+                                }
+                            }
+                        }
+
+                        // Nächstgelegene Säule
+                        let closestPillar = pillars[0];
+                        let closestPillarDist = Infinity;
+                        for (const p of pillars) {
+                            const d = Math.abs(p - targetZ);
+                            if (d < closestPillarDist) {
+                                closestPillarDist = d;
+                                closestPillar = p;
+                            }
+                        }
+
+                        // Wenn direkt an einer Säule (z. B. 0m bei Aufsessplatz/Hbf/St.Leonhard)
+                        // oder kein Zwischenraum breit genug ist (z. B. Maximilianstraße/Bärenschanze):
+                        if (closestPillarDist === 0 || !bestGap || bestGapDist > 10) {
+                            let p = closestPillar;
+                            if (["Maximilianstraße", "Bärenschanze"].includes(station.name)) {
+                                if (targetZ === -30) p = -21;
+                                else if (targetZ === 0) p = -3;
+                                else if (targetZ === 30) p = 21;
+                            }
+                            signConfigs.push({ z: p, isDouble: true });
+                        } else {
+                            signConfigs.push({ z: bestGap.mid, isDouble: false });
+                        }
+                    }
+                }
+            }
+
+            // Geometrien für Flachschild und Doppelschild abrufen
+            const fGeom = this.getFlatSignGeometries(signLen, signH, signT);
+            const dGeom = this.getDoppelschildGeometries(signLen, signH, 0.06, 0.51);
+
+            for (const cfg of signConfigs) {
+                const sSign = station.position + cfg.z;
+                const posSign = this.sim.getTrackPosition(sSign);
+                const tanSign = this.sim.getTrackTangent(sSign);
+                const rotYSign = Math.atan2(tanSign.x, tanSign.z) - centerAngle;
+
+                const signGroup = new THREE.Group();
+                signGroup.position.copy(stationGroup.worldToLocal(posSign.clone()));
+                signGroup.position.y = signY;
+                signGroup.rotation.y = rotYSign;
+
+                if (cfg.isDouble) {
+                    // --- DOPPELSCHILD UM DIE SÄULE ---
+                    // Zweig R (+X Seite, blickt zu Gleis 1)
+                    signGroup.add(new THREE.Mesh(dGeom.branchR.casingGeom, casingMat));
+                    signGroup.add(new THREE.Mesh(dGeom.branchR.faceGeom, signMat));
+
+                    // Zweig L (-X Seite, blickt zu Gleis 2)
+                    signGroup.add(new THREE.Mesh(dGeom.branchL.casingGeom, casingMat));
+                    signGroup.add(new THREE.Mesh(dGeom.branchL.faceGeom, signMat));
+
+                    // Hänger an den zusammenlaufenden Enden
+                    for (const hz of [-hangerOffsetZ, hangerOffsetZ]) {
+                        const hang = new THREE.Mesh(signHangerGeom, this.materials.boardHanger);
+                        hang.position.set(0, signHangerLen / 2, hz);
+                        signGroup.add(hang);
+                    }
+
+                    // Horizontale Befestigungsbügel um die Säule
+                    const bracketGeom = new THREE.BoxGeometry(1.08, 0.04, 0.08);
+                    const bracket1 = new THREE.Mesh(bracketGeom, casingMat);
+                    bracket1.position.set(0, signH / 4, 0);
+                    const bracket2 = new THREE.Mesh(bracketGeom, casingMat);
+                    bracket2.position.set(0, -signH / 4, 0);
+                    signGroup.add(bracket1, bracket2);
+                } else {
+                    // --- FLACHES SCHILD ZWISCHEN DEN SÄULEN ---
+                    signGroup.add(new THREE.Mesh(fGeom.casing, casingMat));
+                    for (const faceSign of [1, -1]) {
+                        const face = new THREE.Mesh(fGeom.face, signMat);
+                        face.position.x = faceSign * (signT / 2 + 0.002);
+                        face.rotation.y = faceSign * Math.PI / 2;
+                        signGroup.add(face);
+                    }
+                    for (const hz of [-hangerOffsetZ, hangerOffsetZ]) {
+                        const hang = new THREE.Mesh(signHangerGeom, this.materials.boardHanger);
+                        hang.position.set(0, signHangerLen / 2, hz);
+                        signGroup.add(hang);
+                    }
+                }
+
+                stationGroup.add(signGroup);
+            }
+        }
+    }
+
     createSubwayULogo() {
         const canvas = document.createElement('canvas');
         canvas.width = 256;
@@ -9044,11 +9480,11 @@ export class StationModel {
                 const spacing = this.sim.getTrackSpacing(s);
                 const leftPlatCenter = spacing / 2 - 5.03;
                 
-                // Left platform trash can
-                placements.push(getLocalPlacement(z, leftPlatCenter + 3.25));
+                // Left platform trash can (centered on platform midline)
+                placements.push(getLocalPlacement(z, -leftPlatCenter));
                 
-                // Right platform trash can
-                placements.push(getLocalPlacement(z, -(leftPlatCenter + 3.25)));
+                // Right platform trash can (centered on platform midline)
+                placements.push(getLocalPlacement(z, leftPlatCenter));
             });
         } else {
             // Island platform: place in the center (X = 0)
@@ -9266,6 +9702,8 @@ export class StationModel {
         if (!configs || configs.length === 0) return;
 
         const passBuilder = new PassengerBuilder();
+        const passList = [];
+        this.stationPassengers.set(station.index, passList);
         const platLength = 2 * station.halfLength;
         const platTopY = 0.865;
         const centerTangent = this.sim.getTrackTangent(station.position);
@@ -9330,7 +9768,10 @@ export class StationModel {
 
             const zone = zZones[idx];
             const randZFrac = zone[0] + rand() * (zone[1] - zone[0]);
-            const zOffset = randZFrac * platLength;
+            let zOffset = randZFrac * platLength;
+            if (isScharfreiterring) {
+                zOffset += 18.0;
+            }
             const s = station.position + zOffset;
             const spacing = this.sim.getTrackSpacing(s);
 
@@ -9348,15 +9789,11 @@ export class StationModel {
                 const dx = standNearTrack ? (0.5 + rand() * 2.0) : (6.5 + rand() * 2.0);
                 xOffset = edgeX - dx;
             } else if (isSideStation) {
-                // Side platform
-                const isLeftPlat = (rand() > 0.5);
-                const sign = isLeftPlat ? 1 : -1;
-                const off = spacing / 2 + 3.54;
-                
-                // Avoid middle of 4m width, enforce 50cm safety margin from track edge (dx >= -1.5)
-                const standNearTrack = (rand() > 0.5);
-                const dx = standNearTrack ? (-1.5 + rand() * 0.9) : (0.8 + rand() * 0.9);
-                xOffset = sign * (off + dx);
+                const trackSign = (rand() > 0.5) ? -1 : 1;
+                const edgeGap = isScharfreiterring ? 1.48 : 1.54;
+                const edgeX = trackSign * (spacing / 2 + edgeGap);
+                const dx = 0.5 + rand() * 2.2;
+                xOffset = edgeX + trackSign * dx;
             } else if (isScharfreiterring) {
                 // Scharfreiterring (wide platforms)
                 const isLeftPlat = (rand() > 0.5);
@@ -9390,6 +9827,7 @@ export class StationModel {
             passenger.rotation.y = p.rotY + baseAngle + (rand() - 0.5) * 0.5;
 
             stationGroup.add(passenger);
+            passList.push(passenger);
         });
     }
 

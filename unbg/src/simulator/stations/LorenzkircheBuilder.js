@@ -32,32 +32,40 @@ export class LorenzkircheBuilder extends StationBuilder {
             ctx.fill();
         }
 
-        // Finer detail noise
-        for (let i = 0; i < 8000; i++) {
-            const val = Math.random();
-            ctx.fillStyle = val > 0.7 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-            const x = Math.random() * 512;
-            const y = Math.random() * 512;
-            ctx.fillRect(x, y, 1.5, 1.5);
+        // Finer detail noise via fast direct pixel buffer
+        const imgData = ctx.getImageData(0, 0, 512, 512);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            if (Math.random() < 0.05) {
+                const delta = (Math.random() > 0.7 ? 12 : -12);
+                data[i] = Math.min(255, Math.max(0, data[i] + delta));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + delta));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + delta));
+            }
         }
+        ctx.putImageData(imgData, 0, 0);
 
         const concTex = tagCanvasTextureSRGBKeepLook(new THREE.CanvasTexture(concCanvas));
         concTex.wrapS = THREE.RepeatWrapping;
         concTex.wrapT = THREE.RepeatWrapping;
         concTex.repeat.set(8, 8); // Tiling scale for the vault
 
-        // Bump map for plasticity
+        // Bump map for plasticity (fast direct pixel fill)
         const bumpCanvas = document.createElement('canvas');
         bumpCanvas.width = 512;
         bumpCanvas.height = 512;
         const bctx = bumpCanvas.getContext('2d');
-        bctx.fillStyle = '#808080'; // Mid-grey
-        bctx.fillRect(0, 0, 512, 512);
-        bctx.globalAlpha = 0.2;
-        for (let i = 0; i < 5000; i++) {
-            bctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
-            bctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+        const bImgData = bctx.createImageData(512, 512);
+        const bData = new Uint32Array(bImgData.data.buffer);
+        // Base color #808080 in Little-Endian ARGB/ABGR: 0xff808080
+        bData.fill(0xff808080);
+        for (let i = 0; i < bData.length; i++) {
+            if (Math.random() < 0.03) {
+                const val = Math.random() > 0.5 ? 160 : 96;
+                bData[i] = (255 << 24) | (val << 16) | (val << 8) | val;
+            }
         }
+        bctx.putImageData(bImgData, 0, 0);
 
         const bumpTex = new THREE.CanvasTexture(bumpCanvas);
         bumpTex.wrapS = bumpTex.wrapT = THREE.RepeatWrapping;

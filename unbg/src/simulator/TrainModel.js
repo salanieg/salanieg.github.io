@@ -158,6 +158,7 @@ export class TrainModel {
             cockpitFloor: cheapMaterial({ color: '#bcbcbc', metalness: 0.1, roughness: 0.8 }),
             currentCollectorYellow: cheapMaterial({ color: '#ffcc00', metalness: 0.1, roughness: 0.5 }), // Stromabnehmer yellow
             skirtGrey: cheapMaterial({ color: '#53565f', metalness: 0.1, roughness: 0.5 }), // G1 dark grey skirt stripe
+            skirtTopGrey: cheapMaterial({ color: '#767b86', metalness: 0.2, roughness: 0.5 }), // G1 bumper cheeks top step plate (slightly lighter)
             underbodyOrange: cheapMaterial({ color: '#d35400', metalness: 0.1, roughness: 0.6 }), // DT1 orange box
             windowGlass: this.createFauxGlassMaterial({ tint: '#ffffff', opacity: 0.02, reflectivity: 0.30 }),
             // Cab side windows and doors: reflectivity 0.30 (same as passenger windowGlass)
@@ -265,6 +266,7 @@ export class TrainModel {
 
     setTrainModel(type, seatVariant = 'blue') {
         if (this.trainType === type && this.seatVariant === seatVariant) return;
+        const wasStraight = this.isStraight;
         this.trainType = type;
         this.seatVariant = seatVariant;
 
@@ -302,12 +304,18 @@ export class TrainModel {
         this.lastDisplayText = "";
         this.lastDisplayKey = "";
         this.dt1DestScreenMat = null;
+        this.isStraight = wasStraight;
         
         // Rebuild the selected train model
         this.buildTrain();
         
-        // Force immediate alignment
-        this.update(0);
+        this.isStraight = wasStraight;
+        if (wasStraight) {
+            this.alignStraight();
+            this.updateLights(false);
+        } else {
+            this.update(0);
+        }
     }
 
     buildTrain() {
@@ -994,6 +1002,154 @@ export class TrainModel {
             // 6. Build bellows (gangway) between carriages
             if (i > 0) this.buildBellowsHalf(carGroup, -G1_BELLOWS_LEN, 0, 'front');
             if (i < 3) this.buildBellowsHalf(carGroup, -(carLength - G1_BELLOWS_LEN), -carLength, 'rear');
+
+            // 7. Carriage numbers on the black side panels next to the bellows (419, 420, 421, 422)
+            this.buildG1CarNumbers(carGroup, i, carLength);
+        }
+    }
+
+    createG1CarNumberMaterial(numStr) {
+        if (!this._g1CarNumberMats) this._g1CarNumberMats = {};
+        if (this._g1CarNumberMats[numStr]) return this._g1CarNumberMats[numStr];
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // White digits in bold clean DIN / transit font, bottom aligned
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 160px "DIN Alternate", "DIN 1451", "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(numStr, canvas.width / 2, canvas.height - 12);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        const mat = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            depthWrite: false,
+            polygonOffset: true,
+            polygonOffsetFactor: -2,
+            polygonOffsetUnits: -2
+        });
+        this._g1CarNumberMats[numStr] = mat;
+        return mat;
+    }
+
+    getG1CouplerWarningMaterial() {
+        if (!this._g1CouplerWarningMat) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(0, 0, 128, 64);
+            ctx.strokeStyle = '#111111';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(3, 3, 122, 58);
+
+            // Black warning triangle
+            ctx.fillStyle = '#111111';
+            ctx.beginPath();
+            ctx.moveTo(64, 12);
+            ctx.lineTo(88, 50);
+            ctx.lineTo(40, 50);
+            ctx.closePath();
+            ctx.fill();
+
+            // Yellow exclamation mark in triangle
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(62, 22, 4, 16);
+            ctx.beginPath();
+            ctx.arc(64, 44, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            this._g1CouplerWarningMat = new THREE.MeshBasicMaterial({ map: tex });
+        }
+        return this._g1CouplerWarningMat;
+    }
+
+    getG1BumperNumberMaterial(numStr) {
+        if (!this._g1BumperNumberMats) this._g1BumperNumberMats = {};
+        if (this._g1BumperNumberMats[numStr]) return this._g1BumperNumberMats[numStr];
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // White digits in bold clean DIN / transit font, centered at full wagon scale
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 170px "DIN Alternate", "DIN 1451", "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(numStr, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        const mat = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            depthWrite: false,
+            polygonOffset: true,
+            polygonOffsetFactor: -2,
+            polygonOffsetUnits: -2
+        });
+        this._g1BumperNumberMats[numStr] = mat;
+        return mat;
+    }
+
+    buildG1CarNumbers(carGroup, carIdx, carLength) {
+        const carNumbers = ['419', '420', '421', '422'];
+        const numStr = carNumbers[carIdx];
+        if (!numStr) return;
+
+        const mat = this.createG1CarNumberMaterial(numStr);
+        // Twice as large: width 0.76m, height 0.38m
+        const geom = new THREE.PlaneGeometry(0.76, 0.38);
+
+        // Determine Z positions where black surfaces next to bellows exist for this car
+        const zPositions = [];
+        if (carIdx > 0) {
+            // Front bellows end
+            const frontZ = (carIdx === 3) ? -1.15 : -0.97;
+            zPositions.push(frontZ);
+        }
+        if (carIdx < 3) {
+            // Rear bellows end
+            const rearZ = (carIdx === 0) ? -18.11 : -17.85;
+            zPositions.push(rearZ);
+        }
+
+        // Bottom edge flush with window bottom edge (~1.30m)
+        const yBottom = 1.30;
+        const yPos = yBottom + 0.38 / 2; // centered at 1.49m
+        const xDist = 1.453; // outside the 1.450m black outer wall face
+
+        for (const z of zPositions) {
+            // Right side (facing +X)
+            const meshR = new THREE.Mesh(geom, mat);
+            meshR.position.set(xDist, yPos, z);
+            meshR.rotation.y = Math.PI / 2;
+            meshR.renderOrder = 2;
+            carGroup.add(meshR);
+
+            // Left side (facing -X)
+            const meshL = new THREE.Mesh(geom, mat);
+            meshL.position.set(-xDist, yPos, z);
+            meshL.rotation.y = -Math.PI / 2;
+            meshL.renderOrder = 2;
+            carGroup.add(meshL);
         }
     }
 
@@ -1247,35 +1403,73 @@ export class TrainModel {
         faceGroup.add(destMesh);
 
 
-        // 7. Dark grey skirt block: flat vertical front face with hard chamfered
-        // corners (wedge look), tucked in slightly under the black nose
-        faceGroup.add(new THREE.Mesh(G.g1Skirt, this.materials.bodyBumperGrey));
+        // 7. Dark grey bumper with protruding cheeks and central coupler bay (skirtGrey, reaching Y = 0.00)
+        faceGroup.add(new THREE.Mesh(G.g1Skirt, this.materials.skirtGrey));
+        faceGroup.add(new THREE.Mesh(G.g1SkirtStep, this.materials.skirtTopGrey));
+        faceGroup.add(new THREE.Mesh(G.g1SkirtBayBack, this.materials.cockpitInteriorDark));
+        faceGroup.add(new THREE.Mesh(G.g1SkirtBayFloor, this.materials.skirtGrey));
 
-        // Car number on the skirt front face (white, like on the original)
-        const numberMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.13), this.getDecalMaterial('516'));
-        numberMesh.position.set(0.42, 0.40, 0.306);
+        // Car number on the right bumper cheek (white digits, large like on the wagons: 419 on Car 0, 422 on Car 3)
+        const cabNumber = (carIdx === 3) ? '422' : '419';
+        const numMat = this.getG1BumperNumberMaterial(cabNumber);
+        const numberMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.60, 0.30), numMat);
+        numberMesh.position.set(0.64, 0.22, 0.562);
+        numberMesh.renderOrder = 2;
         faceGroup.add(numberMesh);
 
-        // 8. Coupler: boxy mechanical assembly protruding from the skirt center
-        const couplerMount = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.30, 0.06), this.materials.bodyGrey);
-        couplerMount.position.set(0, 0.28, 0.32);
-        const couplerShaft = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.17, 0.34), this.materials.bodyDarkGrey);
-        couplerShaft.position.set(0, 0.28, 0.50);
-        const couplerHead = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, 0.16), this.materials.bodyGrey);
-        couplerHead.position.set(0, 0.28, 0.66);
-        const couplerFace = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.025), this.materials.chromeMetal);
-        couplerFace.position.set(0, 0.30, 0.745);
-        const contactBox = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.11, 0.14), this.materials.bodyDarkGrey);
-        contactBox.position.set(0, 0.15, 0.60);
-        faceGroup.add(couplerMount, couplerShaft, couplerHead, couplerFace, contactBox);
+        // 8. Coupler: Scharfenberg assembly protruding from the central bay
+        const couplerMount = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.20, 0.08), this.materials.bodyDarkGrey);
+        couplerMount.position.set(0, 0.26, 0.10);
 
-        const hoseGeom = new THREE.CylinderGeometry(0.018, 0.018, 0.22, 8);
-        for (const hx of [-0.13, 0.13]) {
+        const couplerShaft = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.44), this.materials.bodyDarkGrey);
+        couplerShaft.position.set(0, 0.26, 0.32);
+
+        const couplerHead = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.20, 0.20), this.materials.bodyDarkGrey);
+        couplerHead.position.set(0, 0.26, 0.64);
+
+        const couplerFace = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.03), this.materials.bodyGrey);
+        couplerFace.position.set(0, 0.26, 0.745);
+
+        // Guiding horn (chrome cone) on left
+        const coneGeom = new THREE.ConeGeometry(0.045, 0.09, 12);
+        coneGeom.rotateX(Math.PI / 2);
+        const cone = new THREE.Mesh(coneGeom, this.materials.chromeMetal);
+        cone.position.set(-0.075, 0.26, 0.78);
+
+        // Receiving socket on right
+        const socketGeom = new THREE.CylinderGeometry(0.042, 0.052, 0.035, 12);
+        socketGeom.rotateX(Math.PI / 2);
+        const socket = new THREE.Mesh(socketGeom, this.materials.chromeMetal);
+        socket.position.set(0.075, 0.26, 0.75);
+
+        // Yellow warning label plate on top of coupler head
+        const warningPlate = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.09), this.getG1CouplerWarningMaterial());
+        warningPlate.rotation.x = -Math.PI / 2;
+        warningPlate.position.set(0, 0.365, 0.64);
+
+        // Uncoupling latch lever with orange/red accent underneath
+        const uncoupleLever = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.025, 0.14), this.materials.underbodyOrange);
+        uncoupleLever.position.set(0.10, 0.17, 0.64);
+        uncoupleLever.rotation.z = 0.25;
+
+        // Pneumatic pipe fittings
+        const pipeGeom = new THREE.CylinderGeometry(0.014, 0.014, 0.04, 8);
+        pipeGeom.rotateX(Math.PI / 2);
+        const pipeL = new THREE.Mesh(pipeGeom, this.materials.chromeMetal);
+        pipeL.position.set(-0.06, 0.17, 0.74);
+        const pipeR = new THREE.Mesh(pipeGeom, this.materials.chromeMetal);
+        pipeR.position.set(0.06, 0.17, 0.74);
+
+        // Flexible hoses curving into bay
+        const hoseGeom = new THREE.CylinderGeometry(0.016, 0.016, 0.28, 8);
+        for (const hx of [-0.14, 0.14]) {
             const hose = new THREE.Mesh(hoseGeom, this.materials.bodyDarkGrey);
-            hose.position.set(hx, 0.17, 0.45);
+            hose.position.set(hx, 0.19, 0.42);
             hose.rotation.x = 0.35;
             faceGroup.add(hose);
         }
+
+        faceGroup.add(couplerMount, couplerShaft, couplerHead, couplerFace, cone, socket, warningPlate, uncoupleLever, pipeL, pipeR);
 
         // 9. L-shaped LED light bands, flush in the lower outer corners of the
         // black nose and following its curvature (+ glow sprite)
@@ -1885,8 +2079,6 @@ export class TrainModel {
             const redStripe = new THREE.Mesh(sign < 0 ? G.g1CabRedStripeL : G.g1CabRedStripeR, this.materials.bodyRedG1);
             const skirtStripe = new THREE.Mesh(sign < 0 ? G.g1CabSkirtStripeL : G.g1CabSkirtStripeR, this.materials.skirtGrey);
             const whiteRear = new THREE.Mesh(sign < 0 ? G.g1CabWhiteRearL : G.g1CabWhiteRearR, this.materials.bodyWhite);
-            const redWedge = new THREE.Mesh(sign < 0 ? G.g1CabRedWedgeL : G.g1CabRedWedgeR, this.materials.bodyRedG1);
-            const whiteTri = new THREE.Mesh(sign < 0 ? G.g1CabWhiteTriL : G.g1CabWhiteTriR, this.materials.bodyWhite);
             const topStrip = new THREE.Mesh(sign < 0 ? G.g1CabTopStripL : G.g1CabTopStripR, this.materials.bodyRedG1);
 
             // Interior claddings (#31302C) - full geometry used to avoid gaps
@@ -1894,7 +2086,7 @@ export class TrainModel {
             const flankInt = new THREE.Mesh(sign < 0 ? G.g1CabSideL : G.g1CabSideR, this.materials.cockpitInteriorDark);
             flankInt.position.set(-sign * 0.015, -0.005, -0.01);
 
-            sideGroup.add(flank, flankGlass, redStripe, skirtStripe, whiteRear, redWedge, whiteTri, topStrip, flankInt);
+            sideGroup.add(flank, flankGlass, redStripe, skirtStripe, whiteRear, topStrip, flankInt);
 
             // Doorway reveal: jambs, header and sill lining the flank cutout so
             // the opening has visible depth when the door swings out
@@ -1921,11 +2113,10 @@ export class TrainModel {
             const topRailInt = new THREE.Mesh(new THREE.BoxGeometry(0.01, 2.54 - winY1 + 0.01, doorW + 0.01), this.materials.cockpitInteriorDark);
             topRailInt.position.set(-sign * 0.02, (2.54 + winY1) / 2 - 0.005, -doorW / 2);
 
-            // Split lowerPanel into white livery stripe (Y = 0.60 to 1.20) and black frame (Y = 1.20 to winY0)
-            const lowerPanelWhite = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.20 - 0.60, doorW), this.materials.bodyWhite);
-            lowerPanelWhite.position.set(0, (0.60 + 1.20) / 2, -doorW / 2);
-            const lowerPanelBlack = new THREE.Mesh(new THREE.BoxGeometry(0.04, winY0 - 1.20, doorW), this.materials.bodyGlossBlack);
-            lowerPanelBlack.position.set(0, (1.20 + winY0) / 2, -doorW / 2);
+            // Lower door panel: white livery stripe begins on the door with diagonal slant,
+            // and the area above it up to the window is gloss black.
+            const lowerPanelWhite = new THREE.Mesh(G.g1DoorWhite, this.materials.bodyWhite);
+            const lowerPanelBlack = new THREE.Mesh(G.g1DoorBlack, this.materials.bodyGlossBlack);
             const lowerPanelInt = new THREE.Mesh(new THREE.BoxGeometry(0.01, winY0 - 0.60 + 0.01, doorW + 0.01), this.materials.cockpitInteriorDark);
             lowerPanelInt.position.set(-sign * 0.02, (0.60 + winY0) / 2 + 0.005, -doorW / 2);
 
@@ -1954,15 +2145,9 @@ export class TrainModel {
         // Cab roof: red plan-shaped cap following the brow arc and bevel sweep
         sideGroup.add(new THREE.Mesh(G.g1CabRoofCap, this.materials.bodyRedG1));
 
-        // Interior roof lining (#333333) - moved down and slightly back to stay hidden from outside
-        const interiorRoof = new THREE.Mesh(G.g1CabRoofCap, this.materials.cockpitCeiling);
-        interiorRoof.position.set(0, -0.015, -0.02);
-        sideGroup.add(interiorRoof);
-
-        // Cab Underside Ceiling lining (#333333)
-        const cabCeilingLining = new THREE.Mesh(new THREE.BoxGeometry(2.78, 0.01, 1.12), this.materials.cockpitCeiling);
-        cabCeilingLining.position.set(0, 2.83, -1.32);
-        sideGroup.add(cabCeilingLining);
+        // Interior cockpit ceiling lining (#666666): perfectly enclosed beneath the red roof cap
+        const interiorCeiling = new THREE.Mesh(G.g1CabCeilingInt, this.materials.cockpitCeiling);
+        sideGroup.add(interiorCeiling);
 
         // 10. Cabin Rear Wall partition (Rückwand) — the two transverse windows
         // flanking the cockpit door get a 50% black tint (rest of the train's
@@ -4597,7 +4782,8 @@ export class TrainModel {
         }
 
         const nextStation = stationsList[0];
-        const dist = Math.abs(nextStation.position - this.sim.position);
+        const stopPos = this.sim.getStationStopPosition ? this.sim.getStationStopPosition(nextStation) : nextStation.position;
+        const dist = Math.abs(stopPos - this.sim.position);
         let distStr = '';
         if (dist >= 1000) {
             distStr = (dist / 1000).toFixed(2) + ' km';
@@ -4720,7 +4906,38 @@ export class TrainModel {
         this.dt3DestTexture.needsUpdate = true;
     }
 
+    updateLights(reversing = false) {
+        const showFrontWhite = !reversing;
+        this.lights.frontWhite.forEach(l => l.visible = showFrontWhite);
+        this.lights.frontRed.forEach(l => l.visible = !showFrontWhite);
+        this.lights.rearWhite.forEach(l => l.visible = !showFrontWhite);
+        this.lights.rearRed.forEach(l => l.visible = showFrontWhite);
+    }
+
+    alignStraight() {
+        const S = TRAIN_SCALE;
+        this.group.position.set(0, 0, 0);
+        this.group.rotation.set(0, 0, 0);
+
+        for (let i = 0; i < this.carriages.length; i++) {
+            const carGroup = this.carriages[i];
+            const props = this.getCarriageProperties(i);
+            carGroup.position.set(0, 0.465 * S, props.startOffset * S);
+            carGroup.rotation.set(0, 0, 0);
+        }
+        this.group.updateMatrixWorld(true);
+    }
+
     update(dt) {
+        if (this.isStraight) {
+            this.alignStraight();
+            this.updateLights(this.sim ? this.sim.isReversing : false);
+            this.updateDestinationSign(false);
+            const lineName = this.sim && this.sim.track ? (this.sim.track.lineId || 'U1') : 'U1';
+            this.updateInteriorDisplays("Startbereit", lineName);
+            return;
+        }
+
         // 1. Update overall train group position and orientation along 3D curve
         const trainDist = this.sim.position;
         const reversing = this.sim.isReversing;
@@ -4842,12 +5059,7 @@ export class TrainModel {
         }
 
         // 2. Toggle Headlights and Taillights based on driving direction
-        const showFrontWhite = !reversing;
-        
-        this.lights.frontWhite.forEach(l => l.visible = showFrontWhite);
-        this.lights.frontRed.forEach(l => l.visible = !showFrontWhite);
-        this.lights.rearWhite.forEach(l => l.visible = !showFrontWhite);
-        this.lights.rearRed.forEach(l => l.visible = showFrontWhite);
+        this.updateLights(reversing);
 
         // 3. Animate doors based on doorProgress and update door strip lighting
         const progress = this.sim.doorProgress;
@@ -7548,19 +7760,37 @@ export class TrainModel {
         // (0.40-1.35), so the old, deeper rear corners poked through it into
         // the cockpit. 0.05m of clearance keeps it in front of the wall.
         const skirt = new THREE.Shape();
-        skirt.moveTo(-1.446, 0.15);
-        skirt.lineTo(-1.446, 0.12);
-        skirt.lineTo(-1.38, 0.06);
-        skirt.lineTo(-0.80, -0.30);
-        skirt.lineTo(0.80, -0.30);
-        skirt.lineTo(1.38, 0.06);
-        skirt.lineTo(1.446, 0.12);
-        skirt.lineTo(1.446, 0.15);
+        skirt.moveTo(-1.446, 0.14);
+        skirt.lineTo(-1.38, 0.10);
+        skirt.lineTo(-0.94, -0.56); // Left cheek front-outer (protrudes forward)
+        skirt.lineTo(-0.34, -0.56); // Left cheek front-inner
+        skirt.lineTo(-0.34, -0.06); // Coupler bay back-left
+        skirt.lineTo(0.34, -0.06);  // Coupler bay back-right
+        skirt.lineTo(0.34, -0.56);  // Right cheek front-inner
+        skirt.lineTo(0.94, -0.56);  // Right cheek front-outer (protrudes forward)
+        skirt.lineTo(1.38, 0.10);   // Outer chamfer right
+        skirt.lineTo(1.446, 0.14);
         skirt.closePath();
-        geom = new THREE.ExtrudeGeometry(skirt, { depth: 0.52, bevelEnabled: false });
+        // Base bumper skirt (Y = 0.00 to 0.41)
+        geom = new THREE.ExtrudeGeometry(skirt, { depth: 0.41, bevelEnabled: false });
         geom.rotateX(-Math.PI / 2);
-        geom.translate(0, 0.13, 0);
         G.g1Skirt = geom;
+
+        // Top step plate on the protruding cheeks (Y = 0.41 to 0.422) in slightly lighter grey
+        const stepGeom = new THREE.ExtrudeGeometry(skirt, { depth: 0.012, bevelEnabled: false });
+        stepGeom.rotateX(-Math.PI / 2);
+        stepGeom.translate(0, 0.41, 0);
+        G.g1SkirtStep = stepGeom;
+
+        // Coupler bay back wall (recessed inside the niche at Z = 0.06, Y = 0.00 to 0.42)
+        const bayBack = new THREE.BoxGeometry(0.68, 0.42, 0.03);
+        bayBack.translate(0, 0.21, 0.06);
+        G.g1SkirtBayBack = bayBack;
+
+        // Coupler bay floor plate / obstacle deflector under the coupler (Y = 0.00 to 0.03)
+        const bayFloor = new THREE.BoxGeometry(0.68, 0.03, 0.26);
+        bayFloor.translate(0, 0.015, 0.19);
+        G.g1SkirtBayFloor = bayFloor;
 
         // --- Interior A-pillar trim strips: ruled surfaces from the windshield
         // side edge back to the cab side window front edge (DoubleSide material,
@@ -7599,6 +7829,49 @@ export class TrainModel {
         geom.rotateX(-Math.PI / 2);
         geom.translate(0, 2.851, 0);
         G.g1CabRoofCap = geom;
+
+        // --- Interior cockpit ceiling plate: inset so it stays strictly inside the red roof and walls
+        const capInt = new THREE.Shape();
+        capInt.moveTo(-1.38, 1.88);
+        capInt.lineTo(-1.38, 0.39);
+        capInt.lineTo(-1.20, 0.19);
+        capInt.lineTo(-0.60, 0.15);
+        capInt.lineTo(0, 0.14);
+        capInt.lineTo(0.60, 0.15);
+        capInt.lineTo(1.20, 0.19);
+        capInt.lineTo(1.38, 0.39);
+        capInt.lineTo(1.38, 1.88);
+        capInt.closePath();
+        geom = new THREE.ExtrudeGeometry(capInt, { depth: 0.01, bevelEnabled: false });
+        geom.rotateX(-Math.PI / 2);
+        geom.translate(0, 2.83, 0);
+        G.g1CabCeilingInt = geom;
+
+        // --- Driver door lower panels: white stripe begins on the door with diagonal slant
+        const doorW = 0.70;
+        const winY0 = 1.35;
+        const whiteDoorShape = new THREE.Shape();
+        whiteDoorShape.moveTo(0, 0.60);
+        whiteDoorShape.lineTo(-doorW, 0.60);
+        whiteDoorShape.lineTo(-doorW, 1.20);
+        whiteDoorShape.lineTo(-(doorW - 0.10), 1.20);
+        whiteDoorShape.closePath();
+        const whiteDoorGeom = new THREE.ExtrudeGeometry(whiteDoorShape, { depth: 0.04, bevelEnabled: false });
+        whiteDoorGeom.rotateY(-Math.PI / 2);
+        whiteDoorGeom.translate(0.02, 0, 0);
+        G.g1DoorWhite = whiteDoorGeom;
+
+        const blackDoorShape = new THREE.Shape();
+        blackDoorShape.moveTo(0, 0.60);
+        blackDoorShape.lineTo(-(doorW - 0.10), 1.20);
+        blackDoorShape.lineTo(-doorW, 1.20);
+        blackDoorShape.lineTo(-doorW, winY0);
+        blackDoorShape.lineTo(0, winY0);
+        blackDoorShape.closePath();
+        const blackDoorGeom = new THREE.ExtrudeGeometry(blackDoorShape, { depth: 0.04, bevelEnabled: false });
+        blackDoorGeom.rotateY(-Math.PI / 2);
+        blackDoorGeom.translate(0.02, 0, 0);
+        G.g1DoorBlack = blackDoorGeom;
 
         // --- Cab flank panels (gloss black) with the trapezoid driver window and
         // the driver-door cutout; front edge hugs the bevel rear edge, rear edge

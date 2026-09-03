@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>U-Bahn Simulator U1 Nürnberg - Web3D</title>
     <meta name="description" content="Technisch korrekter und optisch ansprechender 3D-U-Bahn-Simulator der U-Bahn-Linie 1 in Nürnberg mit Three.js, WebGL und physikalischer Fahrsimulation.">
-    <link rel="stylesheet" href="./src/style.css?v=47">
+    <link rel="stylesheet" href="./src/style.css?v=49">
     
     <!-- ES Module Importmap for Three.js (self-hosted, no external CDN) -->
     <script type="importmap">
@@ -18,9 +18,18 @@
     </script>
 </head>
 <body>
-    <!-- Splash / Initialization Screen -->
-    <div id="splash" class="splash-overlay">
+    <!-- Floating Loading Progress & "Spiel starten!" Button -->
+    <div id="intro-status-container" class="intro-status-container">
+        <div id="intro-loading-status" class="intro-loading-status">0 % geladen</div>
+        <button id="btn-play-game" class="play-game-btn" style="display: none;">
+            <span class="play-game-icon">▶</span> Spiel starten!
+        </button>
+    </div>
+
+    <!-- Steuerung Modal (Hidden by default, can be opened from in-game menu) -->
+    <div id="splash" class="splash-overlay" style="display: none;">
         <div class="splash-content">
+            <button id="btn-splash-close" class="splash-close-btn" title="Schließen">✕</button>
             <h1>Steuerung</h1>
             
             <div class="control-tips">
@@ -36,11 +45,10 @@
                 </ul>
             </div>
             
-            <button id="btn-start" class="start-btn" disabled>
-                <div id="btn-loading-bar"></div>
-                <span id="btn-text">LADEN …</span>
-            </button>
-            <p id="fullscreen-hint" class="fullscreen-hint">Gerät wechselt in den Vollbildmodus</p>
+            <div class="splash-actions">
+                <button id="btn-splash-dismiss" class="splash-dismiss-btn">Verstanden (Schließen)</button>
+            </div>
+            <p id="fullscreen-hint" class="fullscreen-hint">Gerät wechselt beim Start in den Vollbildmodus</p>
         </div>
     </div>
 
@@ -143,6 +151,6 @@
     </div>
 
     <!-- Main Logic script (?v= bei jeder Änderung von main.js erhöhen — Cache-Busting) -->
-    <script type="module" src="./src/main.js?v=159"></script>
+    <script type="module" src="./src/main.js?v=196"></script>
 </body>
 </html>
