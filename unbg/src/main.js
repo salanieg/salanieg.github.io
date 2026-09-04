@@ -764,6 +764,26 @@ class App {
     // first frame the train swings into view — that lazy upload of ~1900 buffers
     // was a hard, visible hitch when looking around.
     warmUpRenderer() {
+        if (this.trainModel) {
+            // 1. One-time interior snapshot for faux glass reflections in this station.
+            // CubeCamera renders in all 6 directions (+X, -X, +Y, -Y, +Z, -Z), which
+            // ensures 360° GPU rasterization and shader compilation for the station and train.
+            this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
+
+            // 2. Pre-warm planar window reflections
+            const isInterior = (this.world.activeCameraType === 'cab' || this.world.activeCameraType === 'passenger');
+            if (isInterior && !document.body.classList.contains('is-mobile')) {
+                this.trainModel.updatePlanarReflections(
+                    this.world.renderer,
+                    this.world.scene,
+                    this.world.activeCamera,
+                    true
+                );
+            }
+        }
+
+        // 3. Pre-compute bounding spheres and boxes for all meshes (avoiding CPU hitches on look-around)
+        // and upload all live geometry buffers with frustum culling temporarily disabled.
         const restore = [];
         this.world.scene.traverse(o => {
             if (o.isMesh && o.geometry) {
@@ -781,10 +801,6 @@ class App {
         });
         this.world.renderer.render(this.world.scene, this.world.activeCamera);
         restore.forEach(o => o.frustumCulled = true);
-
-        // One-time interior snapshot for the faux glass reflections — piggybacks
-        // on the controlled warm-up hitch (startup and G1<->DT1 switch).
-        this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
     }
 
     // Stößt den Stadtmodell-GLB-Download an — läuft parallel zu den CPU-
@@ -906,7 +922,6 @@ class App {
     warmUpSpawn(setBar, onDone) {
         if (this.isSpaceIntro) {
             // In Space Intro, geometry is already uploaded via offscreen residency.
-            // Only bake the faux glass reflections for the interior:
             if (this.trainModel) {
                 this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
             }
@@ -914,97 +929,8 @@ class App {
             return;
         }
 
-        const meshes = [];
-        this.world.scene.traverse(o => {
-            if (o.isMesh) {
-                if (o.geometry) {
-                    if (o.geometry.boundingSphere === null) o.geometry.computeBoundingSphere();
-                    if (o.geometry.boundingBox === null) o.geometry.computeBoundingBox();
-                }
-                if (o.isInstancedMesh) {
-                    if (o.boundingSphere === null) o.computeBoundingSphere();
-                    if (o.boundingBox === null) o.computeBoundingBox();
-                }
-                meshes.push(o);
-            }
-        });
-
-        // Phase 2 (unten): Geometrie-Buffer gebatcht auf die GPU laden. Der
-        // Balken-Anteil dieser Funktion (0..1) spiegelt den echten Upload-
-        // Fortschritt; die vorgelagerte Compile-Wartephase deckt der globale
-        // Balken-Animator mit seinem Weiterkriechen ab (kein eigener Fake-Wert).
-        const startUploadLoop = () => {
-            let i = 0;
-            let batch = 64;
-            const tick = () => {
-                const t0 = performance.now();
-                const end = Math.min(meshes.length, i + batch);
-                const restore = [];
-                for (; i < end; i++) {
-                    const m = meshes[i];
-                    if (m.frustumCulled) { m.frustumCulled = false; restore.push(m); }
-                }
-                this.world.renderer.render(this.world.scene, this.world.activeCamera);
-                restore.forEach(m => m.frustumCulled = true);
-                setBar(meshes.length ? i / meshes.length : 1);
-
-                // Batchgröße an die gemessene Frame-Dauer anpassen: zügig
-                // durchlaufen, aber keine sekundenlangen Einzel-Frames erzeugen
-                const dt = performance.now() - t0;
-                if (dt > 150) batch = Math.max(16, batch >> 1);
-                else if (dt < 50) batch = Math.min(1024, batch << 1);
-
-                if (i < meshes.length) {
-                    requestAnimationFrame(tick);
-                } else {
-                    // Interieur-Schnappschuss für die Faux-Glas-Reflexionen — jetzt
-                    // ist die Spawn-Umgebung warm, der Bake kostet nur einen Frame
-                    this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
-                    
-                    // Der Bake invalidiert die Shader aller Glasmaterialien (needsUpdate = true).
-                    // Wir erzwingen hier einen finalen Renderdurchlauf für die Gläser, damit auch
-                    // die Fenster im Rücken der Kamera JETZT kompilieren und nicht erst beim Umdrehen.
-                    const restoreGlass = [];
-                    this.trainModel.carriages.forEach(c => c.traverse(m => {
-                        if (m.isMesh && m.material && m.material.envMap && m.frustumCulled) {
-                            m.frustumCulled = false;
-                            restoreGlass.push(m);
-                        }
-                    }));
-                    if (restoreGlass.length > 0) {
-                        this.world.renderer.render(this.world.scene, this.world.activeCamera);
-                        restoreGlass.forEach(m => m.frustumCulled = true);
-                    }
-
-                    // Alles gerade Hochgeladene als resident merken und den
-                    // Hintergrund-Lader für den Rest der Linie scharfschalten.
-                    this._seedResidencyFromLiveScene();
-                    this._beginBackgroundResidency();
-                    onDone();
-                }
-            };
-            requestAnimationFrame(tick);
-        };
-
-        // Phase 1: Alle Shader-Programme parallel im Grafiktreiber kompilieren
-        // (KHR_parallel_shader_compile via compileAsync). Vorher lief das seriell
-        // und blockierend über die render()-Aufrufe der Upload-Schleife — der
-        // teuerste Teil des Warm-ups. Jetzt sind beim Upload-Durchlauf unten alle
-        // "Rezepte" schon fertig, die Frames werden dadurch deutlich kürzer.
-        // Während des (evtl. kurzen) Wartens hält der globale Balken-Animator
-        // die Bewegung aufrecht.
-        const renderer = this.world.renderer;
-        if (typeof renderer.compileAsync === 'function') {
-            let started = false;
-            const startOnce = () => { if (!started) { started = true; startUploadLoop(); } };
-            renderer.compileAsync(this.world.scene, this.world.activeCamera)
-                .then(startOnce)
-                .catch(startOnce);
-        } else {
-            // Ältere Renderer ohne compileAsync: direkt zum Upload-Durchlauf,
-            // der die Shader dann (wie früher) synchron mitkompiliert.
-            startUploadLoop();
-        }
+        this._ensureResidentNow();
+        if (onDone) onDone();
     }
 
     // ------------------------------------------------------------------------
@@ -1021,7 +947,7 @@ class App {
     // danach bleiben die Buffer dort (Chunks/Stationen werden nie disposed).
     // Statt eines eigenen render()-Aufrufs hängen wir die Meshes des Ziels VOR
     // dem normalen Frame-Render in die Szene (Culling aus) und räumen sie danach
-    // wieder weg ("Piggyback" auf den einen ohnehin laufenden Render pro Frame).
+    // wieder auf.
 
     // Merkt sich alles, was gerade live (und damit schon hochgeladen) ist, als
     // resident. Läuft nach dem Spawn-Warm-up und nach jedem Teleport.
@@ -1043,6 +969,7 @@ class App {
             numStations: sm.sim.stations.length,
             done: false,
             pending: null, // aktuell zum Upload eingehängtes Ziel (siehe _residencyPrep)
+            startTime: performance.now() + 1000 // 1000ms Schonfrist nach Spawn, damit erste Interaktion butterweich ist
         };
     }
 
@@ -1059,13 +986,14 @@ class App {
     _residencyPrep(batchLimit) {
         const r = this._residency;
         if (!r || r.done) return;
+        const startT = performance.now();
+        if (r.startTime && startT < r.startTime) return;
+
         const tm = this.trackManager, sm = this.stationModel;
         if (!tm || !sm) return;
 
         const trunkTm = this._trunkCtx ? this._trunkCtx.trackManager : null;
         const trunkSm = this._trunkCtx ? this._trunkCtx.stationModel : null;
-
-        const startT = performance.now();
         const TIME_BUDGET_MS = this.isSpaceIntro ? 10 : 2;
 
         if (this.isSpaceIntro) {
@@ -1710,6 +1638,12 @@ class App {
         if (this.world.skyTexture) {
             this.world.scene.background = this.world.skyTexture;
         }
+
+        // Live-Spawn-Umgebung (Langwasser Süd + Zug) vor Spielbeginn vollständig aufwärmen:
+        // Rendert die Szene einmal Culling-aus, berechnet alle Bounding Spheres vor
+        // und backt die Innenraum-Reflektionen im echten Bahnhof, damit die erste
+        // Kamerabewegung im Spiel absolut butterweich ist.
+        this._ensureResidentNow();
 
         this.isRunning = true;
         this.clock.getDelta();

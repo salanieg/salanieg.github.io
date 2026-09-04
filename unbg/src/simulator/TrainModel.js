@@ -7058,27 +7058,20 @@ export class TrainModel {
         pm.elements[10] = _mirClip.z + 1.0 - 0.003; // small clip bias
         pm.elements[14] = _mirClip.w;
 
-        const currentRt = renderer.getRenderTarget();
+        const prevRt = renderer.getRenderTarget();
         const currentXr = renderer.xr.enabled;
         renderer.xr.enabled = false;
         
         const oldFog = root.fog;
-        const oldBackground = root.background;
-        const oldEnvironment = root.environment;
-        
         root.fog = scene.fog;
-        root.background = scene.background;
-        root.environment = scene.environment;
 
         renderer.setRenderTarget(rt);
+        renderer.setClearColor(0x000000, 0); // empty = transparent black
         renderer.clear();
         renderer.render(root, vcam);
         
         root.fog = oldFog;
-        root.background = oldBackground;
-        root.environment = oldEnvironment;
-
-        renderer.setRenderTarget(currentRt);
+        renderer.setRenderTarget(prevRt);
         renderer.xr.enabled = currentXr;
         return true;
     }
