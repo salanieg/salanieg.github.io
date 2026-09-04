@@ -104,6 +104,7 @@ export class AudioManager {
 
         // Master Mobile Phone Speaker Processing Nodes
         this.phoneHighpass = null;
+        this.phoneHighpass2 = null;
         this.phoneWarmth = null;
         this.phonePresence = null;
         this.phoneCompressor = null;
@@ -162,7 +163,7 @@ export class AudioManager {
             this.impactIntervalMs = Infinity;
             this.nextImpactTime = 0;
         } else {
-            if (this.motorMix0) this.motorMix0.gain.value = 2.0;
+            if (this.motorMix0) this.motorMix0.gain.value = 1.0;
             if (this.motorMix1) this.motorMix1.gain.value = 0.5;
             if (this.motorMix2) this.motorMix2.gain.value = 0.5;
             if (this.motorMix3) this.motorMix3.gain.value = 0;
@@ -247,45 +248,53 @@ export class AudioManager {
     }
 
     setupMasterProcessing() {
-        // 1. Highpass filter: 95 Hz, Q = 0.7
-        // Cuts sub-bass rumble (<90 Hz) that mobile speaker drivers cannot physically reproduce,
-        // eliminating speaker rattling/flapping and saving acoustic amplifier headroom.
+        // 1. Cascaded 4th-order (24 dB/oct) Linkwitz-Riley Subsonic Highpass Filter at 70 Hz
+        // Eliminates subsonic rumble (<50 Hz) that forces small phone drivers to bottom out (clicking/rattling)
+        // and excites boomy room modes on desktop/stereo speakers, while preserving punchy 80-200 Hz bass 100% full.
         this.phoneHighpass = this.ctx.createBiquadFilter();
         this.phoneHighpass.type = 'highpass';
-        this.phoneHighpass.frequency.value = 95;
-        this.phoneHighpass.Q.value = 0.7;
+        this.phoneHighpass.frequency.value = 70;
+        this.phoneHighpass.Q.value = 0.7071;
 
-        // 2. Warmth Peaking filter: 320 Hz, +2.2 dB, Q = 1.0
-        // Adds body, warmth and weight in the low-mid spectrum where mobile speakers CAN vibrate.
+        this.phoneHighpass2 = this.ctx.createBiquadFilter();
+        this.phoneHighpass2.type = 'highpass';
+        this.phoneHighpass2.frequency.value = 70;
+        this.phoneHighpass2.Q.value = 0.7071;
+
+        // 2. Low-Mid Clean EQ: 320 Hz, neutral (0.0 dB gain, Q = 1.0)
+        // Eliminates the artificial +2.2 dB resonance bump that caused boomy/muddy "wummernd" sound on speakers.
         this.phoneWarmth = this.ctx.createBiquadFilter();
         this.phoneWarmth.type = 'peaking';
         this.phoneWarmth.frequency.value = 320;
         this.phoneWarmth.Q.value = 1.0;
-        this.phoneWarmth.gain.value = 2.2;
+        this.phoneWarmth.gain.value = 0.0;
 
-        // 3. Presence Peaking filter: 2400 Hz, +3.0 dB, Q = 1.1
-        // Boosts intelligibility of motor inverters, chimes, switches, bells and airflow on phone speakers.
+        // 3. Presence Peaking filter: 2400 Hz, +0.8 dB, Q = 1.1
+        // Smooth clarity for motor inverters, chimes, switches and airflow without harshness or click-boosting.
         this.phonePresence = this.ctx.createBiquadFilter();
         this.phonePresence.type = 'peaking';
         this.phonePresence.frequency.value = 2400;
         this.phonePresence.Q.value = 1.1;
-        this.phonePresence.gain.value = 3.0;
+        this.phonePresence.gain.value = 0.8;
 
-        // 4. Master Dynamics Compressor / Limiter
-        // Compresses wide dynamic range so quiet ambiences are clearly audible on small phone speakers
-        // without loud horns or door slams clipping.
+        // 4. Master Dynamics Compressor / Transparent Bus Limiter
+        // Attack time of 25 ms (0.025s) is longer than low-frequency wave cycles, preventing intra-cycle
+        // waveform squaring and clicking/popping artifacts on phone speakers.
+        // Release time of 250 ms (0.25s) prevents low-frequency gain fluttering.
+        // Threshold -7 dB catches excessive peaks smoothly without crushing ambient dynamics.
         this.phoneCompressor = this.ctx.createDynamicsCompressor();
-        this.phoneCompressor.threshold.value = -14;
-        this.phoneCompressor.knee.value = 8;
-        this.phoneCompressor.ratio.value = 3.5;
-        this.phoneCompressor.attack.value = 0.003;
-        this.phoneCompressor.release.value = 0.15;
+        this.phoneCompressor.threshold.value = -7.0;
+        this.phoneCompressor.knee.value = 10;
+        this.phoneCompressor.ratio.value = 2.5;
+        this.phoneCompressor.attack.value = 0.025;
+        this.phoneCompressor.release.value = 0.25;
 
         // Connect chain:
-        // dryGain + reverbGain -> phoneHighpass -> phoneWarmth -> phonePresence -> phoneCompressor -> destination
+        // dryGain + reverbGain -> phoneHighpass -> phoneHighpass2 -> phoneWarmth -> phonePresence -> phoneCompressor -> destination
         this.dryGain.connect(this.phoneHighpass);
         this.reverbGain.connect(this.phoneHighpass);
-        this.phoneHighpass.connect(this.phoneWarmth);
+        this.phoneHighpass.connect(this.phoneHighpass2);
+        this.phoneHighpass2.connect(this.phoneWarmth);
         this.phoneWarmth.connect(this.phonePresence);
         this.phonePresence.connect(this.phoneCompressor);
         this.phoneCompressor.connect(this.ctx.destination);
@@ -395,12 +404,12 @@ export class AudioManager {
         this.motorGainNode = this.ctx.createGain();
         this.motorGainNode.gain.value = 0;
 
-        // Grundfrequenz f0: 900 Hz bei 80 km/h (doppelt so laut: Gain 2.0)
+        // Grundfrequenz f0: 900 Hz bei 80 km/h (Gain 1.0 - sauberes, ausgewogenes Fundament)
         this.motorOsc0 = this.ctx.createOscillator();
         this.motorOsc0.type = 'sine';
         this.motorOsc0.frequency.value = 20;
         this.motorMix0 = this.ctx.createGain();
-        this.motorMix0.gain.value = 2.0;
+        this.motorMix0.gain.value = 1.0;
 
         // 1. Oberschwingung: 1700 Hz bei 80 km/h (halb so laut: Gain 0.5)
         this.motorOsc1 = this.ctx.createOscillator();
@@ -930,7 +939,6 @@ export class AudioManager {
         const targetVol = effectiveIntensity * 0.275;
         if (Math.abs(this.escMasterGain.gain.value - targetVol) > 0.0001 || (targetVol === 0 && this.escMasterGain.gain.value > 0)) {
             this.escMasterGain.gain.setTargetAtTime(targetVol, this.ctx.currentTime, 0.08);
-            this.escMasterGain.gain.value = targetVol;
         }
 
         if (effectiveIntensity < 0.01) {
@@ -998,12 +1006,8 @@ export class AudioManager {
             motorOsc0.frequency.setTargetAtTime(freq0, now, 0.03);
             motorOsc1.frequency.setTargetAtTime(freq1, now, 0.03);
             motorOsc2.frequency.setTargetAtTime(freq2, now, 0.03);
-            motorOsc0.frequency.value = freq0;
-            motorOsc1.frequency.value = freq1;
-            motorOsc2.frequency.value = freq2;
             if (this.motorOsc3) {
                 this.motorOsc3.frequency.setTargetAtTime(freq3, now, 0.03);
-                this.motorOsc3.frequency.value = freq3;
             }
         }
 
@@ -1013,7 +1017,6 @@ export class AudioManager {
 
         if (Math.abs(motorGainNode.gain.value - motorGain) > 0.0005 || motorGain > 0.0001) {
             motorGainNode.gain.setTargetAtTime(motorGain, now, 0.04);
-            motorGainNode.gain.value = motorGain;
         }
 
         // 3. Oberschwingung: fadet bei 5-10 km/h mit dem Motor ein und bei 60-65 km/h aus (Mix 0.25)
@@ -1022,7 +1025,6 @@ export class AudioManager {
             const targetMix3 = 0.25 * motorFade * harm3Out;
             if (Math.abs(this.motorMix3.gain.value - targetMix3) > 0.005 || targetMix3 > 0.0001) {
                 this.motorMix3.gain.setTargetAtTime(targetMix3, now, 0.04);
-                this.motorMix3.gain.value = targetMix3;
             }
         }
 
@@ -1033,13 +1035,11 @@ export class AudioManager {
             targetInverterVol = isBraking ? (0.03 * 1.3) : 0.03;
         }
         if (targetInverterVol === 0) {
-            if (inverterGainNode.gain.value !== 0) {
+            if (inverterGainNode.gain.value > 0.0001) {
                 inverterGainNode.gain.setTargetAtTime(0, now, 0.02);
-                inverterGainNode.gain.value = 0;
             }
         } else if (Math.abs(inverterGainNode.gain.value - targetInverterVol) > 0.0005) {
             inverterGainNode.gain.setTargetAtTime(targetInverterVol, now, 0.04);
-            inverterGainNode.gain.value = targetInverterVol;
         }
 
         // Ausfaden des Stromsounds (wie gehabt zwischen 10 und 20 km/h)
@@ -1050,13 +1050,11 @@ export class AudioManager {
         const targetMix2 = (v < 0.2) ? 0 : 0.35 * fadeIn3200 * fadeOutWhine;
         if (this.g1InvMix2) {
             if (targetMix2 === 0) {
-                if (this.g1InvMix2.gain.value !== 0) {
+                if (this.g1InvMix2.gain.value > 0.0001) {
                     this.g1InvMix2.gain.setTargetAtTime(0, now, 0.02);
-                    this.g1InvMix2.gain.value = 0;
                 }
             } else if (Math.abs(this.g1InvMix2.gain.value - targetMix2) > 0.001) {
                 this.g1InvMix2.gain.setTargetAtTime(targetMix2, now, 0.04);
-                this.g1InvMix2.gain.value = targetMix2;
             }
         }
 
@@ -1069,13 +1067,11 @@ export class AudioManager {
         const targetMix2b = (v <= 5.0 || v >= 16.0) ? 0 : 0.175 * envStrom23;
         if (this.g1InvMix2b) {
             if (targetMix2b === 0) {
-                if (this.g1InvMix2b.gain.value !== 0) {
+                if (this.g1InvMix2b.gain.value > 0.0001) {
                     this.g1InvMix2b.gain.setTargetAtTime(0, now, 0.02);
-                    this.g1InvMix2b.gain.value = 0;
                 }
             } else if (Math.abs(this.g1InvMix2b.gain.value - targetMix2b) > 0.001) {
                 this.g1InvMix2b.gain.setTargetAtTime(targetMix2b, now, 0.04);
-                this.g1InvMix2b.gain.value = targetMix2b;
             }
         }
 
@@ -1083,13 +1079,11 @@ export class AudioManager {
         const targetMix2c = (v <= 5.0 || v >= 16.0) ? 0 : 0.0875 * envStrom23;
         if (this.g1InvMix2c) {
             if (targetMix2c === 0) {
-                if (this.g1InvMix2c.gain.value !== 0) {
+                if (this.g1InvMix2c.gain.value > 0.0001) {
                     this.g1InvMix2c.gain.setTargetAtTime(0, now, 0.02);
-                    this.g1InvMix2c.gain.value = 0;
                 }
             } else if (Math.abs(this.g1InvMix2c.gain.value - targetMix2c) > 0.001) {
                 this.g1InvMix2c.gain.setTargetAtTime(targetMix2c, now, 0.04);
-                this.g1InvMix2c.gain.value = targetMix2c;
             }
         }
 
@@ -1101,19 +1095,16 @@ export class AudioManager {
 
         if (this.g1InvMix1) {
             if (targetMix1 === 0) {
-                if (this.g1InvMix1.gain.value !== 0) {
+                if (this.g1InvMix1.gain.value > 0.0001) {
                     this.g1InvMix1.gain.setTargetAtTime(0, now, 0.02);
-                    this.g1InvMix1.gain.value = 0;
                 }
             } else if (Math.abs(this.g1InvMix1.gain.value - targetMix1) > 0.001) {
                 this.g1InvMix1.gain.setTargetAtTime(targetMix1, now, 0.04);
-                this.g1InvMix1.gain.value = targetMix1;
             }
         }
         if (this.g1InvMix1b) {
             if (this.g1InvMix1b.gain.value > 0.0001) {
                 this.g1InvMix1b.gain.setTargetAtTime(0, now, 0.04);
-                this.g1InvMix1b.gain.value = 0;
             }
         }
 
@@ -1123,21 +1114,17 @@ export class AudioManager {
             const targetVol = volCurve * 3.0 * (this.debugMix.rolling ?? 1);
             if (Math.abs(rollGainNode.gain.value - targetVol) > 0.005) {
                 rollGainNode.gain.setTargetAtTime(targetVol, now, 0.1);
-                rollGainNode.gain.value = targetVol;
             }
             const cutoffFreq = 200 + 400 * vNorm;
             if (Math.abs(rollFilter.frequency.value - cutoffFreq) > 1.0) {
                 rollFilter.frequency.setTargetAtTime(cutoffFreq, now, 0.1);
-                rollFilter.frequency.value = cutoffFreq;
             }
         } else {
             if (rollGainNode.gain.value > 0.0001) {
                 rollGainNode.gain.setTargetAtTime(0, now, 0.2);
-                rollGainNode.gain.value = 0;
             }
-            if (rollFilter.frequency.value !== 200) {
+            if (Math.abs(rollFilter.frequency.value - 200) > 1.0) {
                 rollFilter.frequency.setTargetAtTime(200, now, 0.2);
-                rollFilter.frequency.value = 200;
             }
         }
 
@@ -1155,8 +1142,6 @@ export class AudioManager {
             this._lastIsInside = isInside;
             this.reverbGain.gain.setTargetAtTime(targetReverb, this.ctx.currentTime, 0.5);
             this.dryGain.gain.setTargetAtTime(targetDry, this.ctx.currentTime, 0.5);
-            this.reverbGain.gain.value = targetReverb;
-            this.dryGain.gain.value = targetDry;
         }
 
         const speedKmh = speed * 3.6;
@@ -1169,14 +1154,15 @@ export class AudioManager {
             const isBraking = brakePressure > 0.5 || throttle < -0.05;
             this.updateTrainAudio(speedKmh, isBraking);
 
-            // Silence DT1 / DT3 specific synths nur wenn sie aktiv sind
-            if (this.inverterGain.gain.value !== 0) { this.inverterGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1); this.inverterGain.gain.value = 0; }
-            if (this.inverterGain2.gain.value !== 0) { this.inverterGain2.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1); this.inverterGain2.gain.value = 0; }
-            if (this.inverterGain3.gain.value !== 0) { this.inverterGain3.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1); this.inverterGain3.gain.value = 0; }
-            if (this.dt1RumbleGain.gain.value !== 0) { this.dt1RumbleGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1); this.dt1RumbleGain.gain.value = 0; }
-            if (this.dt1GrowlGain.gain.value !== 0) { this.dt1GrowlGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1); this.dt1GrowlGain.gain.value = 0; }
-            if (this.startupSingGain.gain.value !== 0) { this.startupSingGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1); this.startupSingGain.gain.value = 0; }
-            if (this.startupSphericalGain.gain.value !== 0) { this.startupSphericalGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1); this.startupSphericalGain.gain.value = 0; }
+            // Silence DT1 / DT3 specific synths smoothly without clicks
+            const now = this.ctx.currentTime;
+            if (this.inverterGain.gain.value > 0.0001) this.inverterGain.gain.setTargetAtTime(0, now, 0.08);
+            if (this.inverterGain2.gain.value > 0.0001) this.inverterGain2.gain.setTargetAtTime(0, now, 0.08);
+            if (this.inverterGain3.gain.value > 0.0001) this.inverterGain3.gain.setTargetAtTime(0, now, 0.08);
+            if (this.dt1RumbleGain.gain.value > 0.0001) this.dt1RumbleGain.gain.setTargetAtTime(0, now, 0.08);
+            if (this.dt1GrowlGain.gain.value > 0.0001) this.dt1GrowlGain.gain.setTargetAtTime(0, now, 0.08);
+            if (this.startupSingGain.gain.value > 0.0001) this.startupSingGain.gain.setTargetAtTime(0, now, 0.08);
+            if (this.startupSphericalGain.gain.value > 0.0001) this.startupSphericalGain.gain.setTargetAtTime(0, now, 0.08);
         } else if (speedKmh > 0.05) {
             // Inverter: DT1 has a low hum, DT3 has stepped whine.
             const effort = Math.max(Math.abs(throttle), Math.min(1.0, brakePressure / 5));
@@ -1532,25 +1518,25 @@ export class AudioManager {
         const gainThump = this.ctx.createGain();
         oscThump.type = 'triangle';
         oscThump.frequency.setValueAtTime(isDT1 ? 90 : 110, now);
-        oscThump.frequency.exponentialRampToValueAtTime(isDT1 ? 20 : 25, now + 0.5);
-        gainThump.gain.setValueAtTime(isDT1 ? 1.5 : 1.2, now);
-        gainThump.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        oscThump.frequency.exponentialRampToValueAtTime(isDT1 ? 25 : 30, now + 0.45);
+        gainThump.gain.setValueAtTime(isDT1 ? 0.6 : 0.5, now);
+        gainThump.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
         oscThump.connect(gainThump);
         gainThump.connect(this.masterVolume);
         oscThump.start(now);
-        oscThump.stop(now + 0.6);
+        oscThump.stop(now + 0.5);
 
         const oscSub = this.ctx.createOscillator();
         const gainSub = this.ctx.createGain();
         oscSub.type = 'sine';
-        oscSub.frequency.setValueAtTime(isDT1 ? 45 : 55, now);
-        oscSub.frequency.exponentialRampToValueAtTime(isDT1 ? 15 : 20, now + 0.75);
-        gainSub.gain.setValueAtTime(isDT1 ? 2.0 : 1.5, now);
-        gainSub.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+        oscSub.frequency.setValueAtTime(isDT1 ? 55 : 65, now);
+        oscSub.frequency.exponentialRampToValueAtTime(isDT1 ? 28 : 32, now + 0.6);
+        gainSub.gain.setValueAtTime(isDT1 ? 0.55 : 0.45, now);
+        gainSub.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
         oscSub.connect(gainSub);
         gainSub.connect(this.masterVolume);
         oscSub.start(now);
-        oscSub.stop(now + 0.85);
+        oscSub.stop(now + 0.7);
 
         const bufferSize = Math.floor(this.ctx.sampleRate * 0.6);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -1562,8 +1548,8 @@ export class AudioManager {
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(isDT1 ? 120 : 90, now);
         const gainNoise = this.ctx.createGain();
-        gainNoise.gain.setValueAtTime(isDT1 ? 1.2 : 0.9, now);
-        gainNoise.gain.exponentialRampToValueAtTime(0.001, now + (isDT1 ? 0.5 : 0.4));
+        gainNoise.gain.setValueAtTime(isDT1 ? 0.5 : 0.4, now);
+        gainNoise.gain.exponentialRampToValueAtTime(0.001, now + (isDT1 ? 0.45 : 0.35));
         noise.connect(filter);
         filter.connect(gainNoise);
         gainNoise.connect(this.masterVolume);

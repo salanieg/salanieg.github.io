@@ -128,19 +128,26 @@ audio.init();
 assert.ok(audio.initialized, "AudioManager should be initialized");
 assert.ok(audio.phoneHighpass, "Phone highpass filter created");
 assert.strictEqual(audio.phoneHighpass.type, 'highpass', "Phone highpass filter type is highpass");
-assert.strictEqual(audio.phoneHighpass.frequency.value, 95, "Phone highpass cut frequency is 95 Hz");
+assert.strictEqual(audio.phoneHighpass.frequency.value, 70, "Phone highpass cut frequency is 70 Hz");
+
+assert.ok(audio.phoneHighpass2, "Phone highpass stage 2 filter created");
+assert.strictEqual(audio.phoneHighpass2.type, 'highpass', "Phone highpass stage 2 filter type is highpass");
+assert.strictEqual(audio.phoneHighpass2.frequency.value, 70, "Phone highpass stage 2 cut frequency is 70 Hz");
 
 assert.ok(audio.phoneWarmth, "Phone warmth filter created");
 assert.strictEqual(audio.phoneWarmth.type, 'peaking', "Phone warmth is peaking EQ");
 assert.strictEqual(audio.phoneWarmth.frequency.value, 320, "Phone warmth frequency is 320 Hz");
+assert.strictEqual(audio.phoneWarmth.gain.value, 0.0, "Phone warmth gain is neutral 0.0 dB");
 
 assert.ok(audio.phonePresence, "Phone presence filter created");
 assert.strictEqual(audio.phonePresence.type, 'peaking', "Phone presence is peaking EQ");
 assert.strictEqual(audio.phonePresence.frequency.value, 2400, "Phone presence frequency is 2400 Hz");
+assert.strictEqual(audio.phonePresence.gain.value, 0.8, "Phone presence gain is gentle 0.8 dB");
 
 assert.ok(audio.phoneCompressor, "Phone dynamics compressor created");
-assert.strictEqual(audio.phoneCompressor.threshold.value, -14, "Phone compressor threshold is -14 dB");
-console.log("  [PASS] Mobile phone speaker optimization chain (Highpass 95Hz, Warmth 320Hz, Presence 2400Hz, Compressor) verified");
+assert.strictEqual(audio.phoneCompressor.threshold.value, -7.0, "Phone compressor threshold is -7 dB");
+assert.strictEqual(audio.phoneCompressor.attack.value, 0.025, "Phone compressor attack is 25 ms (click-free)");
+console.log("  [PASS] Mobile phone speaker optimization chain (Cascaded Highpass 70Hz, Clean EQ 320Hz, Presence 2400Hz, Click-free Compressor) verified");
 
 console.log("\n=== 2. TESTING TRAIN & STATION AMBIANCE SYNTHS ===");
 assert.ok(audio.trainAmbianceGain, "trainAmbianceGain exists");
@@ -448,7 +455,7 @@ assert.strictEqual(audio.g1InvMix2c.gain.value, 0, "Stromsound 3 has completely 
 // Test G1 Audio at 20 km/h (3200 Hz whistle 100% faded out, motor fully active)
 audio.updateTrainAudio(20, false);
 assert.ok(Math.abs(audio.g1InvMix2.gain.value - 0.0) < 1e-6, "3200 Hz whistle has completely faded out by 20 km/h");
-assert.strictEqual(audio.motorMix0.gain.value, 2.0, "Fundamental motor frequency f0 is twice as loud (gain 2.0)");
+assert.strictEqual(audio.motorMix0.gain.value, 1.0, "Fundamental motor frequency f0 is balanced (gain 1.0)");
 assert.strictEqual(audio.motorMix1.gain.value, 0.5, "Harmonic 1 is half as loud (gain 0.5)");
 assert.strictEqual(audio.motorMix2.gain.value, 0.5, "Harmonic 2 is half as loud (gain 0.5)");
 
