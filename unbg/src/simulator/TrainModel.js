@@ -6947,7 +6947,7 @@ export class TrainModel {
     // low-res renders of ONE merged carriage (~90 draw calls each), nothing
     // else. Exterior cameras cost nothing: strength goes to 0 and only the
     // static cubemap path remains.
-    updatePlanarReflections(renderer, camera, enabled) {
+    updatePlanarReflections(renderer, scene, camera, enabled) {
         const glassMats = this.glassMaterials();
         if (glassMats.length === 0) return;
         if (!enabled || this.carriages.length === 0) {
@@ -6990,7 +6990,7 @@ export class TrainModel {
             // mid-length; normal points inward (toward the camera)
             _mirPoint.set(sign * 1.43, 1.85, -this.carLength / 2).applyMatrix4(car.matrixWorld);
             _mirNormal.set(-sign, 0, 0).applyMatrix4(_mirRot).normalize();
-            const ok = this.renderMirrorSide(renderer, camera, car, M.targets[i], _mirPoint, _mirNormal, M.matrices[i]);
+            const ok = this.renderMirrorSide(renderer, scene, camera, car, M.targets[i], _mirPoint, _mirNormal, M.matrices[i]);
             if (ok) {
                 _mirPlane.setFromNormalAndCoplanarPoint(_mirNormal, _mirPoint);
                 M.planes[i].set(_mirNormal.x, _mirNormal.y, _mirNormal.z, _mirPlane.constant);
@@ -7017,7 +7017,7 @@ export class TrainModel {
     // three.js' Reflector: the clip plane culls everything on the far side of
     // the glass (tunnel wall etc.), the texture matrix maps world positions
     // to reflection UVs and is taken BEFORE the oblique tweak.
-    renderMirrorSide(renderer, camera, root, rt, point, normal, outMatrix) {
+    renderMirrorSide(renderer, scene, camera, root, rt, point, normal, outMatrix) {
         _mirView.subVectors(point, _mirCamPos);
         if (_mirView.dot(normal) > 0) return false; // camera behind this pane
 
@@ -7058,15 +7058,28 @@ export class TrainModel {
         pm.elements[10] = _mirClip.z + 1.0 - 0.003; // small clip bias
         pm.elements[14] = _mirClip.w;
 
-        const prevRT = renderer.getRenderTarget();
-        renderer.getClearColor(_mirClearColor);
-        const prevAlpha = renderer.getClearAlpha();
+        const currentRt = renderer.getRenderTarget();
+        const currentXr = renderer.xr.enabled;
+        renderer.xr.enabled = false;
+        
+        const oldFog = root.fog;
+        const oldBackground = root.background;
+        const oldEnvironment = root.environment;
+        
+        root.fog = scene.fog;
+        root.background = scene.background;
+        root.environment = scene.environment;
+
         renderer.setRenderTarget(rt);
-        renderer.setClearColor(0x000000, 0); // empty = black = no reflection
-        if (renderer.autoClear === false) renderer.clear();
+        renderer.clear();
         renderer.render(root, vcam);
-        renderer.setClearColor(_mirClearColor, prevAlpha);
-        renderer.setRenderTarget(prevRT);
+        
+        root.fog = oldFog;
+        root.background = oldBackground;
+        root.environment = oldEnvironment;
+
+        renderer.setRenderTarget(currentRt);
+        renderer.xr.enabled = currentXr;
         return true;
     }
 

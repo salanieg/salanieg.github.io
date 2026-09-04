@@ -109,6 +109,20 @@ export class PassengerBuilder {
                 ctx.fillRect(0, 0, w, 4);
             });
             material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
+        } else if (style === 'cult_uniform') {
+            const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
+                ctx.fillStyle = shirtColor || '#38bdf8'; // light blue uniform shirt
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = '#ffffff'; // white tie knot
+                ctx.beginPath();
+                ctx.moveTo(w/2 - 2, 0);
+                ctx.lineTo(w/2 + 2, 0);
+                ctx.lineTo(w/2, 4);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff'; // white tie body
+                ctx.fillRect(w/2 - 1, 3, 2, 9);
+            });
+            material = new THREE.MeshBasicMaterial({ map: tex, color: '#808080', fog: false });
         } else if (style === 'tie') {
             const tex = this.createCanvasTexture(16, 16, (ctx, w, h) => {
                 ctx.fillStyle = '#1e3a8a';
@@ -290,7 +304,8 @@ export class PassengerBuilder {
             'patchwork',
             'patchwork_80s',
             '80s_style',
-            'harlekin'
+            'harlekin',
+            'cult_uniform'
         ];
         return longSleeveStyles.includes(style);
     }
@@ -303,6 +318,8 @@ export class PassengerBuilder {
             return this.getMaterial(isRightArm ? '#008000' : '#b91c1c');
         } else if (style === 'doctor') {
             sleeveColor = '#ffffff';
+        } else if (style === 'cult_uniform') {
+            sleeveColor = options.shirtColor || '#38bdf8';
         } else if (style === 'evening') {
             sleeveColor = '#111111';
         } else if (style === 'tie') {
@@ -756,7 +773,7 @@ export class PassengerBuilder {
 
         // Right Arm
         const shoulderR = new THREE.Group();
-        shoulderR.position.set(0.14, 0.77, 0);
+        shoulderR.position.set(options.isAnimatedMan ? 0.122 : 0.14, 0.77, 0);
 
         const upperArmR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.13, 0.06), sleeveMatR);
         upperArmR.position.set(0, -0.065, 0);
@@ -976,10 +993,18 @@ export class PassengerBuilder {
         group.scale.set(scale, scale, scale);
 
         // Merge static meshes by material bucket to drastically reduce draw calls
-        this.mergeMeshes(group);
+        if (!options.skipMerge) {
+            this.mergeMeshes(group);
+        }
 
         // Tag group as passenger for Raycaster lookup and click response
-        group.userData = { isPassenger: true, config: options };
+        group.userData = {
+            isPassenger: true,
+            config: options,
+            shoulderR: options.isAnimatedMan ? shoulderR : null,
+            elbowR: options.isAnimatedMan ? elbowR : null,
+            isAnimated: !!options.isAnimatedMan
+        };
 
         return group;
     }

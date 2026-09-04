@@ -25,14 +25,14 @@
 // ============================================================================
 import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=67';
-import { WorldManager } from './simulator/WorldManager.js?v=74';
+import { WorldManager } from './simulator/WorldManager.js?v=75';
 import { TrackManager } from './simulator/TrackManager.js?v=79';
-import { StationModel } from './simulator/StationModel.js?v=98';
+import { StationModel } from './simulator/StationModel.js?v=111';
 import { TrainModel } from './simulator/TrainModel.js?v=99';
 import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=11';
 import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=11';
 import { TRACK_DATA_TRUNK } from './simulator/TrackDataTrunk.js?v=5';
-import { AudioManager } from './audio/AudioManager.js?v=49';
+import { AudioManager } from './audio/AudioManager.js?v=76';
 import { RadioManager } from './audio/RadioManager.js?v=2';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
@@ -766,6 +766,14 @@ class App {
     warmUpRenderer() {
         const restore = [];
         this.world.scene.traverse(o => {
+            if (o.isMesh && o.geometry) {
+                if (o.geometry.boundingSphere === null) o.geometry.computeBoundingSphere();
+                if (o.geometry.boundingBox === null) o.geometry.computeBoundingBox();
+                if (o.isInstancedMesh) {
+                    if (o.boundingSphere === null) o.computeBoundingSphere();
+                    if (o.boundingBox === null) o.computeBoundingBox();
+                }
+            }
             if (o.frustumCulled) {
                 o.frustumCulled = false;
                 restore.push(o);
@@ -907,7 +915,19 @@ class App {
         }
 
         const meshes = [];
-        this.world.scene.traverse(o => { if (o.isMesh) meshes.push(o); });
+        this.world.scene.traverse(o => {
+            if (o.isMesh) {
+                if (o.geometry) {
+                    if (o.geometry.boundingSphere === null) o.geometry.computeBoundingSphere();
+                    if (o.geometry.boundingBox === null) o.geometry.computeBoundingBox();
+                }
+                if (o.isInstancedMesh) {
+                    if (o.boundingSphere === null) o.computeBoundingSphere();
+                    if (o.boundingBox === null) o.computeBoundingBox();
+                }
+                meshes.push(o);
+            }
+        });
 
         // Phase 2 (unten): Geometrie-Buffer gebatcht auf die GPU laden. Der
         // Balken-Anteil dieser Funktion (0..1) spiegelt den echten Upload-
@@ -940,6 +960,22 @@ class App {
                     // Interieur-Schnappschuss für die Faux-Glas-Reflexionen — jetzt
                     // ist die Spawn-Umgebung warm, der Bake kostet nur einen Frame
                     this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
+                    
+                    // Der Bake invalidiert die Shader aller Glasmaterialien (needsUpdate = true).
+                    // Wir erzwingen hier einen finalen Renderdurchlauf für die Gläser, damit auch
+                    // die Fenster im Rücken der Kamera JETZT kompilieren und nicht erst beim Umdrehen.
+                    const restoreGlass = [];
+                    this.trainModel.carriages.forEach(c => c.traverse(m => {
+                        if (m.isMesh && m.material && m.material.envMap && m.frustumCulled) {
+                            m.frustumCulled = false;
+                            restoreGlass.push(m);
+                        }
+                    }));
+                    if (restoreGlass.length > 0) {
+                        this.world.renderer.render(this.world.scene, this.world.activeCamera);
+                        restoreGlass.forEach(m => m.frustumCulled = true);
+                    }
+
                     // Alles gerade Hochgeladene als resident merken und den
                     // Hintergrund-Lader für den Rest der Linie scharfschalten.
                     this._seedResidencyFromLiveScene();
@@ -1070,17 +1106,7 @@ class App {
                             }
                         }
                         if (!foundTrunk) {
-                            if (!this._resTrunkStations) this._resTrunkStations = new Set();
-                            let foundStation = false;
-                            for (let i = 0; i < trunkSm.sim.stations.length; i++) {
-                                if (!this._resTrunkStations.has(i)) {
-                                    const d = 5000;
-                                    if (d < bestDist) { bestDist = d; best = { kind: 'trunkStation', idx: i }; }
-                                    foundStation = true;
-                                    break;
-                                }
-                            }
-                            if (!foundStation) r.trunkDone = true;
+                            r.trunkDone = true;
                         }
                     }
 
@@ -1109,17 +1135,22 @@ class App {
                             trunkTm.scene.add(obj);
                         }
                         parent = trunkTm.scene;
-                    } else if (best.kind === 'trunkStation') {
-                        obj = trunkSm.stationsList[best.idx];
-                        if (!obj) {
-                            obj = trunkSm.buildStationAtIndex(best.idx);
-                            trunkSm.scene.add(obj);
-                        }
-                        parent = trunkSm.scene;
                     }
                     
                     const allMeshes = [];
-                    obj.traverse(o => { if (o.isMesh) allMeshes.push(o); });
+                    obj.traverse(o => {
+                        if (o.isMesh) {
+                            if (o.geometry) {
+                                if (o.geometry.boundingSphere === null) o.geometry.computeBoundingSphere();
+                                if (o.geometry.boundingBox === null) o.geometry.computeBoundingBox();
+                            }
+                            if (o.isInstancedMesh) {
+                                if (o.boundingSphere === null) o.computeBoundingSphere();
+                                if (o.boundingBox === null) o.computeBoundingBox();
+                            }
+                            allMeshes.push(o);
+                        }
+                    });
                     r.pending = { kind: best.kind, idx: best.idx, obj, parent, allMeshes, cursor: 0, uncculled: [] };
                 }
 
@@ -1146,7 +1177,6 @@ class App {
                     if (p.kind === 'chunk') this._resChunks.add(p.idx);
                     else if (p.kind === 'station') this._resStations.add(p.idx);
                     else if (p.kind === 'trunkChunk') this._resTrunkChunks.add(p.idx);
-                    else if (p.kind === 'trunkStation') this._resTrunkStations.add(p.idx);
                     r.pending = null;
                 } else {
                     break;
@@ -1185,17 +1215,7 @@ class App {
                     }
                 }
                 if (!foundTrunk) {
-                    if (!this._resTrunkStations) this._resTrunkStations = new Set();
-                    let foundStation = false;
-                    for (let i = 0; i < trunkSm.sim.stations.length; i++) {
-                        if (!this._resTrunkStations.has(i)) {
-                            const d = 5000;
-                            if (d < bestDist) { bestDist = d; best = { kind: 'trunkStation', idx: i }; }
-                            foundStation = true;
-                            break;
-                        }
-                    }
-                    if (!foundStation) r.trunkDone = true;
+                    r.trunkDone = true;
                 }
             }
 
@@ -1230,20 +1250,23 @@ class App {
                 }
                 owned = true;
                 parent = trunkTm.scene;
-            } else if (best.kind === 'trunkStation') {
-                obj = trunkSm.stationsList[best.idx];
-                if (!obj) {
-                    obj = trunkSm.buildStationAtIndex(best.idx);
-                    trunkSm.scene.add(obj);
-                    continue;
-                }
-                owned = true;
-                parent = trunkSm.scene;
             }
             
             if (!owned) parent.add(obj);
             const allMeshes = [];
-            obj.traverse(o => { if (o.isMesh) allMeshes.push(o); });
+            obj.traverse(o => {
+                if (o.isMesh) {
+                    if (o.geometry) {
+                        if (o.geometry.boundingSphere === null) o.geometry.computeBoundingSphere();
+                        if (o.geometry.boundingBox === null) o.geometry.computeBoundingBox();
+                    }
+                    if (o.isInstancedMesh) {
+                        if (o.boundingSphere === null) o.computeBoundingSphere();
+                        if (o.boundingBox === null) o.computeBoundingBox();
+                    }
+                    allMeshes.push(o);
+                }
+            });
             r.pending = { kind: best.kind, idx: best.idx, obj, parent, allMeshes, cursor: 0, uncculled: [] };
             break;
         }
@@ -1286,7 +1309,6 @@ class App {
         if (p.kind === 'chunk') this._resChunks.add(p.idx);
         else if (p.kind === 'station') this._resStations.add(p.idx);
         else if (p.kind === 'trunkChunk') this._resTrunkChunks.add(p.idx);
-        else if (p.kind === 'trunkStation') this._resTrunkStations.add(p.idx);
         
         r.pending = null;
     }
@@ -2015,8 +2037,10 @@ class App {
             // 2. Web Audio Synthesis Update
             const isInside = this.world.isCurrentViewReverberant();
             const isPlatform = (this.world.activeCameraType === 'platform');
+            const isInsideTrain = (this.world.activeCameraType === 'cab' || this.world.activeCameraType === 'passenger');
+            const doorProgress = this.sim ? this.sim.doorProgress : 0;
             const stationDist = isPlatform ? 0 : this.getDistanceToNearestStation();
-            this.audio.update(this.sim.speed, this.sim.throttle, this.sim.brakeCylinderPressure, dt, isInside, stationDist, isPlatform);
+            this.audio.update(this.sim.speed, this.sim.throttle, this.sim.brakeCylinderPressure, dt, isInside, stationDist, isPlatform, doorProgress, isInsideTrain);
 
             // Escalator proximity sounds
             this.updateEscalatorAmbience(dt);
@@ -2132,6 +2156,10 @@ class App {
             this.refreshEscalatorCache();
         }
 
+        const isInsideTrain = (this.world.activeCameraType === 'cab' || this.world.activeCameraType === 'passenger');
+        const doorProgress = this.sim ? this.sim.doorProgress : 0;
+        const doorFactor = isInsideTrain ? Math.max(0, Math.min(1, doorProgress)) : 1.0;
+
         // Nächstgelegene Rolltreppe aus dem Positions-Cache (kein Traversal,
         // keine Allokationen im Frame-Pfad)
         const playerPos = this.world.activeCamera.getWorldPosition(_escPlayerPos);
@@ -2142,10 +2170,10 @@ class App {
         }
 
         const dist = Math.sqrt(minDistSq); // Infinity -> intensity 0
-        // Linear fade out between 3m and 18m
-        const intensity = 1.0 - Math.max(0, Math.min(1, (dist - 3) / 15));
+        // Linear fade out between 3m and 28m (realistische Reichweite auf dem Bahnsteig)
+        const intensity = 1.0 - Math.max(0, Math.min(1, (dist - 3) / 25));
 
-        this.audio.updateEscalatorSound(intensity, dt);
+        this.audio.updateEscalatorSound(intensity, dt, doorFactor);
     }
 
     getDistanceToNearestStation() {

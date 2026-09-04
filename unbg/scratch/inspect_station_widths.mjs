@@ -1,24 +1,24 @@
 import './dom_stubs.mjs';
+import { Simulation } from '../src/simulator/Simulation.js';
 import { TRACK_DATA as U1 } from '../src/simulator/TrackDataU1.js';
-import { TRACK_DATA_U2 as U2 } from '../src/simulator/TrackDataU2.js';
-import { TRACK_DATA_U3 as U3 } from '../src/simulator/TrackDataU3.js';
 
-const allStations = [...U1.stations, ...U2.stations, ...U3.stations];
-const uniqueNames = [...new Set(allStations.map(s => s.name))];
+const sim = new Simulation(U1);
+const wt = U1.stations.find(s => s.name === "Weißer Turm");
+console.log("Station Weißer Turm:", wt);
 
-const canvas = document.createElement("canvas");
-const ctx = canvas.getContext("2d");
-const fontSize = 96;
-ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-
-console.log("Name | TextWidth(px)");
-const widths = [];
-for (const name of uniqueNames) {
-    const text = name.toUpperCase().replace(/\u00DF/g, "SS");
-    const w = ctx.measureText(text).width;
-    widths.push({ name, text, w });
+console.log("\nTrack spacing along Weißer Turm platform:");
+for (let z = -60; z <= 60; z += 10) {
+    const s = wt.position + z;
+    const spacing = sim.getTrackSpacing(s);
+    const platWidth = spacing - 3.08;
+    const hallWidth = spacing + 3.66;
+    console.log(`  z=${z.toFixed(0)}m (dist=${s.toFixed(1)}): trackSpacing=${spacing.toFixed(2)}m -> platformWidth=${platWidth.toFixed(2)}m, hallWidth=${hallWidth.toFixed(2)}m`);
 }
-widths.sort((a, b) => a.w - b.w);
-for (const item of widths) {
-    console.log(`${item.name.padEnd(28)} | ${item.w.toFixed(0).padStart(6)}px`);
+
+console.log("\nComparison with other U1 Mittelbahnsteige:");
+for (const st of U1.stations) {
+    if (st.side || st.name === "Plärrer") continue;
+    const spacing = sim.getTrackSpacing(st.position);
+    const platWidth = spacing - 3.08;
+    console.log(`  ${st.name.padEnd(24)}: configSpacing=${st.platformSpacing} | sampledSpacing=${spacing.toFixed(2)}m | platWidth=${platWidth.toFixed(2)}m`);
 }

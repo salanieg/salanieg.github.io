@@ -360,6 +360,17 @@ export class StationModel {
                 }
             }
         });
+
+        if (this.animatedPassengers && this.animatedPassengers.length > 0) {
+            const t = performance.now() * 0.001;
+            for (const p of this.animatedPassengers) {
+                if (p.userData && p.userData.shoulderR && p.userData.elbowR) {
+                    const wave = (Math.sin(t * 4.2) + 1.0) * 0.5; // 0.0 to 1.0
+                    p.userData.shoulderR.rotation.set(-0.15, 0, 0.95 + wave * 0.80);
+                    p.userData.elbowR.rotation.set(0, 0, 0.40 + wave * 0.50);
+                }
+            }
+        }
     }
 
     // Sammelt alle Rolltreppen-Meshes dieser Linie für die entfernungsbasierte
@@ -1227,11 +1238,76 @@ export class StationModel {
         bumpTexture.wrapS = THREE.ClampToEdgeWrapping;
         bumpTexture.wrapT = THREE.RepeatWrapping;
 
-        return new THREE.MeshLambertMaterial({
+        const topMat = new THREE.MeshLambertMaterial({
             map: texture,
             bumpMap: bumpTexture,
             bumpScale: 0.015
         });
+
+        if (station.name === "Langwasser Süd") {
+            topMat.customProgramCacheKey = () => 'LangwasserSuedPlatformReflect';
+            topMat.onBeforeCompile = (shader) => {
+                shader.vertexShader = `
+                    varying vec2 vFloorUv;
+                    varying vec3 vWorldPos;
+                    varying vec3 vViewVec;
+                    ${shader.vertexShader}
+                `.replace(
+                    '#include <project_vertex>',
+                    `
+                    #include <project_vertex>
+                    vFloorUv = uv;
+                    vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                    vViewVec = cameraPosition - vWorldPos;
+                    `
+                );
+
+                shader.fragmentShader = `
+                    varying vec2 vFloorUv;
+                    varying vec3 vWorldPos;
+                    varying vec3 vViewVec;
+                    ${shader.fragmentShader}
+                `.replace(
+                    '#include <dithering_fragment>',
+                    `
+                    #include <dithering_fragment>
+
+                    // Fake view-dependent neon tube reflections along platform edges in Langwasser Süd
+                    // vFloorUv.x runs 0.0 (left edge) to 1.0 (right edge)
+                    // The continuous ceiling light bands sit at u ~ 0.034 and u ~ 0.966
+                    float uL = 0.034;
+                    float uR = 0.966;
+
+                    float dL = abs(vFloorUv.x - uL);
+                    float dR = abs(vFloorUv.x - uR);
+
+                    // 1. Weicher diffuser Lichtsaum direkt unter den Leuchtstoffröhren (Gauß-Abfall ~70cm)
+                    float saumL = exp(-dL * dL * 220.0);
+                    float saumR = exp(-dR * dR * 220.0);
+                    float directSaum = max(saumL, saumR);
+
+                    // 2. Blickwinkelabhängiger Glanz (Fresnel-Glanz bei flacherem Sichtwinkel)
+                    vec3 V = normalize(vViewVec);
+                    float cosTheta = clamp(dot(vec3(0.0, 1.0, 0.0), V), 0.0, 1.0);
+                    float fresnel = pow(1.0 - cosTheta, 2.5);
+
+                    // Specular-Glanzstreifen
+                    float specL = exp(-dL * dL * 420.0);
+                    float specR = exp(-dR * dR * 420.0);
+                    float specSheen = max(specL, specR) * fresnel;
+
+                    // Harmonische Kombination: Grundaufhellung + dynamischer Glanz
+                    float reflectIntensity = directSaum * 0.22 + specSheen * 0.40;
+
+                    // Angenehmes, klares Neon-Weiß (#f8fafc) sanft auf den Boden aufaddieren
+                    vec3 neonColor = vec3(0.96, 0.98, 1.0);
+                    gl_FragColor.rgb += neonColor * reflectIntensity;
+                    `
+                );
+            };
+        }
+
+        return topMat;
     }
 
     drawSingleTile(cCtx, bCtx, x, y, size, config, customColor, customGrout) {
@@ -1328,14 +1404,6 @@ export class StationModel {
         // So NO line builds a generic Plärrer stop -- the shared hall IS the station
         // (U2/U3 zone tubes come from TrackManager.buildPlaerrerApproach).
         if (station.name === "Plärrer") return new THREE.Group();
-        // The other 5 shared-trunk stations (Rothenburger Straße..Rathenauplatz) are now
-        // byte-identical between U2 and U3 (scratch/gen_topology_u23.mjs splices U2's trunk
-        // into U3), so they're built once by a dedicated shared trunk rig (main.js, lineId
-        // "TRUNK") instead of once per line -- U2/U3 skip them here exactly like Plärrer above.
-        const TRUNK_STATION_NAMES = ['Rothenburger Straße', 'Opernhaus', 'Hauptbahnhof', 'Wöhrder Wiese', 'Rathenauplatz'];
-        if (TRUNK_STATION_NAMES.includes(station.name) && (this.sim.track.lineId === 'U2' || this.sim.track.lineId === 'U3')) {
-            return new THREE.Group();
-        }
 
         // --- LEGACY FALLBACK ---
         const stationGroup = new THREE.Group();
@@ -1642,7 +1710,9 @@ export class StationModel {
                 topGrout: '#7e8a93',
                 stripeBg: '#184763',
                 stripeText: '#ffffff',
-                flatTiles: true
+                flatTiles: true,
+                tileScale: 1.5,
+                thinGrout: true
             },
             "Gemeinschaftshaus": {
                 bottomColor: '#41525a',
@@ -3136,9 +3206,16 @@ export class StationModel {
                     const preset = wallPresets[station.name];
                     const cacheKey = `tileMat_${station.name}`;
                     if (!this[cacheKey]) {
+                        const thinGrout = !!preset.thinGrout;
+                        const bottomMat = this.createTiledMaterial(preset.bottomColor, preset.bottomGrout, 0.2, thinGrout);
+                        const topMat = this.createTiledMaterial(preset.topColor, preset.topGrout, 0.15, thinGrout);
+                        if (station.name === "Langwasser Süd") {
+                            this.applyGlossyTileShader(bottomMat, 'LangwasserSuedWallBottomGloss', 3.6);
+                            this.applyGlossyTileShader(topMat, 'LangwasserSuedWallTopGloss', 3.6);
+                        }
                         this[cacheKey] = {
-                            bottom: this.createTiledMaterial(preset.bottomColor, preset.bottomGrout, 0.2),
-                            top: this.createTiledMaterial(preset.topColor, preset.topGrout, 0.15),
+                            bottom: bottomMat,
+                            top: topMat,
                             stripe: this.createWallStripeMaterial(station.name, preset.stripeBg, preset.stripeText)
                         };
                     }
@@ -3146,7 +3223,9 @@ export class StationModel {
                     const repeatX = Math.round(platLength / (0.35 * (384 / 64)));
                     const isMax = ["Maximilianstraße", "Bärenschanze", "Gostenhof"].includes(station.name);
                     const topHeight = isMax ? 5.0 : 3.7;
-                    const hFactor = preset.flatTiles ? 0.6 : 1.2;
+                    const tileScale = preset.tileScale || 1.0;
+                    const hFactor = (preset.flatTiles ? 0.6 : 1.2) * tileScale;
+                    const wallTileU = 1.2 * tileScale;
                     const sA = station.position - platLength / 2, sB = station.position + platLength / 2;
                     const offW = (s) => this.sim.getTrackSpacing(s) / 2 + 1.83;
                     const cy = centerPos.y;
@@ -3155,16 +3234,16 @@ export class StationModel {
                         const offS = (s) => sign * (offW(s) - 0.02); // stripe sits just in front of the wall
                         if (isMax) {
                             // Tiled bottom: cy - 0.38 to cy + 1.10
-                            this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 1.10, mats.bottom, 1.2, -0.38 / hFactor, 1.10 / hFactor);
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 1.10, mats.bottom, wallTileU, -0.38 / hFactor, 1.10 / hFactor);
                             // Tiled green top: cy + 1.10 to cy + 3.68 (height 2.58m, same height as lower green wall)
-                            this.buildSweptWall(stationGroup, sA, sB, off, cy + 1.10, cy + 3.68, mats.top, 1.2, 1.1 / hFactor, 3.68 / hFactor);
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy + 1.10, cy + 3.68, mats.top, wallTileU, 1.1 / hFactor, 3.68 / hFactor);
                             // Stripe: cy + 2.28 to cy + 2.50
                             this.buildSweptWall(stationGroup, sA, sB, offS, cy + 2.28, cy + 2.50, mats.stripe, 90 / repeatX, 0, 1);
                             // Concrete upper wall: cy + 3.68 to cy + 5.84 (ceiling height, coarser concrete texture scale 2.4)
                             this.buildSweptWall(stationGroup, sA, sB, off, cy + 3.68, cy + 5.84, this.stationConcreteWallMat, 2.4, 3.68 / 2.4, 5.84 / 2.4);
                         } else {
-                            this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 1.10, mats.bottom, 1.2, -0.38 / hFactor, 1.10 / hFactor);
-                            this.buildSweptWall(stationGroup, sA, sB, off, cy + 1.10, cy + 1.10 + topHeight, mats.top, 1.2, 1.1 / hFactor, (1.1 + topHeight) / hFactor);
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy - 0.38, cy + 1.10, mats.bottom, wallTileU, -0.38 / hFactor, 1.10 / hFactor);
+                            this.buildSweptWall(stationGroup, sA, sB, off, cy + 1.10, cy + 1.10 + topHeight, mats.top, wallTileU, 1.1 / hFactor, (1.1 + topHeight) / hFactor);
                             this.buildSweptWall(stationGroup, sA, sB, offS, cy + 2.28, cy + 2.50, mats.stripe, 90 / repeatX, 0, 1);
                         }
                     }
@@ -4958,13 +5037,19 @@ export class StationModel {
                     if (!this[cacheKey]) {
                         if (isSquareLangwasser) {
                             const pWidth = 0.63; // 1/4 narrower than 0.84 diameter
+                            const thinGrout = !!preset.thinGrout;
+                            const pMat = this.createTiledMaterial(preset.topColor, preset.topGrout, 0.15, thinGrout);
+                            if (station.name === "Langwasser Süd") {
+                                this.applyGlossyTileShader(pMat, 'LangwasserSuedPillarGloss', 2.4);
+                            }
+                            const tileScale = preset.tileScale || 1.0;
                             this[cacheKey] = {
                                 geom: new THREE.BoxGeometry(pWidth, pHeight, pWidth),
-                                mat: this.createTiledMaterial(preset.topColor, preset.topGrout, 0.15)
+                                mat: pMat
                             };
-                            this[cacheKey].mat.map.repeat.set(0.5, pHeight / hPillFactor);
+                            this[cacheKey].mat.map.repeat.set(0.5 / tileScale, pHeight / (hPillFactor * tileScale));
                             if (this[cacheKey].mat.bumpMap) {
-                                this[cacheKey].mat.bumpMap.repeat.set(0.5, pHeight / hPillFactor);
+                                this[cacheKey].mat.bumpMap.repeat.set(0.5 / tileScale, pHeight / (hPillFactor * tileScale));
                             }
                         } else {
                             this[cacheKey] = {
@@ -8282,20 +8367,21 @@ export class StationModel {
         return newMat;
     }
 
-    createTiledMaterial(tileColor, groutColor, roughness = 0.15) {
+    createTiledMaterial(tileColor, groutColor, roughness = 0.15, thinGrout = false) {
+        const size = thinGrout ? 256 : 128;
         const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
+        canvas.width = size;
+        canvas.height = size;
         const ctx = canvas.getContext('2d');
         
         ctx.fillStyle = groutColor;
-        ctx.fillRect(0, 0, 128, 128);
+        ctx.fillRect(0, 0, size, size);
         
         ctx.fillStyle = tileColor;
         const cols = 8;
         const rows = 8;
-        const w = 128 / cols;
-        const h = 128 / rows;
+        const w = size / cols;
+        const h = size / rows;
         const border = 1;
         
         for (let r = 0; r < rows; r++) {
@@ -8310,12 +8396,12 @@ export class StationModel {
         texture.colorSpace = THREE.SRGBColorSpace;
         
         const bumpCanvas = document.createElement('canvas');
-        bumpCanvas.width = 128;
-        bumpCanvas.height = 128;
+        bumpCanvas.width = size;
+        bumpCanvas.height = size;
         const bCtx = bumpCanvas.getContext('2d');
         
         bCtx.fillStyle = '#000000';
-        bCtx.fillRect(0, 0, 128, 128);
+        bCtx.fillRect(0, 0, size, size);
         
         bCtx.fillStyle = '#ffffff';
         for (let r = 0; r < rows; r++) {
@@ -8334,6 +8420,81 @@ export class StationModel {
             bumpScale: 0.015,
             emissive: new THREE.Color(tileColor).multiplyScalar(0.25)
         });
+    }
+
+    applyGlossyTileShader(material, cacheId = 'GlossyWallTiles', tubeDist = 3.6) {
+        material.customProgramCacheKey = () => cacheId;
+        material.onBeforeCompile = (shader) => {
+            shader.vertexShader = `
+                varying float vTileLocalY;
+                varying vec3 vTileWorldPos;
+                varying vec3 vTileNormal;
+                ${shader.vertexShader}
+            `.replace(
+                '#include <project_vertex>',
+                `
+                #include <project_vertex>
+                vTileLocalY = position.y;
+                vTileWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                vTileNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+                `
+            );
+
+            shader.fragmentShader = `
+                varying float vTileLocalY;
+                varying vec3 vTileWorldPos;
+                varying vec3 vTileNormal;
+                ${shader.fragmentShader}
+            `.replace(
+                '#include <dithering_fragment>',
+                `
+                #include <dithering_fragment>
+
+                // Glazed ceramic wall tile shine:
+                // 1. Grout mask: tiles are white (1.0) in bumpMap, grout lines are black (0.0)
+                #ifdef USE_BUMPMAP
+                float tileMask = texture2D(bumpMap, vBumpMapUv).r;
+                #else
+                float tileMask = 1.0;
+                #endif
+
+                // 2. View vector and normal
+                vec3 eyeRay = normalize(vTileWorldPos - cameraPosition);
+                vec3 V = -eyeRay;
+                vec3 N = normalize(vTileNormal);
+                // Orient normal towards camera
+                if (dot(N, eyeRay) > 0.0) N = -N;
+
+                float NdotV = clamp(dot(N, V), 0.0, 1.0);
+                // Base ceramic glaze reflection (clear glaze shine when viewing down the station)
+                float fresnel = 0.12 + 0.88 * pow(1.0 - NdotV, 2.5);
+
+                // 3. Continuous Ceiling Neon Tube Reflection Strip (Spiegelstreifen):
+                // Reflected ray from surface back into the station:
+                vec3 R = reflect(eyeRay, N);
+                // Component pointing into station along normal:
+                float Rn = clamp(dot(R, N), 0.02, 1.0);
+                // The neon tubes are located at lateral distance ~tubeDist from the surface and at local height Y ~ 4.5m
+                float distToTube = ${tubeDist.toFixed(2)};
+                float tHit = distToTube / Rn;
+                float yHit = vTileLocalY + tHit * R.y;
+                // Vertical distance to the neon tube at 4.5m height:
+                float deltaY = abs(yHit - 4.5);
+                // Soft, subtle Gaussian reflection band (~0.7m width)
+                float neonStrip = exp(-deltaY * deltaY * 3.5);
+
+                // 4. Tile face micro-glint: smooth quadratic falloff towards grout
+                float tileFaceGlint = pow(clamp(tileMask, 0.0, 1.0), 2.0);
+
+                // Combine: subtle ceramic glaze + soft, gentle neon reflection strip
+                float totalGloss = (fresnel * 0.22 + neonStrip * 0.28) * tileFaceGlint;
+
+                // Add bright white ceramic highlight tint (#ffffff)
+                gl_FragColor.rgb += vec3(0.98, 0.99, 1.0) * totalGloss;
+                `
+            );
+        };
+        return material;
     }
 
     createPebbleDashMaterial() {
@@ -9829,6 +9990,136 @@ export class StationModel {
             stationGroup.add(passenger);
             passList.push(passenger);
         });
+
+        // Spawn Tutorial Cultist Pair at Langwasser Süd
+        if (station.name === "Langwasser Süd") {
+            const tutorialGroup = new THREE.Group();
+            tutorialGroup.userData = {
+                isPassenger: true,
+                isTutorial: true,
+                config: { name: "Tutorial-Sektierer", isTutorial: true }
+            };
+
+            const femaleCultist = passBuilder.createCharacter({
+                name: "Sektiererin",
+                skinColor: '#ffdbac',
+                hairColor: '#fef08a', // bright light blonde
+                hairStyle: 'long',
+                shirtStyle: 'cult_uniform',
+                shirtColor: '#38bdf8',
+                pantsColor: '#38bdf8',
+                shoesColor: '#ffffff',
+                height: 1.72,
+                isTutorial: true
+            });
+            femaleCultist.position.set(-0.45, 0, 0);
+
+            const maleCultist = passBuilder.createCharacter({
+                name: "Sektierer",
+                skinColor: '#ffdbac',
+                hairColor: '#111111', // black hair
+                hairStyle: 'short',
+                shirtStyle: 'cult_uniform',
+                shirtColor: '#38bdf8',
+                pantsColor: '#38bdf8',
+                shoesColor: '#ffffff',
+                height: 1.80,
+                skipMerge: true,
+                isAnimatedMan: true,
+                isTutorial: true
+            });
+            maleCultist.position.set(0.45, 0, 0);
+            if (maleCultist.userData.shoulderR && maleCultist.userData.elbowR) {
+                maleCultist.userData.shoulderR.rotation.set(-0.15, 0, 0.95);
+                maleCultist.userData.elbowR.rotation.set(0, 0, 0.40);
+            }
+
+            const tutorialSign = this.buildTutorialSign();
+            tutorialSign.position.set(0, 0, 0);
+
+            femaleCultist.traverse(o => { if (o.isMesh) o.userData.isTutorial = true; });
+            maleCultist.traverse(o => { if (o.isMesh) o.userData.isTutorial = true; });
+            tutorialSign.traverse(o => { if (o.isMesh) o.userData.isTutorial = true; });
+
+            tutorialGroup.add(femaleCultist, tutorialSign, maleCultist);
+
+            // Position at platform end towards Fürth (+43.8m relative to center, closer to platform end and Gleis 1)
+            const placement = getLocalPlacement(43.8, 1.5);
+            tutorialGroup.position.copy(placement.pos);
+
+            // Orient tutorialGroup to look EXACTLY at initial driver spawn point (turned 180 deg)
+            const sDriver = station.position + (this.sim.trainHalfLength || 38) * 2;
+            const driverWorldPos = this.sim.getTrackPosition(sDriver);
+            driverWorldPos.y += 1.5;
+
+            const tutWorldPos = new THREE.Vector3();
+            stationGroup.localToWorld(tutWorldPos.copy(placement.pos));
+            const dirToDriver = new THREE.Vector3().subVectors(driverWorldPos, tutWorldPos);
+            const angleToDriver = Math.atan2(dirToDriver.x, dirToDriver.z) - centerAngle;
+            tutorialGroup.rotation.y = angleToDriver + Math.PI;
+
+            passList.push(tutorialGroup);
+            stationGroup.add(tutorialGroup);
+
+            if (!this.animatedPassengers) this.animatedPassengers = [];
+            this.animatedPassengers.push(maleCultist);
+        }
+    }
+
+    buildTutorialSign() {
+        const signGroup = new THREE.Group();
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Dark blue accent frame and header background (#1e3a8a)
+        ctx.strokeStyle = '#1e3a8a';
+        ctx.lineWidth = 24;
+        ctx.strokeRect(12, 12, 488, 488);
+
+        ctx.fillStyle = '#1e3a8a';
+        ctx.fillRect(24, 24, 464, 110);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 58px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Tutorial!', 256, 79);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 120px sans-serif';
+        ctx.fillText('ℹ️', 256, 255);
+
+        ctx.fillStyle = '#1e3a8a';
+        ctx.font = 'bold 42px monospace';
+        ctx.fillText('Klick mich!', 256, 410);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const signMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+        const frameMat = new THREE.MeshBasicMaterial({ color: '#1e293b' });
+
+        const boardGeom = new THREE.BoxGeometry(0.55, 0.85, 0.03);
+        const frontBoard = new THREE.Mesh(boardGeom, [
+            frameMat, frameMat, frameMat, frameMat, signMat, signMat
+        ]);
+        frontBoard.position.set(0, 0.425, 0.08);
+        frontBoard.rotation.x = -0.21;
+
+        const backBoard = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.85, 0.02), frameMat);
+        backBoard.position.set(0, 0.425, -0.08);
+        backBoard.rotation.x = 0.21;
+
+        const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.04, 0.04), frameMat);
+        hinge.position.set(0, 0.84, 0);
+
+        signGroup.add(frontBoard, backBoard, hinge);
+        return signGroup;
     }
 
     buildMuggenhofStairs(station, stationGroup, platLength, spacing, centerPos, centerAngle) {

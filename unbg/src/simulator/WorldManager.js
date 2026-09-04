@@ -79,6 +79,28 @@ export class WorldManager {
         this.adaptationDuration = 1.0;
         this.adaptationFromExposure = 1.0;
 
+        // Tutorial Speech Bubble System
+        this.tutorialSteps = [
+            {
+                title: "Tutorial (1/4) — Steuerung",
+                text: "Willkommen in Nürnberg! 🚆\n\nNutze W / S (oder Pfeil oben/unten) für Antrieb & Bremse.\nMit A / D wählst du den Richtungsschalter (Vorwärts / Rückwärts)."
+            },
+            {
+                title: "Tutorial (2/4) — Türen & Halt",
+                text: "An Haltestellen: Am Bahnsteig anhalten. Drücke T, um die Türen zu öffnen und zu schließen.\n\nAchte auf Signale: Grün = Fahrt, Rot = Halt!"
+            },
+            {
+                title: "Tutorial (3/4) — Kameras",
+                text: "Mit den Tasten 1 - 4 wechselst du die Kamera (Cockpit, Fahrgastraum, Bahnsteig & Außen).\n\nIm Fahrgast- & Bahnsteigmodus kannst du mit W/A/S/D frei umhergehen!"
+            },
+            {
+                title: "Tutorial (4/4) — Notbremse & Menü",
+                text: "Drücke Numpad 0 für die Notbremse.\nIm Menü (oben rechts oder Esc) wählst du Züge (GT6, DT1, DT3) und Linien (U1, U2, U3).\n\nGute Fahrt!"
+            }
+        ];
+        this.tutorialStepIndex = 0;
+        this.isTutorialActive = false;
+
         // Smooth lighting targets: instead of hard-assigning light intensities each frame,
         // we set targets and exponentially lerp toward them. This eliminates the visible
         // intensity jump when crossing a zone boundary (tunnel <-> station <-> open air).
@@ -446,8 +468,8 @@ export class WorldManager {
         bubble.style.fontFamily = 'monospace';
         bubble.style.fontSize = '13px';
         bubble.style.zIndex = '1000';
-        bubble.style.pointerEvents = 'none';
-        bubble.style.maxWidth = '250px';
+        bubble.style.pointerEvents = 'auto';
+        bubble.style.maxWidth = '280px';
         bubble.style.boxShadow = '4px 4px 0px rgba(0,0,0,0.15)';
         bubble.style.borderRadius = '0px';
 
@@ -461,7 +483,7 @@ export class WorldManager {
         textEl.id = 'bubble-text';
         bubble.appendChild(textEl);
 
-        // Progress loader bar
+        // Progress loader bar (for normal passengers)
         const loader = document.createElement('div');
         loader.id = 'bubble-loader';
         loader.style.display = 'block';
@@ -474,6 +496,53 @@ export class WorldManager {
         bubble.appendChild(loader);
         this.speechBubbleLoader = loader;
         this.bubbleTimeout = null;
+
+        // Tutorial buttons (Weiter & Beenden)
+        const actions = document.createElement('div');
+        actions.id = 'bubble-actions';
+        actions.style.display = 'none';
+        actions.style.marginTop = '10px';
+        actions.style.justifyContent = 'flex-end';
+        actions.style.gap = '8px';
+
+        const btnClose = document.createElement('button');
+        btnClose.id = 'bubble-btn-close';
+        btnClose.innerText = 'Beenden';
+        btnClose.style.backgroundColor = '#f1f5f9';
+        btnClose.style.color = '#0f172a';
+        btnClose.style.border = '1px solid #000000';
+        btnClose.style.padding = '4px 10px';
+        btnClose.style.fontFamily = 'monospace';
+        btnClose.style.fontSize = '12px';
+        btnClose.style.fontWeight = 'bold';
+        btnClose.style.cursor = 'pointer';
+        btnClose.style.boxShadow = '2px 2px 0px rgba(0,0,0,0.2)';
+
+        const btnNext = document.createElement('button');
+        btnNext.id = 'bubble-btn-next';
+        btnNext.innerText = 'Weiter';
+        btnNext.style.backgroundColor = '#0284c7';
+        btnNext.style.color = '#ffffff';
+        btnNext.style.border = '1px solid #000000';
+        btnNext.style.padding = '4px 10px';
+        btnNext.style.fontFamily = 'monospace';
+        btnNext.style.fontSize = '12px';
+        btnNext.style.fontWeight = 'bold';
+        btnNext.style.cursor = 'pointer';
+        btnNext.style.boxShadow = '2px 2px 0px rgba(0,0,0,0.2)';
+
+        actions.appendChild(btnClose);
+        actions.appendChild(btnNext);
+        bubble.appendChild(actions);
+
+        btnNext.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.advanceTutorialStep();
+        });
+        btnClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.closeSpeechBubble();
+        });
 
         document.getElementById('viewport-container').appendChild(bubble);
         this.speechBubble = bubble;
@@ -516,58 +585,123 @@ export class WorldManager {
         const intersects = this.raycaster.intersectObjects(passengers, true);
 
         let clickedPassenger = null;
+        let isTut = false;
         if (intersects.length > 0) {
             let current = intersects[0].object;
             while (current) {
-                if (current.userData && current.userData.isPassenger) {
+                if (current.userData && (current.userData.isTutorial || (current.userData.config && current.userData.config.isTutorial))) {
+                    isTut = true;
                     clickedPassenger = current;
                     break;
+                }
+                if (current.userData && current.userData.isPassenger && !clickedPassenger) {
+                    clickedPassenger = current;
                 }
                 current = current.parent;
             }
         }
 
         if (clickedPassenger) {
-            const config = clickedPassenger.userData.config;
-            const name = config.name || "Fahrgast";
-            const item = config.item || "";
-            const sentence = ITEM_SENTENCES[item] || "Hallo! Schöner Tag heute.";
+            if (isTut) {
+                this.showTutorialBubble(clickedPassenger);
+            } else {
+                this.isTutorialActive = false;
+                const actionsEl = document.getElementById('bubble-actions');
+                if (actionsEl) actionsEl.style.display = 'none';
+                this.speechBubbleLoader.style.display = 'block';
 
-            document.getElementById('bubble-name').innerText = name;
-            document.getElementById('bubble-text').innerText = sentence;
-            this.activePassengerForBubble = clickedPassenger;
+                const config = clickedPassenger.userData.config || {};
+                const name = config.name || "Fahrgast";
+                const item = config.item || "";
+                const sentence = ITEM_SENTENCES[item] || "Hallo! Schöner Tag heute.";
 
-            // Make the speech bubble immediately display block to allow layout transitions
-            this.speechBubble.style.display = 'block';
+                document.getElementById('bubble-name').innerText = name;
+                document.getElementById('bubble-text').innerText = sentence;
+                this.activePassengerForBubble = clickedPassenger;
 
-            // Clear previous timeout if any
-            if (this.bubbleTimeout) {
-                clearTimeout(this.bubbleTimeout);
-                this.bubbleTimeout = null;
+                // Make the speech bubble immediately display block to allow layout transitions
+                this.speechBubble.style.display = 'block';
+
+                // Clear previous timeout if any
+                if (this.bubbleTimeout) {
+                    clearTimeout(this.bubbleTimeout);
+                    this.bubbleTimeout = null;
+                }
+
+                // Reset loading bar scale and remove transition
+                this.speechBubbleLoader.style.transition = 'none';
+                this.speechBubbleLoader.style.transform = 'scaleX(1)';
+                
+                // Force reflow so the browser registers the scaleX(1) state instantly
+                void this.speechBubbleLoader.offsetWidth;
+
+                // Start CSS transition to scale down to 0 over 7 seconds
+                this.speechBubbleLoader.style.transition = 'transform 7s linear';
+                this.speechBubbleLoader.style.transform = 'scaleX(0)';
+
+                // Set timeout to automatically close the bubble after 7 seconds
+                this.bubbleTimeout = setTimeout(() => {
+                    this.activePassengerForBubble = null;
+                    this.bubbleTimeout = null;
+                }, 7000);
             }
-
-            // Reset loading bar scale and remove transition
-            this.speechBubbleLoader.style.transition = 'none';
-            this.speechBubbleLoader.style.transform = 'scaleX(1)';
-            
-            // Force reflow so the browser registers the scaleX(1) state instantly
-            void this.speechBubbleLoader.offsetWidth;
-
-            // Start CSS transition to scale down to 0 over 7 seconds
-            this.speechBubbleLoader.style.transition = 'transform 7s linear';
-            this.speechBubbleLoader.style.transform = 'scaleX(0)';
-
-            // Set timeout to automatically close the bubble after 7 seconds
-            this.bubbleTimeout = setTimeout(() => {
-                this.activePassengerForBubble = null;
-                this.bubbleTimeout = null;
-            }, 7000);
         } else {
-            this.activePassengerForBubble = null;
-            if (this.bubbleTimeout) {
-                clearTimeout(this.bubbleTimeout);
-                this.bubbleTimeout = null;
+            this.closeSpeechBubble();
+        }
+    }
+
+    showTutorialBubble(passengerObj) {
+        this.isTutorialActive = true;
+        this.tutorialStepIndex = 0;
+        this.activePassengerForBubble = passengerObj;
+
+        if (this.bubbleTimeout) {
+            clearTimeout(this.bubbleTimeout);
+            this.bubbleTimeout = null;
+        }
+
+        this.speechBubbleLoader.style.display = 'none';
+        const actionsEl = document.getElementById('bubble-actions');
+        if (actionsEl) actionsEl.style.display = 'flex';
+        this.renderTutorialStep();
+    }
+
+    renderTutorialStep() {
+        const step = this.tutorialSteps[this.tutorialStepIndex];
+        document.getElementById('bubble-name').innerText = step.title;
+        document.getElementById('bubble-text').innerHTML = step.text.replace(/\n/g, '<br>');
+
+        const btnNext = document.getElementById('bubble-btn-next');
+        if (btnNext) {
+            if (this.tutorialStepIndex === this.tutorialSteps.length - 1) {
+                btnNext.innerText = 'Fertig';
+            } else {
+                btnNext.innerText = 'Weiter';
             }
+        }
+
+        this.speechBubble.style.display = 'block';
+    }
+
+    advanceTutorialStep() {
+        if (!this.isTutorialActive) return;
+        this.tutorialStepIndex++;
+        if (this.tutorialStepIndex >= this.tutorialSteps.length) {
+            this.closeSpeechBubble();
+        } else {
+            this.renderTutorialStep();
+        }
+    }
+
+    closeSpeechBubble() {
+        this.activePassengerForBubble = null;
+        this.isTutorialActive = false;
+        if (this.bubbleTimeout) {
+            clearTimeout(this.bubbleTimeout);
+            this.bubbleTimeout = null;
+        }
+        if (this.speechBubble) {
+            this.speechBubble.style.display = 'none';
         }
     }
 
@@ -953,6 +1087,7 @@ export class WorldManager {
         const interiorCam = this.activeCameraType === 'cab' || this.activeCameraType === 'passenger';
         train3D.updatePlanarReflections(
             this.renderer,
+            this.scene,
             this.activeCamera,
             interiorCam && !document.body.classList.contains('is-mobile')
         );
