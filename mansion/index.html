@@ -545,6 +545,63 @@
             cursor: not-allowed;
         }
 
+        .btn-settings {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-settings:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #ffffff;
+            border: none;
+            padding: 0.75rem 1.4rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+
+        .note-detail-content {
+            background: #111111;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 240px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .note-detail-meta {
+            font-size: 0.8rem;
+            color: #a1a1aa;
+            margin-bottom: 1.25rem;
+            text-align: left;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -643,6 +700,7 @@
             <div id="player-count-badge" class="player-count-badge">
                 <span id="player-count-text">👥 1 online</span>
             </div>
+            <button type="button" id="btn-settings" class="btn-settings" title="Spielername anpassen">⚙️ Name</button>
             <button type="button" id="btn-logout" class="btn-logout">Abmelden</button>
         </header>
 
@@ -651,12 +709,12 @@
 
         <!-- Wand-Interaktions-Prompt -->
         <div id="interact-prompt" class="interact-prompt">
-            Taste [E] drücken zum Anheften
+            Taste [E] drücken
         </div>
 
         <!-- Steuerungs-Leiste am unteren Rand -->
         <footer class="bottom-bar">
-            Klicken zum Umschauen | W,A,S,D = Laufen | E = Notiz anheften | ESC = Maus freigeben
+            Klicken = Umschauen | W,A,S,D = Laufen | LEERTASTE = Springen | E = Interagieren | ESC = Maus frei
         </footer>
 
         <!-- Pointer Lock Klick-Overlay -->
@@ -690,6 +748,37 @@
         </div>
     </div>
 
+    <!-- 4. NOTIZ-DETAIL & LÖSCHEN MODAL -->
+    <div id="view-note-modal" class="modal-backdrop">
+        <div class="note-card">
+            <h3>Notiz an der Wand</h3>
+            <div id="view-note-meta" class="note-detail-meta"></div>
+            <div id="view-note-body" class="note-detail-content"></div>
+            <div class="modal-actions">
+                <button type="button" id="btn-close-view-note" class="btn-cancel">Schließen</button>
+                <button type="button" id="btn-delete-note" class="btn-danger">
+                    <span>🗑️ Notiz entfernen</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. EINSTELLUNGEN MODAL (SPIELERNAME) -->
+    <div id="settings-modal" class="modal-backdrop">
+        <div class="note-card">
+            <h3>Spielerprofil</h3>
+            <p>Wähle einen Spielernamen, der über deiner Figur und auf Notizen angezeigt wird.</p>
+            <div class="form-group" style="margin-bottom: 1.25rem; text-align: left;">
+                <label class="form-label" for="settings-nickname">Dein Name</label>
+                <input type="text" id="settings-nickname" class="input-field" maxlength="20" placeholder="z. B. Dennis">
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="btn-cancel-settings" class="btn-cancel">Abbrechen</button>
+                <button type="button" id="btn-save-settings" class="btn-submit">Speichern</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK via CDN Modules & Three.js via ImportMap -->
     <script type="module">
         import * as THREE from 'three';
@@ -706,6 +795,8 @@
             getFirestore,
             collection,
             addDoc,
+            deleteDoc,
+            doc as firestoreDoc,
             onSnapshot,
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
@@ -757,6 +848,19 @@
         const interactPrompt = document.getElementById("interact-prompt");
         const clickOverlay = document.getElementById("click-overlay");
 
+        // Modals & Settings
+        const btnSettings = document.getElementById("btn-settings");
+        const settingsModal = document.getElementById("settings-modal");
+        const settingsNickname = document.getElementById("settings-nickname");
+        const btnCancelSettings = document.getElementById("btn-cancel-settings");
+        const btnSaveSettings = document.getElementById("btn-save-settings");
+
+        const viewNoteModal = document.getElementById("view-note-modal");
+        const viewNoteMeta = document.getElementById("view-note-meta");
+        const viewNoteBody = document.getElementById("view-note-body");
+        const btnCloseViewNote = document.getElementById("btn-close-view-note");
+        const btnDeleteNote = document.getElementById("btn-delete-note");
+
         const noteModal = document.getElementById("note-modal");
         const noteTextarea = document.getElementById("note-textarea");
         const btnCancelNote = document.getElementById("btn-cancel-note");
@@ -768,9 +872,65 @@
         let currentUser = null;
         let unsubscribeNotes = null;
         let isModalOpen = false;
-        let currentWallHit = null;
+        let currentInteractTarget = null; // { type: 'note' | 'seat' | 'wall', ... }
         let savedWallTarget = null;
         const notesMeshMap = new Map(); // id -> THREE.Mesh
+
+        // Sitzen & Interaktion
+        const seats = []; // { mesh, name, sitPos, lookDir }
+        const seatMeshes = []; // Meshes für Raycast
+        let isSitting = false;
+        let currentSeat = null;
+
+        // Springen & Physik
+        let velocityY = 0;
+        let isOnGround = true;
+        const GRAVITY = -22;
+        const JUMP_STRENGTH = 7.5;
+
+        // ── HILFSFUNKTIONEN ──
+        function escapeHtml(str) {
+            if (!str) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function getStoredNickname() {
+            const saved = localStorage.getItem("mansion_nickname");
+            if (saved && saved.trim()) return saved.trim();
+            if (currentUser && currentUser.displayName) return currentUser.displayName;
+            if (currentUser && currentUser.email) return currentUser.email.split("@")[0];
+            return "Gast";
+        }
+
+        function updateNavUserDisplay() {
+            if (!currentUser) return;
+            const nick = getStoredNickname();
+            navUserEmail.textContent = `${nick} (${currentUser.email || "Angemeldet"})`;
+        }
+
+        function formatNoteDate(timestamp) {
+            if (!timestamp) return "Heute";
+            let date = null;
+            if (typeof timestamp.toDate === "function") {
+                date = timestamp.toDate();
+            } else if (typeof timestamp.seconds === "number") {
+                date = new Date(timestamp.seconds * 1000);
+            } else if (typeof timestamp === "number" || typeof timestamp === "string") {
+                date = new Date(timestamp);
+            }
+            if (!date || isNaN(date.getTime())) return "Heute";
+
+            return date.toLocaleDateString("de-DE", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric"
+            });
+        }
 
         // ── FEHLERBEHANDLUNG ──
         function showError(msg) {
@@ -821,7 +981,7 @@
                 currentUser = user;
                 authContainer.classList.add("hidden");
                 gameContainer.style.display = "block";
-                navUserEmail.textContent = user.email || "Angemeldet";
+                updateNavUserDisplay();
                 
                 initThreeWorld();
                 subscribeToNotes();
@@ -883,50 +1043,681 @@
             }
         });
 
+        // ── EINSTELLUNGEN MODAL (SPIELERNAME) ──
+        btnSettings.addEventListener("click", () => {
+            if (controls && controls.isLocked) controls.unlock();
+            settingsNickname.value = getStoredNickname();
+            isModalOpen = true;
+            settingsModal.classList.add("visible");
+            setTimeout(() => settingsNickname.focus(), 60);
+        });
+
+        function closeSettingsModal() {
+            isModalOpen = false;
+            settingsModal.classList.remove("visible");
+            if (controls && !controls.isLocked) {
+                clickOverlay.classList.remove("hidden");
+            }
+        }
+
+        btnCancelSettings.addEventListener("click", () => {
+            closeSettingsModal();
+            try {
+                if (controls && !controls.isLocked) controls.lock();
+            } catch (err) {}
+        });
+
+        btnSaveSettings.addEventListener("click", () => {
+            const val = settingsNickname.value.trim();
+            if (!val) {
+                alert("Bitte gib einen Namen ein (1-20 Zeichen).");
+                return;
+            }
+            const cleanNick = val.slice(0, 20);
+            localStorage.setItem("mansion_nickname", cleanNick);
+            updateNavUserDisplay();
+
+            if (myPlayerRef) {
+                rtdbUpdate(myPlayerRef, { nickname: cleanNick }).catch(err => console.error("RTDB Nick-Update Fehler:", err));
+            }
+
+            closeSettingsModal();
+            try {
+                if (controls && !controls.isLocked) controls.lock();
+            } catch (err) {}
+        });
+
+        settingsNickname.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                btnSaveSettings.click();
+            }
+        });
+
+        // ── NOTIZ DETAIL & LÖSCHEN MODAL ──
+        function openViewNoteModal(noteId, data) {
+            if (!data) return;
+            isModalOpen = true;
+            moveState.forward = moveState.backward = moveState.left = moveState.right = false;
+            if (controls && controls.isLocked) controls.unlock();
+
+            const author = data.author || "Anonym";
+            const dateStr = formatNoteDate(data.createdAt);
+            
+            viewNoteMeta.innerHTML = `Gepostet von <strong>${escapeHtml(author)}</strong> am <strong>${escapeHtml(dateStr)}</strong>`;
+            viewNoteBody.textContent = data.text || "";
+            
+            btnDeleteNote.dataset.noteId = noteId;
+            btnDeleteNote.disabled = false;
+            btnDeleteNote.innerHTML = "<span>🗑️ Notiz entfernen</span>";
+
+            viewNoteModal.classList.add("visible");
+            interactPrompt.classList.remove("visible");
+        }
+
+        function closeViewNoteModal() {
+            isModalOpen = false;
+            viewNoteModal.classList.remove("visible");
+            btnDeleteNote.dataset.noteId = "";
+            if (controls && !controls.isLocked) {
+                clickOverlay.classList.remove("hidden");
+            }
+        }
+
+        btnCloseViewNote.addEventListener("click", () => {
+            closeViewNoteModal();
+            try {
+                if (controls && !controls.isLocked) controls.lock();
+            } catch (err) {}
+        });
+
+        btnDeleteNote.addEventListener("click", async () => {
+            const noteId = btnDeleteNote.dataset.noteId;
+            if (!noteId) return;
+
+            if (!confirm("Möchtest du diese Notiz wirklich von der Wand entfernen?")) {
+                return;
+            }
+
+            btnDeleteNote.disabled = true;
+            btnDeleteNote.innerHTML = "<span>Wird gelöscht...</span>";
+
+            try {
+                await deleteDoc(firestoreDoc(db, "notes", noteId));
+                closeViewNoteModal();
+                try {
+                    if (controls && !controls.isLocked) controls.lock();
+                } catch (err) {}
+            } catch (err) {
+                console.error("Fehler beim Löschen der Notiz:", err);
+                alert("Fehler beim Löschen der Notiz: " + (err.message || "Unbekannter Fehler"));
+                btnDeleteNote.disabled = false;
+                btnDeleteNote.innerHTML = "<span>🗑️ Notiz entfernen</span>";
+            }
+        });
+
+        // ── SITZ-SYSTEM ──
+        function registerSeat(mesh, name, sitPos, lookDir) {
+            const seatObj = { mesh, name, sitPos, lookDir };
+            mesh.userData.isSeat = true;
+            mesh.userData.seat = seatObj;
+            seats.push(seatObj);
+            seatMeshes.push(mesh);
+        }
+
+        function sitDown(seat) {
+            if (!seat) return;
+            isSitting = true;
+            currentSeat = seat;
+            velocityY = 0;
+            isOnGround = true;
+
+            camera.position.copy(seat.sitPos);
+            interactPrompt.textContent = "Taste [E], [LEERTASTE] oder [W,A,S,D]: Aufstehen";
+            interactPrompt.classList.add("visible");
+        }
+
+        function standUp() {
+            if (!isSitting) return;
+            isSitting = false;
+            velocityY = 0;
+            isOnGround = true;
+
+            if (currentSeat && currentSeat.lookDir) {
+                camera.position.add(currentSeat.lookDir.clone().multiplyScalar(0.7));
+            }
+            camera.position.y = EYE_HEIGHT;
+            currentSeat = null;
+            interactPrompt.classList.remove("visible");
+        }
+
         // ── 3D THREE.JS UMGEBUNG ──
         let scene, camera, renderer, controls;
         let wallMeshes = [];
         let raycaster;
         const centerCoords = new THREE.Vector2(0, 0);
         let animationFrameId = null;
+        let artSculpture = null; // Animiertes Kunstwerk in der Galerie
 
-        // Bewegung & Kollision
+        // Bewegung & Physik
         const moveState = { forward: false, backward: false, left: false, right: false };
         const moveSpeed = 6.5; // Einheiten pro Sekunde
         const clock = new THREE.Clock();
 
-        // Raumdimensionen: 20 x 20 x 5 Einheiten
-        const ROOM_SIZE = 20;
-        const ROOM_HEIGHT = 5;
-        const HALF_ROOM = ROOM_SIZE / 2;
-        const PLAYER_MARGIN = 0.8; // Abstand zu den Wänden
-        const EYE_HEIGHT = 1.7;
+        // Dimensionen: Hof 4x so groß wie der alte 20x20 Raum
+        const COURTYARD_RADIUS = 24.0;
+        const WALL_HEIGHT = 5.0;
+        const EYE_HEIGHT = 1.70;
 
+        // Die 4 runden Satellitenräume mit Türöffnung zum Spawnpunkt (0, 0, 0)
+        const SATELLITE_ROOMS = [
+            { name: "Arbeitsraum", cx: 0, cz: -16.5, radius: 5.5, doorAngle: Math.PI / 2 },
+            { name: "Entspannung", cx: 0, cz: 16.5, radius: 5.5, doorAngle: -Math.PI / 2 },
+            { name: "Galerie", cx: 16.5, cz: 0, radius: 5.5, doorAngle: Math.PI },
+            { name: "Café & Bar", cx: -16.5, cz: 0, radius: 5.5, doorAngle: 0 }
+        ];
+
+        // ── GEOMETRIE-BAUSTEINE FÜR RÄUME & MÖBEL ──
+        function createCircularRoomWall(room) {
+            const doorGap = 0.68; // ca. 3.7 Meter breite Türöffnung
+            const wallArc = Math.PI * 2 - doorGap;
+            const thetaStart = room.doorAngle + doorGap / 2;
+
+            const wallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, thetaStart, wallArc);
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+            const wallMesh = new THREE.Mesh(wallGeo, wallMat);
+            wallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+            wallMesh.userData = {
+                isRoomWall: true,
+                roomCenter: new THREE.Vector2(room.cx, room.cz),
+                radius: room.radius
+            };
+            scene.add(wallMesh);
+            wallMeshes.push(wallMesh);
+
+            // Architektonische Kanten/Umrandungen oben und unten
+            const ringGeoTop = new THREE.RingGeometry(room.radius - 0.04, room.radius + 0.04, 48, 1, thetaStart, wallArc);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x222222, side: THREE.DoubleSide });
+            const ringTop = new THREE.Mesh(ringGeoTop, ringMat);
+            ringTop.rotation.x = Math.PI / 2;
+            ringTop.position.set(room.cx, WALL_HEIGHT, room.cz);
+            scene.add(ringTop);
+
+            // Türrahmen-Pfeiler an beiden Seiten der Türöffnung
+            const pillarGeo = new THREE.CylinderGeometry(0.08, 0.08, WALL_HEIGHT, 16);
+            const pillarMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+
+            const p1Angle = room.doorAngle - doorGap / 2;
+            const p1 = new THREE.Mesh(pillarGeo, pillarMat);
+            p1.position.set(room.cx + Math.cos(p1Angle) * room.radius, WALL_HEIGHT / 2, room.cz + Math.sin(p1Angle) * room.radius);
+            scene.add(p1);
+
+            const p2Angle = room.doorAngle + doorGap / 2;
+            const p2 = new THREE.Mesh(pillarGeo, pillarMat);
+            p2.position.set(room.cx + Math.cos(p2Angle) * room.radius, WALL_HEIGHT / 2, room.cz + Math.sin(p2Angle) * room.radius);
+            scene.add(p2);
+
+            // Sturzbalken über der Tür
+            const lintelGeo = new THREE.BoxGeometry(0.18, 0.35, 3.8);
+            const lintelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+            const lintel = new THREE.Mesh(lintelGeo, lintelMat);
+            lintel.position.set(room.cx + Math.cos(room.doorAngle) * (room.radius - 0.05), WALL_HEIGHT - 0.4, room.cz + Math.sin(room.doorAngle) * (room.radius - 0.05));
+            lintel.rotation.y = -room.doorAngle + Math.PI / 2;
+            scene.add(lintel);
+
+            // Decke des Raumes
+            const ceilingGeo = new THREE.CircleGeometry(room.radius, 48);
+            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x18181b, side: THREE.DoubleSide });
+            const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.set(room.cx, WALL_HEIGHT, room.cz);
+            scene.add(ceiling);
+        }
+
+        // 1. ARBEITSRAUM
+        function buildArbeitsraum() {
+            const rx = 0, rz = -16.5;
+
+            // Boden: Dunkles Anthrazit
+            const floorGeo = new THREE.CircleGeometry(5.42, 48);
+            const floorMat = new THREE.MeshBasicMaterial({ color: 0x141416 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(rx, 0.015, rz);
+            scene.add(floor);
+
+            // Raumlicht
+            const roomLight = new THREE.PointLight(0xffffff, 0.8, 16);
+            roomLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
+            scene.add(roomLight);
+
+            // Großes Bücherregal an der Rückwand
+            const shelfGroup = new THREE.Group();
+            const shelfFrameMat = new THREE.MeshLambertMaterial({ color: 0x1c1917 });
+            const shelfBoardMat = new THREE.MeshLambertMaterial({ color: 0xf4f4f5 });
+
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(4.2, 3.2, 0.08), shelfFrameMat);
+            backWall.position.set(0, 1.6, 0);
+            shelfGroup.add(backWall);
+
+            const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.2, 0.55), shelfFrameMat);
+            sideL.position.set(-2.05, 1.6, 0.24);
+            shelfGroup.add(sideL);
+
+            const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.2, 0.55), shelfFrameMat);
+            sideR.position.set(2.05, 1.6, 0.24);
+            shelfGroup.add(sideR);
+
+            const shelfHeights = [0.1, 0.85, 1.6, 2.35, 3.1];
+            shelfHeights.forEach((h) => {
+                const board = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.06, 0.55), shelfBoardMat);
+                board.position.set(0, h, 0.24);
+                shelfGroup.add(board);
+            });
+
+            // Bücher
+            const bookColors = [0xb91c1c, 0x1d4ed8, 0x047857, 0xb45309, 0x475569, 0xf59e0b, 0x4338ca, 0x0f172a];
+            const rowY = [0.45, 1.20, 1.95, 2.70];
+            rowY.forEach((by) => {
+                let bx = -1.85;
+                while (bx < 1.8) {
+                    const bWidth = 0.06 + Math.random() * 0.05;
+                    const bHeight = 0.45 + Math.random() * 0.18;
+                    const bColor = bookColors[Math.floor(Math.random() * bookColors.length)];
+                    const book = new THREE.Mesh(
+                        new THREE.BoxGeometry(bWidth, bHeight, 0.38),
+                        new THREE.MeshLambertMaterial({ color: bColor })
+                    );
+                    book.position.set(bx + bWidth / 2, by, 0.22);
+                    shelfGroup.add(book);
+                    bx += bWidth + 0.015 + (Math.random() > 0.85 ? 0.08 : 0);
+                }
+            });
+
+            shelfGroup.position.set(rx, 0, rz - 4.6);
+            scene.add(shelfGroup);
+
+            // 4 identische Schreibtische mit Computern & Stühlen
+            const deskConfigs = [
+                { x: rx - 2.2, z: rz + 1.8, faceAngle: Math.PI },
+                { x: rx + 2.2, z: rz + 1.8, faceAngle: Math.PI },
+                { x: rx - 2.2, z: rz - 1.8, faceAngle: 0 },
+                { x: rx + 2.2, z: rz - 1.8, faceAngle: 0 }
+            ];
+
+            deskConfigs.forEach((cfg, idx) => {
+                buildDeskUnit(cfg.x, cfg.z, cfg.faceAngle, idx + 1);
+            });
+        }
+
+        function buildDeskUnit(x, z, faceAngle, num) {
+            const group = new THREE.Group();
+
+            // Schreibtischplatte: 1.6 x 0.06 x 0.85 bei y = 0.74
+            const topMat = new THREE.MeshLambertMaterial({ color: 0x262626 });
+            const top = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.06, 0.85), topMat);
+            top.position.y = 0.74;
+            group.add(top);
+
+            // Metallbeine
+            const legMat = new THREE.MeshLambertMaterial({ color: 0x52525b });
+            const legGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.74, 12);
+            [[-0.72, -0.36], [0.72, -0.36], [-0.72, 0.36], [0.72, 0.36]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(legGeo, legMat);
+                leg.position.set(lx, 0.37, lz);
+                group.add(leg);
+            });
+
+            // Monitor & PC
+            const monitorStand = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.015, 0.16), legMat);
+            monitorStand.position.set(0, 0.775, -0.15);
+            group.add(monitorStand);
+
+            const monitorPole = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.28), legMat);
+            monitorPole.position.set(0, 0.90, -0.15);
+            group.add(monitorPole);
+
+            const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.44, 0.03), new THREE.MeshBasicMaterial({ color: 0x0a0a0a }));
+            screenFrame.position.set(0, 1.08, -0.15);
+            group.add(screenFrame);
+
+            const display = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.68, 0.40),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+            );
+            display.position.set(0, 1.08, -0.134);
+            group.add(display);
+
+            // Tastatur & Maus
+            const kb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.015, 0.14), new THREE.MeshLambertMaterial({ color: 0x18181b }));
+            kb.position.set(0, 0.775, 0.14);
+            group.add(kb);
+
+            const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.10), new THREE.MeshLambertMaterial({ color: 0x27272a }));
+            mouse.position.set(0.30, 0.775, 0.14);
+            group.add(mouse);
+
+            const pc = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.44, 0.44), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            pc.position.set(0.60, 0.22, 0);
+            group.add(pc);
+
+            // Bürostuhl
+            const chairGroup = new THREE.Group();
+            const baseMat = new THREE.MeshLambertMaterial({ color: 0x3f3f46 });
+            const starBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 5), baseMat);
+            starBase.position.y = 0.06;
+            chairGroup.add(starBase);
+
+            const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.38, 12), baseMat);
+            piston.position.y = 0.25;
+            chairGroup.add(piston);
+
+            const seatGeo = new THREE.BoxGeometry(0.48, 0.08, 0.46);
+            const seatMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const seatMesh = new THREE.Mesh(seatGeo, seatMat);
+            seatMesh.position.y = 0.48;
+            chairGroup.add(seatMesh);
+
+            const backGeo = new THREE.BoxGeometry(0.46, 0.48, 0.06);
+            const backMesh = new THREE.Mesh(backGeo, seatMat);
+            backMesh.position.set(0, 0.74, 0.22);
+            chairGroup.add(backMesh);
+
+            const armGeo = new THREE.BoxGeometry(0.06, 0.20, 0.30);
+            const armL = new THREE.Mesh(armGeo, baseMat);
+            armL.position.set(-0.24, 0.58, 0.05);
+            chairGroup.add(armL);
+            const armR = new THREE.Mesh(armGeo, baseMat);
+            armR.position.set(0.24, 0.58, 0.05);
+            chairGroup.add(armR);
+
+            chairGroup.position.set(0, 0, 0.58);
+            group.add(chairGroup);
+
+            group.rotation.y = faceAngle;
+            group.position.set(x, 0, z);
+            scene.add(group);
+
+            // Sitzplatz registrieren
+            const chairWorldPos = new THREE.Vector3(0, 1.15, 0.58).applyAxisAngle(new THREE.Vector3(0, 1, 0), faceAngle).add(new THREE.Vector3(x, 0, z));
+            const lookDir = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), faceAngle).normalize();
+            registerSeat(seatMesh, `Schreibtisch ${num}`, chairWorldPos, lookDir);
+        }
+
+        // 2. ENTSPANNUNGSRAUM
+        function buildEntspannungsraum() {
+            const rx = 0, rz = 16.5;
+
+            const floorGeo = new THREE.CircleGeometry(5.42, 48);
+            const floorMat = new THREE.MeshBasicMaterial({ color: 0x1c1917 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(rx, 0.015, rz);
+            scene.add(floor);
+
+            const warmLight = new THREE.PointLight(0xfef08a, 0.95, 18);
+            warmLight.position.set(rx, WALL_HEIGHT - 0.7, rz);
+            scene.add(warmLight);
+
+            // Runder roter Teppich in der Mitte
+            const rugGeo = new THREE.CircleGeometry(3.4, 48);
+            const rugMat = new THREE.MeshLambertMaterial({ color: 0x991b1b, side: THREE.DoubleSide });
+            const rug = new THREE.Mesh(rugGeo, rugMat);
+            rug.rotation.x = -Math.PI / 2;
+            rug.position.set(rx, 0.022, rz);
+            scene.add(rug);
+
+            const rugBorderGeo = new THREE.RingGeometry(3.32, 3.4, 48);
+            const rugBorderMat = new THREE.MeshBasicMaterial({ color: 0x7f1d1d, side: THREE.DoubleSide });
+            const rugBorder = new THREE.Mesh(rugBorderGeo, rugBorderMat);
+            rugBorder.rotation.x = -Math.PI / 2;
+            rugBorder.position.set(rx, 0.024, rz);
+            scene.add(rugBorder);
+
+            // Gelber Tisch auf dem Teppich
+            const tableGroup = new THREE.Group();
+            const yellowMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
+            const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.06, 32), yellowMat);
+            tableTop.position.y = 0.46;
+            tableGroup.add(tableTop);
+
+            const tableLegMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const tableLegGeo = new THREE.CylinderGeometry(0.025, 0.02, 0.46, 12);
+            [[-0.65, -0.65], [0.65, -0.65], [-0.65, 0.65], [0.65, 0.65]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(tableLegGeo, tableLegMat);
+                leg.position.set(lx, 0.23, lz);
+                tableGroup.add(leg);
+            });
+
+            const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.10, 16), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+            cup.position.set(0.25, 0.54, 0.15);
+            tableGroup.add(cup);
+
+            const mag = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.015, 0.24), new THREE.MeshLambertMaterial({ color: 0x3b82f6 }));
+            mag.position.set(-0.20, 0.495, -0.10);
+            mag.rotation.y = 0.35;
+            tableGroup.add(mag);
+
+            tableGroup.position.set(rx, 0, rz + 0.4);
+            scene.add(tableGroup);
+
+            // Dunkelblaue Polstercouch für 4 Personen
+            const couchGroup = new THREE.Group();
+            const blueMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
+            const cushionMat = new THREE.MeshLambertMaterial({ color: 0x1d4ed8 });
+
+            const couchBase = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.22, 1.1), blueMat);
+            couchBase.position.y = 0.11;
+            couchGroup.add(couchBase);
+
+            const couchBack = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.70, 0.25), blueMat);
+            couchBack.position.set(0, 0.55, 0.42);
+            couchGroup.add(couchBack);
+
+            const armGeo = new THREE.BoxGeometry(0.24, 0.45, 1.1);
+            const armL = new THREE.Mesh(armGeo, blueMat);
+            armL.position.set(-2.15, 0.42, 0);
+            couchGroup.add(armL);
+
+            const armR = new THREE.Mesh(armGeo, blueMat);
+            armR.position.set(2.15, 0.42, 0);
+            couchGroup.add(armR);
+
+            const cushionWidth = 0.95;
+            const cushionX = [-1.42, -0.47, 0.47, 1.42];
+
+            cushionX.forEach((cx, idx) => {
+                const cushionGeo = new THREE.BoxGeometry(cushionWidth, 0.18, 0.78);
+                const cushionMesh = new THREE.Mesh(cushionGeo, cushionMat);
+                cushionMesh.position.set(cx, 0.31, -0.08);
+                couchGroup.add(cushionMesh);
+
+                const seatWorldPos = new THREE.Vector3(rx + cx, 1.10, rz + 3.4 - 0.08);
+                const lookDir = new THREE.Vector3(0, 0, -1);
+                registerSeat(cushionMesh, `Blaue Couch (Platz ${idx + 1})`, seatWorldPos, lookDir);
+            });
+
+            couchGroup.position.set(rx, 0, rz + 3.4);
+            scene.add(couchGroup);
+
+            // Stehlampe
+            const lampGroup = new THREE.Group();
+            const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.1, 12), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            lampPole.position.y = 1.05;
+            lampGroup.add(lampPole);
+
+            const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.45, 24, 1, true), new THREE.MeshLambertMaterial({ color: 0xfef08a, side: THREE.DoubleSide }));
+            lampShade.position.y = 2.05;
+            lampGroup.add(lampShade);
+
+            lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
+            scene.add(lampGroup);
+        }
+
+        // 3. GALERIE
+        function buildGalerie() {
+            const rx = 16.5, rz = 0;
+
+            const floorGeo = new THREE.CircleGeometry(5.42, 48);
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0xf4f4f5 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(rx, 0.015, rz);
+            scene.add(floor);
+
+            const galleryLight = new THREE.PointLight(0xffffff, 0.9, 18);
+            galleryLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
+            scene.add(galleryLight);
+
+            // Podest
+            const pedestal = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 0.9, 1.2),
+                new THREE.MeshLambertMaterial({ color: 0xffffff })
+            );
+            pedestal.position.set(rx, 0.45, rz);
+            scene.add(pedestal);
+
+            // Kunstwerk
+            const sculptureGeo = new THREE.TorusKnotGeometry(0.55, 0.18, 64, 16);
+            const sculptureMat = new THREE.MeshStandardMaterial({
+                color: 0x06b6d4,
+                emissive: 0x0284c7,
+                emissiveIntensity: 0.5,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            artSculpture = new THREE.Mesh(sculptureGeo, sculptureMat);
+            artSculpture.position.set(rx, 1.75, rz);
+            scene.add(artSculpture);
+
+            // Sitzbank
+            const benchGroup = new THREE.Group();
+            const benchSeat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 0.65), new THREE.MeshLambertMaterial({ color: 0x27272a }));
+            benchSeat.position.y = 0.48;
+            benchGroup.add(benchSeat);
+
+            const bLegMat = new THREE.MeshLambertMaterial({ color: 0x52525b });
+            [-0.95, 0.95].forEach((bx) => {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.48), bLegMat);
+                leg.position.set(bx, 0.24, 0);
+                benchGroup.add(leg);
+            });
+
+            benchGroup.position.set(rx + 3.2, 0, rz);
+            benchGroup.rotation.y = -Math.PI / 2;
+            scene.add(benchGroup);
+
+            registerSeat(benchSeat, "Galerie-Sitzbank", new THREE.Vector3(rx + 3.0, 1.15, rz), new THREE.Vector3(-1, 0, 0));
+        }
+
+        // 4. CAFÉ & BAR
+        function buildCafeRaum() {
+            const rx = -16.5, rz = 0;
+
+            const floorGeo = new THREE.CircleGeometry(5.42, 48);
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0x1c1917 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(rx, 0.015, rz);
+            scene.add(floor);
+
+            const cafeLight = new THREE.PointLight(0xfef3c7, 0.9, 18);
+            cafeLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
+            scene.add(cafeLight);
+
+            // Tresen
+            const counterGroup = new THREE.Group();
+            const counterMat = new THREE.MeshLambertMaterial({ color: 0x292524 });
+            const counterTopMat = new THREE.MeshLambertMaterial({ color: 0xd6d3d1 });
+
+            const counterBody = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.05, 0.8), counterMat);
+            counterBody.position.y = 0.525;
+            counterGroup.add(counterBody);
+
+            const counterTop = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.06, 0.9), counterTopMat);
+            counterTop.position.y = 1.08;
+            counterGroup.add(counterTop);
+
+            const coffeeMachine = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.50, 0.45), new THREE.MeshLambertMaterial({ color: 0x71717a }));
+            coffeeMachine.position.set(-0.8, 1.34, 0);
+            counterGroup.add(coffeeMachine);
+
+            [-0.1, 0.15, 0.4].forEach((cx) => {
+                const c = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.08, 12), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+                c.position.set(cx, 1.15, 0.1);
+                counterGroup.add(c);
+            });
+
+            counterGroup.position.set(rx - 3.0, 0, rz);
+            counterGroup.rotation.y = Math.PI / 2;
+            scene.add(counterGroup);
+
+            // Bistrotische mit Hockern
+            const bistroConfigs = [
+                { z: -2.0, num: 1 },
+                { z: 2.0, num: 2 }
+            ];
+
+            bistroConfigs.forEach((cfg) => {
+                const tableGroup = new THREE.Group();
+                const bTop = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.04, 24), counterTopMat);
+                bTop.position.y = 0.95;
+                tableGroup.add(bTop);
+
+                const bPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.95), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+                bPole.position.y = 0.475;
+                tableGroup.add(bPole);
+
+                const bBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.02, 24), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+                bBase.position.y = 0.01;
+                tableGroup.add(bBase);
+
+                tableGroup.position.set(rx + 0.8, 0, rz + cfg.z);
+                scene.add(tableGroup);
+
+                [-0.65, 0.65].forEach((hx) => {
+                    const stoolGroup = new THREE.Group();
+                    const stoolSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.06, 16), new THREE.MeshLambertMaterial({ color: 0x991b1b }));
+                    stoolSeat.position.y = 0.68;
+                    stoolGroup.add(stoolSeat);
+
+                    const sPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.68), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+                    sPole.position.y = 0.34;
+                    stoolGroup.add(sPole);
+
+                    const sBase = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.02, 16), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+                    sBase.position.y = 0.01;
+                    stoolGroup.add(sBase);
+
+                    stoolGroup.position.set(rx + 0.8 + hx, 0, rz + cfg.z);
+                    scene.add(stoolGroup);
+
+                    const seatLook = new THREE.Vector3(hx > 0 ? -1 : 1, 0, 0);
+                    registerSeat(stoolSeat, `Barhocker Tisch ${cfg.num}`, new THREE.Vector3(rx + 0.8 + hx, 1.25, rz + cfg.z), seatLook);
+                });
+            });
+        }
+
+        // ── 3D INIT ──
         function initThreeWorld() {
             if (scene) {
-                // Bereits initialisiert, Größe anpassen und Loop starten falls pausiert
                 onWindowResize();
                 if (!animationFrameId) animate();
                 return;
             }
 
-            // Scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x000000);
 
-            // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, EYE_HEIGHT, 0);
+            camera.position.set(0, EYE_HEIGHT, 0); // Spawn exakt im Zentrum des Hofs
 
-            // Renderer
             renderer = new THREE.WebGLRenderer({ canvas: gameCanvas, antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-            // Controls (PointerLockControls)
             controls = new PointerLockControls(camera, document.body);
 
-            // Klick-Overlay & Viewport Steuerung
             clickOverlay.addEventListener("click", () => {
                 if (!isModalOpen && controls && !controls.isLocked) {
                     controls.lock();
@@ -955,86 +1746,79 @@
                 }
             });
 
-            // Beleuchtung (Minimalistisches klares Licht)
+            // Licht
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
             scene.add(ambientLight);
 
-            const centerLight = new THREE.PointLight(0xffffff, 0.5, 30);
-            centerLight.position.set(0, ROOM_HEIGHT - 0.5, 0);
-            scene.add(centerLight);
+            const courtyardLight = new THREE.PointLight(0xffffff, 0.8, 35);
+            courtyardLight.position.set(0, WALL_HEIGHT - 0.5, 0);
+            scene.add(courtyardLight);
 
-            // 1. BODEN: Schwarzer Hintergrund mit weißem Mesh (Grid)
-            const floorGeo = new THREE.PlaneGeometry(ROOM_SIZE, ROOM_SIZE);
-            const floorMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-            floorMesh.rotation.x = -Math.PI / 2;
-            floorMesh.position.y = 0;
-            scene.add(floorMesh);
+            // 1. Runder Hof-Boden (Radius 24)
+            const courtyardFloorGeo = new THREE.CircleGeometry(COURTYARD_RADIUS + 0.2, 64);
+            const courtyardFloorMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
+            const courtyardFloor = new THREE.Mesh(courtyardFloorGeo, courtyardFloorMat);
+            courtyardFloor.rotation.x = -Math.PI / 2;
+            courtyardFloor.position.y = 0;
+            scene.add(courtyardFloor);
 
-            const floorGrid = new THREE.GridHelper(ROOM_SIZE, ROOM_SIZE, 0xffffff, 0x444444);
-            floorGrid.position.y = 0.01;
-            scene.add(floorGrid);
-
-            // 2. DECKE: Dunkelgrau
-            const ceilingGeo = new THREE.PlaneGeometry(ROOM_SIZE, ROOM_SIZE);
-            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x1c1c1e, side: THREE.DoubleSide });
-            const ceilingMesh = new THREE.Mesh(ceilingGeo, ceilingMat);
-            ceilingMesh.rotation.x = Math.PI / 2;
-            ceilingMesh.position.y = ROOM_HEIGHT;
-            scene.add(ceilingMesh);
-
-            // 3. 4 WEISSE WÄNDE
-            const wallMat = new THREE.MeshLambertMaterial({ 
-                color: 0xffffff, 
-                side: THREE.FrontSide 
+            [6, 12, 18, 24].forEach((r) => {
+                const ring = new THREE.Mesh(
+                    new THREE.RingGeometry(r - 0.03, r + 0.03, 64),
+                    new THREE.MeshBasicMaterial({ color: 0x27272a, side: THREE.DoubleSide })
+                );
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.y = 0.005;
+                scene.add(ring);
             });
 
-            wallMeshes = [];
+            // Zentrales Spawnpad (0, 0, 0)
+            const spawnRing = new THREE.Mesh(
+                new THREE.RingGeometry(1.8, 1.95, 32),
+                new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+            );
+            spawnRing.rotation.x = -Math.PI / 2;
+            spawnRing.position.y = 0.012;
+            scene.add(spawnRing);
 
-            // Nordwand (Z = -10, Blick in den Raum: +Z)
-            const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_HEIGHT), wallMat);
-            northWall.position.set(0, ROOM_HEIGHT / 2, -HALF_ROOM);
-            northWall.rotation.set(0, 0, 0);
-            northWall.userData = { normal: new THREE.Vector3(0, 0, 1) };
-            scene.add(northWall);
-            wallMeshes.push(northWall);
+            const spawnInner = new THREE.Mesh(
+                new THREE.CircleGeometry(1.8, 32),
+                new THREE.MeshBasicMaterial({ color: 0x18181b, side: THREE.DoubleSide })
+            );
+            spawnInner.rotation.x = -Math.PI / 2;
+            spawnInner.position.y = 0.010;
+            scene.add(spawnInner);
 
-            // Südwand (Z = +10, Blick in den Raum: -Z)
-            const southWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_HEIGHT), wallMat);
-            southWall.position.set(0, ROOM_HEIGHT / 2, HALF_ROOM);
-            southWall.rotation.set(0, Math.PI, 0);
-            southWall.userData = { normal: new THREE.Vector3(0, 0, -1) };
-            scene.add(southWall);
-            wallMeshes.push(southWall);
+            // 2. Runde weiße Hof-Außenwand (Radius 24)
+            const outerWallGeo = new THREE.CylinderGeometry(COURTYARD_RADIUS, COURTYARD_RADIUS, WALL_HEIGHT, 64, 1, true);
+            const outerWallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.BackSide });
+            const outerWall = new THREE.Mesh(outerWallGeo, outerWallMat);
+            outerWall.position.set(0, WALL_HEIGHT / 2, 0);
+            outerWall.userData = { isOuterWall: true };
+            scene.add(outerWall);
+            wallMeshes.push(outerWall);
 
-            // Westwand (X = -10, Blick in den Raum: +X)
-            const westWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_HEIGHT), wallMat);
-            westWall.position.set(-HALF_ROOM, ROOM_HEIGHT / 2, 0);
-            westWall.rotation.set(0, Math.PI / 2, 0);
-            westWall.userData = { normal: new THREE.Vector3(1, 0, 0) };
-            scene.add(westWall);
-            wallMeshes.push(westWall);
+            // Hof-Decke
+            const courtyardCeilingGeo = new THREE.CircleGeometry(COURTYARD_RADIUS + 0.2, 64);
+            const courtyardCeilingMat = new THREE.MeshLambertMaterial({ color: 0x111111, side: THREE.DoubleSide });
+            const courtyardCeiling = new THREE.Mesh(courtyardCeilingGeo, courtyardCeilingMat);
+            courtyardCeiling.rotation.x = Math.PI / 2;
+            courtyardCeiling.position.y = WALL_HEIGHT;
+            scene.add(courtyardCeiling);
 
-            // Ostwand (X = +10, Blick in den Raum: -X)
-            const eastWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_HEIGHT), wallMat);
-            eastWall.position.set(HALF_ROOM, ROOM_HEIGHT / 2, 0);
-            eastWall.rotation.set(0, -Math.PI / 2, 0);
-            eastWall.userData = { normal: new THREE.Vector3(-1, 0, 0) };
-            scene.add(eastWall);
-            wallMeshes.push(eastWall);
-
-            // Schwarze architektonische Konturlinien für alle 4 Wände
-            wallMeshes.forEach(wall => {
-                const edges = new THREE.EdgesGeometry(wall.geometry);
-                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }));
-                wall.add(line);
+            // 3. Die 4 Satellitenräume
+            SATELLITE_ROOMS.forEach((room) => {
+                createCircularRoomWall(room);
             });
 
-            // Raycaster für Wand-Erkennung
+            buildArbeitsraum();
+            buildEntspannungsraum();
+            buildGalerie();
+            buildCafeRaum();
+
             raycaster = new THREE.Raycaster();
-            raycaster.far = 4.2;
+            raycaster.far = 4.5;
 
-            // Event Listeners
             window.addEventListener("resize", onWindowResize);
             document.addEventListener("keydown", onKeyDown);
             document.addEventListener("keyup", onKeyUp);
@@ -1053,8 +1837,23 @@
         // Tastatursteuerung
         function onKeyDown(e) {
             if (isModalOpen) {
-                if (e.key === "Escape") closeModal();
+                if (e.key === "Escape") {
+                    closeModal();
+                    closeViewNoteModal();
+                    closeSettingsModal();
+                }
                 return;
+            }
+
+            // Aufstehen bei Bewegung / Interaktion
+            if (isSitting) {
+                if (e.code === "KeyE" || e.code === "Space" || 
+                    e.code === "KeyW" || e.code === "KeyS" || 
+                    e.code === "KeyA" || e.code === "KeyD" ||
+                    e.code.startsWith("Arrow")) {
+                    standUp();
+                    return;
+                }
             }
 
             switch (e.code) {
@@ -1074,8 +1873,19 @@
                 case "ArrowRight":
                     moveState.right = true;
                     break;
+                case "Space":
+                    if (isOnGround) {
+                        velocityY = JUMP_STRENGTH;
+                        isOnGround = false;
+                    }
+                    break;
                 case "KeyE":
-                    if (currentWallHit) {
+                    if (!currentInteractTarget) return;
+                    if (currentInteractTarget.type === 'note') {
+                        openViewNoteModal(currentInteractTarget.noteId, currentInteractTarget.data);
+                    } else if (currentInteractTarget.type === 'seat') {
+                        sitDown(currentInteractTarget.seat);
+                    } else if (currentInteractTarget.type === 'wall') {
                         openNoteModal();
                     }
                     break;
@@ -1107,40 +1917,118 @@
         function animate() {
             animationFrameId = requestAnimationFrame(animate);
 
-            // Delta-Zeit deckeln (verhindert Ruckeln/Sprünge bei Inaktivität)
             const delta = Math.min(clock.getDelta(), 0.1);
 
+            // Galerie-Skulptur animieren
+            if (artSculpture) {
+                artSculpture.rotation.x += delta * 0.45;
+                artSculpture.rotation.y += delta * 0.65;
+            }
+
             if (controls && controls.isLocked) {
-                // Spieler-Bewegung
-                const actualSpeed = moveSpeed * delta;
+                if (!isSitting) {
+                    // Springen & Physik
+                    if (!isOnGround || velocityY !== 0) {
+                        velocityY += GRAVITY * delta;
+                        camera.position.y += velocityY * delta;
 
-                if (moveState.forward) controls.moveForward(actualSpeed);
-                if (moveState.backward) controls.moveForward(-actualSpeed);
-                if (moveState.right) controls.moveRight(actualSpeed);
-                if (moveState.left) controls.moveRight(-actualSpeed);
+                        if (camera.position.y <= EYE_HEIGHT) {
+                            camera.position.y = EYE_HEIGHT;
+                            velocityY = 0;
+                            isOnGround = true;
+                        }
+                    }
 
-                // Kollisionserkennung: Spieler bleibt innerhalb der 4 Wände
-                const bound = HALF_ROOM - PLAYER_MARGIN;
-                camera.position.x = Math.max(-bound, Math.min(bound, camera.position.x));
-                camera.position.z = Math.max(-bound, Math.min(bound, camera.position.z));
-                camera.position.y = EYE_HEIGHT; // Konstante Augenhöhe
+                    // Horizontale Bewegung
+                    const actualSpeed = moveSpeed * delta;
+                    if (moveState.forward) controls.moveForward(actualSpeed);
+                    if (moveState.backward) controls.moveForward(-actualSpeed);
+                    if (moveState.right) controls.moveRight(actualSpeed);
+                    if (moveState.left) controls.moveRight(-actualSpeed);
 
-                // Raycasting: Wand vor dem Spieler prüfen
+                    // Kollisionsabfrage: Hof-Außengrenze (Radius 23.3)
+                    const distFromCenter = Math.sqrt(camera.position.x * camera.position.x + camera.position.z * camera.position.z);
+                    if (distFromCenter > 23.3) {
+                        const angle = Math.atan2(camera.position.z, camera.position.x);
+                        camera.position.x = Math.cos(angle) * 23.3;
+                        camera.position.z = Math.sin(angle) * 23.3;
+                    }
+
+                    // Kollisionsabfrage: 4 Räume (glatter Durchgang durch Türen)
+                    for (const room of SATELLITE_ROOMS) {
+                        const dx = camera.position.x - room.cx;
+                        const dz = camera.position.z - room.cz;
+                        const dist = Math.sqrt(dx * dx + dz * dz);
+
+                        if (dist >= 4.85 && dist <= 6.15) {
+                            const playerAngle = Math.atan2(dz, dx);
+                            let angleDiff = Math.abs(playerAngle - room.doorAngle);
+                            while (angleDiff > Math.PI) angleDiff = Math.abs(angleDiff - 2 * Math.PI);
+
+                            // Türöffnung: ca. 0.36 Radian Durchgangsbreite
+                            if (angleDiff > 0.36) {
+                                const pushDist = dist > room.radius ? 6.18 : 4.82;
+                                camera.position.x = room.cx + Math.cos(playerAngle) * pushDist;
+                                camera.position.z = room.cz + Math.sin(playerAngle) * pushDist;
+                            }
+                        }
+                    }
+                }
+
+                // Raycasting Interaktionsprüfung
                 raycaster.setFromCamera(centerCoords, camera);
-                const intersects = raycaster.intersectObjects(wallMeshes, false);
 
-                if (intersects.length > 0 && intersects[0].distance <= 3.8) {
-                    currentWallHit = intersects[0];
+                // 1. Notizen
+                const noteMeshes = Array.from(notesMeshMap.values());
+                const hitNotes = raycaster.intersectObjects(noteMeshes, false);
+
+                if (hitNotes.length > 0 && hitNotes[0].distance <= 3.6) {
+                    const hitObj = hitNotes[0].object;
+                    currentInteractTarget = {
+                        type: 'note',
+                        noteId: hitObj.userData.id,
+                        data: hitObj.userData.data
+                    };
+                    interactPrompt.textContent = "Taste [E] drücken: Notiz ansehen & löschen";
                     interactPrompt.classList.add("visible");
                 } else {
-                    currentWallHit = null;
-                    interactPrompt.classList.remove("visible");
+                    // 2. Sitze
+                    const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
+                    if (hitSeats.length > 0 && hitSeats[0].distance <= 2.8) {
+                        const hitObj = hitSeats[0].object;
+                        const seat = hitObj.userData.seat;
+                        currentInteractTarget = {
+                            type: 'seat',
+                            seat: seat
+                        };
+                        interactPrompt.textContent = `Taste [E] drücken: Hinsetzen (${seat.name || "Sitz"})`;
+                        interactPrompt.classList.add("visible");
+                    } else {
+                        // 3. Wände
+                        const hitWalls = raycaster.intersectObjects(wallMeshes, false);
+                        if (hitWalls.length > 0 && hitWalls[0].distance <= 4.2) {
+                            currentInteractTarget = {
+                                type: 'wall',
+                                hit: hitWalls[0]
+                            };
+                            interactPrompt.textContent = "Taste [E] drücken: Notiz anheften";
+                            interactPrompt.classList.add("visible");
+                        } else {
+                            currentInteractTarget = null;
+                            if (isSitting) {
+                                interactPrompt.textContent = "Taste [E], [LEERTASTE] oder [W,A,S,D]: Aufstehen";
+                                interactPrompt.classList.add("visible");
+                            } else {
+                                interactPrompt.classList.remove("visible");
+                            }
+                        }
+                    }
                 }
             } else {
                 interactPrompt.classList.remove("visible");
             }
 
-            // Andere Mitspieler weich bewegen (Lineare Interpolation / lerp)
+            // Remote Spieler interpolieren
             const lerpFactor = Math.min(1, delta * 14);
             remotePlayersMap.forEach((player) => {
                 player.mesh.position.lerp(player.targetPos, lerpFactor);
@@ -1156,23 +2044,34 @@
 
         // ── NOTIZ-MODAL LOGIK ──
         function openNoteModal() {
-            if (!currentWallHit || !currentWallHit.object) return;
+            if (!currentInteractTarget || currentInteractTarget.type !== 'wall') return;
+            const hit = currentInteractTarget.hit;
+            if (!hit || !hit.point) return;
 
-            const normal = currentWallHit.object.userData?.normal || currentWallHit.face?.normal || new THREE.Vector3(0, 0, 1);
+            let normal;
+            if (hit.object.userData && hit.object.userData.isRoomWall) {
+                const cx = hit.object.userData.roomCenter.x;
+                const cz = hit.object.userData.roomCenter.y;
+                const radial = new THREE.Vector3(hit.point.x - cx, 0, hit.point.z - cz).normalize();
+                const toPlayer = camera.position.clone().sub(hit.point).normalize();
+                normal = radial.dot(toPlayer) >= 0 ? radial : radial.negate();
+            } else if (hit.object.userData && hit.object.userData.isOuterWall) {
+                normal = new THREE.Vector3(-hit.point.x, 0, -hit.point.z).normalize();
+            } else if (hit.face && hit.face.normal) {
+                normal = hit.face.normal.clone().applyQuaternion(hit.object.quaternion).normalize();
+                const toPlayer = camera.position.clone().sub(hit.point).normalize();
+                if (normal.dot(toPlayer) < 0) normal.negate();
+            } else {
+                normal = camera.position.clone().sub(hit.point).normalize();
+            }
 
-            // Wandtrefferpunkt und Normale sichern
             savedWallTarget = {
-                point: currentWallHit.point.clone(),
+                point: hit.point.clone(),
                 normal: normal.clone()
             };
 
             isModalOpen = true;
-
-            // Bewegung anhalten
-            moveState.forward = false;
-            moveState.backward = false;
-            moveState.left = false;
-            moveState.right = false;
+            moveState.forward = moveState.backward = moveState.left = moveState.right = false;
 
             if (controls && controls.isLocked) controls.unlock();
 
@@ -1187,12 +2086,8 @@
             noteModal.classList.remove("visible");
             savedWallTarget = null;
 
-            moveState.forward = false;
-            moveState.backward = false;
-            moveState.left = false;
-            moveState.right = false;
+            moveState.forward = moveState.backward = moveState.left = moveState.right = false;
 
-            // Falls Steuerung nicht gelockt ist, Klick-Overlay anzeigen
             if (controls && !controls.isLocked) {
                 clickOverlay.classList.remove("hidden");
             }
@@ -1205,7 +2100,6 @@
             } catch (err) {}
         });
 
-        // Tastenkürzel Strg+Enter im Textfeld zum Absenden
         noteTextarea.addEventListener("keydown", (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                 e.preventDefault();
@@ -1226,24 +2120,18 @@
             }
 
             const target = savedWallTarget;
-
-            // 1. Modal sofort schließen
             closeModal();
 
-            // 2. Pointer-Lock direkt synchron innerhalb des Klick-Events wieder anfordern
             try {
                 if (controls && !controls.isLocked) {
                     controls.lock();
                 }
-            } catch (err) {
-                console.warn("Pointer lock konnte nicht sofort aktiviert werden:", err);
-            }
+            } catch (err) {}
 
-            // 3. Position minimal vor der Wand berechnen (verhindert Z-Fighting)
-            const offset = 0.03;
+            const offset = 0.04;
             const pos = {
                 x: Number((target.point.x + target.normal.x * offset).toFixed(3)),
-                y: Number(Math.max(0.6, Math.min(ROOM_HEIGHT - 0.6, target.point.y)).toFixed(3)),
+                y: Number(Math.max(0.6, Math.min(WALL_HEIGHT - 0.4, target.point.y)).toFixed(3)),
                 z: Number((target.point.z + target.normal.z * offset).toFixed(3))
             };
 
@@ -1253,11 +2141,12 @@
                 z: Number(target.normal.z.toFixed(3))
             };
 
-            // 4. Asynchron in Firestore speichern (blockiert die Spiel-Loop nicht!)
+            const authorName = getStoredNickname();
+
             try {
                 await addDoc(collection(db, "notes"), {
                     text: text,
-                    author: currentUser?.email || "Anonym",
+                    author: authorName,
                     position: pos,
                     normal: norm,
                     createdAt: serverTimestamp()
@@ -1268,27 +2157,23 @@
             }
         });
 
-        // ── 3D NOTIZEN (CANVAS-TEXTUR & POST-IT MESH) ──
-        function createNoteCanvasTexture(text, author) {
+        // ── 3D NOTIZEN (TEXTUR & MESH) ──
+        function createNoteCanvasTexture(text, author, dateStr) {
             const canvas = document.createElement("canvas");
             canvas.width = 512;
             canvas.height = 512;
             const ctx = canvas.getContext("2d");
 
-            // Weißer Post-it Hintergrund
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, 512, 512);
 
-            // Schwarzer Rahmen
             ctx.lineWidth = 14;
             ctx.strokeStyle = "#000000";
             ctx.strokeRect(7, 7, 498, 498);
 
-            // Schwarzer Klebestreifen / Pin oben
             ctx.fillStyle = "#000000";
             ctx.fillRect(196, 14, 120, 24);
 
-            // Text umbrechen (unterstützt Umbrüche und lange Wörter)
             ctx.fillStyle = "#000000";
             ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
             ctx.textAlign = "left";
@@ -1319,20 +2204,22 @@
                 ctx.fillText(line, 30, y);
             }
 
-            // Autor Signatur unten
+            // Autor & Datum Signatur unten
             ctx.font = '600 20px monospace';
             ctx.fillStyle = "#444444";
-            const authorStr = author ? "— " + (author.length > 24 ? author.slice(0, 22) + "..." : author) : "— Anonym";
-            ctx.fillText(authorStr, 30, 460);
+            const authorStr = author ? (author.length > 18 ? author.slice(0, 16) + "..." : author) : "Anonym";
+            const dateFormatted = dateStr || "Heute";
+            ctx.fillText(`— ${authorStr} • ${dateFormatted}`, 30, 462);
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
             return texture;
         }
 
-        function createNoteMesh(data) {
+        function createNoteMesh(data, id) {
             try {
-                const texture = createNoteCanvasTexture(data.text, data.author);
+                const dateStr = formatNoteDate(data.createdAt);
+                const texture = createNoteCanvasTexture(data.text, data.author, dateStr);
                 const geo = new THREE.PlaneGeometry(0.85, 0.85);
                 const mat = new THREE.MeshBasicMaterial({ 
                     map: texture, 
@@ -1340,24 +2227,18 @@
                 });
                 const mesh = new THREE.Mesh(geo, mat);
 
-                // Positionieren
                 mesh.position.set(data.position.x, data.position.y, data.position.z);
 
-                // Ausrichtung zur Wand
                 let normal = data.normal && typeof data.normal.x === "number"
-                    ? new THREE.Vector3(data.normal.x, data.normal.y, data.normal.z)
-                    : null;
+                    ? new THREE.Vector3(data.normal.x, data.normal.y, data.normal.z).normalize()
+                    : new THREE.Vector3(0, 0, 1);
 
-                if (!normal || normal.lengthSq() < 0.1) {
-                    // Fallback-Bestimmung anhand der Position
-                    if (Math.abs(data.position.z) > Math.abs(data.position.x)) {
-                        normal = new THREE.Vector3(0, 0, data.position.z > 0 ? -1 : 1);
-                    } else {
-                        normal = new THREE.Vector3(data.position.x > 0 ? -1 : 1, 0, 0);
-                    }
+                if (normal.lengthSq() < 0.1) {
+                    normal = new THREE.Vector3(0, 0, 1);
                 }
 
                 mesh.lookAt(mesh.position.clone().add(normal));
+                mesh.userData = { id: id, data: data, isNote: true };
                 return mesh;
             } catch (err) {
                 console.error("Fehler beim Erstellen des Notiz-Meshes:", err);
@@ -1377,7 +2258,7 @@
             notesMeshMap.clear();
         }
 
-        // ── FIRESTORE ECHTZEIT-ABRUF (onSnapshot) ──
+        // ── FIRESTORE ECHTZEIT-ABRUF ──
         function subscribeToNotes() {
             if (unsubscribeNotes) return;
 
@@ -1388,7 +2269,6 @@
                     const data = change.doc.data();
 
                     if (change.type === "added" || change.type === "modified") {
-                        // Altes Mesh entfernen falls modifiziert
                         if (notesMeshMap.has(id)) {
                             const old = notesMeshMap.get(id);
                             scene.remove(old);
@@ -1404,7 +2284,7 @@
                             typeof data.position.x === "number" && !isNaN(data.position.x) &&
                             typeof data.position.y === "number" && !isNaN(data.position.y) &&
                             typeof data.position.z === "number" && !isNaN(data.position.z)) {
-                            const noteMesh = createNoteMesh(data);
+                            const noteMesh = createNoteMesh(data, id);
                             if (noteMesh) {
                                 scene.add(noteMesh);
                                 notesMeshMap.set(id, noteMesh);
@@ -1428,26 +2308,18 @@
             });
         }
 
-        // ── MULTIPLAYER SPIELER-SYNCHRONISATION (REALTIME DATABASE) ──
-        const remotePlayersMap = new Map(); // uid -> { mesh, targetPos: Vector3, targetRotY: number }
+        // ── MULTIPLAYER SPIELER-SYNCHRONISATION ──
+        const remotePlayersMap = new Map();
         let myPlayerRef = null;
         let syncTimer = null;
         let lastSent = { x: 0, y: 0, z: 0, rotY: 0 };
         let rtdbListeners = [];
 
-        // Farbpalette für verschiedene Mitspieler
         function getPlayerColor(str) {
             const colors = [
-                "#3b82f6", // Blau
-                "#10b981", // Smaragd
-                "#f59e0b", // Bernstein
-                "#ec4899", // Pink
-                "#8b5cf6", // Lila
-                "#06b6d4", // Türkis
-                "#f97316", // Orange
-                "#e11d48", // Rot
-                "#14b8a6", // Mint
-                "#84cc16"  // Limette
+                "#3b82f6", "#10b981", "#f59e0b", "#ec4899", 
+                "#8b5cf6", "#06b6d4", "#f97316", "#e11d48", 
+                "#14b8a6", "#84cc16"
             ];
             let hash = 0;
             for (let i = 0; i < (str || "").length; i++) {
@@ -1457,14 +2329,12 @@
             return colors[Math.abs(hash) % colors.length];
         }
 
-        // Schwebendes Namensschild über dem Kopf des Spielers (2D Billboard Canvas Sprite)
         function createNameTagSprite(name, color) {
             const canvas = document.createElement("canvas");
             canvas.width = 512;
             canvas.height = 128;
             const ctx = canvas.getContext("2d");
 
-            // Pillen-Hintergrund
             ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
             ctx.strokeStyle = color || "#ffffff";
             ctx.lineWidth = 6;
@@ -1481,7 +2351,6 @@
             ctx.fill();
             ctx.stroke();
 
-            // Name / E-Mail
             ctx.font = "bold 40px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
             ctx.fillStyle = "#ffffff";
             ctx.textAlign = "center";
@@ -1493,7 +2362,7 @@
             texture.needsUpdate = true;
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.set(0, 1.85, 0);
+            sprite.position.set(0, 2.15, 0); // Über dem Kopf bei y = 2.15
             sprite.scale.set(1.4, 0.35, 1);
             return sprite;
         }
@@ -1515,7 +2384,7 @@
             });
         }
 
-        // 3D-Spielfigur für einen anderen Nutzer hinzufügen
+        // 3D-Spielfigur: Kopf exakt auf Augenhöhe (y = 1.70)
         function addRemotePlayer(uid, data) {
             if (remotePlayersMap.has(uid)) {
                 updateRemotePlayer(uid, data);
@@ -1527,35 +2396,61 @@
 
             const group = new THREE.Group();
 
-            // 1. Körper
-            const bodyGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.75, 16);
+            // 1. Schuhe & Beine (y = 0 bis 0.70)
+            const shoeMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const shoeLeft = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.24), shoeMat);
+            shoeLeft.position.set(-0.12, 0.06, -0.02);
+            group.add(shoeLeft);
+
+            const shoeRight = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.24), shoeMat);
+            shoeRight.position.set(0.12, 0.06, -0.02);
+            group.add(shoeRight);
+
+            const legMat = new THREE.MeshLambertMaterial({ color: 0x27272a });
+            const legLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.60, 12), legMat);
+            legLeft.position.set(-0.12, 0.40, 0);
+            group.add(legLeft);
+
+            const legRight = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.60, 12), legMat);
+            legRight.position.set(0.12, 0.40, 0);
+            group.add(legRight);
+
+            // 2. Körper / Torso (y = 0.70 bis 1.45)
             const bodyMat = new THREE.MeshLambertMaterial({ color: color });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 0.55;
-            group.add(body);
+            const torsoGeo = new THREE.CylinderGeometry(0.24, 0.22, 0.65, 16);
+            const torso = new THREE.Mesh(torsoGeo, bodyMat);
+            torso.position.y = 1.05;
+            group.add(torso);
 
-            // Abrundung oben
-            const topCapGeo = new THREE.SphereGeometry(0.28, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
-            const topCap = new THREE.Mesh(topCapGeo, bodyMat);
-            topCap.position.y = 0.925;
-            group.add(topCap);
+            const shoulderGeo = new THREE.SphereGeometry(0.24, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+            const shoulders = new THREE.Mesh(shoulderGeo, bodyMat);
+            shoulders.position.y = 1.375;
+            group.add(shoulders);
 
-            // 2. Kopf
-            const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
+            // 3. Hals
+            const neckGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.10, 12);
+            const neckMat = new THREE.MeshLambertMaterial({ color: 0x27272a });
+            const neck = new THREE.Mesh(neckGeo, neckMat);
+            neck.position.y = 1.48;
+            group.add(neck);
+
+            // 4. KOPF - Exakt auf Augenhöhe (y = 1.70)
+            const headGeo = new THREE.SphereGeometry(0.20, 16, 16);
             const headMat = new THREE.MeshLambertMaterial({ color: color });
             const head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 1.35;
+            head.position.y = 1.70;
             group.add(head);
 
-            // 3. Visier / Blickrichtung
-            const visorGeo = new THREE.BoxGeometry(0.22, 0.08, 0.12);
-            const visorMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+            // 5. Visier / Augen - Exakt auf y = 1.70
+            const visorGeo = new THREE.BoxGeometry(0.20, 0.07, 0.10);
+            const visorMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
             const visor = new THREE.Mesh(visorGeo, visorMat);
-            visor.position.set(0, 1.35, -0.18);
+            visor.position.set(0, 1.70, -0.17);
             group.add(visor);
 
-            // 4. Schwebender Namens-Tag
+            // 6. Schwebender Namens-Tag bei y = 2.15
             const nameTag = createNameTagSprite(nickname, color);
+            nameTag.position.set(0, 2.15, 0);
             group.add(nameTag);
 
             // Startposition & Rotation
@@ -1572,7 +2467,10 @@
             remotePlayersMap.set(uid, {
                 mesh: group,
                 targetPos: new THREE.Vector3(initX, initY, initZ),
-                targetRotY: initRot
+                targetRotY: initRot,
+                nameTagSprite: nameTag,
+                nickname: nickname,
+                color: color
             });
         }
 
@@ -1589,6 +2487,19 @@
             }
             if (typeof data.rotationY === "number") {
                 player.targetRotY = data.rotationY;
+            }
+
+            if (data.nickname && data.nickname !== player.nickname) {
+                player.nickname = data.nickname;
+                if (player.nameTagSprite) {
+                    player.mesh.remove(player.nameTagSprite);
+                    if (player.nameTagSprite.material.map) player.nameTagSprite.material.map.dispose();
+                    player.nameTagSprite.material.dispose();
+                }
+                const newTag = createNameTagSprite(data.nickname, data.color || player.color || getPlayerColor(uid));
+                newTag.position.set(0, 2.15, 0);
+                player.mesh.add(newTag);
+                player.nameTagSprite = newTag;
             }
         }
 
@@ -1608,18 +2519,15 @@
             el.textContent = count === 1 ? "👥 1 online" : `👥 ${count} online`;
         }
 
-        // Eigenen Spieler synchronisieren (Senden alle 60ms bei Bewegung)
         function startPlayerSync() {
             if (!currentUser) return;
             myPlayerRef = rtdbRef(rtdb, `players/${currentUser.uid}`);
 
-            // onDisconnect: Beim Schließen des Fensters automatisch entfernen
             onDisconnect(myPlayerRef).remove().catch(err => console.warn("onDisconnect error:", err));
 
             const color = getPlayerColor(currentUser.uid);
-            const nickname = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "Gast");
+            const nickname = getStoredNickname();
 
-            // Initialen Zustand hinterlegen
             rtdbSet(myPlayerRef, {
                 uid: currentUser.uid,
                 email: currentUser.email || "Anonym",
@@ -1639,7 +2547,6 @@
                 rotY: camera.rotation.y
             };
 
-            // Schleife alle 60 Millisekunden (sendet nur wenn bewegt)
             if (syncTimer) clearInterval(syncTimer);
             syncTimer = setInterval(() => {
                 if (!controls || !controls.isLocked || !myPlayerRef) return;
@@ -1679,14 +2586,12 @@
                 rtdbRemove(myPlayerRef).catch(() => {});
                 myPlayerRef = null;
             }
-            // Alle Mitspieler-3D-Objekte aufräumen
             remotePlayersMap.forEach((player) => {
                 scene.remove(player.mesh);
                 disposeHierarchy(player.mesh);
             });
             remotePlayersMap.clear();
 
-            // Event-Listener abbestellen
             if (rtdbListeners && rtdbListeners.length > 0) {
                 rtdbListeners.forEach(unsub => {
                     if (typeof unsub === "function") unsub();
@@ -1697,7 +2602,6 @@
             updatePlayerCountUI();
         }
 
-        // Andere Spieler in Echtzeit abhören (ChildAdded, ChildChanged, ChildRemoved)
         function subscribeToRemotePlayers() {
             const playersRef = rtdbRef(rtdb, "players");
 
@@ -1726,6 +2630,6 @@
 
             rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved];
         }
-    </script>
+</script>
 </body>
 </html>
