@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Mansion - 3D Clubhaus & Geschützter Bereich">
+    <title>Mansion | Clubhaus 3D</title>
+
+    <link rel="icon" type="image/png" href="../images/favicon/favicon-48x48.png" sizes="48x48">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon/favicon.svg">
+    <link rel="shortcut icon" href="../images/favicon/favicon.ico">
+
+    <!-- Three.js Import Map for CDN ESM -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: rgba(10, 10, 10, 0.92);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --card-border-glow: rgba(255, 255, 255, 0.35);
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-bg: #ffffff;
+            --accent-text: #000000;
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --input-border: rgba(255, 255, 255, 0.2);
+            --input-focus: #ffffff;
+            --error-bg: rgba(255, 255, 255, 0.08);
+            --error-border: #ffffff;
+            --error-text: #ffffff;
+            --radius-lg: 16px;
+            --radius-md: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── AUTH CONTAINER (LOGIN) ── */
+        .auth-wrapper {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            z-index: 100;
+            background: radial-gradient(circle at 50% 50%, #18181b 0%, #000000 80%);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 0 1px var(--card-border);
+            text-align: center;
+        }
+
+        .badge-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            margin-bottom: 1.25rem;
+        }
+
+        .badge-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .card-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.35rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            text-align: left;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .input-field {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            font-size: 0.95rem;
+            color: #ffffff;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary {
+            width: 100%;
+            background-color: var(--accent-bg);
+            color: var(--accent-text);
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.9rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            display: none;
+            background-color: var(--error-bg);
+            border: 1px solid var(--error-border);
+            color: var(--error-text);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            text-align: left;
+            margin-top: 1.25rem;
+        }
+
+        .error-message.visible {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .card-footer {
+            margin-top: 1.75rem;
+            text-align: center;
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.825rem;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: #ffffff;
+        }
+
+        .page-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            gap: 0.85rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        /* ── 3D CANVAS & GAME VIEWPORT ── */
+        #game-container {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            z-index: 10;
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* ── 3D UI OVERLAYS ── */
+        /* Top-Right User Header */
+        .top-nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 6px 14px;
+            border-radius: 9999px;
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #ffffff;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+        }
+
+        .btn-logout {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        /* Center Crosshair */
+        .crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .crosshair::before, .crosshair::after {
+            content: "";
+            position: absolute;
+            background: #ffffff;
+            box-shadow: 0 0 2px #000000;
+        }
+
+        .crosshair::before {
+            width: 10px;
+            height: 2px;
+        }
+
+        .crosshair::after {
+            width: 2px;
+            height: 10px;
+        }
+
+        /* Wall Proximity Interaction Prompt */
+        .interact-prompt {
+            position: fixed;
+            top: 54%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.825rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            pointer-events: none;
+            z-index: 25;
+            display: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+
+        .interact-prompt.visible {
+            display: block;
+        }
+
+        /* Bottom Controls Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 0.825rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            padding: 9px 20px;
+            border-radius: 9999px;
+            backdrop-filter: blur(10px);
+            z-index: 20;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Start / Unlock Screen Overlay */
+        .click-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 22;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+
+        .click-box {
+            background: #000000;
+            border: 2px solid #ffffff;
+            padding: 2rem 2.5rem;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            max-width: 380px;
+        }
+
+        .click-box h2 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .click-box p {
+            font-size: 0.9rem;
+            color: #a1a1aa;
+            margin-bottom: 1.25rem;
+        }
+
+        .click-badge {
+            display: inline-block;
+            background: #ffffff;
+            color: #000000;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 6px 16px;
+            border-radius: 9999px;
+        }
+
+        /* ── NOTE MODAL DIALOG ── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            z-index: 50;
+        }
+
+        .modal-backdrop.visible {
+            display: flex;
+        }
+
+        .note-card {
+            width: 100%;
+            max-width: 420px;
+            background: #000000;
+            border: 2px solid #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 1);
+            color: #ffffff;
+        }
+
+        .note-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .note-card p {
+            font-size: 0.85rem;
+            color: #a1a1aa;
+            margin-bottom: 1.25rem;
+        }
+
+        .note-textarea {
+            width: 100%;
+            height: 120px;
+            background: #111111;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-md);
+            padding: 0.85rem;
+            color: #ffffff;
+            font-family: monospace, sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            outline: none;
+            margin-bottom: 1.25rem;
+        }
+
+        .note-textarea:focus {
+            border-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            border-color: #ffffff;
+        }
+
+        .btn-submit {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 0.75rem 1.4rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulseGlow {
+            from { transform: translateX(-50%) scale(1); }
+            to { transform: translateX(-50%) scale(1.05); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN BEREICH (Nicht eingeloggt) -->
+    <div id="auth-container" class="auth-wrapper">
+        <div class="auth-card">
+
+            <!-- Initialer Session-Check -->
+            <div id="loading-state" class="page-loader">
+                <div class="spinner"></div>
+                <span>Wird geladen...</span>
+            </div>
+
+            <!-- Login Maske -->
+            <div id="login-view" class="hidden">
+                <div class="badge-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                </div>
+                <h1 class="card-title">Mansion</h1>
+                <p class="card-subtitle">Clubhaus Login</p>
+
+                <form id="login-form" class="auth-form" novalidate>
+                    <div class="form-group">
+                        <label class="form-label" for="email">E-Mail</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            class="input-field" 
+                            placeholder="name@beispiel.ch" 
+                            required 
+                            autocomplete="username"
+                            spellcheck="false"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Passwort</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="input-field" 
+                            placeholder="••••••••" 
+                            required 
+                            autocomplete="current-password"
+                        >
+                    </div>
+
+                    <button type="submit" id="btn-login" class="btn-primary">
+                        <span id="btn-login-text">Anmelden</span>
+                        <div id="btn-login-spinner" class="spinner hidden" style="border-top-color:#000;"></div>
+                    </button>
+                </form>
+
+                <div id="error-box" class="error-message" role="alert" aria-live="polite">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span id="error-text"></span>
+                </div>
+
+                <div class="card-footer">
+                    <a href="../" class="back-link">← Zurück zu denmuen.ch</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 2. GESCHÜTZTER BEREICH: 3D-WELT (Eingeloggt) -->
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Top Right Header mit Abmelden & Mail -->
+        <header class="top-nav">
+            <div class="user-status">
+                <span class="status-dot"></span>
+                <span id="nav-user-email">Laden...</span>
+            </div>
+            <button type="button" id="btn-logout" class="btn-logout">Abmelden</button>
+        </header>
+
+        <!-- Fadenkreuz -->
+        <div class="crosshair" aria-hidden="true"></div>
+
+        <!-- Wand-Interaktions-Prompt -->
+        <div id="interact-prompt" class="interact-prompt">
+            Taste [E] drücken zum Anheften
+        </div>
+
+        <!-- Steuerungs-Leiste am unteren Rand -->
+        <footer class="bottom-bar">
+            Klicken zum Umschauen | W,A,S,D = Laufen | E = Notiz anheften | ESC = Maus freigeben
+        </footer>
+
+        <!-- Pointer Lock Klick-Overlay -->
+        <div id="click-overlay" class="click-overlay">
+            <div class="click-box">
+                <h2>Willkommen im Clubhaus!</h2>
+                <p>Klicke in dieses Fenster, um die 3D-Welt zu betreten und dich frei umzusehen.</p>
+                <div class="click-badge">Klicken zum Betreten</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. NOTIZ-EINGABE MODAL -->
+    <div id="note-modal" class="modal-backdrop">
+        <div class="note-card">
+            <h3>Notiz an die Wand pinnen</h3>
+            <p>Hinterlasse eine Nachricht im 3D-Clubhaus für alle Besucher.</p>
+            <textarea 
+                id="note-textarea" 
+                class="note-textarea" 
+                maxlength="240" 
+                placeholder="Schreibe deine Notiz hier..."
+            ></textarea>
+            <div class="modal-actions">
+                <button type="button" id="btn-cancel-note" class="btn-cancel">Abbrechen</button>
+                <button type="button" id="btn-save-note" class="btn-submit">
+                    <span id="btn-save-text">Anpinnen</span>
+                    <div id="btn-save-spinner" class="spinner hidden" style="border-top-color:#000; width:14px; height:14px;"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK via CDN Modules & Three.js via ImportMap -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+        
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            onSnapshot,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+        // ── FIREBASE KONFIGURATION ──
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcCv-NlG0Z3jpQINEhbPQqBtMEDsDAthY",
+            authDomain: "mansion-9fed1.firebaseapp.com",
+            projectId: "mansion-9fed1",
+            storageBucket: "mansion-9fed1.firebasestorage.app",
+            messagingSenderId: "904016895478",
+            appId: "1:904016895478:web:b2c60e5da3f89eee72fbd7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ── DOM ELEMENTE ──
+        const authContainer = document.getElementById("auth-container");
+        const loadingState = document.getElementById("loading-state");
+        const loginView = document.getElementById("login-view");
+        const loginForm = document.getElementById("login-form");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const btnLogin = document.getElementById("btn-login");
+        const btnLoginText = document.getElementById("btn-login-text");
+        const btnLoginSpinner = document.getElementById("btn-login-spinner");
+        const errorBox = document.getElementById("error-box");
+        const errorText = document.getElementById("error-text");
+
+        const gameContainer = document.getElementById("game-container");
+        const gameCanvas = document.getElementById("game-canvas");
+        const navUserEmail = document.getElementById("nav-user-email");
+        const btnLogout = document.getElementById("btn-logout");
+        const interactPrompt = document.getElementById("interact-prompt");
+        const clickOverlay = document.getElementById("click-overlay");
+
+        const noteModal = document.getElementById("note-modal");
+        const noteTextarea = document.getElementById("note-textarea");
+        const btnCancelNote = document.getElementById("btn-cancel-note");
+        const btnSaveNote = document.getElementById("btn-save-note");
+        const btnSaveText = document.getElementById("btn-save-text");
+        const btnSaveSpinner = document.getElementById("btn-save-spinner");
+
+        // ── STATE ──
+        let currentUser = null;
+        let unsubscribeNotes = null;
+        let isModalOpen = false;
+        let currentWallHit = null;
+        let savedWallTarget = null;
+        const notesMeshMap = new Map(); // id -> THREE.Mesh
+
+        // ── FEHLERBEHANDLUNG ──
+        function showError(msg) {
+            errorText.textContent = msg;
+            errorBox.classList.add("visible");
+        }
+
+        function clearError() {
+            errorText.textContent = "";
+            errorBox.classList.remove("visible");
+        }
+
+        function getErrorMessage(code) {
+            switch (code) {
+                case "auth/invalid-email":
+                    return "Bitte gib eine gültige E-Mail-Adresse ein.";
+                case "auth/user-not-found":
+                    return "Kein Benutzerkonto mit dieser E-Mail-Adresse gefunden.";
+                case "auth/wrong-password":
+                case "auth/invalid-credential":
+                    return "E-Mail oder Passwort ist nicht korrekt.";
+                case "auth/user-disabled":
+                    return "Dieses Benutzerkonto wurde deaktiviert.";
+                case "auth/too-many-requests":
+                    return "Zu viele Versuche. Bitte warte kurz und versuche es erneut.";
+                case "auth/network-request-failed":
+                    return "Netzwerkfehler. Bitte überprüfe deine Verbindung.";
+                default:
+                    return "Anmeldung fehlgeschlagen. Bitte prüfe deine Daten.";
+            }
+        }
+
+        function setLoginSubmitting(isSubmitting) {
+            btnLogin.disabled = isSubmitting;
+            if (isSubmitting) {
+                btnLoginText.textContent = "Anmelden...";
+                btnLoginSpinner.classList.remove("hidden");
+            } else {
+                btnLoginText.textContent = "Anmelden";
+                btnLoginSpinner.classList.add("hidden");
+            }
+        }
+
+        // ── AUTH LISTENER ──
+        onAuthStateChanged(auth, (user) => {
+            loadingState.classList.add("hidden");
+            if (user) {
+                currentUser = user;
+                authContainer.classList.add("hidden");
+                gameContainer.style.display = "block";
+                navUserEmail.textContent = user.email || "Angemeldet";
+                
+                initThreeWorld();
+                subscribeToNotes();
+            } else {
+                currentUser = null;
+                if (controls && controls.isLocked) controls.unlock();
+                if (unsubscribeNotes) {
+                    unsubscribeNotes();
+                    unsubscribeNotes = null;
+                }
+                clearAllNoteMeshes();
+                gameContainer.style.display = "none";
+                authContainer.classList.remove("hidden");
+                loginView.classList.remove("hidden");
+                clearError();
+            }
+        });
+
+        // Login Form
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            clearError();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showError("Bitte fülle E-Mail und Passwort aus.");
+                return;
+            }
+
+            setLoginSubmitting(true);
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                loginForm.reset();
+            } catch (err) {
+                showError(getErrorMessage(err.code));
+            } finally {
+                setLoginSubmitting(false);
+            }
+        });
+
+        // Logout
+        btnLogout.addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+            } catch (err) {
+                alert("Fehler beim Abmelden.");
+            }
+        });
+
+        // ── 3D THREE.JS UMGEBUNG ──
+        let scene, camera, renderer, controls;
+        let wallMeshes = [];
+        let raycaster;
+        const centerCoords = new THREE.Vector2(0, 0);
+        let animationFrameId = null;
+
+        // Bewegung & Kollision
+        const moveState = { forward: false, backward: false, left: false, right: false };
+        const moveSpeed = 6.5; // Einheiten pro Sekunde
+        const clock = new THREE.Clock();
+
+        // Raumdimensionen: 20 x 20 x 5 Einheiten
+        const ROOM_SIZE = 20;
+        const ROOM_HEIGHT = 5;
+        const HALF_ROOM = ROOM_SIZE / 2;
+        const PLAYER_MARGIN = 0.8; // Abstand zu den Wänden
+        const EYE_HEIGHT = 1.7;
+
+        function initThreeWorld() {
+            if (scene) {
+                // Bereits initialisiert, Größe anpassen und Loop starten falls pausiert
+                onWindowResize();
+                if (!animationFrameId) animate();
+                return;
+            }
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, EYE_HEIGHT, 0);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ canvas: gameCanvas, antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Controls (PointerLockControls)
+            controls = new PointerLockControls(camera, document.body);
+
+            // Klick-Overlay & Viewport Steuerung
+            clickOverlay.addEventListener("click", () => {
+                if (!isModalOpen && controls && !controls.isLocked) {
+                    controls.lock();
+                }
+            });
+
+            gameCanvas.addEventListener("click", () => {
+                if (!isModalOpen && controls && !controls.isLocked) {
+                    controls.lock();
+                }
+            });
+
+            gameContainer.addEventListener("click", (e) => {
+                if (!isModalOpen && controls && !controls.isLocked && !e.target.closest(".top-nav") && !e.target.closest(".modal-backdrop")) {
+                    controls.lock();
+                }
+            });
+
+            controls.addEventListener("lock", () => {
+                clickOverlay.classList.add("hidden");
+            });
+
+            controls.addEventListener("unlock", () => {
+                if (!isModalOpen) {
+                    clickOverlay.classList.remove("hidden");
+                }
+            });
+
+            // Beleuchtung (Minimalistisches klares Licht)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+            scene.add(ambientLight);
+
+            const centerLight = new THREE.PointLight(0xffffff, 0.5, 30);
+            centerLight.position.set(0, ROOM_HEIGHT - 0.5, 0);
+            scene.add(centerLight);
+
+            // 1. BODEN: Schwarzer Hintergrund mit weißem Mesh (Grid)
+            const floorGeo = new THREE.PlaneGeometry(ROOM_SIZE, ROOM_SIZE);
+            const floorMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+            floorMesh.rotation.x = -Math.PI / 2;
+            floorMesh.position.y = 0;
+            scene.add(floorMesh);
+
+            const floorGrid = new THREE.GridHelper(ROOM_SIZE, ROOM_SIZE, 0xffffff, 0x444444);
+            floorGrid.position.y = 0.01;
+            scene.add(floorGrid);
+
+            // 2. DECKE: Dunkelgrau
+            const ceilingGeo = new THREE.PlaneGeometry(ROOM_SIZE, ROOM_SIZE);
+            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x1c1c1e, side: THREE.DoubleSide });
+            const ceilingMesh = new THREE.Mesh(ceilingGeo, ceilingMat);
+            ceilingMesh.rotation.x = Math.PI / 2;
+            ceilingMesh.position.y = ROOM_HEIGHT;
+            scene.add(ceilingMesh);
+
+            // 3. 4 WEISSE WÄNDE
+            const wallMat = new THREE.MeshLambertMaterial({ 
+                color: 0xffffff, 
+                side: THREE.FrontSide 
+            });
+
+            wallMeshes = [];
+
+            // Nordwand (Z = -10, Blick in den Raum: +Z)
+            const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_HEIGHT), wallMat);
+            northWall.position.set(0, ROOM_HEIGHT / 2, -HALF_ROOM);
+            northWall.rotation.set(0, 0, 0);
+            northWall.userData = { normal: new THREE.Vector3(0, 0, 1) };
+            scene.add(northWall);
+            wallMeshes.push(northWall);
+
+            // Südwand (Z = +10, Blick in den Raum: -Z)
+            const southWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_HEIGHT), wallMat);
+            southWall.position.set(0, ROOM_HEIGHT / 2, HALF_ROOM);
+            southWall.rotation.set(0, Math.PI, 0);
+            southWall.userData = { normal: new THREE.Vector3(0, 0, -1) };
+            scene.add(southWall);
+            wallMeshes.push(southWall);
+
+            // Westwand (X = -10, Blick in den Raum: +X)
+            const westWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_HEIGHT), wallMat);
+            westWall.position.set(-HALF_ROOM, ROOM_HEIGHT / 2, 0);
+            westWall.rotation.set(0, Math.PI / 2, 0);
+            westWall.userData = { normal: new THREE.Vector3(1, 0, 0) };
+            scene.add(westWall);
+            wallMeshes.push(westWall);
+
+            // Ostwand (X = +10, Blick in den Raum: -X)
+            const eastWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_HEIGHT), wallMat);
+            eastWall.position.set(HALF_ROOM, ROOM_HEIGHT / 2, 0);
+            eastWall.rotation.set(0, -Math.PI / 2, 0);
+            eastWall.userData = { normal: new THREE.Vector3(-1, 0, 0) };
+            scene.add(eastWall);
+            wallMeshes.push(eastWall);
+
+            // Schwarze architektonische Konturlinien für alle 4 Wände
+            wallMeshes.forEach(wall => {
+                const edges = new THREE.EdgesGeometry(wall.geometry);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }));
+                wall.add(line);
+            });
+
+            // Raycaster für Wand-Erkennung
+            raycaster = new THREE.Raycaster();
+            raycaster.far = 4.2;
+
+            // Event Listeners
+            window.addEventListener("resize", onWindowResize);
+            document.addEventListener("keydown", onKeyDown);
+            document.addEventListener("keyup", onKeyUp);
+
+            clock.start();
+            animate();
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Tastatursteuerung
+        function onKeyDown(e) {
+            if (isModalOpen) {
+                if (e.key === "Escape") closeModal();
+                return;
+            }
+
+            switch (e.code) {
+                case "KeyW":
+                case "ArrowUp":
+                    moveState.forward = true;
+                    break;
+                case "KeyS":
+                case "ArrowDown":
+                    moveState.backward = true;
+                    break;
+                case "KeyA":
+                case "ArrowLeft":
+                    moveState.left = true;
+                    break;
+                case "KeyD":
+                case "ArrowRight":
+                    moveState.right = true;
+                    break;
+                case "KeyE":
+                    if (currentWallHit) {
+                        openNoteModal();
+                    }
+                    break;
+            }
+        }
+
+        function onKeyUp(e) {
+            switch (e.code) {
+                case "KeyW":
+                case "ArrowUp":
+                    moveState.forward = false;
+                    break;
+                case "KeyS":
+                case "ArrowDown":
+                    moveState.backward = false;
+                    break;
+                case "KeyA":
+                case "ArrowLeft":
+                    moveState.left = false;
+                    break;
+                case "KeyD":
+                case "ArrowRight":
+                    moveState.right = false;
+                    break;
+            }
+        }
+
+        // Animations-Loop
+        function animate() {
+            animationFrameId = requestAnimationFrame(animate);
+
+            // Delta-Zeit deckeln (verhindert Ruckeln/Sprünge bei Inaktivität)
+            const delta = Math.min(clock.getDelta(), 0.1);
+
+            if (controls && controls.isLocked) {
+                // Spieler-Bewegung
+                const actualSpeed = moveSpeed * delta;
+
+                if (moveState.forward) controls.moveForward(actualSpeed);
+                if (moveState.backward) controls.moveForward(-actualSpeed);
+                if (moveState.right) controls.moveRight(actualSpeed);
+                if (moveState.left) controls.moveRight(-actualSpeed);
+
+                // Kollisionserkennung: Spieler bleibt innerhalb der 4 Wände
+                const bound = HALF_ROOM - PLAYER_MARGIN;
+                camera.position.x = Math.max(-bound, Math.min(bound, camera.position.x));
+                camera.position.z = Math.max(-bound, Math.min(bound, camera.position.z));
+                camera.position.y = EYE_HEIGHT; // Konstante Augenhöhe
+
+                // Raycasting: Wand vor dem Spieler prüfen
+                raycaster.setFromCamera(centerCoords, camera);
+                const intersects = raycaster.intersectObjects(wallMeshes, false);
+
+                if (intersects.length > 0 && intersects[0].distance <= 3.8) {
+                    currentWallHit = intersects[0];
+                    interactPrompt.classList.add("visible");
+                } else {
+                    currentWallHit = null;
+                    interactPrompt.classList.remove("visible");
+                }
+            } else {
+                interactPrompt.classList.remove("visible");
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // ── NOTIZ-MODAL LOGIK ──
+        function openNoteModal() {
+            if (!currentWallHit || !currentWallHit.object) return;
+
+            const normal = currentWallHit.object.userData?.normal || currentWallHit.face?.normal || new THREE.Vector3(0, 0, 1);
+
+            // Wandtrefferpunkt und Normale sichern
+            savedWallTarget = {
+                point: currentWallHit.point.clone(),
+                normal: normal.clone()
+            };
+
+            isModalOpen = true;
+
+            // Bewegung anhalten
+            moveState.forward = false;
+            moveState.backward = false;
+            moveState.left = false;
+            moveState.right = false;
+
+            if (controls && controls.isLocked) controls.unlock();
+
+            noteTextarea.value = "";
+            noteModal.classList.add("visible");
+            interactPrompt.classList.remove("visible");
+            setTimeout(() => noteTextarea.focus(), 60);
+        }
+
+        function closeModal() {
+            isModalOpen = false;
+            noteModal.classList.remove("visible");
+            savedWallTarget = null;
+
+            moveState.forward = false;
+            moveState.backward = false;
+            moveState.left = false;
+            moveState.right = false;
+
+            // Falls Steuerung nicht gelockt ist, Klick-Overlay anzeigen
+            if (controls && !controls.isLocked) {
+                clickOverlay.classList.remove("hidden");
+            }
+        }
+
+        btnCancelNote.addEventListener("click", () => {
+            closeModal();
+            try {
+                if (controls && !controls.isLocked) controls.lock();
+            } catch (err) {}
+        });
+
+        // Tastenkürzel Strg+Enter im Textfeld zum Absenden
+        noteTextarea.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                btnSaveNote.click();
+            }
+        });
+
+        btnSaveNote.addEventListener("click", async () => {
+            const text = noteTextarea.value.trim();
+            if (!text) {
+                alert("Bitte gib einen Text für deine Notiz ein.");
+                return;
+            }
+
+            if (!savedWallTarget) {
+                closeModal();
+                return;
+            }
+
+            const target = savedWallTarget;
+
+            // 1. Modal sofort schließen
+            closeModal();
+
+            // 2. Pointer-Lock direkt synchron innerhalb des Klick-Events wieder anfordern
+            try {
+                if (controls && !controls.isLocked) {
+                    controls.lock();
+                }
+            } catch (err) {
+                console.warn("Pointer lock konnte nicht sofort aktiviert werden:", err);
+            }
+
+            // 3. Position minimal vor der Wand berechnen (verhindert Z-Fighting)
+            const offset = 0.03;
+            const pos = {
+                x: Number((target.point.x + target.normal.x * offset).toFixed(3)),
+                y: Number(Math.max(0.6, Math.min(ROOM_HEIGHT - 0.6, target.point.y)).toFixed(3)),
+                z: Number((target.point.z + target.normal.z * offset).toFixed(3))
+            };
+
+            const norm = {
+                x: Number(target.normal.x.toFixed(3)),
+                y: Number(target.normal.y.toFixed(3)),
+                z: Number(target.normal.z.toFixed(3))
+            };
+
+            // 4. Asynchron in Firestore speichern (blockiert die Spiel-Loop nicht!)
+            try {
+                await addDoc(collection(db, "notes"), {
+                    text: text,
+                    author: currentUser?.email || "Anonym",
+                    position: pos,
+                    normal: norm,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("Fehler beim Speichern in Firestore:", err);
+                alert("Fehler beim Anpinnen der Notiz: " + (err.message || "Unbekannter Fehler"));
+            }
+        });
+
+        // ── 3D NOTIZEN (CANVAS-TEXTUR & POST-IT MESH) ──
+        function createNoteCanvasTexture(text, author) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+
+            // Weißer Post-it Hintergrund
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Schwarzer Rahmen
+            ctx.lineWidth = 14;
+            ctx.strokeStyle = "#000000";
+            ctx.strokeRect(7, 7, 498, 498);
+
+            // Schwarzer Klebestreifen / Pin oben
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(196, 14, 120, 24);
+
+            // Text umbrechen (unterstützt Umbrüche und lange Wörter)
+            ctx.fillStyle = "#000000";
+            ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+
+            const words = (text || "").split(/\s+/);
+            const maxWidth = 450;
+            const lineHeight = 42;
+            let line = "";
+            let y = 64;
+
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + (line ? " " : "") + words[n];
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && line.length > 0) {
+                    ctx.fillText(line, 30, y);
+                    line = words[n];
+                    y += lineHeight;
+                    if (y > 390) {
+                        line = "...";
+                        break;
+                    }
+                } else {
+                    line = testLine;
+                }
+            }
+            if (line) {
+                ctx.fillText(line, 30, y);
+            }
+
+            // Autor Signatur unten
+            ctx.font = '600 20px monospace';
+            ctx.fillStyle = "#444444";
+            const authorStr = author ? "— " + (author.length > 24 ? author.slice(0, 22) + "..." : author) : "— Anonym";
+            ctx.fillText(authorStr, 30, 460);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function createNoteMesh(data) {
+            try {
+                const texture = createNoteCanvasTexture(data.text, data.author);
+                const geo = new THREE.PlaneGeometry(0.85, 0.85);
+                const mat = new THREE.MeshBasicMaterial({ 
+                    map: texture, 
+                    side: THREE.DoubleSide 
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+
+                // Positionieren
+                mesh.position.set(data.position.x, data.position.y, data.position.z);
+
+                // Ausrichtung zur Wand
+                let normal = data.normal && typeof data.normal.x === "number"
+                    ? new THREE.Vector3(data.normal.x, data.normal.y, data.normal.z)
+                    : null;
+
+                if (!normal || normal.lengthSq() < 0.1) {
+                    // Fallback-Bestimmung anhand der Position
+                    if (Math.abs(data.position.z) > Math.abs(data.position.x)) {
+                        normal = new THREE.Vector3(0, 0, data.position.z > 0 ? -1 : 1);
+                    } else {
+                        normal = new THREE.Vector3(data.position.x > 0 ? -1 : 1, 0, 0);
+                    }
+                }
+
+                mesh.lookAt(mesh.position.clone().add(normal));
+                return mesh;
+            } catch (err) {
+                console.error("Fehler beim Erstellen des Notiz-Meshes:", err);
+                return null;
+            }
+        }
+
+        function clearAllNoteMeshes() {
+            notesMeshMap.forEach((mesh) => {
+                scene.remove(mesh);
+                if (mesh.geometry) mesh.geometry.dispose();
+                if (mesh.material) {
+                    if (mesh.material.map) mesh.material.map.dispose();
+                    mesh.material.dispose();
+                }
+            });
+            notesMeshMap.clear();
+        }
+
+        // ── FIRESTORE ECHTZEIT-ABRUF (onSnapshot) ──
+        function subscribeToNotes() {
+            if (unsubscribeNotes) return;
+
+            const notesCol = collection(db, "notes");
+            unsubscribeNotes = onSnapshot(notesCol, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    const id = change.doc.id;
+                    const data = change.doc.data();
+
+                    if (change.type === "added" || change.type === "modified") {
+                        // Altes Mesh entfernen falls modifiziert
+                        if (notesMeshMap.has(id)) {
+                            const old = notesMeshMap.get(id);
+                            scene.remove(old);
+                            if (old.geometry) old.geometry.dispose();
+                            if (old.material) {
+                                if (old.material.map) old.material.map.dispose();
+                                old.material.dispose();
+                            }
+                            notesMeshMap.delete(id);
+                        }
+
+                        if (data && data.position && 
+                            typeof data.position.x === "number" && !isNaN(data.position.x) &&
+                            typeof data.position.y === "number" && !isNaN(data.position.y) &&
+                            typeof data.position.z === "number" && !isNaN(data.position.z)) {
+                            const noteMesh = createNoteMesh(data);
+                            if (noteMesh) {
+                                scene.add(noteMesh);
+                                notesMeshMap.set(id, noteMesh);
+                            }
+                        }
+                    } else if (change.type === "removed") {
+                        if (notesMeshMap.has(id)) {
+                            const old = notesMeshMap.get(id);
+                            scene.remove(old);
+                            if (old.geometry) old.geometry.dispose();
+                            if (old.material) {
+                                if (old.material.map) old.material.map.dispose();
+                                old.material.dispose();
+                            }
+                            notesMeshMap.delete(id);
+                        }
+                    }
+                });
+            }, (err) => {
+                console.error("Firestore onSnapshot Fehler:", err);
+            });
+        }
+    </script>
+</body>
+</html>
