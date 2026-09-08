@@ -47,11 +47,20 @@
             padding: 0;
         }
 
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        
+        @font-face {
+            font-family: 'Quicksand';
+            src: url('../fonts/Quicksand-Regular.ttf') format('truetype');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        body, html, button, input, textarea, select {
+            font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body, html { font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
@@ -395,51 +404,7 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
         }
 
-        /* Start / Unlock Screen Overlay */
-        .click-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.65);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 22;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-        }
-
-        .click-box {
-            background: #000000;
-            border: 2px solid #ffffff;
-            padding: 2rem 2.5rem;
-            border-radius: var(--radius-lg);
-            text-align: center;
-            color: #ffffff;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
-            max-width: 380px;
-        }
-
-        .click-box h2 {
-            font-size: 1.4rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .click-box p {
-            font-size: 0.9rem;
-            color: #a1a1aa;
-            margin-bottom: 1.25rem;
-        }
-
-        .click-badge {
-            display: inline-block;
-            background: #ffffff;
-            color: #000000;
-            font-weight: 700;
-            font-size: 0.85rem;
-            padding: 6px 16px;
-            border-radius: 9999px;
-        }
+        
 
         /* ── NOTE MODAL DIALOG ── */
         .modal-backdrop {
@@ -717,13 +682,6 @@
             Klicken = Umschauen | W,A,S,D = Laufen | LEERTASTE = Springen | E = Interagieren | ESC = Maus frei
         </footer>
 
-        <!-- Pointer Lock Klick-Overlay -->
-        <div id="click-overlay" class="click-overlay">
-            <div class="click-box">
-                <h2>Willkommen im Clubhaus!</h2>
-                <p>Klicke in dieses Fenster, um die 3D-Welt zu betreten und dich frei umzusehen.</p>
-                <div class="click-badge">Klicken zum Betreten</div>
-            </div>
         </div>
     </div>
 
@@ -749,10 +707,48 @@
     </div>
 
     <!-- 4. NOTIZ-DETAIL & LÖSCHEN MODAL -->
+    
+    <!-- 3b. ART-BILD-EINGABE MODAL (ART-RAUM) -->
+    <div id="art-note-modal" class="modal-backdrop">
+        <div class="note-card" style="max-width: 480px;">
+            <h3>Bild im Art-Raum anpinnen</h3>
+            <p>Wähle ein Kunstwerk oder Foto aus. Es wird automatisch vor dem Pinnen auf maximal 100 KB komprimiert.</p>
+            
+            <div style="margin-bottom: 1rem;">
+                <input type="file" id="art-file-input" accept="image/png, image/jpeg, image/webp, image/gif" style="display: none;">
+                <button type="button" id="btn-browse-art" class="btn-cancel" style="width: 100%; border-style: dashed; padding: 1.1rem; margin-bottom: 6px; font-weight: 600;">
+                    🖼️ Bild auswählen (PNG, JPG, WebP)
+                </button>
+                <div id="art-file-info" style="font-size: 0.8rem; color: #a1a1aa; text-align: center;">Keine Datei ausgewählt</div>
+            </div>
+
+            <div id="art-preview-wrapper" style="display: none; margin: 12px 0; text-align: center;">
+                <img id="art-preview-img" style="max-height: 180px; max-width: 100%; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.25);" alt="Vorschau">
+                <div id="art-compress-info" style="font-size: 0.82rem; color: #38bdf8; margin-top: 8px; font-weight: 600;"></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.25rem; text-align: left;">
+                <label class="form-label" for="art-caption-input">Titel / Bildunterschrift (optional)</label>
+                <input type="text" id="art-caption-input" class="input-field" maxlength="50" placeholder="z. B. Neon-Symphonie #4">
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="btn-cancel-art" class="btn-cancel">Abbrechen</button>
+                <button type="button" id="btn-save-art" class="btn-submit" disabled>
+                    <span id="btn-save-art-text">Bild anpinnen</span>
+                    <div id="btn-save-art-spinner" class="spinner hidden" style="border-top-color:#000; width:14px; height:14px;"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="view-note-modal" class="modal-backdrop">
         <div class="note-card">
             <h3>Notiz an der Wand</h3>
             <div id="view-note-meta" class="note-detail-meta"></div>
+            <div id="view-note-image-container" style="display: none; text-align: center; margin-bottom: 1rem;">
+                <img id="view-note-image" style="max-height: 280px; max-width: 100%; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.2);" alt="Bildnotiz">
+            </div>
             <div id="view-note-body" class="note-detail-content"></div>
             <div class="modal-actions">
                 <button type="button" id="btn-close-view-note" class="btn-cancel">Schließen</button>
@@ -846,7 +842,6 @@
         const navUserEmail = document.getElementById("nav-user-email");
         const btnLogout = document.getElementById("btn-logout");
         const interactPrompt = document.getElementById("interact-prompt");
-        const clickOverlay = document.getElementById("click-overlay");
 
         // Modals & Settings
         const btnSettings = document.getElementById("btn-settings");
@@ -855,12 +850,16 @@
         const btnCancelSettings = document.getElementById("btn-cancel-settings");
         const btnSaveSettings = document.getElementById("btn-save-settings");
 
+        // View Note Modal
         const viewNoteModal = document.getElementById("view-note-modal");
         const viewNoteMeta = document.getElementById("view-note-meta");
         const viewNoteBody = document.getElementById("view-note-body");
+        const viewNoteImageContainer = document.getElementById("view-note-image-container");
+        const viewNoteImage = document.getElementById("view-note-image");
         const btnCloseViewNote = document.getElementById("btn-close-view-note");
         const btnDeleteNote = document.getElementById("btn-delete-note");
 
+        // Text Note Modal (Pinboard)
         const noteModal = document.getElementById("note-modal");
         const noteTextarea = document.getElementById("note-textarea");
         const btnCancelNote = document.getElementById("btn-cancel-note");
@@ -868,12 +867,26 @@
         const btnSaveText = document.getElementById("btn-save-text");
         const btnSaveSpinner = document.getElementById("btn-save-spinner");
 
+        // Art Image Note Modal (Art-Raum)
+        const artNoteModal = document.getElementById("art-note-modal");
+        const artFileInput = document.getElementById("art-file-input");
+        const btnBrowseArt = document.getElementById("btn-browse-art");
+        const artFileInfo = document.getElementById("art-file-info");
+        const artPreviewWrapper = document.getElementById("art-preview-wrapper");
+        const artPreviewImg = document.getElementById("art-preview-img");
+        const artCompressInfo = document.getElementById("art-compress-info");
+        const artCaptionInput = document.getElementById("art-caption-input");
+        const btnCancelArt = document.getElementById("btn-cancel-art");
+        const btnSaveArt = document.getElementById("btn-save-art");
+        const btnSaveArtText = document.getElementById("btn-save-art-text");
+        const btnSaveArtSpinner = document.getElementById("btn-save-art-spinner");
+
         // ── STATE ──
         let currentUser = null;
         let unsubscribeNotes = null;
         let isModalOpen = false;
-        let currentInteractTarget = null; // { type: 'note' | 'seat' | 'wall', ... }
-        let savedWallTarget = null;
+        let currentInteractTarget = null; // { type: 'note' | 'seat' | 'pinboard' | 'artWall', ... }
+        let savedPinTarget = null;
         const notesMeshMap = new Map(); // id -> THREE.Mesh
 
         // Sitzen & Interaktion
@@ -882,11 +895,179 @@
         let isSitting = false;
         let currentSeat = null;
 
+        // Pinboards (Notizbereiche)
+        const pinboardMeshes = [];
+
         // Springen & Physik
         let velocityY = 0;
         let isOnGround = true;
         const GRAVITY = -22;
         const JUMP_STRENGTH = 7.5;
+
+        // Komprimiertes Bild im Art-Modal
+        let compressedArtData = null;
+
+        // ── PROCEDURAL CARPET FOOTSTEP AUDIO (Web Audio API) ──
+        class CarpetFootstepAudio {
+            constructor() {
+                this.ctx = null;
+                this.stepTimer = 0;
+                this.stepInterval = 0.38; // Passend zur Laufgeschwindigkeit
+                this.isLeftFoot = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume().catch(() => {});
+                }
+            }
+
+            playStep() {
+                if (!this.ctx) this.init();
+                if (!this.ctx) return;
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume().catch(() => {});
+                }
+
+                const t = this.ctx.currentTime;
+                const panVal = this.isLeftFoot ? -0.15 : 0.15;
+                this.isLeftFoot = !this.isLeftFoot;
+
+                let dest = this.ctx.destination;
+                if (this.ctx.createStereoPanner) {
+                    const panner = this.ctx.createStereoPanner();
+                    panner.pan.setValueAtTime(panVal, t);
+                    panner.connect(dest);
+                    dest = panner;
+                }
+
+                // 1. Weicher dumpfer Teppich-Aufprall (Muffled Bass Thud: 55-90 Hz)
+                const osc = this.ctx.createOscillator();
+                const oscGain = this.ctx.createGain();
+                const baseFreq = 70 + Math.random() * 15;
+                osc.frequency.setValueAtTime(baseFreq, t);
+                osc.frequency.exponentialRampToValueAtTime(32, t + 0.08);
+
+                oscGain.gain.setValueAtTime(0.20 + Math.random() * 0.04, t);
+                oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.085);
+
+                osc.connect(oscGain);
+                oscGain.connect(dest);
+                osc.start(t);
+                osc.stop(t + 0.09);
+
+                // 2. Weiches Teppichfaser-Geräusch (Low-pass filtered noise)
+                const bufferSize = Math.floor(this.ctx.sampleRate * 0.07);
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.28));
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = "lowpass";
+                filter.frequency.setValueAtTime(420 + Math.random() * 80, t);
+
+                const noiseGain = this.ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.14 + Math.random() * 0.03, t);
+                noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+
+                noise.connect(filter);
+                filter.connect(noiseGain);
+                noiseGain.connect(dest);
+
+                noise.start(t);
+                noise.stop(t + 0.075);
+            }
+
+            update(delta, isMoving, onGround, sitting) {
+                if (!isMoving || !onGround || sitting) {
+                    this.stepTimer = 0.12;
+                    return;
+                }
+
+                this.stepTimer += delta;
+                if (this.stepTimer >= this.stepInterval) {
+                    this.playStep();
+                    this.stepTimer = 0;
+                }
+            }
+        }
+
+        const footstepAudio = new CarpetFootstepAudio();
+
+        // ── BILD-KOMPRIMIERUNGS-PROGRAMM (Maximal 100 KB) ──
+        async function compressImageToMax100KB(file) {
+            const MAX_BYTES = 100 * 1024; // 100 KB
+            
+            const img = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const image = new Image();
+                    image.onload = () => resolve(image);
+                    image.onerror = () => reject(new Error("Bild konnte nicht geladen werden."));
+                    image.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error("Datei konnte nicht gelesen werden."));
+                reader.readAsDataURL(file);
+            });
+
+            let width = img.width;
+            let height = img.height;
+            const MAX_INITIAL_DIM = 1200;
+            if (width > MAX_INITIAL_DIM || height > MAX_INITIAL_DIM) {
+                if (width > height) {
+                    height = Math.round((height * MAX_INITIAL_DIM) / width);
+                    width = MAX_INITIAL_DIM;
+                } else {
+                    width = Math.round((width * MAX_INITIAL_DIM) / height);
+                    height = MAX_INITIAL_DIM;
+                }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            let quality = 0.85;
+            let dataUrl = canvas.toDataURL("image/jpeg", quality);
+            let byteSize = Math.round((dataUrl.length - dataUrl.indexOf(",") - 1) * 3 / 4);
+
+            let iterations = 0;
+            while (byteSize > MAX_BYTES && iterations < 18) {
+                iterations++;
+                if (quality > 0.35) {
+                    quality -= 0.10;
+                } else {
+                    width = Math.round(width * 0.80);
+                    height = Math.round(height * 0.80);
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    quality = 0.70;
+                }
+                dataUrl = canvas.toDataURL("image/jpeg", quality);
+                byteSize = Math.round((dataUrl.length - dataUrl.indexOf(",") - 1) * 3 / 4);
+            }
+
+            return {
+                dataUrl: dataUrl,
+                byteSize: byteSize,
+                width: width,
+                height: height
+            };
+        }
 
         // ── HILFSFUNKTIONEN ──
         function escapeHtml(str) {
@@ -1003,7 +1184,7 @@
             }
         });
 
-        // Tab schließen / verlassen
+        // Tab schließen
         window.addEventListener("beforeunload", () => {
             if (myPlayerRef) {
                 rtdbRemove(myPlayerRef).catch(() => {});
@@ -1043,7 +1224,7 @@
             }
         });
 
-        // ── EINSTELLUNGEN MODAL (SPIELERNAME) ──
+        // ── EINSTELLUNGEN MODAL ──
         btnSettings.addEventListener("click", () => {
             if (controls && controls.isLocked) controls.unlock();
             settingsNickname.value = getStoredNickname();
@@ -1055,9 +1236,6 @@
         function closeSettingsModal() {
             isModalOpen = false;
             settingsModal.classList.remove("visible");
-            if (controls && !controls.isLocked) {
-                clickOverlay.classList.remove("hidden");
-            }
         }
 
         btnCancelSettings.addEventListener("click", () => {
@@ -1104,12 +1282,28 @@
             const author = data.author || "Anonym";
             const dateStr = formatNoteDate(data.createdAt);
             
-            viewNoteMeta.innerHTML = `Gepostet von <strong>${escapeHtml(author)}</strong> am <strong>${escapeHtml(dateStr)}</strong>`;
-            viewNoteBody.textContent = data.text || "";
+            const isImage = data.type === "image" && data.imageUrl;
+            const titleEl = document.getElementById("view-note-title");
+            if (titleEl) {
+                titleEl.textContent = isImage ? (data.caption || "Kunstwerk") : "Notiz an der Pinwand";
+            }
+
+            viewNoteMeta.innerHTML = `Von <strong>${escapeHtml(author)}</strong> am <strong>${escapeHtml(dateStr)}</strong>`;
+
+            if (isImage) {
+                viewNoteImageContainer.style.display = "block";
+                viewNoteImage.src = data.imageUrl;
+                viewNoteBody.style.display = data.caption ? "block" : "none";
+                viewNoteBody.textContent = data.caption || "";
+            } else {
+                viewNoteImageContainer.style.display = "none";
+                viewNoteBody.style.display = "block";
+                viewNoteBody.textContent = data.text || "";
+            }
             
             btnDeleteNote.dataset.noteId = noteId;
             btnDeleteNote.disabled = false;
-            btnDeleteNote.innerHTML = "<span>🗑️ Notiz entfernen</span>";
+            btnDeleteNote.innerHTML = isImage ? "<span>🗑️ Bild entfernen</span>" : "<span>🗑️ Notiz entfernen</span>";
 
             viewNoteModal.classList.add("visible");
             interactPrompt.classList.remove("visible");
@@ -1119,9 +1313,6 @@
             isModalOpen = false;
             viewNoteModal.classList.remove("visible");
             btnDeleteNote.dataset.noteId = "";
-            if (controls && !controls.isLocked) {
-                clickOverlay.classList.remove("hidden");
-            }
         }
 
         btnCloseViewNote.addEventListener("click", () => {
@@ -1149,10 +1340,10 @@
                     if (controls && !controls.isLocked) controls.lock();
                 } catch (err) {}
             } catch (err) {
-                console.error("Fehler beim Löschen der Notiz:", err);
-                alert("Fehler beim Löschen der Notiz: " + (err.message || "Unbekannter Fehler"));
+                console.error("Fehler beim Löschen:", err);
+                alert("Fehler beim Löschen: " + (err.message || "Unbekannter Fehler"));
                 btnDeleteNote.disabled = false;
-                btnDeleteNote.innerHTML = "<span>🗑️ Notiz entfernen</span>";
+                btnDeleteNote.innerHTML = "<span>🗑️ Entfernen</span>";
             }
         });
 
@@ -1199,35 +1390,213 @@
         let animationFrameId = null;
         let artSculpture = null;
 
-        // Bewegung & Physik
         const moveState = { forward: false, backward: false, left: false, right: false };
-        const moveSpeed = 6.5; // Einheiten pro Sekunde
+        const moveSpeed = 6.5;
         const clock = new THREE.Clock();
 
-        // Dimensionen: Hof 4x so groß wie der alte 20x20 Raum
         const COURTYARD_RADIUS = 24.0;
         const WALL_HEIGHT = 5.0;
         const EYE_HEIGHT = 1.70;
 
-        // Die 4 runden Satellitenräume mit Türöffnung zum Spawnpunkt (0, 0, 0)
-        // rotY dreht den Zylinder so, dass die Öffnung exakt zum Ursprung zeigt:
-        // Nord (cz = -16.5) -> Tür nach +Z -> rotY = 0
-        // Süd (cz = +16.5) -> Tür nach -Z -> rotY = PI
-        // Ost (cx = +16.5) -> Tür nach -X -> rotY = -PI/2
-        // West (cx = -16.5) -> Tür nach +X -> rotY = PI/2
+        // 4 Satellitenräume mit den vom Nutzer vorgegebenen Namen:
+        // Nord: Arbeit, Süd: Chillen, West: Gaming, Ost: Art
         const SATELLITE_ROOMS = [
-            { name: "Arbeitsraum", cx: 0, cz: -16.5, radius: 5.5, rotY: 0, doorAngle: Math.PI / 2 },
-            { name: "Entspannung", cx: 0, cz: 16.5, radius: 5.5, rotY: Math.PI, doorAngle: -Math.PI / 2 },
-            { name: "Galerie", cx: 16.5, cz: 0, radius: 5.5, rotY: -Math.PI / 2, doorAngle: Math.PI },
-            { name: "Café & Bar", cx: -16.5, cz: 0, radius: 5.5, rotY: Math.PI / 2, doorAngle: 0 }
+            { name: "Arbeit", cx: 0, cz: -16.5, radius: 5.5, rotY: 0, doorAngle: Math.PI / 2, pinAngle: Math.PI },
+            { name: "Chillen", cx: 0, cz: 16.5, radius: 5.5, rotY: Math.PI, doorAngle: -Math.PI / 2, pinAngle: 0 },
+            { name: "Gaming", cx: -16.5, cz: 0, radius: 5.5, rotY: Math.PI / 2, doorAngle: 0, pinAngle: Math.PI / 2 },
+            { name: "Art", cx: 16.5, cz: 0, radius: 5.5, rotY: -Math.PI / 2, doorAngle: Math.PI } // Keine Beschränkung auf Pinboard
         ];
 
-        // ── GEOMETRIE-BAUSTEINE FÜR RÄUME ──
+        // ── KRONENDÄCHER & TÜRSCHILDER ──
+        function createDoorSign(title, x, y, z, rotY) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 1024;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            ctx.clearRect(0, 0, 1024, 256);
+
+            // Weißer Text in Corporate Font Quicksand
+            ctx.fillStyle = "#ffffff";
+            ctx.font = 'bold 96px "Quicksand", sans-serif';
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+            ctx.shadowBlur = 14;
+            ctx.fillText(title, 512, 128);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.8), mat);
+            mesh.position.set(x, y, z);
+            mesh.rotation.y = rotY;
+            scene.add(mesh);
+        }
+
+        // ── SPAWN-BODENFLÄCHE MIT RUNDEM TEXT ──
+        function createCurvedSpawnMesh() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 2048;
+            canvas.height = 2048;
+            const ctx = canvas.getContext("2d");
+
+            const cx = 1024;
+            const cy = 1024;
+            const radius = 780;
+
+            ctx.clearRect(0, 0, 2048, 2048);
+
+            // Dunkler Spawnpad-Hintergrund
+            ctx.beginPath();
+            ctx.arc(cx, cy, 960, 0, Math.PI * 2);
+            ctx.fillStyle = "#0c0a09";
+            ctx.fill();
+
+            // Zierringe
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 940, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 640, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Kompass-Kreuz in der Mitte
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(cx - 70, cy);
+            ctx.lineTo(cx + 70, cy);
+            ctx.moveTo(cx, cy - 70);
+            ctx.lineTo(cx, cy + 70);
+            ctx.stroke();
+
+            // Runder Text: "MANSION (Multi Angle Navigation System for Idea Organizing and Notebooking)"
+            const text = "MANSION (Multi Angle Navigation System for Idea Organizing and Notebooking)";
+            ctx.font = 'bold 50px "Quicksand", sans-serif';
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            let totalTextWidth = 0;
+            for (let i = 0; i < text.length; i++) {
+                totalTextWidth += ctx.measureText(text[i]).width + 4;
+            }
+
+            const totalAngle = (totalTextWidth / radius);
+            const startAngle = -Math.PI / 2 - totalAngle / 2;
+
+            let currentAngle = startAngle;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const charWidth = ctx.measureText(char).width + 4;
+                const charAngle = charWidth / radius;
+                const midAngle = currentAngle + charAngle / 2;
+
+                ctx.save();
+                ctx.translate(cx + Math.cos(midAngle) * radius, cy + Math.sin(midAngle) * radius);
+                ctx.rotate(midAngle + Math.PI / 2);
+                ctx.fillText(char, 0, 0);
+                ctx.restore();
+
+                currentAngle += charAngle;
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+
+            const spawnMesh = new THREE.Mesh(
+                new THREE.CircleGeometry(2.4, 64),
+                new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
+            );
+            spawnMesh.rotation.x = -Math.PI / 2;
+            spawnMesh.position.set(0, 0.012, 0);
+            return spawnMesh;
+        }
+
+        // ── GEKRÜMMTE NOTIZBEREICHE (PINWÄNDE MIT SCHWARZEM RAHMEN) ──
+        function createCurvedPinboard(room) {
+            const boardRadius = 5.46; // Minimal vor der Wand (r = 5.5)
+            const boardHeight = 2.2;
+            const boardArc = 0.70; // ca. 3.8 Meter Breite an der Wand
+
+            const canvas = document.createElement("canvas");
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+
+            // Dunkler Pinwand-Körper
+            ctx.fillStyle = "#1e1e24";
+            ctx.fillRect(0, 0, 1024, 512);
+
+            // Feines Raster
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+            ctx.lineWidth = 1;
+            for (let x = 0; x < 1024; x += 32) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, 512);
+                ctx.stroke();
+            }
+            for (let y = 0; y < 512; y += 32) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(1024, y);
+                ctx.stroke();
+            }
+
+            // SCHWARZER RAHMEN (Massiv)
+            ctx.lineWidth = 36;
+            ctx.strokeStyle = "#000000";
+            ctx.strokeRect(18, 18, 1024 - 36, 512 - 36);
+
+            // Header-Label
+            ctx.fillStyle = "#ffffff";
+            ctx.font = 'bold 26px "Quicksand", sans-serif';
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(`📌 NOTIZBEREICH • ${room.name.toUpperCase()}`, 512, 46);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+
+            // Zylindersegment
+            const pinGeo = new THREE.CylinderGeometry(boardRadius, boardRadius, boardHeight, 32, 1, true, -boardArc / 2, boardArc);
+            const pinMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+            const pinMesh = new THREE.Mesh(pinGeo, pinMat);
+
+            // Drehung um Y entsprechend dem gewünschten Wandbereich
+            // In CylinderGeometry liegt theta=0 bei (0, 1) -> +Z
+            // Um an pinAngle zu liegen, rotieren wir:
+            const rotY = -room.pinAngle + Math.PI / 2;
+            pinMesh.position.set(room.cx, 2.1, room.cz);
+            pinMesh.rotation.y = rotY;
+
+            pinMesh.userData = {
+                isPinboard: true,
+                roomName: room.name,
+                roomCenter: new THREE.Vector2(room.cx, room.cz),
+                radius: boardRadius
+            };
+
+            scene.add(pinMesh);
+            pinboardMeshes.push(pinMesh);
+        }
+
+        // ── RUNDE RAUMWÄNDE MIT TÜREN ──
         function createCircularRoomWall(room) {
-            const doorGap = 0.70; // ca. 3.85 Meter breite Türöffnung
+            const doorGap = 0.70;
             const wallArc = Math.PI * 2 - doorGap;
 
-            // Zylinder mit Türöffnung (im Zylinder um theta = 0 zentriert)
             const wallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
             const wallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
             const wallMesh = new THREE.Mesh(wallGeo, wallMat);
@@ -1235,13 +1604,14 @@
             wallMesh.rotation.y = room.rotY;
             wallMesh.userData = {
                 isRoomWall: true,
+                roomName: room.name,
                 roomCenter: new THREE.Vector2(room.cx, room.cz),
                 radius: room.radius
             };
             scene.add(wallMesh);
             wallMeshes.push(wallMesh);
 
-            // Die zwei schlanken Türpfosten an den Rändern des Eingangs
+            // Türpfosten
             const pillarGeo = new THREE.CylinderGeometry(0.06, 0.06, WALL_HEIGHT, 16);
             const pillarMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
 
@@ -1249,7 +1619,6 @@
                 const x_cyl = room.radius * Math.sin(theta);
                 const z_cyl = room.radius * Math.cos(theta);
 
-                // Rotation um room.rotY in Weltkoordinaten
                 const x_rot = x_cyl * Math.cos(room.rotY) + z_cyl * Math.sin(room.rotY);
                 const z_rot = -x_cyl * Math.sin(room.rotY) + z_cyl * Math.cos(room.rotY);
 
@@ -1258,16 +1627,28 @@
                 scene.add(pillar);
             });
 
-            // Decke des Raumes (keine störenden Balken)
+            // Decke
             const ceilingGeo = new THREE.CircleGeometry(room.radius, 48);
             const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x18181b, side: THREE.DoubleSide });
             const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
             ceiling.rotation.x = Math.PI / 2;
             ceiling.position.set(room.cx, WALL_HEIGHT, room.cz);
             scene.add(ceiling);
+
+            // Weißes Türschild über der Tür
+            const doorPosAngle = room.doorAngle;
+            const signX = room.cx + Math.cos(doorPosAngle) * (room.radius - 0.05);
+            const signZ = room.cz + Math.sin(doorPosAngle) * (room.radius - 0.05);
+            const signRotY = -doorPosAngle + Math.PI / 2;
+            createDoorSign(room.name, signX, 4.4, signZ, signRotY);
+
+            // Pinboard für Räume außer Art
+            if (room.name !== "Art") {
+                createCurvedPinboard(room);
+            }
         }
 
-        // 1. ARBEITSRAUM
+        // 1. ARBEIT (Nord)
         function buildArbeitsraum() {
             const rx = 0, rz = -16.5;
 
@@ -1282,7 +1663,7 @@
             roomLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
             scene.add(roomLight);
 
-            // Großes Bücherregal an der Rückwand
+            // Bücherregal an der Rückwand
             const shelfGroup = new THREE.Group();
             const shelfFrameMat = new THREE.MeshLambertMaterial({ color: 0x1c1917 });
             const shelfBoardMat = new THREE.MeshLambertMaterial({ color: 0xf4f4f5 });
@@ -1299,17 +1680,14 @@
             sideR.position.set(2.05, 1.6, 0.24);
             shelfGroup.add(sideR);
 
-            const shelfHeights = [0.1, 0.85, 1.6, 2.35, 3.1];
-            shelfHeights.forEach((h) => {
+            [0.1, 0.85, 1.6, 2.35, 3.1].forEach((h) => {
                 const board = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.06, 0.55), shelfBoardMat);
                 board.position.set(0, h, 0.24);
                 shelfGroup.add(board);
             });
 
-            // Bücherreihen
             const bookColors = [0xb91c1c, 0x1d4ed8, 0x047857, 0xb45309, 0x475569, 0xf59e0b, 0x4338ca, 0x0f172a];
-            const rowY = [0.45, 1.20, 1.95, 2.70];
-            rowY.forEach((by) => {
+            [0.45, 1.20, 1.95, 2.70].forEach((by) => {
                 let bx = -1.85;
                 while (bx < 1.8) {
                     const bWidth = 0.06 + Math.random() * 0.05;
@@ -1328,7 +1706,7 @@
             shelfGroup.position.set(rx, 0, rz - 4.6);
             scene.add(shelfGroup);
 
-            // 4 identische Schreibtische mit Computern & Stühlen
+            // 4 identische Schreibtische mit Bürostühlen
             const deskConfigs = [
                 { x: rx - 2.2, z: rz + 1.8, faceAngle: Math.PI },
                 { x: rx + 2.2, z: rz + 1.8, faceAngle: Math.PI },
@@ -1409,14 +1787,6 @@
             backMesh.position.set(0, 0.74, 0.22);
             chairGroup.add(backMesh);
 
-            const armGeo = new THREE.BoxGeometry(0.06, 0.20, 0.30);
-            const armL = new THREE.Mesh(armGeo, baseMat);
-            armL.position.set(-0.24, 0.58, 0.05);
-            chairGroup.add(armL);
-            const armR = new THREE.Mesh(armGeo, baseMat);
-            armR.position.set(0.24, 0.58, 0.05);
-            chairGroup.add(armR);
-
             chairGroup.position.set(0, 0, 0.58);
             group.add(chairGroup);
 
@@ -1429,8 +1799,8 @@
             registerSeat(seatMesh, `Schreibtisch ${num}`, chairWorldPos, lookDir);
         }
 
-        // 2. ENTSPANNUNGSRAUM
-        function buildEntspannungsraum() {
+        // 2. CHILLEN (Süd)
+        function buildChillenRaum() {
             const rx = 0, rz = 16.5;
 
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
@@ -1444,20 +1814,13 @@
             warmLight.position.set(rx, WALL_HEIGHT - 0.7, rz);
             scene.add(warmLight);
 
-            // Runder roter Teppich
+            // Roter runder Teppich
             const rugGeo = new THREE.CircleGeometry(3.4, 48);
             const rugMat = new THREE.MeshLambertMaterial({ color: 0x991b1b, side: THREE.DoubleSide });
             const rug = new THREE.Mesh(rugGeo, rugMat);
             rug.rotation.x = -Math.PI / 2;
             rug.position.set(rx, 0.022, rz);
             scene.add(rug);
-
-            const rugBorderGeo = new THREE.RingGeometry(3.32, 3.4, 48);
-            const rugBorderMat = new THREE.MeshBasicMaterial({ color: 0x7f1d1d, side: THREE.DoubleSide });
-            const rugBorder = new THREE.Mesh(rugBorderGeo, rugBorderMat);
-            rugBorder.rotation.x = -Math.PI / 2;
-            rugBorder.position.set(rx, 0.024, rz);
-            scene.add(rugBorder);
 
             // Gelber Tisch
             const tableGroup = new THREE.Group();
@@ -1477,11 +1840,6 @@
             const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.10, 16), new THREE.MeshLambertMaterial({ color: 0xffffff }));
             cup.position.set(0.25, 0.54, 0.15);
             tableGroup.add(cup);
-
-            const mag = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.015, 0.24), new THREE.MeshLambertMaterial({ color: 0x3b82f6 }));
-            mag.position.set(-0.20, 0.495, -0.10);
-            mag.rotation.y = 0.35;
-            tableGroup.add(mag);
 
             tableGroup.position.set(rx, 0, rz + 0.4);
             scene.add(tableGroup);
@@ -1503,7 +1861,6 @@
             const armL = new THREE.Mesh(armGeo, blueMat);
             armL.position.set(-2.15, 0.42, 0);
             couchGroup.add(armL);
-
             const armR = new THREE.Mesh(armGeo, blueMat);
             armR.position.set(2.15, 0.42, 0);
             couchGroup.add(armR);
@@ -1539,40 +1896,175 @@
             scene.add(lampGroup);
         }
 
-        // 3. GALERIE
-        function buildGalerie() {
-            const rx = 16.5, rz = 0;
+        // 3. GAMING (West)
+        function buildGamingRaum() {
+            const rx = -16.5, rz = 0;
 
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
-            const floorMat = new THREE.MeshLambertMaterial({ color: 0xf4f4f5 });
+            const floorMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
             floor.position.set(rx, 0.015, rz);
             scene.add(floor);
 
-            const galleryLight = new THREE.PointLight(0xffffff, 0.9, 18);
+            // RGB / Cyberpunk Neon-Licht (Lila / Cyan)
+            const neonPurple = new THREE.PointLight(0xa855f7, 0.9, 18);
+            neonPurple.position.set(rx - 1.5, WALL_HEIGHT - 0.7, rz - 1.5);
+            scene.add(neonPurple);
+
+            const neonCyan = new THREE.PointLight(0x06b6d4, 0.9, 18);
+            neonCyan.position.set(rx + 1.5, WALL_HEIGHT - 0.7, rz + 1.5);
+            scene.add(neonCyan);
+
+            // 1. Zwei Battle-Station Gaming-Desks mit Dual-Monitoren
+            const gamingDeskPositions = [
+                { x: rx - 2.5, z: rz - 1.8, faceAngle: 0, num: 1 },
+                { x: rx - 2.5, z: rz + 1.8, faceAngle: 0, num: 2 }
+            ];
+
+            gamingDeskPositions.forEach(cfg => {
+                const group = new THREE.Group();
+
+                // Schwarzer Gaming-Tisch
+                const deskTop = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.7, 0.06, 0.9),
+                    new THREE.MeshLambertMaterial({ color: 0x18181b })
+                );
+                deskTop.position.y = 0.74;
+                group.add(deskTop);
+
+                // LED-Streifen an Tischkante
+                const led = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.7, 0.015, 0.02),
+                    new THREE.MeshBasicMaterial({ color: cfg.num === 1 ? 0x06b6d4 : 0xec4899 })
+                );
+                led.position.set(0, 0.71, 0.44);
+                group.add(led);
+
+                // Tischbeine (Z-Form / Metall)
+                const legMat = new THREE.MeshLambertMaterial({ color: 0x3f3f46 });
+                [[-0.75, 0], [0.75, 0]].forEach(([lx, lz]) => {
+                    const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.74, 0.8), legMat);
+                    l.position.set(lx, 0.37, lz);
+                    group.add(l);
+                });
+
+                // Dual Monitors
+                [-0.38, 0.38].forEach((mx, mi) => {
+                    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.42, 0.03), new THREE.MeshBasicMaterial({ color: 0x0a0a0a }));
+                    frame.position.set(mx, 1.08, -0.15);
+                    frame.rotation.y = mi === 0 ? 0.12 : -0.12;
+                    group.add(frame);
+
+                    const screen = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.66, 0.38),
+                        new THREE.MeshBasicMaterial({ color: cfg.num === 1 ? 0x38bdf8 : 0xd946ef })
+                    );
+                    screen.position.set(mx, 1.08, -0.134);
+                    screen.rotation.y = mi === 0 ? 0.12 : -0.12;
+                    group.add(screen);
+                });
+
+                // RGB-Tastatur & Gaming-Maus
+                const kb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.015, 0.14), new THREE.MeshBasicMaterial({ color: 0x8b5cf6 }));
+                kb.position.set(0, 0.775, 0.14);
+                group.add(kb);
+
+                // Gaming-Chair (Ergonomischer Rennsitz mit Nackenkissen)
+                const chairGroup = new THREE.Group();
+                const chairMat = new THREE.MeshLambertMaterial({ color: cfg.num === 1 ? 0x0284c7 : 0x9333ea });
+                const darkMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+
+                const starBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 5), darkMat);
+                starBase.position.y = 0.06;
+                chairGroup.add(starBase);
+
+                const cSeat = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.10, 0.50), chairMat);
+                cSeat.position.y = 0.48;
+                chairGroup.add(cSeat);
+
+                const cBack = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.65, 0.08), chairMat);
+                cBack.position.set(0, 0.82, 0.22);
+                chairGroup.add(cBack);
+
+                chairGroup.position.set(0, 0, 0.62);
+                group.add(chairGroup);
+
+                group.rotation.y = cfg.faceAngle;
+                group.position.set(cfg.x, 0, cfg.z);
+                scene.add(group);
+
+                const seatWorldPos = new THREE.Vector3(0, 1.15, 0.62).applyAxisAngle(new THREE.Vector3(0, 1, 0), cfg.faceAngle).add(new THREE.Vector3(cfg.x, 0, cfg.z));
+                const lookDir = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), cfg.faceAngle).normalize();
+                registerSeat(cSeat, `Gaming-Station ${cfg.num}`, seatWorldPos, lookDir);
+            });
+
+            // 2. Retro Arcade Automat an der Wand
+            const arcadeGroup = new THREE.Group();
+            const arcadeMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const cabinet = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.1, 0.9), arcadeMat);
+            cabinet.position.y = 1.05;
+            arcadeGroup.add(cabinet);
+
+            // Arcade Screen
+            const arcadeScreen = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.65, 0.50),
+                new THREE.MeshBasicMaterial({ color: 0x22c55e })
+            );
+            arcadeScreen.position.set(0, 1.35, 0.46);
+            arcadeScreen.rotation.x = -0.15;
+            arcadeGroup.add(arcadeScreen);
+
+            // Marquee oben
+            const marquee = new THREE.Mesh(
+                new THREE.BoxGeometry(0.8, 0.22, 0.15),
+                new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+            );
+            marquee.position.set(0, 1.95, 0.42);
+            arcadeGroup.add(marquee);
+
+            arcadeGroup.position.set(rx + 2.4, 0, rz - 2.8);
+            arcadeGroup.rotation.y = -Math.PI / 4;
+            scene.add(arcadeGroup);
+        }
+
+        // 4. ART (Ost)
+        function buildArtRaum() {
+            const rx = 16.5, rz = 0;
+
+            const floorGeo = new THREE.CircleGeometry(5.42, 48);
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f7 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(rx, 0.015, rz);
+            scene.add(floor);
+
+            const galleryLight = new THREE.PointLight(0xffffff, 0.95, 18);
             galleryLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
             scene.add(galleryLight);
 
+            // Zentrales Marmorpodest
             const pedestal = new THREE.Mesh(
-                new THREE.BoxGeometry(1.2, 0.9, 1.2),
+                new THREE.BoxGeometry(1.3, 0.9, 1.3),
                 new THREE.MeshLambertMaterial({ color: 0xffffff })
             );
             pedestal.position.set(rx, 0.45, rz);
             scene.add(pedestal);
 
+            // Animiertes golden-cyan TorusKnot Kunstwerk
             const sculptureGeo = new THREE.TorusKnotGeometry(0.55, 0.18, 64, 16);
             const sculptureMat = new THREE.MeshStandardMaterial({
                 color: 0x06b6d4,
                 emissive: 0x0284c7,
-                emissiveIntensity: 0.5,
-                metalness: 0.8,
-                roughness: 0.2
+                emissiveIntensity: 0.55,
+                metalness: 0.85,
+                roughness: 0.15
             });
             artSculpture = new THREE.Mesh(sculptureGeo, sculptureMat);
             artSculpture.position.set(rx, 1.75, rz);
             scene.add(artSculpture);
 
+            // Galerie-Sitzbank
             const benchGroup = new THREE.Group();
             const benchSeat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 0.65), new THREE.MeshLambertMaterial({ color: 0x27272a }));
             benchSeat.position.y = 0.48;
@@ -1592,92 +2084,6 @@
             registerSeat(benchSeat, "Galerie-Sitzbank", new THREE.Vector3(rx + 3.0, 1.15, rz), new THREE.Vector3(-1, 0, 0));
         }
 
-        // 4. CAFÉ & BAR
-        function buildCafeRaum() {
-            const rx = -16.5, rz = 0;
-
-            const floorGeo = new THREE.CircleGeometry(5.42, 48);
-            const floorMat = new THREE.MeshLambertMaterial({ color: 0x1c1917 });
-            const floor = new THREE.Mesh(floorGeo, floorMat);
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.set(rx, 0.015, rz);
-            scene.add(floor);
-
-            const cafeLight = new THREE.PointLight(0xfef3c7, 0.9, 18);
-            cafeLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
-            scene.add(cafeLight);
-
-            const counterGroup = new THREE.Group();
-            const counterMat = new THREE.MeshLambertMaterial({ color: 0x292524 });
-            const counterTopMat = new THREE.MeshLambertMaterial({ color: 0xd6d3d1 });
-
-            const counterBody = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.05, 0.8), counterMat);
-            counterBody.position.y = 0.525;
-            counterGroup.add(counterBody);
-
-            const counterTop = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.06, 0.9), counterTopMat);
-            counterTop.position.y = 1.08;
-            counterGroup.add(counterTop);
-
-            const coffeeMachine = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.50, 0.45), new THREE.MeshLambertMaterial({ color: 0x71717a }));
-            coffeeMachine.position.set(-0.8, 1.34, 0);
-            counterGroup.add(coffeeMachine);
-
-            [-0.1, 0.15, 0.4].forEach((cx) => {
-                const c = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.08, 12), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-                c.position.set(cx, 1.15, 0.1);
-                counterGroup.add(c);
-            });
-
-            counterGroup.position.set(rx - 3.0, 0, rz);
-            counterGroup.rotation.y = Math.PI / 2;
-            scene.add(counterGroup);
-
-            const bistroConfigs = [
-                { z: -2.0, num: 1 },
-                { z: 2.0, num: 2 }
-            ];
-
-            bistroConfigs.forEach((cfg) => {
-                const tableGroup = new THREE.Group();
-                const bTop = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.04, 24), counterTopMat);
-                bTop.position.y = 0.95;
-                tableGroup.add(bTop);
-
-                const bPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.95), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-                bPole.position.y = 0.475;
-                tableGroup.add(bPole);
-
-                const bBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.02, 24), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-                bBase.position.y = 0.01;
-                tableGroup.add(bBase);
-
-                tableGroup.position.set(rx + 0.8, 0, rz + cfg.z);
-                scene.add(tableGroup);
-
-                [-0.65, 0.65].forEach((hx) => {
-                    const stoolGroup = new THREE.Group();
-                    const stoolSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.06, 16), new THREE.MeshLambertMaterial({ color: 0x991b1b }));
-                    stoolSeat.position.y = 0.68;
-                    stoolGroup.add(stoolSeat);
-
-                    const sPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.68), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-                    sPole.position.y = 0.34;
-                    stoolGroup.add(sPole);
-
-                    const sBase = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.02, 16), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-                    sBase.position.y = 0.01;
-                    stoolGroup.add(sBase);
-
-                    stoolGroup.position.set(rx + 0.8 + hx, 0, rz + cfg.z);
-                    scene.add(stoolGroup);
-
-                    const seatLook = new THREE.Vector3(hx > 0 ? -1 : 1, 0, 0);
-                    registerSeat(stoolSeat, `Barhocker Tisch ${cfg.num}`, new THREE.Vector3(rx + 0.8 + hx, 1.25, rz + cfg.z), seatLook);
-                });
-            });
-        }
-
         // ── 3D INIT ──
         function initThreeWorld() {
             if (scene) {
@@ -1690,7 +2096,7 @@
             scene.background = new THREE.Color(0x000000);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, EYE_HEIGHT, 0); // Spawn exakt im Zentrum des Hofs
+            camera.position.set(0, EYE_HEIGHT, 0); // Spawn im Zentrum
 
             renderer = new THREE.WebGLRenderer({ canvas: gameCanvas, antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1698,31 +2104,18 @@
 
             controls = new PointerLockControls(camera, document.body);
 
-            clickOverlay.addEventListener("click", () => {
-                if (!isModalOpen && controls && !controls.isLocked) {
-                    controls.lock();
-                }
-            });
-
+            // Klick direkt in Spiel-Leinwand aktiviert die Steuerung (ohne Willkommens-Fenster!)
             gameCanvas.addEventListener("click", () => {
                 if (!isModalOpen && controls && !controls.isLocked) {
                     controls.lock();
+                    footstepAudio.init();
                 }
             });
 
             gameContainer.addEventListener("click", (e) => {
                 if (!isModalOpen && controls && !controls.isLocked && !e.target.closest(".top-nav") && !e.target.closest(".modal-backdrop")) {
                     controls.lock();
-                }
-            });
-
-            controls.addEventListener("lock", () => {
-                clickOverlay.classList.add("hidden");
-            });
-
-            controls.addEventListener("unlock", () => {
-                if (!isModalOpen) {
-                    clickOverlay.classList.remove("hidden");
+                    footstepAudio.init();
                 }
             });
 
@@ -1742,7 +2135,7 @@
             courtyardFloor.position.y = 0;
             scene.add(courtyardFloor);
 
-            // Dekorative Ringe im zentralen Freiraum des Hofs (Radius 4 und 8)
+            // Dekorative Ringe nur im Freiraum des Innenhofs (r = 4 und 8)
             [4, 8].forEach((r) => {
                 const ring = new THREE.Mesh(
                     new THREE.RingGeometry(r - 0.03, r + 0.03, 64),
@@ -1753,24 +2146,11 @@
                 scene.add(ring);
             });
 
-            // Zentrales Spawnpad (0, 0, 0)
-            const spawnRing = new THREE.Mesh(
-                new THREE.RingGeometry(1.8, 1.95, 32),
-                new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
-            );
-            spawnRing.rotation.x = -Math.PI / 2;
-            spawnRing.position.y = 0.012;
-            scene.add(spawnRing);
+            // 2. Runder Spawn-Bereich mit MANSION-Rundschrift
+            const curvedSpawn = createCurvedSpawnMesh();
+            scene.add(curvedSpawn);
 
-            const spawnInner = new THREE.Mesh(
-                new THREE.CircleGeometry(1.8, 32),
-                new THREE.MeshBasicMaterial({ color: 0x18181b, side: THREE.DoubleSide })
-            );
-            spawnInner.rotation.x = -Math.PI / 2;
-            spawnInner.position.y = 0.010;
-            scene.add(spawnInner);
-
-            // 2. Runde weiße Hof-Außenwand (Radius 24)
+            // 3. Hof-Außenwand (Radius 24)
             const outerWallGeo = new THREE.CylinderGeometry(COURTYARD_RADIUS, COURTYARD_RADIUS, WALL_HEIGHT, 64, 1, true);
             const outerWallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.BackSide });
             const outerWall = new THREE.Mesh(outerWallGeo, outerWallMat);
@@ -1787,15 +2167,15 @@
             courtyardCeiling.position.y = WALL_HEIGHT;
             scene.add(courtyardCeiling);
 
-            // 3. Die 4 Satellitenräume
+            // 4. Die 4 Satellitenräume
             SATELLITE_ROOMS.forEach((room) => {
                 createCircularRoomWall(room);
             });
 
             buildArbeitsraum();
-            buildEntspannungsraum();
-            buildGalerie();
-            buildCafeRaum();
+            buildChillenRaum();
+            buildGamingRaum();
+            buildArtRaum();
 
             raycaster = new THREE.Raycaster();
             raycaster.far = 4.5;
@@ -1820,6 +2200,7 @@
             if (isModalOpen) {
                 if (e.key === "Escape") {
                     closeModal();
+                    closeArtModal();
                     closeViewNoteModal();
                     closeSettingsModal();
                 }
@@ -1865,8 +2246,10 @@
                         openViewNoteModal(currentInteractTarget.noteId, currentInteractTarget.data);
                     } else if (currentInteractTarget.type === 'seat') {
                         sitDown(currentInteractTarget.seat);
-                    } else if (currentInteractTarget.type === 'wall') {
-                        openNoteModal();
+                    } else if (currentInteractTarget.type === 'pinboard') {
+                        openNoteModal(currentInteractTarget.hit);
+                    } else if (currentInteractTarget.type === 'artWall') {
+                        openArtModal(currentInteractTarget.hit);
                     }
                     break;
             }
@@ -1904,6 +2287,8 @@
                 artSculpture.rotation.y += delta * 0.65;
             }
 
+            let isMoving = false;
+
             if (controls && controls.isLocked) {
                 if (!isSitting) {
                     if (!isOnGround || velocityY !== 0) {
@@ -1918,12 +2303,12 @@
                     }
 
                     const actualSpeed = moveSpeed * delta;
-                    if (moveState.forward) controls.moveForward(actualSpeed);
-                    if (moveState.backward) controls.moveForward(-actualSpeed);
-                    if (moveState.right) controls.moveRight(actualSpeed);
-                    if (moveState.left) controls.moveRight(-actualSpeed);
+                    if (moveState.forward) { controls.moveForward(actualSpeed); isMoving = true; }
+                    if (moveState.backward) { controls.moveForward(-actualSpeed); isMoving = true; }
+                    if (moveState.right) { controls.moveRight(actualSpeed); isMoving = true; }
+                    if (moveState.left) { controls.moveRight(-actualSpeed); isMoving = true; }
 
-                    // Hof-Außengrenze (Radius 23.3)
+                    // Hof-Außengrenze
                     const distFromCenter = Math.sqrt(camera.position.x * camera.position.x + camera.position.z * camera.position.z);
                     if (distFromCenter > 23.3) {
                         const angle = Math.atan2(camera.position.z, camera.position.x);
@@ -1942,7 +2327,6 @@
                             let angleDiff = Math.abs(playerAngle - room.doorAngle);
                             while (angleDiff > Math.PI) angleDiff = Math.abs(angleDiff - 2 * Math.PI);
 
-                            // Türöffnung: ca. 0.36 Radian Durchgangsbreite
                             if (angleDiff > 0.36) {
                                 const pushDist = dist > room.radius ? 6.18 : 4.82;
                                 camera.position.x = room.cx + Math.cos(playerAngle) * pushDist;
@@ -1952,10 +2336,13 @@
                     }
                 }
 
-                // Raycasting Interaktionsprüfung
+                // ── TEPPICH-SCHRITTGERÄUSCHE UPDATE ──
+                footstepAudio.update(delta, isMoving, isOnGround, isSitting);
+
+                // ── RAYCASTING INTERAKTIONS-PRÜFUNG ──
                 raycaster.setFromCamera(centerCoords, camera);
 
-                // 1. Notizen
+                // 1. Notizen (Text & Bild)
                 const noteMeshes = Array.from(notesMeshMap.values());
                 const hitNotes = raycaster.intersectObjects(noteMeshes, false);
 
@@ -1966,7 +2353,7 @@
                         noteId: hitObj.userData.id,
                         data: hitObj.userData.data
                     };
-                    interactPrompt.textContent = "Taste [E] drücken: Notiz ansehen & löschen";
+                    interactPrompt.textContent = hitObj.userData.isImage ? "Taste [E] drücken: Bild ansehen & löschen" : "Taste [E] drücken: Notiz ansehen & löschen";
                     interactPrompt.classList.add("visible");
                 } else {
                     // 2. Sitze
@@ -1981,22 +2368,40 @@
                         interactPrompt.textContent = `Taste [E] drücken: Hinsetzen (${seat.name || "Sitz"})`;
                         interactPrompt.classList.add("visible");
                     } else {
-                        // 3. Wände
-                        const hitWalls = raycaster.intersectObjects(wallMeshes, false);
-                        if (hitWalls.length > 0 && hitWalls[0].distance <= 4.2) {
+                        // 3. Notizbereiche / Pinboards (in Arbeit, Chillen, Gaming)
+                        const hitPinboards = raycaster.intersectObjects(pinboardMeshes, false);
+                        if (hitPinboards.length > 0 && hitPinboards[0].distance <= 4.0) {
                             currentInteractTarget = {
-                                type: 'wall',
-                                hit: hitWalls[0]
+                                type: 'pinboard',
+                                hit: hitPinboards[0]
                             };
-                            interactPrompt.textContent = "Taste [E] drücken: Notiz anheften";
+                            interactPrompt.textContent = `Taste [E] drücken: Notiz anheften (${hitPinboards[0].object.userData.roomName})`;
                             interactPrompt.classList.add("visible");
                         } else {
-                            currentInteractTarget = null;
-                            if (isSitting) {
-                                interactPrompt.textContent = "Taste [E], [LEERTASTE] oder [W,A,S,D]: Aufstehen";
-                                interactPrompt.classList.add("visible");
+                            // 4. Art-Raum Wände (überall Bilder anheftbar)
+                            const hitWalls = raycaster.intersectObjects(wallMeshes, false);
+                            if (hitWalls.length > 0 && hitWalls[0].distance <= 4.2) {
+                                const wallHit = hitWalls[0];
+                                if (wallHit.object.userData && wallHit.object.userData.isRoomWall && wallHit.object.userData.roomName === "Art") {
+                                    currentInteractTarget = {
+                                        type: 'artWall',
+                                        hit: wallHit
+                                    };
+                                    interactPrompt.textContent = "Taste [E] drücken: Bild im Art-Raum anpinnen (max. 100 KB)";
+                                    interactPrompt.classList.add("visible");
+                                } else {
+                                    // Alle anderen Wände: Notizen können NICHT mehr überall angeheftet werden!
+                                    currentInteractTarget = null;
+                                    interactPrompt.classList.remove("visible");
+                                }
                             } else {
-                                interactPrompt.classList.remove("visible");
+                                currentInteractTarget = null;
+                                if (isSitting) {
+                                    interactPrompt.textContent = "Taste [E], [LEERTASTE] oder [W,A,S,D]: Aufstehen";
+                                    interactPrompt.classList.add("visible");
+                                } else {
+                                    interactPrompt.classList.remove("visible");
+                                }
                             }
                         }
                     }
@@ -2005,6 +2410,7 @@
                 interactPrompt.classList.remove("visible");
             }
 
+            // Mitspieler interpolieren
             const lerpFactor = Math.min(1, delta * 14);
             remotePlayersMap.forEach((player) => {
                 player.mesh.position.lerp(player.targetPos, lerpFactor);
@@ -2018,37 +2424,23 @@
             renderer.render(scene, camera);
         }
 
-        // ── NOTIZ-MODAL LOGIK ──
-        function openNoteModal() {
-            if (!currentInteractTarget || currentInteractTarget.type !== 'wall') return;
-            const hit = currentInteractTarget.hit;
+        // ── TEXT-NOTIZ MODAL (PINBOARD) ──
+        function openNoteModal(hit) {
             if (!hit || !hit.point) return;
 
-            let normal;
-            if (hit.object.userData && hit.object.userData.isRoomWall) {
-                const cx = hit.object.userData.roomCenter.x;
-                const cz = hit.object.userData.roomCenter.y;
-                const radial = new THREE.Vector3(hit.point.x - cx, 0, hit.point.z - cz).normalize();
-                const toPlayer = camera.position.clone().sub(hit.point).normalize();
-                normal = radial.dot(toPlayer) >= 0 ? radial : radial.negate();
-            } else if (hit.object.userData && hit.object.userData.isOuterWall) {
-                normal = new THREE.Vector3(-hit.point.x, 0, -hit.point.z).normalize();
-            } else if (hit.face && hit.face.normal) {
-                normal = hit.face.normal.clone().applyQuaternion(hit.object.quaternion).normalize();
-                const toPlayer = camera.position.clone().sub(hit.point).normalize();
-                if (normal.dot(toPlayer) < 0) normal.negate();
-            } else {
-                normal = camera.position.clone().sub(hit.point).normalize();
-            }
+            const cx = hit.object.userData.roomCenter.x;
+            const cz = hit.object.userData.roomCenter.y;
+            const radial = new THREE.Vector3(hit.point.x - cx, 0, hit.point.z - cz).normalize();
+            const toPlayer = camera.position.clone().sub(hit.point).normalize();
+            const normal = radial.dot(toPlayer) >= 0 ? radial : radial.negate();
 
-            savedWallTarget = {
+            savedPinTarget = {
                 point: hit.point.clone(),
                 normal: normal.clone()
             };
 
             isModalOpen = true;
             moveState.forward = moveState.backward = moveState.left = moveState.right = false;
-
             if (controls && controls.isLocked) controls.unlock();
 
             noteTextarea.value = "";
@@ -2060,13 +2452,8 @@
         function closeModal() {
             isModalOpen = false;
             noteModal.classList.remove("visible");
-            savedWallTarget = null;
-
+            savedPinTarget = null;
             moveState.forward = moveState.backward = moveState.left = moveState.right = false;
-
-            if (controls && !controls.isLocked) {
-                clickOverlay.classList.remove("hidden");
-            }
         }
 
         btnCancelNote.addEventListener("click", () => {
@@ -2090,18 +2477,16 @@
                 return;
             }
 
-            if (!savedWallTarget) {
+            if (!savedPinTarget) {
                 closeModal();
                 return;
             }
 
-            const target = savedWallTarget;
+            const target = savedPinTarget;
             closeModal();
 
             try {
-                if (controls && !controls.isLocked) {
-                    controls.lock();
-                }
+                if (controls && !controls.isLocked) controls.lock();
             } catch (err) {}
 
             const offset = 0.04;
@@ -2121,6 +2506,7 @@
 
             try {
                 await addDoc(collection(db, "notes"), {
+                    type: "text",
                     text: text,
                     author: authorName,
                     position: pos,
@@ -2128,13 +2514,142 @@
                     createdAt: serverTimestamp()
                 });
             } catch (err) {
-                console.error("Fehler beim Speichern in Firestore:", err);
-                alert("Fehler beim Anpinnen der Notiz: " + (err.message || "Unbekannter Fehler"));
+                console.error("Fehler beim Speichern der Notiz:", err);
+                alert("Fehler beim Anpinnen: " + (err.message || "Unbekannter Fehler"));
             }
         });
 
-        // ── 3D NOTIZEN (TEXTUR & MESH) ──
-        function createNoteCanvasTexture(text, author, dateStr) {
+        // ── ART BILD-NOTIZ MODAL (ART-RAUM) ──
+        function openArtModal(hit) {
+            if (!hit || !hit.point) return;
+
+            const cx = hit.object.userData.roomCenter.x;
+            const cz = hit.object.userData.roomCenter.y;
+            const radial = new THREE.Vector3(hit.point.x - cx, 0, hit.point.z - cz).normalize();
+            const toPlayer = camera.position.clone().sub(hit.point).normalize();
+            const normal = radial.dot(toPlayer) >= 0 ? radial : radial.negate();
+
+            savedPinTarget = {
+                point: hit.point.clone(),
+                normal: normal.clone()
+            };
+
+            compressedArtData = null;
+            artFileInput.value = "";
+            artCaptionInput.value = "";
+            artFileInfo.textContent = "Keine Datei ausgewählt";
+            artPreviewWrapper.style.display = "none";
+            btnSaveArt.disabled = true;
+
+            isModalOpen = true;
+            moveState.forward = moveState.backward = moveState.left = moveState.right = false;
+            if (controls && controls.isLocked) controls.unlock();
+
+            artNoteModal.classList.add("visible");
+            interactPrompt.classList.remove("visible");
+        }
+
+        function closeArtModal() {
+            isModalOpen = false;
+            artNoteModal.classList.remove("visible");
+            compressedArtData = null;
+            savedPinTarget = null;
+            moveState.forward = moveState.backward = moveState.left = moveState.right = false;
+        }
+
+        btnBrowseArt.addEventListener("click", () => {
+            artFileInput.click();
+        });
+
+        artFileInput.addEventListener("change", async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            artFileInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB) - Komprimiere...`;
+            btnSaveArt.disabled = true;
+
+            try {
+                const compressed = await compressImageToMax100KB(file);
+                compressedArtData = compressed;
+
+                artPreviewImg.src = compressed.dataUrl;
+                artPreviewWrapper.style.display = "block";
+                artCompressInfo.textContent = `Größe: ${(compressed.byteSize / 1024).toFixed(1)} KB (≤ 100 KB komprimiert)`;
+                artFileInfo.textContent = file.name;
+                btnSaveArt.disabled = false;
+            } catch (err) {
+                console.error("Komprimierungsfehler:", err);
+                alert("Fehler bei der Bildkomprimierung: " + err.message);
+                artFileInfo.textContent = "Fehler beim Laden";
+                btnSaveArt.disabled = true;
+            }
+        });
+
+        btnCancelArt.addEventListener("click", () => {
+            closeArtModal();
+            try {
+                if (controls && !controls.isLocked) controls.lock();
+            } catch (err) {}
+        });
+
+        btnSaveArt.addEventListener("click", async () => {
+            if (!compressedArtData || !compressedArtData.dataUrl) {
+                alert("Bitte wähle zuerst ein Bild aus.");
+                return;
+            }
+
+            if (!savedPinTarget) {
+                closeArtModal();
+                return;
+            }
+
+            btnSaveArt.disabled = true;
+            btnSaveArtText.textContent = "Wird angepinnt...";
+            btnSaveArtSpinner.classList.remove("hidden");
+
+            const target = savedPinTarget;
+            const caption = artCaptionInput.value.trim();
+            const authorName = getStoredNickname();
+
+            const offset = 0.04;
+            const pos = {
+                x: Number((target.point.x + target.normal.x * offset).toFixed(3)),
+                y: Number(Math.max(0.7, Math.min(WALL_HEIGHT - 0.7, target.point.y)).toFixed(3)),
+                z: Number((target.point.z + target.normal.z * offset).toFixed(3))
+            };
+
+            const norm = {
+                x: Number(target.normal.x.toFixed(3)),
+                y: Number(target.normal.y.toFixed(3)),
+                z: Number(target.normal.z.toFixed(3))
+            };
+
+            try {
+                await addDoc(collection(db, "notes"), {
+                    type: "image",
+                    imageUrl: compressedArtData.dataUrl,
+                    caption: caption,
+                    author: authorName,
+                    position: pos,
+                    normal: norm,
+                    createdAt: serverTimestamp()
+                });
+                closeArtModal();
+                try {
+                    if (controls && !controls.isLocked) controls.lock();
+                } catch (err) {}
+            } catch (err) {
+                console.error("Fehler beim Hochladen:", err);
+                alert("Fehler beim Hochladen: " + (err.message || "Unbekannter Fehler"));
+            } finally {
+                btnSaveArt.disabled = false;
+                btnSaveArtText.textContent = "Bild anpinnen";
+                btnSaveArtSpinner.classList.add("hidden");
+            }
+        });
+
+        // ── 3D NOTIZEN RENDERING (TEXT & BILDER) ──
+        function createTextNoteTexture(text, author, dateStr) {
             const canvas = document.createElement("canvas");
             canvas.width = 512;
             canvas.height = 512;
@@ -2151,7 +2666,7 @@
             ctx.fillRect(196, 14, 120, 24);
 
             ctx.fillStyle = "#000000";
-            ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+            ctx.font = 'bold 30px "Quicksand", sans-serif';
             ctx.textAlign = "left";
             ctx.textBaseline = "top";
 
@@ -2180,7 +2695,7 @@
                 ctx.fillText(line, 30, y);
             }
 
-            ctx.font = '600 20px monospace';
+            ctx.font = '600 20px "Quicksand", sans-serif';
             ctx.fillStyle = "#444444";
             const authorStr = author ? (author.length > 18 ? author.slice(0, 16) + "..." : author) : "Anonym";
             const dateFormatted = dateStr || "Heute";
@@ -2191,16 +2706,82 @@
             return texture;
         }
 
+        function createImageNoteTexture(img, caption, author, dateStr) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 640;
+            canvas.height = 640;
+            const ctx = canvas.getContext("2d");
+
+            // Weißer Galerierahmen
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, 640, 640);
+
+            // Feine Kante
+            ctx.strokeStyle = "#111111";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, 620, 620);
+
+            // Passepartout / Bildfeld
+            ctx.fillStyle = "#0c0a09";
+            ctx.fillRect(20, 20, 600, 500);
+
+            // Bild einpassen
+            const imgAspect = img.width / img.height;
+            const targetW = 600;
+            const targetH = 500;
+            let dw = targetW, dh = targetH, dx = 20, dy = 20;
+
+            if (imgAspect > targetW / targetH) {
+                dh = Math.round(targetW / imgAspect);
+                dy = 20 + Math.round((targetH - dh) / 2);
+            } else {
+                dw = Math.round(targetH * imgAspect);
+                dx = 20 + Math.round((targetW - dw) / 2);
+            }
+            ctx.drawImage(img, dx, dy, dw, dh);
+
+            // Galerie-Plakette unten
+            ctx.fillStyle = "#111111";
+            ctx.font = 'bold 22px "Quicksand", sans-serif';
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            const title = caption ? (caption.length > 28 ? caption.slice(0, 26) + "…" : caption) : "Ohne Titel";
+            ctx.fillText(title, 24, 552);
+
+            ctx.font = '600 16px "Quicksand", sans-serif';
+            ctx.fillStyle = "#666666";
+            const sig = `${author || "Anonym"} • ${dateStr || "Heute"}`;
+            ctx.fillText(sig, 24, 592);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
         function createNoteMesh(data, id) {
             try {
                 const dateStr = formatNoteDate(data.createdAt);
-                const texture = createNoteCanvasTexture(data.text, data.author, dateStr);
-                const geo = new THREE.PlaneGeometry(0.85, 0.85);
-                const mat = new THREE.MeshBasicMaterial({ 
-                    map: texture, 
-                    side: THREE.DoubleSide 
-                });
-                const mesh = new THREE.Mesh(geo, mat);
+                const isImage = data.type === "image" && data.imageUrl;
+
+                let mesh;
+                if (isImage) {
+                    const geo = new THREE.PlaneGeometry(1.2, 1.2);
+                    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+                    mesh = new THREE.Mesh(geo, mat);
+
+                    const img = new Image();
+                    img.onload = () => {
+                        const texture = createImageNoteTexture(img, data.caption, data.author, dateStr);
+                        mat.map = texture;
+                        mat.needsUpdate = true;
+                    };
+                    img.src = data.imageUrl;
+                } else {
+                    const texture = createTextNoteTexture(data.text, data.author, dateStr);
+                    const geo = new THREE.PlaneGeometry(0.85, 0.85);
+                    const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+                    mesh = new THREE.Mesh(geo, mat);
+                }
 
                 mesh.position.set(data.position.x, data.position.y, data.position.z);
 
@@ -2208,12 +2789,10 @@
                     ? new THREE.Vector3(data.normal.x, data.normal.y, data.normal.z).normalize()
                     : new THREE.Vector3(0, 0, 1);
 
-                if (normal.lengthSq() < 0.1) {
-                    normal = new THREE.Vector3(0, 0, 1);
-                }
+                if (normal.lengthSq() < 0.1) normal = new THREE.Vector3(0, 0, 1);
 
                 mesh.lookAt(mesh.position.clone().add(normal));
-                mesh.userData = { id: id, data: data, isNote: true };
+                mesh.userData = { id: id, data: data, isNote: true, isImage: isImage };
                 return mesh;
             } catch (err) {
                 console.error("Fehler beim Erstellen des Notiz-Meshes:", err);
@@ -2326,7 +2905,7 @@
             ctx.fill();
             ctx.stroke();
 
-            ctx.font = "bold 40px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+            ctx.font = 'bold 38px "Quicksand", sans-serif';
             ctx.fillStyle = "#ffffff";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
@@ -2405,14 +2984,14 @@
             neck.position.y = 1.48;
             group.add(neck);
 
-            // KOPF - Exakt auf Augenhöhe y = 1.70
+            // Kopf exakt auf Augenhöhe y = 1.70
             const headGeo = new THREE.SphereGeometry(0.20, 16, 16);
             const headMat = new THREE.MeshLambertMaterial({ color: color });
             const head = new THREE.Mesh(headGeo, headMat);
             head.position.y = 1.70;
             group.add(head);
 
-            // Visier / Augen - Exakt auf y = 1.70
+            // Visier / Augen exakt bei y = 1.70
             const visorGeo = new THREE.BoxGeometry(0.20, 0.07, 0.10);
             const visorMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
             const visor = new THREE.Mesh(visorGeo, visorMat);
