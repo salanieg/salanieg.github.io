@@ -283,6 +283,15 @@
             color: #ffffff;
         }
 
+        .player-count-badge {
+            font-size: 0.8rem;
+            color: #a1a1aa;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            padding-left: 10px;
+            display: flex;
+            align-items: center;
+        }
+
         .status-dot {
             width: 8px;
             height: 8px;
@@ -631,6 +640,9 @@
                 <span class="status-dot"></span>
                 <span id="nav-user-email">Laden...</span>
             </div>
+            <div id="player-count-badge" class="player-count-badge">
+                <span id="player-count-text">👥 1 online</span>
+            </div>
             <button type="button" id="btn-logout" class="btn-logout">Abmelden</button>
         </header>
 
@@ -697,11 +709,23 @@
             onSnapshot,
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+        import { 
+            getDatabase, 
+            ref as rtdbRef, 
+            set as rtdbSet, 
+            update as rtdbUpdate, 
+            remove as rtdbRemove, 
+            onChildAdded, 
+            onChildChanged, 
+            onChildRemoved, 
+            onDisconnect 
+        } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
         // ── FIREBASE KONFIGURATION ──
         const firebaseConfig = {
             apiKey: "AIzaSyBcCv-NlG0Z3jpQINEhbPQqBtMEDsDAthY",
             authDomain: "mansion-9fed1.firebaseapp.com",
+            databaseURL: "https://mansion-9fed1-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "mansion-9fed1",
             storageBucket: "mansion-9fed1.firebasestorage.app",
             messagingSenderId: "904016895478",
@@ -711,6 +735,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const rtdb = getDatabase(app);
 
         // ── DOM ELEMENTE ──
         const authContainer = document.getElementById("auth-container");
@@ -800,6 +825,8 @@
                 
                 initThreeWorld();
                 subscribeToNotes();
+                startPlayerSync();
+                subscribeToRemotePlayers();
             } else {
                 currentUser = null;
                 if (controls && controls.isLocked) controls.unlock();
@@ -807,11 +834,19 @@
                     unsubscribeNotes();
                     unsubscribeNotes = null;
                 }
+                stopPlayerSync();
                 clearAllNoteMeshes();
                 gameContainer.style.display = "none";
                 authContainer.classList.remove("hidden");
                 loginView.classList.remove("hidden");
                 clearError();
+            }
+        });
+
+        // Tab schließen / verlassen
+        window.addEventListener("beforeunload", () => {
+            if (myPlayerRef) {
+                rtdbRemove(myPlayerRef).catch(() => {});
             }
         });
 
@@ -1105,6 +1140,17 @@
                 interactPrompt.classList.remove("visible");
             }
 
+            // Andere Mitspieler weich bewegen (Lineare Interpolation / lerp)
+            const lerpFactor = Math.min(1, delta * 14);
+            remotePlayersMap.forEach((player) => {
+                player.mesh.position.lerp(player.targetPos, lerpFactor);
+
+                let diff = player.targetRotY - player.mesh.rotation.y;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                player.mesh.rotation.y += diff * lerpFactor;
+            });
+
             renderer.render(scene, camera);
         }
 
@@ -1380,6 +1426,305 @@
             }, (err) => {
                 console.error("Firestore onSnapshot Fehler:", err);
             });
+        }
+
+        // ── MULTIPLAYER SPIELER-SYNCHRONISATION (REALTIME DATABASE) ──
+        const remotePlayersMap = new Map(); // uid -> { mesh, targetPos: Vector3, targetRotY: number }
+        let myPlayerRef = null;
+        let syncTimer = null;
+        let lastSent = { x: 0, y: 0, z: 0, rotY: 0 };
+        let rtdbListeners = [];
+
+        // Farbpalette für verschiedene Mitspieler
+        function getPlayerColor(str) {
+            const colors = [
+                "#3b82f6", // Blau
+                "#10b981", // Smaragd
+                "#f59e0b", // Bernstein
+                "#ec4899", // Pink
+                "#8b5cf6", // Lila
+                "#06b6d4", // Türkis
+                "#f97316", // Orange
+                "#e11d48", // Rot
+                "#14b8a6", // Mint
+                "#84cc16"  // Limette
+            ];
+            let hash = 0;
+            for (let i = 0; i < (str || "").length; i++) {
+                hash = (hash << 5) - hash + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        // Schwebendes Namensschild über dem Kopf des Spielers (2D Billboard Canvas Sprite)
+        function createNameTagSprite(name, color) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext("2d");
+
+            // Pillen-Hintergrund
+            ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+            ctx.strokeStyle = color || "#ffffff";
+            ctx.lineWidth = 6;
+            
+            const r = 32;
+            const x = 16, y = 16, w = 480, h = 96;
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Name / E-Mail
+            ctx.font = "bold 40px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            const displayName = name.length > 22 ? name.slice(0, 20) + "…" : name;
+            ctx.fillText(displayName, 256, 64);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.position.set(0, 1.85, 0);
+            sprite.scale.set(1.4, 0.35, 1);
+            return sprite;
+        }
+
+        function disposeHierarchy(obj) {
+            obj.traverse((child) => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach((m) => {
+                            if (m.map) m.map.dispose();
+                            m.dispose();
+                        });
+                    } else {
+                        if (child.material.map) child.material.map.dispose();
+                        child.material.dispose();
+                    }
+                }
+            });
+        }
+
+        // 3D-Spielfigur für einen anderen Nutzer hinzufügen
+        function addRemotePlayer(uid, data) {
+            if (remotePlayersMap.has(uid)) {
+                updateRemotePlayer(uid, data);
+                return;
+            }
+
+            const color = data.color || getPlayerColor(uid);
+            const nickname = data.nickname || (data.email ? data.email.split("@")[0] : "Gast");
+
+            const group = new THREE.Group();
+
+            // 1. Körper
+            const bodyGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.75, 16);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: color });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.55;
+            group.add(body);
+
+            // Abrundung oben
+            const topCapGeo = new THREE.SphereGeometry(0.28, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+            const topCap = new THREE.Mesh(topCapGeo, bodyMat);
+            topCap.position.y = 0.925;
+            group.add(topCap);
+
+            // 2. Kopf
+            const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
+            const headMat = new THREE.MeshLambertMaterial({ color: color });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.35;
+            group.add(head);
+
+            // 3. Visier / Blickrichtung
+            const visorGeo = new THREE.BoxGeometry(0.22, 0.08, 0.12);
+            const visorMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+            const visor = new THREE.Mesh(visorGeo, visorMat);
+            visor.position.set(0, 1.35, -0.18);
+            group.add(visor);
+
+            // 4. Schwebender Namens-Tag
+            const nameTag = createNameTagSprite(nickname, color);
+            group.add(nameTag);
+
+            // Startposition & Rotation
+            const initY = typeof data.y === "number" ? Math.max(0, data.y - EYE_HEIGHT) : 0;
+            const initX = typeof data.x === "number" ? data.x : 0;
+            const initZ = typeof data.z === "number" ? data.z : 0;
+            const initRot = typeof data.rotationY === "number" ? data.rotationY : 0;
+
+            group.position.set(initX, initY, initZ);
+            group.rotation.y = initRot;
+
+            scene.add(group);
+
+            remotePlayersMap.set(uid, {
+                mesh: group,
+                targetPos: new THREE.Vector3(initX, initY, initZ),
+                targetRotY: initRot
+            });
+        }
+
+        function updateRemotePlayer(uid, data) {
+            const player = remotePlayersMap.get(uid);
+            if (!player) {
+                addRemotePlayer(uid, data);
+                return;
+            }
+
+            if (typeof data.x === "number" && typeof data.z === "number") {
+                const targetY = typeof data.y === "number" ? Math.max(0, data.y - EYE_HEIGHT) : 0;
+                player.targetPos.set(data.x, targetY, data.z);
+            }
+            if (typeof data.rotationY === "number") {
+                player.targetRotY = data.rotationY;
+            }
+        }
+
+        function removeRemotePlayer(uid) {
+            const player = remotePlayersMap.get(uid);
+            if (player) {
+                scene.remove(player.mesh);
+                disposeHierarchy(player.mesh);
+                remotePlayersMap.delete(uid);
+            }
+        }
+
+        function updatePlayerCountUI() {
+            const el = document.getElementById("player-count-text");
+            if (!el) return;
+            const count = remotePlayersMap.size + (currentUser ? 1 : 0);
+            el.textContent = count === 1 ? "👥 1 online" : `👥 ${count} online`;
+        }
+
+        // Eigenen Spieler synchronisieren (Senden alle 60ms bei Bewegung)
+        function startPlayerSync() {
+            if (!currentUser) return;
+            myPlayerRef = rtdbRef(rtdb, `players/${currentUser.uid}`);
+
+            // onDisconnect: Beim Schließen des Fensters automatisch entfernen
+            onDisconnect(myPlayerRef).remove().catch(err => console.warn("onDisconnect error:", err));
+
+            const color = getPlayerColor(currentUser.uid);
+            const nickname = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "Gast");
+
+            // Initialen Zustand hinterlegen
+            rtdbSet(myPlayerRef, {
+                uid: currentUser.uid,
+                email: currentUser.email || "Anonym",
+                nickname: nickname,
+                color: color,
+                x: Number(camera.position.x.toFixed(3)),
+                y: Number(camera.position.y.toFixed(3)),
+                z: Number(camera.position.z.toFixed(3)),
+                rotationY: Number(camera.rotation.y.toFixed(3)),
+                lastSeen: Date.now()
+            }).catch(err => console.error("RTDB initial set error:", err));
+
+            lastSent = {
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z,
+                rotY: camera.rotation.y
+            };
+
+            // Schleife alle 60 Millisekunden (sendet nur wenn bewegt)
+            if (syncTimer) clearInterval(syncTimer);
+            syncTimer = setInterval(() => {
+                if (!controls || !controls.isLocked || !myPlayerRef) return;
+
+                const dx = Math.abs(camera.position.x - lastSent.x);
+                const dy = Math.abs(camera.position.y - lastSent.y);
+                const dz = Math.abs(camera.position.z - lastSent.z);
+                const drot = Math.abs(camera.rotation.y - lastSent.rotY);
+
+                if (dx > 0.015 || dz > 0.015 || dy > 0.015 || drot > 0.015) {
+                    rtdbUpdate(myPlayerRef, {
+                        x: Number(camera.position.x.toFixed(3)),
+                        y: Number(camera.position.y.toFixed(3)),
+                        z: Number(camera.position.z.toFixed(3)),
+                        rotationY: Number(camera.rotation.y.toFixed(3)),
+                        lastSeen: Date.now()
+                    }).catch(() => {});
+
+                    lastSent = {
+                        x: camera.position.x,
+                        y: camera.position.y,
+                        z: camera.position.z,
+                        rotY: camera.rotation.y
+                    };
+                }
+            }, 60);
+
+            updatePlayerCountUI();
+        }
+
+        function stopPlayerSync() {
+            if (syncTimer) {
+                clearInterval(syncTimer);
+                syncTimer = null;
+            }
+            if (myPlayerRef) {
+                rtdbRemove(myPlayerRef).catch(() => {});
+                myPlayerRef = null;
+            }
+            // Alle Mitspieler-3D-Objekte aufräumen
+            remotePlayersMap.forEach((player) => {
+                scene.remove(player.mesh);
+                disposeHierarchy(player.mesh);
+            });
+            remotePlayersMap.clear();
+
+            // Event-Listener abbestellen
+            if (rtdbListeners && rtdbListeners.length > 0) {
+                rtdbListeners.forEach(unsub => {
+                    if (typeof unsub === "function") unsub();
+                });
+                rtdbListeners = [];
+            }
+
+            updatePlayerCountUI();
+        }
+
+        // Andere Spieler in Echtzeit abhören (ChildAdded, ChildChanged, ChildRemoved)
+        function subscribeToRemotePlayers() {
+            const playersRef = rtdbRef(rtdb, "players");
+
+            const unsubAdded = onChildAdded(playersRef, (snapshot) => {
+                const uid = snapshot.key;
+                if (!currentUser || uid === currentUser.uid) return;
+                const data = snapshot.val();
+                if (!data) return;
+                addRemotePlayer(uid, data);
+                updatePlayerCountUI();
+            });
+
+            const unsubChanged = onChildChanged(playersRef, (snapshot) => {
+                const uid = snapshot.key;
+                if (!currentUser || uid === currentUser.uid) return;
+                const data = snapshot.val();
+                if (!data) return;
+                updateRemotePlayer(uid, data);
+            });
+
+            const unsubRemoved = onChildRemoved(playersRef, (snapshot) => {
+                const uid = snapshot.key;
+                removeRemotePlayer(uid);
+                updatePlayerCountUI();
+            });
+
+            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved];
         }
     </script>
 </body>
