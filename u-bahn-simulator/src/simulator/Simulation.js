@@ -736,9 +736,17 @@ export class Simulation {
         const fNet = fDrive - fBrake - fResist - fGravity * direction;
         let rawAccel = fNet / MASS_KG;
 
-        // Standstill logic: if stopped and forces are trying to move us backwards (due to brakes or grade in opposite direction),
-        // clamp rawAccel and acceleration to 0. Brakes cannot reverse the train.
-        if (this.speed <= 0.01 && fDrive <= (fBrake + fResist + fGravity * direction)) {
+        // Standstill logic: if stopped or near stop with no drive force and brakes holding,
+        // clamp rawAccel and acceleration to 0. Brakes cannot reverse or creep the train.
+        const fGravityVal = MASS_KG * 9.81 * (this.gradient / 100);
+        const brakesHold = (fBrake + fResist) >= Math.abs(fGravityVal);
+
+        if (fDrive === 0 && (this.speed <= 0.03 || brakeInput > 0.05 || this.emergencyBrake) && brakesHold) {
+            rawAccel = 0;
+            if (this.speed <= 0.03) {
+                this.acceleration = 0;
+            }
+        } else if (this.speed <= 0.01 && fDrive <= (fBrake + fResist + fGravity * direction)) {
             rawAccel = 0;
             if (this.acceleration < 0) {
                 this.acceleration = 0;
@@ -765,13 +773,10 @@ export class Simulation {
         // Clamp speed
         this.speed = Math.max(0, Math.min(V_MAX_MS, this.speed));
 
-        // Prevent reversing under brakes/coasting, and prevent creeping at standstill
-        if ((prevSpeed > 0 && this.speed <= 0 && fDrive === 0) || (this.speed <= 0.001 && fDrive === 0)) {
-            const fGravityVal = MASS_KG * 9.81 * (this.gradient / 100);
-            if (Math.abs(fGravityVal) <= (fBrake + fResist)) {
-                this.speed = 0;
-                this.acceleration = 0;
-            }
+        // Prevent reversing under brakes/coasting, and completely eliminate creeping at standstill
+        if (fDrive === 0 && (this.speed < 0.03 || (prevSpeed > 0 && this.speed <= 0)) && (brakesHold || brakeInput > 0.05 || this.emergencyBrake)) {
+            this.speed = 0;
+            this.acceleration = 0;
         }
 
         // 7. Update brake cylinder pressure for dials and sounds
@@ -904,16 +909,31 @@ export class Simulation {
         }
     }
 
-    triggerDoors() {
-        if (this.speed > 0.01) return; // safety interlock: cannot open doors while moving
+    isAtPlatformStation(distMargin = 12.0) {
+        const trainCenter = this.isReversing ? (this.position + this.trainHalfLength) : (this.position - this.trainHalfLength);
+        for (let i = 0; i < this.stations.length; i++) {
+            const st = this.stations[i];
+            const stopPos = this.getStationStopPosition(st);
+            const halfLen = Math.max(st.halfLength || 45.0, distMargin);
+            if (Math.abs(trainCenter - stopPos) <= halfLen) {
+                return true;
+            }
+        }
+        return false;
+    }
 
+    triggerDoors() {
         if (this.doorState === 0 || this.doorState === 3) {
+            // Safety interlock: cannot open doors while moving OR when away from station platform
+            if (this.speed > 0.01) return;
+            if (!this.isAtPlatformStation(15.0)) return;
+
             // Start opening
             this.doorState = 1;
             this.currentPlatformSide = this.getPlatformSide();
             this.doorWarningActive = false;
         } else if (this.doorState === 2 || this.doorState === 1) {
-            // Start closing
+            // Closing is always allowed
             this.doorState = 3;
         }
     }
@@ -932,13 +952,10 @@ export class Simulation {
     getSideForStation(idx) {
         const station = this.stations[idx];
         if (!station) return 'left';
-        const isRightExit = station.side;
-        const side = isRightExit ? 'right' : 'left';
-        if (this.isReversing) {
-            return side;
-        } else {
-            return (side === 'left') ? 'right' : 'left';
-        }
+        // Nuremberg U1 right-hand traffic rules:
+        // Island platforms (between running tracks, side: false) -> exit LEFT in both directions.
+        // Side platforms (Muggenhof, Stadtgrenze, side: true) -> exit RIGHT in both directions.
+        return station.side ? 'right' : 'left';
     }
 
     getPlatformSide() {
@@ -954,22 +971,7 @@ export class Simulation {
         }
 
         if (!station) return 'left';
-
-        // Nuremberg U1 rules:
-        // 1. Side platforms (Muggenhof, Stadtgrenze: station.side === true) -> Right exit in reverse, Left exit in forward.
-        // 2. Island platforms & Scharfreiterring (between running tracks) -> Left exit in reverse, Right exit in forward.
-        const isRightExit = station.side;
-        const side = isRightExit ? 'right' : 'left';
-
-        // The simulator drives on different tracks for different directions.
-        // The current logic in getTrackXOffset ensures track separation.
-        // For the reverse direction (Langwasser-bound), the current rules work.
-        // For the forward direction (Hardhöhe-bound), we must invert the side.
-        if (this.isReversing) {
-            return side;
-        } else {
-            return (side === 'left') ? 'right' : 'left';
-        }
+        return station.side ? 'right' : 'left';
     }
 
     advanceNextStation() {
@@ -1075,11 +1077,12 @@ export class Simulation {
         const distToStation = Math.abs(trainCenter - stopPos);
         const dir = this.isReversing ? -1 : 1;
 
-        // --- Stopped precisely at the platform ---
-        if (this.speed < 0.05 && distToStation < 1.5) {
+        // --- Stopped at the platform ---
+        const isPlatformStop = (this.speed < 0.05 && distToStation < 6.0);
+        if (isPlatformStop) {
             this.throttle = -0.5; // hold brakes
             this.atoCoasting = false;
-            if (this.doorState === 0 && this.stopWaitTime < this.scheduledStopTime - 3) {
+            if (this.doorState === 0 && this.stopWaitTime < this.scheduledStopTime - 3.2) {
                 this.triggerDoors();
                 this.atoDoorWarningPlayed = false;
             } else if (this.doorState === 2 && this.stopWaitTime >= this.scheduledStopTime - 2.8) {
@@ -1094,19 +1097,18 @@ export class Simulation {
         }
 
         // Doors must be fully closed before the train is allowed to move. Anywhere other than
-        // a correct platform stop (e.g. left open by a manual override away from a station) the
-        // autopilot closes them itself, so it always keeps heading for the next stop once able.
+        // a correct platform stop (e.g. left open away from a station) the autopilot closes them itself.
         if (this.doorState !== 0) {
             this.throttle = -0.5;
             if (this.doorState === 1 || this.doorState === 2) {
-                this.triggerDoors(); // command close (no-op if still moving, per its own interlock)
+                this.triggerDoors(); // command close
             }
             return;
         }
 
         // Target speed: min of track limit and station braking curve
         const decel = 0.75; // m/s² – conservative: actual brake force must meet or exceed this
-        const stationTarget = distToStation > 1.5 ? Math.sqrt(2 * decel * distToStation) : 0;
+        const stationTarget = distToStation > 1.0 ? Math.sqrt(2 * decel * distToStation) : 0;
         const target = Math.min(this.targetSpeed, stationTarget);
 
         const err = target - this.speed;

@@ -8,7 +8,7 @@ function toMeters(coord) {
     return [coord[0] * M_LON, -coord[1] * M_LAT];
 }
 
-const geo = JSON.parse(fs.readFileSync('./unbg/railspline.geojson', 'utf8'));
+const geo = JSON.parse(fs.readFileSync('./u-bahn-simulator/railspline.geojson', 'utf8'));
 console.log('Features count:', geo.features.length);
 
 for (const f of geo.features) {

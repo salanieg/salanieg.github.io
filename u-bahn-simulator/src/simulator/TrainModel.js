@@ -6974,8 +6974,10 @@ export class TrainModel {
         // Reflections are muted entirely for the pass — glass seen INSIDE a
         // mirror image must not show reflections of its own, that reads as
         // overdone double-mirroring.
-        const savedRefl = glassMats.map(m => m.uniforms.uReflectivity.value);
-        for (const m of glassMats) {
+        if (!this._savedRefl) this._savedRefl = [];
+        for (let j = 0; j < glassMats.length; j++) {
+            const m = glassMats[j];
+            this._savedRefl[j] = m.uniforms.uReflectivity.value;
             m.uniforms.uMirrorStrength.value = 0;
             m.uniforms.uReflectivity.value = 0;
             m.uniforms.uMirrorTexL.value = M.dummyTex;
@@ -7000,8 +7002,9 @@ export class TrainModel {
             }
         }
 
-        glassMats.forEach((m, i) => {
-            m.uniforms.uReflectivity.value = savedRefl[i];
+        for (let j = 0; j < glassMats.length; j++) {
+            const m = glassMats[j];
+            m.uniforms.uReflectivity.value = this._savedRefl[j];
             m.uniforms.uMirrorTexL.value = M.targets[0].texture;
             m.uniforms.uMirrorTexR.value = M.targets[1].texture;
             m.uniforms.uMirrorMatL.value.copy(M.matrices[0]);
@@ -7009,7 +7012,7 @@ export class TrainModel {
             m.uniforms.uMirrorPlaneL.value.copy(M.planes[0]);
             m.uniforms.uMirrorPlaneR.value.copy(M.planes[1]);
             m.uniforms.uMirrorStrength.value = anyOk ? 1 : 0;
-        });
+        }
     }
 
     // One mirrored render of `root` across the plane (point, normal) into rt.

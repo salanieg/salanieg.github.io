@@ -18,7 +18,7 @@ export class SpaceIntro {
         this.isActive = true;
         this.isWarping = false;
         this.warpProgress = 0;
-        this.warpDuration = 1.0; // seconds
+        this.warpDuration = 1.3; // seconds of smooth accelerating hyperspace streaks
         this.baseSpeed = 6.0;    // gentle forward drift (m/s)
         this.currentSpeed = this.baseSpeed;
         this.onWarpComplete = null;

@@ -25,10 +25,10 @@
 // ============================================================================
 import * as THREE from 'three';
 import { Simulation } from './simulator/Simulation.js?v=67';
-import { WorldManager } from './simulator/WorldManager.js?v=75';
-import { TrackManager } from './simulator/TrackManager.js?v=79';
-import { StationModel } from './simulator/StationModel.js?v=111';
-import { TrainModel } from './simulator/TrainModel.js?v=99';
+import { WorldManager } from './simulator/WorldManager.js?v=83';
+import { TrackManager } from './simulator/TrackManager.js?v=84';
+import { StationModel } from './simulator/StationModel.js?v=126';
+import { TrainModel } from './simulator/TrainModel.js?v=100';
 import { TRACK_DATA_U2 } from './simulator/TrackDataU2.js?v=11';
 import { TRACK_DATA_U3 } from './simulator/TrackDataU3.js?v=11';
 import { TRACK_DATA_TRUNK } from './simulator/TrackDataTrunk.js?v=5';
@@ -36,7 +36,7 @@ import { AudioManager } from './audio/AudioManager.js?v=76';
 import { RadioManager } from './audio/RadioManager.js?v=2';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { SpaceIntro } from './simulator/SpaceIntro.js?v=2';
+import { SpaceIntro } from './simulator/SpaceIntro.js?v=3';
 
 // Wiederverwendbare Temp-Vektoren für den Frame-Loop (kein GC-Druck)
 const _escPlayerPos = new THREE.Vector3();
@@ -510,8 +510,7 @@ class App {
 
         if (this.cityModel && this.world && this.sim) {
             this.world.cityModel = this.cityModel;
-            const isUnderground = (this.world.getChunkTypeAtDistance(this.sim.position) === 'underground');
-            this.cityModel.visible = !isUnderground;
+            this.cityModel.visible = !this.isSpaceIntro;
         }
     }
 
@@ -724,8 +723,9 @@ class App {
         if (this._cityDl) {
             if (this._cityDl.done || this._cityDl.error) {
                 pct += 20;
-            } else if (this._cityDl.progress) {
-                pct += Math.floor(this._cityDl.progress * 20);
+            } else {
+                const frac = (this._cityDl.frac !== undefined) ? this._cityDl.frac : (this._cityDl.progress || 0);
+                pct += Math.floor(frac * 20);
             }
         }
 
@@ -782,8 +782,56 @@ class App {
             }
         }
 
-        // 3. Pre-compute bounding spheres and boxes for all meshes (avoiding CPU hitches on look-around)
-        // and upload all live geometry buffers with frustum culling temporarily disabled.
+        // 3. Pre-warm all stations and scene objects on GPU:
+        // Temporarily attach any unmounted station groups so their shaders and geometry buffers
+        // are uploaded right now during loading screen, instead of on-demand during driving.
+        const detachedStations = [];
+        if (this.stationModel && this.stationModel.stationsList) {
+            this.stationModel.stationsList.forEach(stGroup => {
+                if (stGroup && !stGroup.parent) {
+                    this.world.scene.add(stGroup);
+                    detachedStations.push(stGroup);
+                }
+            });
+        }
+
+        // 4. Pre-warm track chunks 0..40 and all TrackManager materials and textures:
+        const detachedChunks = [];
+        if (this.trackManager) {
+            for (let i = 0; i <= 40; i++) {
+                let chunk = this.trackManager.chunkCache.get(i);
+                if (!chunk) {
+                    chunk = this.trackManager.createChunk(i);
+                    this.trackManager.chunkCache.set(i, chunk);
+                }
+                if (chunk && !chunk.parent) {
+                    this.world.scene.add(chunk);
+                    detachedChunks.push(chunk);
+                }
+            }
+        }
+
+        const dummyGeo = new THREE.PlaneGeometry(0.1, 0.1);
+        const dummyTrackGroup = new THREE.Group();
+        if (this.trackManager && this.trackManager.materials) {
+            for (const key in this.trackManager.materials) {
+                const mat = this.trackManager.materials[key];
+                if (mat && mat.isMaterial) {
+                    const mesh = new THREE.Mesh(dummyGeo, mat);
+                    mesh.frustumCulled = false;
+                    dummyTrackGroup.add(mesh);
+                }
+            }
+        }
+        this.world.scene.add(dummyTrackGroup);
+
+        // Temporarily enable visibility on skyDome and cityModel so their shaders and geometry buffers are uploaded now
+        const prevSkyVis = this.world && this.world.skyDome ? this.world.skyDome.visible : false;
+        const prevCityVis = this.cityModel ? this.cityModel.visible : false;
+        if (this.world && this.world.skyDome) this.world.skyDome.visible = true;
+        if (this.cityModel) this.cityModel.visible = true;
+
+        // Pre-compute bounding spheres and upload all live geometry buffers with frustum culling disabled
         const restore = [];
         this.world.scene.traverse(o => {
             if (o.isMesh && o.geometry) {
@@ -799,8 +847,24 @@ class App {
                 restore.push(o);
             }
         });
-        this.world.renderer.render(this.world.scene, this.world.activeCamera);
+
+        if (this.world && this.world.renderer && this.world.activeCamera) {
+            try {
+                this.world.renderer.compile(this.world.scene, this.world.activeCamera);
+            } catch (e) {
+                // ignore
+            }
+            this.world.renderer.render(this.world.scene, this.world.activeCamera);
+        }
+
+        if (this.world && this.world.skyDome) this.world.skyDome.visible = prevSkyVis;
+        if (this.cityModel) this.cityModel.visible = prevCityVis;
+
         restore.forEach(o => o.frustumCulled = true);
+        detachedStations.forEach(stGroup => this.world.scene.remove(stGroup));
+        detachedChunks.forEach(chunk => this.world.scene.remove(chunk));
+        this.world.scene.remove(dummyTrackGroup);
+        dummyGeo.dispose();
     }
 
     // Stößt den Stadtmodell-GLB-Download an — läuft parallel zu den CPU-
@@ -827,6 +891,7 @@ class App {
                 model.rotation.set(0, 0.0000, 0);
                 model.scale.set(1.000, 1.000, 1.000);
 
+                model.visible = false;
                 this.world.scene.add(model);
 
                 model.traverse(child => {
@@ -836,6 +901,27 @@ class App {
                         child.receiveShadow = false;
                         if (child.material) {
                             child.material.shadowSide = null;
+                            const convertMat = (oldMat) => {
+                                if (!oldMat) return oldMat;
+                                return new THREE.MeshLambertMaterial({
+                                    color: oldMat.color || new THREE.Color(0xf1f5f9),
+                                    map: oldMat.map || null,
+                                    transparent: !!oldMat.transparent,
+                                    opacity: oldMat.opacity !== undefined ? oldMat.opacity : 1.0,
+                                    alphaTest: oldMat.alphaTest || 0,
+                                    side: THREE.FrontSide, // FrontSide prevents backface z-fighting within building models
+                                    depthWrite: true,
+                                    depthTest: true,
+                                    polygonOffset: true,
+                                    polygonOffsetFactor: -1,
+                                    polygonOffsetUnits: -1
+                                });
+                            };
+                            if (Array.isArray(child.material)) {
+                                child.material = child.material.map(convertMat);
+                            } else {
+                                child.material = convertMat(child.material);
+                            }
                         }
                     }
                 });
@@ -848,10 +934,34 @@ class App {
                 this.cityModel = model;
                 if (this.world) {
                     this.world.cityModel = model;
-                    const isUnderground = (this.sim && this.world.sim)
-                        ? (this.world.getChunkTypeAtDistance(this.sim.position) === 'underground')
-                        : true;
-                    this.cityModel.visible = this.isSpaceIntro ? false : !isUnderground;
+                    this.cityModel.visible = !this.isSpaceIntro; // Invisible during space intro
+                }
+
+                // Pre-warm city model shaders and upload all geometry buffers to GPU VRAM
+                // using the real world scene so all lighting parameters and shader programs match 100%.
+                if (this.world && this.world.renderer && this.world.activeCamera && this.world.scene) {
+                    try {
+                        model.visible = true; // Must be visible so WebGLRenderer traverses and uploads geometries
+                        model.traverse(child => {
+                            if (child.isMesh && child.geometry) {
+                                if (child.geometry.boundingSphere === null) child.geometry.computeBoundingSphere();
+                                if (child.geometry.boundingBox === null) child.geometry.computeBoundingBox();
+                            }
+                        });
+                        this.world.renderer.compile(model, this.world.activeCamera, this.world.scene);
+
+                        const tempTarget = new THREE.WebGLRenderTarget(2, 2);
+                        const prevTarget = this.world.renderer.getRenderTarget();
+                        this.world.renderer.setRenderTarget(tempTarget);
+                        this.world.renderer.render(model, this.world.activeCamera);
+                        this.world.renderer.setRenderTarget(prevTarget);
+                        tempTarget.dispose();
+
+                        model.visible = !this.isSpaceIntro; // Restore intended visibility
+                        console.log('City model successfully pre-warmed on GPU.');
+                    } catch (e) {
+                        console.warn('City model GPU pre-warm warning:', e);
+                    }
                 }
 
                 console.log('City model loaded successfully.');
@@ -921,10 +1031,8 @@ class App {
     // `setBar` bekommt den Fortschritt 0..1, `onDone` läuft nach Env-Map-Bake.
     warmUpSpawn(setBar, onDone) {
         if (this.isSpaceIntro) {
-            // In Space Intro, geometry is already uploaded via offscreen residency.
-            if (this.trainModel) {
-                this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
-            }
+            // In Space Intro, pre-warm live scene, all stations and city model shaders on GPU
+            this.warmUpRenderer();
             if (onDone) onDone();
             return;
         }
@@ -969,7 +1077,7 @@ class App {
             numStations: sm.sim.stations.length,
             done: false,
             pending: null, // aktuell zum Upload eingehängtes Ziel (siehe _residencyPrep)
-            startTime: performance.now() + 1000 // 1000ms Schonfrist nach Spawn, damit erste Interaktion butterweich ist
+            startTime: this.isSpaceIntro ? 0 : (performance.now() + 1000) // In Space Intro sofort laden, im Spiel 1s Schonfrist nach Spawn
         };
     }
 
@@ -992,6 +1100,14 @@ class App {
         const tm = this.trackManager, sm = this.stationModel;
         if (!tm || !sm) return;
 
+        // Während der Zug aktiv fährt (speed > 1.0 m/s), Hintergrund-Streaming pausieren!
+        // GPU-Uploads während schneller Fahrt erzeugen spürbare Mikroruckler.
+        // Sobald der Zug am Bahnhof steht oder sehr langsam rollt (speed <= 1.0 m/s),
+        // wird das Streaming nahtlos und unbemerkt fortgesetzt.
+        if (this.isRunning && !this.isSpaceIntro && this.sim && Math.abs(this.sim.speed) > 1.0) {
+            return;
+        }
+
         const trunkTm = this._trunkCtx ? this._trunkCtx.trackManager : null;
         const trunkSm = this._trunkCtx ? this._trunkCtx.stationModel : null;
         const TIME_BUDGET_MS = this.isSpaceIntro ? 10 : 2;
@@ -1000,7 +1116,15 @@ class App {
             if (!this._offscreenTarget) {
                 this._offscreenTarget = new THREE.WebGLRenderTarget(4, 4);
                 this._offscreenScene = new THREE.Scene();
-                this._offscreenCam = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+                if (this.world && this.world.scene) {
+                    this._offscreenScene.fog = this.world.scene.fog;
+                    this._offscreenScene.add(new THREE.AmbientLight(0xffffff, 0.6));
+                    this._offscreenScene.add(new THREE.DirectionalLight(0xffffff, 2.5));
+                    const sl = new THREE.SpotLight(0xffffff, 15.0, 80, Math.PI / 4.5, 0.8, 1.0);
+                    this._offscreenScene.add(sl);
+                    this._offscreenScene.add(sl.target);
+                }
+                this._offscreenCam = new THREE.PerspectiveCamera(60, 1, 0.1, 50000);
             }
 
             while (performance.now() - startT < TIME_BUDGET_MS) {
@@ -1087,19 +1211,43 @@ class App {
                 const maxBatch = 128;
                 const end = Math.min(p.allMeshes.length, p.cursor + maxBatch);
 
-                this._offscreenScene.add(p.obj);
-                for (let i = p.cursor; i < end; i++) {
-                    const m = p.allMeshes[i];
-                    if (m.frustumCulled) { m.frustumCulled = false; p.uncculled.push(m); }
+                if (p.cursor === 0) {
+                    if (this.world && this.world.renderer && this.world.scene) {
+                        try {
+                            this.world.renderer.compile(p.obj, this.world.activeCamera, this.world.scene);
+                        } catch (e) {
+                            console.warn('renderer.compile warning:', e);
+                        }
+                    }
+                    if (p.allMeshes.length > 0) {
+                        const m0 = p.allMeshes[0];
+                        const center = new THREE.Vector3();
+                        m0.getWorldPosition(center);
+                        this._offscreenCam.position.set(center.x, center.y + 2, center.z + 5);
+                        this._offscreenCam.lookAt(center);
+                        this._offscreenCam.updateMatrixWorld();
+                    }
                 }
-                this.world.renderer.setRenderTarget(this._offscreenTarget);
-                this.world.renderer.render(this._offscreenScene, this._offscreenCam);
-                this.world.renderer.setRenderTarget(null);
-                this._offscreenScene.remove(p.obj);
 
-                for (const m of p.uncculled) m.frustumCulled = true;
-                p.uncculled = [];
-                p.cursor = end;
+                const wasInParent = (p.obj.parent === p.parent);
+                try {
+                    this._offscreenScene.add(p.obj);
+                    for (let i = p.cursor; i < end; i++) {
+                        const m = p.allMeshes[i];
+                        if (m.frustumCulled) { m.frustumCulled = false; p.uncculled.push(m); }
+                    }
+                    this.world.renderer.setRenderTarget(this._offscreenTarget);
+                    this.world.renderer.render(this._offscreenScene, this._offscreenCam);
+                    this.world.renderer.setRenderTarget(null);
+                } catch (err) {
+                    console.error('Error during offscreen residency warmup:', err);
+                } finally {
+                    this._offscreenScene.remove(p.obj);
+                    if (wasInParent && p.parent) p.parent.add(p.obj);
+                    for (const m of p.uncculled) m.frustumCulled = true;
+                    p.uncculled = [];
+                    p.cursor = end;
+                }
 
                 if (p.cursor >= p.allMeshes.length) {
                     if (p.kind === 'chunk') this._resChunks.add(p.idx);
@@ -1241,13 +1389,23 @@ class App {
         r.pending = null;
     }
 
-    // Teleport-Fall "kurz vorladen, dann zeigen": die vom Teleport frisch
+    warmUpLiveScene() {
+        if (!this.world || !this.world.renderer || !this.world.activeCamera) return;
+        try {
+            this.world.renderer.compile(this.world.scene, this.world.activeCamera);
+        } catch (e) {
+            // ignore
+        }
+        this.world.renderer.render(this.world.scene, this.world.activeCamera);
+    }
+
+    // "Kurz vorladen, dann zeigen": die durch Teleport oder Streckenwechsel frisch
     // eingeblendete Zielumgebung sofort synchron auf die GPU schieben (ein
     // kontrollierter Kurz-Hänger statt eines Überraschungs-Rucklers beim ersten
     // Frame am Ziel), danach als resident markieren.
     _ensureResidentNow() {
         if (!this.world || !this.world.renderer) return;
-        this.warmUpRenderer(); // rendert die aktuelle Live-Szene einmal Culling-aus
+        this.warmUpLiveScene();
         this._seedResidencyFromLiveScene();
     }
 
@@ -1634,16 +1792,11 @@ class App {
         this.world.update(0.016, this.trainModel);
         this.world.updateEnvironmentLighting(this.sim.position, 0.016);
 
-        // Restore sky/environment
-        if (this.world.skyTexture) {
-            this.world.scene.background = this.world.skyTexture;
+        // Warm up active spawn station reflections and mark active scene as resident (0 hitches, instant transition)
+        if (this.trainModel) {
+            this.trainModel.bakeInteriorEnvMap(this.world.renderer, this.world.scene);
         }
-
-        // Live-Spawn-Umgebung (Langwasser Süd + Zug) vor Spielbeginn vollständig aufwärmen:
-        // Rendert die Szene einmal Culling-aus, berechnet alle Bounding Spheres vor
-        // und backt die Innenraum-Reflektionen im echten Bahnhof, damit die erste
-        // Kamerabewegung im Spiel absolut butterweich ist.
-        this._ensureResidentNow();
+        this._seedResidencyFromLiveScene();
 
         this.isRunning = true;
         this.clock.getDelta();
@@ -1877,11 +2030,11 @@ class App {
     handleDoors() {
         if (this.sim.speed > 0.05) return; // interlock
         
-        const nextStation = this.sim.stations[this.sim.nextStationIdx];
-        const trainCenter = this.sim.isReversing ? (this.sim.position + this.sim.trainHalfLength) : (this.sim.position - this.sim.trainHalfLength);
-        const stopPos = this.sim.getStationStopPosition ? this.sim.getStationStopPosition(nextStation) : nextStation.position;
-        const distToStation = Math.abs(trainCenter - stopPos);
-        const isAtPlatform = distToStation < 12;
+        // In ATO mode or manual mode, opening doors is only allowed at a platform
+        const isAtPlatform = this.sim.isAtPlatformStation ? this.sim.isAtPlatformStation(15.0) : false;
+        if (!isAtPlatform && (this.sim.doorState === 0 || this.sim.doorState === 3)) {
+            return; // Cannot open doors away from a platform!
+        }
 
         if (this.sim.doorState === 0 || this.sim.doorState === 3) {
             this.sim.triggerDoors();
@@ -1913,8 +2066,11 @@ class App {
             // Update loading progress display ("XX % geladen")
             this._updateIntroLoadingProgress();
 
+            const isWarpingNow = this.spaceIntro && this.spaceIntro.isWarping;
+
             // Pump full line residency in background: builds and uploads ALL 27 stations and ALL 370 chunks!
-            if (this._residency && !this._residency.done) {
+            // Paused during active hyperspace warp jump to guarantee smooth 60 FPS!
+            if (!isWarpingNow && this._residency && !this._residency.done) {
                 this._residencyPrep(128);
                 this.world.update(dt, this.trainModel);
                 this._residencyFinish();
@@ -1923,7 +2079,7 @@ class App {
             }
 
             // Check if EVERYTHING (city model + 100% of all chunks and stations) is fully loaded!
-            if (!this.isReadyToStart && this._isEverythingFullyLoaded()) {
+            if (!isWarpingNow && !this.isReadyToStart && this._isEverythingFullyLoaded()) {
                 this._isStartingWarmup = true;
                 this.warmUpSpawn(() => {}, () => {
                     this.onBackgroundLoadingComplete();
@@ -2065,6 +2221,8 @@ class App {
             collect(this.lineRigs.U1.trackManager.escalators);
         }
 
+        if (!this._escVecPool) this._escVecPool = [];
+        let poolIdx = 0;
         this._escalatorCache.length = 0;
         for (const mesh of sources) {
             // Nur Rolltreppen zählen, die gerade wirklich in der sichtbaren
@@ -2077,7 +2235,14 @@ class App {
                 node = node.parent;
             }
             if (!inScene) continue;
-            this._escalatorCache.push(mesh.getWorldPosition(new THREE.Vector3()));
+            let v = this._escVecPool[poolIdx];
+            if (!v) {
+                v = new THREE.Vector3();
+                this._escVecPool[poolIdx] = v;
+            }
+            poolIdx++;
+            mesh.getWorldPosition(v);
+            this._escalatorCache.push(v);
         }
     }
 
@@ -2124,6 +2289,11 @@ class App {
     teleportToStation(stationIdx) {
         const station = this.sim.stations[stationIdx];
         if (!station) return;
+
+        // 1. Ensure target station mesh exists if it was deferred in background pipeline
+        if (this.stationModel && !this.stationModel.stationsList[stationIdx]) {
+            this.stationModel.buildStationAtIndex(stationIdx);
+        }
 
         // Reset speed and control inputs
         this.sim.speed = 0;
@@ -2174,18 +2344,27 @@ class App {
             }
         }
 
-        // Force update 3D meshes immediately
+        // Force update 3D meshes immediately for target position
         this.trackManager.update(this.sim.position);
         this.updateTrunkVisibility();
         this.updateSwitchVisibility();
         this.stationModel.update(this.sim.position);
         this.trainModel.update(0);
-        this.world.update(0, this.trainModel);
 
-        // "Kurz vorladen, dann zeigen": die frisch eingeblendete Zielumgebung
-        // sofort auf die GPU schieben, falls der Hintergrund-Lader sie noch nicht
-        // erreicht hatte — verhindert einen Ruckler beim ersten Frame am Ziel.
-        this._ensureResidentNow();
+        // Update lighting, fog, and sky for the target station
+        this.world.update(0, this.trainModel);
+        this.world.updateEnvironmentLighting(this.sim.position, 0.016);
+
+        // Ensure cityModel and skyDome are immediately visible if target station is above ground,
+        // or hidden if underground
+        const chunkType = this.world.getChunkTypeAtDistance(this.sim.position);
+        const isOpenAir = (chunkType !== 'underground');
+        if (this.cityModel) {
+            this.cityModel.visible = isOpenAir;
+        }
+        if (this.world && this.world.skyDome) {
+            this.world.skyDome.visible = isOpenAir;
+        }
 
         // If orbit camera is active, update orbit controls target
         if (this.world.activeCameraType === 'orbit') {
@@ -2200,6 +2379,10 @@ class App {
             // For platform view, re-initialize coordinates for the new station
             this.world.setCamera('platform');
         }
+
+        // Fast GPU pre-warm ONLY of the active live destination scene (train, platform, local track, city model)
+        this.warmUpLiveScene();
+        this._seedResidencyFromLiveScene();
     }
 }
 

@@ -4,7 +4,7 @@
 // Dispatch per Stationsname in StationModel.buildStation.
 // ============================================================================
 import * as THREE from 'three';
-import { StationBuilder } from './StationBuilder.js?v=69';
+import { StationBuilder } from './StationBuilder.js?v=74';
 import { tagCanvasTextureSRGBKeepLook } from '../TextureUtils.js';
 
 export class RathausBuilder extends StationBuilder {

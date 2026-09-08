@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { StationBuilder } from './stations/StationBuilder.js?v=69';
+import { StationBuilder } from './stations/StationBuilder.js?v=74';
 import { tagCanvasTextureSRGBKeepLook } from './TextureUtils.js';
 
 // ============================================================================
@@ -36,8 +36,8 @@ export class TrackManager {
 
         // Chunk configuration
         this.chunkSize = 50; // meters per track segment
-        this.visibleChunksCount = 40; // load +/- 40 chunks (4km total window)
-        this.tunnelChunksCount = 4; // reduced window when fully underground (darkness hides the distance)
+        this.chunksAhead = 10; // stream 500m ahead of train
+        this.chunksBehind = 4; // keep 200m buffer behind train
         this.chunkCache = new Map(); // chunkIndex -> THREE.Group, built once and kept forever
         this.activeChunks = new Map(); // chunkIndex -> THREE.Group currently in the scene
         
@@ -120,19 +120,17 @@ export class TrackManager {
             window: new THREE.MeshBasicMaterial({ color: '#ffcc44' }),
             building: new THREE.MeshLambertMaterial({ color: '#f1f5f9' }),
 
-            // Ground (clouds are now part of WorldManager's sky-photo background)
-            // side: DoubleSide because the shaft cutout strips are now swept continuously
-            // (buildSweptTrackBox) along curves in both directions; harmless for the flat
-            // plane usage elsewhere.
+            // Ground: Exterior concrete pavement/slabs
+            // FrontSide eliminates internal backface z-fighting between slab top and bottom faces
             ground: (() => {
-                const tex = this.createGrassTexture();
+                const tex = this.createConcreteGroundTexture();
                 tex.repeat.set(0.1, 0.1);
                 return new THREE.MeshLambertMaterial({
                     map: tex,
-                    side: THREE.DoubleSide,
+                    side: THREE.FrontSide,
                     polygonOffset: true,
-                    polygonOffsetFactor: 4,
-                    polygonOffsetUnits: 4
+                    polygonOffsetFactor: 1,
+                    polygonOffsetUnits: 1
                 });
             })()
         };
@@ -228,6 +226,14 @@ export class TrackManager {
         // U2/U3 only: bespoke stacked approach tracks + tubes through this line's own
         // Plärrer zone, meeting the permanent shared hall's Gleis 3/4 mock stubs flush.
         this.buildPlaerrerApproach();
+
+        // Pre-compute chunk types once at startup so the update loop doesn't do 81 expensive
+        // getChunkType() function calls per chunk-boundary transition.
+        const totalChunks = Math.ceil(this.sim.totalLength / this.chunkSize) + 1;
+        this.chunkTypes = new Array(totalChunks);
+        for (let i = 0; i < totalChunks; i++) {
+            this.chunkTypes[i] = this.sim.getChunkType((i + 0.5) * this.chunkSize);
+        }
     }
 
     // ---------- shared low-level helpers for bespoke (non-chunk) track rendering ----------
@@ -827,9 +833,9 @@ export class TrackManager {
             ctx.fillText('PLÄRRER', 0, textY);
             ctx.fillText('PLÄRRER', 1024, textY);
 
-            // Draw tile grout lines over the entire wall
-            ctx.strokeStyle = 'rgba(156, 141, 110, 0.35)';
-            ctx.lineWidth = 1.2;
+            // Draw tile grout lines over the entire wall (finer grout lines)
+            ctx.strokeStyle = 'rgba(156, 141, 110, 0.30)';
+            ctx.lineWidth = 0.7;
             // Horizontal grout lines every 12 pixels
             for (let y = 0; y < h; y += 12) {
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
@@ -862,8 +868,8 @@ export class TrackManager {
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#eddcb9';
             ctx.fillRect(0, 0, w, h);
-            ctx.strokeStyle = 'rgba(156, 141, 110, 0.35)';
-            ctx.lineWidth = 1.2;
+            ctx.strokeStyle = 'rgba(156, 141, 110, 0.30)';
+            ctx.lineWidth = 0.7;
             for (let y = 0; y < h; y += 12) {
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
             }
@@ -1219,6 +1225,7 @@ export class TrackManager {
 
         const lowerWallMat = new THREE.MeshLambertMaterial({ map: createLowerWallTexture(false), side: THREE.DoubleSide });
         lowerWallMat.userData = { keepWrapAndRepeat: true };
+
         // Near-side variant with horizontally mirrored U: the near wall is seen from the
         // opposite side of its face, so the shared texture would read mirror-inverted there
         // (the "PLÄRRER gespiegelt" bug). Negative repeat.x + RepeatWrapping flips it back.
@@ -1230,6 +1237,7 @@ export class TrackManager {
         // Flipped variants for Gleis 1 and 2
         const lowerWallMatFlipped = new THREE.MeshLambertMaterial({ map: createLowerWallTexture(true), side: THREE.DoubleSide });
         lowerWallMatFlipped.userData = { keepWrapAndRepeat: true };
+
         const lowerWallMatMirrorFlipped = lowerWallMatFlipped.clone();
         lowerWallMatMirrorFlipped.map = lowerWallMatFlipped.map.clone();
         lowerWallMatMirrorFlipped.map.repeat.x = -1;
@@ -2336,7 +2344,7 @@ export class TrackManager {
     // yBotFn(s)/yTopFn(s): ABSOLUTE world Y of the box's bottom/top face at that ring.
     // UV is baked in real metres (1 repeat per meter, same convention the old boxes used), so the shared
     // RepeatWrapping ballast/viaduct materials can be reused directly — no cloning needed.
-    buildSweptTrackBox(chunkGroup, sStart, sEnd, centerOffFn, halfWidthFn, yBotFn, yTopFn, material, resStep = 2) {
+    buildSweptTrackBox(chunkGroup, sStart, sEnd, centerOffFn, halfWidthFn, yBotFn, yTopFn, material, resStep = 2, caps = true) {
         const length = sEnd - sStart;
         if (length <= 0) return null;
         const nSeg = Math.max(1, Math.ceil(length / resStep));
@@ -2367,9 +2375,11 @@ export class TrackManager {
             quad(A.bl, A.tl, B.tl, B.bl, [0, A.cum], [0, A.cum], [0, B.cum], [0, B.cum]); // left side
             quad(A.tr, A.br, B.br, B.tr, [0, A.cum], [0, A.cum], [0, B.cum], [0, B.cum]); // right side
         }
-        const c0 = rings[0], cN = rings[nSeg];
-        quad(c0.bl, c0.br, c0.tr, c0.tl, [0, 0], [1, 0], [1, 1], [0, 1]); // start cap
-        quad(cN.tl, cN.tr, cN.br, cN.bl, [0, 0], [1, 0], [1, 1], [0, 1]); // end cap
+        if (caps) {
+            const c0 = rings[0], cN = rings[nSeg];
+            quad(c0.bl, c0.br, c0.tr, c0.tl, [0, 0], [1, 0], [1, 1], [0, 1]); // start cap
+            quad(cN.tl, cN.tr, cN.br, cN.bl, [0, 0], [1, 0], [1, 1], [0, 1]); // end cap
+        }
 
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -2398,21 +2408,14 @@ export class TrackManager {
         if (currentChunkIdx === this._lastStreamChunkIdx && this.activeChunks.size > 0) return;
         this._lastStreamChunkIdx = currentChunkIdx;
 
-        // Deep underground the tunnel is pitch black beyond ~200 m, so a smaller streaming
-        // window suffices. Only shrink it when the FULL default window is underground —
-        // near portals the daylight world must already be streamed in before it gets visible.
-        let windowChunks = this.tunnelChunksCount;
-        for (let i = currentChunkIdx - this.visibleChunksCount; i <= currentChunkIdx + this.visibleChunksCount; i++) {
-            const z = (i + 0.5) * this.chunkSize;
-            if (z < 0 || z > this.sim.totalLength) continue;
-            if (this.sim.getChunkType(z) !== 'underground') {
-                windowChunks = this.visibleChunksCount;
-                break;
-            }
-        }
-
-        const minChunk = Math.max(0, currentChunkIdx - windowChunks);
-        const maxChunk = Math.min(Math.floor(this.sim.totalLength / this.chunkSize), currentChunkIdx + windowChunks);
+        // Asymmetrisches Gleitfenster:
+        // Hinter dem Zug genügen 4 Chunks (200m) Puffer für alle Kamerasichten vollständig.
+        // Vor dem Zug streamen 14 Chunks (700m) voraus — das reicht bei Maximalgeschwindigkeit (80 km/h)
+        // für über 30 Sekunden Sichtweite und deckt alle Portale und Oberflächenabschnitte ab.
+        // Da das Fenster konstant groß ist, wird bei jedem 50m-Schritt exakt EIN Chunk vorne angehängt
+        // und EIN Chunk hinten entfernt (0 Spikes, 0 Ruckler, konstante 60 FPS).
+        const minChunk = Math.max(0, currentChunkIdx - this.chunksBehind);
+        const maxChunk = Math.min(Math.floor(this.sim.totalLength / this.chunkSize), currentChunkIdx + this.chunksAhead);
 
         // Ensure all chunks in the window are in the scene. Chunks are built once and then
         // cached forever: re-entering an area re-adds the cached group instead of rebuilding
@@ -2559,10 +2562,10 @@ export class TrackManager {
             const gTY = (s) => this.sim.getTrackY(s);
             const gSp = (s) => this.sim.getTrackSpacing(s);
 
-            // Lay a mathematically curved, smooth 600m-wide grass ground carpet for all open-air sections
+            // Lay a mathematically curved, smooth 600m-wide grass/concrete ground carpet for all open-air sections
             if (kind === 'viaduct' || kind === 'ramp' || kind === 'atgrade-split' || kind === 'atgrade-normal') {
                 this.buildSweptTrackBox(chunkGroup, sStart, sEnd, null,
-                    () => 300, () => -0.50, () => -0.49, this.materials.ground);
+                    () => 300, () => -2.50, () => -0.50, this.materials.ground, 2, false);
             }
 
             if (kind === 'viaduct') {
@@ -2647,7 +2650,7 @@ export class TrackManager {
                     this.buildSweptTrackBox(chunkGroup, sStart, sEnd,
                         (s) => sign * (wShaft(s) / 2 + outer) / 2,
                         (s) => (outer - wShaft(s) / 2) / 2,
-                        () => -0.50, () => -0.49, this.materials.ground);
+                        () => -2.50, () => -0.50, this.materials.ground, 2, false);
                 }
             } else if (kind === 'tunnel' || kind === 'tunnel-platform') {
                 const yOff = kind === 'tunnel-platform' ? 0.52 : 0.50;
@@ -2818,7 +2821,7 @@ export class TrackManager {
                         this.buildSweptTrackBox(chunkGroup, gs, ge,
                             (s) => sign * (innerHalf(s) + outerHalf) / 2,
                             (s) => (outerHalf - innerHalf(s)) / 2,
-                            () => -0.50, () => -0.49, this.materials.ground);
+                            () => -2.50, () => -0.50, this.materials.ground, 2, false);
                     }
                 }
             }
@@ -3490,37 +3493,56 @@ export class TrackManager {
         return tex;
     }
 
-    createGrassTexture() {
-        const W = 128, H = 128;
+    createConcreteGroundTexture() {
+        const W = 256, H = 256;
         const canvas = document.createElement('canvas');
         canvas.width = W;
         canvas.height = H;
         const ctx = canvas.getContext('2d');
 
-        // Base mid-green
-        ctx.fillStyle = '#4a7c3f';
+        // Base neutral concrete grey
+        ctx.fillStyle = '#6f737a';
         ctx.fillRect(0, 0, W, H);
 
-        // Subtle vertical streaks simulating grass blades / light variation
-        const streakColors = ['#3d6b34', '#557a47', '#4a7c3f', '#3a6030', '#5a8a4e', '#426e38'];
-        for (let i = 0; i < 80; i++) {
-            const x = Math.floor(Math.random() * W);
-            const w = 1 + Math.floor(Math.random() * 3);
-            const h = 4 + Math.floor(Math.random() * 12);
-            const y = Math.floor(Math.random() * H);
-            ctx.fillStyle = streakColors[Math.floor(Math.random() * streakColors.length)];
-            ctx.globalAlpha = 0.35 + Math.random() * 0.45;
-            ctx.fillRect(x, y, w, h);
+        // Mottled tone variations (subtle cloudiness across slabs)
+        const toneColors = ['#666a71', '#787c84', '#60646b', '#73777f', '#5c6066'];
+        for (let i = 0; i < 90; i++) {
+            const cx = Math.floor(Math.random() * W);
+            const cy = Math.floor(Math.random() * H);
+            const r = 16 + Math.floor(Math.random() * 45);
+            ctx.fillStyle = toneColors[Math.floor(Math.random() * toneColors.length)];
+            ctx.globalAlpha = 0.18 + Math.random() * 0.22;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fill();
         }
         ctx.globalAlpha = 1.0;
 
-        // Fine random noise dots for micro-detail
-        for (let i = 0; i < 1200; i++) {
+        // Subtle slab expansion joints / seam grid (two slabs per 256px tile)
+        ctx.strokeStyle = '#4e5157';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(128, 0); ctx.lineTo(128, 256);
+        ctx.moveTo(0, 128); ctx.lineTo(256, 128);
+        ctx.stroke();
+
+        // Joint groove bevel highlight
+        ctx.strokeStyle = '#858991';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(129, 0); ctx.lineTo(129, 256);
+        ctx.moveTo(0, 129); ctx.lineTo(256, 129);
+        ctx.stroke();
+
+        // Fine concrete aggregate specks (sand, mineral chips, gravel)
+        for (let i = 0; i < 3000; i++) {
             const x = Math.random() * W;
             const y = Math.random() * H;
-            ctx.fillStyle = Math.random() > 0.5 ? '#3a5c30' : '#5e9050';
-            ctx.globalAlpha = 0.18;
-            ctx.fillRect(x, y, 1, 1);
+            const isLight = Math.random() > 0.45;
+            ctx.fillStyle = isLight ? '#9da1a8' : '#45484e';
+            ctx.globalAlpha = 0.12 + Math.random() * 0.35;
+            const size = Math.random() > 0.85 ? 2 : 1;
+            ctx.fillRect(x, y, size, size);
         }
         ctx.globalAlpha = 1.0;
 
@@ -3529,6 +3551,10 @@ export class TrackManager {
         texture.wrapT = THREE.RepeatWrapping;
         texture.colorSpace = THREE.SRGBColorSpace;
         return texture;
+    }
+
+    createGrassTexture() {
+        return this.createConcreteGroundTexture();
     }
 
     createFenceTexture() {
@@ -3565,85 +3591,10 @@ export class TrackManager {
     }
 
     createRoughConcreteMaterial() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        const ctx = canvas.getContext('2d');
-
-        // Base color: light grey concrete (somewhat brighter)
-        ctx.fillStyle = '#b0b0b0';
-        ctx.fillRect(0, 0, 256, 256);
-
-        // Add subtle organic patches for concrete texture
-        for (let i = 0; i < 15; i++) {
-            const x = Math.random() * 256;
-            const y = Math.random() * 256;
-            const radius = 20 + Math.random() * 40;
-            const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
-            const isDark = Math.random() > 0.5;
-            const alpha = 0.05 + Math.random() * 0.08;
-            grad.addColorStop(0, isDark ? `rgba(100,100,100,${alpha})` : `rgba(235,235,235,${alpha})`);
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // High-frequency fine concrete grain noise
-        const numGrains = 4000;
-        for (let i = 0; i < numGrains; i++) {
-            const x = Math.random() * 256;
-            const y = Math.random() * 256;
-            const size = 1.0 + Math.random() * 1.5;
-
-            const rand = Math.random();
-            if (rand < 0.4) {
-                ctx.fillStyle = '#8e8e8e'; // dark speckles
-            } else if (rand < 0.8) {
-                ctx.fillStyle = '#d2d2d2'; // light speckles
-            } else {
-                ctx.fillStyle = '#a0a0a0'; // mid speckles
-            }
-
-            ctx.globalAlpha = 0.12;
-            ctx.fillRect(x, y, size, size);
-        }
-        ctx.globalAlpha = 1.0;
-
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(1, 1);
-        texture.colorSpace = THREE.SRGBColorSpace;
-
-        // Generate bump map canvas for rough surface
-        const bumpCanvas = document.createElement('canvas');
-        bumpCanvas.width = 256;
-        bumpCanvas.height = 256;
-        const bCtx = bumpCanvas.getContext('2d');
-
-        bCtx.fillStyle = '#808080';
-        bCtx.fillRect(0, 0, 256, 256);
-
-        bCtx.globalAlpha = 0.25;
-        for (let i = 0; i < 3000; i++) {
-            const x = Math.random() * 256;
-            const y = Math.random() * 256;
-            const size = 1 + Math.random() * 2;
-            bCtx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
-            bCtx.fillRect(x, y, size, size);
-        }
-        bCtx.globalAlpha = 1.0;
-
-        const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
-        bumpTexture.wrapS = THREE.RepeatWrapping;
-        bumpTexture.wrapT = THREE.RepeatWrapping;
-        bumpTexture.repeat.set(1, 1);
-
+        const { map, bumpMap } = StationBuilder.getRoughConcreteTextures();
         return new THREE.MeshLambertMaterial({
-            map: texture,
-            bumpMap: bumpTexture,
+            map: map,
+            bumpMap: bumpMap,
             bumpScale: 0.008,
             side: THREE.DoubleSide
         });

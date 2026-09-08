@@ -76,51 +76,51 @@ export class StationBuilder {
         this.wallPresets = {
             "Maximilianstraße": {
                 bottomColor: '#f8fafc',
-                bottomGrout: '#94a3b8',
+                bottomGrout: '#777A8B',
                 topColor: '#6FB464',
-                topGrout: '#94a3b8',
+                topGrout: '#777A8B',
                 stripeBg: '#ffffff',
                 stripeText: '#000000'
             },
             "Bärenschanze": {
                 bottomColor: '#f8fafc',
-                bottomGrout: '#94a3b8',
-                topColor: '#1f799e',
-                topGrout: '#94a3b8',
+                bottomGrout: '#777A8B',
+                topColor: '#396296',
+                topGrout: '#777A8B',
                 stripeBg: '#ffffff',
                 stripeText: '#000000'
             },
             "Gostenhof": {
                 bottomColor: '#f8fafc',
-                bottomGrout: '#94a3b8',
-                topColor: '#e0bf04',
-                topGrout: '#94a3b8',
+                bottomGrout: '#777A8B',
+                topColor: '#BA7C00',
+                topGrout: '#777A8B',
                 stripeBg: '#ffffff',
                 stripeText: '#000000'
             },
             "Langwasser Süd": {
                 bottomColor: '#41525a',
-                bottomGrout: '#222d32',
+                bottomGrout: '#777A8B',
                 topColor: '#acb6bf',
-                topGrout: '#7e8a93',
+                topGrout: '#777A8B',
                 stripeBg: '#184763',
                 stripeText: '#ffffff',
                 flatTiles: true
             },
             "Gemeinschaftshaus": {
                 bottomColor: '#41525a',
-                bottomGrout: '#222d32',
+                bottomGrout: '#777A8B',
                 topColor: '#acb6bf',
-                topGrout: '#7e8a93',
+                topGrout: '#777A8B',
                 stripeBg: '#41525a',
                 stripeText: '#ffffff',
                 flatTiles: true
             },
             "Langwasser Mitte": {
                 bottomColor: '#41525a',
-                bottomGrout: '#222d32',
+                bottomGrout: '#777A8B',
                 topColor: '#acb6bf',
-                topGrout: '#7e8a93',
+                topGrout: '#777A8B',
                 stripeBg: '#51301b',
                 stripeText: '#ffffff',
                 flatTiles: true
@@ -202,7 +202,9 @@ export class StationBuilder {
 
     buildSegmentOuterWalls(segmentData) {}
     buildPillars() {}
-    buildBenches() {}
+    buildBenches() {
+        this.model.addBenchesToStation(this.station, this.group, 1.0, this.platLength, this.platTopY, this.centerAngle);
+    }
     buildSignsAndBoards() {}
     buildStairs() {
         if (this.station.type !== 'underground' && this.station.name !== 'Messe') return;
@@ -215,6 +217,7 @@ export class StationBuilder {
         const isRound = (station.name === "Rathaus" || station.name === "Lorenzkirche");
 
         const wallMat = this.createRoughConcreteMaterial();
+        wallMat.side = THREE.DoubleSide;
 
         const stairTex = this.createStairTexture();
         const stepMat = new THREE.MeshLambertMaterial({ map: stairTex });
@@ -505,6 +508,20 @@ export class StationBuilder {
                 const rWall = new THREE.Mesh(stairWallGeom, wallMat);
                 rWall.position.set(2.3, stairWallHeight/2, wallMidZ);
                 stairGroup.add(lWall, rWall);
+
+                // Roof/Ceiling over the inclined stairwell shaft: closes the upper void above the escalators
+                const shaftCeilGeom = new THREE.BoxGeometry(5.0, 0.4, stairWallDepth + stairWallOverlap);
+                const shaftCeil = new THREE.Mesh(shaftCeilGeom, wallMat);
+                shaftCeil.position.set(0, stairWallHeight + 0.2, wallMidZ);
+                stairGroup.add(shaftCeil);
+
+                // Shaft neon light fixtures mounted under the shaft ceiling in a strictly regular 2.4m sequence
+                const lampPitch = 2.4;
+                for (let d = 2.0; d < stairWallDepth - 0.5; d += lampPitch) {
+                    const fixture = this.createNeonFixture(1.8, 'z');
+                    fixture.position.set(0, stairWallHeight - 0.02, zDir * d);
+                    stairGroup.add(fixture);
+                }
             }
 
             // 2. Stairs in the middle + escalator steps as TWO InstancedMeshes instead of
@@ -636,6 +653,11 @@ export class StationBuilder {
             
             stairGroup.add(railL1, railL2, railR1, railR2);
 
+            // Upper mezzanine corridor / distribution hall at top of stairs & escalators:
+            if (this.station.name !== "Messe") {
+                this.buildUpperMezzanine(stairGroup, zDir, numSteps, stepDepth, stepHeight, stairWallHeight, stairWallDepth, wallMat, stepMat);
+            }
+
             const localPos = this.group.worldToLocal(anchor.edgePos.clone());
 
             stairGroup.position.copy(localPos);
@@ -656,7 +678,7 @@ export class StationBuilder {
         const postThickness = 0.05;
         const postGeom = new THREE.BoxGeometry(postThickness, gateHeight, postThickness);
         const crossbarGeom = new THREE.BoxGeometry(this.doorWidth, 0.06, postThickness);
-        const gateMat = new THREE.MeshStandardMaterial({ color: '#3f4448', metalness: 0.6, roughness: 0.4 });
+        const gateMat = new THREE.MeshLambertMaterial({ color: '#3f4448' });
 
         const createGateInstance = () => {
             const gateGroup = new THREE.Group();
@@ -688,11 +710,11 @@ export class StationBuilder {
         const signalArmLength = 0.15;
         const signalArmGeom = new THREE.BoxGeometry(0.08, 0.08, signalArmLength);
         const signalBackGeom = new THREE.BoxGeometry(0.2, signalLampSpacing * 2 + 0.24, 0.06);
-        const signalBackMat = new THREE.MeshStandardMaterial({ color: '#1a1a1a', roughness: 0.6 });
+        const signalBackMat = new THREE.MeshLambertMaterial({ color: '#1a1a1a' });
         const signalLampGeom = new THREE.SphereGeometry(signalLampRadius, 12, 8);
-        const signalOffMat = new THREE.MeshStandardMaterial({ color: '#2a2a2a' });
-        const signalGreenMat = new THREE.MeshStandardMaterial({ color: '#0aff5a', emissive: '#0aff5a', emissiveIntensity: 1.8 });
-        const signalRedMat = new THREE.MeshStandardMaterial({ color: '#ff2020', emissive: '#ff2020', emissiveIntensity: 1.8 });
+        const signalOffMat = new THREE.MeshLambertMaterial({ color: '#2a2a2a' });
+        const signalGreenMat = new THREE.MeshLambertMaterial({ color: '#0aff5a', emissive: '#0aff5a', emissiveIntensity: 1.8 });
+        const signalRedMat = new THREE.MeshLambertMaterial({ color: '#ff2020', emissive: '#ff2020', emissiveIntensity: 1.8 });
         const signalVisorGeom = new THREE.BoxGeometry(0.18, 0.02, 0.12);
         const signalGlowGeom = new THREE.SphereGeometry(signalLampRadius * 2.4, 12, 8);
         const signalGlowMatGreen = new THREE.MeshBasicMaterial({ color: '#0aff5a', transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide });
@@ -840,6 +862,7 @@ export class StationBuilder {
     }
 
     createDurchgangVerbotenTexture() {
+        if (StationBuilder._sharedDurchgangTex) return StationBuilder._sharedDurchgangTex;
         // 50x50cm square plaque: the "Verbot der Einfahrt" no-entry sign (red circle, white
         // horizontal bar) with a black pedestrian silhouette standing in front of it, and
         // "Durchgang verboten" underneath.
@@ -926,10 +949,12 @@ export class StationBuilder {
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
+        StationBuilder._sharedDurchgangTex = texture;
         return texture;
     }
 
     createStairTexture() {
+        if (StationBuilder._sharedStairTex) return StationBuilder._sharedStairTex;
         const canvas = document.createElement('canvas');
         canvas.width = 128;
         canvas.height = 128;
@@ -961,6 +986,7 @@ export class StationBuilder {
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
+        StationBuilder._sharedStairTex = texture;
         return texture;
     }
 
@@ -996,6 +1022,7 @@ export class StationBuilder {
     // hohe metalness fast schwarz (gleicher Effekt wie bei den Mülleimern, siehe
     // StationModel-Konstruktor).
     static createBalustradeMaterial() {
+        if (StationBuilder._sharedBalustradeMat) return StationBuilder._sharedBalustradeMat;
         const canvas = document.createElement('canvas');
         canvas.width = 128;
         canvas.height = 4;
@@ -1012,10 +1039,12 @@ export class StationBuilder {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.colorSpace = THREE.SRGBColorSpace;
-        return new THREE.MeshLambertMaterial({ map: texture });
+        StationBuilder._sharedBalustradeMat = new THREE.MeshLambertMaterial({ map: texture });
+        return StationBuilder._sharedBalustradeMat;
     }
 
     createEscalatorStripeTexture() {
+        if (StationBuilder._sharedEscalatorStripeTex) return StationBuilder._sharedEscalatorStripeTex;
         const canvas = document.createElement('canvas');
         canvas.width = 64;
         canvas.height = 64;
@@ -1038,10 +1067,14 @@ export class StationBuilder {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.colorSpace = THREE.SRGBColorSpace;
+        StationBuilder._sharedEscalatorStripeTex = texture;
         return texture;
     }
 
-    createRoughConcreteMaterial() {
+    static getRoughConcreteTextures() {
+        if (StationBuilder._sharedConcreteMap && StationBuilder._sharedConcreteBumpMap) {
+            return { map: StationBuilder._sharedConcreteMap, bumpMap: StationBuilder._sharedConcreteBumpMap };
+        }
         const canvas = document.createElement('canvas');
         canvas.width = 256;
         canvas.height = 256;
@@ -1117,15 +1150,492 @@ export class StationBuilder {
         bumpTexture.wrapS = THREE.ClampToEdgeWrapping;
         bumpTexture.wrapT = THREE.ClampToEdgeWrapping;
         bumpTexture.repeat.set(1, 1);
-        
+
+        StationBuilder._sharedConcreteMap = texture;
+        StationBuilder._sharedConcreteBumpMap = bumpTexture;
+        return { map: texture, bumpMap: bumpTexture };
+    }
+
+    createRoughConcreteMaterial() {
+        const { map, bumpMap } = StationBuilder.getRoughConcreteTextures();
         return new THREE.MeshLambertMaterial({
-            map: texture,
-            bumpMap: bumpTexture,
+            map: map,
+            bumpMap: bumpMap,
             bumpScale: 0.008
         });
     }
 
     buildPointLights() {}
-    buildStandardDetails() {}
+    buildStandardDetails() {
+        this.model.addTrashCansToStation(this.station, this.group, 1.0, this.platLength, this.platTopY, this.centerAngle);
+    }
+
+    createNeonFixture(length = 2.0, orientation = 'z') {
+        const fixtureGroup = new THREE.Group();
+
+        if (!StationBuilder._neonHouseMat) {
+            StationBuilder._neonHouseMat = new THREE.MeshLambertMaterial({ color: '#25282c' });
+        }
+        if (!StationBuilder._neonDiffMat) {
+            StationBuilder._neonDiffMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+        }
+
+        // Metal housing channel (anthracite casing)
+        const isX = (orientation === 'x');
+        const houseWidth = isX ? length : 0.22;
+        const houseDepth = isX ? 0.22 : length;
+        const houseGeom = new THREE.BoxGeometry(houseWidth, 0.05, houseDepth);
+        const house = new THREE.Mesh(houseGeom, StationBuilder._neonHouseMat);
+        house.position.y = -0.025;
+
+        // Clean white fluorescent/LED diffuser lens (flush inside housing)
+        const diffWidth = isX ? Math.max(0.1, length - 0.08) : 0.12;
+        const diffDepth = isX ? 0.12 : Math.max(0.1, length - 0.08);
+        const diffGeom = new THREE.BoxGeometry(diffWidth, 0.025, diffDepth);
+        const diff = new THREE.Mesh(diffGeom, StationBuilder._neonDiffMat);
+        diff.position.y = -0.05;
+
+        fixtureGroup.add(house, diff);
+        return fixtureGroup;
+    }
+
+    createMinimalistExitSignTexture() {
+        if (StationBuilder._sharedExitSignTex) return StationBuilder._sharedExitSignTex;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        // Pure crisp white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 512, 128);
+
+        // Thin minimalist black border
+        ctx.strokeStyle = '#1e2022';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(4, 4, 504, 120);
+
+        // Crisp solid black typography & arrows
+        ctx.fillStyle = '#111315';
+        ctx.textBaseline = 'middle';
+
+        // Left Arrow
+        ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('←', 52, 64);
+
+        // Center Word: Ausgang
+        ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        ctx.fillText('Ausgang', 256, 64);
+
+        // Right Arrow
+        ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        ctx.fillText('→', 460, 64);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        StationBuilder._sharedExitSignTex = texture;
+        return texture;
+    }
+
+    createMezzaninePosterTexture() {
+        if (StationBuilder._sharedPosterTex) return StationBuilder._sharedPosterTex;
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 384;
+        const ctx = canvas.getContext('2d');
+
+        // Poster background
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 256, 384);
+
+        // Header
+        ctx.fillStyle = '#e11d48';
+        ctx.fillRect(16, 16, 224, 48);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('VAG Nürnberg', 128, 40);
+
+        // Subtitle
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('U-Bahn Netz', 128, 100);
+
+        // Lines U1, U2, U3
+        const lineColors = ['#e11d48', '#2563eb', '#059669'];
+        const lineNames = ['U1 Langwasser - Fürth', 'U2 Röthenbach - Flughafen', 'U3 Grossreuth - Nordwestring'];
+        for (let i = 0; i < 3; i++) {
+            ctx.fillStyle = lineColors[i];
+            ctx.fillRect(24, 145 + i * 52, 36, 26);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`U${i+1}`, 42, 158 + i * 52);
+
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(lineNames[i], 68, 158 + i * 52);
+        }
+
+        // Footer
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(16, 330, 224, 36);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Mobilität für alle', 128, 348);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        StationBuilder._sharedPosterTex = texture;
+        return texture;
+    }
+
+    createLightGreyTileMaterial() {
+        if (StationBuilder._sharedTileMat) return StationBuilder._sharedTileMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // Grout base color (neutral mid-grey grout)
+        ctx.fillStyle = '#9ca3af';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // 8 rows of tiles (each 64px tall), 4 columns of tiles (each 128px wide -> 2:1 subway aspect ratio)
+        const rowH = 64;
+        const colW = 128;
+        const grout = 3;
+
+        for (let row = 0; row < 8; row++) {
+            const y = row * rowH;
+            const xOffset = (row % 2 === 1) ? colW / 2 : 0;
+            for (let col = -1; col < 5; col++) {
+                const x = col * colW + xOffset;
+                const tileW = colW - grout;
+                const tileH = rowH - grout;
+
+                // Tile base: light grey ceramic with tiny subtle variation
+                const v = 222 + Math.floor(Math.sin(row * 13 + col * 7) * 5);
+                ctx.fillStyle = `rgb(${v},${v+2},${v+5})`;
+                ctx.fillRect(x + grout, y + grout, tileW, tileH);
+
+                // Subtle ceramic bevel highlight on top & left edges
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.fillRect(x + grout, y + grout, tileW, 1.5);
+                ctx.fillRect(x + grout, y + grout, 1.5, tileH);
+
+                // Subtle ceramic bevel shadow on bottom & right edges
+                ctx.fillStyle = 'rgba(160, 165, 175, 0.4)';
+                ctx.fillRect(x + grout, y + grout + tileH - 1.5, tileW, 1.5);
+                ctx.fillRect(x + grout + tileW - 1.5, y + grout, 1.5, tileH);
+            }
+        }
+
+        // Bump map canvas for physical tile bevel depth
+        const bumpCanvas = document.createElement('canvas');
+        bumpCanvas.width = 512;
+        bumpCanvas.height = 512;
+        const bCtx = bumpCanvas.getContext('2d');
+        bCtx.fillStyle = '#000000'; // Recessed grout is black
+        bCtx.fillRect(0, 0, 512, 512);
+
+        for (let row = 0; row < 8; row++) {
+            const y = row * rowH;
+            const xOffset = (row % 2 === 1) ? colW / 2 : 0;
+            for (let col = -1; col < 5; col++) {
+                const x = col * colW + xOffset;
+                const tileW = colW - grout;
+                const tileH = rowH - grout;
+                bCtx.fillStyle = '#ffffff'; // Elevated tile face is white
+                bCtx.fillRect(x + grout + 1, y + grout + 1, tileW - 2, tileH - 2);
+            }
+        }
+
+        const tileTex = new THREE.CanvasTexture(canvas);
+        tileTex.wrapS = THREE.RepeatWrapping;
+        tileTex.wrapT = THREE.RepeatWrapping;
+        tileTex.colorSpace = THREE.SRGBColorSpace;
+
+        const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+        bumpTex.wrapS = THREE.RepeatWrapping;
+        bumpTex.wrapT = THREE.RepeatWrapping;
+
+        StationBuilder._sharedTileMat = new THREE.MeshLambertMaterial({
+            map: tileTex,
+            bumpMap: bumpTex,
+            bumpScale: 0.012
+        });
+        return StationBuilder._sharedTileMat;
+    }
+
+    createLightGreyFloorMaterial() {
+        if (StationBuilder._sharedFloorMat) return StationBuilder._sharedFloorMat;
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Darker grout
+        ctx.fillStyle = '#7a818c';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // 4x4 square floor tiles (64px each)
+        const size = 64;
+        const grout = 3;
+        for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+                const x = c * size;
+                const y = r * size;
+                const v = 205 + Math.floor(Math.sin(r * 11 + c * 17) * 4);
+                ctx.fillStyle = `rgb(${v},${v+2},${v+4})`;
+                ctx.fillRect(x + grout, y + grout, size - grout, size - grout);
+            }
+        }
+
+        const floorTex = new THREE.CanvasTexture(canvas);
+        floorTex.wrapS = THREE.RepeatWrapping;
+        floorTex.wrapT = THREE.RepeatWrapping;
+        floorTex.colorSpace = THREE.SRGBColorSpace;
+
+        StationBuilder._sharedFloorMat = new THREE.MeshLambertMaterial({
+            map: floorTex
+        });
+        return StationBuilder._sharedFloorMat;
+    }
+
+    scaleBoxUVs(geom, width, height, depth, unitSize = 1.2) {
+        const uv = geom.attributes.uv;
+        if (!uv) return;
+        // ±X faces (0..7): span depth (U) and height (V)
+        for (let i = 0; i < 8; i++) {
+            uv.setXY(i, uv.getX(i) * (depth / unitSize), uv.getY(i) * (height / unitSize));
+        }
+        // ±Y faces (8..15): span width (U) and depth (V)
+        for (let i = 8; i < 16; i++) {
+            uv.setXY(i, uv.getX(i) * (width / unitSize), uv.getY(i) * (depth / unitSize));
+        }
+        // ±Z faces (16..23): span width (U) and height (V)
+        for (let i = 16; i < 24; i++) {
+            uv.setXY(i, uv.getX(i) * (width / unitSize), uv.getY(i) * (height / unitSize));
+        }
+        uv.needsUpdate = true;
+    }
+
+    buildUpperMezzanine(stairGroup, zDir, numSteps, stepDepth, stepHeight, stairWallHeight, stairWallDepth, wallMat, stepMat) {
+        const tileMat = this.createLightGreyTileMaterial();
+        const floorMat = this.createLightGreyFloorMaterial();
+
+        const topY = numSteps * stepHeight;
+        const corridorCeilY = (this.station && this.station.name === "Rathenauplatz") ? (topY + 2.8) : stairWallHeight;
+        const corridorHeight = corridorCeilY - topY;
+
+        // Dimensions of the T-junction mezzanine:
+        // Approach corridor (starts at escalator landing, runs forward):
+        const approachDepth = 4.0;
+        const landingStartZ = zDir * stairWallDepth;
+        const crossStartZ = landingStartZ + zDir * approachDepth;
+        const approachMidZ = landingStartZ + zDir * (approachDepth / 2);
+
+        // Cross corridor (Querflur: runs left and right):
+        const crossDepth = 3.2;
+        const crossEndZ = crossStartZ + zDir * crossDepth;
+        const crossMidZ = crossStartZ + zDir * (crossDepth / 2);
+        const crossHalfWidth = 6.2; // Spans from X = -6.2m to +6.2m (12.4m total width)
+        const approachInnerHalfWidth = 2.1; // Walkway between X = -2.1 and +2.1 (4.2m width)
+
+        // 1. Approach Corridor Floor & Cross Corridor Floor (tiled in light grey)
+        const floorThick = 0.2;
+        const appFloorGeom = new THREE.BoxGeometry(4.2, floorThick, approachDepth);
+        this.scaleBoxUVs(appFloorGeom, 4.2, floorThick, approachDepth, 1.2);
+        const appFloor = new THREE.Mesh(appFloorGeom, floorMat);
+        appFloor.position.set(0, topY - floorThick / 2, approachMidZ);
+
+        const crossFloorWidth = crossHalfWidth * 2;
+        const crossFloorGeom = new THREE.BoxGeometry(crossFloorWidth, floorThick, crossDepth);
+        this.scaleBoxUVs(crossFloorGeom, crossFloorWidth, floorThick, crossDepth, 1.2);
+        const crossFloor = new THREE.Mesh(crossFloorGeom, floorMat);
+        crossFloor.position.set(0, topY - floorThick / 2, crossMidZ);
+
+        stairGroup.add(appFloor, crossFloor);
+
+        // 2. Escalator Comb Plates (transition from steps to floor tiles)
+        const combGeom = new THREE.BoxGeometry(1.05, 0.02, 0.4);
+        if (!StationBuilder._mezzanineCombMat) {
+            StationBuilder._mezzanineCombMat = new THREE.MeshLambertMaterial({ color: '#334155' });
+        }
+        const combMat = StationBuilder._mezzanineCombMat;
+        const combL = new THREE.Mesh(combGeom, combMat);
+        combL.position.set(-1.55, topY + 0.01, landingStartZ + zDir * 0.2);
+        const combR = new THREE.Mesh(combGeom, combMat);
+        combR.position.set(1.55, topY + 0.01, landingStartZ + zDir * 0.2);
+        stairGroup.add(combL, combR);
+
+        // 3. Approach Corridor Side Walls (tiled in light grey)
+        const appWallGeom = new THREE.BoxGeometry(0.4, corridorHeight, approachDepth);
+        this.scaleBoxUVs(appWallGeom, 0.4, corridorHeight, approachDepth, 1.2);
+        const appWallL = new THREE.Mesh(appWallGeom, tileMat);
+        appWallL.position.set(-2.3, topY + corridorHeight / 2, approachMidZ);
+        const appWallR = new THREE.Mesh(appWallGeom, tileMat);
+        appWallR.position.set(2.3, topY + corridorHeight / 2, approachMidZ);
+        stairGroup.add(appWallL, appWallR);
+
+        // 4. Cross Corridor Walls (all tiled in light grey)
+        // 4a. Back Wall: full-width wall facing the approach corridor
+        const backWallWidth = crossFloorWidth + 0.4;
+        const backWallGeom = new THREE.BoxGeometry(backWallWidth, corridorHeight, 0.4);
+        this.scaleBoxUVs(backWallGeom, backWallWidth, corridorHeight, 0.4, 1.2);
+        const backWall = new THREE.Mesh(backWallGeom, tileMat);
+        backWall.position.set(0, topY + corridorHeight / 2, crossEndZ + zDir * 0.2);
+        stairGroup.add(backWall);
+
+        // 4b. End Cap Walls (left & right ends of the cross corridor)
+        const endCapGeom = new THREE.BoxGeometry(0.4, corridorHeight, crossDepth);
+        this.scaleBoxUVs(endCapGeom, 0.4, corridorHeight, crossDepth, 1.2);
+        const endCapL = new THREE.Mesh(endCapGeom, tileMat);
+        endCapL.position.set(-crossHalfWidth - 0.2, topY + corridorHeight / 2, crossMidZ);
+        const endCapR = new THREE.Mesh(endCapGeom, tileMat);
+        endCapR.position.set(crossHalfWidth + 0.2, topY + corridorHeight / 2, crossMidZ);
+        stairGroup.add(endCapL, endCapR);
+
+        // 4c. Front Return Walls (on either side of the entrance from the approach corridor)
+        const frontWallWidth = crossHalfWidth - approachInnerHalfWidth; // (6.2 - 2.1 = 4.1m)
+        const frontWallGeom = new THREE.BoxGeometry(frontWallWidth, corridorHeight, 0.4);
+        this.scaleBoxUVs(frontWallGeom, frontWallWidth, corridorHeight, 0.4, 1.2);
+        const frontWallL = new THREE.Mesh(frontWallGeom, tileMat);
+        frontWallL.position.set(-(approachInnerHalfWidth + frontWallWidth / 2), topY + corridorHeight / 2, crossStartZ - zDir * 0.2);
+        const frontWallR = new THREE.Mesh(frontWallGeom, tileMat);
+        frontWallR.position.set(approachInnerHalfWidth + frontWallWidth / 2, topY + corridorHeight / 2, crossStartZ - zDir * 0.2);
+        stairGroup.add(frontWallL, frontWallR);
+
+        // 5. Ceilings (enclosing the top completely)
+        const appCeilGeom = new THREE.BoxGeometry(5.0, 0.4, approachDepth);
+        const appCeil = new THREE.Mesh(appCeilGeom, wallMat);
+        appCeil.position.set(0, corridorCeilY + 0.2, approachMidZ);
+
+        const crossCeilGeom = new THREE.BoxGeometry(crossFloorWidth + 0.8, 0.4, crossDepth + 0.8);
+        const crossCeil = new THREE.Mesh(crossCeilGeom, wallMat);
+        crossCeil.position.set(0, corridorCeilY + 0.2, crossMidZ);
+        stairGroup.add(appCeil, crossCeil);
+
+        // 6. Transition Bulkhead (if corridorCeilY < stairWallHeight, e.g. Rathenauplatz)
+        if (stairWallHeight > corridorCeilY + 0.05) {
+            const bulkHeight = stairWallHeight - corridorCeilY;
+            const bulkGeom = new THREE.BoxGeometry(5.0, bulkHeight, 0.4);
+            const bulkMesh = new THREE.Mesh(bulkGeom, wallMat);
+            bulkMesh.position.set(0, corridorCeilY + bulkHeight / 2, landingStartZ - zDir * 0.2);
+            stairGroup.add(bulkMesh);
+        }
+
+        // 7. Baseboards (Sockelleisten) along all tiled walls
+        if (!StationBuilder._mezzanineBaseboardMat) {
+            StationBuilder._mezzanineBaseboardMat = new THREE.MeshLambertMaterial({ color: '#26282b' });
+        }
+        const baseboardMat = StationBuilder._mezzanineBaseboardMat;
+        const bbY = topY + 0.05;
+        const bbH = 0.1;
+
+        // Approach side baseboards
+        const bbAppGeom = new THREE.BoxGeometry(0.04, bbH, approachDepth);
+        const bbAppL = new THREE.Mesh(bbAppGeom, baseboardMat);
+        bbAppL.position.set(-2.08, bbY, approachMidZ);
+        const bbAppR = new THREE.Mesh(bbAppGeom, baseboardMat);
+        bbAppR.position.set(2.08, bbY, approachMidZ);
+
+        // Cross corridor baseboards
+        const bbBackGeom = new THREE.BoxGeometry(crossFloorWidth, bbH, 0.04);
+        const bbBack = new THREE.Mesh(bbBackGeom, baseboardMat);
+        bbBack.position.set(0, bbY, crossEndZ - zDir * 0.02);
+
+        const bbEndGeom = new THREE.BoxGeometry(0.04, bbH, crossDepth);
+        const bbEndL = new THREE.Mesh(bbEndGeom, baseboardMat);
+        bbEndL.position.set(-crossHalfWidth + 0.02, bbY, crossMidZ);
+        const bbEndR = new THREE.Mesh(bbEndGeom, baseboardMat);
+        bbEndR.position.set(crossHalfWidth - 0.02, bbY, crossMidZ);
+
+        const bbFrontGeom = new THREE.BoxGeometry(frontWallWidth, bbH, 0.04);
+        const bbFrontL = new THREE.Mesh(bbFrontGeom, baseboardMat);
+        bbFrontL.position.set(-(approachInnerHalfWidth + frontWallWidth / 2), bbY, crossStartZ + zDir * 0.02);
+        const bbFrontR = new THREE.Mesh(bbFrontGeom, baseboardMat);
+        bbFrontR.position.set(approachInnerHalfWidth + frontWallWidth / 2, bbY, crossStartZ + zDir * 0.02);
+
+        stairGroup.add(bbAppL, bbAppR, bbBack, bbEndL, bbEndR, bbFrontL, bbFrontR);
+
+        // 8. Regular, Rhythmic Neon Light Fixtures
+        // Continuation of the 2.4m sequence from the escalator shaft into the approach corridor:
+        // Shaft lamps were at d = 2.0, 4.4, 6.8 (with d < stairWallDepth).
+        // The first corridor lamp is at d = 6.8 + 2.4 - stairWallDepth = 0.8m past landing.
+        // The second corridor lamp is at d = 0.8 + 2.4 = 3.2m past landing.
+        const lampPitch = 2.4;
+        let lastShaftD = 2.0;
+        while (lastShaftD + lampPitch < stairWallDepth - 0.5) {
+            lastShaftD += lampPitch;
+        }
+        let dCorr = lastShaftD + lampPitch - stairWallDepth;
+        while (dCorr < approachDepth) {
+            const fixture = this.createNeonFixture(1.8, 'z');
+            fixture.position.set(0, corridorCeilY - 0.02, landingStartZ + zDir * dCorr);
+            stairGroup.add(fixture);
+            dCorr += lampPitch;
+        }
+
+        // Cross corridor ceiling fixtures (spanning left, center, right along the transverse hallway):
+        const crossCenterFix = this.createNeonFixture(2.0, 'x');
+        crossCenterFix.position.set(0, corridorCeilY - 0.02, crossMidZ);
+
+        const crossLeftFix = this.createNeonFixture(2.0, 'x');
+        crossLeftFix.position.set(-4.0, corridorCeilY - 0.02, crossMidZ);
+
+        const crossRightFix = this.createNeonFixture(2.0, 'x');
+        crossRightFix.position.set(4.0, corridorCeilY - 0.02, crossMidZ);
+
+        stairGroup.add(crossCenterFix, crossLeftFix, crossRightFix);
+
+        // 9. Minimalist White Exit Sign ("←  Ausgang  →")
+        if (!StationBuilder._mezzanineSignMat) {
+            const signTex = this.createMinimalistExitSignTexture();
+            StationBuilder._mezzanineSignMat = new THREE.MeshBasicMaterial({ map: signTex });
+        }
+        if (!StationBuilder._mezzanineSignFrameMat) {
+            StationBuilder._mezzanineSignFrameMat = new THREE.MeshLambertMaterial({ color: '#1a1a1a' });
+        }
+        const signMat = StationBuilder._mezzanineSignMat;
+        const signFrameMat = StationBuilder._mezzanineSignFrameMat;
+        const signBoxMat = [signFrameMat, signFrameMat, signFrameMat, signFrameMat, signMat, signMat];
+        const signGeom = new THREE.BoxGeometry(2.0, 0.42, 0.04);
+        const signMesh = new THREE.Mesh(signGeom, signBoxMat);
+        const signY = corridorCeilY - 0.32;
+        const signZ = landingStartZ + zDir * 2.0; // Suspended halfway between approach lamps
+        signMesh.position.set(0, signY, signZ);
+        stairGroup.add(signMesh);
+
+        // Suspension rods for the exit sign
+        if (!StationBuilder._mezzanineRodMat) {
+            StationBuilder._mezzanineRodMat = new THREE.MeshLambertMaterial({ color: '#1a1a1a' });
+        }
+        const rodMat = StationBuilder._mezzanineRodMat;
+        const rodHeight = Math.max(0.1, corridorCeilY - (signY + 0.21));
+        const rodGeom = new THREE.CylinderGeometry(0.012, 0.012, rodHeight, 8);
+        const rodL = new THREE.Mesh(rodGeom, rodMat);
+        rodL.position.set(-0.7, corridorCeilY - rodHeight / 2, signZ);
+        const rodR = new THREE.Mesh(rodGeom, rodMat);
+        rodR.position.set(0.7, corridorCeilY - rodHeight / 2, signZ);
+        stairGroup.add(rodL, rodR);
+
+        // 10. Information / Network Poster on Approach Side Wall
+        if (!StationBuilder._mezzaninePosterMat) {
+            const posterTex = this.createMezzaninePosterTexture();
+            StationBuilder._mezzaninePosterMat = new THREE.MeshLambertMaterial({ map: posterTex });
+        }
+        const posterMat = StationBuilder._mezzaninePosterMat;
+        const posterGeom = new THREE.PlaneGeometry(1.2, 1.7);
+        const posterMesh = new THREE.Mesh(posterGeom, posterMat);
+        posterMesh.position.set(-2.08, topY + 1.35, landingStartZ + zDir * 2.0);
+        posterMesh.rotation.y = Math.PI / 2;
+        stairGroup.add(posterMesh);
+    }
 }
 

@@ -4,7 +4,7 @@ const LAT0 = 49.44;
 const M_LAT = 111320.0;
 const M_LON = 111320.0 * Math.cos(LAT0 * Math.PI / 180);
 
-const geo = JSON.parse(fs.readFileSync('./unbg/railspline.geojson', 'utf8'));
+const geo = JSON.parse(fs.readFileSync('./u-bahn-simulator/railspline.geojson', 'utf8'));
 
 function getTrackCoords(id) {
     const feat = geo.features.find(f => f.properties && f.properties['@id'] === id);

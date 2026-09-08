@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const geo = JSON.parse(fs.readFileSync('./unbg/railspline.geojson', 'utf8'));
+const geo = JSON.parse(fs.readFileSync('./u-bahn-simulator/railspline.geojson', 'utf8'));
 
 // Find all subway features near Weißer Turm (11.0707, 49.4504)
 const wtLon = 11.0707, wtLat = 49.4504;

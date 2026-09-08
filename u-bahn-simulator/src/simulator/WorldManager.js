@@ -68,9 +68,12 @@ export class WorldManager {
         this.headlight = null;
         
         // Sky & Env
-        this.skyColor = new THREE.Color('#93d5f8'); // Day sky blue (fog tint; background uses skyTexture)
+        this.skyColor = new THREE.Color('#93d5f8'); // Day sky blue (fog tint)
         this.tunnelColor = new THREE.Color('#000000'); // Pitch black tunnel
         this._isOpenAirBackground = null; // tracks which background is active (avoids Color/Texture .equals())
+        this.skyDome = null;
+        this.skyMaterial = null;
+        this.skyUniforms = null;
         
         // Eye adaptation effect: on a tunnel<->daylight change the exposure jumps to
         // adaptationFromExposure and settles back to 1.0 over adaptationDuration seconds.
@@ -177,10 +180,14 @@ export class WorldManager {
         // Scene setup
         this.scene = new THREE.Scene();
         this.scene.background = this.tunnelColor;
-        this.scene.fog = new THREE.FogExp2(0x050505, 0.018); // Less dense tunnel fog
+        this.scene.fog = new THREE.FogExp2(this.tunnelColor, 0.022); // Dense pitch-black tunnel fog
 
-        // Renderer setup
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        // Renderer setup: logarithmicDepthBuffer eliminates z-fighting across large scale outdoor & city geometry
+        this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: false,
+            logarithmicDepthBuffer: true
+        });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.resolutionScale = 1.0; // user quality setting, applied via setResolutionScale
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -193,29 +200,24 @@ export class WorldManager {
         this.renderer.toneMappingExposure = 1.0;
         this.container.appendChild(this.renderer.domElement);
 
-        // Open-air sky: an equirectangular photo used directly as scene.background.
-        // Three.js renders this as a full-screen shader (EquirectangularReflectionMapping),
-        // so it costs no extra draw call or geometry — cheaper than the old per-chunk cloud
-        // planes it replaces, and no more expensive than the flat sky color it also replaces.
-        const skyUrl = new URL('../assets/sky.jpg', import.meta.url).href;
-        this.skyTexture = new THREE.TextureLoader().load(skyUrl);
-        this.skyTexture.mapping = THREE.EquirectangularReflectionMapping;
-        this.skyTexture.colorSpace = THREE.SRGBColorSpace;
+        // Procedural Shader Sky: realistic semi-overcast sky dome with volumetric 3D clouds,
+        // directional sun shading, Mie forward scattering (silver lining), and dynamic crepuscular rays.
+        this.createProceduralSky();
 
-        // Cameras Setup
+        // Cameras Setup: Clean near planes (0.2m / 0.3m) with logarithmic depth buffer for sub-millimeter precision
         const aspect = this.container.clientWidth / this.container.clientHeight;
         
         // 1. Cab Camera (inside front cabin)
-        this.cameras.cab = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+        this.cameras.cab = new THREE.PerspectiveCamera(75, aspect, 0.2, 1500);
 
         // 2. Passenger Camera (inside passenger coach looking out window)
-        this.cameras.passenger = new THREE.PerspectiveCamera(65, aspect, 0.1, 1000);
+        this.cameras.passenger = new THREE.PerspectiveCamera(65, aspect, 0.2, 1500);
 
         // 3. Platform Camera (cinematic angle at next station)
-        this.cameras.platform = new THREE.PerspectiveCamera(55, aspect, 0.1, 1000);
+        this.cameras.platform = new THREE.PerspectiveCamera(55, aspect, 0.2, 1500);
 
         // 4. Orbit Camera (general view)
-        this.cameras.orbit = new THREE.PerspectiveCamera(60, aspect, 0.1, 15000);
+        this.cameras.orbit = new THREE.PerspectiveCamera(60, aspect, 0.3, 3500);
 
         // Orbit Controls
         this.controls = new OrbitControls(this.cameras.orbit, this.renderer.domElement);
@@ -721,6 +723,214 @@ export class WorldManager {
         this.scene.add(this.headlight.target); // Spotlight needs target in scene
     }
 
+    createProceduralSky() {
+        this.skyUniforms = {
+            uTime: { value: 0.0 },
+            uSunPosition: { value: new THREE.Vector3(-100, 150, 50).normalize() },
+            uZenithColor: { value: new THREE.Color('#1f64c8') }, // Daylight sky blue
+            uHorizonColor: { value: new THREE.Color('#a4d2f4') }, // Daylight horizon haze
+            uGroundConcreteColor: { value: new THREE.Color('#6c7077') }, // Terrain concrete grey
+            uSunColor: { value: new THREE.Color('#fff4da') }
+        };
+
+        const vertexShader = `
+            varying vec3 vViewDir;
+
+            void main() {
+                vViewDir = normalize(position);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            precision highp float;
+
+            uniform float uTime;
+            uniform vec3 uSunPosition;
+            uniform vec3 uZenithColor;
+            uniform vec3 uHorizonColor;
+            uniform vec3 uGroundConcreteColor;
+            uniform vec3 uSunColor;
+
+            varying vec3 vViewDir;
+
+            // Fast quintic Hermite noise
+            float hash(vec2 p) {
+                p = fract(p * vec2(123.34, 456.21));
+                p += dot(p, p + 45.32);
+                return fract(p.x * p.y);
+            }
+
+            float noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+                return mix(
+                    mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+                    mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+                    u.y
+                );
+            }
+
+            const mat2 m2 = mat2(0.80, 0.60, -0.60, 0.80);
+
+            float fbm(vec2 p) {
+                float f = 0.0;
+                f += 0.5000 * noise(p); p = m2 * p * 2.02;
+                f += 0.2500 * noise(p); p = m2 * p * 2.03;
+                f += 0.1250 * noise(p); p = m2 * p * 2.01;
+                f += 0.0625 * noise(p); p = m2 * p * 2.04;
+                return f / 0.9375;
+            }
+
+            // Domain-warped cumulus cloud structure
+            float cloudMap(vec2 p) {
+                vec2 q = vec2(fbm(p), fbm(p + vec2(5.2, 1.3)));
+                vec2 r = vec2(fbm(p + 3.0 * q + vec2(1.7, 9.2)), fbm(p + 3.0 * q + vec2(8.3, 2.8)));
+                return fbm(p + 2.2 * r);
+            }
+
+            // Rich overcast coverage (~82-88% coverage with thick puffy cumulus & layered cloudlets)
+            float cloudDensity(vec2 p) {
+                float n = cloudMap(p * 0.38);
+                float cloudlets = fbm(p * 1.1 + vec2(3.1, 1.7));
+                float combined = mix(n, max(n, cloudlets * 0.85), 0.35);
+                return smoothstep(0.14, 0.54, combined);
+            }
+
+            void main() {
+                vec3 dir = normalize(vViewDir);
+                vec3 sunDir = normalize(uSunPosition);
+                float sunDot = max(dot(dir, sunDir), 0.0);
+
+                vec3 baseSky = vec3(0.0);
+
+                if (dir.y >= 0.0) {
+                    // --- UPPER HEMISPHERE: ATMOSPHERE & CLOUDS ---
+                    float h = dir.y;
+                    vec3 skyGradient = mix(uHorizonColor, uZenithColor, pow(h, 0.55));
+
+                    // Soft, natural sun disc (non-blinding, blended smoothly into sky gradient)
+                    float sunDisc = smoothstep(0.9986, 0.9996, sunDot);
+                    float sunHalo = pow(sunDot, 128.0) * 0.15 + pow(sunDot, 32.0) * 0.05;
+                    vec3 sunDiscCol = vec3(1.0, 0.98, 0.92);
+
+                    baseSky = mix(skyGradient, sunDiscCol, sunDisc * 0.85);
+                    baseSky += uSunColor * sunHalo;
+
+                    // Volumetric 3D Clouds (dome projection)
+                    if (dir.y > 0.01) {
+                        float cloudHeight = 1.0 / (dir.y + 0.16);
+                        vec2 windOffset = uTime * vec2(0.007, 0.0035);
+                        vec2 cloudUV = dir.xz * cloudHeight * 0.32 + windOffset;
+                        vec2 sunCloudUV = sunDir.xz / (sunDir.y + 0.16) * 0.32 + windOffset;
+
+                        float dens = cloudDensity(cloudUV);
+
+                        // 3D Plasticity via normal vector
+                        float eps = 0.04;
+                        float dX = cloudDensity(cloudUV + vec2(eps, 0.0));
+                        float dY = cloudDensity(cloudUV + vec2(0.0, eps));
+                        vec3 cloudNorm = normalize(vec3((dens - dX) * 5.0, 0.35, (dens - dY) * 5.0));
+
+                        float sunDiff = clamp(dot(cloudNorm, sunDir), 0.0, 1.0);
+                        float ambientUp = clamp(cloudNorm.y * 0.5 + 0.5, 0.0, 1.0);
+
+                        // Subtle, pleasant silver lining
+                        float silverLining = pow(sunDot, 4.0) * smoothstep(0.02, 0.35, dens) * (1.0 - smoothstep(0.35, 0.85, dens));
+
+                        // Natural daylight cloud palette
+                        vec3 cloudBaseCol = vec3(0.42, 0.49, 0.60); // Soft shaded underside
+                        vec3 cloudMidCol  = vec3(0.78, 0.83, 0.90); // Daylight body
+                        vec3 cloudLitCol  = vec3(0.98, 0.98, 0.96); // Bright sunlit top
+                        vec3 silverCol    = vec3(1.00, 0.98, 0.90) * 0.4;
+
+                        vec3 cloudShading = mix(cloudBaseCol, cloudMidCol, ambientUp);
+                        cloudShading = mix(cloudShading, cloudLitCol, sunDiff * 0.8 + 0.2);
+                        cloudShading += silverCol * silverLining;
+
+                        // Soft Crepuscular Sun Rays (God rays breaking through clouds)
+                        vec2 toSun = sunCloudUV - cloudUV;
+                        vec2 rayStep = normalize(toSun) * 0.06;
+                        
+                        float rayTransmittance = 0.0;
+                        for (int i = 1; i <= 6; i++) {
+                            vec2 sampleP = cloudUV + rayStep * float(i);
+                            rayTransmittance += (1.0 - cloudDensity(sampleP));
+                        }
+                        rayTransmittance /= 6.0;
+
+                        // Radial streak modulation
+                        float rayAngle = atan(toSun.y, toSun.x);
+                        float streak = noise(vec2(rayAngle * 7.0, uTime * 0.02)) * 0.5 + 0.5;
+                        streak += noise(vec2(rayAngle * 15.0, -uTime * 0.03)) * 0.25;
+
+                        float angularGlow = pow(sunDot, 4.0) * 0.35 + pow(sunDot, 16.0) * 0.45;
+                        float godRays = rayTransmittance * angularGlow * (0.6 + 0.4 * streak) * (1.0 - dens * 0.85);
+                        vec3 godRayCol = vec3(1.0, 0.97, 0.90) * 0.35;
+
+                        // Horizon fade so clouds blend cleanly into horizon haze
+                        float horizonFade = smoothstep(0.01, 0.16, dir.y);
+                        float cloudAlpha = dens * horizonFade;
+
+                        baseSky = mix(baseSky, cloudShading, cloudAlpha);
+                        baseSky += godRayCol * (godRays * horizonFade);
+                    }
+                } else {
+                    // --- LOWER HEMISPHERE: CONTINUOUS CONCRETE LANDSCAPE ---
+                    // Terrain coordinates with perspective scaling
+                    vec2 groundUV = dir.xz / (abs(dir.y) + 0.08) * 0.12;
+                    float cNoise = noise(groundUV * 2.0) * 0.5 + noise(groundUV * 6.0) * 0.25;
+
+                    // Authentic concrete tones matching TrackManager concrete textures
+                    vec3 concDark  = vec3(0.36, 0.38, 0.41); // #5c6068 deep shadowed concrete
+                    vec3 concMid   = uGroundConcreteColor;    // #6c7077 base aggregate concrete
+                    vec3 concLight = vec3(0.48, 0.50, 0.54); // #7a808a weathered concrete slab
+
+                    vec3 groundColor = mix(concDark, concMid, smoothstep(0.2, 0.5, cNoise));
+                    groundColor = mix(groundColor, concLight, smoothstep(0.5, 0.8, cNoise));
+
+                    // Atmospheric horizon haze over distant terrain (seamlessly joins horizon)
+                    float distHaze = exp(-abs(dir.y) * 14.0);
+                    baseSky = mix(groundColor, uHorizonColor, distHaze * 0.82);
+                }
+
+                gl_FragColor = vec4(baseSky, 1.0);
+            }
+        `;
+
+        this.skyMaterial = new THREE.ShaderMaterial({
+            uniforms: this.skyUniforms,
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            side: THREE.BackSide,
+            depthWrite: false,
+            depthTest: false,
+            fog: false
+        });
+
+        const skyGeom = new THREE.SphereGeometry(750, 64, 32);
+        this.skyDome = new THREE.Mesh(skyGeom, this.skyMaterial);
+        this.skyDome.renderOrder = -99999;
+        this.skyDome.visible = false;
+        this.scene.add(this.skyDome);
+
+        // Pre-warm sky shader so emerging from a tunnel never hitches
+        if (this.renderer && this.activeCamera) {
+            try {
+                this.skyDome.visible = true;
+                this.renderer.compile(this.skyDome, this.activeCamera, this.scene);
+                const tempTarget = new THREE.WebGLRenderTarget(2, 2);
+                const prevTarget = this.renderer.getRenderTarget();
+                this.renderer.setRenderTarget(tempTarget);
+                this.renderer.render(this.skyDome, this.activeCamera);
+                this.renderer.setRenderTarget(prevTarget);
+                tempTarget.dispose();
+                this.skyDome.visible = false;
+            } catch (e) {}
+        }
+    }
+
     setCamera(type) {
         if (this.cameras[type]) {
             this.activeCameraType = type;
@@ -1092,6 +1302,14 @@ export class WorldManager {
             interiorCam && !document.body.classList.contains('is-mobile')
         );
 
+        // Update procedural sky dome animation and camera tracking
+        if (this.skyUniforms) {
+            this.skyUniforms.uTime.value += dt;
+        }
+        if (this.skyDome && this.activeCamera) {
+            this.skyDome.position.copy(this.activeCamera.position);
+        }
+
         // Apply render
         this.renderer.render(this.scene, this.activeCamera);
 
@@ -1167,59 +1385,60 @@ export class WorldManager {
         const isOpenAir = (chunkType !== 'underground');
         const isPlatform = this.isInsideStationPlatform(cameraTrackZ);
 
-        // Handle eye adaptation effect when transitioning
-        if (isOpenAir && this._isOpenAirBackground === false) {
+        // Handle eye adaptation effect and background/fog change when transitioning
+        if (isOpenAir && this._isOpenAirBackground !== true) {
             // Emerging from tunnel: daylight blinds for a moment, eyes settle quickly
-            this.adaptationActive = true;
-            this.adaptationTimer = 0;
-            this.adaptationDuration = 1.4;
-            this.adaptationFromExposure = 2.0;
-        } else if (!isOpenAir && this._isOpenAirBackground === true) {
+            if (this._isOpenAirBackground === false) {
+                this.adaptationActive = true;
+                this.adaptationTimer = 0;
+                this.adaptationDuration = 1.4;
+                this.adaptationFromExposure = 2.0;
+            }
+            this.scene.background = null;
+            if (this.skyDome) this.skyDome.visible = true;
+            this.scene.fog.color = this.skyColor;
+            this._isOpenAirBackground = true;
+            if (this.cityModel && !this.cityModel.visible) {
+                this.cityModel.visible = true;
+            }
+        } else if (!isOpenAir && this._isOpenAirBackground !== false) {
             // Entering tunnel: near-black at first, dark adaptation takes longer
-            this.adaptationActive = true;
-            this.adaptationTimer = 0;
-            this.adaptationDuration = 2.2;
-            this.adaptationFromExposure = 0.35;
+            if (this._isOpenAirBackground === true) {
+                this.adaptationActive = true;
+                this.adaptationTimer = 0;
+                this.adaptationDuration = 2.2;
+                this.adaptationFromExposure = 0.35;
+            }
+            this.scene.background = this.tunnelColor;
+            if (this.skyDome) this.skyDome.visible = false;
+            if (this.cityModel && this.cityModel.visible) {
+                this.cityModel.visible = false;
+            }
+            this.scene.fog.color = this.tunnelColor;
+            this._isOpenAirBackground = false;
         }
-        this._isOpenAirBackground = isOpenAir;
 
         // ── Set lighting targets ──────────────────────────────────────────────────
         // Only target values are written here; actual intensities are lerped below.
         // This prevents hard jumps when the train crosses a zone boundary.
         if (isOpenAir) {
-            // Day environment: real sky photo (equirectangular background, no extra draw call)
-            this.scene.background = this.skyTexture;
-            this.scene.fog.color = this.skyColor;
-
             this._targetAmbient    = isPlatform ? 0.85 : 0.6;
             this._targetSun        = 2.5;
             this._targetHeadlight  = 1.0;
-            this._targetFogDensity = 0.0015;
-
-            if (this.cityModel && !this.cityModel.visible) {
-                this.cityModel.visible = true;
-            }
+            this._targetFogDensity = 0.0022;
         } else {
-            // Tunnel environment
-            this.scene.background = this.tunnelColor;
-            this.scene.fog.color = this.tunnelColor;
-
             if (isPlatform) {
-                // Brightly lit underground station
+                // Brightly lit underground station: clear visibility in the 90m hall, dark portals
                 this._targetAmbient    = 0.55;
                 this._targetSun        = 0.0;
                 this._targetHeadlight  = 12.0;
-                this._targetFogDensity = 0.0;
+                this._targetFogDensity = 0.004;
             } else {
-                // Dark tunnel
+                // Dark tunnel: pitch-black at 150m+, blending smoothly into tunnel background
                 this._targetAmbient    = 0.05;
                 this._targetSun        = 0.0;
                 this._targetHeadlight  = 20.0;
-                this._targetFogDensity = 0.0;
-            }
-
-            if (this.cityModel && this.cityModel.visible) {
-                this.cityModel.visible = false;
+                this._targetFogDensity = 0.022;
             }
         }
 
