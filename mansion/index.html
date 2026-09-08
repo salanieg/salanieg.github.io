@@ -1197,7 +1197,7 @@
         let raycaster;
         const centerCoords = new THREE.Vector2(0, 0);
         let animationFrameId = null;
-        let artSculpture = null; // Animiertes Kunstwerk in der Galerie
+        let artSculpture = null;
 
         // Bewegung & Physik
         const moveState = { forward: false, backward: false, left: false, right: false };
@@ -1210,23 +1210,29 @@
         const EYE_HEIGHT = 1.70;
 
         // Die 4 runden Satellitenräume mit Türöffnung zum Spawnpunkt (0, 0, 0)
+        // rotY dreht den Zylinder so, dass die Öffnung exakt zum Ursprung zeigt:
+        // Nord (cz = -16.5) -> Tür nach +Z -> rotY = 0
+        // Süd (cz = +16.5) -> Tür nach -Z -> rotY = PI
+        // Ost (cx = +16.5) -> Tür nach -X -> rotY = -PI/2
+        // West (cx = -16.5) -> Tür nach +X -> rotY = PI/2
         const SATELLITE_ROOMS = [
-            { name: "Arbeitsraum", cx: 0, cz: -16.5, radius: 5.5, doorAngle: Math.PI / 2 },
-            { name: "Entspannung", cx: 0, cz: 16.5, radius: 5.5, doorAngle: -Math.PI / 2 },
-            { name: "Galerie", cx: 16.5, cz: 0, radius: 5.5, doorAngle: Math.PI },
-            { name: "Café & Bar", cx: -16.5, cz: 0, radius: 5.5, doorAngle: 0 }
+            { name: "Arbeitsraum", cx: 0, cz: -16.5, radius: 5.5, rotY: 0, doorAngle: Math.PI / 2 },
+            { name: "Entspannung", cx: 0, cz: 16.5, radius: 5.5, rotY: Math.PI, doorAngle: -Math.PI / 2 },
+            { name: "Galerie", cx: 16.5, cz: 0, radius: 5.5, rotY: -Math.PI / 2, doorAngle: Math.PI },
+            { name: "Café & Bar", cx: -16.5, cz: 0, radius: 5.5, rotY: Math.PI / 2, doorAngle: 0 }
         ];
 
-        // ── GEOMETRIE-BAUSTEINE FÜR RÄUME & MÖBEL ──
+        // ── GEOMETRIE-BAUSTEINE FÜR RÄUME ──
         function createCircularRoomWall(room) {
-            const doorGap = 0.68; // ca. 3.7 Meter breite Türöffnung
+            const doorGap = 0.70; // ca. 3.85 Meter breite Türöffnung
             const wallArc = Math.PI * 2 - doorGap;
-            const thetaStart = room.doorAngle + doorGap / 2;
 
-            const wallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, thetaStart, wallArc);
+            // Zylinder mit Türöffnung (im Zylinder um theta = 0 zentriert)
+            const wallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
             const wallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
             const wallMesh = new THREE.Mesh(wallGeo, wallMat);
             wallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+            wallMesh.rotation.y = room.rotY;
             wallMesh.userData = {
                 isRoomWall: true,
                 roomCenter: new THREE.Vector2(room.cx, room.cz),
@@ -1235,37 +1241,24 @@
             scene.add(wallMesh);
             wallMeshes.push(wallMesh);
 
-            // Architektonische Kanten/Umrandungen oben und unten
-            const ringGeoTop = new THREE.RingGeometry(room.radius - 0.04, room.radius + 0.04, 48, 1, thetaStart, wallArc);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x222222, side: THREE.DoubleSide });
-            const ringTop = new THREE.Mesh(ringGeoTop, ringMat);
-            ringTop.rotation.x = Math.PI / 2;
-            ringTop.position.set(room.cx, WALL_HEIGHT, room.cz);
-            scene.add(ringTop);
+            // Die zwei schlanken Türpfosten an den Rändern des Eingangs
+            const pillarGeo = new THREE.CylinderGeometry(0.06, 0.06, WALL_HEIGHT, 16);
+            const pillarMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
 
-            // Türrahmen-Pfeiler an beiden Seiten der Türöffnung
-            const pillarGeo = new THREE.CylinderGeometry(0.08, 0.08, WALL_HEIGHT, 16);
-            const pillarMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+            [-doorGap / 2, doorGap / 2].forEach((theta) => {
+                const x_cyl = room.radius * Math.sin(theta);
+                const z_cyl = room.radius * Math.cos(theta);
 
-            const p1Angle = room.doorAngle - doorGap / 2;
-            const p1 = new THREE.Mesh(pillarGeo, pillarMat);
-            p1.position.set(room.cx + Math.cos(p1Angle) * room.radius, WALL_HEIGHT / 2, room.cz + Math.sin(p1Angle) * room.radius);
-            scene.add(p1);
+                // Rotation um room.rotY in Weltkoordinaten
+                const x_rot = x_cyl * Math.cos(room.rotY) + z_cyl * Math.sin(room.rotY);
+                const z_rot = -x_cyl * Math.sin(room.rotY) + z_cyl * Math.cos(room.rotY);
 
-            const p2Angle = room.doorAngle + doorGap / 2;
-            const p2 = new THREE.Mesh(pillarGeo, pillarMat);
-            p2.position.set(room.cx + Math.cos(p2Angle) * room.radius, WALL_HEIGHT / 2, room.cz + Math.sin(p2Angle) * room.radius);
-            scene.add(p2);
+                const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+                pillar.position.set(room.cx + x_rot, WALL_HEIGHT / 2, room.cz + z_rot);
+                scene.add(pillar);
+            });
 
-            // Sturzbalken über der Tür
-            const lintelGeo = new THREE.BoxGeometry(0.18, 0.35, 3.8);
-            const lintelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-            const lintel = new THREE.Mesh(lintelGeo, lintelMat);
-            lintel.position.set(room.cx + Math.cos(room.doorAngle) * (room.radius - 0.05), WALL_HEIGHT - 0.4, room.cz + Math.sin(room.doorAngle) * (room.radius - 0.05));
-            lintel.rotation.y = -room.doorAngle + Math.PI / 2;
-            scene.add(lintel);
-
-            // Decke des Raumes
+            // Decke des Raumes (keine störenden Balken)
             const ceilingGeo = new THREE.CircleGeometry(room.radius, 48);
             const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x18181b, side: THREE.DoubleSide });
             const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
@@ -1278,7 +1271,6 @@
         function buildArbeitsraum() {
             const rx = 0, rz = -16.5;
 
-            // Boden: Dunkles Anthrazit
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
             const floorMat = new THREE.MeshBasicMaterial({ color: 0x141416 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -1286,7 +1278,6 @@
             floor.position.set(rx, 0.015, rz);
             scene.add(floor);
 
-            // Raumlicht
             const roomLight = new THREE.PointLight(0xffffff, 0.8, 16);
             roomLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
             scene.add(roomLight);
@@ -1315,7 +1306,7 @@
                 shelfGroup.add(board);
             });
 
-            // Bücher
+            // Bücherreihen
             const bookColors = [0xb91c1c, 0x1d4ed8, 0x047857, 0xb45309, 0x475569, 0xf59e0b, 0x4338ca, 0x0f172a];
             const rowY = [0.45, 1.20, 1.95, 2.70];
             rowY.forEach((by) => {
@@ -1353,13 +1344,11 @@
         function buildDeskUnit(x, z, faceAngle, num) {
             const group = new THREE.Group();
 
-            // Schreibtischplatte: 1.6 x 0.06 x 0.85 bei y = 0.74
             const topMat = new THREE.MeshLambertMaterial({ color: 0x262626 });
             const top = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.06, 0.85), topMat);
             top.position.y = 0.74;
             group.add(top);
 
-            // Metallbeine
             const legMat = new THREE.MeshLambertMaterial({ color: 0x52525b });
             const legGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.74, 12);
             [[-0.72, -0.36], [0.72, -0.36], [-0.72, 0.36], [0.72, 0.36]].forEach(([lx, lz]) => {
@@ -1368,7 +1357,6 @@
                 group.add(leg);
             });
 
-            // Monitor & PC
             const monitorStand = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.015, 0.16), legMat);
             monitorStand.position.set(0, 0.775, -0.15);
             group.add(monitorStand);
@@ -1388,7 +1376,6 @@
             display.position.set(0, 1.08, -0.134);
             group.add(display);
 
-            // Tastatur & Maus
             const kb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.015, 0.14), new THREE.MeshLambertMaterial({ color: 0x18181b }));
             kb.position.set(0, 0.775, 0.14);
             group.add(kb);
@@ -1401,7 +1388,6 @@
             pc.position.set(0.60, 0.22, 0);
             group.add(pc);
 
-            // Bürostuhl
             const chairGroup = new THREE.Group();
             const baseMat = new THREE.MeshLambertMaterial({ color: 0x3f3f46 });
             const starBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 5), baseMat);
@@ -1438,7 +1424,6 @@
             group.position.set(x, 0, z);
             scene.add(group);
 
-            // Sitzplatz registrieren
             const chairWorldPos = new THREE.Vector3(0, 1.15, 0.58).applyAxisAngle(new THREE.Vector3(0, 1, 0), faceAngle).add(new THREE.Vector3(x, 0, z));
             const lookDir = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), faceAngle).normalize();
             registerSeat(seatMesh, `Schreibtisch ${num}`, chairWorldPos, lookDir);
@@ -1459,7 +1444,7 @@
             warmLight.position.set(rx, WALL_HEIGHT - 0.7, rz);
             scene.add(warmLight);
 
-            // Runder roter Teppich in der Mitte
+            // Runder roter Teppich
             const rugGeo = new THREE.CircleGeometry(3.4, 48);
             const rugMat = new THREE.MeshLambertMaterial({ color: 0x991b1b, side: THREE.DoubleSide });
             const rug = new THREE.Mesh(rugGeo, rugMat);
@@ -1474,7 +1459,7 @@
             rugBorder.position.set(rx, 0.024, rz);
             scene.add(rugBorder);
 
-            // Gelber Tisch auf dem Teppich
+            // Gelber Tisch
             const tableGroup = new THREE.Group();
             const yellowMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
             const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.06, 32), yellowMat);
@@ -1569,7 +1554,6 @@
             galleryLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
             scene.add(galleryLight);
 
-            // Podest
             const pedestal = new THREE.Mesh(
                 new THREE.BoxGeometry(1.2, 0.9, 1.2),
                 new THREE.MeshLambertMaterial({ color: 0xffffff })
@@ -1577,7 +1561,6 @@
             pedestal.position.set(rx, 0.45, rz);
             scene.add(pedestal);
 
-            // Kunstwerk
             const sculptureGeo = new THREE.TorusKnotGeometry(0.55, 0.18, 64, 16);
             const sculptureMat = new THREE.MeshStandardMaterial({
                 color: 0x06b6d4,
@@ -1590,7 +1573,6 @@
             artSculpture.position.set(rx, 1.75, rz);
             scene.add(artSculpture);
 
-            // Sitzbank
             const benchGroup = new THREE.Group();
             const benchSeat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 0.65), new THREE.MeshLambertMaterial({ color: 0x27272a }));
             benchSeat.position.y = 0.48;
@@ -1625,7 +1607,6 @@
             cafeLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
             scene.add(cafeLight);
 
-            // Tresen
             const counterGroup = new THREE.Group();
             const counterMat = new THREE.MeshLambertMaterial({ color: 0x292524 });
             const counterTopMat = new THREE.MeshLambertMaterial({ color: 0xd6d3d1 });
@@ -1652,7 +1633,6 @@
             counterGroup.rotation.y = Math.PI / 2;
             scene.add(counterGroup);
 
-            // Bistrotische mit Hockern
             const bistroConfigs = [
                 { z: -2.0, num: 1 },
                 { z: 2.0, num: 2 }
@@ -1762,7 +1742,8 @@
             courtyardFloor.position.y = 0;
             scene.add(courtyardFloor);
 
-            [6, 12, 18, 24].forEach((r) => {
+            // Dekorative Ringe im zentralen Freiraum des Hofs (Radius 4 und 8)
+            [4, 8].forEach((r) => {
                 const ring = new THREE.Mesh(
                     new THREE.RingGeometry(r - 0.03, r + 0.03, 64),
                     new THREE.MeshBasicMaterial({ color: 0x27272a, side: THREE.DoubleSide })
@@ -1845,7 +1826,6 @@
                 return;
             }
 
-            // Aufstehen bei Bewegung / Interaktion
             if (isSitting) {
                 if (e.code === "KeyE" || e.code === "Space" || 
                     e.code === "KeyW" || e.code === "KeyS" || 
@@ -1919,7 +1899,6 @@
 
             const delta = Math.min(clock.getDelta(), 0.1);
 
-            // Galerie-Skulptur animieren
             if (artSculpture) {
                 artSculpture.rotation.x += delta * 0.45;
                 artSculpture.rotation.y += delta * 0.65;
@@ -1927,7 +1906,6 @@
 
             if (controls && controls.isLocked) {
                 if (!isSitting) {
-                    // Springen & Physik
                     if (!isOnGround || velocityY !== 0) {
                         velocityY += GRAVITY * delta;
                         camera.position.y += velocityY * delta;
@@ -1939,14 +1917,13 @@
                         }
                     }
 
-                    // Horizontale Bewegung
                     const actualSpeed = moveSpeed * delta;
                     if (moveState.forward) controls.moveForward(actualSpeed);
                     if (moveState.backward) controls.moveForward(-actualSpeed);
                     if (moveState.right) controls.moveRight(actualSpeed);
                     if (moveState.left) controls.moveRight(-actualSpeed);
 
-                    // Kollisionsabfrage: Hof-Außengrenze (Radius 23.3)
+                    // Hof-Außengrenze (Radius 23.3)
                     const distFromCenter = Math.sqrt(camera.position.x * camera.position.x + camera.position.z * camera.position.z);
                     if (distFromCenter > 23.3) {
                         const angle = Math.atan2(camera.position.z, camera.position.x);
@@ -1954,7 +1931,7 @@
                         camera.position.z = Math.sin(angle) * 23.3;
                     }
 
-                    // Kollisionsabfrage: 4 Räume (glatter Durchgang durch Türen)
+                    // Kollisionsabfrage: 4 Räume
                     for (const room of SATELLITE_ROOMS) {
                         const dx = camera.position.x - room.cx;
                         const dz = camera.position.z - room.cz;
@@ -2028,7 +2005,6 @@
                 interactPrompt.classList.remove("visible");
             }
 
-            // Remote Spieler interpolieren
             const lerpFactor = Math.min(1, delta * 14);
             remotePlayersMap.forEach((player) => {
                 player.mesh.position.lerp(player.targetPos, lerpFactor);
@@ -2204,7 +2180,6 @@
                 ctx.fillText(line, 30, y);
             }
 
-            // Autor & Datum Signatur unten
             ctx.font = '600 20px monospace';
             ctx.fillStyle = "#444444";
             const authorStr = author ? (author.length > 18 ? author.slice(0, 16) + "..." : author) : "Anonym";
@@ -2362,7 +2337,7 @@
             texture.needsUpdate = true;
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.set(0, 2.15, 0); // Über dem Kopf bei y = 2.15
+            sprite.position.set(0, 2.15, 0);
             sprite.scale.set(1.4, 0.35, 1);
             return sprite;
         }
@@ -2384,7 +2359,6 @@
             });
         }
 
-        // 3D-Spielfigur: Kopf exakt auf Augenhöhe (y = 1.70)
         function addRemotePlayer(uid, data) {
             if (remotePlayersMap.has(uid)) {
                 updateRemotePlayer(uid, data);
@@ -2396,7 +2370,6 @@
 
             const group = new THREE.Group();
 
-            // 1. Schuhe & Beine (y = 0 bis 0.70)
             const shoeMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
             const shoeLeft = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.24), shoeMat);
             shoeLeft.position.set(-0.12, 0.06, -0.02);
@@ -2415,7 +2388,6 @@
             legRight.position.set(0.12, 0.40, 0);
             group.add(legRight);
 
-            // 2. Körper / Torso (y = 0.70 bis 1.45)
             const bodyMat = new THREE.MeshLambertMaterial({ color: color });
             const torsoGeo = new THREE.CylinderGeometry(0.24, 0.22, 0.65, 16);
             const torso = new THREE.Mesh(torsoGeo, bodyMat);
@@ -2427,33 +2399,30 @@
             shoulders.position.y = 1.375;
             group.add(shoulders);
 
-            // 3. Hals
             const neckGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.10, 12);
             const neckMat = new THREE.MeshLambertMaterial({ color: 0x27272a });
             const neck = new THREE.Mesh(neckGeo, neckMat);
             neck.position.y = 1.48;
             group.add(neck);
 
-            // 4. KOPF - Exakt auf Augenhöhe (y = 1.70)
+            // KOPF - Exakt auf Augenhöhe y = 1.70
             const headGeo = new THREE.SphereGeometry(0.20, 16, 16);
             const headMat = new THREE.MeshLambertMaterial({ color: color });
             const head = new THREE.Mesh(headGeo, headMat);
             head.position.y = 1.70;
             group.add(head);
 
-            // 5. Visier / Augen - Exakt auf y = 1.70
+            // Visier / Augen - Exakt auf y = 1.70
             const visorGeo = new THREE.BoxGeometry(0.20, 0.07, 0.10);
             const visorMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
             const visor = new THREE.Mesh(visorGeo, visorMat);
             visor.position.set(0, 1.70, -0.17);
             group.add(visor);
 
-            // 6. Schwebender Namens-Tag bei y = 2.15
             const nameTag = createNameTagSprite(nickname, color);
             nameTag.position.set(0, 2.15, 0);
             group.add(nameTag);
 
-            // Startposition & Rotation
             const initY = typeof data.y === "number" ? Math.max(0, data.y - EYE_HEIGHT) : 0;
             const initX = typeof data.x === "number" ? data.x : 0;
             const initZ = typeof data.z === "number" ? data.z : 0;
