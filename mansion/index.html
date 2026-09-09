@@ -4258,7 +4258,8 @@
 
 
 
-        // ── REALISTISCHER, GENERIERTER HIMMEL MIT FLIESSENDEN WOLKEN (NACH VORBILD U-BAHN-SIMULATOR) ──
+
+        // ── REALISTISCHER, GENERIERTER HIMMEL MIT FLIESSENDEN WOLKEN (HOCHPERFORMANT & WEICH) ──
         function createRealisticProceduralSky() {
             skyUniforms = {
                 uTime: { value: 0.0 },
@@ -4300,7 +4301,7 @@
                 float noise(vec2 p) {
                     vec2 i = floor(p);
                     vec2 f = fract(p);
-                    vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+                    vec2 u = f * f * (3.0 - 2.0 * f);
                     return mix(
                         mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
                         mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
@@ -4310,28 +4311,24 @@
 
                 const mat2 m2 = mat2(0.80, 0.60, -0.60, 0.80);
 
-                float fbm(vec2 p) {
-                    float f = 0.0;
-                    f += 0.5000 * noise(p); p = m2 * p * 2.02;
-                    f += 0.2500 * noise(p); p = m2 * p * 2.03;
-                    f += 0.1250 * noise(p); p = m2 * p * 2.01;
-                    f += 0.0625 * noise(p); p = m2 * p * 2.04;
-                    return f / 0.9375;
+                // 3-Oktaven-FBM: Ultraschnell & natürlich
+                float fbm3(vec2 p) {
+                    float f = 0.550 * noise(p); p = m2 * p * 2.02;
+                    f += 0.280 * noise(p); p = m2 * p * 2.03;
+                    f += 0.140 * noise(p);
+                    return f / 0.970;
                 }
 
-                // Domänen-verzerrte, organische Cumulus-Wolkenstrukturen
-                float cloudMap(vec2 p) {
-                    vec2 q = vec2(fbm(p), fbm(p + vec2(5.2, 1.3)));
-                    vec2 r = vec2(fbm(p + 3.0 * q + vec2(1.7, 9.2)), fbm(p + 3.0 * q + vec2(8.3, 2.8)));
-                    return fbm(p + 2.2 * r);
-                }
-
-                // Dichte-Funktion für fließende Schäfchen- und Haufenwolken
+                // Hochperformante Cumulus-Dichte mit sanfter Domänenverzerrung (nur 5 Rausch-Schritte)
                 float cloudDensity(vec2 p) {
-                    float n = cloudMap(p * 0.36);
-                    float cloudlets = fbm(p * 1.05 + vec2(3.1, 1.7));
-                    float combined = mix(n, max(n, cloudlets * 0.85), 0.35);
-                    return smoothstep(0.18, 0.58, combined);
+                    vec2 warp = vec2(noise(p * 0.26), noise(p * 0.26 + vec2(4.3, 1.7)));
+                    float n = fbm3(p * 0.35 + warp * 0.55);
+                    return smoothstep(0.30, 0.70, n);
+                }
+
+                // Schnelle Coarse-Dichte für Normalen & Strahlen (nur 1 Rausch-Schritt)
+                float coarseCloud(vec2 p) {
+                    return smoothstep(0.28, 0.68, noise(p * 0.35));
                 }
 
                 void main() {
@@ -4342,7 +4339,7 @@
                     vec3 baseSky = vec3(0.0);
 
                     if (dir.y >= 0.0) {
-                        // --- OBERE HEMISPHÄRE: ATMOSPHÄRE & VOLUMETRISCHE WOLKEN ---
+                        // --- OBERE HEMISPHÄRE: ATMOSPHÄRE & FLIESSENDE WOLKEN ---
                         float h = dir.y;
                         vec3 skyGradient = mix(uHorizonColor, uZenithColor, pow(h, 0.58));
 
@@ -4364,11 +4361,12 @@
 
                             float dens = cloudDensity(cloudUV);
 
-                            // Plastische Beleuchtungsnormalen der Wolke
-                            float eps = 0.04;
-                            float dX = cloudDensity(cloudUV + vec2(eps, 0.0));
-                            float dY = cloudDensity(cloudUV + vec2(0.0, eps));
-                            vec3 cloudNorm = normalize(vec3((dens - dX) * 5.0, 0.35, (dens - dY) * 5.0));
+                            // Plastische Beleuchtungsnormalen der Wolke (extrem schnell)
+                            float eps = 0.08;
+                            float dX = coarseCloud(cloudUV + vec2(eps, 0.0));
+                            float dY = coarseCloud(cloudUV + vec2(0.0, eps));
+                            float baseC = coarseCloud(cloudUV);
+                            vec3 cloudNorm = normalize(vec3((baseC - dX) * 4.0, 0.40, (baseC - dY) * 4.0));
 
                             float sunDiff = clamp(dot(cloudNorm, sunDir), 0.0, 1.0);
                             float ambientUp = clamp(cloudNorm.y * 0.5 + 0.5, 0.0, 1.0);
@@ -4386,15 +4384,13 @@
                             cloudShading = mix(cloudShading, cloudLitCol, sunDiff * 0.82 + 0.18);
                             cloudShading += silverCol * silverLining;
 
-                            // Sanfte Strahlenbrechung (Crepuscular Rays)
+                            // Sanfte Sonnenstrahlen (Crepuscular Rays) mit 3 schnellen Abtastungen
                             vec2 toSun = sunCloudUV - cloudUV;
-                            vec2 rayStep = normalize(toSun) * 0.06;
-                            float rayTransmittance = 0.0;
-                            for (int i = 1; i <= 6; i++) {
-                                vec2 sampleP = cloudUV + rayStep * float(i);
-                                rayTransmittance += (1.0 - cloudDensity(sampleP));
-                            }
-                            rayTransmittance /= 6.0;
+                            vec2 rayStep = normalize(toSun) * 0.12;
+                            float rayTransmittance = (1.0 - coarseCloud(cloudUV + rayStep)) +
+                                                     (1.0 - coarseCloud(cloudUV + rayStep * 2.0)) +
+                                                     (1.0 - coarseCloud(cloudUV + rayStep * 3.0));
+                            rayTransmittance *= 0.3333;
 
                             float rayAngle = atan(toSun.y, toSun.x);
                             float streak = noise(vec2(rayAngle * 7.0, uTime * 0.02)) * 0.5 + 0.5;
@@ -4435,6 +4431,7 @@
             return dome;
         }
 
+
         // ── ECHTE HALBKUGELFÖRMIGE GEODÄTISCHE GLASKUPPEL (HALBKUGEL R = 24 m) ──
         const DOME_RADIUS = COURTYARD_RADIUS; // Exakt 24.0 m Radius für eine echte, perfekte Halbkugel
         const DOME_APEX_Y = WALL_HEIGHT + DOME_RADIUS; // Scheitelpunkt bei y = 29.0 m
@@ -4456,15 +4453,15 @@
         function createGeodesicGlassDome() {
             const domeGroup = new THREE.Group();
 
-            const numRings = 10; // 10 Höhenringe für perfekte sphärische Wölbung der Halbkugel
-            const segments = 36; // 36 Radialteilungen
+            const numRings = 8; // 8 Höhenringe für vollkommen symmetrische, gerade Dreiecksproportionen
+            const segments = 36; // 36 Radialteilungen (exakt passend zur 36-teiligen Hofwand)
 
             const vertices = [];
             const ringVertexIndices = [];
 
-            // 1. Stützpunkte entlang der echten Halbkugel (Kugelfunktion: x = R*cos(phi)*cos(theta), y = WALL_HEIGHT + R*sin(phi))
+            // 1. Stützpunkte entlang der echten Halbkugel
             for (let i = 0; i <= numRings; i++) {
-                const phi = (i / numRings) * (Math.PI * 0.5); // 0 (Basis, 90 Grad senkrechte Tangente) bis PI/2 (Scheitel)
+                const phi = (i / numRings) * (Math.PI * 0.5); // 0 (senkrechte Basis) bis PI/2 (Scheitel)
                 const r = DOME_RADIUS * Math.cos(phi);
                 const y = WALL_HEIGHT + DOME_RADIUS * Math.sin(phi);
 
@@ -4486,7 +4483,7 @@
                 ringVertexIndices.push(ring);
             }
 
-            // 2. Geodätische Dreiecks-Topologie & Randkanten
+            // 2. Mathematisch exakte, symmetrische Geodäten-Triangulierung
             const triangles = [];
             const edgesMap = new Map();
 
@@ -4521,14 +4518,8 @@
                         const n2 = rNext[(j + 1) % segments];
 
                         if (i % 2 === 0) {
-                            triangles.push([c1, c2, n2]);
-                            triangles.push([c1, n2, n1]);
-                            registerEdge(c1, c2);
-                            registerEdge(c2, n2);
-                            registerEdge(n2, c1);
-                            registerEdge(n2, n1);
-                            registerEdge(n1, c1);
-                        } else {
+                            // rCurrent hat Offset 0, rNext hat Offset +halfStep.
+                            // n1 liegt exakt mittig über c1 und c2 -> perfekt symmetrisches, aufrechtes Dreieck!
                             triangles.push([c1, c2, n1]);
                             triangles.push([c2, n2, n1]);
                             registerEdge(c1, c2);
@@ -4536,6 +4527,16 @@
                             registerEdge(n1, c1);
                             registerEdge(c2, n2);
                             registerEdge(n2, n1);
+                        } else {
+                            // rCurrent hat Offset +halfStep, rNext hat Offset 0.
+                            // n2 liegt exakt mittig über c1 und c2 -> perfekt symmetrisches, aufrechtes Dreieck!
+                            triangles.push([c1, c2, n2]);
+                            triangles.push([c1, n2, n1]);
+                            registerEdge(c1, c2);
+                            registerEdge(c2, n2);
+                            registerEdge(n2, c1);
+                            registerEdge(n2, n1);
+                            registerEdge(n1, c1);
                         }
                     }
                 }
@@ -4575,18 +4576,16 @@
             glassGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(glassPositions), 3));
             glassGeo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(glassNormals), 3));
 
-            // Hochrealistisches Architektur-Glasmaterial
+            // Hochrealistisches, butterweich performantes Architektur-Glasmaterial
             const glassMat = new THREE.MeshPhysicalMaterial({
                 color: 0xe0f2fe,
-                transmission: 0.85,
-                opacity: 0.35,
+                opacity: 0.22,
                 transparent: true,
-                roughness: 0.05,
-                metalness: 0.06,
-                ior: 1.52,
+                roughness: 0.04,
+                metalness: 0.08,
                 reflectivity: 0.95,
                 clearcoat: 1.0,
-                clearcoatRoughness: 0.03,
+                clearcoatRoughness: 0.04,
                 depthWrite: false,
                 side: THREE.DoubleSide
             });
