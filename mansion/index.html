@@ -579,6 +579,16 @@
         .hidden {
             display: none !important;
         }
+    
+        /* Alle Overlays eckig (border-radius: 0) und un-animiert */
+        .modal-backdrop, .note-card, .interact-prompt, .bottom-bar, .top-nav,
+        .player-count-badge, .btn-settings, .btn-logout, .btn-submit, .btn-cancel, .btn-danger,
+        .input-field, .note-textarea, #art-preview-img, #view-note-image, .modal-dialog,
+        button, input, textarea {
+            border-radius: 0 !important;
+            animation: none !important;
+            transition: none !important;
+        }
     </style>
 </head>
 <body>
@@ -689,7 +699,7 @@
     <div id="note-modal" class="modal-backdrop">
         <div class="note-card">
             <h3>Notiz an die Wand pinnen</h3>
-            <p>Hinterlasse eine Nachricht im 3D-Clubhaus für alle Besucher.</p>
+            
             <textarea 
                 id="note-textarea" 
                 class="note-textarea" 
@@ -711,7 +721,7 @@
     <!-- 3b. ART-BILD-EINGABE MODAL (ART-RAUM) -->
     <div id="art-note-modal" class="modal-backdrop">
         <div class="note-card" style="max-width: 480px;">
-            <h3>Bild im Art-Raum anpinnen</h3>
+            <h3>Bild im Kunstraum anpinnen</h3>
             <p>Wähle ein Kunstwerk oder Foto aus. Es wird automatisch vor dem Pinnen auf maximal 100 KB komprimiert.</p>
             
             <div style="margin-bottom: 1rem;">
@@ -1441,7 +1451,7 @@
                 titleEl.textContent = isImage ? (data.caption || "Kunstwerk") : "Notiz an der Pinwand";
             }
 
-            viewNoteMeta.innerHTML = `Von <strong>${escapeHtml(author)}</strong> am <strong>${escapeHtml(dateStr)}</strong>`;
+            viewNoteMeta.innerHTML = "";
 
             if (isImage) {
                 viewNoteImageContainer.style.display = "block";
@@ -1557,32 +1567,32 @@
             { name: "Arbeit", cx: 0, cz: -16.5, radius: 5.5, rotY: 0, doorAngle: Math.PI / 2, pinAngle: Math.PI },
             { name: "Chillen", cx: 0, cz: 16.5, radius: 5.5, rotY: Math.PI, doorAngle: -Math.PI / 2, pinAngle: 0 },
             { name: "Gaming", cx: -16.5, cz: 0, radius: 5.5, rotY: Math.PI / 2, doorAngle: 0, pinAngle: Math.PI / 2 },
-            { name: "Art", cx: 16.5, cz: 0, radius: 5.5, rotY: -Math.PI / 2, doorAngle: Math.PI } // Keine Beschränkung auf Pinboard
+            { name: "Kunst", cx: 16.5, cz: 0, radius: 5.5, rotY: -Math.PI / 2, doorAngle: Math.PI } // Keine Beschränkung auf Pinboard
         ];
 
         // ── KRONENDÄCHER & TÜRSCHILDER ──
         function createDoorSign(title, x, y, z, rotY) {
             const canvas = document.createElement("canvas");
-            canvas.width = 1024;
-            canvas.height = 256;
+            canvas.width = 1536;
+            canvas.height = 512;
             const ctx = canvas.getContext("2d");
 
-            ctx.clearRect(0, 0, 1024, 256);
+            ctx.clearRect(0, 0, 1536, 512);
 
-            // Weißer Text in Corporate Font Quicksand
+            // Doppelt so große weiße Schrift in Corporate Font Quicksand
             ctx.fillStyle = "#ffffff";
-            ctx.font = 'bold 96px "Quicksand", sans-serif';
+            ctx.font = 'bold 180px "Quicksand", sans-serif';
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-            ctx.shadowBlur = 14;
-            ctx.fillText(title, 512, 128);
+            ctx.shadowBlur = 18;
+            ctx.fillText(title, 768, 256);
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
             const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
-            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.8), mat);
-            mesh.position.set(x, y, z);
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.05), mat);
+            mesh.position.set(x, y + 0.15, z);
             mesh.rotation.y = rotY;
             scene.add(mesh);
         }
@@ -1678,60 +1688,45 @@
 
         // ── GEKRÜMMTE NOTIZBEREICHE (PINWÄNDE MIT SCHWARZEM RAHMEN) ──
         function createCurvedPinboard(room) {
+            // 50% größer: boardHeight 3.3m (statt 2.2m), boardArc 1.05 rad (statt 0.70 rad)
             const boardRadius = 5.46; // Minimal vor der Wand (r = 5.5)
-            const boardHeight = 2.2;
-            const boardArc = 0.70; // ca. 3.8 Meter Breite an der Wand
+            const boardHeight = 3.3;
+            const boardArc = 1.05; // 50% breiterer Bogen an der Wand
 
             const canvas = document.createElement("canvas");
-            canvas.width = 1024;
-            canvas.height = 512;
+            canvas.width = 1536;
+            canvas.height = 768;
             const ctx = canvas.getContext("2d");
 
-            // Dunkler Pinwand-Körper
-            ctx.fillStyle = "#1e1e24";
-            ctx.fillRect(0, 0, 1024, 512);
+            // Keine Füllung (vollkommen transparent, NUR schwarzer Rahmen)
+            ctx.clearRect(0, 0, 1536, 768);
 
-            // Feines Raster
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-            ctx.lineWidth = 1;
-            for (let x = 0; x < 1024; x += 32) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, 512);
-                ctx.stroke();
-            }
-            for (let y = 0; y < 512; y += 32) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(1024, y);
-                ctx.stroke();
-            }
-
-            // SCHWARZER RAHMEN (Massiv)
-            ctx.lineWidth = 36;
+            // Robuster schwarzer Rahmen
+            ctx.lineWidth = 28;
             ctx.strokeStyle = "#000000";
-            ctx.strokeRect(18, 18, 1024 - 36, 512 - 36);
+            ctx.strokeRect(14, 14, 1536 - 28, 768 - 28);
 
-            // Header-Label
-            ctx.fillStyle = "#ffffff";
-            ctx.font = 'bold 26px "Quicksand", sans-serif';
+            // Header-Label: Immer "NOTIZEN" (ohne Unterstrich, ungespiegelt, nach unten versetzt)
+            ctx.fillStyle = "#000000";
+            ctx.font = 'bold 46px "Quicksand", sans-serif';
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(`NOTIZBEREICH • ${room.name.toUpperCase()}`, 512, 46);
+            ctx.fillText("NOTIZEN", 1536 / 2, 85);
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
 
-            // Zylindersegment
+            // Zylindersegment mit transparenter Textur
             const pinGeo = new THREE.CylinderGeometry(boardRadius, boardRadius, boardHeight, 32, 1, true, -boardArc / 2, boardArc);
-            const pinMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+            const pinMat = new THREE.MeshBasicMaterial({
+                map: texture,
+                side: THREE.DoubleSide,
+                transparent: true
+            });
             const pinMesh = new THREE.Mesh(pinGeo, pinMat);
 
-            // Drehung um Y entsprechend dem gewünschten Wandbereich
-            // In CylinderGeometry liegt theta=0 bei (0, 1) -> +Z
-            // Um an pinAngle zu liegen, rotieren wir:
             const rotY = -room.pinAngle + Math.PI / 2;
-            pinMesh.position.set(room.cx, 2.1, room.cz);
+            pinMesh.position.set(room.cx, boardHeight / 2 + 0.15, room.cz);
             pinMesh.rotation.y = rotY;
 
             pinMesh.userData = {
@@ -1780,13 +1775,7 @@
                 scene.add(pillar);
             });
 
-            // Decke
-            const ceilingGeo = new THREE.CircleGeometry(room.radius, 48);
-            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x18181b, side: THREE.DoubleSide });
-            const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
-            ceiling.rotation.x = Math.PI / 2;
-            ceiling.position.set(room.cx, WALL_HEIGHT, room.cz);
-            scene.add(ceiling);
+// Raum-Decken komplett entfernt gegen Flackern
 
             // Weißes Türschild über der Tür
             const doorPosAngle = room.doorAngle;
@@ -1796,7 +1785,7 @@
             createDoorSign(room.name, signX, 4.4, signZ, signRotY);
 
             // Pinboard für Räume außer Art
-            if (room.name !== "Art") {
+            if (room.name !== "Kunst") {
                 createCurvedPinboard(room);
             }
         }
@@ -3311,9 +3300,7 @@
             floor.position.set(rx, 0.015, rz);
             scene.add(floor);
 
-            const warmLight = new THREE.PointLight(0xfef08a, 0.95, 18);
-            warmLight.position.set(rx, WALL_HEIGHT - 0.7, rz);
-            scene.add(warmLight);
+
 
             // Roter runder Teppich
             const rugGeo = new THREE.CircleGeometry(3.4, 48);
@@ -3410,13 +3397,7 @@
             scene.add(floor);
 
             // RGB Neon-Licht
-            const neonPurple = new THREE.PointLight(0xa855f7, 0.9, 18);
-            neonPurple.position.set(rx - 1.5, WALL_HEIGHT - 0.7, rz - 1.5);
-            scene.add(neonPurple);
 
-            const neonCyan = new THREE.PointLight(0x06b6d4, 0.9, 18);
-            neonCyan.position.set(rx + 1.5, WALL_HEIGHT - 0.7, rz + 1.5);
-            scene.add(neonCyan);
 
             // ─────────────────────────────────────────────────────────────
             // SITZPLATZ 1: GELBER DRACHE MIT FREUNDLICHEM GESICHT
@@ -3950,9 +3931,7 @@
             floor.position.set(rx, 0.015, rz);
             scene.add(floor);
 
-            const galleryLight = new THREE.PointLight(0xffffff, 0.95, 18);
-            galleryLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
-            scene.add(galleryLight);
+
 
             // Zentrales Marmorpodest
             const pedestal = new THREE.Mesh(
@@ -4070,12 +4049,13 @@
             });
 
             // Licht
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.96);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.35);
+            dirLight.position.set(6, 14, 6);
+            scene.add(dirLight);
             scene.add(ambientLight);
 
-            const courtyardLight = new THREE.PointLight(0xffffff, 0.8, 35);
-            courtyardLight.position.set(0, WALL_HEIGHT - 0.5, 0);
-            scene.add(courtyardLight);
+
 
             // 1. Runder Hof-Boden (Radius 24)
             const courtyardFloorGeo = new THREE.CircleGeometry(COURTYARD_RADIUS + 0.2, 64);
@@ -4109,13 +4089,7 @@
             scene.add(outerWall);
             wallMeshes.push(outerWall);
 
-            // Hof-Decke
-            const courtyardCeilingGeo = new THREE.CircleGeometry(COURTYARD_RADIUS + 0.2, 64);
-            const courtyardCeilingMat = new THREE.MeshLambertMaterial({ color: 0x111111, side: THREE.DoubleSide });
-            const courtyardCeiling = new THREE.Mesh(courtyardCeilingGeo, courtyardCeilingMat);
-            courtyardCeiling.rotation.x = Math.PI / 2;
-            courtyardCeiling.position.y = WALL_HEIGHT;
-            scene.add(courtyardCeiling);
+// Hof-Decke komplett entfernt gegen Flackern
 
             // 4. Die 4 Satellitenräume
             SATELLITE_ROOMS.forEach((room) => {
@@ -4932,7 +4906,7 @@
             ctx.fillStyle = "#444444";
             const authorStr = author ? (author.length > 18 ? author.slice(0, 16) + "..." : author) : "Anonym";
             const dateFormatted = dateStr || "Heute";
-            ctx.fillText(`— ${authorStr} • ${dateFormatted}`, 30, 462);
+            ctx.fillText(`${authorStr}, ${dateFormatted}`, 30, 462);
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
@@ -4983,7 +4957,7 @@
 
             ctx.font = '600 16px "Quicksand", sans-serif';
             ctx.fillStyle = "#666666";
-            const sig = `${author || "Anonym"} • ${dateStr || "Heute"}`;
+            const sig = `${author || "Anonym"}, ${dateStr || "Heute"}`;
             ctx.fillText(sig, 24, 592);
 
             const texture = new THREE.CanvasTexture(canvas);
