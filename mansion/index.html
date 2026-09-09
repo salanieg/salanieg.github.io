@@ -1573,26 +1573,33 @@
         // ── KRONENDÄCHER & TÜRSCHILDER ──
         function createDoorSign(title, x, y, z, rotY) {
             const canvas = document.createElement("canvas");
-            canvas.width = 1536;
-            canvas.height = 512;
+            canvas.width = 2048;
+            canvas.height = 768;
             const ctx = canvas.getContext("2d");
 
-            ctx.clearRect(0, 0, 1536, 512);
+            ctx.clearRect(0, 0, 2048, 768);
 
-            // Doppelt so große weiße Schrift in Corporate Font Quicksand
+            // Doppelt so große weiße Schrift (360px statt 180px) in Corporate Font Quicksand
             ctx.fillStyle = "#ffffff";
-            ctx.font = 'bold 180px "Quicksand", sans-serif';
+            ctx.font = 'bold 360px "Quicksand", sans-serif';
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-            ctx.shadowBlur = 18;
-            ctx.fillText(title, 768, 256);
+            ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+            ctx.shadowBlur = 28;
+            ctx.fillText(title, 1024, 384);
 
             const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
             texture.needsUpdate = true;
-            const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
-            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.05), mat);
-            mesh.position.set(x, y + 0.15, z);
+            const mat = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide,
+                toneMapped: false
+            });
+            // Doppelt so große 3D-Geometrie (6.0m x 2.0m statt 3.2m x 1.05m)
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(6.0, 2.0), mat);
+            mesh.position.set(x, y + 0.20, z);
             mesh.rotation.y = rotY;
             scene.add(mesh);
         }
@@ -1685,7 +1692,8 @@
 
                 ctx.save();
                 ctx.translate(cx + Math.cos(midAngle) * acronymRadius, cy + Math.sin(midAngle) * acronymRadius);
-                ctx.rotate(Math.PI / 2 - midAngle);
+                // Korrekte Drehung tangential zum unteren Kreisbogen (midAngle - Math.PI / 2)
+                ctx.rotate(midAngle - Math.PI / 2);
                 ctx.fillText(char, 0, 0);
                 ctx.restore();
 
