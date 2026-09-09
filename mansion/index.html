@@ -4602,51 +4602,114 @@
                     return stars;
                 }
 
-                // Milchstraße: Galaktisches Band, kosmische Nebel & Dark-Rift-Staubbänder
+                // ── DURCHGÄNGIGES, MAJESTÄTISCHES GALAXIENLICHTBAND (MILCHSTRASSE) ──
                 vec3 renderMilkyWay(vec3 dir, float time) {
-                    vec3 galNorm = normalize(vec3(0.58, 0.72, 0.38));
-                    float galDist = dot(dir, galNorm);
-                    float galProfile = exp(-galDist * galDist * 18.0);
-                    float galGlow = exp(-galDist * galDist * 4.5);
+                    // Normalenvektor der galaktischen Ebene: Spannt sich als durchgängiger Großkreis über das Firmament
+                    const vec3 galNorm = vec3(0.8256, 0.1812, -0.5437); // normalisiert
+                    const vec3 galU    = vec3(0.5500, 0.0, 0.8351);     // Tangente im Horizont
+                    const vec3 galV    = vec3(-0.1513, 0.9834, 0.0997); // Bitangente zum Zenit
 
-                    if (galGlow < 0.005) return vec3(0.0);
+                    float d = dot(dir, galNorm);
 
-                    vec3 galTangent = normalize(cross(galNorm, vec3(0.0, 1.0, 0.0)));
-                    vec3 galBitangent = cross(galNorm, galTangent);
-                    vec2 galCoord = vec2(dot(dir, galTangent), dot(dir, galBitangent));
+                    // Kontinuierliche Profile quer zum Band
+                    float galProfile = exp(-d * d * 20.0); // Kernband
+                    float galGlow    = exp(-d * d * 4.5);  // Atmosphärischer Schein
 
-                    vec2 st = galCoord * 4.5;
-                    float dustFbm = fbm3(st + vec2(1.7, 3.2));
-                    float detailFbm = noise(st * 3.8 + vec2(5.4, 2.1));
+                    if (galGlow < 0.004) return vec3(0.0);
 
-                    // Dunkelwolken (Great Rift): Reale dunkle Staubbänder in der Milchstraße
-                    float rift = smoothstep(0.35, 0.65, noise(st * 1.8 + vec2(0.8, 1.4)));
-                    float riftMask = mix(1.0, 0.15, rift * galProfile);
+                    // Großkreis-Winkelkoordinate phi entlang des Bandes: Garantiert 100 % nahtlose Durchgängigkeit [-PI, PI]
+                    float uDot = dot(dir, galU);
+                    float vDot = dot(dir, galV);
+                    float phi = atan(vDot, uDot);
 
-                    vec3 galCoreCol   = vec3(1.00, 0.88, 0.70); // Galaktischer Kern
-                    vec3 galVioletCol = vec3(0.45, 0.20, 0.62); // H-Alpha-Nebel
-                    vec3 galTealCol   = vec3(0.14, 0.40, 0.58); // Interstellarer Reflexionsnebel
+                    // Stetige 2D-Koordinaten entlang und quer zum Band
+                    vec2 st = vec2(phi * 2.8, d * 8.5);
 
-                    vec3 nebulaCol = mix(galTealCol, galVioletCol, dustFbm);
-                    nebulaCol = mix(nebulaCol, galCoreCol, galProfile * (dustFbm * 0.70 + 0.30));
+                    // Mehrschichtiges kosmisches Rauschen für Sternenwolken und Nebelfilamente
+                    float dust = fbm3(st + vec2(1.7, 3.2));
+                    float detail = noise(st * 2.6 + vec2(4.8, 1.9));
 
-                    float intensity = (galProfile * 0.95 + galGlow * 0.40) * (dustFbm * 0.75 + detailFbm * 0.35);
-                    return nebulaCol * intensity * riftMask;
+                    // Dunkelbänder (Great Rift): Realistische feine Staubbänder, die das Band niemals unterbrechen
+                    float riftNoise = noise(st * 1.6 + vec2(0.8, 1.4));
+                    float rift = smoothstep(0.35, 0.70, riftNoise);
+                    float riftMask = 1.0 - 0.28 * rift * galProfile; // Maximal 28 % Dämpfung, Band bleibt immer durchgängig!
+
+                    // Farbpalette: Strahlend goldener Kern, tiefviolette H-Alpha-Nebel und blaugrüne Reflexionsnebel
+                    vec3 galCoreCol   = vec3(1.00, 0.90, 0.75); // Goldener Kern
+                    vec3 galVioletCol = vec3(0.50, 0.22, 0.68); // Kosmisches Violett/Magenta
+                    vec3 galTealCol   = vec3(0.18, 0.42, 0.65); // Kosmisches Cyan/Teal
+
+                    vec3 nebulaCol = mix(galTealCol, galVioletCol, dust);
+                    nebulaCol = mix(nebulaCol, galCoreCol, galProfile * 0.55);
+
+                    // Solides durchgängiges Lichtrückgrat + lebendige Staubmodulation
+                    float solidSpine = galProfile * 0.68 + galGlow * 0.32;
+                    float modulation = 0.72 + 0.35 * dust + 0.15 * detail;
+
+                    float intensity = solidSpine * modulation * riftMask;
+                    return nebulaCol * intensity;
                 }
 
-                // Dynamische Sternschnuppen
+                // ── FEINE, REALISTISCHE STERNSCHNUPPEN (OHNE GROSSE FEUERBÄLLE, NADELFEINE LINIEN) ──
                 vec3 renderShootingStar(vec3 dir, float time) {
+                    float seed = floor(time / 7.5);
                     float cycle = mod(time, 7.5);
-                    if (cycle > 1.2) return vec3(0.0);
+                    // Ein schnelles, elegantes Aufleuchten für 0.60 Sekunden
+                    if (cycle > 0.60) return vec3(0.0);
 
-                    float t = cycle / 1.2;
-                    vec3 startPos = normalize(vec3(-0.4, 0.85, -0.35));
-                    vec3 endPos   = normalize(vec3(0.5, 0.65, 0.58));
-                    vec3 meteorPos = normalize(mix(startPos, endPos, t));
+                    float t = cycle / 0.60; // 0.0 bis 1.0 während des Flugs
 
-                    float d = distance(dir, meteorPos);
-                    float streak = smoothstep(0.035, 0.0, d) * (1.0 - t);
-                    return vec3(1.0, 0.98, 0.90) * streak * 2.8;
+                    // Zufällige Flugbahn im oberen Himmelsbereich pro Intervall
+                    float h1 = hash(vec2(seed, 2.14));
+                    float h2 = hash(vec2(seed, 5.37));
+                    float h3 = hash(vec2(seed, 8.91));
+
+                    vec3 startPos = normalize(vec3(
+                        sin(h1 * 6.283) * 0.80,
+                        0.65 + h2 * 0.28,
+                        cos(h1 * 6.283) * 0.80
+                    ));
+
+                    vec3 streakDir = normalize(vec3(
+                        cos(h3 * 6.283),
+                        -0.35 - h2 * 0.20,
+                        sin(h3 * 6.283)
+                    ));
+
+                    vec3 endPos = normalize(startPos + streakDir * 0.48);
+
+                    // Meteor-Kopf
+                    vec3 head = normalize(mix(startPos, endPos, t));
+
+                    // Meteor-Schweif (zieht hinterher)
+                    float tailLength = 0.18;
+                    vec3 tail = normalize(mix(startPos, endPos, max(0.0, t - tailLength)));
+
+                    // Exakte Projektion auf das Liniensegment [tail, head]
+                    vec3 vSeg = head - tail;
+                    float segLenSq = dot(vSeg, vSeg);
+                    if (segLenSq < 0.00001) return vec3(0.0);
+
+                    vec3 p = dir - tail;
+                    float proj = clamp(dot(p, vSeg) / segLenSq, 0.0, 1.0);
+                    vec3 closest = tail + vSeg * proj;
+                    float dist = length(dir - closest);
+
+                    // Nadelfeiner Schweif (nur ca. 1-2 Pixel dünn, keine Feuerbälle!)
+                    float lineWidth = 0.0016;
+                    float streak = smoothstep(lineWidth, 0.0, dist);
+
+                    // Sanfte Helligkeitsverjüngung vom Kopf zum Ende des Schweifs
+                    float taper = pow(proj, 2.2);
+
+                    // Diskreter, winziger Stecknadelkopf-Funke an der Spitze (kein Feuerball!)
+                    float headSpark = exp(-length(dir - head) * 450.0) * 1.6;
+
+                    // Ein- und Ausblenden während des Fluges
+                    float flightFade = sin(t * 3.14159);
+
+                    float intensity = (streak * taper * 2.4 + headSpark) * flightFade;
+                    return vec3(0.96, 0.98, 1.00) * intensity;
                 }
 
                 void main() {
