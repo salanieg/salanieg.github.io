@@ -663,9 +663,9 @@
                 <span id="nav-user-email">Laden...</span>
             </div>
             <div id="player-count-badge" class="player-count-badge">
-                <span id="player-count-text">👥 1 online</span>
+                <span id="player-count-text">1 online</span>
             </div>
-            <button type="button" id="btn-settings" class="btn-settings" title="Spielername anpassen">⚙️ Name</button>
+            <button type="button" id="btn-settings" class="btn-settings" title="Spielername anpassen">Name</button>
             <button type="button" id="btn-logout" class="btn-logout">Abmelden</button>
         </header>
 
@@ -679,7 +679,7 @@
 
         <!-- Steuerungs-Leiste am unteren Rand -->
         <footer class="bottom-bar">
-            Klicken = Umschauen | W,A,S,D = Laufen | LEERTASTE = Springen | E = Interagieren | ESC = Maus frei
+            WASD: Laufen | LEER: Springen | LMB: Interagieren | E: Verschieben / Aktionen | ESC: Menü
         </footer>
 
         </div>
@@ -717,7 +717,7 @@
             <div style="margin-bottom: 1rem;">
                 <input type="file" id="art-file-input" accept="image/png, image/jpeg, image/webp, image/gif" style="display: none;">
                 <button type="button" id="btn-browse-art" class="btn-cancel" style="width: 100%; border-style: dashed; padding: 1.1rem; margin-bottom: 6px; font-weight: 600;">
-                    🖼️ Bild auswählen (PNG, JPG, WebP)
+                    Bild auswählen (PNG, JPG, WebP)
                 </button>
                 <div id="art-file-info" style="font-size: 0.8rem; color: #a1a1aa; text-align: center;">Keine Datei ausgewählt</div>
             </div>
@@ -753,7 +753,7 @@
             <div class="modal-actions">
                 <button type="button" id="btn-close-view-note" class="btn-cancel">Schließen</button>
                 <button type="button" id="btn-delete-note" class="btn-danger">
-                    <span>🗑️ Notiz entfernen</span>
+                    <span>Notiz entfernen</span>
                 </button>
             </div>
         </div>
@@ -791,6 +791,7 @@
             getFirestore,
             collection,
             addDoc,
+            updateDoc,
             deleteDoc,
             doc as firestoreDoc,
             onSnapshot,
@@ -1004,6 +1005,158 @@
         }
 
         const footstepAudio = new CarpetFootstepAudio();
+
+        // ── JETPACK PROZEDURALES WEB AUDIO SYSTEM (SANFTER JETSOUND, NICHT ZU LAUT) ──
+        class JetpackAudio {
+            constructor() {
+                this.ctx = null;
+                this.isThrusting = false;
+                this.gainNode = null;
+                this.noiseSource = null;
+                this.subOsc = null;
+            }
+
+            init(audioCtx) {
+                if (!audioCtx) return;
+                this.ctx = audioCtx;
+
+                try {
+                    this.gainNode = this.ctx.createGain();
+                    this.gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.gainNode.connect(this.ctx.destination);
+
+                    // Gefiltertes Rauschen für sanftes Triebwerkszischen
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 1.5);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * 0.35;
+                    }
+
+                    this.noiseSource = this.ctx.createBufferSource();
+                    this.noiseSource.buffer = buffer;
+                    this.noiseSource.loop = true;
+
+                    const bandpass = this.ctx.createBiquadFilter();
+                    bandpass.type = "bandpass";
+                    bandpass.frequency.value = 460;
+                    bandpass.Q.value = 1.4;
+
+                    const lowpass = this.ctx.createBiquadFilter();
+                    lowpass.type = "lowpass";
+                    lowpass.frequency.value = 1100;
+
+                    this.noiseSource.connect(bandpass);
+                    bandpass.connect(lowpass);
+                    lowpass.connect(this.gainNode);
+                    this.noiseSource.start(0);
+
+                    // Sub-Bass Oszillator (60 Hz) für tiefes Triebwerksgrollen
+                    this.subOsc = this.ctx.createOscillator();
+                    this.subOsc.type = "sine";
+                    this.subOsc.frequency.value = 60;
+
+                    const subGain = this.ctx.createGain();
+                    subGain.gain.value = 0.20;
+
+                    this.subOsc.connect(subGain);
+                    subGain.connect(this.gainNode);
+                    this.subOsc.start(0);
+                } catch (err) {
+                    console.warn("Jetpack audio init warning:", err);
+                }
+            }
+
+            setThrust(active) {
+                if (!this.ctx && footstepAudio && footstepAudio.ctx) {
+                    this.init(footstepAudio.ctx);
+                }
+                if (!this.ctx || !this.gainNode) return;
+                if (this.ctx.state === "suspended") {
+                    this.ctx.resume().catch(() => {});
+                }
+
+                const now = this.ctx.currentTime;
+                if (active) {
+                    if (!this.isThrusting) {
+                        this.isThrusting = true;
+                        // Angenehme, dezente Lautstärke (~0.14) mit sanftem 0.08s Anschwellen
+                        this.gainNode.gain.cancelScheduledValues(now);
+                        this.gainNode.gain.setTargetAtTime(0.14, now, 0.08);
+                    }
+                } else {
+                    if (this.isThrusting) {
+                        this.isThrusting = false;
+                        // Sanftes Ausklingen (0.12s)
+                        this.gainNode.gain.cancelScheduledValues(now);
+                        this.gainNode.gain.setTargetAtTime(0.0001, now, 0.12);
+                    }
+                }
+            }
+        }
+
+        const jetpackAudio = new JetpackAudio();
+
+        // ── NOTIZ-VERSCHIEBEN STATUSVARIABLEN ──
+        let movingNoteState = null; // { noteId, data, mesh, ghostFrame, isImage, validTarget }
+
+        // ── FAHRRAD & JETPACK STATUSVARIABLEN ──
+        let isRidingBike = false;
+        let worldBikeGroup = null;
+        let bikeInteractMesh = null;
+        let localBikeCockpit = null;
+
+        let isJetpackEquipped = false;
+        let isJetpackThrusting = false;
+        let spacePressed = false;
+        let worldJetpackGroup = null;
+        let jetpackInteractMesh = null;
+
+        function mountBike() {
+            if (isSitting) standUp();
+            isRidingBike = true;
+            if (worldBikeGroup) worldBikeGroup.visible = false;
+            if (localBikeCockpit) localBikeCockpit.visible = true;
+            interactPrompt.textContent = "[E] oder [ESC] Absteigen";
+            interactPrompt.classList.add("visible");
+        }
+
+        function dismountBike() {
+            if (!isRidingBike) return;
+            isRidingBike = false;
+            if (localBikeCockpit) localBikeCockpit.visible = false;
+            if (worldBikeGroup && camera) {
+                // Fahrrad auf Boden am aktuellen Spielerstandort abstellen
+                worldBikeGroup.position.set(camera.position.x, 0, camera.position.z);
+                const camDir = new THREE.Vector3();
+                camera.getWorldDirection(camDir);
+                worldBikeGroup.rotation.y = Math.atan2(camDir.x, camDir.z);
+                worldBikeGroup.visible = true;
+            }
+            interactPrompt.classList.remove("visible");
+        }
+
+        function equipJetpack() {
+            if (isSitting) standUp();
+            isJetpackEquipped = true;
+            if (worldJetpackGroup) worldJetpackGroup.visible = false;
+            interactPrompt.textContent = "[LEERTASTE] Schub nach oben | [E] Jetpack ablegen";
+            interactPrompt.classList.add("visible");
+        }
+
+        function dropJetpack() {
+            if (!isJetpackEquipped) return;
+            isJetpackEquipped = false;
+            if (isJetpackThrusting) {
+                isJetpackThrusting = false;
+                jetpackAudio.setThrust(false);
+            }
+            if (worldJetpackGroup && camera) {
+                worldJetpackGroup.position.set(camera.position.x, 0.15, camera.position.z);
+                worldJetpackGroup.visible = true;
+            }
+            interactPrompt.classList.remove("visible");
+        }
 
         // ── BILD-KOMPRIMIERUNGS-PROGRAMM (Maximal 100 KB) ──
         async function compressImageToMax100KB(file) {
@@ -1303,7 +1456,7 @@
             
             btnDeleteNote.dataset.noteId = noteId;
             btnDeleteNote.disabled = false;
-            btnDeleteNote.innerHTML = isImage ? "<span>🗑️ Bild entfernen</span>" : "<span>🗑️ Notiz entfernen</span>";
+            btnDeleteNote.innerHTML = isImage ? "<span>Bild entfernen</span>" : "<span>Notiz entfernen</span>";
 
             viewNoteModal.classList.add("visible");
             interactPrompt.classList.remove("visible");
@@ -1343,7 +1496,7 @@
                 console.error("Fehler beim Löschen:", err);
                 alert("Fehler beim Löschen: " + (err.message || "Unbekannter Fehler"));
                 btnDeleteNote.disabled = false;
-                btnDeleteNote.innerHTML = "<span>🗑️ Entfernen</span>";
+                btnDeleteNote.innerHTML = "<span>Entfernen</span>";
             }
         });
 
@@ -1564,7 +1717,7 @@
             ctx.font = 'bold 26px "Quicksand", sans-serif';
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(`📌 NOTIZBEREICH • ${room.name.toUpperCase()}`, 512, 46);
+            ctx.fillText(`NOTIZBEREICH • ${room.name.toUpperCase()}`, 512, 46);
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
@@ -1648,7 +1801,687 @@
             }
         }
 
-        // 1. ARBEIT (Nord)
+        // ── PROZEDURALE TEXTUR-GENERATOREN (KRÄFTIGE MASERUNG, HOHER KONTRAST & RANDLOS) ──
+        function createProceduralWoodTex(baseHex, darkHex, highlightHex, isPlanks) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+
+            // Warme, satte Holzbasis
+            ctx.fillStyle = baseHex;
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Breitere, organische Jahresringe & Fladern mit hohem Kontrast (Schritt 14 statt 4)
+            for (let y = 0; y <= 512; y += 14) {
+                const waveAmp1 = 6.0;
+                const waveAmp2 = 3.5;
+
+                // Helles Frühholzband
+                if (highlightHex) {
+                    ctx.strokeStyle = highlightHex;
+                    ctx.lineWidth = 4.5;
+                    ctx.globalAlpha = 0.55;
+                    ctx.beginPath();
+                    for (let x = 0; x <= 512; x += 16) {
+                        const nx = (x / 512) * Math.PI * 2;
+                        const wave = Math.sin(nx * 2 + y * 0.03) * waveAmp1 + Math.sin(nx * 5) * waveAmp2;
+                        const py = y + wave + 2;
+                        if (x === 0) ctx.moveTo(x, py);
+                        else ctx.lineTo(x, py);
+                    }
+                    ctx.stroke();
+                }
+
+                // Dunkle Spätholz-Linie mit hoher Deckkraft & Schärfe
+                ctx.strokeStyle = darkHex;
+                ctx.lineWidth = (y % 42 === 0) ? 4.0 : 2.5;
+                ctx.globalAlpha = (y % 42 === 0) ? 0.90 : 0.72;
+                ctx.beginPath();
+                for (let x = 0; x <= 512; x += 16) {
+                    const nx = (x / 512) * Math.PI * 2;
+                    const wave = Math.sin(nx * 2 + y * 0.03) * waveAmp1 + Math.sin(nx * 5) * waveAmp2;
+                    const py = y + wave;
+                    if (x === 0) ctx.moveTo(x, py);
+                    else ctx.lineTo(x, py);
+                }
+                ctx.stroke();
+            }
+
+            // Holzporen & Gefäße entlang der Faserrichtung
+            ctx.strokeStyle = darkHex;
+            ctx.lineWidth = 1.0;
+            ctx.globalAlpha = 0.35;
+            for (let i = 0; i < 75; i++) {
+                const px = Math.random() * 450;
+                const py = Math.random() * 512;
+                const plen = 20 + Math.random() * 50;
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.lineTo(px + plen, py + (Math.sin(px * 0.05) * 1.5));
+                ctx.stroke();
+            }
+
+            // Planken mit tiefen Schattenrillen & Lichtfasen
+            if (isPlanks) {
+                [128, 256, 384].forEach(px => {
+                    ctx.globalAlpha = 0.92;
+                    ctx.lineWidth = 3.5;
+                    ctx.strokeStyle = "#100602";
+                    ctx.beginPath();
+                    ctx.moveTo(px, 0);
+                    ctx.lineTo(px, 512);
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 0.45;
+                    ctx.lineWidth = 1.2;
+                    ctx.strokeStyle = highlightHex || "#f59e0b";
+                    ctx.beginPath();
+                    ctx.moveTo(px + 2, 0);
+                    ctx.lineTo(px + 2, 512);
+                    ctx.stroke();
+                });
+            }
+            ctx.globalAlpha = 1.0;
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Hochkontrastiger, plastischer Polsterstoff (Struktur-Gewebe mit Fadenkronen & Schattenrillen)
+        function createProceduralUpholsteryTex(baseHex, darkHex, highlightHex, threadShadowHex) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = baseHex;
+            ctx.fillRect(0, 0, 256, 256);
+
+            const tileSize = 32;
+            for (let y = 0; y < 256; y += tileSize) {
+                for (let x = 0; x < 256; x += tileSize) {
+                    const isHorizontal = ((x / tileSize) + (y / tileSize)) % 2 === 0;
+
+                    // Tiefe Rille zwischen Webelementen mit hohem Kontrast
+                    ctx.strokeStyle = darkHex;
+                    ctx.lineWidth = 3.0;
+                    ctx.globalAlpha = 0.95;
+                    ctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+
+                    if (isHorizontal) {
+                        for (let ty = y + 2; ty < y + tileSize - 2; ty += 5) {
+                            ctx.fillStyle = threadShadowHex || darkHex;
+                            ctx.globalAlpha = 0.95;
+                            ctx.fillRect(x + 2, ty, tileSize - 4, 1.8);
+
+                            ctx.fillStyle = baseHex;
+                            ctx.globalAlpha = 1.0;
+                            ctx.fillRect(x + 2, ty + 1.5, tileSize - 4, 2.8);
+
+                            ctx.fillStyle = highlightHex;
+                            ctx.globalAlpha = 0.95;
+                            ctx.fillRect(x + 4, ty + 2, tileSize - 8, 1.8);
+                        }
+                    } else {
+                        for (let tx = x + 2; tx < x + tileSize - 2; tx += 5) {
+                            ctx.fillStyle = threadShadowHex || darkHex;
+                            ctx.globalAlpha = 0.95;
+                            ctx.fillRect(tx, y + 2, 1.8, tileSize - 4);
+
+                            ctx.fillStyle = baseHex;
+                            ctx.globalAlpha = 1.0;
+                            ctx.fillRect(tx + 1.5, y + 2, 2.8, tileSize - 4);
+
+                            ctx.fillStyle = highlightHex;
+                            ctx.globalAlpha = 0.95;
+                            ctx.fillRect(tx + 2, y + 4, 1.8, tileSize - 8);
+                        }
+                    }
+                }
+            }
+
+            // Melange-Fasern mit starkem Kontrast
+            ctx.globalAlpha = 0.30;
+            for (let i = 0; i < 500; i++) {
+                const rx = Math.random() * 256;
+                const ry = Math.random() * 256;
+                ctx.fillStyle = Math.random() > 0.4 ? highlightHex : darkHex;
+                ctx.fillRect(rx, ry, 2, 2);
+            }
+            ctx.globalAlpha = 1.0;
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Passende Relief-Bump-Map für dynamische Stoffplastizität
+        function createProceduralUpholsteryBumpTex() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = "#808080";
+            ctx.fillRect(0, 0, 256, 256);
+
+            const tileSize = 32;
+            for (let y = 0; y < 256; y += tileSize) {
+                for (let x = 0; x < 256; x += tileSize) {
+                    const isHorizontal = ((x / tileSize) + (y / tileSize)) % 2 === 0;
+                    ctx.strokeStyle = "#080808";
+                    ctx.lineWidth = 3.0;
+                    ctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+
+                    if (isHorizontal) {
+                        for (let ty = y + 2; ty < y + tileSize - 2; ty += 5) {
+                            ctx.fillStyle = "#121212";
+                            ctx.fillRect(x + 2, ty, tileSize - 4, 1.8);
+                            ctx.fillStyle = "#ffffff";
+                            ctx.fillRect(x + 4, ty + 2, tileSize - 8, 2.2);
+                        }
+                    } else {
+                        for (let tx = x + 2; tx < x + tileSize - 2; tx += 5) {
+                            ctx.fillStyle = "#121212";
+                            ctx.fillRect(tx, y + 2, 1.8, tileSize - 4);
+                            ctx.fillStyle = "#ffffff";
+                            ctx.fillRect(tx + 2, y + 4, 2.2, tileSize - 8);
+                        }
+                    }
+                }
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Geprägtes Waben-/Antirutsch-Muster für Yogamatte mit kräftigem Kontrast
+        function createProceduralYogaMatTex(baseHex, darkHex, highlightHex) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = baseHex;
+            ctx.fillRect(0, 0, 256, 256);
+
+            const step = 16;
+            ctx.lineWidth = 1.8;
+
+            for (let y = -256; y < 512; y += step) {
+                ctx.strokeStyle = darkHex;
+                ctx.globalAlpha = 0.85;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(256, y + 256);
+                ctx.stroke();
+
+                ctx.strokeStyle = highlightHex;
+                ctx.globalAlpha = 0.65;
+                ctx.beginPath();
+                ctx.moveTo(0, y + 1.8);
+                ctx.lineTo(256, y + 256 + 1.8);
+                ctx.stroke();
+
+                ctx.strokeStyle = darkHex;
+                ctx.globalAlpha = 0.85;
+                ctx.beginPath();
+                ctx.moveTo(256, y);
+                ctx.lineTo(0, y + 256);
+                ctx.stroke();
+
+                ctx.strokeStyle = highlightHex;
+                ctx.globalAlpha = 0.65;
+                ctx.beginPath();
+                ctx.moveTo(256, y + 1.8);
+                ctx.lineTo(0, y + 256 + 1.8);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Kräftige konzentrische Jahresringe (Schritt 14) bis über den Tischrand hinaus
+        function createProceduralRadialWoodTex(baseHex, ringHex, highlightHex, poreHex) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+            const cx = 256, cy = 256;
+
+            ctx.fillStyle = baseHex;
+            ctx.fillRect(0, 0, 512, 512);
+
+            const grad = ctx.createRadialGradient(cx, cy, 15, cx, cy, 360);
+            grad.addColorStop(0, "rgba(255, 255, 255, 0.12)");
+            grad.addColorStop(0.65, "rgba(0, 0, 0, 0)");
+            grad.addColorStop(1, "rgba(0, 0, 0, 0.45)");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Breitere Jahresringe bis r = 380 mit deutlichem Kontrast
+            for (let r = 8; r <= 380; r += 14) {
+                if (highlightHex) {
+                    ctx.strokeStyle = highlightHex;
+                    ctx.lineWidth = 3.2;
+                    ctx.globalAlpha = 0.50;
+                    ctx.beginPath();
+                    for (let a = 0; a <= Math.PI * 2; a += 0.08) {
+                        const wobble = Math.sin(a * 4 + r * 0.15) * 2.8 + Math.cos(a * 7) * 1.5;
+                        const x = cx + Math.cos(a) * (r + 1.5 + wobble);
+                        const y = cy + Math.sin(a) * (r + 1.5 + wobble);
+                        if (a === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+
+                ctx.strokeStyle = ringHex;
+                ctx.lineWidth = (r % 42 === 0) ? 4.2 : 2.5;
+                ctx.globalAlpha = (r % 42 === 0) ? 0.88 : 0.68;
+                ctx.beginPath();
+                for (let a = 0; a <= Math.PI * 2; a += 0.08) {
+                    const wobble = Math.sin(a * 4 + r * 0.15) * 2.8 + Math.cos(a * 7) * 1.5;
+                    const x = cx + Math.cos(a) * (r + wobble);
+                    const y = cy + Math.sin(a) * (r + wobble);
+                    if (a === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            // Markstrahlen / Poren
+            ctx.strokeStyle = poreHex || "rgba(0, 0, 0, 0.38)";
+            ctx.lineWidth = 1.2;
+            ctx.globalAlpha = 0.32;
+            for (let ray = 0; ray < 64; ray++) {
+                const a = (ray / 64) * Math.PI * 2 + (Math.random() - 0.5) * 0.05;
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(a) * 15, cy + Math.sin(a) * 15);
+                ctx.lineTo(cx + Math.cos(a) * 380, cy + Math.sin(a) * 380);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        function createProceduralBrushedMetalTex(baseHex, scratchHex) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 128;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = baseHex;
+            ctx.fillRect(0, 0, 256, 128);
+
+            ctx.strokeStyle = scratchHex;
+            ctx.globalAlpha = 0.38;
+            ctx.lineWidth = 1.2;
+            for (let i = 0; i < 65; i++) {
+                const y = Math.random() * 128;
+                const x = Math.random() * 180;
+                const len = 35 + Math.random() * 70;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + len, y);
+                ctx.stroke();
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Bündig bis an alle Ränder abschließendes IDE-Display
+        function createProceduralScreenTex() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 296;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = "#09090b";
+            ctx.fillRect(0, 0, 512, 296);
+
+            ctx.fillStyle = "#18181b";
+            ctx.fillRect(0, 0, 512, 26);
+            ctx.strokeStyle = "#27272a";
+            ctx.strokeRect(0, 0, 512, 26);
+
+            ["#ef4444", "#f59e0b", "#10b981"].forEach((col, idx) => {
+                ctx.beginPath();
+                ctx.arc(14 + idx * 14, 13, 4, 0, Math.PI * 2);
+                ctx.fillStyle = col;
+                ctx.fill();
+            });
+
+            ctx.fillStyle = "#27272a";
+            ctx.fillRect(70, 4, 130, 22);
+            ctx.fillStyle = "#38bdf8";
+            ctx.font = 'bold 11px "Quicksand", monospace';
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText("mansion.ts", 82, 15);
+            ctx.fillStyle = "#71717a";
+            ctx.fillText("x", 185, 15);
+
+            ctx.fillStyle = "#111113";
+            ctx.fillRect(0, 26, 80, 246);
+            ctx.strokeStyle = "#27272a";
+            ctx.beginPath();
+            ctx.moveTo(80, 26);
+            ctx.lineTo(80, 272);
+            ctx.stroke();
+
+            ctx.font = '9px "Quicksand", monospace';
+            ["EXPLORER", "v SRC", "  > models", "    chair.ts", "    tools.ts", "    notes.ts", "  app.ts", "package.json"].forEach((line, idx) => {
+                ctx.fillStyle = line.includes(".ts") ? "#38bdf8" : "#71717a";
+                ctx.fillText(line, 8, 42 + idx * 17);
+            });
+
+            const codeColors = ["#38bdf8", "#f43f5e", "#a855f7", "#22c55e", "#eab308", "#cbd5e1"];
+            for (let row = 0; row < 12; row++) {
+                const y = 44 + row * 19;
+                ctx.fillStyle = "#3f3f46";
+                ctx.font = '10px "Quicksand", monospace';
+                ctx.textAlign = "right";
+                ctx.fillText((row + 1).toString(), 105, y);
+
+                let cx = 118 + (row % 3 === 0 ? 18 : (row % 4 === 0 ? 36 : 0));
+                const tokens = 2 + (row * 5) % 4;
+                for (let t = 0; t < tokens; t++) {
+                    const tw = 22 + ((row + t) * 19) % 52;
+                    ctx.fillStyle = codeColors[(row * 2 + t) % codeColors.length];
+                    ctx.fillRect(cx, y - 8, tw, 9);
+                    cx += tw + 8;
+                }
+            }
+
+            ctx.fillStyle = "#111114";
+            ctx.fillRect(460, 26, 52, 246);
+            ctx.strokeStyle = "#27272a";
+            ctx.beginPath();
+            ctx.moveTo(460, 26);
+            ctx.lineTo(460, 272);
+            ctx.stroke();
+
+            ctx.fillStyle = "rgba(56, 189, 248, 0.4)";
+            for (let my = 32; my < 265; my += 5) {
+                ctx.fillRect(466, my, 14 + (my % 28), 2.5);
+            }
+
+            ctx.fillStyle = "#0284c7";
+            ctx.fillRect(0, 272, 512, 24);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = 'bold 9px "Quicksand", monospace';
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText("main*  |  0 errors  0 warnings", 12, 284);
+            ctx.textAlign = "right";
+            ctx.fillText("UTF-8  |  TypeScript", 500, 284);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Bündige Tastaturoberseite mit vollständiger Tastenmatrix
+        function createProceduralKeyboardTex() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 160;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = "#18181b";
+            ctx.fillRect(0, 0, 512, 160);
+
+            ctx.strokeStyle = "#27272a";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(2, 2, 508, 156);
+
+            const fKeys = ["ESC", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "DEL"];
+            let fx = 8;
+            fKeys.forEach(k => {
+                const kw = k === "ESC" ? 30 : 28;
+                ctx.fillStyle = k === "ESC" ? "#dc2626" : "#27272a";
+                ctx.fillRect(fx, 6, kw, 18);
+                ctx.strokeStyle = "#3f3f46";
+                ctx.strokeRect(fx, 6, kw, 18);
+                ctx.fillStyle = "#e4e4e7";
+                ctx.font = 'bold 8px "Quicksand", monospace';
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(k, fx + kw / 2, 15);
+                fx += kw + 6;
+            });
+
+            const keyRows = [
+                ["~", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "+", "BKSP"],
+                ["TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\\\"],
+                ["CAPS", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "ENTER"],
+                ["SHIFT", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "SHIFT", "UP"],
+                ["CTRL", "WIN", "ALT", "SPACE", "ALT", "FN", "LEFT", "DOWN", "RIGHT"]
+            ];
+
+            const rowY = [28, 54, 80, 106, 132];
+            keyRows.forEach((row, rIdx) => {
+                let x = 8;
+                const y = rowY[rIdx];
+                row.forEach(k => {
+                    let kw = 28;
+                    if (k === "BKSP") kw = 48;
+                    else if (k === "TAB") kw = 42;
+                    else if (k === "CAPS") kw = 46;
+                    else if (k === "ENTER") kw = 56;
+                    else if (k === "SHIFT") kw = 52;
+                    else if (k === "SPACE") kw = 176;
+                    else if (k === "CTRL" || k === "ALT" || k === "WIN" || k === "FN") kw = 34;
+
+                    ctx.fillStyle = (k === "ENTER" || k === "SPACE") ? "#3f3f46" : "#27272a";
+                    ctx.fillRect(x, y, kw, 22);
+                    ctx.strokeStyle = "#52525b";
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, kw, 22);
+
+                    ctx.fillStyle = "#e4e4e7";
+                    ctx.font = 'bold 8px "Quicksand", monospace';
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(k === "SPACE" ? "" : k, x + kw / 2, y + 11);
+
+                    x += kw + 5;
+                });
+            });
+
+            ["#10b981", "#3b82f6", "#ef4444"].forEach((col, idx) => {
+                ctx.beginPath();
+                ctx.arc(488 + idx * 8, 12, 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = col;
+                ctx.fill();
+            });
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Buchdeckel oben (Goldprägung auf Leder mit hohem Kontrast)
+        function createProceduralBookCoverTex() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = "#090d16";
+            ctx.fillRect(0, 0, 256, 256);
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+            for (let i = 0; i < 400; i++) {
+                ctx.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 1.5);
+            }
+
+            ctx.strokeStyle = "#facc15";
+            ctx.lineWidth = 3.5;
+            ctx.strokeRect(8, 8, 240, 240);
+            ctx.lineWidth = 1.2;
+            ctx.strokeRect(15, 15, 226, 226);
+
+            [[15, 15], [241, 15], [15, 241], [241, 241]].forEach(([cx, cy]) => {
+                ctx.fillStyle = "#fef08a";
+                ctx.beginPath();
+                ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.fillStyle = "#fef08a";
+            ctx.font = 'bold 24px "Quicksand", serif';
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("MANSION", 128, 110);
+            ctx.font = 'bold 13px "Quicksand", sans-serif';
+            ctx.fillStyle = "#facc15";
+            ctx.fillText("ARCHIV", 128, 145);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Buchrücken mit kräftigen Goldrippen & Schrift
+        function createProceduralBookSpineTex() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 64;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = "#090d16";
+            ctx.fillRect(0, 0, 256, 64);
+
+            [35, 85, 171, 221].forEach(x => {
+                ctx.fillStyle = "#1e293b";
+                ctx.fillRect(x - 5, 0, 10, 64);
+                ctx.fillStyle = "#facc15";
+                ctx.fillRect(x - 1.5, 0, 3, 64);
+            });
+
+            ctx.save();
+            ctx.translate(128, 32);
+            ctx.fillStyle = "#fef08a";
+            ctx.font = 'bold 13px "Quicksand", serif';
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("MANSION", 0, 0);
+            ctx.restore();
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Buchseiten mit Papierschichten
+        function createProceduralBookPagesTex() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 64;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = "#fef9c3";
+            ctx.fillRect(0, 0, 256, 64);
+
+            ctx.strokeStyle = "#b45309";
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.40;
+            for (let y = 2; y < 64; y += 3) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(256, y);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        function createProceduralMarkerTex() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 64;
+            const ctx = canvas.getContext("2d");
+
+            ctx.fillStyle = "#ccff00";
+            ctx.fillRect(0, 0, 256, 64);
+
+            ctx.fillStyle = "#111111";
+            ctx.font = 'bold 16px "Quicksand", sans-serif';
+            ctx.textBaseline = "middle";
+            ctx.fillText("HIGHLIGHTER", 30, 32);
+            ctx.font = '9px "Quicksand", sans-serif';
+            ctx.fillText("FLUORESCENT // PERMANENT", 30, 48);
+
+            for (let bx = 180; bx < 240; bx += 3) {
+                ctx.fillRect(bx, 18, (bx % 6 === 0 ? 2 : 1), 28);
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // ── MAẞSTABSGETREUE UV-SKALIERUNG NACH OBJEKTMAẞEN ──
+        function adjustBoxGeometryUVs(geo, width, height, depth, scaleU = 1.0, scaleV = 1.0) {
+            const uvAttr = geo.attributes.uv;
+            const uv = uvAttr.array;
+
+            const faces = [
+                { w: depth, h: height }, // Face 0: +X
+                { w: depth, h: height }, // Face 1: -X
+                { w: width, h: depth },  // Face 2: +Y
+                { w: width, h: depth },  // Face 3: -Y
+                { w: width, h: height }, // Face 4: +Z
+                { w: width, h: height }, // Face 5: -Z
+            ];
+
+            for (let f = 0; f < 6; f++) {
+                const fw = faces[f].w * scaleU;
+                const fh = faces[f].h * scaleV;
+                const base = f * 8;
+                uv[base + 0] = 0;  uv[base + 1] = fh;
+                uv[base + 2] = fw; uv[base + 3] = fh;
+                uv[base + 4] = 0;  uv[base + 5] = 0;
+                uv[base + 6] = fw; uv[base + 7] = 0;
+            }
+            uvAttr.needsUpdate = true;
+        }
+
+        function createDimensionBoxGeometry(width, height, depth, scaleU = 1.0, scaleV = 1.0) {
+            const geo = new THREE.BoxGeometry(width, height, depth);
+            adjustBoxGeometryUVs(geo, width, height, depth, scaleU, scaleV);
+            return geo;
+        }
+
+        // 1. ARBEIT (Nord) - 4 INDIVIDUELLE ARBEITS- & SITZBEREICHE
         function buildArbeitsraum() {
             const rx = 0, rz = -16.5;
 
@@ -1659,144 +2492,643 @@
             floor.position.set(rx, 0.015, rz);
             scene.add(floor);
 
-            const roomLight = new THREE.PointLight(0xffffff, 0.8, 16);
-            roomLight.position.set(rx, WALL_HEIGHT - 0.6, rz);
-            scene.add(roomLight);
+            // Keine Punktbeleuchtung
 
-            // Bücherregal an der Rückwand
-            const shelfGroup = new THREE.Group();
-            const shelfFrameMat = new THREE.MeshLambertMaterial({ color: 0x1c1917 });
-            const shelfBoardMat = new THREE.MeshLambertMaterial({ color: 0xf4f4f5 });
+            // 1. Große Werkbank mit Hammer, Schraubenschlüssel, Sichel, Pinsel & gelbem Schemel
+            buildWorkbenchArea(rx, rz);
 
-            const backWall = new THREE.Mesh(new THREE.BoxGeometry(4.2, 3.2, 0.08), shelfFrameMat);
-            backWall.position.set(0, 1.6, 0);
-            shelfGroup.add(backWall);
+            // 2. Blaue Yogamatte mit 2 Kurzhanteln
+            buildYogaArea(rx, rz);
 
-            const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.2, 0.55), shelfFrameMat);
-            sideL.position.set(-2.05, 1.6, 0.24);
-            shelfGroup.add(sideL);
+            // 3. Schreibtisch mit PC-Setup & rotem Bürostuhl
+            buildOfficeDeskArea(rx, rz);
 
-            const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.2, 0.55), shelfFrameMat);
-            sideR.position.set(2.05, 1.6, 0.24);
-            shelfGroup.add(sideR);
-
-            [0.1, 0.85, 1.6, 2.35, 3.1].forEach((h) => {
-                const board = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.06, 0.55), shelfBoardMat);
-                board.position.set(0, h, 0.24);
-                shelfGroup.add(board);
-            });
-
-            const bookColors = [0xb91c1c, 0x1d4ed8, 0x047857, 0xb45309, 0x475569, 0xf59e0b, 0x4338ca, 0x0f172a];
-            [0.45, 1.20, 1.95, 2.70].forEach((by) => {
-                let bx = -1.85;
-                while (bx < 1.8) {
-                    const bWidth = 0.06 + Math.random() * 0.05;
-                    const bHeight = 0.45 + Math.random() * 0.18;
-                    const bColor = bookColors[Math.floor(Math.random() * bookColors.length)];
-                    const book = new THREE.Mesh(
-                        new THREE.BoxGeometry(bWidth, bHeight, 0.38),
-                        new THREE.MeshLambertMaterial({ color: bColor })
-                    );
-                    book.position.set(bx + bWidth / 2, by, 0.22);
-                    shelfGroup.add(book);
-                    bx += bWidth + 0.015 + (Math.random() > 0.85 ? 0.08 : 0);
-                }
-            });
-
-            shelfGroup.position.set(rx, 0, rz - 4.6);
-            scene.add(shelfGroup);
-
-            // 4 identische Schreibtische mit Bürostühlen
-            const deskConfigs = [
-                { x: rx - 2.2, z: rz + 1.8, faceAngle: Math.PI },
-                { x: rx + 2.2, z: rz + 1.8, faceAngle: Math.PI },
-                { x: rx - 2.2, z: rz - 1.8, faceAngle: 0 },
-                { x: rx + 2.2, z: rz - 1.8, faceAngle: 0 }
-            ];
-
-            deskConfigs.forEach((cfg, idx) => {
-                buildDeskUnit(cfg.x, cfg.z, cfg.faceAngle, idx + 1);
-            });
+            // 4. Hellgrauer Lesesessel mit Beistelltisch (Buch, 3D-Brille, neongelber Marker)
+            buildReadingCornerArea(rx, rz);
         }
 
-        function buildDeskUnit(x, z, faceAngle, num) {
+        // ── 1. WERKBANK MIT WERKZEUGEN & GELBEM SCHEMEL ──
+        function buildWorkbenchArea(rx, rz) {
             const group = new THREE.Group();
 
-            const topMat = new THREE.MeshLambertMaterial({ color: 0x262626 });
-            const top = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.06, 0.85), topMat);
-            top.position.y = 0.74;
+            // Kräftige, ausdrucksstarke Holztexturen mit hohem Kontrast
+            const woodTopTex = createProceduralWoodTex("#78350f", "#3b1704", "#d97706", true);
+            const woodDarkTex = createProceduralWoodTex("#522507", "#281102", "#92400e", false);
+            const toolWoodTex = createProceduralWoodTex("#b45309", "#522204", "#f59e0b", false);
+            const brushedMetalTex = createProceduralBrushedMetalTex("#94a3b8", "#475569");
+            const castIronTex = createProceduralBrushedMetalTex("#27272a", "#09090b");
+            const yellowWoodTex = createProceduralWoodTex("#eab308", "#854d0e", "#fef08a", false);
+
+            const woodTopMat = new THREE.MeshLambertMaterial({ map: woodTopTex });
+            const frameMat = new THREE.MeshLambertMaterial({ map: castIronTex });
+            const woodShelfMat = new THREE.MeshLambertMaterial({ map: woodDarkTex });
+
+            // Robuste Werkbankplatte maßstabsgetreu dimensioniert (2.4m x 0.85m x 0.08m)
+            const topGeo = createDimensionBoxGeometry(2.4, 0.08, 0.85, 1.0, 1.0);
+            const top = new THREE.Mesh(topGeo, woodTopMat);
+            top.position.y = 0.86;
             group.add(top);
 
-            const legMat = new THREE.MeshLambertMaterial({ color: 0x52525b });
-            const legGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.74, 12);
-            [[-0.72, -0.36], [0.72, -0.36], [-0.72, 0.36], [0.72, 0.36]].forEach(([lx, lz]) => {
-                const leg = new THREE.Mesh(legGeo, legMat);
+            // Rückwandleiste / Kantenschutz (2.4m lang)
+            const lipGeo = createDimensionBoxGeometry(2.4, 0.12, 0.04, 1.0, 1.0);
+            const lip = new THREE.Mesh(lipGeo, woodTopMat);
+            lip.position.set(0, 0.94, -0.405);
+            group.add(lip);
+
+            // 4 massive Beine
+            const legGeo = createDimensionBoxGeometry(0.09, 0.82, 0.09, 1.5, 1.5);
+            [[-1.1, -0.34], [1.1, -0.34], [-1.1, 0.34], [1.1, 0.34]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(legGeo, frameMat);
+                leg.position.set(lx, 0.41, lz);
+                group.add(leg);
+            });
+
+            // Untere Ablage
+            const lowerShelfGeo = createDimensionBoxGeometry(2.1, 0.04, 0.70, 1.0, 1.0);
+            const lowerShelf = new THREE.Mesh(lowerShelfGeo, woodShelfMat);
+            lowerShelf.position.y = 0.22;
+            group.add(lowerShelf);
+
+            // Schraubstock an der linken Kante
+            const viceGroup = new THREE.Group();
+            const viceBase = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.16), frameMat);
+            viceBase.position.set(-1.08, 0.94, 0.28);
+            viceGroup.add(viceBase);
+            const viceJaw1 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.04), frameMat);
+            viceJaw1.position.set(-1.08, 0.98, 0.24);
+            viceGroup.add(viceJaw1);
+            const viceJaw2 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.04), frameMat);
+            viceJaw2.position.set(-1.08, 0.98, 0.34);
+            viceGroup.add(viceJaw2);
+            const viceSpindle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 12), new THREE.MeshLambertMaterial({ map: brushedMetalTex }));
+            viceSpindle.rotation.x = Math.PI / 2;
+            viceSpindle.position.set(-1.08, 0.96, 0.38);
+            viceGroup.add(viceSpindle);
+            group.add(viceGroup);
+
+            // ── REQUISITEN AUF DER WERKBANK ──
+            const metalMat = new THREE.MeshLambertMaterial({ map: brushedMetalTex });
+            const woodHandleMat = new THREE.MeshLambertMaterial({ map: toolWoodTex });
+
+            // 1. Hammer (Echter Schlosserhammer mit Stieldurchdringung)
+            const hammerGroup = new THREE.Group();
+            const hammerHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.018, 0.34, 12), woodHandleMat);
+            hammerHandle.rotation.z = Math.PI / 2;
+            hammerGroup.add(hammerHandle);
+
+            const hammerHeadGroup = new THREE.Group();
+            const forgedSteelMat = new THREE.MeshLambertMaterial({ map: brushedMetalTex, color: 0x334155 });
+
+            const centerEye = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.044, 0.044), forgedSteelMat);
+            hammerHeadGroup.add(centerEye);
+
+            const strikingFace = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.040, 0.040), forgedSteelMat);
+            strikingFace.position.set(0.05, 0, 0);
+            hammerHeadGroup.add(strikingFace);
+
+            const peenGeo = new THREE.CylinderGeometry(0.005, 0.040, 0.065, 4);
+            peenGeo.rotateZ(Math.PI / 2);
+            peenGeo.rotateY(Math.PI / 4);
+            const peenMesh = new THREE.Mesh(peenGeo, forgedSteelMat);
+            peenMesh.position.set(-0.052, 0, 0);
+            hammerHeadGroup.add(peenMesh);
+
+            const wedge = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.006, 0.024), woodHandleMat);
+            wedge.position.set(0, 0.024, 0);
+            hammerHeadGroup.add(wedge);
+
+            hammerHeadGroup.position.set(0.12, 0, 0);
+            hammerGroup.add(hammerHeadGroup);
+
+            hammerGroup.position.set(-0.55, 0.915, -0.05);
+            hammerGroup.rotation.y = 0.35;
+            group.add(hammerGroup);
+
+            // 2. Schraubenschlüssel
+            const wrenchGroup = new THREE.Group();
+            const wrenchBody = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.012, 0.032), metalMat);
+            wrenchBody.position.y = 0.006;
+            wrenchGroup.add(wrenchBody);
+            const jawL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.012, 0.012), metalMat);
+            jawL.position.set(0.13, 0.006, -0.024);
+            wrenchGroup.add(jawL);
+            const jawR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.012, 0.012), metalMat);
+            jawR.position.set(0.13, 0.006, 0.024);
+            wrenchGroup.add(jawR);
+            const wrenchRing = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.008, 8, 16), metalMat);
+            wrenchRing.rotation.x = Math.PI / 2;
+            wrenchRing.position.set(-0.13, 0.006, 0);
+            wrenchGroup.add(wrenchRing);
+            wrenchGroup.position.set(-0.15, 0.90, 0.12);
+            wrenchGroup.rotation.y = -0.45;
+            group.add(wrenchGroup);
+
+            // 3. Sichel
+            const sickleGroup = new THREE.Group();
+            const sickleHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.016, 0.16, 12), woodHandleMat);
+            sickleHandle.rotation.z = Math.PI / 2;
+            sickleGroup.add(sickleHandle);
+
+            const sickleFerrule = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.028, 12), metalMat);
+            sickleFerrule.rotation.z = Math.PI / 2;
+            sickleFerrule.position.set(0.08, 0, 0);
+            sickleGroup.add(sickleFerrule);
+
+            const bladeShape = new THREE.Shape();
+            bladeShape.moveTo(0, 0);
+            bladeShape.quadraticCurveTo(0.06, 0.14, 0.18, 0.18);
+            bladeShape.quadraticCurveTo(0.28, 0.20, 0.34, 0.13);
+            bladeShape.quadraticCurveTo(0.38, 0.06, 0.36, 0.01);
+            bladeShape.quadraticCurveTo(0.26, 0.10, 0.16, 0.11);
+            bladeShape.quadraticCurveTo(0.06, 0.10, 0.01, 0.01);
+            bladeShape.closePath();
+
+            const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, {
+                steps: 1,
+                depth: 0.003,
+                bevelEnabled: true,
+                bevelThickness: 0.001,
+                bevelSize: 0.001,
+                bevelSegments: 2
+            });
+            bladeGeo.center();
+            const sickleBlade = new THREE.Mesh(bladeGeo, metalMat);
+            sickleBlade.rotation.x = Math.PI / 2;
+            sickleBlade.position.set(0.18, 0, -0.05);
+            sickleGroup.add(sickleBlade);
+
+            sickleGroup.position.set(0.35, 0.905, -0.05);
+            sickleGroup.rotation.y = 0.25;
+            group.add(sickleGroup);
+
+            // 4. Pinsel
+            const brushGroup = new THREE.Group();
+            const brushHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.014, 0.22, 12), woodHandleMat);
+            brushHandle.rotation.x = Math.PI / 2;
+            brushHandle.position.set(0, 0.012, 0);
+            brushGroup.add(brushHandle);
+            const brushFerrule = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.016, 0.04), metalMat);
+            brushFerrule.position.set(0, 0.012, 0.12);
+            brushGroup.add(brushFerrule);
+            const bristleMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const brushBristles = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.014, 0.06), bristleMat);
+            brushBristles.position.set(0, 0.012, 0.17);
+            brushGroup.add(brushBristles);
+            brushGroup.position.set(0.72, 0.90, 0.10);
+            brushGroup.rotation.y = 0.60;
+            group.add(brushGroup);
+
+            // ── GELBER SCHEMEL (TISCHFARBE AUS CHILLEN MIT KRÄFTIGER MASERUNG) ──
+            const stoolGroup = new THREE.Group();
+            const yellowSeatMat = new THREE.MeshLambertMaterial({ map: yellowWoodTex });
+            const stoolLegMat = new THREE.MeshLambertMaterial({ map: castIronTex });
+
+            const stoolSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.045, 24), yellowSeatMat);
+            stoolSeat.position.y = 0.50;
+            stoolGroup.add(stoolSeat);
+
+            const stoolLegGeo = new THREE.CylinderGeometry(0.018, 0.015, 0.50, 12);
+            [
+                [-0.14, -0.14, 0.12, -0.12],
+                [0.14, -0.14, -0.12, -0.12],
+                [-0.14, 0.14, 0.12, 0.12],
+                [0.14, 0.14, -0.12, 0.12]
+            ].forEach(([lx, lz, tiltX, tiltZ]) => {
+                const leg = new THREE.Mesh(stoolLegGeo, stoolLegMat);
+                leg.position.set(lx, 0.25, lz);
+                leg.rotation.x = tiltZ;
+                leg.rotation.z = tiltX;
+                stoolGroup.add(leg);
+            });
+
+            const stoolRing = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.008, 8, 20), stoolLegMat);
+            stoolRing.rotation.x = Math.PI / 2;
+            stoolRing.position.y = 0.20;
+            stoolGroup.add(stoolRing);
+
+            stoolGroup.position.set(0, 0, 0.75);
+            group.add(stoolGroup);
+
+            group.position.set(rx, 0, rz - 3.2);
+            scene.add(group);
+
+            const stoolWorldPos = new THREE.Vector3(rx, 1.15, rz - 3.2 + 0.75);
+            const stoolLookDir = new THREE.Vector3(0, 0, -1);
+            registerSeat(stoolSeat, "Gelber Werkbank-Schemel", stoolWorldPos, stoolLookDir);
+        }
+
+        // ── 2. BLAUE YOGAMATTE MIT 2 HANTELN ──
+        function buildYogaArea(rx, rz) {
+            const group = new THREE.Group();
+
+            const yogaMatTex = createProceduralYogaMatTex("#1d4ed8", "#0f172a", "#7dd3fc");
+            const blueMatMat = new THREE.MeshLambertMaterial({ map: yogaMatTex });
+            const matGeo = createDimensionBoxGeometry(0.72, 0.018, 1.95, 8.0, 8.0);
+            const matMesh = new THREE.Mesh(matGeo, blueMatMat);
+            matMesh.position.y = 0.01;
+            group.add(matMesh);
+
+            const stripeMat = new THREE.MeshLambertMaterial({ color: 0x38bdf8 });
+            [-0.88, 0.88].forEach(sz => {
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.02, 0.04), stripeMat);
+                stripe.position.set(0, 0.012, sz);
+                group.add(stripe);
+            });
+
+            const chromeTex = createProceduralBrushedMetalTex("#cbd5e1", "#64748b");
+            const castIronTex = createProceduralBrushedMetalTex("#27272a", "#09090b");
+            const dumbbellBarMat = new THREE.MeshLambertMaterial({ map: chromeTex });
+            const dumbbellWeightMat = new THREE.MeshLambertMaterial({ map: castIronTex });
+
+            function createDumbbell() {
+                const dbGroup = new THREE.Group();
+                const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.28, 12), dumbbellBarMat);
+                bar.rotation.z = Math.PI / 2;
+                bar.position.y = 0.055;
+                dbGroup.add(bar);
+
+                [-0.10, -0.06, 0.06, 0.10].forEach(bx => {
+                    const radius = Math.abs(bx) > 0.08 ? 0.055 : 0.05;
+                    const weight = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.024, 16), dumbbellWeightMat);
+                    weight.rotation.z = Math.PI / 2;
+                    weight.position.set(bx, 0.055, 0);
+                    dbGroup.add(weight);
+                });
+                return dbGroup;
+            }
+
+            const db1 = createDumbbell();
+            db1.position.set(-0.16, 0.015, -0.55);
+            db1.rotation.y = 0.15;
+            group.add(db1);
+
+            const db2 = createDumbbell();
+            db2.position.set(0.14, 0.015, -0.62);
+            db2.rotation.y = -0.22;
+            group.add(db2);
+
+            group.position.set(rx - 2.8, 0.015, rz - 0.2);
+            group.rotation.y = 0.12;
+            scene.add(group);
+
+            const sitWorldPos = new THREE.Vector3(rx - 2.8, 0.65, rz - 0.2 + 0.2);
+            const sitLookDir = new THREE.Vector3(1, 0, 0.1).normalize();
+            registerSeat(matMesh, "Blaue Yogamatte", sitWorldPos, sitLookDir);
+        }
+
+        // ── 3. SCHREIBTISCH MIT ROTEM BÜROSTUHL ──
+        function buildOfficeDeskArea(rx, rz) {
+            const group = new THREE.Group();
+
+            // Eleganter Walnuss-Schreibtisch: Edles warmes Holz, KEIN grauer Streifen!
+            const deskTex = createProceduralWoodTex("#3a2212", "#180e06", "#5a361c", false);
+            const metalTex = createProceduralBrushedMetalTex("#52525b", "#27272a");
+            const screenTex = createProceduralScreenTex();
+            const keyboardTex = createProceduralKeyboardTex();
+
+            // Roter Polsterstoff mit maximalem Kontrast & tiefer Bump-Map
+            const redFabricTex = createProceduralUpholsteryTex("#b91c1c", "#350707", "#fca5a5", "#200303");
+            const upholsteryBumpTex = createProceduralUpholsteryBumpTex();
+            const redFabricMat = new THREE.MeshLambertMaterial({
+                map: redFabricTex,
+                bumpMap: upholsteryBumpTex,
+                bumpScale: 0.065
+            });
+
+            // Schreibtischplatte: scaleV = 1.0 verhindert jegliche Naht/Streifenbildung über die Tischtiefe!
+            const deskTopMat = new THREE.MeshLambertMaterial({ map: deskTex });
+            const deskTopGeo = createDimensionBoxGeometry(1.5, 0.05, 0.80, 0.8, 1.0);
+            const deskTop = new THREE.Mesh(deskTopGeo, deskTopMat);
+            deskTop.position.y = 0.74;
+            group.add(deskTop);
+
+            const deskLegMat = new THREE.MeshLambertMaterial({ map: metalTex });
+            const legGeo = createDimensionBoxGeometry(0.05, 0.74, 0.05, 1.5, 1.5);
+            [[-0.68, -0.34], [0.68, -0.34], [-0.68, 0.34], [0.68, 0.34]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(legGeo, deskLegMat);
                 leg.position.set(lx, 0.37, lz);
                 group.add(leg);
             });
 
-            const monitorStand = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.015, 0.16), legMat);
-            monitorStand.position.set(0, 0.775, -0.15);
+            // ── BILDSCHIRM & STÄNDER (SÄULE HINTER DEM MONITOR, RANDLOSES DISPLAY) ──
+            const monitorStand = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.015, 0.18), deskLegMat);
+            monitorStand.position.set(0, 0.775, -0.22);
             group.add(monitorStand);
 
-            const monitorPole = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.28), legMat);
-            monitorPole.position.set(0, 0.90, -0.15);
+            const monitorPole = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.28, 12), deskLegMat);
+            monitorPole.position.set(0, 0.915, -0.22);
             group.add(monitorPole);
 
-            const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.44, 0.03), new THREE.MeshBasicMaterial({ color: 0x0a0a0a }));
-            screenFrame.position.set(0, 1.08, -0.15);
+            const vesaArm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.06), deskLegMat);
+            vesaArm.position.set(0, 1.05, -0.19);
+            group.add(vesaArm);
+
+            const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.44, 0.024), new THREE.MeshBasicMaterial({ color: 0x0a0a0a }));
+            screenFrame.position.set(0, 1.05, -0.15);
             group.add(screenFrame);
 
-            const display = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.68, 0.40),
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+            const screenDisplay = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.71, 0.41),
+                new THREE.MeshBasicMaterial({ map: screenTex })
             );
-            display.position.set(0, 1.08, -0.134);
-            group.add(display);
+            screenDisplay.position.set(0, 1.05, -0.137);
+            group.add(screenDisplay);
 
-            const kb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.015, 0.14), new THREE.MeshLambertMaterial({ color: 0x18181b }));
-            kb.position.set(0, 0.775, 0.14);
+            // Tastatur mit Multi-Material (Tastenfeld oben, Chassis an Seiten/Boden)
+            const kbTopMat = new THREE.MeshLambertMaterial({ map: keyboardTex });
+            const kbChassisMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const kbMats = [kbChassisMat, kbChassisMat, kbTopMat, kbChassisMat, kbChassisMat, kbChassisMat];
+            const kb = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.014, 0.14), kbMats);
+            kb.position.set(0, 0.775, 0.12);
             group.add(kb);
 
-            const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.10), new THREE.MeshLambertMaterial({ color: 0x27272a }));
-            mouse.position.set(0.30, 0.775, 0.14);
+            // Mauspad & Maus
+            const mousepad = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.004, 0.20), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            mousepad.position.set(0.32, 0.768, 0.12);
+            group.add(mousepad);
+
+            const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.024, 0.11), new THREE.MeshLambertMaterial({ color: 0x27272a }));
+            mouse.position.set(0.32, 0.775, 0.12);
             group.add(mouse);
 
-            const pc = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.44, 0.44), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-            pc.position.set(0.60, 0.22, 0);
-            group.add(pc);
+            // PC Tower
+            const pcTower = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.44, 0.44), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            pcTower.position.set(0.55, 0.22, 0);
+            group.add(pcTower);
 
+            // ── ROTER BÜROSTUHL ──
             const chairGroup = new THREE.Group();
-            const baseMat = new THREE.MeshLambertMaterial({ color: 0x3f3f46 });
-            const starBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 5), baseMat);
+            const chairBaseMat = new THREE.MeshLambertMaterial({ map: metalTex });
+
+            const starBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 5), chairBaseMat);
             starBase.position.y = 0.06;
             chairGroup.add(starBase);
 
-            const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.38, 12), baseMat);
+            for (let i = 0; i < 5; i++) {
+                const a = (i / 5) * Math.PI * 2;
+                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.02, 8), chairBaseMat);
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(Math.cos(a) * 0.26, 0.025, Math.sin(a) * 0.26);
+                chairGroup.add(wheel);
+            }
+
+            const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.38, 12), new THREE.MeshLambertMaterial({ color: 0x71717a }));
             piston.position.y = 0.25;
             chairGroup.add(piston);
 
-            const seatGeo = new THREE.BoxGeometry(0.48, 0.08, 0.46);
-            const seatMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
-            const seatMesh = new THREE.Mesh(seatGeo, seatMat);
-            seatMesh.position.y = 0.48;
-            chairGroup.add(seatMesh);
+            // Rote Sitzfläche (0.48 x 0.08 x 0.46) mit maßstabsgetreuer UV-Skalierung
+            const seatGeo = createDimensionBoxGeometry(0.48, 0.08, 0.46, 14.0, 14.0);
+            const chairSeat = new THREE.Mesh(seatGeo, redFabricMat);
+            chairSeat.position.y = 0.48;
+            chairGroup.add(chairSeat);
 
-            const backGeo = new THREE.BoxGeometry(0.46, 0.48, 0.06);
-            const backMesh = new THREE.Mesh(backGeo, seatMat);
-            backMesh.position.set(0, 0.74, 0.22);
-            chairGroup.add(backMesh);
+            // Rote Rückenlehne (0.46 x 0.48 x 0.06)
+            const backGeo = createDimensionBoxGeometry(0.46, 0.48, 0.06, 14.0, 14.0);
+            const chairBack = new THREE.Mesh(backGeo, redFabricMat);
+            chairBack.position.set(0, 0.74, 0.22);
+            chairGroup.add(chairBack);
 
-            chairGroup.position.set(0, 0, 0.58);
+            [-0.26, 0.26].forEach(ax => {
+                const armSupport = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.20, 0.04), chairBaseMat);
+                armSupport.position.set(ax, 0.56, 0.06);
+                chairGroup.add(armSupport);
+                const armPad = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.025, 0.24), chairBaseMat);
+                armPad.position.set(ax, 0.67, 0.06);
+                chairGroup.add(armPad);
+            });
+
+            chairGroup.position.set(0, 0, 0.62);
             group.add(chairGroup);
 
-            group.rotation.y = faceAngle;
-            group.position.set(x, 0, z);
+            group.position.set(rx + 2.5, 0, rz - 1.6);
+            group.rotation.y = -Math.PI / 3;
             scene.add(group);
 
-            const chairWorldPos = new THREE.Vector3(0, 1.15, 0.58).applyAxisAngle(new THREE.Vector3(0, 1, 0), faceAngle).add(new THREE.Vector3(x, 0, z));
-            const lookDir = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), faceAngle).normalize();
-            registerSeat(seatMesh, `Schreibtisch ${num}`, chairWorldPos, lookDir);
+            const chairWorldPos = new THREE.Vector3(0, 1.15, 0.62)
+                .applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 3)
+                .add(new THREE.Vector3(rx + 2.5, 0, rz - 1.6));
+            const chairLookDir = new THREE.Vector3(0, 0, -1)
+                .applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 3)
+                .normalize();
+            registerSeat(chairSeat, "Roter Bürostuhl", chairWorldPos, chairLookDir);
+        }
+
+        // ── 4. HELLGRAUER LESESESSEL MIT BEISTELLTISCH (BUCH, 3D-BRILLE, NEON-MARKER) ──
+        function buildReadingCornerArea(rx, rz) {
+            // Texturen für Leseecke: Starker Kontrast, tiefe Fadenrillen & hohe Plastizität
+            const fabricLightTex = createProceduralUpholsteryTex("#d4d4d8", "#27272a", "#ffffff", "#18181b");
+            const fabricDarkTex = createProceduralUpholsteryTex("#9ca3af", "#111827", "#f3f4f6", "#030712");
+            const upholsteryBumpTex = createProceduralUpholsteryBumpTex();
+
+            const fabricLightMat = new THREE.MeshLambertMaterial({
+                map: fabricLightTex,
+                bumpMap: upholsteryBumpTex,
+                bumpScale: 0.065
+            });
+            const fabricDarkMat = new THREE.MeshLambertMaterial({
+                map: fabricDarkTex,
+                bumpMap: upholsteryBumpTex,
+                bumpScale: 0.065
+            });
+
+            const radialWoodTex = createProceduralRadialWoodTex("#292524", "#12100e", "#57534e", "rgba(0,0,0,0.45)");
+            const woodDarkTex = createProceduralWoodTex("#292524", "#12100e", "#57534e", false);
+            const bookTex = createProceduralBookCoverTex();
+            const bookSpineTex = createProceduralBookSpineTex();
+            const bookPagesTex = createProceduralBookPagesTex();
+            const markerTex = createProceduralMarkerTex();
+            const darkWoodLegTex = createProceduralWoodTex("#78350f", "#3b1704", "#b45309", false);
+
+            // ── HELLGRAUER LESESESSEL ──
+            const chairGroup = new THREE.Group();
+            const woodLegMat = new THREE.MeshLambertMaterial({ map: darkWoodLegTex });
+
+            const legGeo = new THREE.CylinderGeometry(0.024, 0.016, 0.22, 12);
+            [
+                [-0.30, -0.28, 0.12, -0.12],
+                [0.30, -0.28, -0.12, -0.12],
+                [-0.30, 0.28, 0.12, 0.12],
+                [0.30, 0.28, -0.12, 0.12]
+            ].forEach(([lx, lz, tiltX, tiltZ]) => {
+                const leg = new THREE.Mesh(legGeo, woodLegMat);
+                leg.position.set(lx, 0.11, lz);
+                leg.rotation.x = tiltZ;
+                leg.rotation.z = tiltX;
+                chairGroup.add(leg);
+            });
+
+            const seatGeo = createDimensionBoxGeometry(0.68, 0.16, 0.65, 14.0, 14.0);
+            const armchairSeat = new THREE.Mesh(seatGeo, fabricLightMat);
+            armchairSeat.position.y = 0.28;
+            chairGroup.add(armchairSeat);
+
+            const backGeo = createDimensionBoxGeometry(0.68, 0.72, 0.16, 14.0, 14.0);
+            const backMesh = new THREE.Mesh(backGeo, fabricLightMat);
+            backMesh.position.set(0, 0.65, -0.26);
+            backMesh.rotation.x = -0.10;
+            chairGroup.add(backMesh);
+
+            const armGeo = createDimensionBoxGeometry(0.12, 0.38, 0.65, 14.0, 14.0);
+            [-0.38, 0.38].forEach(ax => {
+                const arm = new THREE.Mesh(armGeo, fabricDarkMat);
+                arm.position.set(ax, 0.44, 0);
+                chairGroup.add(arm);
+            });
+
+            chairGroup.position.set(rx + 2.2, 0, rz + 1.8);
+            chairGroup.rotation.y = -Math.PI * 0.75;
+            scene.add(chairGroup);
+
+            const chairWorldPos = new THREE.Vector3(rx + 2.2, 1.15, rz + 1.8);
+            const chairLookDir = new THREE.Vector3(0, 0, 1)
+                .applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI * 0.75)
+                .normalize();
+            registerSeat(armchairSeat, "Hellgrauer Lesesessel", chairWorldPos, chairLookDir);
+
+            // ── ELEGANTER BEISTELLTISCH (RADIALHOLZ MIT KRÄFTIGEN JAHRESRINGEN) ──
+            const tableGroup = new THREE.Group();
+
+            const tableEdgeMat = new THREE.MeshLambertMaterial({ map: woodDarkTex });
+            const tableTopRadialMat = new THREE.MeshLambertMaterial({ map: radialWoodTex });
+            const tableMats = [tableEdgeMat, tableTopRadialMat, tableEdgeMat];
+
+            const sideTableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.03, 32), tableMats);
+            sideTableTop.position.y = 0.52;
+            tableGroup.add(sideTableTop);
+
+            const tableLegMat = new THREE.MeshLambertMaterial({ color: 0x3f3f46 });
+            const sideLegGeo = new THREE.CylinderGeometry(0.015, 0.012, 0.52, 12);
+            for (let i = 0; i < 3; i++) {
+                const a = (i / 3) * Math.PI * 2;
+                const leg = new THREE.Mesh(sideLegGeo, tableLegMat);
+                leg.position.set(Math.cos(a) * 0.18, 0.26, Math.sin(a) * 0.18);
+                leg.rotation.z = Math.cos(a) * -0.08;
+                leg.rotation.x = Math.sin(a) * 0.08;
+                tableGroup.add(leg);
+            }
+
+            // ── REQUISITEN AUF DEM BEISTELLTISCH ──
+            // 1. Authentisches Hardcover-Buch mit physischem, abgerundetem Buchrücken
+            const bookGroup = new THREE.Group();
+            const bLength = 0.24; // Länge entlang des Buchrückens
+            const bWidth = 0.17;  // Breite vom Buchrücken bis zur Vorderkante
+            const bThick = 0.036; // Gesamtdicke des Buches
+            const coverThick = 0.003;
+            const overhang = 0.004; // Typischer Deckelüberstand
+
+            // Buchblock (Papierseiten)
+            const pagesWidth = bWidth - overhang;
+            const pagesLength = bLength - overhang * 2;
+            const pagesHeight = bThick - coverThick * 2;
+            const pagesGeo = new THREE.BoxGeometry(pagesWidth, pagesHeight, pagesLength);
+            const pagesMat = new THREE.MeshLambertMaterial({ map: bookPagesTex });
+            const pagesMesh = new THREE.Mesh(pagesGeo, pagesMat);
+            pagesMesh.position.set(pagesWidth / 2, bThick / 2, 0);
+            bookGroup.add(pagesMesh);
+
+            // Unterer Buchdeckel
+            const coverLeatherMat = new THREE.MeshLambertMaterial({ color: 0x090d16 });
+            const bottomCover = new THREE.Mesh(new THREE.BoxGeometry(bWidth, coverThick, bLength), coverLeatherMat);
+            bottomCover.position.set(bWidth / 2, coverThick / 2, 0);
+            bookGroup.add(bottomCover);
+
+            // Oberer Buchdeckel (goldgeprägtes Leder)
+            const topCoverMat = new THREE.MeshLambertMaterial({ map: bookTex });
+            const topCover = new THREE.Mesh(new THREE.BoxGeometry(bWidth, coverThick, bLength), topCoverMat);
+            topCover.position.set(bWidth / 2, bThick - coverThick / 2, 0);
+            bookGroup.add(topCover);
+
+            // Dreidimensionaler, abgerundeter Buchrücken (Halbzylinder an der gebundenen Seite)
+            const spineRadius = bThick / 2;
+            const spineGeo = new THREE.CylinderGeometry(spineRadius, spineRadius, bLength, 16, 1, false, 0, Math.PI);
+            spineGeo.rotateX(Math.PI / 2);
+            spineGeo.rotateZ(Math.PI / 2); // Wölbung nach außen (-X)
+            const spineMat = new THREE.MeshLambertMaterial({ map: bookSpineTex });
+            const spineMesh = new THREE.Mesh(spineGeo, spineMat);
+            spineMesh.position.set(0, bThick / 2, 0);
+            bookGroup.add(spineMesh);
+
+            // Erhabene Bundstege / Goldrippen auf dem Buchrücken
+            const ribMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
+            [-0.08, -0.026, 0.026, 0.08].forEach(sz => {
+                const ribGeo = new THREE.TorusGeometry(spineRadius + 0.001, 0.0018, 8, 16, Math.PI);
+                ribGeo.rotateY(-Math.PI / 2);
+                const ribMesh = new THREE.Mesh(ribGeo, ribMat);
+                ribMesh.position.set(0, bThick / 2, sz);
+                bookGroup.add(ribMesh);
+            });
+
+            // Positionierung auf dem Tisch: Buchrücken zeigt prominent nach vorne zum Raum
+            bookGroup.position.set(-0.02, 0.535, -0.02);
+            bookGroup.rotation.y = 0.55;
+            tableGroup.add(bookGroup);
+
+            // 2. Echte 3D-Brille (liegt oben auf dem Buch)
+            const glassesGroup = new THREE.Group();
+            const glassesWireMat = new THREE.MeshLambertMaterial({ color: 0xa1a1aa });
+            const lensGlassMat = new THREE.MeshBasicMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.35, side: THREE.DoubleSide });
+
+            [-0.032, 0.032].forEach(lx => {
+                const rim = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.0025, 12, 24), glassesWireMat);
+                rim.position.set(lx, 0.024, 0);
+                glassesGroup.add(rim);
+
+                const glass = new THREE.Mesh(new THREE.CircleGeometry(0.020, 16), lensGlassMat);
+                glass.position.set(lx, 0.024, 0);
+                glassesGroup.add(glass);
+
+                const pad = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.008, 0.004), new THREE.MeshBasicMaterial({ color: 0xd4d4d8, transparent: true, opacity: 0.8 }));
+                pad.position.set(lx > 0 ? -0.012 + lx : 0.012 + lx, 0.018, 0.004);
+                glassesGroup.add(pad);
+            });
+
+            const bridge = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.002, 8, 12, Math.PI * 0.9), glassesWireMat);
+            bridge.rotation.x = Math.PI;
+            bridge.position.set(0, 0.024, 0);
+            glassesGroup.add(bridge);
+
+            [-0.055, 0.055].forEach(bx => {
+                const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.004, 0.006), glassesWireMat);
+                hinge.position.set(bx, 0.024, 0.003);
+                glassesGroup.add(hinge);
+
+                const temple = new THREE.Mesh(new THREE.BoxGeometry(0.0025, 0.0025, 0.085), glassesWireMat);
+                temple.position.set(bx, 0.018, 0.045);
+                temple.rotation.x = -0.15;
+                glassesGroup.add(temple);
+
+                const earBend = new THREE.Mesh(new THREE.BoxGeometry(0.0025, 0.016, 0.0025), glassesWireMat);
+                earBend.position.set(bx, 0.008, 0.086);
+                earBend.rotation.x = 0.45;
+                glassesGroup.add(earBend);
+            });
+
+            glassesGroup.position.set(0.06, 0.575, 0.01);
+            glassesGroup.rotation.y = 0.70;
+            tableGroup.add(glassesGroup);
+
+            // 3. Neongelber Textmarker (OHNE neongelben Kegel am Heck!)
+            const markerGroup = new THREE.Group();
+            const markerBody = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.016, 0.026), new THREE.MeshLambertMaterial({ map: markerTex }));
+            markerBody.position.y = 0.008;
+            markerGroup.add(markerBody);
+
+            // Schwarze Kappe an der Vorderseite
+            const markerCap = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.018, 0.028), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            markerCap.position.set(-0.065, 0.008, 0);
+            markerGroup.add(markerCap);
+
+            // Flacher schwarzer Endstopfen am Heck (kein Kegel!)
+            const markerEndPlug = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.015, 0.024), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            markerEndPlug.position.set(0.065, 0.008, 0);
+            markerGroup.add(markerEndPlug);
+
+            markerGroup.position.set(-0.10, 0.535, 0.12);
+            markerGroup.rotation.y = -0.65;
+            tableGroup.add(markerGroup);
+
+            tableGroup.position.set(rx + 1.25, 0, rz + 2.1);
+            scene.add(tableGroup);
         }
 
         // 2. CHILLEN (Süd)
@@ -1900,6 +3232,7 @@
         function buildGamingRaum() {
             const rx = -16.5, rz = 0;
 
+            // Dunkler runder Bodenbelag
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
             const floorMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
             const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -1907,7 +3240,7 @@
             floor.position.set(rx, 0.015, rz);
             scene.add(floor);
 
-            // RGB / Cyberpunk Neon-Licht (Lila / Cyan)
+            // RGB Neon-Licht
             const neonPurple = new THREE.PointLight(0xa855f7, 0.9, 18);
             neonPurple.position.set(rx - 1.5, WALL_HEIGHT - 0.7, rz - 1.5);
             scene.add(neonPurple);
@@ -1916,116 +3249,525 @@
             neonCyan.position.set(rx + 1.5, WALL_HEIGHT - 0.7, rz + 1.5);
             scene.add(neonCyan);
 
-            // 1. Zwei Battle-Station Gaming-Desks mit Dual-Monitoren
-            const gamingDeskPositions = [
-                { x: rx - 2.5, z: rz - 1.8, faceAngle: 0, num: 1 },
-                { x: rx - 2.5, z: rz + 1.8, faceAngle: 0, num: 2 }
-            ];
+            // ─────────────────────────────────────────────────────────────
+            // SITZPLATZ 1: GELBER DRACHE MIT FREUNDLICHEM GESICHT
+            // ─────────────────────────────────────────────────────────────
+            const dragonGroup = new THREE.Group();
 
-            gamingDeskPositions.forEach(cfg => {
-                const group = new THREE.Group();
+            const dragonYellowMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 }); // Warmes Sonnengelb
+            const dragonBellyMat = new THREE.MeshLambertMaterial({ color: 0xfef08a });  // Weiches Pastellgelb
+            const dragonAccentMat = new THREE.MeshLambertMaterial({ color: 0xeab308 }); // Dunkleres Goldgelb
+            const dragonEyeMat = new THREE.MeshLambertMaterial({ color: 0x18181b });    // Dunkle Pupille
+            const eyeGlintMat = new THREE.MeshBasicMaterial({ color: 0xffffff });       // Lebendiger Glanzpunkt
+            const saddleMat = new THREE.MeshLambertMaterial({ color: 0x78350f });       // Braunes Ledersattel
+            const saddleTrimMat = new THREE.MeshLambertMaterial({ color: 0x92400e });
 
-                // Schwarzer Gaming-Tisch
-                const deskTop = new THREE.Mesh(
-                    new THREE.BoxGeometry(1.7, 0.06, 0.9),
-                    new THREE.MeshLambertMaterial({ color: 0x18181b })
-                );
-                deskTop.position.y = 0.74;
-                group.add(deskTop);
+            // 1. Runder, knuffiger Drachenkörper
+            const bodyGeo = new THREE.SphereGeometry(0.55, 18, 14);
+            bodyGeo.scale(0.9, 0.85, 1.35);
+            const body = new THREE.Mesh(bodyGeo, dragonYellowMat);
+            body.position.set(0, 0.72, 0);
+            dragonGroup.add(body);
 
-                // LED-Streifen an Tischkante
-                const led = new THREE.Mesh(
-                    new THREE.BoxGeometry(1.7, 0.015, 0.02),
-                    new THREE.MeshBasicMaterial({ color: cfg.num === 1 ? 0x06b6d4 : 0xec4899 })
-                );
-                led.position.set(0, 0.71, 0.44);
-                group.add(led);
+            // Bauchpanzer (weiches Hellgelb an der Unterseite)
+            const bellyGeo = new THREE.SphereGeometry(0.50, 16, 12);
+            bellyGeo.scale(0.82, 0.75, 1.25);
+            const belly = new THREE.Mesh(bellyGeo, dragonBellyMat);
+            belly.position.set(0, 0.65, 0.08);
+            dragonGroup.add(belly);
 
-                // Tischbeine (Z-Form / Metall)
-                const legMat = new THREE.MeshLambertMaterial({ color: 0x3f3f46 });
-                [[-0.75, 0], [0.75, 0]].forEach(([lx, lz]) => {
-                    const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.74, 0.8), legMat);
-                    l.position.set(lx, 0.37, lz);
-                    group.add(l);
+            // 4 stämmige, knuffige Beine mit sanften Pfoten
+            const legGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.45, 12);
+            [[-0.32, 0.22, 0.42], [0.32, 0.22, 0.42], [-0.32, 0.22, -0.42], [0.32, 0.22, -0.42]].forEach(([lx, ly, lz]) => {
+                const leg = new THREE.Mesh(legGeo, dragonYellowMat);
+                leg.position.set(lx, ly, lz);
+                dragonGroup.add(leg);
+
+                const footGeo = new THREE.SphereGeometry(0.15, 12, 10);
+                footGeo.scale(1.0, 0.6, 1.25);
+                const foot = new THREE.Mesh(footGeo, dragonYellowMat);
+                foot.position.set(lx, 0.08, lz + 0.06);
+                dragonGroup.add(foot);
+
+                [-0.07, 0, 0.07].forEach(kx => {
+                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.06, 8), dragonAccentMat);
+                    claw.rotation.x = Math.PI / 2;
+                    claw.position.set(lx + kx, 0.05, lz + 0.21);
+                    dragonGroup.add(claw);
                 });
-
-                // Dual Monitors
-                [-0.38, 0.38].forEach((mx, mi) => {
-                    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.42, 0.03), new THREE.MeshBasicMaterial({ color: 0x0a0a0a }));
-                    frame.position.set(mx, 1.08, -0.15);
-                    frame.rotation.y = mi === 0 ? 0.12 : -0.12;
-                    group.add(frame);
-
-                    const screen = new THREE.Mesh(
-                        new THREE.PlaneGeometry(0.66, 0.38),
-                        new THREE.MeshBasicMaterial({ color: cfg.num === 1 ? 0x38bdf8 : 0xd946ef })
-                    );
-                    screen.position.set(mx, 1.08, -0.134);
-                    screen.rotation.y = mi === 0 ? 0.12 : -0.12;
-                    group.add(screen);
-                });
-
-                // RGB-Tastatur & Gaming-Maus
-                const kb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.015, 0.14), new THREE.MeshBasicMaterial({ color: 0x8b5cf6 }));
-                kb.position.set(0, 0.775, 0.14);
-                group.add(kb);
-
-                // Gaming-Chair (Ergonomischer Rennsitz mit Nackenkissen)
-                const chairGroup = new THREE.Group();
-                const chairMat = new THREE.MeshLambertMaterial({ color: cfg.num === 1 ? 0x0284c7 : 0x9333ea });
-                const darkMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-
-                const starBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 5), darkMat);
-                starBase.position.y = 0.06;
-                chairGroup.add(starBase);
-
-                const cSeat = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.10, 0.50), chairMat);
-                cSeat.position.y = 0.48;
-                chairGroup.add(cSeat);
-
-                const cBack = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.65, 0.08), chairMat);
-                cBack.position.set(0, 0.82, 0.22);
-                chairGroup.add(cBack);
-
-                chairGroup.position.set(0, 0, 0.62);
-                group.add(chairGroup);
-
-                group.rotation.y = cfg.faceAngle;
-                group.position.set(cfg.x, 0, cfg.z);
-                scene.add(group);
-
-                const seatWorldPos = new THREE.Vector3(0, 1.15, 0.62).applyAxisAngle(new THREE.Vector3(0, 1, 0), cfg.faceAngle).add(new THREE.Vector3(cfg.x, 0, cfg.z));
-                const lookDir = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), cfg.faceAngle).normalize();
-                registerSeat(cSeat, `Gaming-Station ${cfg.num}`, seatWorldPos, lookDir);
             });
 
-            // 2. Retro Arcade Automat an der Wand
-            const arcadeGroup = new THREE.Group();
-            const arcadeMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
-            const cabinet = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.1, 0.9), arcadeMat);
-            cabinet.position.y = 1.05;
-            arcadeGroup.add(cabinet);
+            // 2. Geschwungener Schwanz mit Pfeilspitze
+            const tailCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 0.65, -0.65),
+                new THREE.Vector3(0.08, 0.60, -1.05),
+                new THREE.Vector3(-0.10, 0.72, -1.40),
+                new THREE.Vector3(-0.02, 0.90, -1.65)
+            ]);
+            const tailGeo = new THREE.TubeGeometry(tailCurve, 16, 0.11, 8, false);
+            const tail = new THREE.Mesh(tailGeo, dragonYellowMat);
+            dragonGroup.add(tail);
 
-            // Arcade Screen
-            const arcadeScreen = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.65, 0.50),
-                new THREE.MeshBasicMaterial({ color: 0x22c55e })
+            const spadeGeo = new THREE.ConeGeometry(0.16, 0.32, 4);
+            spadeGeo.rotateZ(Math.PI / 4);
+            const spade = new THREE.Mesh(spadeGeo, dragonAccentMat);
+            spade.position.set(-0.02, 0.98, -1.72);
+            spade.rotation.x = -Math.PI / 3;
+            dragonGroup.add(spade);
+
+            // 3. Freundlicher Kopf & Hals
+            const neckGeo = new THREE.CylinderGeometry(0.20, 0.26, 0.45, 12);
+            const neck = new THREE.Mesh(neckGeo, dragonYellowMat);
+            neck.position.set(0, 1.05, 0.52);
+            neck.rotation.x = 0.35;
+            dragonGroup.add(neck);
+
+            const headGeo = new THREE.SphereGeometry(0.32, 16, 14);
+            headGeo.scale(1.0, 0.92, 1.15);
+            const head = new THREE.Mesh(headGeo, dragonYellowMat);
+            head.position.set(0, 1.32, 0.72);
+            dragonGroup.add(head);
+
+            const snoutGeo = new THREE.SphereGeometry(0.22, 14, 12);
+            snoutGeo.scale(1.0, 0.75, 1.1);
+            const snout = new THREE.Mesh(snoutGeo, dragonBellyMat);
+            snout.position.set(0, 1.24, 0.98);
+            dragonGroup.add(snout);
+
+            [-0.06, 0.06].forEach(nx => {
+                const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), dragonAccentMat);
+                nostril.position.set(nx, 1.28, 1.18);
+                dragonGroup.add(nostril);
+            });
+
+            // Sanftes Lächeln
+            const smileCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-0.14, 1.20, 0.98),
+                new THREE.Vector3(0, 1.16, 1.08),
+                new THREE.Vector3(0.14, 1.20, 0.98)
+            ]);
+            const smileGeo = new THREE.TubeGeometry(smileCurve, 8, 0.012, 6, false);
+            const smile = new THREE.Mesh(smileGeo, dragonAccentMat);
+            dragonGroup.add(smile);
+
+            // Große freundliche Kulleraugen mit weißem Glanzpunkt
+            [[-0.18, 1.38, 0.88, -0.35], [0.18, 1.38, 0.88, 0.35]].forEach(([ex, ey, ez, rotY]) => {
+                const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                eyeWhite.position.set(ex, ey, ez);
+                dragonGroup.add(eyeWhite);
+
+                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), dragonEyeMat);
+                pupil.position.set(ex + (rotY > 0 ? 0.02 : -0.02), ey, ez + 0.04);
+                dragonGroup.add(pupil);
+
+                const glint = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), eyeGlintMat);
+                glint.position.set(ex + (rotY > 0 ? 0.01 : -0.03), ey + 0.022, ez + 0.075);
+                dragonGroup.add(glint);
+            });
+
+            // Niedliche weiche Hörner nach hinten
+            [[-0.14, 1.55, 0.65], [0.14, 1.55, 0.65]].forEach(([hx, hy, hz]) => {
+                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 8), dragonBellyMat);
+                horn.position.set(hx, hy, hz);
+                horn.rotation.x = -0.65;
+                horn.rotation.z = hx > 0 ? 0.25 : -0.25;
+                dragonGroup.add(horn);
+            });
+
+            // Kleine süße Drachenflügel an den Seiten
+            [[-0.48, 0.85, 0.0, -0.4], [0.48, 0.85, 0.0, 0.4]].forEach(([wx, wy, wz, rotZ]) => {
+                const wing = new THREE.Group();
+                const wingBone = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.45, 8), dragonAccentMat);
+                wingBone.rotation.z = Math.PI / 3;
+                wing.add(wingBone);
+
+                const wingSkinGeo = new THREE.BufferGeometry();
+                const verts = new Float32Array([
+                    0, 0, 0,
+                    0.22, 0.35, 0,
+                    0.35, 0.10, -0.15
+                ]);
+                wingSkinGeo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+                wingSkinGeo.computeVertexNormals();
+                const wingSkin = new THREE.Mesh(wingSkinGeo, new THREE.MeshLambertMaterial({ color: 0xfef08a, side: THREE.DoubleSide }));
+                wing.add(wingSkin);
+
+                wing.position.set(wx, wy, wz);
+                wing.rotation.z = rotZ;
+                wing.rotation.y = wx > 0 ? 0.35 : -0.35;
+                dragonGroup.add(wing);
+            });
+
+            // 4. Bequemer Reitsattel auf dem Rücken
+            const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.12, 0.52), saddleMat);
+            saddle.position.set(0, 1.02, -0.05);
+            dragonGroup.add(saddle);
+
+            const saddleTrim = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.05, 0.54), saddleTrimMat);
+            saddleTrim.position.set(0, 0.98, -0.05);
+            dragonGroup.add(saddleTrim);
+
+            dragonGroup.position.set(rx - 2.3, 0, rz - 2.2);
+            dragonGroup.rotation.y = Math.PI * 0.28;
+            scene.add(dragonGroup);
+
+            const dragonSitPos = new THREE.Vector3(rx - 2.3, 1.45, rz - 2.2);
+            const dragonLookDir = new THREE.Vector3(Math.sin(dragonGroup.rotation.y), 0, Math.cos(dragonGroup.rotation.y));
+            registerSeat(saddle, "Freundlicher Gelber Drache", dragonSitPos, dragonLookDir);
+
+            // ─────────────────────────────────────────────────────────────
+            // SITZPLATZ 2: ROTER RENNSPORT-SITZ MIT LENKRAD & SCHUBHEBEL
+            // ─────────────────────────────────────────────────────────────
+            const racingGroup = new THREE.Group();
+
+            const rigMetalMat = new THREE.MeshLambertMaterial({ color: 0x27272a });      // Anthrazit Stahlrahmen
+            const racingRedMat = new THREE.MeshLambertMaterial({ color: 0xdc2626 });     // Kräftiges Rennrot
+            const seatBlackMat = new THREE.MeshLambertMaterial({ color: 0x18181b });     // Schwarze Polsterwangen
+            const wheelRubberMat = new THREE.MeshLambertMaterial({ color: 0x111827 });   // Griffiges Lenkrad
+            const chromeMat = new THREE.MeshLambertMaterial({ color: 0xcbd5e1 });        // Alu Pedale & Hebel
+            const ledGreenMat = new THREE.MeshBasicMaterial({ color: 0x22c55e });        // Grüne LED
+            const ledRedMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });          // Rote LED
+
+            // 1. Sim-Rig Rohrrahmen (Chassis)
+            [[-0.34, 0.06, 0], [0.34, 0.06, 0]].forEach(([bx, by, bz]) => {
+                const beam = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 1.55), rigMetalMat);
+                beam.position.set(bx, by, bz);
+                racingGroup.add(beam);
+            });
+            [-0.70, 0, 0.70].forEach(cz => {
+                const cross = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.06, 0.06), rigMetalMat);
+                cross.position.set(0, 0.06, cz);
+                racingGroup.add(cross);
+            });
+
+            // 2. Roter Schalensitz (Recaro-/FIA-Stil)
+            const seatBase = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.14, 0.52), racingRedMat);
+            seatBase.position.set(0, 0.32, -0.15);
+            racingGroup.add(seatBase);
+
+            [[-0.24, 0.38, -0.15], [0.24, 0.38, -0.15]].forEach(([wx, wy, wz]) => {
+                const bolster = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.52), seatBlackMat);
+                bolster.position.set(wx, wy, wz);
+                racingGroup.add(bolster);
+            });
+
+            const backrest = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.78, 0.12), racingRedMat);
+            backrest.position.set(0, 0.72, -0.38);
+            backrest.rotation.x = -0.18;
+            racingGroup.add(backrest);
+
+            [[-0.23, 0.82, -0.37], [0.23, 0.82, -0.37]].forEach(([sx, sy, sz]) => {
+                const sBolster = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.45, 0.16), seatBlackMat);
+                sBolster.position.set(sx, sy, sz);
+                sBolster.rotation.x = -0.18;
+                racingGroup.add(sBolster);
+            });
+
+            const headrest = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.12), seatBlackMat);
+            headrest.position.set(0, 1.15, -0.46);
+            headrest.rotation.x = -0.18;
+            racingGroup.add(headrest);
+
+            [-0.08, 0.08].forEach(hx => {
+                const slot = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.035, 0.14), new THREE.MeshBasicMaterial({ color: 0x09090b }));
+                slot.position.set(hx, 1.02, -0.43);
+                slot.rotation.x = -0.18;
+                racingGroup.add(slot);
+            });
+
+            // 3. Lenkradsäule & Sportlenkrad
+            [[-0.26, 0.44, 0.18], [0.26, 0.44, 0.18]].forEach(([px, py, pz]) => {
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.65, 8), rigMetalMat);
+                post.position.set(px, py, pz);
+                post.rotation.x = -0.35;
+                racingGroup.add(post);
+            });
+
+            const motorBase = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.24), rigMetalMat);
+            motorBase.position.set(0, 0.70, 0.28);
+            racingGroup.add(motorBase);
+
+            const steeringShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 12), chromeMat);
+            steeringShaft.rotation.x = Math.PI / 3;
+            steeringShaft.position.set(0, 0.74, 0.18);
+            racingGroup.add(steeringShaft);
+
+            const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.022, 10, 24), wheelRubberMat);
+            wheelRim.position.set(0, 0.78, 0.12);
+            wheelRim.rotation.x = Math.PI / 3;
+            racingGroup.add(wheelRim);
+
+            const centerStripe = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.03, 10), racingRedMat);
+            centerStripe.position.set(0, 0.92, 0.04);
+            centerStripe.rotation.z = Math.PI / 2;
+            racingGroup.add(centerStripe);
+
+            const wheelHub = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 16), rigMetalMat);
+            wheelHub.position.set(0, 0.78, 0.12);
+            wheelHub.rotation.x = Math.PI / 3;
+            racingGroup.add(wheelHub);
+
+            [-0.03, 0.03].forEach(bx => {
+                const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.015, 8), bx > 0 ? ledRedMat : ledGreenMat);
+                btn.position.set(bx, 0.79, 0.12);
+                btn.rotation.x = Math.PI / 3;
+                racingGroup.add(btn);
+            });
+
+            // 4. Schubhebel (Throttle Quadrant)
+            const throttleConsole = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, 0.28), rigMetalMat);
+            throttleConsole.position.set(0.42, 0.48, -0.05);
+            racingGroup.add(throttleConsole);
+
+            const slotMesh = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.01, 0.20), new THREE.MeshBasicMaterial({ color: 0x09090b }));
+            slotMesh.position.set(0.42, 0.575, -0.05);
+            racingGroup.add(slotMesh);
+
+            const throttleLever = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 10), chromeMat);
+            throttleLever.position.set(0.42, 0.64, -0.02);
+            throttleLever.rotation.x = 0.30;
+            racingGroup.add(throttleLever);
+
+            const throttleGrip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.08), wheelRubberMat);
+            throttleGrip.position.set(0.42, 0.71, 0.01);
+            racingGroup.add(throttleGrip);
+
+            [-0.04, 0, 0.04].forEach((lz, idx) => {
+                const led = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), idx === 2 ? ledRedMat : ledGreenMat);
+                led.position.set(0.37, 0.58, -0.05 + lz);
+                racingGroup.add(led);
+            });
+
+            // 5. Sportpedalerie
+            const pedalPlate = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.04, 0.32), rigMetalMat);
+            pedalPlate.position.set(0, 0.16, 0.58);
+            pedalPlate.rotation.x = -0.45;
+            racingGroup.add(pedalPlate);
+
+            [-0.10, 0, 0.10].forEach(px => {
+                const pedal = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.10, 0.015), chromeMat);
+                pedal.position.set(px, 0.20, 0.56);
+                pedal.rotation.x = -0.45;
+                racingGroup.add(pedal);
+            });
+
+            racingGroup.position.set(rx + 2.0, 0, rz - 2.0);
+            racingGroup.rotation.y = -Math.PI * 0.30;
+            scene.add(racingGroup);
+
+            const racingSitPos = new THREE.Vector3(rx + 2.0, 0.88, rz - 2.0);
+            const racingLookDir = new THREE.Vector3(Math.sin(racingGroup.rotation.y), 0, Math.cos(racingGroup.rotation.y));
+            registerSeat(seatBase, "Rennsport-Sitz & Sim-Rig", racingSitPos, racingLookDir);
+
+            // ─────────────────────────────────────────────────────────────
+            // SITZPLATZ 3: BLAUES FAHRRAD (FAHRBAR MIT [E] & MULTIPLAYER-SYNC)
+            // ─────────────────────────────────────────────────────────────
+            const bikeGroup = new THREE.Group();
+
+            const bikeBlueMat = new THREE.MeshLambertMaterial({ color: 0x2563eb });
+            const tireRubberMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const rimSpokeMat = new THREE.MeshLambertMaterial({ color: 0xd4d4d8 });
+            const chainMat = new THREE.MeshLambertMaterial({ color: 0x52525b });
+
+            function createBikeWheel() {
+                const wGroup = new THREE.Group();
+                const tire = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.035, 10, 24), tireRubberMat);
+                wGroup.add(tire);
+                const rim = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.015, 8, 24), rimSpokeMat);
+                wGroup.add(rim);
+                const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.08, 12), rimSpokeMat);
+                hub.rotation.x = Math.PI / 2;
+                wGroup.add(hub);
+                for (let a = 0; a < 4; a++) {
+                    const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.002, 0.58, 4), rimSpokeMat);
+                    spoke.rotation.z = a * (Math.PI / 4);
+                    wGroup.add(spoke);
+                }
+                return wGroup;
+            }
+
+            const rearWheel = createBikeWheel();
+            rearWheel.position.set(0, 0.34, -0.52);
+            bikeGroup.add(rearWheel);
+
+            const frontWheel = createBikeWheel();
+            frontWheel.position.set(0, 0.34, 0.52);
+            bikeGroup.add(frontWheel);
+
+            const frameTubes = [
+                { from: [0, 0.30, 0], to: [0, 0.34, -0.52], r: 0.016 },
+                { from: [0, 0.30, 0], to: [0, 0.76, -0.16], r: 0.018 },
+                { from: [0, 0.30, 0], to: [0, 0.74, 0.42], r: 0.020 },
+                { from: [0, 0.76, -0.16], to: [0, 0.34, -0.52], r: 0.014 },
+                { from: [0, 0.74, -0.16], to: [0, 0.78, 0.42], r: 0.018 },
+                { from: [0, 0.68, 0.44], to: [0, 0.84, 0.41], r: 0.022 },
+                { from: [0, 0.68, 0.44], to: [0, 0.34, 0.52], r: 0.016 }
+            ];
+
+            frameTubes.forEach(t => {
+                const p1 = new THREE.Vector3(...t.from);
+                const p2 = new THREE.Vector3(...t.to);
+                const dist = p1.distanceTo(p2);
+                const tube = new THREE.Mesh(new THREE.CylinderGeometry(t.r, t.r, dist, 10), bikeBlueMat);
+                tube.position.copy(p1.clone().add(p2).multiplyScalar(0.5));
+                tube.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize());
+                bikeGroup.add(tube);
+            });
+
+            const bikeSaddle = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, 0.28), tireRubberMat);
+            bikeSaddle.position.set(0, 0.80, -0.16);
+            bikeGroup.add(bikeSaddle);
+
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.12, 8), chromeMat);
+            stem.position.set(0, 0.88, 0.40);
+            stem.rotation.x = -0.25;
+            bikeGroup.add(stem);
+
+            const handlebar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.56, 12), chromeMat);
+            handlebar.rotation.z = Math.PI / 2;
+            handlebar.position.set(0, 0.94, 0.38);
+            bikeGroup.add(handlebar);
+
+            [-0.26, 0.26].forEach(gx => {
+                const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.10, 10), tireRubberMat);
+                grip.rotation.z = Math.PI / 2;
+                grip.position.set(gx, 0.94, 0.38);
+                bikeGroup.add(grip);
+            });
+
+            const crankAxle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.18, 10), chromeMat);
+            crankAxle.rotation.x = Math.PI / 2;
+            crankAxle.position.set(0, 0.30, 0);
+            bikeGroup.add(crankAxle);
+
+            const chainRing = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.008, 16), chainMat);
+            chainRing.rotation.x = Math.PI / 2;
+            chainRing.position.set(0.07, 0.30, 0);
+            bikeGroup.add(chainRing);
+
+            [[-0.09, 0.30, 0.10, -1], [0.09, 0.30, -0.10, 1]].forEach(([px, py, pz, s]) => {
+                const pedalArm = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.01), chromeMat);
+                pedalArm.position.set(px, py + s * 0.05, 0);
+                bikeGroup.add(pedalArm);
+
+                const pedalPad = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.06), tireRubberMat);
+                pedalPad.position.set(px, py + s * 0.11, 0);
+                bikeGroup.add(pedalPad);
+            });
+
+            const kickstand = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.32, 8), chromeMat);
+            kickstand.position.set(-0.10, 0.16, -0.10);
+            kickstand.rotation.z = 0.55;
+            bikeGroup.add(kickstand);
+
+            const bikeHitBox = new THREE.Mesh(
+                new THREE.BoxGeometry(0.60, 1.0, 1.40),
+                new THREE.MeshBasicMaterial({ visible: false })
             );
-            arcadeScreen.position.set(0, 1.35, 0.46);
-            arcadeScreen.rotation.x = -0.15;
-            arcadeGroup.add(arcadeScreen);
+            bikeHitBox.position.set(0, 0.55, 0);
+            bikeHitBox.userData.isBikeMount = true;
+            bikeGroup.add(bikeHitBox);
 
-            // Marquee oben
-            const marquee = new THREE.Mesh(
-                new THREE.BoxGeometry(0.8, 0.22, 0.15),
-                new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+            bikeGroup.position.set(rx - 2.0, 0, rz + 2.0);
+            bikeGroup.rotation.y = -Math.PI * 0.35;
+            scene.add(bikeGroup);
+
+            worldBikeGroup = bikeGroup;
+            bikeInteractMesh = bikeHitBox;
+
+            const bikeSitPos = new THREE.Vector3(rx - 2.0, 1.15, rz + 2.0);
+            const bikeLookDir = new THREE.Vector3(Math.sin(bikeGroup.rotation.y), 0, Math.cos(bikeGroup.rotation.y));
+            registerSeat(bikeSaddle, "Blaues Fahrrad", bikeSitPos, bikeLookDir);
+
+            // ─────────────────────────────────────────────────────────────
+            // SITZPLATZ 4: FETTER SITZSACK
+            // ─────────────────────────────────────────────────────────────
+            const beanbagGroup = new THREE.Group();
+
+            const beanbagMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+            const beanbagCreaseMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+
+            const beanGeo = new THREE.SphereGeometry(0.68, 20, 14);
+            beanGeo.scale(1.2, 0.65, 1.15);
+            const beanBody = new THREE.Mesh(beanGeo, beanbagMat);
+            beanBody.position.set(0, 0.32, 0);
+            beanbagGroup.add(beanBody);
+
+            const seatGeo = new THREE.CylinderGeometry(0.48, 0.58, 0.18, 18);
+            const beanSeat = new THREE.Mesh(seatGeo, beanbagCreaseMat);
+            beanSeat.position.set(0, 0.36, -0.05);
+            beanbagGroup.add(beanSeat);
+
+            const rimGeo = new THREE.TorusGeometry(0.56, 0.12, 10, 24);
+            rimGeo.scale(1.15, 0.8, 1.1);
+            const beanRim = new THREE.Mesh(rimGeo, beanbagMat);
+            beanRim.rotation.x = Math.PI / 2;
+            beanRim.position.set(0, 0.40, 0);
+            beanbagGroup.add(beanRim);
+
+            beanbagGroup.position.set(rx + 2.0, 0, rz + 2.0);
+            beanbagGroup.rotation.y = -Math.PI * 0.75;
+            scene.add(beanbagGroup);
+
+            const beanSitPos = new THREE.Vector3(rx + 2.0, 0.72, rz + 2.0);
+            const beanLookDir = new THREE.Vector3(Math.sin(beanbagGroup.rotation.y), 0, Math.cos(beanbagGroup.rotation.y));
+            registerSeat(beanSeat, "Fetter Sitzsack", beanSitPos, beanLookDir);
+
+            // ─────────────────────────────────────────────────────────────
+            // GIMMICK: DAS JETPACK (MIT [E] ANLEGEN & MIT LEERTASTE FLIEGEN)
+            // ─────────────────────────────────────────────────────────────
+            const jetpackGroup = new THREE.Group();
+
+            const jpDarkMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+            const jpChromeMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
+            const jpCoreMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+            const jpStrapMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+
+            const jpStand = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.05, 16), new THREE.MeshLambertMaterial({ color: 0x27272a }));
+            jpStand.position.set(0, 0.025, 0);
+            jetpackGroup.add(jpStand);
+
+            [[-0.14, 0.28, 0], [0.14, 0.28, 0]].forEach(([tx, ty, tz]) => {
+                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.42, 16), jpDarkMat);
+                tank.position.set(tx, ty, tz);
+                jetpackGroup.add(tank);
+
+                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.08, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), jpChromeMat);
+                cap.position.set(tx, ty + 0.21, tz);
+                jetpackGroup.add(cap);
+
+                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.085, 0.12, 16), jpChromeMat);
+                nozzle.position.set(tx, ty - 0.24, tz);
+                jetpackGroup.add(nozzle);
+            });
+
+            const coreBox = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.10), jpDarkMat);
+            coreBox.position.set(0, 0.28, 0.02);
+            jetpackGroup.add(coreBox);
+
+            const coreGlow = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.11), jpCoreMat);
+            coreGlow.position.set(0, 0.28, 0.02);
+            jetpackGroup.add(coreGlow);
+
+            [[-0.09, 0.32, 0.08], [0.09, 0.32, 0.08]].forEach(([sx, sy, sz]) => {
+                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.38, 0.04), jpStrapMat);
+                strap.position.set(sx, sy, sz);
+                jetpackGroup.add(strap);
+            });
+
+            const jpHitBox = new THREE.Mesh(
+                new THREE.BoxGeometry(0.65, 0.75, 0.45),
+                new THREE.MeshBasicMaterial({ visible: false })
             );
-            marquee.position.set(0, 1.95, 0.42);
-            arcadeGroup.add(marquee);
+            jpHitBox.position.set(0, 0.35, 0);
+            jpHitBox.userData.isJetpackItem = true;
+            jetpackGroup.add(jpHitBox);
 
-            arcadeGroup.position.set(rx + 2.4, 0, rz - 2.8);
-            arcadeGroup.rotation.y = -Math.PI / 4;
-            scene.add(arcadeGroup);
+            jetpackGroup.position.set(rx - 0.5, 0, rz);
+            scene.add(jetpackGroup);
+
+            worldJetpackGroup = jetpackGroup;
+            jetpackInteractMesh = jpHitBox;
         }
 
         // 4. ART (Ost)
@@ -2103,6 +3845,45 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
             controls = new PointerLockControls(camera, document.body);
+
+            // First-Person Fahrrad-Cockpit (am unteren Sichtrand bei Fahrt eingeblendet)
+            localBikeCockpit = new THREE.Group();
+            const rubberMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const chromeMat = new THREE.MeshLambertMaterial({ color: 0xcbd5e1 });
+
+            // Querlenker
+            const cBar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.52, 12), chromeMat);
+            cBar.rotation.z = Math.PI / 2;
+            cBar.position.set(0, -0.28, -0.55);
+            localBikeCockpit.add(cBar);
+
+            // Griffe & Bremshebel
+            [-0.24, 0.24].forEach(gx => {
+                const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.09, 10), rubberMat);
+                grip.rotation.z = Math.PI / 2;
+                grip.position.set(gx, -0.28, -0.55);
+                localBikeCockpit.add(grip);
+
+                const lever = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.008, 0.08), chromeMat);
+                lever.position.set(gx * 0.85, -0.29, -0.58);
+                lever.rotation.y = gx > 0 ? -0.2 : 0.2;
+                localBikeCockpit.add(lever);
+            });
+
+            // Vorbau & Steuerrohr
+            const cStem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.16, 8), chromeMat);
+            cStem.position.set(0, -0.35, -0.56);
+            cStem.rotation.x = -0.35;
+            localBikeCockpit.add(cStem);
+
+            // Sichtbarer oberer Vorderrad-Reifenbogen
+            const cTire = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.035, 10, 24, Math.PI * 0.5), rubberMat);
+            cTire.position.set(0, -0.58, -0.72);
+            localBikeCockpit.add(cTire);
+
+            localBikeCockpit.visible = false;
+            camera.add(localBikeCockpit);
+            scene.add(camera);
 
             // Klick direkt in Spiel-Leinwand aktiviert die Steuerung (ohne Willkommens-Fenster!)
             gameCanvas.addEventListener("click", () => {
@@ -2184,6 +3965,57 @@
             document.addEventListener("keydown", onKeyDown);
             document.addEventListener("keyup", onKeyUp);
 
+            // Mousedown im First-Person-Modus unterbindet Textselektions-Ziehgesten
+            document.addEventListener("mousedown", (e) => {
+                if (controls && controls.isLocked) {
+                    e.preventDefault();
+                }
+            });
+
+            // Linksklick (LMB) Interaktion
+            document.addEventListener("click", (e) => {
+                if (e.button !== 0) return;
+                if (isModalOpen || document.querySelector('.modal-backdrop.visible')) return;
+                if (!controls || !controls.isLocked) return;
+
+                if (isSitting) {
+                    e.preventDefault();
+                    standUp();
+                    return;
+                }
+
+                if (movingNoteState) {
+                    if (movingNoteState.validTarget) {
+                        e.preventDefault();
+                        pinMovingNote();
+                    }
+                    return;
+                }
+
+                if (!currentInteractTarget) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (window.getSelection) {
+                    window.getSelection().removeAllRanges();
+                }
+
+                if (currentInteractTarget.type === 'note') {
+                    openViewNoteModal(currentInteractTarget.noteId, currentInteractTarget.data);
+                } else if (currentInteractTarget.type === 'seat') {
+                    sitDown(currentInteractTarget.seat);
+                } else if (currentInteractTarget.type === 'bike') {
+                    mountBike();
+                } else if (currentInteractTarget.type === 'jetpack') {
+                    equipJetpack();
+                } else if (currentInteractTarget.type === 'pinboard') {
+                    openNoteModal(currentInteractTarget.hit);
+                } else if (currentInteractTarget.type === 'artWall') {
+                    openArtModal(currentInteractTarget.hit);
+                }
+            });
+
             clock.start();
             animate();
         }
@@ -2195,7 +4027,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // Tastatursteuerung
+        // Tastatur- und Maussteuerung
         function onKeyDown(e) {
             if (isModalOpen) {
                 if (e.key === "Escape") {
@@ -2205,6 +4037,17 @@
                     closeSettingsModal();
                 }
                 return;
+            }
+
+            if (e.code === "Escape") {
+                if (movingNoteState) {
+                    cancelMovingNote();
+                    return;
+                }
+                if (isRidingBike) {
+                    dismountBike();
+                    return;
+                }
             }
 
             if (isSitting) {
@@ -2235,21 +4078,46 @@
                     moveState.right = true;
                     break;
                 case "Space":
-                    if (isOnGround) {
-                        velocityY = JUMP_STRENGTH;
-                        isOnGround = false;
+                    spacePressed = true;
+                    if (!isJetpackEquipped) {
+                        if (isOnGround) {
+                            velocityY = JUMP_STRENGTH;
+                            isOnGround = false;
+                        }
+                    }
+                    break;
+                case "KeyR":
+                    if (movingNoteState) {
+                        pinMovingNote();
+                    } else if (currentInteractTarget && currentInteractTarget.type === 'note') {
+                        startMovingNote();
                     }
                     break;
                 case "KeyE":
-                    if (!currentInteractTarget) return;
-                    if (currentInteractTarget.type === 'note') {
-                        openViewNoteModal(currentInteractTarget.noteId, currentInteractTarget.data);
-                    } else if (currentInteractTarget.type === 'seat') {
-                        sitDown(currentInteractTarget.seat);
-                    } else if (currentInteractTarget.type === 'pinboard') {
-                        openNoteModal(currentInteractTarget.hit);
-                    } else if (currentInteractTarget.type === 'artWall') {
-                        openArtModal(currentInteractTarget.hit);
+                    if (movingNoteState) {
+                        pinMovingNote();
+                        return;
+                    }
+                    if (isRidingBike) {
+                        dismountBike();
+                        return;
+                    }
+                    if (currentInteractTarget) {
+                        if (currentInteractTarget.type === 'note') {
+                            startMovingNote();
+                        } else if (currentInteractTarget.type === 'seat') {
+                            sitDown(currentInteractTarget.seat);
+                        } else if (currentInteractTarget.type === 'bike') {
+                            mountBike();
+                        } else if (currentInteractTarget.type === 'jetpack') {
+                            equipJetpack();
+                        } else if (currentInteractTarget.type === 'pinboard') {
+                            openNoteModal(currentInteractTarget.hit);
+                        } else if (currentInteractTarget.type === 'artWall') {
+                            openArtModal(currentInteractTarget.hit);
+                        }
+                    } else if (isJetpackEquipped) {
+                        dropJetpack();
                     }
                     break;
             }
@@ -2273,6 +4141,9 @@
                 case "ArrowRight":
                     moveState.right = false;
                     break;
+                case "Space":
+                    spacePressed = false;
+                    break;
             }
         }
 
@@ -2291,18 +4162,40 @@
 
             if (controls && controls.isLocked) {
                 if (!isSitting) {
-                    if (!isOnGround || velocityY !== 0) {
-                        velocityY += GRAVITY * delta;
+                    // Jetpack Flug-Physik mit Schub via Leertaste
+                    if (isJetpackEquipped && spacePressed) {
+                        isJetpackThrusting = true;
+                        isOnGround = false;
+                        velocityY += (38.0 + GRAVITY) * delta;
+                        if (velocityY > 7.0) velocityY = 7.0;
                         camera.position.y += velocityY * delta;
 
-                        if (camera.position.y <= EYE_HEIGHT) {
-                            camera.position.y = EYE_HEIGHT;
+                        if (camera.position.y >= WALL_HEIGHT - 0.4) {
+                            camera.position.y = WALL_HEIGHT - 0.4;
                             velocityY = 0;
-                            isOnGround = true;
+                        }
+
+                        jetpackAudio.setThrust(true);
+                    } else {
+                        if (isJetpackThrusting) {
+                            isJetpackThrusting = false;
+                            jetpackAudio.setThrust(false);
+                        }
+
+                        if (!isOnGround || velocityY !== 0) {
+                            velocityY += GRAVITY * delta;
+                            camera.position.y += velocityY * delta;
+
+                            if (camera.position.y <= EYE_HEIGHT) {
+                                camera.position.y = EYE_HEIGHT;
+                                velocityY = 0;
+                                isOnGround = true;
+                            }
                         }
                     }
 
-                    const actualSpeed = moveSpeed * delta;
+                    const speedMultiplier = isRidingBike ? 1.85 : 1.0;
+                    const actualSpeed = moveSpeed * speedMultiplier * delta;
                     if (moveState.forward) { controls.moveForward(actualSpeed); isMoving = true; }
                     if (moveState.backward) { controls.moveForward(-actualSpeed); isMoving = true; }
                     if (moveState.right) { controls.moveRight(actualSpeed); isMoving = true; }
@@ -2342,65 +4235,146 @@
                 // ── RAYCASTING INTERAKTIONS-PRÜFUNG ──
                 raycaster.setFromCamera(centerCoords, camera);
 
-                // 1. Notizen (Text & Bild)
-                const noteMeshes = Array.from(notesMeshMap.values());
-                const hitNotes = raycaster.intersectObjects(noteMeshes, false);
+                if (movingNoteState) {
+                    const hitWalls = raycaster.intersectObjects(wallMeshes, false);
+                    let validHit = null;
 
-                if (hitNotes.length > 0 && hitNotes[0].distance <= 3.6) {
-                    const hitObj = hitNotes[0].object;
-                    currentInteractTarget = {
-                        type: 'note',
-                        noteId: hitObj.userData.id,
-                        data: hitObj.userData.data
-                    };
-                    interactPrompt.textContent = hitObj.userData.isImage ? "Taste [E] drücken: Bild ansehen & löschen" : "Taste [E] drücken: Notiz ansehen & löschen";
-                    interactPrompt.classList.add("visible");
-                } else {
-                    // 2. Sitze
-                    const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
-                    if (hitSeats.length > 0 && hitSeats[0].distance <= 2.8) {
-                        const hitObj = hitSeats[0].object;
-                        const seat = hitObj.userData.seat;
-                        currentInteractTarget = {
-                            type: 'seat',
-                            seat: seat
+                    if (hitWalls.length > 0 && hitWalls[0].distance <= 4.5) {
+                        const hit = hitWalls[0];
+                        if (movingNoteState.isImage) {
+                            if (hit.object.userData && hit.object.userData.isRoomWall && hit.object.userData.roomName === "Kunst") {
+                                validHit = hit;
+                            }
+                        } else {
+                            if (hit.object.userData && hit.object.userData.isPinboard) {
+                                validHit = hit;
+                            }
+                        }
+                    }
+
+                    if (validHit) {
+                        movingNoteState.ghostFrame.visible = true;
+                        const normal = validHit.face.normal.clone().applyQuaternion(validHit.object.quaternion);
+                        const targetPos = validHit.point.clone().add(normal.clone().multiplyScalar(0.015));
+                        movingNoteState.ghostFrame.position.copy(targetPos);
+                        movingNoteState.ghostFrame.lookAt(targetPos.clone().add(normal));
+
+                        movingNoteState.validTarget = {
+                            pos: {
+                                x: Number(targetPos.x.toFixed(3)),
+                                y: Number(targetPos.y.toFixed(3)),
+                                z: Number(targetPos.z.toFixed(3))
+                            },
+                            normal: {
+                                x: Number(normal.x.toFixed(3)),
+                                y: Number(normal.y.toFixed(3)),
+                                z: Number(normal.z.toFixed(3))
+                            }
                         };
-                        interactPrompt.textContent = `Taste [E] drücken: Hinsetzen (${seat.name || "Sitz"})`;
+                        interactPrompt.textContent = "[E] oder [LMB] Anheften | [ESC] Abbrechen";
                         interactPrompt.classList.add("visible");
                     } else {
-                        // 3. Notizbereiche / Pinboards (in Arbeit, Chillen, Gaming)
-                        const hitPinboards = raycaster.intersectObjects(pinboardMeshes, false);
-                        if (hitPinboards.length > 0 && hitPinboards[0].distance <= 4.0) {
-                            currentInteractTarget = {
-                                type: 'pinboard',
-                                hit: hitPinboards[0]
-                            };
-                            interactPrompt.textContent = `Taste [E] drücken: Notiz anheften (${hitPinboards[0].object.userData.roomName})`;
-                            interactPrompt.classList.add("visible");
-                        } else {
-                            // 4. Art-Raum Wände (überall Bilder anheftbar)
-                            const hitWalls = raycaster.intersectObjects(wallMeshes, false);
-                            if (hitWalls.length > 0 && hitWalls[0].distance <= 4.2) {
-                                const wallHit = hitWalls[0];
-                                if (wallHit.object.userData && wallHit.object.userData.isRoomWall && wallHit.object.userData.roomName === "Art") {
-                                    currentInteractTarget = {
-                                        type: 'artWall',
-                                        hit: wallHit
-                                    };
-                                    interactPrompt.textContent = "Taste [E] drücken: Bild im Art-Raum anpinnen (max. 100 KB)";
-                                    interactPrompt.classList.add("visible");
-                                } else {
-                                    // Alle anderen Wände: Notizen können NICHT mehr überall angeheftet werden!
-                                    currentInteractTarget = null;
-                                    interactPrompt.classList.remove("visible");
-                                }
+                        movingNoteState.ghostFrame.visible = false;
+                        movingNoteState.validTarget = null;
+                        interactPrompt.textContent = movingNoteState.isImage
+                            ? "Wand in Kunst anvisieren | [ESC] Abbrechen"
+                            : "Notizwand anvisieren | [ESC] Abbrechen";
+                        interactPrompt.classList.add("visible");
+                    }
+                } else {
+                    // 1. Notizen (Text & Bild)
+                    const noteMeshes = Array.from(notesMeshMap.values());
+                    const hitNotes = raycaster.intersectObjects(noteMeshes, false);
+
+                    if (hitNotes.length > 0 && hitNotes[0].distance <= 3.6) {
+                        const hitObj = hitNotes[0].object;
+                        currentInteractTarget = {
+                            type: 'note',
+                            noteId: hitObj.userData.id,
+                            data: hitObj.userData.data
+                        };
+                        interactPrompt.textContent = hitObj.userData.isImage 
+                            ? "[LMB] Bild ansehen | [E] Verschieben" 
+                            : "[LMB] Notiz ansehen | [E] Verschieben";
+                        interactPrompt.classList.add("visible");
+                    } else {
+                        // 2. Fahrrad Interaktion
+                        let hitBike = false;
+                        if (bikeInteractMesh && worldBikeGroup && worldBikeGroup.visible && !isRidingBike) {
+                            const bikeHits = raycaster.intersectObject(bikeInteractMesh, false);
+                            if (bikeHits.length > 0 && bikeHits[0].distance <= 2.8) {
+                                currentInteractTarget = { type: 'bike' };
+                                interactPrompt.textContent = "[E] Fahrrad fahren";
+                                interactPrompt.classList.add("visible");
+                                hitBike = true;
+                            }
+                        }
+
+                        // 3. Jetpack Interaktion
+                        let hitJp = false;
+                        if (!hitBike && jetpackInteractMesh && worldJetpackGroup && worldJetpackGroup.visible && !isJetpackEquipped) {
+                            const jpHits = raycaster.intersectObject(jetpackInteractMesh, false);
+                            if (jpHits.length > 0 && jpHits[0].distance <= 2.8) {
+                                currentInteractTarget = { type: 'jetpack' };
+                                interactPrompt.textContent = "[E] Jetpack anlegen";
+                                interactPrompt.classList.add("visible");
+                                hitJp = true;
+                            }
+                        }
+
+                        if (!hitBike && !hitJp) {
+                            // 4. Sitze
+                            const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
+                            if (hitSeats.length > 0 && hitSeats[0].distance <= 2.8) {
+                                const hitObj = hitSeats[0].object;
+                                const seat = hitObj.userData.seat;
+                                currentInteractTarget = {
+                                    type: 'seat',
+                                    seat: seat
+                                };
+                                interactPrompt.textContent = "[E] oder [LMB] Hinsetzen";
+                                interactPrompt.classList.add("visible");
                             } else {
-                                currentInteractTarget = null;
-                                if (isSitting) {
-                                    interactPrompt.textContent = "Taste [E], [LEERTASTE] oder [W,A,S,D]: Aufstehen";
+                                // 5. Pinboards
+                                const hitPinboards = raycaster.intersectObjects(pinboardMeshes, false);
+                                if (hitPinboards.length > 0 && hitPinboards[0].distance <= 4.0) {
+                                    currentInteractTarget = {
+                                        type: 'pinboard',
+                                        hit: hitPinboards[0]
+                                    };
+                                    interactPrompt.textContent = "[LMB] Notiz anheften";
                                     interactPrompt.classList.add("visible");
                                 } else {
-                                    interactPrompt.classList.remove("visible");
+                                    // 6. ArtWall
+                                    const hitWalls = raycaster.intersectObjects(wallMeshes, false);
+                                    if (hitWalls.length > 0 && hitWalls[0].distance <= 4.2) {
+                                        const wallHit = hitWalls[0];
+                                        if (wallHit.object.userData && wallHit.object.userData.isRoomWall && wallHit.object.userData.roomName === "Kunst") {
+                                            currentInteractTarget = {
+                                                type: 'artWall',
+                                                hit: wallHit
+                                            };
+                                            interactPrompt.textContent = "[LMB] Bild anpinnen";
+                                            interactPrompt.classList.add("visible");
+                                        } else {
+                                            currentInteractTarget = null;
+                                            interactPrompt.classList.remove("visible");
+                                        }
+                                    } else {
+                                        currentInteractTarget = null;
+                                        if (isSitting) {
+                                            interactPrompt.textContent = "[LMB] oder [LEERTASTE] Aufstehen";
+                                            interactPrompt.classList.add("visible");
+                                        } else if (isRidingBike) {
+                                            interactPrompt.textContent = "[E] oder [ESC] Absteigen";
+                                            interactPrompt.classList.add("visible");
+                                        } else if (isJetpackEquipped) {
+                                            interactPrompt.textContent = "[LEERTASTE] Schub nach oben | [E] Jetpack ablegen";
+                                            interactPrompt.classList.add("visible");
+                                        } else {
+                                            interactPrompt.classList.remove("visible");
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -2409,17 +4383,6 @@
             } else {
                 interactPrompt.classList.remove("visible");
             }
-
-            // Mitspieler interpolieren
-            const lerpFactor = Math.min(1, delta * 14);
-            remotePlayersMap.forEach((player) => {
-                player.mesh.position.lerp(player.targetPos, lerpFactor);
-
-                let diff = player.targetRotY - player.mesh.rotation.y;
-                while (diff < -Math.PI) diff += Math.PI * 2;
-                while (diff > Math.PI) diff -= Math.PI * 2;
-                player.mesh.rotation.y += diff * lerpFactor;
-            });
 
             renderer.render(scene, camera);
         }
@@ -2647,6 +4610,105 @@
                 btnSaveArtSpinner.classList.add("hidden");
             }
         });
+
+        // ── NOTIZEN VERSCHIEBEN [E] (MIT BLAUEM 3D-RAHMEN & FIRESTORE-UPDATE) ──
+        function startMovingNote() {
+            if (!currentInteractTarget || currentInteractTarget.type !== 'note') return;
+            const noteId = currentInteractTarget.noteId;
+            const data = currentInteractTarget.data;
+            const origMesh = notesMeshMap.get(noteId);
+            if (!origMesh) return;
+
+            const isImage = data.type === 'image';
+            const w = isImage ? 1.2 : 0.85;
+            const h = isImage ? 1.2 : 0.85;
+
+            // Blauer Rahmen in Form des Notizzettels
+            const planeGeo = new THREE.PlaneGeometry(w, h);
+            const edgesGeo = new THREE.EdgesGeometry(planeGeo);
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 0x38bdf8,
+                linewidth: 3,
+                depthTest: false
+            });
+            const ghostFrame = new THREE.LineSegments(edgesGeo, lineMat);
+            ghostFrame.renderOrder = 999;
+
+            // Dezente halbtransparente blaue Vorschau-Füllung
+            const fillMat = new THREE.MeshBasicMaterial({
+                color: 0x0284c7,
+                transparent: true,
+                opacity: 0.18,
+                side: THREE.DoubleSide,
+                depthTest: false
+            });
+            const fillMesh = new THREE.Mesh(planeGeo, fillMat);
+            fillMesh.renderOrder = 998;
+            ghostFrame.add(fillMesh);
+
+            ghostFrame.visible = false;
+            scene.add(ghostFrame);
+
+            // Original-Mesh während des Verschiebens ausblenden
+            origMesh.visible = false;
+
+            movingNoteState = {
+                noteId: noteId,
+                data: data,
+                mesh: origMesh,
+                ghostFrame: ghostFrame,
+                isImage: isImage,
+                validTarget: null
+            };
+
+            currentInteractTarget = null;
+            interactPrompt.textContent = "[E] oder [LMB] Anheften | [ESC] Abbrechen";
+            interactPrompt.classList.add("visible");
+        }
+
+        async function pinMovingNote() {
+            if (!movingNoteState || !movingNoteState.validTarget) return;
+            const targetState = movingNoteState;
+            movingNoteState = null;
+
+            const ghost = targetState.ghostFrame;
+            if (ghost) {
+                scene.remove(ghost);
+                ghost.traverse((c) => {
+                    if (c.geometry) c.geometry.dispose();
+                    if (c.material) c.material.dispose();
+                });
+            }
+
+            try {
+                const noteRef = firestoreDoc(db, "notes", targetState.noteId);
+                await updateDoc(noteRef, {
+                    position: targetState.validTarget.pos,
+                    normal: targetState.validTarget.normal
+                });
+            } catch (err) {
+                console.error("Fehler beim Verschieben der Notiz:", err);
+                alert("Fehler beim Verschieben: " + (err.message || "Unbekannter Fehler"));
+                if (targetState.mesh) targetState.mesh.visible = true;
+            }
+        }
+
+        function cancelMovingNote() {
+            if (!movingNoteState) return;
+            if (movingNoteState.mesh) {
+                movingNoteState.mesh.visible = true;
+            }
+            const ghost = movingNoteState.ghostFrame;
+            if (ghost) {
+                scene.remove(ghost);
+                ghost.traverse((c) => {
+                    if (c.geometry) c.geometry.dispose();
+                    if (c.material) c.material.dispose();
+                });
+            }
+            movingNoteState = null;
+            interactPrompt.classList.remove("visible");
+        }
 
         // ── 3D NOTIZEN RENDERING (TEXT & BILDER) ──
         function createTextNoteTexture(text, author, dateStr) {
@@ -2938,6 +5000,70 @@
             });
         }
 
+        // ── REMOTE SPIELER AVATAR ZUSATZ-MODELLE (FAHRRAD & JETPACK) ──
+        function createRemoteBikeModel() {
+            const b = new THREE.Group();
+            const blueMat = new THREE.MeshLambertMaterial({ color: 0x2563eb });
+            const blackMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const silverMat = new THREE.MeshLambertMaterial({ color: 0xd4d4d8 });
+
+            [-0.45, 0.45].forEach(wz => {
+                const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.03, 8, 16), blackMat);
+                wheel.position.set(0, 0.24, wz);
+                b.add(wheel);
+            });
+
+            const frame = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.85, 8), blueMat);
+            frame.rotation.x = Math.PI / 2;
+            frame.position.set(0, 0.38, 0);
+            b.add(frame);
+
+            const sTube = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.45, 8), blueMat);
+            sTube.position.set(0, 0.52, -0.12);
+            b.add(sTube);
+
+            const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.44, 8), silverMat);
+            bar.rotation.z = Math.PI / 2;
+            bar.position.set(0, 0.78, 0.35);
+            b.add(bar);
+
+            return b;
+        }
+
+        function createRemoteJetpackModel() {
+            const jp = new THREE.Group();
+            const darkMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+            const chromeMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
+            const cyanMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+            const fireMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+            const plumes = new THREE.Group();
+
+            [-0.14, 0.14].forEach(tx => {
+                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.40, 12), darkMat);
+                tank.position.set(tx, 0, 0);
+                jp.add(tank);
+
+                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.07, 0.08, 12), chromeMat);
+                nozzle.position.set(tx, -0.22, 0);
+                jp.add(nozzle);
+
+                const flame = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 8), fireMat);
+                flame.rotation.x = Math.PI;
+                flame.position.set(tx, -0.34, 0);
+                plumes.add(flame);
+            });
+
+            const core = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.24, 0.08), cyanMat);
+            jp.add(core);
+
+            plumes.visible = false;
+            jp.add(plumes);
+            jp.userData.plumes = plumes;
+
+            return jp;
+        }
+
         function addRemotePlayer(uid, data) {
             if (remotePlayersMap.has(uid)) {
                 updateRemotePlayer(uid, data);
@@ -3037,6 +5163,33 @@
                 player.targetRotY = data.rotationY;
             }
 
+            if (data.isBike) {
+                if (!player.remoteBike) {
+                    player.remoteBike = createRemoteBikeModel();
+                    player.remoteBike.position.set(0, 0, 0);
+                    player.mesh.add(player.remoteBike);
+                }
+            } else if (player.remoteBike) {
+                player.mesh.remove(player.remoteBike);
+                disposeHierarchy(player.remoteBike);
+                player.remoteBike = null;
+            }
+
+            if (data.isJetpack) {
+                if (!player.remoteJetpack) {
+                    player.remoteJetpack = createRemoteJetpackModel();
+                    player.remoteJetpack.position.set(0, 1.15, 0.24);
+                    player.mesh.add(player.remoteJetpack);
+                }
+                if (player.remoteJetpack && player.remoteJetpack.userData && player.remoteJetpack.userData.plumes) {
+                    player.remoteJetpack.userData.plumes.visible = Boolean(data.isFlying);
+                }
+            } else if (player.remoteJetpack) {
+                player.mesh.remove(player.remoteJetpack);
+                disposeHierarchy(player.remoteJetpack);
+                player.remoteJetpack = null;
+            }
+
             if (data.nickname && data.nickname !== player.nickname) {
                 player.nickname = data.nickname;
                 if (player.nameTagSprite) {
@@ -3064,7 +5217,7 @@
             const el = document.getElementById("player-count-text");
             if (!el) return;
             const count = remotePlayersMap.size + (currentUser ? 1 : 0);
-            el.textContent = count === 1 ? "👥 1 online" : `👥 ${count} online`;
+            el.textContent = count === 1 ? "1 online" : `${count} online`;
         }
 
         function startPlayerSync() {
@@ -3085,6 +5238,9 @@
                 y: Number(camera.position.y.toFixed(3)),
                 z: Number(camera.position.z.toFixed(3)),
                 rotationY: Number(camera.rotation.y.toFixed(3)),
+                isBike: Boolean(isRidingBike),
+                isJetpack: Boolean(isJetpackEquipped),
+                isFlying: Boolean(isJetpackEquipped && isJetpackThrusting),
                 lastSeen: Date.now()
             }).catch(err => console.error("RTDB initial set error:", err));
 
@@ -3110,6 +5266,9 @@
                         y: Number(camera.position.y.toFixed(3)),
                         z: Number(camera.position.z.toFixed(3)),
                         rotationY: Number(camera.rotation.y.toFixed(3)),
+                        isBike: Boolean(isRidingBike),
+                        isJetpack: Boolean(isJetpackEquipped),
+                        isFlying: Boolean(isJetpackEquipped && isJetpackThrusting),
                         lastSeen: Date.now()
                     }).catch(() => {});
 
