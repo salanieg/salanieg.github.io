@@ -3577,11 +3577,35 @@
                 glint2.position.set(rotY > 0 ? -0.010 : 0.022, -0.016, 0.054);
                 eyeGroup.add(glint2);
 
-                // 7. Freundlich geschwungene Augenbraue (Brow Ridge)
-                const brow = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.018, 0.16, 8), dragonAccentMat);
-                brow.rotation.z = rotY > 0 ? 0.28 : -0.28;
-                brow.position.set(0, 0.105, 0.02);
-                eyeGroup.add(brow);
+                // 7. Harmonisch geschwungener Brauenbogen (schmiegt sich anatomisch über das Auge)
+                const side = rotY > 0 ? 1 : -1;
+                const browCurve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(-side * 0.055, 0.105, 0.024),
+                    new THREE.Vector3(0, 0.124, 0.034),
+                    new THREE.Vector3(side * 0.058, 0.098, 0.018)
+                ]);
+                const browGeo = new THREE.TubeGeometry(browCurve, 12, 0.014, 8, false);
+                const browMesh = new THREE.Mesh(browGeo, dragonDarkAccent);
+                eyeGroup.add(browMesh);
+
+                // Weiche Endkappen für den Brauenbogen
+                [-side * 0.055, side * 0.058].forEach((bx, idx) => {
+                    const cap = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.014, 8, 6),
+                        dragonDarkAccent
+                    );
+                    cap.position.set(bx, idx === 0 ? 0.105 : 0.098, idx === 0 ? 0.024 : 0.018);
+                    eyeGroup.add(cap);
+                });
+
+                // Zarter anatomischer Lidfalten-Wulst in Goldgelb direkt über dem Lidrand
+                const lidFolds = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(-side * 0.065, 0.088, 0.016),
+                    new THREE.Vector3(0, 0.104, 0.026),
+                    new THREE.Vector3(side * 0.068, 0.082, 0.012)
+                ]);
+                const foldMesh = new THREE.Mesh(new THREE.TubeGeometry(lidFolds, 10, 0.010, 6, false), dragonAccentMat);
+                eyeGroup.add(foldMesh);
 
                 dragonGroup.add(eyeGroup);
 
