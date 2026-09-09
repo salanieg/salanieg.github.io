@@ -377,6 +377,9 @@
             display: none;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);
             animation: pulseGlow 1.5s infinite alternate;
+            text-align: center;
+            white-space: pre-line;
+            line-height: 1.4;
         }
 
         .interact-prompt.visible {
@@ -1150,7 +1153,7 @@
             if (isSitting) standUp();
             isJetpackEquipped = true;
             if (worldJetpackGroup) worldJetpackGroup.visible = false;
-            interactPrompt.textContent = "[LEERTASTE] Schub nach oben | [E] Jetpack ablegen";
+            interactPrompt.textContent = "[LEERTASTE] Schub nach oben\n[E] Jetpack ablegen";
             interactPrompt.classList.add("visible");
         }
 
@@ -4481,14 +4484,14 @@
                                 z: Number(normal.z.toFixed(3))
                             }
                         };
-                        interactPrompt.textContent = "[E] oder [LMB] Anheften | [ESC] Abbrechen";
+                        interactPrompt.textContent = "[E] oder [LMB] Anheften\n[ESC] Abbrechen";
                         interactPrompt.classList.add("visible");
                     } else {
                         movingNoteState.ghostFrame.visible = false;
                         movingNoteState.validTarget = null;
                         interactPrompt.textContent = movingNoteState.isImage
-                            ? "Wand in Kunst anvisieren | [ESC] Abbrechen"
-                            : "Notizwand anvisieren | [ESC] Abbrechen";
+                            ? "Wand in Kunst anvisieren\n[ESC] Abbrechen"
+                            : "Notizwand anvisieren\n[ESC] Abbrechen";
                         interactPrompt.classList.add("visible");
                     }
                 } else {
@@ -4504,8 +4507,8 @@
                             data: hitObj.userData.data
                         };
                         interactPrompt.textContent = hitObj.userData.isImage 
-                            ? "[LMB] Bild ansehen | [E] Verschieben" 
-                            : "[LMB] Notiz ansehen | [E] Verschieben";
+                            ? "[LMB] Bild ansehen\n[E] Verschieben" 
+                            : "[LMB] Notiz ansehen\n[E] Verschieben";
                         interactPrompt.classList.add("visible");
                     } else {
                         // 2. Fahrrad Interaktion
@@ -4579,7 +4582,7 @@
                                             interactPrompt.textContent = "[E] oder [ESC] Absteigen";
                                             interactPrompt.classList.add("visible");
                                         } else if (isJetpackEquipped) {
-                                            interactPrompt.textContent = "[LEERTASTE] Schub nach oben | [E] Jetpack ablegen";
+                                            interactPrompt.textContent = "[LEERTASTE] Schub nach oben\n[E] Jetpack ablegen";
                                             interactPrompt.classList.add("visible");
                                         } else {
                                             interactPrompt.classList.remove("visible");
@@ -4872,7 +4875,7 @@
             };
 
             currentInteractTarget = null;
-            interactPrompt.textContent = "[E] oder [LMB] Anheften | [ESC] Abbrechen";
+            interactPrompt.textContent = "[E] oder [LMB] Anheften\n[ESC] Abbrechen";
             interactPrompt.classList.add("visible");
         }
 
