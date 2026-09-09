@@ -3481,7 +3481,7 @@
                 [-0.07, 0, 0.07].forEach(kx => {
                     const claw = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.06, 8), dragonAccentMat);
                     claw.rotation.x = Math.PI / 2;
-                    claw.position.set(lx + kx, 0.05, lz + 0.21);
+                    claw.position.set(lx + kx, 0.045, foot.position.z + 0.15);
                     dragonGroup.add(claw);
                 });
             });
@@ -3563,18 +3563,23 @@
                 dragonGroup.add(horn);
             });
 
-            // Kleine süße Drachenflügel an den Seiten
+            // Kleine süße Drachenflügel an den Seiten (beide Flügel sauber nach außen gespreizt)
             [[-0.48, 0.85, 0.0, -0.4], [0.48, 0.85, 0.0, 0.4]].forEach(([wx, wy, wz, rotZ]) => {
                 const wing = new THREE.Group();
+                const isRight = wx > 0;
                 const wingBone = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.45, 8), dragonAccentMat);
-                wingBone.rotation.z = Math.PI / 3;
+                wingBone.rotation.z = isRight ? Math.PI / 3 : -Math.PI / 3;
                 wing.add(wingBone);
 
                 const wingSkinGeo = new THREE.BufferGeometry();
-                const verts = new Float32Array([
+                const verts = new Float32Array(isRight ? [
                     0, 0, 0,
                     0.22, 0.35, 0,
                     0.35, 0.10, -0.15
+                ] : [
+                    0, 0, 0,
+                    -0.22, 0.35, 0,
+                    -0.35, 0.10, -0.15
                 ]);
                 wingSkinGeo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
                 wingSkinGeo.computeVertexNormals();
@@ -3583,7 +3588,7 @@
 
                 wing.position.set(wx, wy, wz);
                 wing.rotation.z = rotZ;
-                wing.rotation.y = wx > 0 ? 0.35 : -0.35;
+                wing.rotation.y = isRight ? 0.35 : -0.35;
                 dragonGroup.add(wing);
             });
 
@@ -3676,32 +3681,54 @@
             motorBase.position.set(0, 0.70, 0.28);
             racingGroup.add(motorBase);
 
-            const steeringShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 12), chromeMat);
-            steeringShaft.rotation.x = Math.PI / 3;
-            steeringShaft.position.set(0, 0.74, 0.18);
-            racingGroup.add(steeringShaft);
+            // Vollständig ausgerichtete Lenkrad-Einheit
+            const wheelAssembly = new THREE.Group();
+            wheelAssembly.position.set(0, 0.74, 0.14);
+            wheelAssembly.rotation.x = -0.45; // Neigt Lenkradfläche zum Fahrer hin
 
-            const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.022, 10, 24), wheelRubberMat);
-            wheelRim.position.set(0, 0.78, 0.12);
-            wheelRim.rotation.x = Math.PI / 3;
-            racingGroup.add(wheelRim);
+            // Lenksäulen-Welle rückwärtig in die Motor-Base
+            const steeringShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 12), chromeMat);
+            steeringShaft.rotation.x = Math.PI / 2;
+            steeringShaft.position.set(0, 0, 0.08);
+            wheelAssembly.add(steeringShaft);
 
-            const centerStripe = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.03, 10), racingRedMat);
-            centerStripe.position.set(0, 0.92, 0.04);
+            // Lenkradkranz in XY-Ebene
+            const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.022, 12, 28), wheelRubberMat);
+            wheelAssembly.add(wheelRim);
+
+            // Rote 12-Uhr-Mittelmarkierung bündig auf dem Kranz
+            const centerStripe = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.035, 12), racingRedMat);
+            centerStripe.position.set(0, 0.16, 0);
             centerStripe.rotation.z = Math.PI / 2;
-            racingGroup.add(centerStripe);
+            wheelAssembly.add(centerStripe);
 
+            // Zentrale Nabe (Zylinder in Z-Richtung, Scheibe bündig in XY)
             const wheelHub = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 16), rigMetalMat);
-            wheelHub.position.set(0, 0.78, 0.12);
-            wheelHub.rotation.x = Math.PI / 3;
-            racingGroup.add(wheelHub);
+            wheelHub.rotation.x = Math.PI / 2;
+            wheelAssembly.add(wheelHub);
 
+            // 3 Speichen (links, rechts, unten)
+            const leftSpoke = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.025, 0.015), chromeMat);
+            leftSpoke.position.set(-0.09, 0, 0);
+            wheelAssembly.add(leftSpoke);
+
+            const rightSpoke = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.025, 0.015), chromeMat);
+            rightSpoke.position.set(0.09, 0, 0);
+            wheelAssembly.add(rightSpoke);
+
+            const bottomSpoke = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.10, 0.015), chromeMat);
+            bottomSpoke.position.set(0, -0.09, 0);
+            wheelAssembly.add(bottomSpoke);
+
+            // Knöpfe auf der Nabe (dem Fahrer zugewandt)
             [-0.03, 0.03].forEach(bx => {
-                const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.015, 8), bx > 0 ? ledRedMat : ledGreenMat);
-                btn.position.set(bx, 0.79, 0.12);
-                btn.rotation.x = Math.PI / 3;
-                racingGroup.add(btn);
+                const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.018, 8), bx > 0 ? ledRedMat : ledGreenMat);
+                btn.position.set(bx, 0.015, -0.015);
+                btn.rotation.x = Math.PI / 2;
+                wheelAssembly.add(btn);
             });
+
+            racingGroup.add(wheelAssembly);
 
             // 4. Schubhebel (Throttle Quadrant)
             const throttleConsole = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, 0.28), rigMetalMat);
@@ -3719,6 +3746,7 @@
 
             const throttleGrip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.08), wheelRubberMat);
             throttleGrip.position.set(0.42, 0.71, 0.01);
+            throttleGrip.rotation.x = 0.30; // Winkel exakt bündig zur Hebelneigung
             racingGroup.add(throttleGrip);
 
             [-0.04, 0, 0.04].forEach((lz, idx) => {
@@ -3760,10 +3788,14 @@
 
             function createBikeWheel() {
                 const wGroup = new THREE.Group();
+                // Rad in YZ-Ebene drehen, sodass es parallel zum Fahrradrahmen in Fahrtrichtung (Z) rollt
+                wGroup.rotation.y = Math.PI / 2;
+
                 const tire = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.035, 10, 24), tireRubberMat);
                 wGroup.add(tire);
                 const rim = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.015, 8, 24), rimSpokeMat);
                 wGroup.add(rim);
+                // Nabenachse zeigt nach 90-Grad-Y-Drehung quer entlang der Radachse (X)
                 const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.08, 12), rimSpokeMat);
                 hub.rotation.x = Math.PI / 2;
                 wGroup.add(hub);
@@ -3824,23 +3856,30 @@
                 bikeGroup.add(grip);
             });
 
+            // Tretlager-Achse quer durch den Rahmen (entlang X)
             const crankAxle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.18, 10), chromeMat);
-            crankAxle.rotation.x = Math.PI / 2;
+            crankAxle.rotation.z = Math.PI / 2;
             crankAxle.position.set(0, 0.30, 0);
             bikeGroup.add(crankAxle);
 
+            // Kettenblatt-Scheibe in YZ-Ebene parallel zum Rahmen
             const chainRing = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.008, 16), chainMat);
-            chainRing.rotation.x = Math.PI / 2;
+            chainRing.rotation.z = Math.PI / 2;
             chainRing.position.set(0.07, 0.30, 0);
             bikeGroup.add(chainRing);
 
-            [[-0.09, 0.30, 0.10, -1], [0.09, 0.30, -0.10, 1]].forEach(([px, py, pz, s]) => {
-                const pedalArm = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.01), chromeMat);
-                pedalArm.position.set(px, py + s * 0.05, 0);
+            // Kurbelarme & Pedale um 180 Grad phasenversetzt
+            [
+                { px: 0.09, py: 0.23, pz: 0.07, rotX: -Math.PI / 4 }, // Rechter Arm nach vorn-unten
+                { px: -0.09, py: 0.37, pz: -0.07, rotX: -Math.PI / 4 } // Linker Arm nach hinten-oben
+            ].forEach(k => {
+                const pedalArm = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.015), chromeMat);
+                pedalArm.position.set(k.px, k.py, k.pz);
+                pedalArm.rotation.x = k.rotX;
                 bikeGroup.add(pedalArm);
 
                 const pedalPad = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.06), tireRubberMat);
-                pedalPad.position.set(px, py + s * 0.11, 0);
+                pedalPad.position.set(k.px > 0 ? k.px + 0.03 : k.px - 0.03, k.py + (k.px > 0 ? -0.05 : 0.05), k.pz + (k.px > 0 ? 0.05 : -0.05));
                 bikeGroup.add(pedalPad);
             });
 
@@ -3887,11 +3926,11 @@
             beanSeat.position.set(0, 0.36, -0.05);
             beanbagGroup.add(beanSeat);
 
-            const rimGeo = new THREE.TorusGeometry(0.56, 0.12, 10, 24);
-            rimGeo.scale(1.15, 0.8, 1.1);
+            const rimGeo = new THREE.TorusGeometry(0.56, 0.14, 12, 28);
             const beanRim = new THREE.Mesh(rimGeo, beanbagMat);
             beanRim.rotation.x = Math.PI / 2;
-            beanRim.position.set(0, 0.40, 0);
+            beanRim.scale.set(1.15, 1.15, 0.65); // Flaches, gequetschtes Sitzpolster
+            beanRim.position.set(0, 0.38, 0);
             beanbagGroup.add(beanRim);
 
             beanbagGroup.position.set(rx + 2.0, 0, rz + 2.0);
@@ -3916,7 +3955,7 @@
             jpStand.position.set(0, 0.025, 0);
             jetpackGroup.add(jpStand);
 
-            [[-0.14, 0.28, 0], [0.14, 0.28, 0]].forEach(([tx, ty, tz]) => {
+            [[-0.14, 0.35, 0], [0.14, 0.35, 0]].forEach(([tx, ty, tz]) => {
                 const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.42, 16), jpDarkMat);
                 tank.position.set(tx, ty, tz);
                 jetpackGroup.add(tank);
@@ -3926,19 +3965,19 @@
                 jetpackGroup.add(cap);
 
                 const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.085, 0.12, 16), jpChromeMat);
-                nozzle.position.set(tx, ty - 0.24, tz);
+                nozzle.position.set(tx, ty - 0.24, tz); // ty = 0.35 -> Düsenunterkante exakt bei 0.05 bündig auf jpStand
                 jetpackGroup.add(nozzle);
             });
 
             const coreBox = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.10), jpDarkMat);
-            coreBox.position.set(0, 0.28, 0.02);
+            coreBox.position.set(0, 0.35, 0.02);
             jetpackGroup.add(coreBox);
 
             const coreGlow = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.11), jpCoreMat);
-            coreGlow.position.set(0, 0.28, 0.02);
+            coreGlow.position.set(0, 0.35, 0.02);
             jetpackGroup.add(coreGlow);
 
-            [[-0.09, 0.32, 0.08], [0.09, 0.32, 0.08]].forEach(([sx, sy, sz]) => {
+            [[-0.09, 0.39, 0.08], [0.09, 0.39, 0.08]].forEach(([sx, sy, sz]) => {
                 const strap = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.38, 0.04), jpStrapMat);
                 strap.position.set(sx, sy, sz);
                 jetpackGroup.add(strap);
@@ -3948,7 +3987,7 @@
                 new THREE.BoxGeometry(0.65, 0.75, 0.45),
                 new THREE.MeshBasicMaterial({ visible: false })
             );
-            jpHitBox.position.set(0, 0.35, 0);
+            jpHitBox.position.set(0, 0.42, 0);
             jpHitBox.userData.isJetpackItem = true;
             jetpackGroup.add(jpHitBox);
 
@@ -4063,9 +4102,10 @@
             cStem.rotation.x = -0.35;
             localBikeCockpit.add(cStem);
 
-            // Sichtbarer oberer Vorderrad-Reifenbogen
+            // Sichtbarer oberer Vorderrad-Reifenbogen in YZ-Ebene (Fahrtrichtung nach vorn)
             const cTire = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.035, 10, 24, Math.PI * 0.5), rubberMat);
-            cTire.position.set(0, -0.58, -0.72);
+            cTire.rotation.y = Math.PI / 2;
+            cTire.position.set(0, -0.58, -0.42);
             localBikeCockpit.add(cTire);
 
             localBikeCockpit.visible = false;
@@ -5232,25 +5272,41 @@
             const blackMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
             const silverMat = new THREE.MeshLambertMaterial({ color: 0xd4d4d8 });
 
+            // Räder in Fahrtrichtung (YZ-Ebene) drehen: Vorderrad bei -0.45, Hinterrad bei +0.45
             [-0.45, 0.45].forEach(wz => {
                 const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.03, 8, 16), blackMat);
+                wheel.rotation.y = Math.PI / 2;
                 wheel.position.set(0, 0.24, wz);
                 b.add(wheel);
             });
 
+            // Hauptrahmenrohr entlang Z
             const frame = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.85, 8), blueMat);
             frame.rotation.x = Math.PI / 2;
             frame.position.set(0, 0.38, 0);
             b.add(frame);
 
+            // Sattelrohr hinten (+Z)
             const sTube = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.45, 8), blueMat);
-            sTube.position.set(0, 0.52, -0.12);
+            sTube.position.set(0, 0.52, 0.12);
             b.add(sTube);
 
+            // Sattel auf dem Sattelrohr
+            const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.22), blackMat);
+            saddle.position.set(0, 0.74, 0.12);
+            b.add(saddle);
+
+            // Lenker vorne (-Z, wo das Avatar-Visier hinschaut)
             const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.44, 8), silverMat);
             bar.rotation.z = Math.PI / 2;
-            bar.position.set(0, 0.78, 0.35);
+            bar.position.set(0, 0.78, -0.35);
             b.add(bar);
+
+            // Vorbau / Gabelrohr nach vorn
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.40, 8), blueMat);
+            stem.position.set(0, 0.58, -0.38);
+            stem.rotation.x = 0.25;
+            b.add(stem);
 
             return b;
         }
