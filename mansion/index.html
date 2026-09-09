@@ -679,7 +679,7 @@
 
         <!-- Steuerungs-Leiste am unteren Rand -->
         <footer class="bottom-bar">
-            WASD: Laufen | LEER: Springen | LMB: Interagieren | E: Verschieben / Aktionen | ESC: Menü
+            WASD: Laufen | LEER: Springen | LMB: Interagieren / Hinsetzen | E: Verschieben / Aktionen | ESC: Menü
         </footer>
 
         </div>
@@ -2511,17 +2511,13 @@
         function buildWorkbenchArea(rx, rz) {
             const group = new THREE.Group();
 
-            // Kräftige, ausdrucksstarke Holztexturen mit hohem Kontrast
-            const woodTopTex = createProceduralWoodTex("#78350f", "#3b1704", "#d97706", true);
-            const woodDarkTex = createProceduralWoodTex("#522507", "#281102", "#92400e", false);
-            const toolWoodTex = createProceduralWoodTex("#b45309", "#522204", "#f59e0b", false);
+            // Realistisches, massives Buchenholz (geölte Buche wie bei einer echten Hobelbank) OHNE Streifen
+            const woodTopTex = createProceduralWoodTex("#bfa278", "#6d4827", "#dfcbac", false);
             const brushedMetalTex = createProceduralBrushedMetalTex("#94a3b8", "#475569");
             const castIronTex = createProceduralBrushedMetalTex("#27272a", "#09090b");
-            const yellowWoodTex = createProceduralWoodTex("#eab308", "#854d0e", "#fef08a", false);
 
             const woodTopMat = new THREE.MeshLambertMaterial({ map: woodTopTex });
             const frameMat = new THREE.MeshLambertMaterial({ map: castIronTex });
-            const woodShelfMat = new THREE.MeshLambertMaterial({ map: woodDarkTex });
 
             // Robuste Werkbankplatte maßstabsgetreu dimensioniert (2.4m x 0.85m x 0.08m)
             const topGeo = createDimensionBoxGeometry(2.4, 0.08, 0.85, 1.0, 1.0);
@@ -2543,9 +2539,9 @@
                 group.add(leg);
             });
 
-            // Untere Ablage
+            // Untere Ablage mit exakt gleicher Textur wie die Oberseite
             const lowerShelfGeo = createDimensionBoxGeometry(2.1, 0.04, 0.70, 1.0, 1.0);
-            const lowerShelf = new THREE.Mesh(lowerShelfGeo, woodShelfMat);
+            const lowerShelf = new THREE.Mesh(lowerShelfGeo, woodTopMat);
             lowerShelf.position.y = 0.22;
             group.add(lowerShelf);
 
@@ -2566,121 +2562,270 @@
             viceGroup.add(viceSpindle);
             group.add(viceGroup);
 
-            // ── REQUISITEN AUF DER WERKBANK ──
-            const metalMat = new THREE.MeshLambertMaterial({ map: brushedMetalTex });
-            const woodHandleMat = new THREE.MeshLambertMaterial({ map: toolWoodTex });
+            // ── REQUISITEN AUF DER WERKBANK (SAUBERE, REALISTISCHE MATERIALIEN OHNE PROZEDURALE TEXTUREN) ──
+            const toolWoodMat = new THREE.MeshLambertMaterial({ color: 0xc49a6c }); // Natürliches Hickory-/Eschenholz
+            const darkWoodMat = new THREE.MeshLambertMaterial({ color: 0x78350f }); // Hartholzkeil
+            const steelForgedMat = new THREE.MeshLambertMaterial({ color: 0x334155 }); // Geschmiedeter Werkzeugstahl
+            const steelSatinMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 }); // Satinierter Chrom-Vanadium-Stahl
+            const steelPolishedMat = new THREE.MeshLambertMaterial({ color: 0xcbd5e1 }); // Polierte Schlag-/Schneidfase
+            const ferruleMat = new THREE.MeshLambertMaterial({ color: 0xa1a1aa }); // Weißblech-/Stahlzwinge
+            const bristleMat = new THREE.MeshLambertMaterial({ color: 0x18181b }); // Dichte Naturborsten
 
-            // 1. Hammer (Echter Schlosserhammer mit Stieldurchdringung)
+            // 1. Echter Schlosserhammer nach DIN 1041 (Kopf steht im 90°-Winkel senkrecht zum Stiel!)
             const hammerGroup = new THREE.Group();
-            const hammerHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.018, 0.34, 12), woodHandleMat);
-            hammerHandle.rotation.z = Math.PI / 2;
-            hammerGroup.add(hammerHandle);
 
-            const hammerHeadGroup = new THREE.Group();
-            const forgedSteelMat = new THREE.MeshLambertMaterial({ map: brushedMetalTex, color: 0x334155 });
+            // Ergonomischer Hickory-Stiel entlang der X-Achse (von x = -0.20 bis x = 0.06)
+            const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.14, 12), toolWoodMat);
+            grip.rotation.z = Math.PI / 2;
+            grip.scale.set(1, 1, 0.75); // Ovaler Querschnitt
+            grip.position.set(-0.13, 0.014, 0);
+            hammerGroup.add(grip);
 
-            const centerEye = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.044, 0.044), forgedSteelMat);
-            hammerHeadGroup.add(centerEye);
+            const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.012, 0.11, 12), toolWoodMat);
+            mid.rotation.z = Math.PI / 2;
+            mid.scale.set(1, 1, 0.75);
+            mid.position.set(-0.01, 0.014, 0);
+            hammerGroup.add(mid);
 
-            const strikingFace = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.040, 0.040), forgedSteelMat);
-            strikingFace.position.set(0.05, 0, 0);
-            hammerHeadGroup.add(strikingFace);
+            const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.010, 0.07, 12), toolWoodMat);
+            collar.rotation.z = Math.PI / 2;
+            collar.scale.set(1, 1, 0.75);
+            collar.position.set(0.05, 0.014, 0);
+            hammerGroup.add(collar);
 
-            const peenGeo = new THREE.CylinderGeometry(0.005, 0.040, 0.065, 4);
-            peenGeo.rotateZ(Math.PI / 2);
-            peenGeo.rotateY(Math.PI / 4);
-            const peenMesh = new THREE.Mesh(peenGeo, forgedSteelMat);
-            peenMesh.position.set(-0.052, 0, 0);
-            hammerHeadGroup.add(peenMesh);
+            // Stielspitze tritt an der Außenseite des Auges hervor (x = 0.063) mit Holzkeil
+            const tip = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.018, 0.012), darkWoodMat);
+            tip.position.set(0.063, 0.014, 0);
+            hammerGroup.add(tip);
 
-            const wedge = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.006, 0.024), woodHandleMat);
-            wedge.position.set(0, 0.024, 0);
-            hammerHeadGroup.add(wedge);
+            // Hammerkopf: Verläuft ENTLANG DER Z-ACHSE (im 90°-Winkel quer zum Stiel!)
+            const headX = 0.045;
+            const headY = 0.014;
 
-            hammerHeadGroup.position.set(0.12, 0, 0);
-            hammerGroup.add(hammerHeadGroup);
+            // Zentraler Auge-Block (Stiel durchdringt die Mitte bei headX)
+            const eye = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.032, 0.034), steelForgedMat);
+            eye.position.set(headX, headY, 0);
+            hammerGroup.add(eye);
 
-            hammerGroup.position.set(-0.55, 0.915, -0.05);
+            // Schlaghals in +Z-Richtung
+            const neck = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.026, 0.036), steelForgedMat);
+            neck.position.set(headX, headY, 0.032);
+            hammerGroup.add(neck);
+
+            // Schlagbahn (geschliffene Vierkant-Schlagfläche mit Fase) bei +Z
+            const face = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.024, 0.010), steelPolishedMat);
+            face.position.set(headX, headY, 0.054);
+            hammerGroup.add(face);
+
+            // Finne (verjüngt sich keilförmig in -Z-Richtung)
+            const peenShape = new THREE.Shape();
+            peenShape.moveTo(-0.017, 0.013);
+            peenShape.lineTo(-0.056, 0.002);
+            peenShape.lineTo(-0.056, -0.002);
+            peenShape.lineTo(-0.017, -0.013);
+            peenShape.closePath();
+
+            const peenGeo = new THREE.ExtrudeGeometry(peenShape, { depth: 0.024, bevelEnabled: false });
+            peenGeo.center();
+            peenGeo.rotateY(Math.PI / 2); // Breite liegt entlang der X-Achse
+            const peen = new THREE.Mesh(peenGeo, steelForgedMat);
+            peen.position.set(headX, headY, -0.036);
+            hammerGroup.add(peen);
+
+            // Polierte Schneidkante der Finne bei -Z
+            const peenTip = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.004, 0.004), steelPolishedMat);
+            peenTip.position.set(headX, headY, -0.058);
+            hammerGroup.add(peenTip);
+
+            hammerGroup.position.set(-0.50, 0.90, -0.05);
             hammerGroup.rotation.y = 0.35;
             group.add(hammerGroup);
 
-            // 2. Schraubenschlüssel
+            // 2. Realistischer Ring-Maulschlüssel DIN 3113 (Doppel-T-Schaft, 15°-Maul mit Sechskant-Profil & Ringkopf)
             const wrenchGroup = new THREE.Group();
-            const wrenchBody = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.012, 0.032), metalMat);
-            wrenchBody.position.y = 0.006;
-            wrenchGroup.add(wrenchBody);
-            const jawL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.012, 0.012), metalMat);
-            jawL.position.set(0.13, 0.006, -0.024);
-            wrenchGroup.add(jawL);
-            const jawR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.012, 0.012), metalMat);
-            jawR.position.set(0.13, 0.006, 0.024);
-            wrenchGroup.add(jawR);
-            const wrenchRing = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.008, 8, 16), metalMat);
-            wrenchRing.rotation.x = Math.PI / 2;
-            wrenchRing.position.set(-0.13, 0.006, 0);
-            wrenchGroup.add(wrenchRing);
-            wrenchGroup.position.set(-0.15, 0.90, 0.12);
-            wrenchGroup.rotation.y = -0.45;
-            group.add(wrenchGroup);
+            const shaftLen = 0.15, thickness = 0.008, shaftWidth = 0.018;
 
-            // 3. Sichel
-            const sickleGroup = new THREE.Group();
-            const sickleHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.016, 0.16, 12), woodHandleMat);
-            sickleHandle.rotation.z = Math.PI / 2;
-            sickleGroup.add(sickleHandle);
+            const shaft = new THREE.Mesh(new THREE.BoxGeometry(shaftLen, thickness, shaftWidth), steelSatinMat);
+            wrenchGroup.add(shaft);
 
-            const sickleFerrule = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.028, 12), metalMat);
-            sickleFerrule.rotation.z = Math.PI / 2;
-            sickleFerrule.position.set(0.08, 0, 0);
-            sickleGroup.add(sickleFerrule);
+            [-thickness / 2, thickness / 2].forEach(yPos => {
+                const groove = new THREE.Mesh(new THREE.BoxGeometry(shaftLen - 0.02, 0.001, shaftWidth - 0.006), steelForgedMat);
+                groove.position.set(0, yPos, 0);
+                wrenchGroup.add(groove);
+            });
 
-            const bladeShape = new THREE.Shape();
-            bladeShape.moveTo(0, 0);
-            bladeShape.quadraticCurveTo(0.06, 0.14, 0.18, 0.18);
-            bladeShape.quadraticCurveTo(0.28, 0.20, 0.34, 0.13);
-            bladeShape.quadraticCurveTo(0.38, 0.06, 0.36, 0.01);
-            bladeShape.quadraticCurveTo(0.26, 0.10, 0.16, 0.11);
-            bladeShape.quadraticCurveTo(0.06, 0.10, 0.01, 0.01);
-            bladeShape.closePath();
+            const jawShape = new THREE.Shape();
+            jawShape.moveTo(0, -0.010);
+            jawShape.lineTo(0.015, -0.018);
+            jawShape.lineTo(0.045, -0.018);
+            jawShape.lineTo(0.052, -0.006);
+            jawShape.lineTo(0.032, -0.006);
+            jawShape.lineTo(0.020, 0);
+            jawShape.lineTo(0.032, 0.006);
+            jawShape.lineTo(0.052, 0.006);
+            jawShape.lineTo(0.045, 0.018);
+            jawShape.lineTo(0.015, 0.018);
+            jawShape.lineTo(0, 0.010);
+            jawShape.closePath();
 
-            const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, {
-                steps: 1,
-                depth: 0.003,
+            const jawGeo = new THREE.ExtrudeGeometry(jawShape, {
+                depth: thickness,
                 bevelEnabled: true,
                 bevelThickness: 0.001,
                 bevelSize: 0.001,
                 bevelSegments: 2
             });
-            bladeGeo.center();
-            const sickleBlade = new THREE.Mesh(bladeGeo, metalMat);
-            sickleBlade.rotation.x = Math.PI / 2;
-            sickleBlade.position.set(0.18, 0, -0.05);
-            sickleGroup.add(sickleBlade);
+            jawGeo.rotateX(Math.PI / 2);
+            jawGeo.center();
+            const jawMesh = new THREE.Mesh(jawGeo, steelSatinMat);
+            jawMesh.position.set(shaftLen / 2 + 0.025, 0, 0);
+            wrenchGroup.add(jawMesh);
 
-            sickleGroup.position.set(0.35, 0.905, -0.05);
-            sickleGroup.rotation.y = 0.25;
+            const ringShape = new THREE.Shape();
+            ringShape.absarc(0, 0, 0.020, 0, Math.PI * 2, false);
+            const ringHole = new THREE.Path();
+            ringHole.absarc(0, 0, 0.012, 0, Math.PI * 2, true);
+            ringShape.holes.push(ringHole);
+
+            const ringGeo = new THREE.ExtrudeGeometry(ringShape, {
+                depth: thickness,
+                bevelEnabled: true,
+                bevelThickness: 0.001,
+                bevelSize: 0.001,
+                bevelSegments: 2
+            });
+            ringGeo.rotateX(Math.PI / 2);
+            ringGeo.center();
+            const ringMesh = new THREE.Mesh(ringGeo, steelSatinMat);
+            ringMesh.position.set(-shaftLen / 2 - 0.022, 0, 0);
+            wrenchGroup.add(ringMesh);
+
+            wrenchGroup.position.set(-0.15, 0.904, 0.12);
+            wrenchGroup.rotation.y = -0.45;
+            group.add(wrenchGroup);
+
+            // 3. Traditionelle Handsichel (Handgeschmiedetes C-förmiges Sichelblatt, im unteren Regalfach platziert)
+            const sickleGroup = new THREE.Group();
+
+            // Gedrechselter Holzgriff (12cm lang, ergonomische Form)
+            const sickleHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.12, 16), toolWoodMat);
+            sickleHandle.rotation.z = Math.PI / 2;
+            sickleHandle.position.set(-0.06, 0.012, 0);
+            sickleGroup.add(sickleHandle);
+
+            const knob = new THREE.Mesh(new THREE.SphereGeometry(0.015, 14, 14), toolWoodMat);
+            knob.position.set(-0.125, 0.012, 0);
+            sickleGroup.add(knob);
+
+            const sickleFerrule = new THREE.Mesh(new THREE.CylinderGeometry(0.0135, 0.0135, 0.018, 16), ferruleMat);
+            sickleFerrule.rotation.z = Math.PI / 2;
+            sickleFerrule.position.set(-0.005, 0.012, 0);
+            sickleGroup.add(sickleFerrule);
+
+            // Perfekt proportionierte Sichelklinge (aus einem Guss: Kropf & C-förmig geschwungene Schneide)
+            const sickleArcCenter = { x: 0.02, y: 0.11 };
+            const sickleA0 = -Math.PI * 0.45;
+            const sickleA1 = Math.PI * 0.85;
+            const sickleSteps = 24;
+
+            const sickleOuter = [];
+            const sickleInner = [];
+
+            for (let i = 0; i <= sickleSteps; i++) {
+                const t = i / sickleSteps;
+                const a = sickleA0 + t * (sickleA1 - sickleA0);
+                const w = 0.022 * (1 - Math.pow(t, 2.0)); // Klingenbreite verjüngt sich von 2.2 cm auf 0 mm an der Spitze
+                const rx = 0.095;
+                const ry = 0.115;
+                const ox = sickleArcCenter.x + rx * Math.cos(a);
+                const oy = sickleArcCenter.y + ry * Math.sin(a);
+                const tx = -rx * Math.sin(a);
+                const ty = ry * Math.cos(a);
+                const len = Math.hypot(tx, ty);
+                const nx = -ty / len;
+                const ny = tx / len;
+                sickleOuter.push([ox, oy]);
+                sickleInner.push([ox + nx * w, oy + ny * w]);
+            }
+
+            const bladeShape = new THREE.Shape();
+            // Startet an der Zwinge (Angler / Kropf)
+            bladeShape.moveTo(0, -0.004);
+            bladeShape.lineTo(sickleOuter[0][0], sickleOuter[0][1]);
+            for (let i = 1; i <= sickleSteps; i++) {
+                bladeShape.lineTo(sickleOuter[i][0], sickleOuter[i][1]);
+            }
+            // Von der Spitze entlang der geschärften Schneide zurück zur Basis
+            for (let i = sickleSteps - 1; i >= 0; i--) {
+                bladeShape.lineTo(sickleInner[i][0], sickleInner[i][1]);
+            }
+            // Übergang von der Schneidenbasis zum Kropf
+            bladeShape.quadraticCurveTo(0.015, 0.010, 0, 0.004);
+            bladeShape.closePath();
+
+            const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, {
+                depth: 0.0025,
+                bevelEnabled: true,
+                bevelThickness: 0.0006,
+                bevelSize: 0.0006,
+                bevelSegments: 2
+            });
+            bladeGeo.rotateX(Math.PI / 2);
+            const bladeMesh = new THREE.Mesh(bladeGeo, steelPolishedMat);
+            bladeMesh.position.set(0, 0.012, 0);
+            sickleGroup.add(bladeMesh);
+
+            // Geschmiedeter Rückenwulst (Klingenrippe zur Verstärkung des Außenrückens)
+            const spinePts = [
+                new THREE.Vector3(0, 0.012, -0.004)
+            ];
+            for (let i = 0; i <= sickleSteps; i++) {
+                spinePts.push(new THREE.Vector3(sickleOuter[i][0], 0.012, sickleOuter[i][1]));
+            }
+            const spineCurve = new THREE.CatmullRomCurve3(spinePts);
+            const spineGeo = new THREE.TubeGeometry(spineCurve, 24, 0.0018, 6, false);
+            const spineMesh = new THREE.Mesh(spineGeo, steelForgedMat);
+            sickleGroup.add(spineMesh);
+
+            // Im UNTEREN FACH der Werkbank ablegen (Ablagefläche bei y = 0.24)
+            sickleGroup.position.set(0.30, 0.252, 0.02);
+            sickleGroup.rotation.y = 0.35;
             group.add(sickleGroup);
 
-            // 4. Pinsel
+            // 4. Authentischer Flachpinsel (konturierter Holzgriff mit Bohrung, Blechzwinge mit Sicken, dichte Borsten)
             const brushGroup = new THREE.Group();
-            const brushHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.014, 0.22, 12), woodHandleMat);
-            brushHandle.rotation.x = Math.PI / 2;
-            brushHandle.position.set(0, 0.012, 0);
-            brushGroup.add(brushHandle);
-            const brushFerrule = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.016, 0.04), metalMat);
-            brushFerrule.position.set(0, 0.012, 0.12);
+
+            const handleShaft = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.010, 0.12), toolWoodMat);
+            handleShaft.position.set(0, 0.005, -0.06);
+            brushGroup.add(handleShaft);
+
+            const butt = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.010, 16), toolWoodMat);
+            butt.position.set(0, 0.005, -0.12);
+            brushGroup.add(butt);
+
+            const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.0035, 0.012, 12), darkWoodMat);
+            hole.position.set(0, 0.005, -0.12);
+            brushGroup.add(hole);
+
+            const waist = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.011, 0.04), toolWoodMat);
+            waist.position.set(0, 0.005, 0.01);
+            brushGroup.add(waist);
+
+            const brushFerrule = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.013, 0.038), ferruleMat);
+            brushFerrule.position.set(0, 0.0065, 0.045);
             brushGroup.add(brushFerrule);
-            const bristleMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
-            const brushBristles = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.014, 0.06), bristleMat);
-            brushBristles.position.set(0, 0.012, 0.17);
+
+            const brushBristles = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.011, 0.055), bristleMat);
+            brushBristles.position.set(0, 0.0055, 0.09);
             brushGroup.add(brushBristles);
-            brushGroup.position.set(0.72, 0.90, 0.10);
-            brushGroup.rotation.y = 0.60;
+
+            brushGroup.position.set(0.68, 0.90, 0.08);
+            brushGroup.rotation.y = 0.55;
             group.add(brushGroup);
 
-            // ── GELBER SCHEMEL (TISCHFARBE AUS CHILLEN MIT KRÄFTIGER MASERUNG) ──
+            // ── GELBER SCHEMEL (REINE, GLATTE FARBE PASSEND ZUM TISCH IM CHILLEN-RAUM) ──
             const stoolGroup = new THREE.Group();
-            const yellowSeatMat = new THREE.MeshLambertMaterial({ map: yellowWoodTex });
+            const yellowSeatMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
             const stoolLegMat = new THREE.MeshLambertMaterial({ map: castIronTex });
 
             const stoolSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.045, 24), yellowSeatMat);
@@ -2787,7 +2932,7 @@
             const keyboardTex = createProceduralKeyboardTex();
 
             // Roter Polsterstoff mit maximalem Kontrast & tiefer Bump-Map
-            const redFabricTex = createProceduralUpholsteryTex("#b91c1c", "#350707", "#fca5a5", "#200303");
+            const redFabricTex = createProceduralUpholsteryTex("#dc2626", "#7f1d1d", "#fecaca", "#450a0a");
             const upholsteryBumpTex = createProceduralUpholsteryBumpTex();
             const redFabricMat = new THREE.MeshLambertMaterial({
                 map: redFabricTex,
@@ -2844,11 +2989,11 @@
 
             // Mauspad & Maus
             const mousepad = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.004, 0.20), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-            mousepad.position.set(0.32, 0.768, 0.12);
+            mousepad.position.set(0.44, 0.768, 0.12);
             group.add(mousepad);
 
             const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.024, 0.11), new THREE.MeshLambertMaterial({ color: 0x27272a }));
-            mouse.position.set(0.32, 0.775, 0.12);
+            mouse.position.set(0.44, 0.775, 0.12);
             group.add(mouse);
 
             // PC Tower
@@ -2856,24 +3001,48 @@
             pcTower.position.set(0.55, 0.22, 0);
             group.add(pcTower);
 
-            // ── ROTER BÜROSTUHL ──
+            // ── ROTER BÜROSTUHL MIT ELEGANTEM 5-STERN-FUẞKREUZ (SCHÖNE AUSLEGER-BEINE STATT PLATTE) ──
             const chairGroup = new THREE.Group();
             const chairBaseMat = new THREE.MeshLambertMaterial({ map: metalTex });
+            const wheelMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
 
-            const starBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 5), chairBaseMat);
-            starBase.position.y = 0.06;
-            chairGroup.add(starBase);
+            // Zentrale Aluminium-Nabe
+            const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.048, 0.065, 16), chairBaseMat);
+            hub.position.y = 0.085;
+            chairGroup.add(hub);
 
+            // 5 elegante, geschwungene Ausleger-Beine mit Zwillingsrollen
             for (let i = 0; i < 5; i++) {
                 const a = (i / 5) * Math.PI * 2;
-                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.02, 8), chairBaseMat);
-                wheel.rotation.z = Math.PI / 2;
-                wheel.position.set(Math.cos(a) * 0.26, 0.025, Math.sin(a) * 0.26);
-                chairGroup.add(wheel);
+                const legArm = new THREE.Group();
+
+                // Leicht nach unten geneigter Auslegerarm
+                const armMesh = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.022, 0.22), chairBaseMat);
+                armMesh.position.set(0, -0.012, 0.13);
+                armMesh.rotation.x = -0.10;
+                legArm.add(armMesh);
+
+                // Rollen-Aufnahme / Gabel am Ende des Beins
+                const socket = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.022, 10), chairBaseMat);
+                socket.position.set(0, -0.025, 0.25);
+                legArm.add(socket);
+
+                // Reale Zwillingsrollen (zwei parallele Rollenräder auf dem Boden)
+                [-0.012, 0.012].forEach(wx => {
+                    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.009, 12), wheelMat);
+                    wheel.rotation.z = Math.PI / 2;
+                    wheel.position.set(wx, -0.060, 0.25);
+                    legArm.add(wheel);
+                });
+
+                legArm.position.y = 0.085;
+                legArm.rotation.y = a;
+                chairGroup.add(legArm);
             }
 
-            const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.38, 12), new THREE.MeshLambertMaterial({ color: 0x71717a }));
-            piston.position.y = 0.25;
+            // Gasfeder / Hubsäule
+            const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.028, 0.36, 12), new THREE.MeshLambertMaterial({ color: 0x71717a }));
+            piston.position.y = 0.26;
             chairGroup.add(piston);
 
             // Rote Sitzfläche (0.48 x 0.08 x 0.46) mit maßstabsgetreuer UV-Skalierung
@@ -3966,6 +4135,14 @@
             document.addEventListener("keyup", onKeyUp);
 
             // Mousedown im First-Person-Modus unterbindet Textselektions-Ziehgesten
+            // Verhindert native Browser-Textselektion im Dokument (außer in echten Eingabefeldern)
+            document.addEventListener("selectstart", (e) => {
+                if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
+                    return;
+                }
+                e.preventDefault();
+            });
+
             document.addEventListener("mousedown", (e) => {
                 if (controls && controls.isLocked) {
                     e.preventDefault();
@@ -4086,13 +4263,7 @@
                         }
                     }
                     break;
-                case "KeyR":
-                    if (movingNoteState) {
-                        pinMovingNote();
-                    } else if (currentInteractTarget && currentInteractTarget.type === 'note') {
-                        startMovingNote();
-                    }
-                    break;
+
                 case "KeyE":
                     if (movingNoteState) {
                         pinMovingNote();
