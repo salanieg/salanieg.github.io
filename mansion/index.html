@@ -10,9 +10,6 @@
     <link rel="icon" type="image/svg+xml" href="../images/favicon/favicon.svg">
     <link rel="shortcut icon" href="../images/favicon/favicon.ico">
 
-    <!-- YouTube IFrame API fuer synchrone Watchparty -->
-    <script src="https://www.youtube.com/iframe_api"></script>
-
     <!-- Three.js Import Map for CDN ESM -->
     <script type="importmap">
     {
@@ -595,24 +592,6 @@
             animation: none !important;
             transition: none !important;
         }
-        .cinema-preset-btn {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .cinema-preset-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: #38bdf8;
-            transform: translateY(-1px);
-        }
-        .cinema-preset-btn.active {
-            background: rgba(56, 189, 248, 0.2);
-            border-color: #38bdf8;
-            color: #38bdf8;
-        }
     </style>
 </head>
 <body>
@@ -791,64 +770,6 @@
                 </button>
             </div>
         </div>
-    </div>
-
-    <!-- 6. KINO & BEAMER MODAL (SYNCHRONE WATCHPARTY) -->
-    <div id="cinema-modal" class="modal-backdrop">
-        <div class="note-card" style="max-width: 520px;">
-            <h3>Chillen Video-Projektor</h3>
-            <p style="margin-bottom: 0.8rem; font-size: 0.90rem; color: var(--text-secondary);">
-                Synchronisierte Watchparty. Videos laufen fuer alle Spieler im Raum synchron.
-            </p>
-
-            <div class="form-group" style="margin-bottom: 0.85rem; text-align: left;">
-                <label class="form-label" for="cinema-input-url">YouTube-Link oder Video-ID</label>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" id="cinema-input-url" class="input-field" placeholder="z. B. https://youtu.be/... oder ID" style="flex: 1;">
-                    <button type="button" id="btn-cinema-load" class="btn-submit" style="white-space: nowrap; padding: 0.5rem 1rem;">Laden</button>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1rem; text-align: left;">
-                <label class="form-label" style="margin-bottom: 0.35rem; display: block;">Schnellauswahl (Presets)</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;" id="cinema-presets-container">
-                    <button type="button" class="cinema-preset-btn" data-id="jfKfPfyJRdk" data-title="Lofi Hip Hop Radio" style="padding: 0.5rem 0.65rem; font-size: 0.82rem; text-align: left;">
-                        [Lofi Chill Beats]
-                    </button>
-                    <button type="button" class="cinema-preset-btn" data-id="4xDzrJKXOOY" data-title="Synthwave Chill Drive" style="padding: 0.5rem 0.65rem; font-size: 0.82rem; text-align: left;">
-                        [Synthwave Night Drive]
-                    </button>
-                    <button type="button" class="cinema-preset-btn" data-id="aqz-KE-bpKQ" data-title="Big Buck Bunny 4K" style="padding: 0.5rem 0.65rem; font-size: 0.82rem; text-align: left;">
-                        [Big Buck Bunny 4K]
-                    </button>
-                    <button type="button" class="cinema-preset-btn" data-id="L_LUpnjgPso" data-title="Cozy Kaminfeuer" style="padding: 0.5rem 0.65rem; font-size: 0.82rem; text-align: left;">
-                        [Gemütliches Kaminfeuer]
-                    </button>
-                </div>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-md); padding: 0.7rem 0.85rem; margin-bottom: 1rem; text-align: left; font-size: 0.86rem;">
-                <div style="font-weight: bold; margin-bottom: 0.2rem;" id="cinema-status-title">Status: Kein Video aktiv</div>
-                <div style="color: var(--text-secondary); font-size: 0.80rem;" id="cinema-status-info">Projektor im Standby-Modus</div>
-            </div>
-
-            <div class="modal-actions" style="justify-content: space-between;">
-                <div style="display: flex; gap: 0.5rem;">
-                    <button type="button" id="btn-cinema-playpause" class="btn-submit" style="min-width: 100px;">Abspielen</button>
-                    <button type="button" id="btn-cinema-stop" class="btn-cancel">Stopp</button>
-                </div>
-                <button type="button" id="btn-close-cinema" class="btn-cancel">Schließen</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mini-Player Widget (Audio & Video) -->
-    <div id="cinema-yt-wrapper" style="position: fixed; bottom: 20px; right: 20px; width: 320px; height: 204px; z-index: 99; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 12px 40px rgba(0,0,0,0.8); background: #000000; display: none;">
-        <div style="background: rgba(18,18,22,0.95); padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #a1a1aa;">
-            <span id="cinema-yt-title-bar" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;">Chillen Cinema Player</span>
-            <button type="button" id="btn-minimize-cinema-yt" style="background: none; border: none; color: #fff; cursor: pointer; font-size: 13px; line-height: 1; padding: 0 4px;">X</button>
-        </div>
-        <div id="cinema-yt-player" style="width: 100%; height: 180px;"></div>
     </div>
 
     <!-- 5. EINSTELLUNGEN MODAL (SPIELERNAME) -->
@@ -1224,173 +1145,6 @@
         let sceneAmbientLight = null;
         let sceneDirLight = null;
 
-        // ── CHILLEN KINO & FLACKERNDER BEAMER STATUSVARIABLEN ──
-        let cinemaState = {
-            videoId: "jfKfPfyJRdk",
-            title: "Lofi Hip Hop Radio",
-            isPlaying: false,
-            currentTime: 0,
-            updatedAt: 0,
-            updatedBy: "system"
-        };
-        let ytPlayer = null;
-        let isYtApiReady = false;
-        let isCinemaModalOpen = false;
-
-        let projectorBeamGroup = null;
-        let projectorBeamMat = null;
-        let projectorSpotLight = null;
-        let projectorIndicatorLed = null;
-        let cinemaScreenCanvas = null;
-        let cinemaScreenCtx = null;
-        let cinemaScreenTex = null;
-        let cinemaInteractMesh = null;
-        let lastCinemaCanvasUpdate = 0;
-
-        function extractYouTubeId(urlOrId) {
-            if (!urlOrId) return null;
-            const str = urlOrId.trim();
-            if (/^[a-zA-Z0-9_-]{11}$/.test(str)) {
-                return str;
-            }
-            const match = str.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-            return match ? match[1] : null;
-        }
-
-        window.onYouTubeIframeAPIReady = function() {
-            isYtApiReady = true;
-            initYouTubePlayer();
-        };
-
-        function initYouTubePlayer() {
-            if (!isYtApiReady || ytPlayer) return;
-            const targetDiv = document.getElementById("cinema-yt-player");
-            if (!targetDiv) return;
-
-            try {
-                ytPlayer = new YT.Player("cinema-yt-player", {
-                    width: "320",
-                    height: "180",
-                    videoId: cinemaState.videoId || "jfKfPfyJRdk",
-                    playerVars: {
-                        autoplay: 0,
-                        controls: 1,
-                        rel: 0,
-                        playsinline: 1
-                    },
-                    events: {
-                        onReady: () => {
-                            if (cinemaState.isPlaying) {
-                                applyCinemaStateToPlayer(cinemaState);
-                            }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.warn("YouTube Player Init Warn:", err);
-            }
-        }
-
-        function applyCinemaStateToPlayer(state) {
-            const wrapper = document.getElementById("cinema-yt-wrapper");
-            const titleBar = document.getElementById("cinema-yt-title-bar");
-            if (titleBar) titleBar.textContent = state.title || "Chillen Cinema Player";
-
-            if (wrapper) {
-                wrapper.style.display = state.isPlaying ? "block" : "none";
-            }
-
-            if (ytPlayer && typeof ytPlayer.loadVideoById === "function") {
-                try {
-                    const currentVid = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
-                    if (currentVid !== state.videoId) {
-                        ytPlayer.loadVideoById({
-                            videoId: state.videoId,
-                            startSeconds: state.currentTime || 0
-                        });
-                    }
-
-                    if (state.isPlaying) {
-                        ytPlayer.playVideo();
-                    } else {
-                        ytPlayer.pauseVideo();
-                    }
-                } catch (e) {
-                    console.warn("YT Player State Update:", e);
-                }
-            }
-
-            updateCinemaUI();
-        }
-
-        function broadcastCinemaState(newState) {
-            cinemaState = Object.assign({}, cinemaState, newState, {
-                updatedAt: Date.now(),
-                updatedBy: currentUser ? currentUser.uid : "guest"
-            });
-
-            applyCinemaStateToPlayer(cinemaState);
-
-            if (rtdb) {
-                rtdbSet(rtdbRef(rtdb, "worldState/cinema"), cinemaState).catch(err => {
-                    console.warn("RTDB cinema sync error:", err);
-                });
-            }
-        }
-
-        function openCinemaModal() {
-            const modal = document.getElementById("cinema-modal");
-            if (!modal) return;
-            isCinemaModalOpen = true;
-            modal.classList.add("visible");
-            if (controls && controls.isLocked) {
-                controls.unlock();
-            }
-            updateCinemaUI();
-        }
-
-        function closeCinemaModal() {
-            const modal = document.getElementById("cinema-modal");
-            if (!modal) return;
-            isCinemaModalOpen = false;
-            modal.classList.remove("visible");
-        }
-
-        function updateCinemaUI() {
-            const statusTitle = document.getElementById("cinema-status-title");
-            const statusInfo = document.getElementById("cinema-status-info");
-            const playPauseBtn = document.getElementById("btn-cinema-playpause");
-            const urlInput = document.getElementById("cinema-input-url");
-
-            if (statusTitle) {
-                statusTitle.textContent = cinemaState.isPlaying 
-                    ? ("Spielt: " + (cinemaState.title || cinemaState.videoId))
-                    : "Status: Pausiert / Standby";
-            }
-            if (statusInfo) {
-                statusInfo.textContent = cinemaState.isPlaying
-                    ? "Projektor wirft Live-Lichtstrahl auf die Leinwand"
-                    : "Projektor im Standby-Modus";
-            }
-            if (playPauseBtn) {
-                playPauseBtn.textContent = cinemaState.isPlaying ? "Pausieren" : "Abspielen";
-            }
-            if (urlInput && !urlInput.value && cinemaState.videoId) {
-                urlInput.value = "https://youtu.be/" + cinemaState.videoId;
-            }
-
-            // Mark active preset
-            const presetButtons = document.querySelectorAll(".cinema-preset-btn");
-            presetButtons.forEach(btn => {
-                const vid = btn.getAttribute("data-id");
-                if (vid === cinemaState.videoId && cinemaState.isPlaying) {
-                    btn.classList.add("active");
-                } else {
-                    btn.classList.remove("active");
-                }
-            });
-        }
-
         function toggleChillenLamp() {
             const newState = !isChillenLampOn;
             setChillenLampState(newState, true);
@@ -1687,95 +1441,6 @@
                 alert("Fehler beim Abmelden.");
             }
         });
-
-        // ── KINO & VIDEO-PROJEKTOR MODAL EVENT LISTENERS ──
-        function initCinemaModalEvents() {
-            const btnCloseCinema = document.getElementById("btn-close-cinema");
-            const btnCinemaLoad = document.getElementById("btn-cinema-load");
-            const btnCinemaPlayPause = document.getElementById("btn-cinema-playpause");
-            const btnCinemaStop = document.getElementById("btn-cinema-stop");
-            const cinemaInputUrl = document.getElementById("cinema-input-url");
-            const btnMinimizeYt = document.getElementById("btn-minimize-cinema-yt");
-
-            if (btnCloseCinema) {
-                btnCloseCinema.addEventListener("click", () => closeCinemaModal());
-            }
-
-            if (btnMinimizeYt) {
-                btnMinimizeYt.addEventListener("click", () => {
-                    const wrap = document.getElementById("cinema-yt-wrapper");
-                    if (wrap) wrap.style.display = "none";
-                });
-            }
-
-            if (btnCinemaLoad) {
-                btnCinemaLoad.addEventListener("click", () => {
-                    const rawVal = cinemaInputUrl ? cinemaInputUrl.value : "";
-                    const vid = extractYouTubeId(rawVal);
-                    if (vid) {
-                        broadcastCinemaState({
-                            videoId: vid,
-                            title: "YouTube: " + vid,
-                            isPlaying: true,
-                            currentTime: 0
-                        });
-                        closeCinemaModal();
-                    } else {
-                        alert("Bitte eine gültige YouTube-URL oder Video-ID eingeben.");
-                    }
-                });
-            }
-
-            if (btnCinemaPlayPause) {
-                btnCinemaPlayPause.addEventListener("click", () => {
-                    broadcastCinemaState({
-                        isPlaying: !cinemaState.isPlaying
-                    });
-                });
-            }
-
-            if (btnCinemaStop) {
-                btnCinemaStop.addEventListener("click", () => {
-                    broadcastCinemaState({
-                        isPlaying: false,
-                        currentTime: 0
-                    });
-                });
-            }
-
-            // Presets Klick-Handler
-            const presetBtns = document.querySelectorAll(".cinema-preset-btn");
-            presetBtns.forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const vid = btn.getAttribute("data-id");
-                    const title = btn.getAttribute("data-title");
-                    if (vid) {
-                        broadcastCinemaState({
-                            videoId: vid,
-                            title: title || vid,
-                            isPlaying: true,
-                            currentTime: 0
-                        });
-                        closeCinemaModal();
-                    }
-                });
-            });
-
-            // Initialen Zustand des Kinos für alle synchron abhören
-            try {
-                const cinemaRtdbRef = rtdbRef(rtdb, "worldState/cinema");
-                onValue(cinemaRtdbRef, (snapshot) => {
-                    const val = snapshot.val();
-                    if (val && typeof val.videoId === "string") {
-                        cinemaState = Object.assign({}, cinemaState, val);
-                        applyCinemaStateToPlayer(cinemaState);
-                    }
-                });
-            } catch (err) {
-                console.warn("RTDB cinema listener error:", err);
-            }
-        }
-        initCinemaModalEvents();
 
         // ── EINSTELLUNGEN MODAL ──
         btnSettings.addEventListener("click", () => {
@@ -3964,350 +3629,6 @@
 
             lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
             scene.add(lampGroup);
-
-            // ─────────────────────────────────────────────────────────────
-            // DER CLOU: FLACKERNDER 3D-PROJEKTOR AUF DEM GELBEN TISCH
-            // ─────────────────────────────────────────────────────────────
-            const projectorGroup = new THREE.Group();
-
-            // Beamer-Gehäuse (Anthrazit-Metallic mit abgerundeten Phasen)
-            const projBodyGeo = new THREE.BoxGeometry(0.38, 0.12, 0.28);
-            const projBodyMat = new THREE.MeshStandardMaterial({
-                color: 0x22242a,
-                metalness: 0.85,
-                roughness: 0.35
-            });
-            const projBody = new THREE.Mesh(projBodyGeo, projBodyMat);
-            projBody.position.y = 0.06;
-            projectorGroup.add(projBody);
-
-            // Frontblende in gebürstetem Silber/Titan
-            const projFrontGeo = new THREE.BoxGeometry(0.38, 0.11, 0.02);
-            const projFrontMat = new THREE.MeshStandardMaterial({
-                color: 0x3f3f46,
-                metalness: 0.90,
-                roughness: 0.20
-            });
-            const projFront = new THREE.Mesh(projFrontGeo, projFrontMat);
-            projFront.position.set(0, 0.06, -0.14);
-            projectorGroup.add(projFront);
-
-            // Objektiv / Projektor-Linse (Blickrichtung -Z zur Leinwand)
-            const lensRing = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.052, 0.052, 0.04, 24),
-                new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.9, roughness: 0.2 })
-            );
-            lensRing.rotation.x = Math.PI / 2;
-            lensRing.position.set(0.08, 0.06, -0.155);
-            projectorGroup.add(lensRing);
-
-            const lensGlass = new THREE.Mesh(
-                new THREE.SphereGeometry(0.045, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-                new THREE.MeshPhysicalMaterial({
-                    color: 0x38bdf8,
-                    roughness: 0.05,
-                    metalness: 0.1,
-                    transmission: 0.5,
-                    clearcoat: 1.0,
-                    emissive: 0x0284c7,
-                    emissiveIntensity: 0.4
-                })
-            );
-            lensGlass.rotation.x = -Math.PI / 2;
-            lensGlass.position.set(0.08, 0.06, -0.17);
-            projectorGroup.add(lensGlass);
-
-            // 4 Gummifüße des Beamers
-            const footGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.012, 12);
-            const footMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
-            [[-0.15, -0.10], [0.15, -0.10], [-0.15, 0.10], [0.15, 0.10]].forEach(([fx, fz]) => {
-                const foot = new THREE.Mesh(footGeo, footMat);
-                foot.position.set(fx, 0.006, fz);
-                projectorGroup.add(foot);
-            });
-
-            // Lüftungsgitter an der Seite
-            const ventMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
-            [-0.08, -0.04, 0.0, 0.04, 0.08].forEach(vz => {
-                const vent = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.05, 0.02), ventMat);
-                vent.position.set(-0.191, 0.06, vz);
-                projectorGroup.add(vent);
-            });
-
-            // Status-LED an der Oberseite (Grün aktiv / Bernstein Standby)
-            projectorIndicatorLed = new THREE.Mesh(
-                new THREE.SphereGeometry(0.012, 12, 12),
-                new THREE.MeshBasicMaterial({ color: 0xf59e0b })
-            );
-            projectorIndicatorLed.position.set(-0.13, 0.125, 0.08);
-            projectorGroup.add(projectorIndicatorLed);
-
-            // Projektor auf dem gelben Tisch platzieren
-            // Tisch ist bei (rx, 0, rz + 0.4), Höhe 0.49m
-            projectorGroup.position.set(rx, 0.49, rz + 0.25);
-            scene.add(projectorGroup);
-
-            // ─────────────────────────────────────────────────────────────
-            // KINO-LEINWAND GEGENÜBER DER COUCH (16:9 GROSSBILD)
-            // ─────────────────────────────────────────────────────────────
-            const screenGroup = new THREE.Group();
-            const screenW = 3.50;
-            const screenH = 1.97;
-            const screenY = 2.05;
-            const screenZ = rz - 3.4; // z = 13.1m (3.8m Distanz zum Beamer, breiter Durchgang frei)
-
-            // Schwarzer edler Aluminiumrahmen
-            const frameGeo = new THREE.BoxGeometry(screenW + 0.16, screenH + 0.16, 0.06);
-            const frameMat = new THREE.MeshStandardMaterial({
-                color: 0x111113,
-                metalness: 0.85,
-                roughness: 0.25
-            });
-            const frameMesh = new THREE.Mesh(frameGeo, frameMat);
-            frameMesh.position.set(0, 0, 0);
-            screenGroup.add(frameMesh);
-
-            // Zwei filigrane Standbeine zum Boden
-            const legGeo = new THREE.CylinderGeometry(0.025, 0.025, screenY, 12);
-            const legMat = new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.9, roughness: 0.3 });
-            [-screenW / 2 + 0.10, screenW / 2 - 0.10].forEach(lx => {
-                const sLeg = new THREE.Mesh(legGeo, legMat);
-                sLeg.position.set(lx, -screenY / 2, 0);
-                screenGroup.add(sLeg);
-
-                // Runder Fußteller am Boden
-                const baseFoot = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.20, 0.025, 16), legMat);
-                baseFoot.position.set(lx, -screenY + 0.012, 0);
-                screenGroup.add(baseFoot);
-            });
-
-            // Dynamische Projektionsfläche (Canvas-Texture)
-            cinemaScreenCanvas = document.createElement("canvas");
-            cinemaScreenCanvas.width = 1280;
-            cinemaScreenCanvas.height = 720;
-            cinemaScreenCtx = cinemaScreenCanvas.getContext("2d");
-
-            cinemaScreenTex = new THREE.CanvasTexture(cinemaScreenCanvas);
-            cinemaScreenTex.colorSpace = THREE.SRGBColorSpace;
-            cinemaScreenTex.minFilter = THREE.LinearFilter;
-            cinemaScreenTex.magFilter = THREE.LinearFilter;
-
-            const screenGeo = new THREE.PlaneGeometry(screenW, screenH);
-            const screenMat = new THREE.MeshBasicMaterial({
-                map: cinemaScreenTex,
-                side: THREE.FrontSide
-            });
-            cinemaScreenMesh = new THREE.Mesh(screenGeo, screenMat);
-            cinemaScreenMesh.position.set(0, 0, 0.035);
-            screenGroup.add(cinemaScreenMesh);
-
-            screenGroup.position.set(rx, screenY, screenZ);
-            scene.add(screenGroup);
-
-            // ─────────────────────────────────────────────────────────────
-            // FLACKERNDER VOLUMETRISCHER PROJEKTOR-LICHTKEGEL & SPOTLIGHT
-            // ─────────────────────────────────────────────────────────────
-            const lensWorldPos = new THREE.Vector3(rx + 0.08, 0.49 + 0.06, rz + 0.25 - 0.17);
-            const screenWorldPos = new THREE.Vector3(rx, screenY, screenZ);
-            const beamDist = lensWorldPos.distanceTo(screenWorldPos);
-
-            projectorBeamGroup = new THREE.Group();
-            projectorBeamGroup.position.copy(lensWorldPos);
-            projectorBeamGroup.lookAt(screenWorldPos);
-
-            const beamGeo = new THREE.CylinderGeometry(0.06, 1.48, beamDist, 24, 1, true);
-            beamGeo.rotateX(Math.PI / 2);
-
-            projectorBeamMat = new THREE.MeshBasicMaterial({
-                color: 0x93c5fd,
-                transparent: true,
-                opacity: 0.03,
-                blending: THREE.AdditiveBlending,
-                side: THREE.DoubleSide,
-                depthWrite: false
-            });
-            const beamMesh = new THREE.Mesh(beamGeo, projectorBeamMat);
-            beamMesh.position.set(0, 0, beamDist / 2);
-            projectorBeamGroup.add(beamMesh);
-
-            // Echtes Three.js SpotLight für filmische Raumbeleuchtung
-            projectorSpotLight = new THREE.SpotLight(0xe0f2fe, 0.0, 16, Math.PI / 7, 0.45, 1.4);
-            projectorSpotLight.position.set(0, 0, 0);
-            projectorSpotLight.target.position.set(0, 0, beamDist);
-            projectorBeamGroup.add(projectorSpotLight);
-            projectorBeamGroup.add(projectorSpotLight.target);
-
-            scene.add(projectorBeamGroup);
-
-            // Unsichtbares Interaktionsvolumen für Beamer und Leinwand
-            cinemaInteractMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(1.2, 1.2, 1.2),
-                new THREE.MeshBasicMaterial({ visible: false })
-            );
-            cinemaInteractMesh.position.set(rx, 0.65, rz + 0.25);
-            cinemaInteractMesh.userData = { isCinema: true };
-            scene.add(cinemaInteractMesh);
-
-            // Zusätzliches Interaktionsvolumen an der Leinwand
-            const screenHitBox = new THREE.Mesh(
-                new THREE.BoxGeometry(screenW, screenH, 0.6),
-                new THREE.MeshBasicMaterial({ visible: false })
-            );
-            screenHitBox.position.set(rx, screenY, screenZ);
-            screenHitBox.userData = { isCinema: true };
-            scene.add(screenHitBox);
-
-            // Initiale Zeichnung des Standby-Screens
-            drawCinemaScreenCanvas(0);
-        }
-
-        // ── KINO-LEINWAND CANVAS TEXTUR RENDERING ──
-        function drawCinemaScreenCanvas(time) {
-            if (!cinemaScreenCtx || !cinemaScreenCanvas) return;
-            const w = cinemaScreenCanvas.width;
-            const h = cinemaScreenCanvas.height;
-            const ctx = cinemaScreenCtx;
-
-            ctx.clearRect(0, 0, w, h);
-
-            if (!cinemaState.isPlaying) {
-                // 1. Standby-Testbild & Kino-Countdown
-                const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-                bgGrad.addColorStop(0, "#080c16");
-                bgGrad.addColorStop(1, "#030408");
-                ctx.fillStyle = bgGrad;
-                ctx.fillRect(0, 0, w, h);
-
-                // Subtile Filmkader-Rasterlinien
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
-                ctx.lineWidth = 1.5;
-                for (let x = 80; x < w; x += 140) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x, h);
-                    ctx.stroke();
-                }
-
-                // Zentraler Emblem-Ring mit Fadenkreuz
-                ctx.strokeStyle = "rgba(56, 189, 248, 0.40)";
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.arc(w / 2, h / 2 - 40, 110, 0, Math.PI * 2);
-                ctx.stroke();
-
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.20)";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(w / 2 - 140, h / 2 - 40);
-                ctx.lineTo(w / 2 + 140, h / 2 - 40);
-                ctx.moveTo(w / 2, h / 2 - 180);
-                ctx.lineTo(w / 2, h / 2 + 100);
-                ctx.stroke();
-
-                ctx.fillStyle = "#ffffff";
-                ctx.font = 'bold 50px "Quicksand", sans-serif';
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("CHILLEN CINEMA", w / 2, h / 2 - 40);
-
-                ctx.fillStyle = "#94a3b8";
-                ctx.font = 'bold 26px "Quicksand", sans-serif';
-                ctx.fillText("Synchronisierte Watchparty fuer alle Spieler", w / 2, h / 2 + 65);
-
-                // Interaktiver Hinweis-Button
-                ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-                ctx.strokeStyle = "#38bdf8";
-                ctx.lineWidth = 2.5;
-                const bw = 560, bh = 60;
-                ctx.beginPath();
-                ctx.roundRect((w - bw) / 2, h / 2 + 125, bw, bh, 12);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.fillStyle = "#38bdf8";
-                ctx.font = 'bold 24px "Quicksand", sans-serif';
-                ctx.fillText("[E] oder [LMB] druecken fuer Videoauswahl & Steuerung", w / 2, h / 2 + 155);
-            } else {
-                // 2. Aktive Video-Wiedergabe mit Audio-Visualizer & Fortschritt
-                ctx.fillStyle = "#04060c";
-                ctx.fillRect(0, 0, w, h);
-
-                // Dynamischer radialer Lichtschein passend zum Beamerstrahl
-                const pulse = Math.sin(time * 3.5) * 0.15 + 0.85;
-                const radGrad = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w * 0.6);
-                radGrad.addColorStop(0, "rgba(30, 58, 138, 0.35)");
-                radGrad.addColorStop(1, "rgba(4, 6, 12, 0.0)");
-                ctx.fillStyle = radGrad;
-                ctx.fillRect(0, 0, w, h);
-
-                // Header: Status Badge & Titel
-                ctx.fillStyle = "#ef4444";
-                ctx.beginPath();
-                ctx.roundRect(70, 48, 120, 40, 8);
-                ctx.fill();
-
-                ctx.fillStyle = "#ffffff";
-                ctx.font = 'bold 20px "Quicksand", sans-serif';
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("LIVE PLAY", 130, 68);
-
-                ctx.fillStyle = "#ffffff";
-                ctx.font = 'bold 36px "Quicksand", sans-serif';
-                ctx.textAlign = "left";
-                const displayTitle = (cinemaState.title || cinemaState.videoId || "Laufendes Video").slice(0, 42);
-                ctx.fillText(displayTitle, 210, 68);
-
-                // Dynamischer Multi-Band Equalizer / Audio-Visualizer in der Mitte
-                const bars = 36;
-                const barW = 20;
-                const spacing = 12;
-                const totalW = bars * (barW + spacing) - spacing;
-                const startX = (w - totalW) / 2;
-                const baseY = h / 2 + 90;
-
-                for (let i = 0; i < bars; i++) {
-                    const wave1 = Math.sin(time * 5.8 + i * 0.45) * 60;
-                    const wave2 = Math.cos(time * 3.2 + i * 0.75) * 45;
-                    const wave3 = Math.sin(time * 8.4 + i * 1.10) * 25;
-                    const barH = Math.max(16, 80 + wave1 + wave2 + wave3);
-
-                    const grad = ctx.createLinearGradient(0, baseY, 0, baseY - barH);
-                    grad.addColorStop(0, "rgba(56, 189, 248, 0.95)");
-                    grad.addColorStop(0.6, "rgba(139, 92, 246, 0.90)");
-                    grad.addColorStop(1, "rgba(245, 158, 11, 0.95)");
-
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.roundRect(startX + i * (barW + spacing), baseY - barH, barW, barH, 4);
-                    ctx.fill();
-                }
-
-                // Unterer Bereich: Timeline & Fortschrittsbalken
-                ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-                ctx.fillRect(80, h - 75, w - 160, 10);
-
-                const progressCycle = (time * 0.05) % 1.0;
-                ctx.fillStyle = "#38bdf8";
-                ctx.fillRect(80, h - 75, (w - 160) * progressCycle, 10);
-
-                ctx.fillStyle = "#ffffff";
-                ctx.beginPath();
-                ctx.arc(80 + (w - 160) * progressCycle, h - 70, 9, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = "#94a3b8";
-                ctx.font = 'bold 20px "Quicksand", sans-serif';
-                ctx.textAlign = "left";
-                ctx.fillText("Synchronisiert via Firebase Realtime Watchparty", 80, h - 35);
-
-                ctx.textAlign = "right";
-                ctx.fillText("[E] Steuerung oeffnen", w - 80, h - 35);
-            }
-
-            if (cinemaScreenTex) {
-                cinemaScreenTex.needsUpdate = true;
-            }
         }
 
         // 3. GAMING (West)
@@ -5901,9 +5222,7 @@
                     window.getSelection().removeAllRanges();
                 }
 
-                if (currentInteractTarget.type === 'cinema') {
-                    openCinemaModal();
-                } else if (currentInteractTarget.type === 'chillenLamp') {
+                if (currentInteractTarget.type === 'chillenLamp') {
                     toggleChillenLamp();
                 } else if (currentInteractTarget.type === 'note') {
                     openViewNoteModal(currentInteractTarget.noteId, currentInteractTarget.data);
@@ -5933,13 +5252,12 @@
 
         // Tastatur- und Maussteuerung
         function onKeyDown(e) {
-            if (isModalOpen || isCinemaModalOpen) {
+            if (isModalOpen) {
                 if (e.key === "Escape") {
                     closeModal();
                     closeArtModal();
                     closeViewNoteModal();
                     closeSettingsModal();
-                    closeCinemaModal();
                 }
                 return;
             }
@@ -6002,9 +5320,7 @@
                         return;
                     }
                     if (currentInteractTarget) {
-                        if (currentInteractTarget.type === 'cinema') {
-                            openCinemaModal();
-                        } else if (currentInteractTarget.type === 'chillenLamp') {
+                        if (currentInteractTarget.type === 'chillenLamp') {
                             toggleChillenLamp();
                         } else if (currentInteractTarget.type === 'note') {
                             startMovingNote();
@@ -6074,36 +5390,6 @@
             if (sceneDirLight) {
                 sceneDirLight.intensity = THREE.MathUtils.lerp(0.35, 0.08, nightTransition);
                 sceneDirLight.color.lerpColors(new THREE.Color(0xffffff), new THREE.Color(0x9cbde6), nightTransition);
-            }
-
-            // Flackernder Beamer-Lichtkegel & dynamische Leinwand-Aktualisierung
-            const now = performance.now() * 0.001;
-            if (projectorBeamMat) {
-                if (cinemaState.isPlaying) {
-                    // Natürliches filmisches Projektionsflackern
-                    const flicker = 0.82 + 0.16 * Math.sin(now * 38.0) * Math.cos(now * 19.0 + 0.7) + 0.05 * (Math.random() - 0.5);
-                    projectorBeamMat.opacity = Math.max(0.04, Math.min(0.24, 0.16 * flicker));
-                    if (projectorSpotLight) {
-                        projectorSpotLight.intensity = 4.2 * flicker;
-                    }
-                    if (projectorIndicatorLed) {
-                        projectorIndicatorLed.material.color.setHex(0x10b981); // Gruen aktiv
-                    }
-                } else {
-                    projectorBeamMat.opacity = 0.02;
-                    if (projectorSpotLight) {
-                        projectorSpotLight.intensity = 0.0;
-                    }
-                    if (projectorIndicatorLed) {
-                        projectorIndicatorLed.material.color.setHex(0xf59e0b); // Bernstein Standby
-                    }
-                }
-            }
-
-            // Leinwand-Canvas in Echtzeit aktualisieren
-            if (cinemaState.isPlaying || (now - lastCinemaCanvasUpdate > 0.5)) {
-                drawCinemaScreenCanvas(now);
-                lastCinemaCanvasUpdate = now;
             }
 
             if (artSculpture) {
@@ -6305,18 +5591,6 @@
                             }
                         }
 
-                        // 3c. Chillen Beamer & Video-Screen Interaktion
-                        let hitCinema = false;
-                        if (!hitBike && !hitJp && !hitLamp && cinemaInteractMesh) {
-                            const cinemaHits = raycaster.intersectObjects([cinemaInteractMesh, cinemaScreenMesh].filter(Boolean), true);
-                            if (cinemaHits.length > 0 && cinemaHits[0].distance <= 4.2) {
-                                currentInteractTarget = { type: 'cinema' };
-                                interactPrompt.textContent = "[E] oder [LMB] Video-Projektor steuern";
-                                interactPrompt.classList.add("visible");
-                                hitCinema = true;
-                            }
-                        }
-
                         // 3b. Chillen-Stehlampe Interaktion
                         let hitLamp = false;
                         if (!hitBike && !hitJp && chillenLampInteractMesh) {
@@ -6331,7 +5605,7 @@
                             }
                         }
 
-                        if (!hitBike && !hitJp && !hitLamp && !hitCinema) {
+                        if (!hitBike && !hitJp && !hitLamp) {
                             // 4. Sitze
                             const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
                             if (hitSeats.length > 0 && hitSeats[0].distance <= 2.8) {
