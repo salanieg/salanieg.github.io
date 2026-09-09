@@ -1609,7 +1609,7 @@
             scene.add(mesh);
         }
 
-        // ── SPAWN-BODENFLÄCHE: LEDIGLICH DER WEISSE RING AUF TEPPICHBODEN ──
+        // ── SPAWN-BODENFLÄCHE MIT SCHRIFTZUG & MITTLEREM WEISSEN RING ──
         function createCurvedSpawnMesh() {
             const canvas = document.createElement("canvas");
             canvas.width = 2048;
@@ -1619,15 +1619,85 @@
             const cx = 1024;
             const cy = 1024;
 
-            // Vollkommen transparenter Hintergrund (der filzige Teppichboden bleibt durchgehend sichtbar)
+            // 100% transparenter Hintergrund (filziger Teppichboden bleibt darunter vollständig sichtbar)
             ctx.clearRect(0, 0, 2048, 2048);
 
-            // Lediglich der weiße Ring bleibt erhalten
+            // Mittlerer weißer Ring
             ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 14;
+            ctx.lineWidth = 10;
             ctx.beginPath();
             ctx.arc(cx, cy, 880, 0, Math.PI * 2);
             ctx.stroke();
+
+            // 1. MANSION: Groß und im oberen Halbkreis gerundet, mit gleichmäßigem Kerning
+            ctx.font = 'bold 150px "Quicksand", sans-serif';
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const mansion = "MANSION";
+            const mansionRadius = 580;
+            const letterSpacing = 28;
+            let totalMansionWidth = 0;
+            const mansionWidths = [];
+            for (let i = 0; i < mansion.length; i++) {
+                const w = ctx.measureText(mansion[i]).width + letterSpacing;
+                mansionWidths.push(w);
+                totalMansionWidth += w;
+            }
+
+            const totalMansionAngle = totalMansionWidth / mansionRadius;
+            let currentMansionAngle = -Math.PI / 2 - totalMansionAngle / 2;
+
+            for (let i = 0; i < mansion.length; i++) {
+                const char = mansion[i];
+                const charW = mansionWidths[i];
+                const charAngle = charW / mansionRadius;
+                const midAngle = currentMansionAngle + charAngle / 2;
+
+                ctx.save();
+                ctx.translate(cx + Math.cos(midAngle) * mansionRadius, cy + Math.sin(midAngle) * mansionRadius);
+                ctx.rotate(midAngle + Math.PI / 2);
+                ctx.fillText(char, 0, 0);
+                ctx.restore();
+
+                currentMansionAngle += charAngle;
+            }
+
+            // 2. Akronym im unteren Halbkreis (tangential und aufrecht lesbar gerundet)
+            ctx.font = 'bold 36px "Quicksand", sans-serif';
+            ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const acronym = "MULTI ANGLE NAVIGATION SYSTEM FOR IDEA ORGANIZING AND NOTEBOOKING";
+            const acronymRadius = 750;
+            const acronymSpacing = 6;
+            let totalAcronymWidth = 0;
+            const acronymWidths = [];
+            for (let i = 0; i < acronym.length; i++) {
+                const w = ctx.measureText(acronym[i]).width + acronymSpacing;
+                acronymWidths.push(w);
+                totalAcronymWidth += w;
+            }
+
+            const totalAcronymAngle = totalAcronymWidth / acronymRadius;
+            let currentAcronymAngle = Math.PI / 2 + totalAcronymAngle / 2;
+
+            for (let i = 0; i < acronym.length; i++) {
+                const char = acronym[i];
+                const charW = acronymWidths[i];
+                const charAngle = charW / acronymRadius;
+                const midAngle = currentAcronymAngle - charAngle / 2;
+
+                ctx.save();
+                ctx.translate(cx + Math.cos(midAngle) * acronymRadius, cy + Math.sin(midAngle) * acronymRadius);
+                ctx.rotate(midAngle - Math.PI / 2);
+                ctx.fillText(char, 0, 0);
+                ctx.restore();
+
+                currentAcronymAngle -= charAngle;
+            }
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.colorSpace = THREE.SRGBColorSpace;
@@ -1644,7 +1714,7 @@
                 })
             );
             spawnMesh.rotation.x = -Math.PI / 2;
-            spawnMesh.position.set(0, 0.012, 0);
+            spawnMesh.position.set(0, 0.005, 0);
             return spawnMesh;
         }
 
@@ -4767,7 +4837,24 @@
             courtyardFloor.receiveShadow = true;
             scene.add(courtyardFloor);
 
-            // Boden im Innenhof durchgehend filzig, lediglich der weiße Spawner-Ring bleibt
+            // Konzentrische weiße Kreise um den mittleren Kreis (nach außen hin gleichmäßig ausblendend)
+            const concentricRingsCount = 8;
+            for (let i = 1; i <= concentricRingsCount; i++) {
+                const r = 2.06 + 0.65 * i + 0.08 * i * i;
+                const opacity = Math.pow(1.0 - (i / (concentricRingsCount + 1)), 1.7) * 0.60;
+                const ringGeo = new THREE.RingGeometry(r - 0.015, r + 0.015, 96);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: opacity,
+                    side: THREE.DoubleSide,
+                    depthWrite: false
+                });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.y = 0.003;
+                scene.add(ring);
+            }
 
             // 2. Runder Spawn-Bereich mit MANSION-Rundschrift
             const curvedSpawn = createCurvedSpawnMesh();
