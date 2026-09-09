@@ -819,7 +819,8 @@
             onChildAdded, 
             onChildChanged, 
             onChildRemoved, 
-            onDisconnect 
+            onDisconnect,
+            onValue 
         } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
         // ── FIREBASE KONFIGURATION ──
@@ -837,6 +838,19 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const rtdb = getDatabase(app);
+
+        // Initialen Zustand der Chillen-Lampe für alle synchron abhören
+        try {
+            const initialLampRef = rtdbRef(rtdb, "worldState/chillenLamp");
+            onValue(initialLampRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val !== null && typeof val.isOn === "boolean") {
+                    setChillenLampState(val.isOn, false);
+                }
+            });
+        } catch (e) {
+            console.warn("RTDB initial lamp listener error:", e);
+        }
 
         // ── DOM ELEMENTE ──
         const authContainer = document.getElementById("auth-container");
@@ -1120,6 +1134,42 @@
         let localBikeCockpit = null;
         let skyDomeMesh = null;
         let skyUniforms = null;
+
+        // ── CHILLEN-LAMPE & STERNENHIMMEL STATUSVARIABLEN ──
+        let isChillenLampOn = false;
+        let targetNightTransition = 0.0;
+        let nightTransition = 0.0;
+        let chillenLampInteractMesh = null;
+        let chillenLampLight = null;
+        let chillenLampShadeMat = null;
+        let sceneAmbientLight = null;
+        let sceneDirLight = null;
+
+        function toggleChillenLamp() {
+            const newState = !isChillenLampOn;
+            setChillenLampState(newState, true);
+        }
+
+        function setChillenLampState(on, syncToNetwork) {
+            isChillenLampOn = on;
+            targetNightTransition = on ? 1.0 : 0.0;
+
+            if (chillenLampLight) {
+                chillenLampLight.visible = on;
+            }
+            if (chillenLampShadeMat) {
+                chillenLampShadeMat.emissive.setHex(on ? 0xfef08a : 0x000000);
+                chillenLampShadeMat.emissiveIntensity = on ? 1.5 : 0.0;
+            }
+
+            if (syncToNetwork && rtdb) {
+                rtdbSet(rtdbRef(rtdb, "worldState/chillenLamp"), {
+                    isOn: on,
+                    updatedBy: currentUser ? currentUser.uid : "guest",
+                    updatedAt: Date.now()
+                }).catch(err => console.warn("RTDB lamp update error:", err));
+            }
+        }
 
         let isJetpackEquipped = false;
         let isJetpackThrusting = false;
@@ -3528,15 +3578,54 @@
             couchGroup.position.set(rx, 0, rz + 3.4);
             scene.add(couchGroup);
 
-            // Stehlampe
+            // Stehlampe (interaktiv schaltbar mit [E] / [LMB] & Multiplayer-Sync)
             const lampGroup = new THREE.Group();
-            const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.1, 12), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+
+            const lampBase = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.22, 0.24, 0.03, 16),
+                new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4, metalness: 0.8 })
+            );
+            lampBase.position.y = 0.015;
+            lampGroup.add(lampBase);
+
+            const lampPole = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.022, 0.022, 2.1, 12),
+                new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.3, metalness: 0.85 })
+            );
             lampPole.position.y = 1.05;
             lampGroup.add(lampPole);
 
-            const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.45, 24, 1, true), new THREE.MeshLambertMaterial({ color: 0xfef08a, side: THREE.DoubleSide }));
+            chillenLampShadeMat = new THREE.MeshStandardMaterial({
+                color: 0xfef08a,
+                side: THREE.DoubleSide,
+                roughness: 0.35,
+                emissive: 0x000000,
+                emissiveIntensity: 0.0
+            });
+            const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.46, 24, 1, true), chillenLampShadeMat);
             lampShade.position.y = 2.05;
             lampGroup.add(lampShade);
+
+            const lampBulb = new THREE.Mesh(
+                new THREE.SphereGeometry(0.07, 16, 16),
+                new THREE.MeshBasicMaterial({ color: 0xfffbeb })
+            );
+            lampBulb.position.y = 1.95;
+            lampGroup.add(lampBulb);
+
+            chillenLampLight = new THREE.PointLight(0xffe29a, 3.8, 14, 1.4);
+            chillenLampLight.position.set(0, 1.95, 0);
+            chillenLampLight.visible = false;
+            lampGroup.add(chillenLampLight);
+
+            // Unsichtbares Interaktions-Volumen für verlässliches Anvisieren
+            chillenLampInteractMesh = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.48, 0.48, 2.3, 12),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            chillenLampInteractMesh.position.y = 1.15;
+            chillenLampInteractMesh.userData = { isChillenLamp: true };
+            lampGroup.add(chillenLampInteractMesh);
 
             lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
             scene.add(lampGroup);
@@ -4377,10 +4466,11 @@
 
 
 
-        // ── REALISTISCHER, GENERIERTER HIMMEL MIT FLIESSENDEN, PROMINENTEN WOLKEN ──
+        // ── REALISTISCHER HIMMEL: FLIESSENDE WOLKEN AM TAG & SPEKTAKULÄRER STERNENHIMMEL BEI NACHT ──
         function createRealisticProceduralSky() {
             skyUniforms = {
                 uTime: { value: 0.0 },
+                uNightTransition: { value: 0.0 },
                 uSunPosition: { value: new THREE.Vector3(12.0, 35.0, 12.0).normalize() },
                 uZenithColor: { value: new THREE.Color('#195cc7') },      // Strahlendes Tageslicht-Azurblau
                 uHorizonColor: { value: new THREE.Color('#a8d3f8') },     // Weicher atmosphärischer Dunst
@@ -4401,6 +4491,7 @@
                 precision highp float;
 
                 uniform float uTime;
+                uniform float uNightTransition;
                 uniform vec3 uSunPosition;
                 uniform vec3 uZenithColor;
                 uniform vec3 uHorizonColor;
@@ -4409,11 +4500,17 @@
 
                 varying vec3 vViewDir;
 
-                // Schnelles, stetiges Quintic-Hermite Rauschen
+                // Schnelles, stetiges Rauschen & Hash-Funktionen
                 float hash(vec2 p) {
                     p = fract(p * vec2(123.34, 456.21));
                     p += dot(p, p + 45.32);
                     return fract(p.x * p.y);
+                }
+
+                float hash3(vec3 p) {
+                    p = fract(p * vec3(123.34, 456.21, 789.12));
+                    p += dot(p, p + 45.32);
+                    return fract(p.x * p.y * p.z);
                 }
 
                 float noise(vec2 p) {
@@ -4429,7 +4526,7 @@
 
                 const mat2 m2 = mat2(0.80, 0.60, -0.60, 0.80);
 
-                // 3-Oktaven-FBM für lebendige, natürliche Wolkenstrukturen
+                // 3-Oktaven-FBM für lebendige Wolkenstrukturen
                 float fbm3(vec2 p) {
                     float f = 0.550 * noise(p); p = m2 * p * 2.02;
                     f += 0.280 * noise(p); p = m2 * p * 2.03;
@@ -4437,93 +4534,217 @@
                     return f / 0.970;
                 }
 
-                // Deutlich erkennbare Cumulus-Schäfchen- & Haufenwolken mit natürlicher Bauschigkeit
                 float cloudDensity(vec2 p) {
                     vec2 warp = vec2(noise(p * 0.7), noise(p * 0.7 + vec2(4.3, 1.7)));
                     float n = fbm3(p + warp * 0.45);
                     return smoothstep(0.40, 0.70, n);
                 }
 
-                void main() {
-                    vec3 dir = normalize(vViewDir);
-                    vec3 sunDir = normalize(uSunPosition);
-                    float sunDot = max(dot(dir, sunDir), 0.0);
+                // ── SPEKTAKULÄRE STERNENHIMMEL-KOMPONENTEN ──
 
-                    vec3 baseSky = vec3(0.0);
+                // Mehrstufiges Sternenfeld: Tausende Sterne, Spektralfarben, Funkeln & Diffraktionsspikes
+                vec3 renderStarField(vec3 dir, float time) {
+                    vec3 stars = vec3(0.0);
 
-                    if (dir.y >= 0.0) {
-                        // --- OBERE HEMISPHÄRE: ATMOSPHÄRE & VOLUMETRISCHE WOLKEN ---
-                        float h = dir.y;
-                        vec3 skyGradient = mix(uHorizonColor, uZenithColor, pow(h, 0.58));
-
-                        // Sonnenscheibe mit natürlichem Sonnenkranz (Halo)
-                        float sunDisc = smoothstep(0.9986, 0.9996, sunDot);
-                        float sunHalo = pow(sunDot, 128.0) * 0.20 + pow(sunDot, 32.0) * 0.08;
-                        vec3 sunDiscCol = vec3(1.0, 0.98, 0.92);
-
-                        baseSky = mix(skyGradient, sunDiscCol, sunDisc * 0.90);
-                        baseSky += uSunColor * sunHalo;
-
-                        // Fließende, plastische 3D-Wolken
-                        if (dir.y > 0.01) {
-                            float cloudHeight = 1.0 / (dir.y + 0.16);
-                            // Fließender Windvektor über die Zeit
-                            vec2 windOffset = uTime * vec2(0.012, 0.006);
-                            // Optimierter Maßstab für weithin sichtbare Wolkenformationen
-                            vec2 cloudUV = dir.xz * cloudHeight * 2.2 + windOffset;
-                            vec2 sunCloudUV = sunDir.xz / (sunDir.y + 0.16) * 2.2 + windOffset;
-
-                            float dens = cloudDensity(cloudUV);
-
-                            // Plastische 3D-Beleuchtung über Normalenvektor
-                            float eps = 0.06;
-                            float dX = cloudDensity(cloudUV + vec2(eps, 0.0));
-                            float dY = cloudDensity(cloudUV + vec2(0.0, eps));
-                            vec3 cloudNorm = normalize(vec3((dens - dX) * 3.5, 0.45, (dens - dY) * 3.5));
-
-                            float sunDiff = clamp(dot(cloudNorm, sunDir), 0.0, 1.0);
-                            float ambientUp = clamp(cloudNorm.y * 0.5 + 0.5, 0.0, 1.0);
-
-                            // Strahlender Silberstreif an den von der Sonne beschienenen Wolkenrändern
-                            float silverLining = pow(sunDot, 4.0) * smoothstep(0.02, 0.35, dens) * (1.0 - smoothstep(0.35, 0.85, dens));
-
-                            // Natürliche Wolken-Farbpalette mit hohem Kontrast zum blauen Himmel
-                            vec3 cloudBaseCol = vec3(0.55, 0.62, 0.74); // Sanft beschattete Unterseite
-                            vec3 cloudMidCol  = vec3(0.86, 0.91, 0.97); // Voller Wolkenkörper
-                            vec3 cloudLitCol  = vec3(1.00, 1.00, 0.99); // Strahlend weiße, sonnenbeschienene Flanken
-                            vec3 silverCol    = vec3(1.00, 0.98, 0.92) * 0.60;
-
-                            vec3 cloudShading = mix(cloudBaseCol, cloudMidCol, ambientUp);
-                            cloudShading = mix(cloudShading, cloudLitCol, sunDiff * 0.82 + 0.18);
-                            cloudShading += silverCol * silverLining;
-
-                            // Sonnenstrahlen (Crepuscular Rays)
-                            vec2 toSun = sunCloudUV - cloudUV;
-                            vec2 rayStep = normalize(toSun) * 0.15;
-                            float rayTransmittance = (1.0 - cloudDensity(cloudUV + rayStep * 1.5)) +
-                                                     (1.0 - cloudDensity(cloudUV + rayStep * 3.0));
-                            rayTransmittance *= 0.5;
-
-                            float rayAngle = atan(toSun.y, toSun.x);
-                            float streak = noise(vec2(rayAngle * 7.0, uTime * 0.02)) * 0.5 + 0.5;
-                            float angularGlow = pow(sunDot, 4.0) * 0.35 + pow(sunDot, 16.0) * 0.45;
-                            float godRays = rayTransmittance * angularGlow * (0.6 + 0.4 * streak) * (1.0 - dens * 0.85);
-                            vec3 godRayCol = vec3(1.0, 0.97, 0.90) * 0.35;
-
-                            // Weicher Horizont-Übergang
-                            float horizonFade = smoothstep(0.01, 0.16, dir.y);
-                            float cloudAlpha = dens * horizonFade;
-
-                            baseSky = mix(baseSky, cloudShading, cloudAlpha);
-                            baseSky += godRayCol * (godRays * horizonFade);
-                        }
-                    } else {
-                        // Untere Hemisphäre: Sanfter Dunst-Übergang
-                        float distHaze = exp(-abs(dir.y) * 14.0);
-                        baseSky = mix(uGroundColor, uHorizonColor, distHaze * 0.85);
+                    // 1. Feiner kosmischer Sternenstaub (Tiefe & Glanz)
+                    vec3 pDust = dir * 180.0;
+                    vec3 cellDust = floor(pDust);
+                    float hDust = hash3(cellDust);
+                    if (hDust > 0.982) {
+                        float b = (hDust - 0.982) / 0.018;
+                        stars += vec3(b * 0.45);
                     }
 
-                    gl_FragColor = vec4(baseSky, 1.0);
+                    // 2. Markante Einzelsterne mit individuellem Funkeln
+                    vec3 pStars = dir * 75.0;
+                    vec3 cellStars = floor(pStars);
+                    vec3 fractStars = fract(pStars) - 0.5;
+
+                    float hStar = hash3(cellStars);
+                    if (hStar > 0.938) {
+                        vec3 starOffset = vec3(
+                            hash(cellStars.xy + vec2(1.1, 2.3)) - 0.5,
+                            hash(cellStars.yz + vec2(3.4, 4.5)) - 0.5,
+                            hash(cellStars.zx + vec2(5.6, 6.7)) - 0.5
+                        ) * 0.70;
+
+                        vec3 d = fractStars - starOffset;
+                        float dist = length(d);
+
+                        // Sternfarben nach Spektralklassen (Blau-Weiß, Sonnengelb, Roter Riese)
+                        vec3 col = vec3(0.92, 0.96, 1.00);
+                        float colorHash = hash(cellStars.xz + 7.12);
+                        if (colorHash < 0.28) {
+                            col = vec3(0.68, 0.84, 1.00); // Heißer Azur-Stern
+                        } else if (colorHash < 0.58) {
+                            col = vec3(1.00, 0.94, 0.80); // Warmes Sonnengold
+                        } else if (colorHash < 0.75) {
+                            col = vec3(1.00, 0.62, 0.42); // Rötlicher Riesenstern
+                        }
+
+                        // Realistisches Funkeln (Szintillation)
+                        float twinkle = 0.72 + 0.38 * sin(time * (4.5 + hStar * 14.0) + hStar * 62.8);
+
+                        // Kern-Luminanz und sanfter Schein
+                        float starCore = smoothstep(0.08, 0.005, dist);
+                        float starGlow = exp(-dist * 18.0) * 0.50;
+
+                        // 4-strahlige Diffraktionskreuze bei prominenten Hero-Sternen
+                        float spikes = 0.0;
+                        if (hStar > 0.984 && dist < 0.28) {
+                            float crossDist = min(abs(d.x), abs(d.y));
+                            spikes = exp(-crossDist * 65.0) * exp(-dist * 14.0) * 0.75;
+                        }
+
+                        stars += col * ((starCore + starGlow + spikes) * twinkle);
+                    }
+
+                    return stars;
+                }
+
+                // Milchstraße: Galaktisches Band, kosmische Nebel & Dark-Rift-Staubbänder
+                vec3 renderMilkyWay(vec3 dir, float time) {
+                    vec3 galNorm = normalize(vec3(0.58, 0.72, 0.38));
+                    float galDist = dot(dir, galNorm);
+                    float galProfile = exp(-galDist * galDist * 18.0);
+                    float galGlow = exp(-galDist * galDist * 4.5);
+
+                    if (galGlow < 0.005) return vec3(0.0);
+
+                    vec3 galTangent = normalize(cross(galNorm, vec3(0.0, 1.0, 0.0)));
+                    vec3 galBitangent = cross(galNorm, galTangent);
+                    vec2 galCoord = vec2(dot(dir, galTangent), dot(dir, galBitangent));
+
+                    vec2 st = galCoord * 4.5;
+                    float dustFbm = fbm3(st + vec2(1.7, 3.2));
+                    float detailFbm = noise(st * 3.8 + vec2(5.4, 2.1));
+
+                    // Dunkelwolken (Great Rift): Reale dunkle Staubbänder in der Milchstraße
+                    float rift = smoothstep(0.35, 0.65, noise(st * 1.8 + vec2(0.8, 1.4)));
+                    float riftMask = mix(1.0, 0.15, rift * galProfile);
+
+                    vec3 galCoreCol   = vec3(1.00, 0.88, 0.70); // Galaktischer Kern
+                    vec3 galVioletCol = vec3(0.45, 0.20, 0.62); // H-Alpha-Nebel
+                    vec3 galTealCol   = vec3(0.14, 0.40, 0.58); // Interstellarer Reflexionsnebel
+
+                    vec3 nebulaCol = mix(galTealCol, galVioletCol, dustFbm);
+                    nebulaCol = mix(nebulaCol, galCoreCol, galProfile * (dustFbm * 0.70 + 0.30));
+
+                    float intensity = (galProfile * 0.95 + galGlow * 0.40) * (dustFbm * 0.75 + detailFbm * 0.35);
+                    return nebulaCol * intensity * riftMask;
+                }
+
+                // Dynamische Sternschnuppen
+                vec3 renderShootingStar(vec3 dir, float time) {
+                    float cycle = mod(time, 7.5);
+                    if (cycle > 1.2) return vec3(0.0);
+
+                    float t = cycle / 1.2;
+                    vec3 startPos = normalize(vec3(-0.4, 0.85, -0.35));
+                    vec3 endPos   = normalize(vec3(0.5, 0.65, 0.58));
+                    vec3 meteorPos = normalize(mix(startPos, endPos, t));
+
+                    float d = distance(dir, meteorPos);
+                    float streak = smoothstep(0.035, 0.0, d) * (1.0 - t);
+                    return vec3(1.0, 0.98, 0.90) * streak * 2.8;
+                }
+
+                void main() {
+                    vec3 dir = normalize(vViewDir);
+                    float t = clamp(uNightTransition, 0.0, 1.0);
+
+                    // ── 1. TAGESLICHT-HIMMEL MIT FLIESSENDEN WOLKEN ──
+                    vec3 daySky = vec3(0.0);
+                    if (t < 0.999) {
+                        vec3 sunDir = normalize(uSunPosition);
+                        float sunDot = max(dot(dir, sunDir), 0.0);
+
+                        if (dir.y >= 0.0) {
+                            float h = dir.y;
+                            vec3 skyGradient = mix(uHorizonColor, uZenithColor, pow(h, 0.58));
+
+                            float sunDisc = smoothstep(0.9986, 0.9996, sunDot);
+                            float sunHalo = pow(sunDot, 128.0) * 0.20 + pow(sunDot, 32.0) * 0.08;
+                            vec3 sunDiscCol = vec3(1.0, 0.98, 0.92);
+
+                            daySky = mix(skyGradient, sunDiscCol, sunDisc * 0.90);
+                            daySky += uSunColor * sunHalo;
+
+                            if (dir.y > 0.01) {
+                                float cloudHeight = 1.0 / (dir.y + 0.16);
+                                vec2 windOffset = uTime * vec2(0.012, 0.006);
+                                vec2 cloudUV = dir.xz * cloudHeight * 2.2 + windOffset;
+                                vec2 sunCloudUV = sunDir.xz / (sunDir.y + 0.16) * 2.2 + windOffset;
+
+                                float dens = cloudDensity(cloudUV);
+
+                                float eps = 0.06;
+                                float dX = cloudDensity(cloudUV + vec2(eps, 0.0));
+                                float dY = cloudDensity(cloudUV + vec2(0.0, eps));
+                                vec3 cloudNorm = normalize(vec3((dens - dX) * 3.5, 0.45, (dens - dY) * 3.5));
+
+                                float sunDiff = clamp(dot(cloudNorm, sunDir), 0.0, 1.0);
+                                float ambientUp = clamp(cloudNorm.y * 0.5 + 0.5, 0.0, 1.0);
+
+                                float silverLining = pow(sunDot, 4.0) * smoothstep(0.02, 0.35, dens) * (1.0 - smoothstep(0.35, 0.85, dens));
+
+                                vec3 cloudBaseCol = vec3(0.55, 0.62, 0.74);
+                                vec3 cloudMidCol  = vec3(0.86, 0.91, 0.97);
+                                vec3 cloudLitCol  = vec3(1.00, 1.00, 0.99);
+                                vec3 silverCol    = vec3(1.00, 0.98, 0.92) * 0.60;
+
+                                vec3 cloudShading = mix(cloudBaseCol, cloudMidCol, ambientUp);
+                                cloudShading = mix(cloudShading, cloudLitCol, sunDiff * 0.82 + 0.18);
+                                cloudShading += silverCol * silverLining;
+
+                                vec2 toSun = sunCloudUV - cloudUV;
+                                vec2 rayStep = normalize(toSun) * 0.15;
+                                float rayTransmittance = (1.0 - cloudDensity(cloudUV + rayStep * 1.5)) +
+                                                         (1.0 - cloudDensity(cloudUV + rayStep * 3.0));
+                                rayTransmittance *= 0.5;
+
+                                float rayAngle = atan(toSun.y, toSun.x);
+                                float streak = noise(vec2(rayAngle * 7.0, uTime * 0.02)) * 0.5 + 0.5;
+                                float angularGlow = pow(sunDot, 4.0) * 0.35 + pow(sunDot, 16.0) * 0.45;
+                                float godRays = rayTransmittance * angularGlow * (0.6 + 0.4 * streak) * (1.0 - dens * 0.85);
+                                vec3 godRayCol = vec3(1.0, 0.97, 0.90) * 0.35;
+
+                                float horizonFade = smoothstep(0.01, 0.16, dir.y);
+                                float cloudAlpha = dens * horizonFade;
+
+                                daySky = mix(daySky, cloudShading, cloudAlpha);
+                                daySky += godRayCol * (godRays * horizonFade);
+                            }
+                        } else {
+                            float distHaze = exp(-abs(dir.y) * 14.0);
+                            daySky = mix(uGroundColor, uHorizonColor, distHaze * 0.85);
+                        }
+                    }
+
+                    // ── 2. SPEKTAKULÄRER STERNENHIMMEL BEI NACHT ──
+                    vec3 nightSky = vec3(0.0);
+                    if (t > 0.001) {
+                        if (dir.y >= -0.02) {
+                            float h = max(dir.y, 0.0);
+                            vec3 nightZenith  = vec3(0.008, 0.012, 0.030); // Tiefes Obsidian-Schwarz
+                            vec3 nightHorizon = vec3(0.030, 0.050, 0.105); // Kosmisches Indigoblau
+                            nightSky = mix(nightHorizon, nightZenith, pow(h, 0.65));
+
+                            vec3 stars = renderStarField(dir, uTime);
+                            vec3 milkyWay = renderMilkyWay(dir, uTime);
+                            vec3 shootingStar = renderShootingStar(dir, uTime);
+
+                            float horizonFade = smoothstep(-0.02, 0.14, dir.y);
+                            nightSky += (stars + milkyWay + shootingStar) * horizonFade;
+                        } else {
+                            float distHaze = exp(-abs(dir.y) * 12.0);
+                            nightSky = mix(vec3(0.004, 0.007, 0.014), vec3(0.018, 0.028, 0.065), distHaze);
+                        }
+                    }
+
+                    // ── 3. SANFTES, PERFEKTES CROSS-FADING ZWISCHEN TAG UND NACHT ──
+                    vec3 finalColor = mix(daySky, nightSky, t);
+                    gl_FragColor = vec4(finalColor, 1.0);
                 }
             `;
 
@@ -4811,12 +5032,12 @@
                 }
             });
 
-            // Licht
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.96);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.35);
-            dirLight.position.set(12, 35, 12);
-            scene.add(dirLight);
-            scene.add(ambientLight);
+            // Licht (dynamisch angepasst bei Tag- und Nacht-/Sternenhimmel)
+            sceneAmbientLight = new THREE.AmbientLight(0xffffff, 0.96);
+            sceneDirLight = new THREE.DirectionalLight(0xffffff, 0.35);
+            sceneDirLight.position.set(12, 35, 12);
+            scene.add(sceneDirLight);
+            scene.add(sceneAmbientLight);
 
 
 
@@ -4938,7 +5159,9 @@
                     window.getSelection().removeAllRanges();
                 }
 
-                if (currentInteractTarget.type === 'note') {
+                if (currentInteractTarget.type === 'chillenLamp') {
+                    toggleChillenLamp();
+                } else if (currentInteractTarget.type === 'note') {
                     openViewNoteModal(currentInteractTarget.noteId, currentInteractTarget.data);
                 } else if (currentInteractTarget.type === 'seat') {
                     sitDown(currentInteractTarget.seat);
@@ -5034,7 +5257,9 @@
                         return;
                     }
                     if (currentInteractTarget) {
-                        if (currentInteractTarget.type === 'note') {
+                        if (currentInteractTarget.type === 'chillenLamp') {
+                            toggleChillenLamp();
+                        } else if (currentInteractTarget.type === 'note') {
                             startMovingNote();
                         } else if (currentInteractTarget.type === 'seat') {
                             sitDown(currentInteractTarget.seat);
@@ -5084,12 +5309,24 @@
 
             const delta = Math.min(clock.getDelta(), 0.1);
 
-            // Realistischer Himmel: Zeit für fließende Wolken fortführen & am Spieler zentrieren
+            // Realistischer Himmel & Sternenhimmel: Zeit & sanftes Überblenden fortführen
             if (skyUniforms) {
                 skyUniforms.uTime.value += delta;
+                nightTransition = THREE.MathUtils.damp(nightTransition, targetNightTransition, 2.2, delta);
+                skyUniforms.uNightTransition.value = nightTransition;
             }
             if (skyDomeMesh && camera) {
                 skyDomeMesh.position.copy(camera.position);
+            }
+
+            // Atmosphärische Beleuchtungsanpassung bei Sternenhimmel
+            if (sceneAmbientLight) {
+                sceneAmbientLight.intensity = THREE.MathUtils.lerp(0.96, 0.28, nightTransition);
+                sceneAmbientLight.color.lerpColors(new THREE.Color(0xffffff), new THREE.Color(0x8fa8d1), nightTransition);
+            }
+            if (sceneDirLight) {
+                sceneDirLight.intensity = THREE.MathUtils.lerp(0.35, 0.08, nightTransition);
+                sceneDirLight.color.lerpColors(new THREE.Color(0xffffff), new THREE.Color(0x9cbde6), nightTransition);
             }
 
             if (artSculpture) {
@@ -5291,7 +5528,21 @@
                             }
                         }
 
-                        if (!hitBike && !hitJp) {
+                        // 3b. Chillen-Stehlampe Interaktion
+                        let hitLamp = false;
+                        if (!hitBike && !hitJp && chillenLampInteractMesh) {
+                            const lampHits = raycaster.intersectObject(chillenLampInteractMesh, false);
+                            if (lampHits.length > 0 && lampHits[0].distance <= 3.8) {
+                                currentInteractTarget = { type: 'chillenLamp' };
+                                interactPrompt.textContent = isChillenLampOn
+                                    ? "[E] oder [LMB] Lampe ausschalten"
+                                    : "[E] oder [LMB] Lampe einschalten";
+                                interactPrompt.classList.add("visible");
+                                hitLamp = true;
+                            }
+                        }
+
+                        if (!hitBike && !hitJp && !hitLamp) {
                             // 4. Sitze
                             const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
                             if (hitSeats.length > 0 && hitSeats[0].distance <= 2.8) {
@@ -6327,7 +6578,16 @@
                 updatePlayerCountUI();
             });
 
-            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved];
+            // Globalen Zustand der Chillen-Lampe & des Sternenhimmels für alle synchronisieren
+            const worldLampRef = rtdbRef(rtdb, "worldState/chillenLamp");
+            const unsubLamp = onValue(worldLampRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val !== null && typeof val.isOn === "boolean") {
+                    setChillenLampState(val.isOn, false);
+                }
+            });
+
+            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved, unsubLamp];
         }
 </script>
 </body>
