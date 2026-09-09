@@ -4255,17 +4255,15 @@
         }
 
 
-        // ── DOMFÖRMIGE GEODÄTISCHE GLASKUPPEL (DREIECKIGE, EINGERAHMTE GLASPOLYGONE) ──
-        const DOME_APEX_RISE = 8.5; // Scheitelpunkthöhe über der Wand (Scheitelpunkt bei y = 13.5 m)
-        const DOME_APEX_Y = WALL_HEIGHT + DOME_APEX_RISE;
-        const DOME_SPHERE_R = (COURTYARD_RADIUS * COURTYARD_RADIUS + DOME_APEX_RISE * DOME_APEX_RISE) / (2 * DOME_APEX_RISE);
-        const DOME_SPHERE_CY = DOME_APEX_Y - DOME_SPHERE_R;
+        // ── ECHTE HALBKUGELFÖRMIGE GEODÄTISCHE GLASKUPPEL (HALBKUGEL R = 24 m) ──
+        const DOME_RADIUS = COURTYARD_RADIUS; // Exakt 24.0 m Radius für eine echte, perfekte Halbkugel
+        const DOME_APEX_Y = WALL_HEIGHT + DOME_RADIUS; // Scheitelpunkt bei y = 29.0 m
 
         function getDomeHeightAt(r) {
             if (r >= COURTYARD_RADIUS) return WALL_HEIGHT;
-            const term = DOME_SPHERE_R * DOME_SPHERE_R - r * r;
-            if (term <= 0) return DOME_APEX_Y;
-            return DOME_SPHERE_CY + Math.sqrt(term);
+            const term = DOME_RADIUS * DOME_RADIUS - r * r;
+            if (term <= 0) return WALL_HEIGHT;
+            return WALL_HEIGHT + Math.sqrt(term);
         }
 
         function getDomeCeilingY(x, z) {
@@ -4278,28 +4276,29 @@
         function createGeodesicGlassDome() {
             const domeGroup = new THREE.Group();
 
-            const numRings = 7;
-            const segments = 36;
+            const numRings = 10; // 10 Höhenringe für perfekte sphärische Wölbung der Halbkugel
+            const segments = 36; // 36 Radialteilungen
 
             const vertices = [];
             const ringVertexIndices = [];
 
-            // 1. Ringstützpunkte auf der Sphärenkappe (bündig mit Außenwand bei r = 24 m, y = 5 m)
+            // 1. Stützpunkte entlang der echten Halbkugel (Kugelfunktion: x = R*cos(phi)*cos(theta), y = WALL_HEIGHT + R*sin(phi))
             for (let i = 0; i <= numRings; i++) {
-                const t = i / numRings;
-                const r = COURTYARD_RADIUS * (1 - Math.sin(t * Math.PI * 0.5));
-                const y = getDomeHeightAt(r);
+                const phi = (i / numRings) * (Math.PI * 0.5); // 0 (Basis, 90 Grad senkrechte Tangente) bis PI/2 (Scheitel)
+                const r = DOME_RADIUS * Math.cos(phi);
+                const y = WALL_HEIGHT + DOME_RADIUS * Math.sin(phi);
 
                 const ring = [];
                 if (i === numRings) {
+                    // Scheitelpunkt der Halbkugel exakt bei y = 29.0 m
                     vertices.push({ x: 0, y: DOME_APEX_Y, z: 0 });
                     ring.push(vertices.length - 1);
                 } else {
                     const angleOffset = (i % 2) * (Math.PI / segments);
                     for (let j = 0; j < segments; j++) {
-                        const angle = j * (2 * Math.PI / segments) + angleOffset;
-                        const x = r * Math.cos(angle);
-                        const z = r * Math.sin(angle);
+                        const theta = j * (2 * Math.PI / segments) + angleOffset;
+                        const x = r * Math.cos(theta);
+                        const z = r * Math.sin(theta);
                         vertices.push({ x, y, z });
                         ring.push(vertices.length - 1);
                     }
@@ -4362,7 +4361,7 @@
                 }
             }
 
-            // 3. Kristallklare Dreiecks-Glaspaneele mit physikalisch realistischen Flächennormalen
+            // 3. Kristallklare Dreiecks-Glaspaneele mit berechneten Flächennormalen
             const glassPositions = [];
             const glassNormals = [];
 
@@ -4418,7 +4417,7 @@
             // 4. Dreidimensionale Profilstreben als Rahmen um jedes einzelne Glasdreieck
             const strutPositions = [];
             const strutNormals = [];
-            const strutRadius = 0.045; // 9 cm breite, elegante Titan-Tragprofile
+            const strutRadius = 0.045; // 9 cm breite Titan-Tragprofile
 
             function buildStrutPrism(p1, p2, radius, sides) {
                 const dx = p2.x - p1.x, dy = p2.y - p1.y, dz = p2.z - p1.z;
@@ -4490,7 +4489,7 @@
             ringBeam.position.set(0, WALL_HEIGHT, 0);
             domeGroup.add(ringBeam);
 
-            // 6. Scheitel-Abschlussring am Zenit der Kuppel
+            // 6. Scheitel-Abschlussring am Zenit der Halbkugel
             const apexCrownGeo = new THREE.TorusGeometry(0.85, 0.08, 12, 32);
             apexCrownGeo.rotateX(Math.PI / 2);
             const apexCrown = new THREE.Mesh(apexCrownGeo, frameMat);
@@ -4578,7 +4577,7 @@
             // Licht
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.96);
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.35);
-            dirLight.position.set(6, 14, 6);
+            dirLight.position.set(12, 35, 12);
             scene.add(dirLight);
             scene.add(ambientLight);
 
