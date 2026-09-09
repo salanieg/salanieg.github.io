@@ -4084,8 +4084,8 @@
 
             // Dynamische Projektionsfläche (Canvas-Texture)
             cinemaScreenCanvas = document.createElement("canvas");
-            cinemaScreenCanvas.width = 1280;
-            cinemaScreenCanvas.height = 720;
+            cinemaScreenCanvas.width = 512;
+            cinemaScreenCanvas.height = 288;
             cinemaScreenCtx = cinemaScreenCanvas.getContext("2d");
 
             cinemaScreenTex = new THREE.CanvasTexture(cinemaScreenCanvas);
@@ -4171,21 +4171,28 @@
 
             ctx.clearRect(0, 0, w, h);
 
+            // Skalierung: Zeichenlogik basiert auf 1280x720, Canvas ist 512x288
+            ctx.save();
+            const sx = w / 1280, sy = h / 720;
+            ctx.scale(sx, sy);
+            // Ab hier: logische Koordinaten 1280x720
+            const lw = 1280, lh = 720;
+
             if (!cinemaState.isPlaying) {
                 // 1. Standby-Testbild & Kino-Countdown
-                const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+                const bgGrad = ctx.createLinearGradient(0, 0, lw, lh);
                 bgGrad.addColorStop(0, "#080c16");
                 bgGrad.addColorStop(1, "#030408");
                 ctx.fillStyle = bgGrad;
-                ctx.fillRect(0, 0, w, h);
+                ctx.fillRect(0, 0, lw, lh);
 
                 // Subtile Filmkader-Rasterlinien
                 ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
                 ctx.lineWidth = 1.5;
-                for (let x = 80; x < w; x += 140) {
+                for (let x = 80; x < lw; x += 140) {
                     ctx.beginPath();
                     ctx.moveTo(x, 0);
-                    ctx.lineTo(x, h);
+                    ctx.lineTo(x, lh);
                     ctx.stroke();
                 }
 
@@ -4193,27 +4200,27 @@
                 ctx.strokeStyle = "rgba(56, 189, 248, 0.40)";
                 ctx.lineWidth = 4;
                 ctx.beginPath();
-                ctx.arc(w / 2, h / 2 - 40, 110, 0, Math.PI * 2);
+                ctx.arc(lw / 2, lh / 2 - 40, 110, 0, Math.PI * 2);
                 ctx.stroke();
 
                 ctx.strokeStyle = "rgba(255, 255, 255, 0.20)";
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(w / 2 - 140, h / 2 - 40);
-                ctx.lineTo(w / 2 + 140, h / 2 - 40);
-                ctx.moveTo(w / 2, h / 2 - 180);
-                ctx.lineTo(w / 2, h / 2 + 100);
+                ctx.moveTo(lw / 2 - 140, lh / 2 - 40);
+                ctx.lineTo(lw / 2 + 140, lh / 2 - 40);
+                ctx.moveTo(lw / 2, lh / 2 - 180);
+                ctx.lineTo(lw / 2, lh / 2 + 100);
                 ctx.stroke();
 
                 ctx.fillStyle = "#ffffff";
                 ctx.font = 'bold 50px "Quicksand", sans-serif';
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText("CHILLEN CINEMA", w / 2, h / 2 - 40);
+                ctx.fillText("CHILLEN CINEMA", lw / 2, lh / 2 - 40);
 
                 ctx.fillStyle = "#94a3b8";
                 ctx.font = 'bold 26px "Quicksand", sans-serif';
-                ctx.fillText("Synchronisierte Watchparty fuer alle Spieler", w / 2, h / 2 + 65);
+                ctx.fillText("Synchronisierte Watchparty fuer alle Spieler", lw / 2, lh / 2 + 65);
 
                 // Interaktiver Hinweis-Button
                 ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
@@ -4221,25 +4228,24 @@
                 ctx.lineWidth = 2.5;
                 const bw = 560, bh = 60;
                 ctx.beginPath();
-                ctx.roundRect((w - bw) / 2, h / 2 + 125, bw, bh, 12);
+                ctx.roundRect((lw - bw) / 2, lh / 2 + 125, bw, bh, 12);
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.fillStyle = "#38bdf8";
                 ctx.font = 'bold 24px "Quicksand", sans-serif';
-                ctx.fillText("[E] oder [LMB] druecken fuer Videoauswahl & Steuerung", w / 2, h / 2 + 155);
+                ctx.fillText("[E] oder [LMB] druecken fuer Videoauswahl & Steuerung", lw / 2, lh / 2 + 155);
             } else {
                 // 2. Aktive Video-Wiedergabe mit Audio-Visualizer & Fortschritt
                 ctx.fillStyle = "#04060c";
-                ctx.fillRect(0, 0, w, h);
+                ctx.fillRect(0, 0, lw, lh);
 
                 // Dynamischer radialer Lichtschein passend zum Beamerstrahl
-                const pulse = Math.sin(time * 3.5) * 0.15 + 0.85;
-                const radGrad = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w * 0.6);
+                const radGrad = ctx.createRadialGradient(lw / 2, lh / 2, 40, lw / 2, lh / 2, lw * 0.6);
                 radGrad.addColorStop(0, "rgba(30, 58, 138, 0.35)");
                 radGrad.addColorStop(1, "rgba(4, 6, 12, 0.0)");
                 ctx.fillStyle = radGrad;
-                ctx.fillRect(0, 0, w, h);
+                ctx.fillRect(0, 0, lw, lh);
 
                 // Header: Status Badge & Titel
                 ctx.fillStyle = "#ef4444";
@@ -4264,8 +4270,15 @@
                 const barW = 20;
                 const spacing = 12;
                 const totalW = bars * (barW + spacing) - spacing;
-                const startX = (w - totalW) / 2;
-                const baseY = h / 2 + 90;
+                const startX = (lw - totalW) / 2;
+                const baseY = lh / 2 + 90;
+
+                // Ein einzelner Gradient fuer alle Bars (Performance)
+                const eqGrad = ctx.createLinearGradient(0, baseY, 0, baseY - 210);
+                eqGrad.addColorStop(0, "rgba(56, 189, 248, 0.95)");
+                eqGrad.addColorStop(0.6, "rgba(139, 92, 246, 0.90)");
+                eqGrad.addColorStop(1, "rgba(245, 158, 11, 0.95)");
+                ctx.fillStyle = eqGrad;
 
                 for (let i = 0; i < bars; i++) {
                     const wave1 = Math.sin(time * 5.8 + i * 0.45) * 60;
@@ -4273,12 +4286,6 @@
                     const wave3 = Math.sin(time * 8.4 + i * 1.10) * 25;
                     const barH = Math.max(16, 80 + wave1 + wave2 + wave3);
 
-                    const grad = ctx.createLinearGradient(0, baseY, 0, baseY - barH);
-                    grad.addColorStop(0, "rgba(56, 189, 248, 0.95)");
-                    grad.addColorStop(0.6, "rgba(139, 92, 246, 0.90)");
-                    grad.addColorStop(1, "rgba(245, 158, 11, 0.95)");
-
-                    ctx.fillStyle = grad;
                     ctx.beginPath();
                     ctx.roundRect(startX + i * (barW + spacing), baseY - barH, barW, barH, 4);
                     ctx.fill();
@@ -4286,25 +4293,27 @@
 
                 // Unterer Bereich: Timeline & Fortschrittsbalken
                 ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-                ctx.fillRect(80, h - 75, w - 160, 10);
+                ctx.fillRect(80, lh - 75, lw - 160, 10);
 
                 const progressCycle = (time * 0.05) % 1.0;
                 ctx.fillStyle = "#38bdf8";
-                ctx.fillRect(80, h - 75, (w - 160) * progressCycle, 10);
+                ctx.fillRect(80, lh - 75, (lw - 160) * progressCycle, 10);
 
                 ctx.fillStyle = "#ffffff";
                 ctx.beginPath();
-                ctx.arc(80 + (w - 160) * progressCycle, h - 70, 9, 0, Math.PI * 2);
+                ctx.arc(80 + (lw - 160) * progressCycle, lh - 70, 9, 0, Math.PI * 2);
                 ctx.fill();
 
                 ctx.fillStyle = "#94a3b8";
                 ctx.font = 'bold 20px "Quicksand", sans-serif';
                 ctx.textAlign = "left";
-                ctx.fillText("Synchronisiert via Firebase Realtime Watchparty", 80, h - 35);
+                ctx.fillText("Synchronisiert via Firebase Realtime Watchparty", 80, lh - 35);
 
                 ctx.textAlign = "right";
-                ctx.fillText("[E] Steuerung oeffnen", w - 80, h - 35);
+                ctx.fillText("[E] Steuerung oeffnen", lw - 80, lh - 35);
             }
+
+            ctx.restore();
 
             if (cinemaScreenTex) {
                 cinemaScreenTex.needsUpdate = true;
@@ -6051,6 +6060,11 @@
             }
         }
 
+        // Vorab-Cache: Farb-Konstanten fuer Nachtlicht-Lerp (keine Allokation im Loop)
+        const _colWhite = new THREE.Color(0xffffff);
+        const _colMoonAmb = new THREE.Color(0x8fa8d1);
+        const _colMoonDir = new THREE.Color(0x9cbde6);
+
         // Animations-Loop
         function animate() {
             animationFrameId = requestAnimationFrame(animate);
@@ -6067,14 +6081,14 @@
                 skyDomeMesh.position.copy(camera.position);
             }
 
-            // Atmosphärische Beleuchtungsanpassung bei Sternenhimmel
+            // Atmosphaerische Beleuchtungsanpassung bei Sternenhimmel
             if (sceneAmbientLight) {
                 sceneAmbientLight.intensity = THREE.MathUtils.lerp(0.96, 0.28, nightTransition);
-                sceneAmbientLight.color.lerpColors(new THREE.Color(0xffffff), new THREE.Color(0x8fa8d1), nightTransition);
+                sceneAmbientLight.color.lerpColors(_colWhite, _colMoonAmb, nightTransition);
             }
             if (sceneDirLight) {
                 sceneDirLight.intensity = THREE.MathUtils.lerp(0.35, 0.08, nightTransition);
-                sceneDirLight.color.lerpColors(new THREE.Color(0xffffff), new THREE.Color(0x9cbde6), nightTransition);
+                sceneDirLight.color.lerpColors(_colWhite, _colMoonDir, nightTransition);
             }
 
             // Flackernder Beamer-Lichtkegel & dynamische Leinwand-Aktualisierung
@@ -6101,10 +6115,12 @@
                 }
             }
 
-            // Leinwand-Canvas in Echtzeit aktualisieren
-            if (cinemaState.isPlaying || (now - lastCinemaCanvasUpdate > 0.5)) {
-                drawCinemaScreenCanvas(now);
-                lastCinemaCanvasUpdate = now;
+            // Leinwand-Canvas gedrosselt aktualisieren (max 8fps bei Wiedergabe, Standby nur 1x)
+            if (cinemaScreenCtx) {
+                if (cinemaState.isPlaying && (now - lastCinemaCanvasUpdate > 0.125)) {
+                    drawCinemaScreenCanvas(now);
+                    lastCinemaCanvasUpdate = now;
+                }
             }
 
             if (artSculpture) {
