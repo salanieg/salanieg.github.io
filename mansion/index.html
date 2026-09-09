@@ -3439,167 +3439,345 @@
 
 
             // ─────────────────────────────────────────────────────────────
-            // SITZPLATZ 1: GELBER DRACHE MIT FREUNDLICHEM GESICHT
+            // SITZPLATZ 1: GELBER DRACHE (WIE AUS EINEM GUSS & KLARE AUGEN)
             // ─────────────────────────────────────────────────────────────
             const dragonGroup = new THREE.Group();
 
             const dragonYellowMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 }); // Warmes Sonnengelb
-            const dragonBellyMat = new THREE.MeshLambertMaterial({ color: 0xfef08a });  // Weiches Pastellgelb
-            const dragonAccentMat = new THREE.MeshLambertMaterial({ color: 0xeab308 }); // Dunkleres Goldgelb
-            const dragonEyeMat = new THREE.MeshLambertMaterial({ color: 0x18181b });    // Dunkle Pupille
-            const eyeGlintMat = new THREE.MeshBasicMaterial({ color: 0xffffff });       // Lebendiger Glanzpunkt
-            const saddleMat = new THREE.MeshLambertMaterial({ color: 0x78350f });       // Braunes Ledersattel
-            const saddleTrimMat = new THREE.MeshLambertMaterial({ color: 0x92400e });
+            const dragonBellyMat = new THREE.MeshLambertMaterial({ color: 0xfef9c3 });  // Weiches Helles Creme-Pastell
+            const dragonAccentMat = new THREE.MeshLambertMaterial({ color: 0xd97706 }); // Kräftiges warmes Gold-Orange
+            const dragonDarkAccent = new THREE.MeshLambertMaterial({ color: 0x78350f });// Dunkles Braun (Nüstern, Mund)
+            const dragonClawMat = new THREE.MeshLambertMaterial({ color: 0xffedd5 });   // Sanftes Elfenbein für Krallen
+            const blushMat = new THREE.MeshLambertMaterial({ color: 0xfca5a5 });        // Zartes Wangenrot
+            const saddleMat = new THREE.MeshLambertMaterial({ color: 0x78350f });       // Braunes Sattelleder
+            const saddleTrimMat = new THREE.MeshLambertMaterial({ color: 0xb45309 });
+            const saddleGoldMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b });   // Goldene Schnallen
 
-            // 1. Runder, knuffiger Drachenkörper
-            const bodyGeo = new THREE.SphereGeometry(0.55, 18, 14);
-            bodyGeo.scale(0.9, 0.85, 1.35);
-            const body = new THREE.Mesh(bodyGeo, dragonYellowMat);
-            body.position.set(0, 0.72, 0);
-            dragonGroup.add(body);
+            // 1. Geschmeidiger, organischer Drachenkörper (wie aus einem Guss)
+            // Rumpf & Becken
+            const hips = new THREE.Mesh(new THREE.SphereGeometry(0.56, 24, 18), dragonYellowMat);
+            hips.scale.set(0.98, 0.94, 1.20);
+            hips.position.set(0, 0.68, -0.06);
+            dragonGroup.add(hips);
 
-            // Bauchpanzer (weiches Hellgelb an der Unterseite)
-            const bellyGeo = new THREE.SphereGeometry(0.50, 16, 12);
-            bellyGeo.scale(0.82, 0.75, 1.25);
-            const belly = new THREE.Mesh(bellyGeo, dragonBellyMat);
-            belly.position.set(0, 0.65, 0.08);
-            dragonGroup.add(belly);
+            // Brust & Schulterpartie
+            const chest = new THREE.Mesh(new THREE.SphereGeometry(0.46, 22, 16), dragonYellowMat);
+            chest.scale.set(0.92, 0.98, 1.05);
+            chest.position.set(0, 0.92, 0.18);
+            dragonGroup.add(chest);
 
-            // 4 stämmige, knuffige Beine mit sanften Pfoten
-            const legGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.45, 12);
-            [[-0.32, 0.22, 0.42], [0.32, 0.22, 0.42], [-0.32, 0.22, -0.42], [0.32, 0.22, -0.42]].forEach(([lx, ly, lz]) => {
-                const leg = new THREE.Mesh(legGeo, dragonYellowMat);
-                leg.position.set(lx, ly, lz);
+            // 5 segmentierte, geschmeidige Bauchschalen (harmonische Drachenanatomie)
+            [
+                { y: 1.04, z: 0.44, rx: 0.30, ry: 0.08, rz: 0.18, rotX: 0.35 },
+                { y: 0.90, z: 0.50, rx: 0.34, ry: 0.09, rz: 0.22, rotX: 0.20 },
+                { y: 0.76, z: 0.50, rx: 0.36, ry: 0.09, rz: 0.24, rotX: 0.05 },
+                { y: 0.62, z: 0.44, rx: 0.34, ry: 0.09, rz: 0.22, rotX: -0.15 },
+                { y: 0.48, z: 0.32, rx: 0.28, ry: 0.08, rz: 0.18, rotX: -0.35 }
+            ].forEach(p => {
+                const plate = new THREE.Mesh(new THREE.SphereGeometry(0.50, 16, 10), dragonBellyMat);
+                plate.scale.set(p.rx, p.ry, p.rz);
+                plate.position.set(0, p.y, p.z);
+                plate.rotation.x = p.rotX;
+                dragonGroup.add(plate);
+            });
+
+            // 2. Nahtlos ansetzender Hals & Kopf
+            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.32, 0.46, 20), dragonYellowMat);
+            neck.position.set(0, 1.10, 0.46);
+            neck.rotation.x = 0.50;
+            dragonGroup.add(neck);
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 24, 18), dragonYellowMat);
+            head.scale.set(1.0, 0.94, 1.08);
+            head.position.set(0, 1.34, 0.70);
+            dragonGroup.add(head);
+
+            // Knuffige Bäckchen
+            [[-0.19, 1.25, 0.78], [0.19, 1.25, 0.78]].forEach(([cx, cy, cz]) => {
+                const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), dragonYellowMat);
+                cheek.position.set(cx, cy, cz);
+                dragonGroup.add(cheek);
+            });
+
+            // Sanft abgerundete Schnauze
+            const snout = new THREE.Mesh(new THREE.SphereGeometry(0.22, 20, 16), dragonYellowMat);
+            snout.scale.set(0.96, 0.74, 1.12);
+            snout.position.set(0, 1.22, 0.94);
+            dragonGroup.add(snout);
+
+            const chin = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), dragonBellyMat);
+            chin.scale.set(0.90, 0.55, 1.0);
+            chin.position.set(0, 1.14, 0.92);
+            dragonGroup.add(chin);
+
+            // Feine Nüstern
+            [[-0.065, 1.26, 1.15], [0.065, 1.26, 1.15]].forEach(([nx, ny, nz]) => {
+                const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), dragonAccentMat);
+                nostril.position.set(nx, ny, nz);
+                dragonGroup.add(nostril);
+
+                const nHole = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), dragonDarkAccent);
+                nHole.position.set(nx, ny - 0.004, nz + 0.015);
+                dragonGroup.add(nHole);
+            });
+
+            // Sanftes, herzliches Lächeln
+            const smileCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-0.13, 1.18, 0.92),
+                new THREE.Vector3(-0.07, 1.14, 1.02),
+                new THREE.Vector3(0, 1.13, 1.04),
+                new THREE.Vector3(0.07, 1.14, 1.02),
+                new THREE.Vector3(0.13, 1.18, 0.92)
+            ]);
+            const smile = new THREE.Mesh(new THREE.TubeGeometry(smileCurve, 12, 0.012, 8, false), dragonDarkAccent);
+            dragonGroup.add(smile);
+
+            // 3. Große, glasklar erkennbare Kulleraugen mit lebendigem Glanz & Kontur
+            [[-0.20, 1.40, 0.92, -0.42], [0.20, 1.40, 0.92, 0.42]].forEach(([ex, ey, ez, rotY]) => {
+                const eyeGroup = new THREE.Group();
+                eyeGroup.position.set(ex, ey, ez);
+                eyeGroup.rotation.y = rotY;
+                eyeGroup.rotation.x = 0.08;
+
+                // 1. Dunkle, scharfe Lidrand-Kontur für perfekten Kontrast zum gelben Kopf
+                const socketRing = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.085, 0.016, 12, 28),
+                    new THREE.MeshLambertMaterial({ color: 0x451a03 })
+                );
+                socketRing.scale.set(1.0, 1.15, 0.6);
+                eyeGroup.add(socketRing);
+
+                // 2. Strahlendes Augenei (Sclera) - sitzt stolz und prominent im Blickfeld
+                const eyeWhiteGeo = new THREE.SphereGeometry(0.082, 18, 14);
+                eyeWhiteGeo.scale(0.95, 1.12, 0.65);
+                const eyeWhite = new THREE.Mesh(eyeWhiteGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                eyeGroup.add(eyeWhite);
+
+                // 3. Große warme Schoko-Iris für freundlichen Ausdruck
+                const irisGeo = new THREE.SphereGeometry(0.058, 16, 12);
+                irisGeo.scale(0.92, 1.06, 0.25);
+                const iris = new THREE.Mesh(irisGeo, new THREE.MeshBasicMaterial({ color: 0x1c1917 }));
+                iris.position.set(rotY > 0 ? 0.008 : -0.008, 0.005, 0.038);
+                eyeGroup.add(iris);
+
+                // 4. Glänzende Pupille
+                const pupilGeo = new THREE.SphereGeometry(0.042, 14, 10);
+                pupilGeo.scale(0.90, 1.04, 0.20);
+                const pupil = new THREE.Mesh(pupilGeo, new THREE.MeshBasicMaterial({ color: 0x09090b }));
+                pupil.position.set(rotY > 0 ? 0.008 : -0.008, 0.005, 0.046);
+                eyeGroup.add(pupil);
+
+                // 5. Großer, lebendiger Glanzpunkt (Catchlight) oben außen
+                const glint1 = new THREE.Mesh(new THREE.SphereGeometry(0.018, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                glint1.position.set(rotY > 0 ? 0.024 : -0.008, 0.026, 0.056);
+                eyeGroup.add(glint1);
+
+                // 6. Kleiner süßer Sekundärglanzpunkt unten innen
+                const glint2 = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                glint2.position.set(rotY > 0 ? -0.010 : 0.022, -0.016, 0.054);
+                eyeGroup.add(glint2);
+
+                // 7. Freundlich geschwungene Augenbraue (Brow Ridge)
+                const brow = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.018, 0.16, 8), dragonAccentMat);
+                brow.rotation.z = rotY > 0 ? 0.28 : -0.28;
+                brow.position.set(0, 0.105, 0.02);
+                eyeGroup.add(brow);
+
+                dragonGroup.add(eyeGroup);
+
+                // Rosige Bäckchen unter den Augen
+                const blush = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 10), blushMat);
+                blush.scale.set(1.1, 0.7, 0.3);
+                blush.position.set(ex * 1.15, ey - 0.14, ez + 0.02);
+                blush.rotation.y = rotY;
+                dragonGroup.add(blush);
+            });
+
+            // 4. Sanft nach hinten geschwungene Hörner
+            [[-0.14, 1.56, 0.62, -0.22], [0.14, 1.56, 0.62, 0.22]].forEach(([hx, hy, hz, rotZ]) => {
+                const hornGroup = new THREE.Group();
+                hornGroup.position.set(hx, hy, hz);
+                hornGroup.rotation.x = -0.58;
+                hornGroup.rotation.z = rotZ;
+
+                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.052, 0.26, 12), dragonBellyMat);
+                hornGroup.add(horn);
+
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 8, 16), dragonAccentMat);
+                ring.rotation.x = Math.PI / 2;
+                ring.position.y = -0.04;
+                hornGroup.add(ring);
+
+                dragonGroup.add(hornGroup);
+            });
+
+            // 5. Durchgehender Rückenkamm (verbindet die Silhouette wie aus einem Guss)
+            const spineData = [
+                { p: [0, 1.62, 0.58], s: 0.075, rx: -0.65 },
+                { p: [0, 1.44, 0.44], s: 0.085, rx: -0.50 },
+                { p: [0, 1.26, 0.32], s: 0.090, rx: -0.40 },
+                { p: [0, 1.10, 0.20], s: 0.085, rx: -0.25 },
+                { p: [0, 0.96, -0.36], s: 0.080, rx: 0.25 },
+                { p: [0, 0.84, -0.56], s: 0.075, rx: 0.40 },
+                { p: [0.03, 0.72, -0.84], s: 0.065, rx: 0.55 },
+                { p: [0.01, 0.68, -1.16], s: 0.055, rx: 0.45 },
+                { p: [-0.07, 0.80, -1.46], s: 0.045, rx: 0.20 }
+            ];
+            spineData.forEach(sp => {
+                const spineGeo = new THREE.ConeGeometry(sp.s * 0.45, sp.s * 1.1, 4);
+                spineGeo.rotateY(Math.PI / 4);
+                const spine = new THREE.Mesh(spineGeo, dragonAccentMat);
+                spine.position.set(...sp.p);
+                spine.rotation.x = sp.rx;
+                dragonGroup.add(spine);
+            });
+
+            // 6. Harmonische, stämmige Beine mit Pfoten & Krallen
+            // Hinterbeine (mit weichen Oberschenkel-Rundungen)
+            [[-0.35, 0.42, -0.32], [0.35, 0.42, -0.32]].forEach(([tx, ty, tz]) => {
+                const thigh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 14), dragonYellowMat);
+                thigh.scale.set(0.85, 1.15, 1.0);
+                thigh.position.set(tx, ty, tz);
+                dragonGroup.add(thigh);
+
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.32, 16), dragonYellowMat);
+                leg.position.set(tx, 0.20, tz);
                 dragonGroup.add(leg);
 
-                const footGeo = new THREE.SphereGeometry(0.15, 12, 10);
-                footGeo.scale(1.0, 0.6, 1.25);
-                const foot = new THREE.Mesh(footGeo, dragonYellowMat);
-                foot.position.set(lx, 0.08, lz + 0.06);
+                const foot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), dragonYellowMat);
+                foot.scale.set(1.05, 0.55, 1.25);
+                foot.position.set(tx, 0.08, tz + 0.08);
                 dragonGroup.add(foot);
 
                 [-0.07, 0, 0.07].forEach(kx => {
-                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.06, 8), dragonAccentMat);
+                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.065, 8), dragonClawMat);
                     claw.rotation.x = Math.PI / 2;
-                    claw.position.set(lx + kx, 0.045, foot.position.z + 0.15);
+                    claw.position.set(tx + kx, 0.045, tz + 0.23);
                     dragonGroup.add(claw);
                 });
             });
 
-            // 2. Geschwungener Schwanz mit Pfeilspitze
-            const tailCurve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(0, 0.65, -0.65),
-                new THREE.Vector3(0.08, 0.60, -1.05),
-                new THREE.Vector3(-0.10, 0.72, -1.40),
-                new THREE.Vector3(-0.02, 0.90, -1.65)
-            ]);
-            const tailGeo = new THREE.TubeGeometry(tailCurve, 16, 0.11, 8, false);
-            const tail = new THREE.Mesh(tailGeo, dragonYellowMat);
-            dragonGroup.add(tail);
+            // Vorderbeine (mit weichen Schultern)
+            [[-0.33, 0.56, 0.28], [0.33, 0.56, 0.28]].forEach(([sx, sy, sz]) => {
+                const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 14), dragonYellowMat);
+                shoulder.position.set(sx, sy, sz);
+                dragonGroup.add(shoulder);
 
-            const spadeGeo = new THREE.ConeGeometry(0.16, 0.32, 4);
-            spadeGeo.rotateZ(Math.PI / 4);
-            const spade = new THREE.Mesh(spadeGeo, dragonAccentMat);
-            spade.position.set(-0.02, 0.98, -1.72);
-            spade.rotation.x = -Math.PI / 3;
-            dragonGroup.add(spade);
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.38, 16), dragonYellowMat);
+                leg.position.set(sx, 0.24, sz + 0.04);
+                dragonGroup.add(leg);
 
-            // 3. Freundlicher Kopf & Hals
-            const neckGeo = new THREE.CylinderGeometry(0.20, 0.26, 0.45, 12);
-            const neck = new THREE.Mesh(neckGeo, dragonYellowMat);
-            neck.position.set(0, 1.05, 0.52);
-            neck.rotation.x = 0.35;
-            dragonGroup.add(neck);
+                const foot = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), dragonYellowMat);
+                foot.scale.set(1.05, 0.55, 1.25);
+                foot.position.set(sx, 0.08, sz + 0.12);
+                dragonGroup.add(foot);
 
-            const headGeo = new THREE.SphereGeometry(0.32, 16, 14);
-            headGeo.scale(1.0, 0.92, 1.15);
-            const head = new THREE.Mesh(headGeo, dragonYellowMat);
-            head.position.set(0, 1.32, 0.72);
-            dragonGroup.add(head);
-
-            const snoutGeo = new THREE.SphereGeometry(0.22, 14, 12);
-            snoutGeo.scale(1.0, 0.75, 1.1);
-            const snout = new THREE.Mesh(snoutGeo, dragonBellyMat);
-            snout.position.set(0, 1.24, 0.98);
-            dragonGroup.add(snout);
-
-            [-0.06, 0.06].forEach(nx => {
-                const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), dragonAccentMat);
-                nostril.position.set(nx, 1.28, 1.18);
-                dragonGroup.add(nostril);
+                [-0.065, 0, 0.065].forEach(kx => {
+                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.065, 8), dragonClawMat);
+                    claw.rotation.x = Math.PI / 2;
+                    claw.position.set(sx + kx, 0.045, sz + 0.27);
+                    dragonGroup.add(claw);
+                });
             });
 
-            // Sanftes Lächeln
-            const smileCurve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(-0.14, 1.20, 0.98),
-                new THREE.Vector3(0, 1.16, 1.08),
-                new THREE.Vector3(0.14, 1.20, 0.98)
-            ]);
-            const smileGeo = new THREE.TubeGeometry(smileCurve, 8, 0.012, 6, false);
-            const smile = new THREE.Mesh(smileGeo, dragonAccentMat);
-            dragonGroup.add(smile);
-
-            // Große freundliche Kulleraugen mit weißem Glanzpunkt
-            [[-0.18, 1.38, 0.88, -0.35], [0.18, 1.38, 0.88, 0.35]].forEach(([ex, ey, ez, rotY]) => {
-                const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-                eyeWhite.position.set(ex, ey, ez);
-                dragonGroup.add(eyeWhite);
-
-                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), dragonEyeMat);
-                pupil.position.set(ex + (rotY > 0 ? 0.02 : -0.02), ey, ez + 0.04);
-                dragonGroup.add(pupil);
-
-                const glint = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), eyeGlintMat);
-                glint.position.set(ex + (rotY > 0 ? 0.01 : -0.03), ey + 0.022, ez + 0.075);
-                dragonGroup.add(glint);
-            });
-
-            // Niedliche weiche Hörner nach hinten
-            [[-0.14, 1.55, 0.65], [0.14, 1.55, 0.65]].forEach(([hx, hy, hz]) => {
-                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 8), dragonBellyMat);
-                horn.position.set(hx, hy, hz);
-                horn.rotation.x = -0.65;
-                horn.rotation.z = hx > 0 ? 0.25 : -0.25;
-                dragonGroup.add(horn);
-            });
-
-            // Kleine süße Drachenflügel an den Seiten (beide Flügel sauber nach außen gespreizt)
-            [[-0.48, 0.85, 0.0, -0.4], [0.48, 0.85, 0.0, 0.4]].forEach(([wx, wy, wz, rotZ]) => {
+            // 7. Formschöne 3D-Drachenflügel (volumetrisch, symmetrisch nach außen gespreizt)
+            [[-0.44, 0.88, 0.04, -1], [0.44, 0.88, 0.04, 1]].forEach(([wx, wy, wz, side]) => {
                 const wing = new THREE.Group();
-                const isRight = wx > 0;
-                const wingBone = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.45, 8), dragonAccentMat);
-                wingBone.rotation.z = isRight ? Math.PI / 3 : -Math.PI / 3;
-                wing.add(wingBone);
-
-                const wingSkinGeo = new THREE.BufferGeometry();
-                const verts = new Float32Array(isRight ? [
-                    0, 0, 0,
-                    0.22, 0.35, 0,
-                    0.35, 0.10, -0.15
-                ] : [
-                    0, 0, 0,
-                    -0.22, 0.35, 0,
-                    -0.35, 0.10, -0.15
-                ]);
-                wingSkinGeo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
-                wingSkinGeo.computeVertexNormals();
-                const wingSkin = new THREE.Mesh(wingSkinGeo, new THREE.MeshLambertMaterial({ color: 0xfef08a, side: THREE.DoubleSide }));
-                wing.add(wingSkin);
-
                 wing.position.set(wx, wy, wz);
-                wing.rotation.z = rotZ;
-                wing.rotation.y = isRight ? 0.35 : -0.35;
+                wing.rotation.y = side * 0.38;
+                wing.rotation.z = side * 0.42;
+
+                // Schulteransatz
+                const joint = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), dragonAccentMat);
+                wing.add(joint);
+
+                // Armknochen
+                const armCurve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(side * 0.18, 0.22, -0.04),
+                    new THREE.Vector3(side * 0.38, 0.32, -0.08)
+                ]);
+                const armMesh = new THREE.Mesh(new THREE.TubeGeometry(armCurve, 12, 0.024, 8, false), dragonAccentMat);
+                wing.add(armMesh);
+
+                // Daumenkralle
+                const thumb = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.05, 8), dragonClawMat);
+                thumb.position.set(side * 0.38, 0.33, -0.08);
+                thumb.rotation.z = side * -0.5;
+                wing.add(thumb);
+
+                // 2 Flügel-Fingerknochen
+                const finger1Curve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(side * 0.38, 0.32, -0.08),
+                    new THREE.Vector3(side * 0.46, 0.16, -0.22),
+                    new THREE.Vector3(side * 0.42, 0.02, -0.34)
+                ]);
+                wing.add(new THREE.Mesh(new THREE.TubeGeometry(finger1Curve, 10, 0.015, 6, false), dragonAccentMat));
+
+                const finger2Curve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(side * 0.38, 0.32, -0.08),
+                    new THREE.Vector3(side * 0.24, 0.12, -0.26),
+                    new THREE.Vector3(side * 0.12, -0.02, -0.32)
+                ]);
+                wing.add(new THREE.Mesh(new THREE.TubeGeometry(finger2Curve, 10, 0.015, 6, false), dragonAccentMat));
+
+                // Formschöne, doppelseitige Flügelhaut
+                const wingMat = new THREE.MeshLambertMaterial({ color: 0xfef08a, side: THREE.DoubleSide });
+                const v = [
+                    0, 0, 0,
+                    side * 0.38, 0.32, -0.08,
+                    side * 0.42, 0.02, -0.34,
+
+                    0, 0, 0,
+                    side * 0.42, 0.02, -0.34,
+                    side * 0.12, -0.02, -0.32
+                ];
+                const skinGeo = new THREE.BufferGeometry();
+                skinGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(v), 3));
+                skinGeo.computeVertexNormals();
+                wing.add(new THREE.Mesh(skinGeo, wingMat));
+
                 dragonGroup.add(wing);
             });
 
-            // 4. Bequemer Reitsattel auf dem Rücken
+            // 8. Eleganter Schwanz mit herzförmiger Schaufel
+            const tailCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 0.66, -0.65),
+                new THREE.Vector3(0.06, 0.58, -0.98),
+                new THREE.Vector3(-0.08, 0.68, -1.35),
+                new THREE.Vector3(-0.02, 0.88, -1.68)
+            ]);
+            const tailGeo = new THREE.TubeGeometry(tailCurve, 20, 0.12, 10, false);
+            const tail = new THREE.Mesh(tailGeo, dragonYellowMat);
+            dragonGroup.add(tail);
+
+            const spadeGeo = new THREE.ConeGeometry(0.18, 0.35, 4);
+            spadeGeo.rotateZ(Math.PI / 4);
+            const spade = new THREE.Mesh(spadeGeo, dragonAccentMat);
+            spade.position.set(-0.02, 0.94, -1.74);
+            spade.rotation.x = -Math.PI / 3;
+            dragonGroup.add(spade);
+
+            // 9. Bequemer, anschmiegsamer Reitsattel mit Steppkissen & Gurt
             const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.12, 0.52), saddleMat);
-            saddle.position.set(0, 1.02, -0.05);
+            saddle.position.set(0, 1.00, -0.06);
             dragonGroup.add(saddle);
 
             const saddleTrim = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.05, 0.54), saddleTrimMat);
-            saddleTrim.position.set(0, 0.98, -0.05);
+            saddleTrim.position.set(0, 0.96, -0.06);
             dragonGroup.add(saddleTrim);
+
+            // Sattel-Bauchgurt
+            const girth = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.025, 8, 24), saddleTrimMat);
+            girth.position.set(0, 0.70, -0.06);
+            dragonGroup.add(girth);
+
+            // Goldene Steigbügel-Schnallen
+            [-0.26, 0.26].forEach(bx => {
+                const buckle = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.008, 6, 16), saddleGoldMat);
+                buckle.position.set(bx, 0.94, -0.06);
+                dragonGroup.add(buckle);
+            });
 
             dragonGroup.position.set(rx - 2.3, 0, rz - 2.2);
             dragonGroup.rotation.y = Math.PI * 0.28;
