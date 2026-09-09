@@ -4837,12 +4837,16 @@
             courtyardFloor.receiveShadow = true;
             scene.add(courtyardFloor);
 
-            // Konzentrische weiße Kreise um den mittleren Kreis (nach außen hin gleichmäßig ausblendend)
-            const concentricRingsCount = 8;
+            // Konzentrische weiße Kreise um den mittleren Kreis (Abstand vergrößert bis zum Rand)
+            const concentricRingsCount = 9;
+            const innerR = 2.06;
+            const outerR = 23.6;
+            const ringStep = (outerR - innerR) / concentricRingsCount;
             for (let i = 1; i <= concentricRingsCount; i++) {
-                const r = 2.06 + 0.65 * i + 0.08 * i * i;
-                const opacity = Math.pow(1.0 - (i / (concentricRingsCount + 1)), 1.7) * 0.60;
-                const ringGeo = new THREE.RingGeometry(r - 0.015, r + 0.015, 96);
+                const r = innerR + i * ringStep;
+                const t = (i - 1) / (concentricRingsCount - 1);
+                const opacity = 0.52 * Math.pow(1 - t, 1.4) + 0.06;
+                const ringGeo = new THREE.RingGeometry(r - 0.016, r + 0.016, 128);
                 const ringMat = new THREE.MeshBasicMaterial({
                     color: 0xffffff,
                     transparent: true,
