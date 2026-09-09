@@ -2479,6 +2479,116 @@
             return tex;
         }
 
+
+        // ── HOCHFEINER, DUNKELGRAUER FILZTEPPICH FÜR DEN HAUPTRAUM ──
+        function createDarkGrayFeltCarpetTexture() {
+            const size = 512;
+            const canvas = document.createElement("canvas");
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext("2d");
+
+            // 1. Dunkelgrauer Grundton (Anthrazit / Schiefergrau)
+            ctx.fillStyle = "#272a30";
+            ctx.fillRect(0, 0, size, size);
+
+            const imgData = ctx.getImageData(0, 0, size, size);
+            const data = imgData.data;
+
+            // Deterministischer Zufallsgenerator für gleichmäßige, konsistente Wollmischung
+            let seed = 42891;
+            function rnd() {
+                seed = (seed * 16807) % 2147483647;
+                return (seed - 1) / 2147483646;
+            }
+
+            // 2. Feines Filz-Grundrauschen & Melange-Marmorierung
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const idx = (y * size + x) * 4;
+                    // Hochfrequentes Wollfaser-Korn
+                    const grain = (rnd() - 0.5) * 24;
+                    // Sanfte Melange-Wollflocken
+                    const melange = (Math.sin(x * 0.08) + Math.cos(y * 0.08) + Math.sin((x + y) * 0.05)) * 4.0;
+
+                    const baseGray = 38 + grain + melange;
+                    data[idx]     = Math.max(16, Math.min(62, baseGray - 2)); // R
+                    data[idx + 1] = Math.max(18, Math.min(65, baseGray));     // G
+                    data[idx + 2] = Math.max(22, Math.min(70, baseGray + 4)); // B (subtiler blaugrauer Schieferunterton)
+                    data[idx + 3] = 255;
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            // 3. Tausende feine, wirre Filz-Mikrofasern (nahtlos gekachelt)
+            function drawSeamlessFibers(count, color, alpha, width, minLen, maxLen) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = width;
+                ctx.lineCap = "round";
+                for (let i = 0; i < count; i++) {
+                    const x0 = rnd() * size;
+                    const y0 = rnd() * size;
+                    const angle = rnd() * Math.PI * 2;
+                    const len = minLen + rnd() * (maxLen - minLen);
+                    const curve = (rnd() - 0.5) * 3.5;
+                    const xm = x0 + Math.cos(angle) * (len * 0.5) + Math.sin(angle) * curve;
+                    const ym = y0 + Math.sin(angle) * (len * 0.5) - Math.cos(angle) * curve;
+                    const x1 = x0 + Math.cos(angle) * len;
+                    const y1 = y0 + Math.sin(angle) * len;
+
+                    ctx.globalAlpha = alpha * (0.6 + rnd() * 0.4);
+
+                    for (let ox of [-size, 0, size]) {
+                        for (let oy of [-size, 0, size]) {
+                            ctx.beginPath();
+                            ctx.moveTo(x0 + ox, y0 + oy);
+                            ctx.quadraticCurveTo(xm + ox, ym + oy, x1 + ox, y1 + oy);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            // Dunkle Tiefenfasern (erzeugen Tiefe und Schatten im Flor)
+            drawSeamlessFibers(1800, "#16181c", 0.55, 0.8, 3, 9);
+            drawSeamlessFibers(1400, "#1f2227", 0.60, 0.9, 4, 11);
+
+            // Mittlere Filzfasern (Hauptkörper des Teppichs)
+            drawSeamlessFibers(2200, "#2c3037", 0.65, 0.9, 3, 10);
+            drawSeamlessFibers(1800, "#363a43", 0.55, 0.8, 4, 12);
+
+            // Feine helle Melange-Fasern (Wollflöckchen)
+            drawSeamlessFibers(900, "#484e5a", 0.45, 0.7, 2, 7);
+            drawSeamlessFibers(450, "#565e6d", 0.35, 0.6, 2, 5);
+
+            // 4. Mikroporen von Nadelfilz
+            ctx.fillStyle = "#141518";
+            for (let i = 0; i < 600; i++) {
+                const px = rnd() * size;
+                const py = rnd() * size;
+                const pr = 0.5 + rnd() * 0.8;
+                ctx.globalAlpha = 0.45 * rnd();
+                for (let ox of [-size, 0, size]) {
+                    for (let oy of [-size, 0, size]) {
+                        ctx.beginPath();
+                        ctx.arc(px + ox, py + oy, pr, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            ctx.globalAlpha = 1.0;
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(36, 36); // Ca. 1.33 m Kantenlänge pro Kachel auf 48 m Durchmesser
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = 8;
+            texture.needsUpdate = true;
+            return texture;
+        }
+
         // ── MAẞSTABSGETREUE UV-SKALIERUNG NACH OBJEKTMAẞEN ──
         function adjustBoxGeometryUVs(geo, width, height, depth, scaleU = 1.0, scaleV = 1.0) {
             const uvAttr = geo.attributes.uv;
@@ -4703,12 +4813,21 @@
 
 
 
-            // 1. Runder Hof-Boden (Radius 24)
+            // 1. Runder Hof-Boden (Radius 24 m): Dunkelgrauer feiner filziger Teppich
             const courtyardFloorGeo = new THREE.CircleGeometry(COURTYARD_RADIUS + 0.2, 64);
-            const courtyardFloorMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
+            const feltCarpetTex = createDarkGrayFeltCarpetTexture();
+            const courtyardFloorMat = new THREE.MeshStandardMaterial({
+                map: feltCarpetTex,
+                bumpMap: feltCarpetTex,
+                bumpScale: 0.015,
+                roughness: 0.96, // Filz ist absolut matt und absorbiert Licht gleichmäßig
+                metalness: 0.02,
+                color: 0xffffff
+            });
             const courtyardFloor = new THREE.Mesh(courtyardFloorGeo, courtyardFloorMat);
             courtyardFloor.rotation.x = -Math.PI / 2;
             courtyardFloor.position.y = 0;
+            courtyardFloor.receiveShadow = true;
             scene.add(courtyardFloor);
 
             // Dekorative Ringe nur im Freiraum des Innenhofs (r = 4 und 8)
