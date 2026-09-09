@@ -4254,6 +4254,252 @@
             registerSeat(benchSeat, "Galerie-Sitzbank", new THREE.Vector3(rx + 3.0, 1.15, rz), new THREE.Vector3(-1, 0, 0));
         }
 
+
+        // ── DOMFÖRMIGE GEODÄTISCHE GLASKUPPEL (DREIECKIGE, EINGERAHMTE GLASPOLYGONE) ──
+        const DOME_APEX_RISE = 8.5; // Scheitelpunkthöhe über der Wand (Scheitelpunkt bei y = 13.5 m)
+        const DOME_APEX_Y = WALL_HEIGHT + DOME_APEX_RISE;
+        const DOME_SPHERE_R = (COURTYARD_RADIUS * COURTYARD_RADIUS + DOME_APEX_RISE * DOME_APEX_RISE) / (2 * DOME_APEX_RISE);
+        const DOME_SPHERE_CY = DOME_APEX_Y - DOME_SPHERE_R;
+
+        function getDomeHeightAt(r) {
+            if (r >= COURTYARD_RADIUS) return WALL_HEIGHT;
+            const term = DOME_SPHERE_R * DOME_SPHERE_R - r * r;
+            if (term <= 0) return DOME_APEX_Y;
+            return DOME_SPHERE_CY + Math.sqrt(term);
+        }
+
+        function getDomeCeilingY(x, z) {
+            const r = Math.hypot(x, z);
+            if (r >= COURTYARD_RADIUS) return WALL_HEIGHT - 0.4;
+            const domeY = getDomeHeightAt(r);
+            return Math.max(WALL_HEIGHT - 0.4, domeY - 0.6);
+        }
+
+        function createGeodesicGlassDome() {
+            const domeGroup = new THREE.Group();
+
+            const numRings = 7;
+            const segments = 36;
+
+            const vertices = [];
+            const ringVertexIndices = [];
+
+            // 1. Ringstützpunkte auf der Sphärenkappe (bündig mit Außenwand bei r = 24 m, y = 5 m)
+            for (let i = 0; i <= numRings; i++) {
+                const t = i / numRings;
+                const r = COURTYARD_RADIUS * (1 - Math.sin(t * Math.PI * 0.5));
+                const y = getDomeHeightAt(r);
+
+                const ring = [];
+                if (i === numRings) {
+                    vertices.push({ x: 0, y: DOME_APEX_Y, z: 0 });
+                    ring.push(vertices.length - 1);
+                } else {
+                    const angleOffset = (i % 2) * (Math.PI / segments);
+                    for (let j = 0; j < segments; j++) {
+                        const angle = j * (2 * Math.PI / segments) + angleOffset;
+                        const x = r * Math.cos(angle);
+                        const z = r * Math.sin(angle);
+                        vertices.push({ x, y, z });
+                        ring.push(vertices.length - 1);
+                    }
+                }
+                ringVertexIndices.push(ring);
+            }
+
+            // 2. Geodätische Dreiecks-Topologie & Randkanten
+            const triangles = [];
+            const edgesMap = new Map();
+
+            function registerEdge(i1, i2) {
+                const min = Math.min(i1, i2);
+                const max = Math.max(i1, i2);
+                const key = min + "_" + max;
+                if (!edgesMap.has(key)) {
+                    edgesMap.set(key, [min, max]);
+                }
+            }
+
+            for (let i = 0; i < numRings; i++) {
+                const rCurrent = ringVertexIndices[i];
+                const rNext = ringVertexIndices[i + 1];
+
+                if (i === numRings - 1) {
+                    const apexIdx = rNext[0];
+                    for (let j = 0; j < segments; j++) {
+                        const p1 = rCurrent[j];
+                        const p2 = rCurrent[(j + 1) % segments];
+                        triangles.push([p1, p2, apexIdx]);
+                        registerEdge(p1, p2);
+                        registerEdge(p2, apexIdx);
+                        registerEdge(apexIdx, p1);
+                    }
+                } else {
+                    for (let j = 0; j < segments; j++) {
+                        const c1 = rCurrent[j];
+                        const c2 = rCurrent[(j + 1) % segments];
+                        const n1 = rNext[j];
+                        const n2 = rNext[(j + 1) % segments];
+
+                        if (i % 2 === 0) {
+                            triangles.push([c1, c2, n2]);
+                            triangles.push([c1, n2, n1]);
+                            registerEdge(c1, c2);
+                            registerEdge(c2, n2);
+                            registerEdge(n2, c1);
+                            registerEdge(n2, n1);
+                            registerEdge(n1, c1);
+                        } else {
+                            triangles.push([c1, c2, n1]);
+                            triangles.push([c2, n2, n1]);
+                            registerEdge(c1, c2);
+                            registerEdge(c2, n1);
+                            registerEdge(n1, c1);
+                            registerEdge(c2, n2);
+                            registerEdge(n2, n1);
+                        }
+                    }
+                }
+            }
+
+            // 3. Kristallklare Dreiecks-Glaspaneele mit physikalisch realistischen Flächennormalen
+            const glassPositions = [];
+            const glassNormals = [];
+
+            triangles.forEach(([i1, i2, i3]) => {
+                const p1 = vertices[i1];
+                const p2 = vertices[i2];
+                const p3 = vertices[i3];
+
+                const ax = p2.x - p1.x, ay = p2.y - p1.y, az = p2.z - p1.z;
+                const bx = p3.x - p1.x, by = p3.y - p1.y, bz = p3.z - p1.z;
+                let nx = ay * bz - az * by;
+                let ny = az * bx - ax * bz;
+                let nz = ax * by - ay * bx;
+                const len = Math.hypot(nx, ny, nz) || 1;
+                nx /= len; ny /= len; nz /= len;
+                if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+
+                glassPositions.push(
+                    p1.x, p1.y, p1.z,
+                    p2.x, p2.y, p2.z,
+                    p3.x, p3.y, p3.z
+                );
+                glassNormals.push(
+                    nx, ny, nz,
+                    nx, ny, nz,
+                    nx, ny, nz
+                );
+            });
+
+            const glassGeo = new THREE.BufferGeometry();
+            glassGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(glassPositions), 3));
+            glassGeo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(glassNormals), 3));
+
+            // Hochrealistisches Architektur-Glasmaterial
+            const glassMat = new THREE.MeshPhysicalMaterial({
+                color: 0xe0f2fe,
+                transmission: 0.85,
+                opacity: 0.35,
+                transparent: true,
+                roughness: 0.05,
+                metalness: 0.06,
+                ior: 1.52,
+                reflectivity: 0.95,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.03,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+
+            const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+            domeGroup.add(glassMesh);
+
+            // 4. Dreidimensionale Profilstreben als Rahmen um jedes einzelne Glasdreieck
+            const strutPositions = [];
+            const strutNormals = [];
+            const strutRadius = 0.045; // 9 cm breite, elegante Titan-Tragprofile
+
+            function buildStrutPrism(p1, p2, radius, sides) {
+                const dx = p2.x - p1.x, dy = p2.y - p1.y, dz = p2.z - p1.z;
+                const len = Math.hypot(dx, dy, dz);
+                if (len < 1e-4) return;
+                const ux = dx / len, uy = dy / len, uz = dz / len;
+
+                let vx, vy, vz;
+                if (Math.abs(uy) < 0.9) {
+                    vx = -uz; vy = 0; vz = ux;
+                } else {
+                    vx = 0; vy = uz; vz = -uy;
+                }
+                const vlen = Math.hypot(vx, vy, vz);
+                vx /= vlen; vy /= vlen; vz /= vlen;
+
+                const wx = uy * vz - uz * vy;
+                const wy = uz * vx - ux * vz;
+                const wz = ux * vy - uy * vx;
+
+                for (let k = 0; k < sides; k++) {
+                    const a1 = (k / sides) * Math.PI * 2;
+                    const a2 = ((k + 1) / sides) * Math.PI * 2;
+
+                    const c1 = Math.cos(a1) * radius, s1 = Math.sin(a1) * radius;
+                    const c2 = Math.cos(a2) * radius, s2 = Math.sin(a2) * radius;
+
+                    const r1x = c1 * vx + s1 * wx, r1y = c1 * vy + s1 * wy, r1z = c1 * vz + s1 * wz;
+                    const r2x = c2 * vx + s2 * wx, r2y = c2 * vy + s2 * wy, r2z = c2 * vz + s2 * wz;
+
+                    const midA = (a1 + a2) * 0.5;
+                    const mc = Math.cos(midA), ms = Math.sin(midA);
+                    const fnx = mc * vx + ms * wx, fny = mc * vy + ms * wy, fnz = mc * vz + ms * wz;
+
+                    const a1x = p1.x + r1x, a1y = p1.y + r1y, a1z = p1.z + r1z;
+                    const b1x = p2.x + r1x, b1y = p2.y + r1y, b1z = p2.z + r1z;
+                    const a2x = p1.x + r2x, a2y = p1.y + r2y, a2z = p1.z + r2z;
+                    const b2x = p2.x + r2x, b2y = p2.y + r2y, b2z = p2.z + r2z;
+
+                    strutPositions.push(a1x, a1y, a1z,  b1x, b1y, b1z,  b2x, b2y, b2z);
+                    strutNormals.push(fnx, fny, fnz,  fnx, fny, fnz,  fnx, fny, fnz);
+
+                    strutPositions.push(a1x, a1y, a1z,  b2x, b2y, b2z,  a2x, a2y, a2z);
+                    strutNormals.push(fnx, fny, fnz,  fnx, fny, fnz,  fnx, fny, fnz);
+                }
+            }
+
+            edgesMap.forEach(([i1, i2]) => {
+                buildStrutPrism(vertices[i1], vertices[i2], strutRadius, 4);
+            });
+
+            const frameGeo = new THREE.BufferGeometry();
+            frameGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(strutPositions), 3));
+            frameGeo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(strutNormals), 3));
+
+            const frameMat = new THREE.MeshStandardMaterial({
+                color: 0x1e293b, // Elegantes Anthrazit-Titan
+                roughness: 0.28,
+                metalness: 0.85
+            });
+
+            const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+            domeGroup.add(frameMesh);
+
+            // 5. Massiver, bündiger Ringbalken auf der Außenwand (y = 5.0 m, r = 24.0 m)
+            const ringBeamGeo = new THREE.TorusGeometry(COURTYARD_RADIUS, 0.14, 12, 64);
+            ringBeamGeo.rotateX(Math.PI / 2);
+            const ringBeam = new THREE.Mesh(ringBeamGeo, frameMat);
+            ringBeam.position.set(0, WALL_HEIGHT, 0);
+            domeGroup.add(ringBeam);
+
+            // 6. Scheitel-Abschlussring am Zenit der Kuppel
+            const apexCrownGeo = new THREE.TorusGeometry(0.85, 0.08, 12, 32);
+            apexCrownGeo.rotateX(Math.PI / 2);
+            const apexCrown = new THREE.Mesh(apexCrownGeo, frameMat);
+            apexCrown.position.set(0, DOME_APEX_Y, 0);
+            domeGroup.add(apexCrown);
+
+            return domeGroup;
+        }
+
         // ── 3D INIT ──
         function initThreeWorld() {
             if (scene) {
@@ -4370,7 +4616,9 @@
             scene.add(outerWall);
             wallMeshes.push(outerWall);
 
-// Hof-Decke komplett entfernt gegen Flackern
+            // Domförmige Glaskuppel aus dreieckigen, eingerahmten Glaspolygonen bündig auf Außenwand
+            const glassDome = createGeodesicGlassDome();
+            scene.add(glassDome);
 
             // 4. Die 4 Satellitenräume
             SATELLITE_ROOMS.forEach((room) => {
@@ -4596,8 +4844,9 @@
                         if (velocityY > 7.0) velocityY = 7.0;
                         camera.position.y += velocityY * delta;
 
-                        if (camera.position.y >= WALL_HEIGHT - 0.4) {
-                            camera.position.y = WALL_HEIGHT - 0.4;
+                        const domeCeilY = getDomeCeilingY(camera.position.x, camera.position.z);
+                        if (camera.position.y >= domeCeilY) {
+                            camera.position.y = domeCeilY;
                             velocityY = 0;
                         }
 
