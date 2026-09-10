@@ -915,23 +915,12 @@
     <div id="cinema-modal" class="modal-backdrop">
         <div class="cinema-card">
             <h3>
-                <span>Synchron-Bildschirm (Chillen)</span>
-                <span style="font-size: 0.8rem; color: #a1a1aa; font-weight: normal;">Live-Sync</span>
+                <span>Synchron-Bildschirm</span>
+                <span style="font-size: 0.8rem; color: #a1a1aa; font-weight: normal;">Chillen</span>
             </h3>
-            <p style="font-size: 0.88rem; color: #a1a1aa; margin: 0;">
-                Füge einen YouTube-Link oder eine Video-ID ein. Was du startest, sehen und hören alle Mitspieler synchron.
-            </p>
             <div class="cinema-input-row">
-                <input type="text" id="cinema-url-input" placeholder="https://www.youtube.com/watch?v=... oder Video-ID" />
+                <input type="text" id="cinema-url-input" placeholder="YouTube-Link oder Video-ID einfügen..." />
                 <button type="button" id="btn-cinema-play">Abspielen</button>
-            </div>
-            <div class="cinema-presets-title">Schnellauswahl</div>
-            <div class="cinema-presets">
-                <button type="button" class="cinema-preset-btn" data-vid="jfKfPfyJRdk">Lofi Hip Hop Radio</button>
-                <button type="button" class="cinema-preset-btn" data-vid="5qap5aO4i9A">Lofi Girl Synthwave</button>
-                <button type="button" class="cinema-preset-btn" data-vid="DWcJFNfaw9c">Jazz Cafe &amp; Rain</button>
-                <button type="button" class="cinema-preset-btn" data-vid="M5QY2_8704o">Chillhop Essentials</button>
-                <button type="button" class="cinema-preset-btn" data-vid="HuFYqnbVbzY">4K Nature Relax</button>
             </div>
             <div class="cinema-controls-row">
                 <button type="button" id="btn-cinema-pause">Pause / Play</button>
@@ -939,7 +928,7 @@
                 <span id="cinema-status" class="cinema-status">Kein Video aktiv.</span>
             </div>
             <div style="display:flex; justify-content:flex-end;">
-                <button type="button" id="btn-cinema-close" class="cinema-preset-btn" style="border-color:rgba(255,255,255,0.3); font-weight: 600;">Schließen</button>
+                <button type="button" id="btn-cinema-close" class="btn-cancel" style="padding: 0.5rem 1.2rem;">Schließen</button>
             </div>
         </div>
     </div>
@@ -1341,35 +1330,77 @@
         }
 
         function parseYouTubeId(raw) {
-            raw = (raw || '').trim();
+            if (!raw) return null;
+            raw = raw.trim();
             if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
+            const match = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|live\/|shorts\/))([A-Za-z0-9_-]{11})/i);
+            if (match && match[1]) return match[1];
             try {
-                const u = new URL(raw);
-                if (u.hostname.includes('youtu.be')) return u.pathname.slice(1, 12);
-                return u.searchParams.get('v') || null;
-            } catch (e) {
-                return null;
+                const u = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
+                if (u.searchParams && u.searchParams.get('v')) return u.searchParams.get('v');
+                const parts = u.pathname.split('/').filter(Boolean);
+                const last = parts[parts.length - 1];
+                if (last && /^[A-Za-z0-9_-]{11}$/.test(last)) return last;
+            } catch (e) {}
+            return null;
+        }
+
+        function createYTPlayer(videoId, playing, seekSec) {
+            const container = document.getElementById('yt-player-container');
+            if (container) {
+                container.innerHTML = '<div id="yt-player-iframe"></div>';
             }
+            ytPlayer = new YT.Player('yt-player-iframe', {
+                videoId: videoId,
+                width: '320',
+                height: '180',
+                playerVars: {
+                    autoplay: 1,
+                    controls: 1,
+                    rel: 0,
+                    modestbranding: 1,
+                    playsinline: 1,
+                    enablejsapi: 1,
+                    start: Math.floor(seekSec || 0)
+                },
+                events: {
+                    onReady: function(event) {
+                        if (playing) {
+                            event.target.seekTo(seekSec || 0, true);
+                            event.target.playVideo();
+                        }
+                    },
+                    onError: function(err) {
+                        console.warn('YouTube Error:', err.data);
+                        const el = document.getElementById('cinema-status');
+                        let msg = 'Wiedergabefehler (Code ' + err.data + ')';
+                        if (err.data === 101 || err.data === 150) msg = 'Uploader erlaubt keine externe Einbettung.';
+                        else if (err.data === 100) msg = 'Video nicht gefunden oder privat.';
+                        else if (err.data === 2) msg = 'Ungültige Video-ID.';
+                        if (el) el.textContent = msg;
+                    }
+                }
+            });
         }
 
         function setCinemaVideo(videoId, playing, seekSec) {
             if (!videoId) return;
             currentCinemaVideoId = videoId;
             updateCinemaScreenTexture(videoId, playing);
+
+            const container = document.getElementById('yt-player-container');
+            if (container) container.style.display = 'block';
+
             ensureYouTubeAPI(() => {
-                const container = document.getElementById('yt-player-container');
-                if (container) container.style.display = 'block';
                 if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-                    ytPlayer.loadVideoById({ videoId: videoId, startSeconds: seekSec || 0 });
-                    if (playing) { ytPlayer.playVideo(); } else { ytPlayer.pauseVideo(); }
+                    try {
+                        ytPlayer.loadVideoById({ videoId: videoId, startSeconds: Math.floor(seekSec || 0) });
+                        if (playing) { ytPlayer.playVideo(); } else { ytPlayer.pauseVideo(); }
+                    } catch (e) {
+                        createYTPlayer(videoId, playing, seekSec);
+                    }
                 } else {
-                    ytPlayer = new YT.Player('yt-player-iframe', {
-                        videoId: videoId,
-                        width: '280',
-                        height: '158',
-                        playerVars: { autoplay: playing ? 1 : 0, controls: 1, rel: 0, modestbranding: 1, start: Math.floor(seekSec || 0) },
-                        events: {}
-                    });
+                    createYTPlayer(videoId, playing, seekSec);
                 }
             });
         }
@@ -1391,9 +1422,28 @@
             ctx.strokeRect(8, 8, 1536 - 16, 768 - 16);
 
             if (videoId) {
-                const thumbUrl = 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg';
+                const thumbUrl = 'https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg';
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
+                img.onerror = () => {
+                    ctx.fillStyle = '#18181b';
+                    ctx.fillRect(24, 24, 1536 - 48, 768 - 48);
+                    ctx.save();
+                    ctx.translate(1536 / 2, 768 / 2);
+                    ctx.scale(-1, 1);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 50px "Quicksand", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('VIDEO WIRD ABGESPIELT', 0, -20);
+                    ctx.font = '32px "Quicksand", sans-serif';
+                    ctx.fillStyle = '#818cf8';
+                    ctx.fillText(videoId, 0, 40);
+                    ctx.restore();
+                    if (cinemaScreenMesh && cinemaScreenMesh.material.map) {
+                        cinemaScreenMesh.material.map.needsUpdate = true;
+                    }
+                };
                 img.onload = () => {
                     // Zeichne Thumbnail mit zentrierter Skalierung
                     ctx.drawImage(img, 24, 24, 1536 - 48, 768 - 48);
@@ -1496,14 +1546,36 @@
         }
 
         function pushCinemaState(videoId, isPlaying, seekSec) {
-            rtdbSet(rtdbRef(rtdb, 'worldState/cinema'), {
+            const state = {
                 videoId: videoId || null,
                 isPlaying: Boolean(isPlaying),
                 seekSec: Number(seekSec || 0),
                 startedAt: isPlaying ? Date.now() : 0,
                 updatedBy: currentUser ? currentUser.uid : 'guest',
                 updatedAt: Date.now()
-            }).catch(err => console.warn('RTDB cinema update error:', err));
+            };
+
+            // Sofort lokal anwenden, damit das Video ohne Verzögerung startet
+            syncCinemaState(state, false);
+
+            if (rtdb) {
+                rtdbSet(rtdbRef(rtdb, 'worldState/cinema'), state).then(() => {
+                    const el = document.getElementById('cinema-status');
+                    if (el && isPlaying && videoId) {
+                        el.textContent = 'Synchron für alle aktiv: ' + videoId;
+                    }
+                }).catch(err => {
+                    console.warn('RTDB cinema update error:', err);
+                    const el = document.getElementById('cinema-status');
+                    if (el) {
+                        if (err.code === 'PERMISSION_DENIED' || (err.message && err.message.includes('PERMISSION_DENIED'))) {
+                            el.textContent = 'Video läuft lokal. In Firebase fehlt Schreibregel für "worldState"!';
+                        } else {
+                            el.textContent = 'Video läuft lokal (Sync: ' + (err.code || 'Offline') + ')';
+                        }
+                    }
+                });
+            }
         }
 
         function openCinemaModal() {
@@ -5753,16 +5825,7 @@
                 });
             }
 
-            document.querySelectorAll('.cinema-preset-btn[data-vid]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const vid = btn.dataset.vid;
-                    if (vid) {
-                        pushCinemaState(vid, true, 0);
-                        const inputEl = document.getElementById('cinema-url-input');
-                        if (inputEl) inputEl.value = vid;
-                    }
-                });
-            });
+
         }
 
         function onWindowResize() {
