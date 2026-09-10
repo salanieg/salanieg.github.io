@@ -1713,7 +1713,7 @@
             const dropX = Number(playerPos.x.toFixed(3));
             const dropZ = Number(playerPos.z.toFixed(3));
 
-            jpObj.group.position.set(dropX, 0.05, dropZ);
+            jpObj.group.position.set(dropX, 0.0, dropZ);
             jpObj.group.rotation.y = dropRotY;
             jpObj.group.visible = true;
             jpObj.isEquipped = false;
@@ -5809,48 +5809,96 @@
             });
         }
 
-        // 4. Ueberarbeitetes, groesseres Jetpack-Modell
-        // ── KOMPLETT NEU DESIGNTES MINIMALISTISCHES JETPACK (MODULAR FUER LAGER, REMOTE & 3RD PERSON) ──
+        // ── TEXTUR: WARNUNG "Achtung! Jetpack!" FUER DAS MINIMALISTISCHE JETPACK ──
+        function createJetpackWarningTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext("2d");
+
+            // Kraeftiger gelber Warn-Hintergrund
+            ctx.fillStyle = "#facc15";
+            ctx.fillRect(0, 0, 512, 128);
+
+            // Schwarzer Aussenrahmen
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 502, 118);
+
+            // Diagonale schwarze Warnstreifen links
+            ctx.fillStyle = "#000000";
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(15 + i * 22, 10);
+                ctx.lineTo(30 + i * 22, 10);
+                ctx.lineTo(10 + i * 22, 118);
+                ctx.lineTo(0 + i * 22, 118);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Diagonale schwarze Warnstreifen rechts
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(435 + i * 22, 10);
+                ctx.lineTo(450 + i * 22, 10);
+                ctx.lineTo(430 + i * 22, 118);
+                ctx.lineTo(415 + i * 22, 118);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Text in der Mitte: "Achtung! Jetpack!"
+            ctx.fillStyle = "#000000";
+            ctx.font = '900 44px "Quicksand", sans-serif';
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("Achtung! Jetpack!", 256, 64);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            return texture;
+        }
+
+        // ── KOMPLETT NEU DESIGNTES MINIMALISTISCHES JETPACK (OHNE STAENDER, STEHT DIREKT AM BODEN) ──
         function createRedesignedJetpackModel(opts = {}) {
             const jp = new THREE.Group();
 
-            // Minimalistische Material-Palette: Mattes Schiefergrau, gebuerstetes Aluminium, Gunmetal & leuchtendes Orange
-            const chassisMat = new THREE.MeshStandardMaterial({
-                color: 0x1e293b,
-                roughness: 0.70,
-                metalness: 0.20
+            // Minimalistische Material-Palette: Mattes Anthrazit, gebuerstetes Titan, tiefes Schwarz & Warn-Badge
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0x27272a, // Mattes Anthrazit
+                roughness: 0.85,
+                metalness: 0.15
             });
-            const aluMat = new THREE.MeshStandardMaterial({
-                color: 0x94a3b8,
-                roughness: 0.30,
-                metalness: 0.85
-            });
-            const thrusterMat = new THREE.MeshStandardMaterial({
-                color: 0x0f172a,
-                roughness: 0.50,
-                metalness: 0.50
+            const tankMat = new THREE.MeshStandardMaterial({
+                color: 0x52525b, // Gebuerstetes Titan / Dunkelgrau
+                roughness: 0.45,
+                metalness: 0.55
             });
             const nozzleMat = new THREE.MeshStandardMaterial({
-                color: 0x18181b,
+                color: 0x18181b, // Tiefes Matt-Schwarz
                 roughness: 0.35,
-                metalness: 0.85
+                metalness: 0.80
             });
             const strapMat = new THREE.MeshLambertMaterial({ color: 0x09090b });
-            const heatRingMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
 
-            // 1. Schlankes, monolithisches Hauptgehaeuse (Unibody)
-            const mainBodyGeo = new THREE.BoxGeometry(0.26, 0.40, 0.09);
-            const mainBody = new THREE.Mesh(mainBodyGeo, chassisMat);
-            mainBody.position.set(0, 0.40, 0);
+            // 1. Schlanker, minimalistischer Unibody-Mittelblock
+            // Laeuft von y = 0.08 bis y = 0.46 (Mitte y = 0.27)
+            const mainBodyGeo = new THREE.BoxGeometry(0.28, 0.38, 0.08);
+            const mainBody = new THREE.Mesh(mainBodyGeo, bodyMat);
+            mainBody.position.set(0, 0.27, 0);
             jp.add(mainBody);
 
-            // Minimalistischer Aluminium-Akzentstreifen oben
-            const topCapGeo = new THREE.BoxGeometry(0.264, 0.06, 0.094);
-            const topCap = new THREE.Mesh(topCapGeo, aluMat);
-            topCap.position.set(0, 0.57, 0);
-            jp.add(topCap);
+            // 2. Warn-Plakette: "Achtung! Jetpack!" auf der Rueckseite (-Z, im Raum frontal sichtbar)
+            const warnTex = createJetpackWarningTexture();
+            const badgeMat = new THREE.MeshBasicMaterial({ map: warnTex, side: THREE.FrontSide });
+            const badgeGeo = new THREE.PlaneGeometry(0.24, 0.06);
+            const badgeMesh = new THREE.Mesh(badgeGeo, badgeMat);
+            badgeMesh.rotation.y = Math.PI; // Zeigt in -Z Richtung (frontal sichtbar)
+            badgeMesh.position.set(0, 0.30, -0.041);
+            jp.add(badgeMesh);
 
-            // 2. Schlanke Zwillings-Duesenkoerper (links und rechts buendig integriert)
+            // 3. Schlanke Zwillings-Drucktanks links und rechts
             const flameMeshes = [];
 
             const jetFlameOuterMat = new THREE.MeshBasicMaterial({
@@ -5870,69 +5918,52 @@
                 side: THREE.DoubleSide
             });
 
-            [-0.14, 0.14].forEach((tx) => {
+            [-0.13, 0.13].forEach((tx) => {
                 const thrusterGroup = new THREE.Group();
-                thrusterGroup.position.set(tx, 0.40, 0);
+                thrusterGroup.position.set(tx, 0, 0);
 
-                // Zylindrischer Duesenkoerper
-                const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.36, 16), thrusterMat);
-                thrusterGroup.add(pod);
+                // Zylinder-Tank (y = 0.08 bis y = 0.46, Hoehe 0.38)
+                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.38, 20), tankMat);
+                tank.position.y = 0.27;
+                thrusterGroup.add(tank);
 
-                // Oberer Aluminium-Abschluss
-                const podTop = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.052, 0.04, 16), aluMat);
-                podTop.position.y = 0.20;
-                thrusterGroup.add(podTop);
+                // Halbkugelfoermige obere Kappe
+                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.048, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), tankMat);
+                cap.position.y = 0.46;
+                thrusterGroup.add(cap);
 
-                // Konische Auslass-Duese
-                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.054, 0.07, 16), nozzleMat);
-                nozzle.position.y = -0.215;
+                // Konische Duese unten (y = 0.0 bis y = 0.08, Hoehe 0.08)
+                // Die Duesenunterkante steht exakt bei y = 0.0 plan auf dem Boden!
+                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.044, 0.034, 0.08, 18), nozzleMat);
+                nozzle.position.y = 0.04;
                 thrusterGroup.add(nozzle);
 
-                // Oranger Hitze-Ring im Duesenmund
-                const ring = new THREE.Mesh(new THREE.RingGeometry(0.012, 0.036, 16), heatRingMat);
-                ring.rotation.x = Math.PI / 2;
-                ring.position.y = -0.252;
-                thrusterGroup.add(ring);
-
-                // Flammenkegel (Aussen orange, Kern leuchtend hellgelb)
-                const outerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.085, 0.48, 16, 1, true), jetFlameOuterMat);
-                outerFlame.position.set(0, -0.50, 0);
+                // Flammenkegel (nur beim Fliegen sichtbar, unterhalb der Duese bei y <= 0.0)
+                const outerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.08, 0.42, 16, 1, true), jetFlameOuterMat);
+                outerFlame.position.set(0, -0.21, 0);
                 thrusterGroup.add(outerFlame);
 
-                const innerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.038, 0.32, 12, 1, true), jetFlameCoreMat);
-                innerFlame.position.set(0, -0.42, 0);
+                const innerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.036, 0.28, 12, 1, true), jetFlameCoreMat);
+                innerFlame.position.set(0, -0.14, 0);
                 thrusterGroup.add(innerFlame);
 
                 flameMeshes.push({ outer: outerFlame, inner: innerFlame });
                 jp.add(thrusterGroup);
             });
 
-            // 3. Schlichte Rueckengurte
-            [-0.08, 0.08].forEach(sx => {
-                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.36, 0.02), strapMat);
-                strap.position.set(sx, 0.40, 0.055);
+            // 4. Schlichte Rueckengurte (auf der Trageseite +Z)
+            [-0.07, 0.07].forEach(sx => {
+                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.34, 0.012), strapMat);
+                strap.position.set(sx, 0.27, 0.043);
                 jp.add(strap);
             });
 
-            // 4. Minimalistischer Standfuss (nur wenn im Lager auf dem Geraetestaender)
-            if (opts.isOnStand) {
-                const standPlate = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.02, 0.24), chassisMat);
-                standPlate.position.y = 0.01;
-                jp.add(standPlate);
-
-                [-0.14, 0.14].forEach(sx => {
-                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.20, 10), aluMat);
-                    post.position.set(sx, 0.11, 0);
-                    jp.add(post);
-                });
-            }
-
-            // Unsichtbare Klick- und Raycast-Hitbox
+            // Unsichtbare Klick- und Raycast-Hitbox zum Aufheben mit [E]
             const hitBox = new THREE.Mesh(
-                new THREE.BoxGeometry(0.55, 0.65, 0.35),
+                new THREE.BoxGeometry(0.44, 0.52, 0.22),
                 new THREE.MeshBasicMaterial({ visible: false })
             );
-            hitBox.position.set(0, 0.40, 0);
+            hitBox.position.set(0, 0.26, 0);
             hitBox.userData = { isJetpackItem: true, jetpackId: opts.id || 'jetpack' };
             jp.add(hitBox);
 
@@ -5961,7 +5992,7 @@
         }
 
         function createWarehouseJetpackMesh(id) {
-            return createRedesignedJetpackModel({ isOnStand: true, id: id });
+            return createRedesignedJetpackModel({ id: id });
         }
 
         function buildWarehouseJetpacks(rx, rz, doorAngle) {
@@ -6945,9 +6976,9 @@
             group.add(nameTag);
 
             // Ausgeruestetes High-Tech Jetpack auf dem Ruecken
-            localPlayerJetpack = createRedesignedJetpackModel({ isOnStand: false, id: 'local_equipped' });
+            localPlayerJetpack = createRedesignedJetpackModel({ id: 'local_equipped' });
             localPlayerJetpack.rotation.y = Math.PI;
-            localPlayerJetpack.position.set(0, 0.65, 0.22);
+            localPlayerJetpack.position.set(0, 0.85, 0.16);
             localPlayerJetpack.visible = isJetpackEquipped;
             group.add(localPlayerJetpack);
 
@@ -6962,61 +6993,10 @@
             return group;
         }
 
-        // ── LOKALES FIRST-PERSON JETPACK RIG MIT ORANGEN FLAMMEN & LICHT ──
-            localJetpackCockpit = new THREE.Group();
-            localJetpackFlames = new THREE.Group();
-
-            const fpFlameOuterMat = new THREE.MeshBasicMaterial({
-                color: 0xf97316,
-                transparent: true,
-                opacity: 0.85,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                side: THREE.DoubleSide
-            });
-            const fpFlameCoreMat = new THREE.MeshBasicMaterial({
-                color: 0xfef08a,
-                transparent: true,
-                opacity: 0.95,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                side: THREE.DoubleSide
-            });
-
-            [-0.38, 0.38].forEach(fx => {
-                const thrusterHousing = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.045, 0.07, 0.14, 16),
-                    new THREE.MeshLambertMaterial({ color: 0x27272a, roughness: 0.4, metalness: 0.8 })
-                );
-                thrusterHousing.rotation.x = Math.PI / 8;
-                thrusterHousing.position.set(fx, -0.28, -0.42);
-                localJetpackCockpit.add(thrusterHousing);
-
-                const outerFlame = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.015, 0.08, 0.40, 16, 1, true),
-                    fpFlameOuterMat
-                );
-                outerFlame.position.set(fx, -0.48, -0.48);
-                outerFlame.rotation.x = Math.PI / 8;
-                localJetpackFlames.add(outerFlame);
-
-                const coreFlame = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.008, 0.04, 0.28, 12, 1, true),
-                    fpFlameCoreMat
-                );
-                coreFlame.position.set(fx, -0.42, -0.46);
-                coreFlame.rotation.x = Math.PI / 8;
-                localJetpackFlames.add(coreFlame);
-            });
-
-            localJetpackLight = new THREE.PointLight(0xf97316, 0, 8, 1.5);
-            localJetpackLight.position.set(0, -0.45, -0.40);
-            localJetpackCockpit.add(localJetpackLight);
-
-            localJetpackFlames.visible = false;
-            localJetpackCockpit.add(localJetpackFlames);
-            localJetpackCockpit.visible = false;
-            camera.add(localJetpackCockpit);
+        // ── FIRST-PERSON: KEINE STOERENDEN MESHS VOR DER KAMERA ──
+            localJetpackCockpit = null;
+            localJetpackFlames = null;
+            localJetpackLight = null;
 
             scene.add(camera);
 
@@ -8716,9 +8696,9 @@
         }
 
         function createRemoteJetpackModel() {
-            const jp = createRedesignedJetpackModel({ isOnStand: false, id: 'remote' });
+            const jp = createRedesignedJetpackModel({ id: 'remote' });
             jp.rotation.y = Math.PI;
-            jp.position.set(0, 0.65, 0.22);
+            jp.position.set(0, 0.85, 0.16);
             return jp;
         }
 
