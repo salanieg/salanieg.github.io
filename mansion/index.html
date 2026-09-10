@@ -3901,22 +3901,66 @@
             tableGroup.position.set(rx, 0, rz + 0.4);
             scene.add(tableGroup);
 
-            // ── KINOPROJEKTOR AUF DEM GELBEN TISCH (GROESSER & MIT AUSFADENDEM LICHTSTRAHL) ──
+            // ── MINI-TRIPOD (STATIV) AUF DEM GELBEN TISCH ──
+            const tripodGroup = new THREE.Group();
+            const tripodMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const tripodMetalMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
+
+            // Zentraler Stativ-Hub
+            const tripodHub = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.045, 0.04, 16), tripodMat);
+            tripodHub.position.set(0, 0.14, 0);
+            tripodGroup.add(tripodHub);
+
+            // Kugelkopf (silberne Gelenkkugel)
+            const tripodBall = new THREE.Mesh(new THREE.SphereGeometry(0.032, 16, 12), tripodMetalMat);
+            tripodBall.position.set(0, 0.175, 0);
+            tripodGroup.add(tripodBall);
+
+            // Schnellwechselplatte / Stativteller
+            const tripodPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.015, 16), tripodMat);
+            tripodPlate.position.set(0, 0.20, 0);
+            tripodGroup.add(tripodPlate);
+
+            // 3 Stativbeine mit Gummifuessen (spreizen sich auf die Tischplatte)
+            const legLen = 0.26;
+            const legGeo = new THREE.CylinderGeometry(0.011, 0.016, legLen, 12);
+            legGeo.translate(0, -legLen / 2, 0);
+            const rubberFootGeo = new THREE.SphereGeometry(0.018, 12, 10);
+            const footRubberMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
+
+            [0, (Math.PI * 2) / 3, (Math.PI * 4) / 3].forEach(angle => {
+                const legPivot = new THREE.Group();
+                legPivot.position.set(0, 0.14, 0);
+                legPivot.rotation.y = angle;
+
+                const legMesh = new THREE.Mesh(legGeo, tripodMat);
+                legMesh.rotation.z = 0.98;
+                legPivot.add(legMesh);
+
+                const footMesh = new THREE.Mesh(rubberFootGeo, footRubberMat);
+                footMesh.position.set(Math.sin(0.98) * legLen, -Math.cos(0.98) * legLen, 0);
+                legPivot.add(footMesh);
+
+                tripodGroup.add(legPivot);
+            });
+
+            // Auf dem Tisch platziert (Tischplatte bei y = 0.49m)
+            tripodGroup.position.set(-0.25, 0.49, 16.85);
+            scene.add(tripodGroup);
+
+            // ── KINOPROJEKTOR AUF DEM STATIV (SCHWEBT FREI UEBER DEM TISCH) ──
             const projectorGroup = new THREE.Group();
 
-            // Gehaeuse (etwas groesser, edles anthrazitfarbenes Schiefergrau)
+            // Gehaeuse (edles anthrazitfarbenes Schiefergrau)
             const projBodyMat = new THREE.MeshLambertMaterial({ color: 0x27272a });
             const projBody = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.14, 0.32), projBodyMat);
             projBody.position.y = 0.07;
             projectorGroup.add(projBody);
 
-            // Gummifuesse
-            const footMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
-            [[-0.18, -0.12], [0.18, -0.12], [-0.18, 0.12], [0.18, 0.12]].forEach(([fx, fz]) => {
-                const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.016, 12), footMat);
-                foot.position.set(fx, 0.008, fz);
-                projectorGroup.add(foot);
-            });
+            // Stativ-Montagering an der Unterseite
+            const mountRing = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.015, 16), tripodMetalMat);
+            mountRing.position.y = -0.005;
+            projectorGroup.add(mountRing);
 
             // Objektiv-Tubus (vorne bei local +Z)
             const lensRimMat = new THREE.MeshLambertMaterial({ color: 0x71717a });
@@ -3991,9 +4035,10 @@
             projectorFlareMesh.visible = false;
             projectorGroup.add(projectorFlareMesh);
 
-            // Positionierung auf dem gelben Tisch (Tischplatte bei y = 0.49m)
-            projectorGroup.position.set(-0.25, 0.49, 16.85);
-            // Exakt auf die neue Hoehe der Kinoleinwand (-4.75, 2.35, 16.5) ausgerichtet
+            // Montage direkt auf dem Kugelkopf-Stativteller (y = 0.49 + 0.21 = 0.70m)
+            // Durch die Erhoehung auf dem Stativ verbleiben selbst bei Aufwaertsneigung ca. 8cm Luft zum Tisch!
+            projectorGroup.position.set(-0.25, 0.70, 16.85);
+            // Exakt auf die Kinoleinwand (-4.75, 2.35, 16.5) ausgerichtet
             projectorGroup.lookAt(-4.75, 2.35, 16.5);
             scene.add(projectorGroup);
 
