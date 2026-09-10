@@ -3991,7 +3991,7 @@
             lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
             scene.add(lampGroup);
 
-            // ── VIEWING SCREEN (2D-FLACHBILDWAND, 30% GROESSER, SCHWARZER RAHMEN WIE NOTIZENLEINWAND, KEIN SCHRIFTZUG) ──
+            // ── VIEWING SCREEN (WEISSE 2D-LEINWAND, SCHWARZER RAHMEN WIE NOTIZENLEINWAND, KEINE HALTERUNGEN) ──
             const csWidth = 3.84;
             const csHeight = 2.16;
 
@@ -4000,17 +4000,17 @@
             csCanvas.height = 864;
             const csCtx = csCanvas.getContext("2d");
 
-            // Tiefschwarzer matter Hintergrund fuer die Kinoleinwand
-            csCtx.fillStyle = "#000000";
+            // Reine weisse Leinwandfläche
+            csCtx.fillStyle = "#ffffff";
             csCtx.fillRect(0, 0, 1536, 864);
 
-            // Robuster schwarzer Rahmen exakt wie beim Notizboard (kein gestreifter Rahmen)
+            // Robuster schwarzer Rahmen exakt wie beim Notizboard
             csCtx.lineWidth = 28;
             csCtx.strokeStyle = "#000000";
             csCtx.strokeRect(14, 14, 1536 - 28, 864 - 28);
 
-            // Dezenter Hinweistext in der Mitte, wenn noch kein Video läuft (kein oberer Header)
-            csCtx.fillStyle = "rgba(255, 255, 255, 0.45)";
+            // Dezenter Hinweistext in der Mitte, wenn noch kein Video läuft
+            csCtx.fillStyle = "rgba(0, 0, 0, 0.40)";
             csCtx.font = '500 32px "Quicksand", sans-serif';
             csCtx.textAlign = "center";
             csCtx.textBaseline = "middle";
@@ -4020,11 +4020,11 @@
             csTexture.colorSpace = THREE.SRGBColorSpace;
             csTexture.needsUpdate = true;
 
-            // 2D-Flachbildschirm (PlaneGeometry)
+            // 2D-Flachbildschirm (PlaneGeometry, DoubleSide, absolut blickdicht)
             const csGeo = new THREE.PlaneGeometry(csWidth, csHeight);
             const csMat = new THREE.MeshBasicMaterial({
                 map: csTexture,
-                side: THREE.FrontSide,
+                side: THREE.DoubleSide,
                 toneMapped: false
             });
             cinemaScreenMesh = new THREE.Mesh(csGeo, csMat);
@@ -4035,24 +4035,6 @@
             cinemaScreenMesh.rotation.y = Math.PI / 2;
             cinemaScreenMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaScreenMesh);
-
-            // Schlanke schwarze Rückplatte für sauberes Finish von hinten
-            const csBackMat = new THREE.MeshBasicMaterial({ color: 0x050507, side: THREE.BackSide });
-            const csBackMesh = new THREE.Mesh(csGeo, csBackMat);
-            csBackMesh.position.set(-5.022, 2.0, rz);
-            csBackMesh.rotation.y = Math.PI / 2;
-            scene.add(csBackMesh);
-
-            // Wandhalterungs-Elemente / Distanz-Streben zur runden Wand
-            const bracketMat = new THREE.MeshBasicMaterial({ color: 0x18181b });
-            const bracketZOffsets = [-1.55, 1.55];
-            bracketZOffsets.forEach(bz => {
-                const wallX = -Math.sqrt(Math.max(0, 5.46 * 5.46 - bz * bz));
-                const bracketLen = Math.abs(wallX - (-5.02));
-                const bracket = new THREE.Mesh(new THREE.BoxGeometry(bracketLen, 0.05, 0.05), bracketMat);
-                bracket.position.set(-5.02 - bracketLen / 2, 2.0, rz + bz);
-                scene.add(bracket);
-            });
 
             // Unsichtbares Interaktions-Volumen für verlässliches Raycasting (PlaneGeometry, DoubleSide)
             cinemaInteractMesh = new THREE.Mesh(
