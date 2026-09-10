@@ -6258,9 +6258,12 @@
                             }
                         }
 
-                        // 3b. Cinema Screen Interaktion (Screen + InteractMesh + Kulante Wandprüfung bis 9.0 m)
+                        // 3b. Cinema Screen Interaktion (NUR wenn man sich im Chillen-Kreis-Raum vor dem Screen befindet)
                         let hitCinema = false;
-                        if (!hitBike && !hitJp && (cinemaScreenMesh || cinemaInteractMesh)) {
+                        const distToChillenInteract = Math.hypot(camera.position.x - 0, camera.position.z - 16.5);
+                        const inChillenForInteract = (camera.position.z >= 11.0) && (distToChillenInteract <= 5.25) && (camera.position.x > -4.68);
+
+                        if (!hitBike && !hitJp && inChillenForInteract && (cinemaScreenMesh || cinemaInteractMesh)) {
                             const cinemaTargets = [];
                             if (cinemaScreenMesh) cinemaTargets.push(cinemaScreenMesh);
                             if (cinemaInteractMesh) cinemaTargets.push(cinemaInteractMesh);
@@ -6390,38 +6393,40 @@
 
             renderer.render(scene, camera);
 
-            // ── CSS3D ON-WALL VIDEO RENDERN ──
+            // ── CSS3D ON-WALL VIDEO RENDERN (NUR IM CHILLEN-KREIS-RAUM SICHTBAR) ──
             if (cssRenderer && cssScene) {
                 let shouldShow = Boolean(currentCinemaVideoId);
 
                 if (shouldShow) {
                     const px = camera.position.x;
+                    const py = camera.position.y;
                     const pz = camera.position.z;
                     const distToChillen = Math.hypot(px - 0, pz - 16.5);
 
-                    // 1. Wenn der Spieler hinter der Bildwand steht (x <= -4.68), ist er in/hinter der Wand oder draussen
-                    if (px <= -4.68) {
-                        shouldShow = false;
-                    }
-                    // 2. Befindet sich der Spieler auf Hoehe des Chillen-Zimmers (z >= 11.0):
-                    // Er muss sich innerhalb der Zylinderwand befinden (Radius ca. 5.46m)
-                    else if (pz >= 11.0) {
-                        if (distToChillen > 5.35) {
-                            shouldShow = false; // Ausserhalb der Aussenwand im Garten / Freien
-                        }
-                    }
-                    // 3. Steht der Spieler im Verbindungskorridor davor (z < 11.0):
-                    // Nur anzeigen, wenn er im Flur (|x| <= 2.2, z >= 6.0) steht und hineinblickt
-                    else {
-                        const camDir = new THREE.Vector3();
-                        camera.getWorldDirection(camDir);
-                        if (Math.abs(px) > 2.2 || pz < 6.0 || camDir.z <= 0.2) {
-                            shouldShow = false;
+                    // Video ausschliesslich sichtbar, wenn man sich im "Chillen"-Kreis-Raum befindet:
+                    // 1. Z-Position ab Tueruebergang (pz >= 11.0m)
+                    // 2. Innerhalb der Raumhoehe unter der Decke (py >= -0.5m && py <= 4.8m)
+                    // 3. Innerhalb des Kreis-Raumradius:
+                    //    - Kern-Innenraum: distToChillen <= 4.85m
+                    //    - Tuerbereich (distToChillen bis 5.35m): nur innerhalb der Tueroeffnung (|px| <= 1.85m)
+                    let inChillenRoom = false;
+                    if (pz >= 11.0 && py >= -0.5 && py <= 4.8) {
+                        if (distToChillen <= 4.85) {
+                            inChillenRoom = true;
+                        } else if (distToChillen <= 5.35 && Math.abs(px) <= 1.85) {
+                            inChillenRoom = true;
                         }
                     }
 
-                    // 4. Frustum/Blickrichtung: Wenn die Leinwand im Ruecken liegt, ausblenden
-                    if (shouldShow) {
+                    if (!inChillenRoom) {
+                        shouldShow = false; // Ausserhalb des Raumes (Flur, Hof, andere Zimmer, Aussenbereich, Luftraum)
+                    }
+                    // 4. Hinter der Leinwand (x <= -4.68m): Bildrueckseite nicht anzeigen
+                    else if (px <= -4.68) {
+                        shouldShow = false;
+                    }
+                    // 5. Frustum/Blickrichtung: Wenn die Leinwand komplett im Ruecken liegt, ausblenden
+                    else {
                         const camDir = new THREE.Vector3();
                         camera.getWorldDirection(camDir);
                         const toScreenX = -4.74 - px;
@@ -6432,6 +6437,9 @@
                     }
                 }
 
+                if (cssCinemaObject) {
+                    cssCinemaObject.visible = shouldShow;
+                }
                 if (cssRenderer.domElement) {
                     cssRenderer.domElement.style.display = shouldShow ? 'block' : 'none';
                 }
