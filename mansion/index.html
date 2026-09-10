@@ -2344,8 +2344,9 @@
             canvas.height = 768;
             const ctx = canvas.getContext("2d");
 
-            // Keine Füllung (vollkommen transparent, NUR schwarzer Rahmen)
-            ctx.clearRect(0, 0, 1536, 768);
+            // Innenflaeche im aktuellen Hellgrau der Waende (#dcdce0)
+            ctx.fillStyle = "#dcdce0";
+            ctx.fillRect(0, 0, 1536, 768);
 
             // Robuster schwarzer Rahmen
             ctx.lineWidth = 28;
@@ -2367,12 +2368,11 @@
             texture.colorSpace = THREE.SRGBColorSpace;
             texture.needsUpdate = true;
 
-            // Zylindersegment mit transparenter Textur
+            // Zylindersegment mit deckender Textur im Wandgrau
             const pinGeo = new THREE.CylinderGeometry(boardRadius, boardRadius, boardHeight, 32, 1, true, -boardArc / 2, boardArc);
             const pinMat = new THREE.MeshBasicMaterial({
                 map: texture,
                 side: THREE.DoubleSide,
-                transparent: true,
                 toneMapped: false
             });
             const pinMesh = new THREE.Mesh(pinGeo, pinMat);
@@ -2394,6 +2394,35 @@
 
             scene.add(pinMesh);
             pinboardMeshes.push(pinMesh);
+        }
+
+        // ── LEICHT KOERNIGE WANDTEXTUR FUER CHILLEN-RAUM (FEINPUTZ) ──
+        function createGrainyWallTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+
+            // Wandgrundierung: Heller eleganter Wandton (#ececee)
+            ctx.fillStyle = "#ececee";
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Feines mineralisches Korn / Putzstruktur
+            const imgData = ctx.getImageData(0, 0, 512, 512);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const grain = (Math.random() - 0.5) * 24;
+                data[i]     = Math.min(255, Math.max(0, data[i] + grain));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + grain));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + grain));
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(16, 4);
+            return texture;
         }
 
         // ── ZIEGELSTEIN-TEXTUR FUER DIE LAGER-INNENWAND (EINFACH GEHALTEN) ──
@@ -2460,6 +2489,37 @@
                 const innerWallGeo = new THREE.CylinderGeometry(room.radius - 0.005, room.radius - 0.005, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
                 const brickTex = createWarehouseBrickTexture();
                 const innerWallMat = new THREE.MeshLambertMaterial({ map: brickTex, side: THREE.BackSide });
+                const innerWallMesh = new THREE.Mesh(innerWallGeo, innerWallMat);
+                innerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+                innerWallMesh.rotation.y = room.rotY;
+                innerWallMesh.userData = {
+                    isRoomWall: true,
+                    roomName: room.name,
+                    roomCenter: new THREE.Vector2(room.cx, room.cz),
+                    radius: room.radius - 0.005
+                };
+                scene.add(innerWallMesh);
+                wallMeshes.push(innerWallMesh);
+            } else if (room.name === "Chillen") {
+                // Aussenwand zum Hof hin: Standard-Weiss (FrontSide)
+                const outerWallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
+                const outerWallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.FrontSide });
+                const outerWallMesh = new THREE.Mesh(outerWallGeo, outerWallMat);
+                outerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+                outerWallMesh.rotation.y = room.rotY;
+                outerWallMesh.userData = {
+                    isRoomWall: true,
+                    roomName: room.name,
+                    roomCenter: new THREE.Vector2(room.cx, room.cz),
+                    radius: room.radius
+                };
+                scene.add(outerWallMesh);
+                wallMeshes.push(outerWallMesh);
+
+                // Innenseite: Leicht koernige Wand (Innenseite! BackSide)
+                const innerWallGeo = new THREE.CylinderGeometry(room.radius - 0.005, room.radius - 0.005, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
+                const grainyWallTex = createGrainyWallTexture();
+                const innerWallMat = new THREE.MeshLambertMaterial({ map: grainyWallTex, side: THREE.BackSide });
                 const innerWallMesh = new THREE.Mesh(innerWallGeo, innerWallMat);
                 innerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
                 innerWallMesh.rotation.y = room.rotY;
@@ -4135,6 +4195,56 @@
         }
 
         // 2. CHILLEN (Sued-Ost, Pentagon-Position bei rx = 9.698, rz = 13.349)
+        // ── EINFACHER WARMER PARKETTBODEN FUER DEN CHILLEN-RAUM ──
+        function createSimpleParquetTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+
+            // Warme Grundfarbe: Eichenparkett
+            ctx.fillStyle = "#b88a52";
+            ctx.fillRect(0, 0, 512, 512);
+
+            const plankW = 32;
+            const plankL = 128;
+            const plankColors = ["#ba8c54", "#c2945c", "#b0824a", "#c79961", "#a97b43", "#bd8f57"];
+
+            const cols = 512 / plankW;
+            for (let c = 0; c < cols; c++) {
+                const x = c * plankW;
+                // Versatz pro Diele fuer natuerlichen Parkettverband
+                const offset = (c * 53) % plankL;
+                for (let y = -plankL + offset; y < 512 + plankL; y += plankL) {
+                    const colIdx = Math.floor(Math.random() * plankColors.length);
+                    ctx.fillStyle = plankColors[colIdx];
+                    ctx.fillRect(x + 1, y + 1, plankW - 2, plankL - 2);
+
+                    // Feine dezente Holzmaserung entlang der Planke
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
+                    for (let g = 4; g < plankW - 4; g += 6) {
+                        ctx.fillRect(x + g, y + 1, 1, plankL - 2);
+                    }
+                }
+            }
+
+            // Feine Fugenlinien zwischen den Dielen
+            ctx.strokeStyle = "rgba(70, 45, 20, 0.45)";
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= 512; x += plankW) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, 512);
+                ctx.stroke();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(6, 6);
+            return texture;
+        }
+
         function buildChillenRaum() {
             const rx = 9.698, rz = 13.349;
             const dRot = 0.6283185; // Drehung um +36 Grad
@@ -4144,8 +4254,14 @@
                 return { x: dx * c + dz * s, z: -dx * s + dz * c };
             }
 
+            // 1. Einfacher warmer Parkettboden (trotz Teppich)
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
-            const floorMat = new THREE.MeshBasicMaterial({ color: 0x1c1917 });
+            const parquetTex = createSimpleParquetTexture();
+            const floorMat = new THREE.MeshStandardMaterial({
+                map: parquetTex,
+                roughness: 0.55,
+                metalness: 0.05
+            });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
             floor.position.set(rx, 0.015, rz);
