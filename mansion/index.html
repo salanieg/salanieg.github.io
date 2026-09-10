@@ -1393,10 +1393,10 @@
             cinemaIframe.setAttribute('allowfullscreen', 'true');
 
             cssCinemaObject = new CSS3DObject(cinemaIframe);
-            // 3D-Skalierung: 1280x720 px -> 3.32m x 1.86m (zentriert im 5.7m x 2.2m Viewing Screen)
-            cssCinemaObject.scale.set(0.0026, 0.0026, 0.0026);
+            // 3D-Skalierung: 1280x720 px -> 2.88m x 1.62m (exakt vertikal und horizontal zentriert im Viewing Screen)
+            cssCinemaObject.scale.set(0.00225, 0.00225, 0.00225);
             // Westwand des Chillen-Zimmers (rx = 0, rz = 16.5, radius = 5.46)
-            cssCinemaObject.position.set(-5.38, 1.90, 16.5);
+            cssCinemaObject.position.set(-5.25, 1.86, 16.5);
             // Drehung nach innen zur Raummitte/Couch (Richtung +X)
             cssCinemaObject.rotation.y = Math.PI / 2;
             cssScene.add(cssCinemaObject);
@@ -6253,18 +6253,46 @@
 
             // ── CSS3D ON-WALL VIDEO RENDERN ──
             if (cssRenderer && cssScene) {
-                const distToChillen = Math.hypot(camera.position.x - 0, camera.position.z - 16.5);
-                let shouldShow = (distToChillen <= 16.0 && Boolean(currentCinemaVideoId));
+                let shouldShow = Boolean(currentCinemaVideoId);
+
                 if (shouldShow) {
-                    // Culling: Nicht rendern, wenn die Leinwand deutlich im Ruecken der Kamera liegt
-                    const toScreenX = -5.38 - camera.position.x;
-                    const toScreenZ = 16.5 - camera.position.z;
-                    const camDir = new THREE.Vector3();
-                    camera.getWorldDirection(camDir);
-                    if (camDir.x * toScreenX + camDir.z * toScreenZ < -1.5) {
+                    const px = camera.position.x;
+                    const pz = camera.position.z;
+                    const distToChillen = Math.hypot(px - 0, pz - 16.5);
+
+                    // 1. Wenn der Spieler hinter der Bildwand steht (x <= -5.20), ist er in/hinter der Wand oder draussen
+                    if (px <= -5.20) {
                         shouldShow = false;
                     }
+                    // 2. Befindet sich der Spieler auf Hoehe des Chillen-Zimmers (z >= 11.0):
+                    // Er muss sich innerhalb der Zylinderwand befinden (Radius ca. 5.46m)
+                    else if (pz >= 11.0) {
+                        if (distToChillen > 5.35) {
+                            shouldShow = false; // Ausserhalb der Aussenwand im Garten / Freien
+                        }
+                    }
+                    // 3. Steht der Spieler im Verbindungskorridor davor (z < 11.0):
+                    // Nur anzeigen, wenn er im Flur (|x| <= 2.2, z >= 6.0) steht und hineinblickt
+                    else {
+                        const camDir = new THREE.Vector3();
+                        camera.getWorldDirection(camDir);
+                        if (Math.abs(px) > 2.2 || pz < 6.0 || camDir.z <= 0.2) {
+                            shouldShow = false;
+                        }
+                    }
+
+                    // 4. Frustum/Blickrichtung: Wenn die Leinwand im Ruecken liegt, ausblenden
+                    if (shouldShow) {
+                        const camDir = new THREE.Vector3();
+                        camera.getWorldDirection(camDir);
+                        const toScreenX = -5.25 - px;
+                        const toScreenZ = 16.5 - pz;
+                        if (camDir.x * toScreenX + camDir.z * toScreenZ < -1.0) {
+                            shouldShow = false;
+                        }
+                    }
                 }
+
                 if (cssRenderer.domElement) {
                     cssRenderer.domElement.style.display = shouldShow ? 'block' : 'none';
                 }
