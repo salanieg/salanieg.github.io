@@ -262,9 +262,12 @@
         }
 
         #game-canvas {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             display: block;
+            z-index: 1;
         }
 
         /* ── 3D UI OVERLAYS ── */
@@ -1347,52 +1350,55 @@
         function setCinemaVideo(videoId, playing, seekSec) {
             currentCinemaVideoId = videoId;
 
-            if (!videoId) {
-                if (cinemaIframe) {
-                    cinemaIframe.src = '';
-                }
-                if (cssCinemaObject) {
-                    cssCinemaObject.visible = false;
-                }
-                return;
-            }
-
             if (!cinemaIframe && cssScene) {
                 initCSS3DCinema();
             }
 
+            if (!videoId) {
+                if (cinemaIframe) {
+                    cinemaIframe.style.opacity = '0';
+                    cinemaIframe.src = 'about:blank';
+                }
+                return;
+            }
+
             if (cinemaIframe) {
+                cinemaIframe.style.opacity = '1';
                 const autoplayParam = playing ? '1' : '0';
                 const startParam = Math.floor(seekSec || 0);
-                const targetSrc = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=' + autoplayParam + '&enablejsapi=1&rel=0&start=' + startParam;
+                const origin = encodeURIComponent(window.location.origin || 'https://salanieg.github.io');
+                const targetSrc = 'https://www.youtube.com/embed/' + videoId + '?autoplay=' + autoplayParam + '&enablejsapi=1&rel=0&playsinline=1&origin=' + origin + '&start=' + startParam;
+
                 if (!cinemaIframe.src || !cinemaIframe.src.includes(videoId)) {
                     cinemaIframe.src = targetSrc;
-                }
-                if (cssCinemaObject) {
-                    cssCinemaObject.visible = true;
+                } else if (cinemaIframe.contentWindow) {
+                    const cmd = playing ? 'playVideo' : 'pauseVideo';
+                    cinemaIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: '' }), '*');
                 }
             }
         }
 
         function initCSS3DCinema() {
-            if (!cssScene) return;
+            if (!cssScene || cinemaIframe) return;
 
             cinemaIframe = document.createElement('iframe');
             cinemaIframe.style.width = '1280px';
             cinemaIframe.style.height = '720px';
             cinemaIframe.style.border = '0';
-            cinemaIframe.style.background = '#000000';
-            cinemaIframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen');
+            cinemaIframe.style.background = '#09090b';
+            cinemaIframe.style.borderRadius = '8px';
+            cinemaIframe.style.opacity = '0';
+            cinemaIframe.style.transition = 'opacity 0.4s ease';
+            cinemaIframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen');
             cinemaIframe.setAttribute('allowfullscreen', 'true');
 
             cssCinemaObject = new CSS3DObject(cinemaIframe);
-            // 3D-Skalierung: 1280x720 px -> 3.46m x 1.94m (passt optimal in den 5.7m x 2.2m Viewing Screen)
-            cssCinemaObject.scale.set(0.0027, 0.0027, 0.0027);
+            // 3D-Skalierung: 1280x720 px -> 3.32m x 1.86m (zentriert im 5.7m x 2.2m Viewing Screen)
+            cssCinemaObject.scale.set(0.0026, 0.0026, 0.0026);
             // Westwand des Chillen-Zimmers (rx = 0, rz = 16.5, radius = 5.46)
-            cssCinemaObject.position.set(-5.40, 1.95, 16.5);
+            cssCinemaObject.position.set(-5.38, 1.90, 16.5);
             // Drehung nach innen zur Raummitte/Couch (Richtung +X)
             cssCinemaObject.rotation.y = Math.PI / 2;
-            cssCinemaObject.visible = false;
             cssScene.add(cssCinemaObject);
         }
 
@@ -1415,7 +1421,7 @@
             setCinemaVideo(vid, playing, elapsed);
 
             const el = document.getElementById('cinema-status');
-            if (el) el.textContent = playing ? ('Live auf Leinwand: ' + vid) : ('Pausiert: ' + vid);
+            if (el) el.textContent = playing ? 'Wiedergabe aktiv (Synchron für alle)' : 'Pausiert';
         }
 
         function pushCinemaState(videoId, isPlaying, seekSec) {
@@ -1435,7 +1441,7 @@
                 rtdbSet(rtdbRef(rtdb, 'worldState/cinema'), state).then(() => {
                     const el = document.getElementById('cinema-status');
                     if (el && isPlaying && videoId) {
-                        el.textContent = 'Synchron für alle aktiv: ' + videoId;
+                        el.textContent = 'Wiedergabe aktiv (Synchron für alle)';
                     }
                 }).catch(err => {
                     console.warn('RTDB cinema update error:', err);
@@ -1455,6 +1461,9 @@
             isModalOpen = true;
             isCinemaModalOpen = true;
             document.getElementById('cinema-modal').classList.add('visible');
+            if (cssRenderer && cssRenderer.domElement) {
+                cssRenderer.domElement.style.pointerEvents = 'auto';
+            }
             if (controls && controls.isLocked) controls.unlock();
         }
 
@@ -1462,6 +1471,9 @@
             isModalOpen = false;
             isCinemaModalOpen = false;
             document.getElementById('cinema-modal').classList.remove('visible');
+            if (cssRenderer && cssRenderer.domElement) {
+                cssRenderer.domElement.style.pointerEvents = 'none';
+            }
         }
         let targetNightTransition = 0.0;
         let nightTransition = 0.0;
@@ -5472,7 +5484,7 @@
             cssRenderer.domElement.style.width = '100%';
             cssRenderer.domElement.style.height = '100%';
             cssRenderer.domElement.style.pointerEvents = 'none';
-            cssRenderer.domElement.style.zIndex = '5';
+            cssRenderer.domElement.style.zIndex = '2';
             gameContainer.appendChild(cssRenderer.domElement);
 
             controls = new PointerLockControls(camera, document.body);
@@ -5520,6 +5532,7 @@
             // Klick direkt in Spiel-Leinwand aktiviert die Steuerung (ohne Willkommens-Fenster!)
             gameCanvas.addEventListener("click", () => {
                 if (!isModalOpen && controls && !controls.isLocked) {
+                    if (cssRenderer && cssRenderer.domElement) cssRenderer.domElement.style.pointerEvents = 'none';
                     controls.lock();
                     footstepAudio.init();
                 }
@@ -5689,9 +5702,10 @@
 
             // CSS3D-Wand-Video rendern
             if (cssRenderer && cssScene) {
+                // Nur rendern, wenn im oder am Chillen-Zimmer
                 const distToChillen = Math.hypot(camera.position.x - 0, camera.position.z - 16.5);
-                if (cssCinemaObject) {
-                    cssCinemaObject.visible = (distToChillen <= 12.0 && Boolean(currentCinemaVideoId));
+                if (cssRenderer.domElement) {
+                    cssRenderer.domElement.style.display = (distToChillen <= 14.0 && Boolean(currentCinemaVideoId)) ? 'block' : 'none';
                 }
                 cssRenderer.render(cssScene, camera);
             }
