@@ -1013,7 +1013,7 @@
             console.warn("RTDB initial cinema listener error:", e);
         }
 
-        // Initialen Zustand der Lagerstuehle fuer alle synchron abhoeren
+        // Initialen Zustand der Lagerstuehle & Jetpacks fuer alle synchron abhoeren
         try {
             const initialChairsRef = rtdbRef(rtdb, "worldState/warehouseChairs");
             onValue(initialChairsRef, (snapshot) => {
@@ -1022,8 +1022,16 @@
                     syncWarehouseChairsFromNetwork(val);
                 }
             });
+
+            const initialJetpacksRef = rtdbRef(rtdb, "worldState/warehouseJetpacks");
+            onValue(initialJetpacksRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val && typeof val === "object") {
+                    syncWarehouseJetpacksFromNetwork(val);
+                }
+            });
         } catch (e) {
-            console.warn("RTDB initial chairs listener error:", e);
+            console.warn("RTDB initial chairs/jetpacks listener error:", e);
         }
 
         // ── DOM ELEMENTE ──
@@ -1567,6 +1575,11 @@
         let spacePressed = false;
         let worldJetpackGroup = null;
         let jetpackInteractMesh = null;
+        let warehouseJetpacks = []; // [{ id, group, hitBox, defaultPos, isEquipped }]
+        let currentEquippedJetpack = null;
+        let localJetpackCockpit = null;
+        let localJetpackFlames = null;
+        let localJetpackLight = null;
 
         function mountBike() {
             if (isSitting) standUp();
@@ -1592,26 +1605,104 @@
             interactPrompt.classList.remove("visible");
         }
 
-        function equipJetpack() {
+        function equipJetpack(targetJpObj) {
             if (isSitting) standUp();
+            let jpObj = targetJpObj;
+            if (!jpObj) {
+                jpObj = warehouseJetpacks.find(j => !j.isEquipped && j.group.visible) || warehouseJetpacks[0];
+            }
+            if (!jpObj) return;
+
+            currentEquippedJetpack = jpObj;
+            worldJetpackGroup = jpObj.group;
             isJetpackEquipped = true;
-            if (worldJetpackGroup) worldJetpackGroup.visible = false;
+            jpObj.isEquipped = true;
+            jpObj.group.visible = false;
+
+            if (localJetpackCockpit) localJetpackCockpit.visible = true;
+
             interactPrompt.textContent = "[LEERTASTE] Schub nach oben\n[E] Jetpack ablegen";
             interactPrompt.classList.add("visible");
+
+            try {
+                const jpRef = rtdbRef(rtdb, "worldState/warehouseJetpacks/" + jpObj.id);
+                rtdbSet(jpRef, {
+                    isEquipped: true,
+                    equippedBy: myUserId || 'local',
+                    updatedAt: Date.now()
+                });
+            } catch (err) {
+                console.warn("RTDB sync jetpack equip error:", err);
+            }
         }
 
         function dropJetpack() {
-            if (!isJetpackEquipped) return;
+            if (!isJetpackEquipped || !currentEquippedJetpack) return;
+            const jpObj = currentEquippedJetpack;
             isJetpackEquipped = false;
+            currentEquippedJetpack = null;
+
             if (isJetpackThrusting) {
                 isJetpackThrusting = false;
                 jetpackAudio.setThrust(false);
             }
-            if (worldJetpackGroup && camera) {
-                worldJetpackGroup.position.set(camera.position.x, 0.15, camera.position.z);
-                worldJetpackGroup.visible = true;
+            if (localJetpackCockpit) {
+                localJetpackCockpit.visible = false;
+                if (localJetpackFlames) localJetpackFlames.visible = false;
+                if (localJetpackLight) localJetpackLight.intensity = 0;
             }
+
+            const camDir = new THREE.Vector3();
+            camera.getWorldDirection(camDir);
+            const dropRotY = Math.atan2(camDir.x, camDir.z);
+            const dropX = Number(camera.position.x.toFixed(3));
+            const dropZ = Number(camera.position.z.toFixed(3));
+
+            jpObj.group.position.set(dropX, 0.05, dropZ);
+            jpObj.group.rotation.y = dropRotY;
+            jpObj.group.visible = true;
+            jpObj.isEquipped = false;
+
             interactPrompt.classList.remove("visible");
+
+            try {
+                const jpRef = rtdbRef(rtdb, "worldState/warehouseJetpacks/" + jpObj.id);
+                rtdbSet(jpRef, {
+                    isEquipped: false,
+                    equippedBy: null,
+                    x: dropX,
+                    z: dropZ,
+                    rotY: Number(dropRotY.toFixed(3)),
+                    updatedAt: Date.now()
+                });
+            } catch (err) {
+                console.warn("RTDB sync jetpack drop error:", err);
+            }
+        }
+
+        function syncWarehouseJetpacksFromNetwork(data) {
+            if (!data || typeof data !== "object") return;
+            warehouseJetpacks.forEach(jp => {
+                if (isJetpackEquipped && currentEquippedJetpack && currentEquippedJetpack.id === jp.id) {
+                    return;
+                }
+                const jpData = data[jp.id];
+                if (!jpData) return;
+
+                if (jpData.isEquipped) {
+                    jp.isEquipped = true;
+                    jp.group.visible = false;
+                } else {
+                    jp.isEquipped = false;
+                    jp.group.visible = true;
+                    if (typeof jpData.x === "number" && typeof jpData.z === "number") {
+                        jp.group.position.set(jpData.x, 0.05, jpData.z);
+                    }
+                    if (typeof jpData.rotY === "number") {
+                        jp.group.rotation.y = jpData.rotY;
+                    }
+                }
+            });
         }
 
         // ── BILD-KOMPRIMIERUNGS-PROGRAMM (Maximal 100 KB) ──
@@ -4960,63 +5051,7 @@
             const beanLookDir = new THREE.Vector3(Math.sin(beanbagGroup.rotation.y), 0, Math.cos(beanbagGroup.rotation.y));
             registerSeat(beanSeat, "Fetter Sitzsack", beanSitPos, beanLookDir);
 
-            // ─────────────────────────────────────────────────────────────
-            // GIMMICK: DAS JETPACK (MIT [E] ANLEGEN & MIT LEERTASTE FLIEGEN)
-            // ─────────────────────────────────────────────────────────────
-            const jetpackGroup = new THREE.Group();
-
-            const jpDarkMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
-            const jpChromeMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
-            const jpCoreMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-            const jpStrapMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
-
-            const jpStand = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.05, 16), new THREE.MeshLambertMaterial({ color: 0x27272a }));
-            jpStand.position.set(0, 0.025, 0);
-            jetpackGroup.add(jpStand);
-
-            [[-0.14, 0.35, 0], [0.14, 0.35, 0]].forEach(([tx, ty, tz]) => {
-                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.42, 16), jpDarkMat);
-                tank.position.set(tx, ty, tz);
-                jetpackGroup.add(tank);
-
-                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.08, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), jpChromeMat);
-                cap.position.set(tx, ty + 0.21, tz);
-                jetpackGroup.add(cap);
-
-                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.085, 0.12, 16), jpChromeMat);
-                nozzle.position.set(tx, ty - 0.24, tz); // ty = 0.35 -> Düsenunterkante exakt bei 0.05 bündig auf jpStand
-                jetpackGroup.add(nozzle);
-            });
-
-            const coreBox = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.10), jpDarkMat);
-            coreBox.position.set(0, 0.35, 0.02);
-            jetpackGroup.add(coreBox);
-
-            const coreGlow = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.11), jpCoreMat);
-            coreGlow.position.set(0, 0.35, 0.02);
-            jetpackGroup.add(coreGlow);
-
-            [[-0.09, 0.39, 0.08], [0.09, 0.39, 0.08]].forEach(([sx, sy, sz]) => {
-                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.38, 0.04), jpStrapMat);
-                strap.position.set(sx, sy, sz);
-                jetpackGroup.add(strap);
-            });
-
-            const jpHitBox = new THREE.Mesh(
-                new THREE.BoxGeometry(0.65, 0.75, 0.45),
-                new THREE.MeshBasicMaterial({ visible: false })
-            );
-            jpHitBox.position.set(0, 0.42, 0);
-            jpHitBox.userData.isJetpackItem = true;
-            jetpackGroup.add(jpHitBox);
-
-            const rJp = rot(-0.5, 0);
-            jetpackGroup.position.set(rx + rJp.x, 0, rz + rJp.z);
-            jetpackGroup.rotation.y = dRot;
-            scene.add(jetpackGroup);
-
-            worldJetpackGroup = jetpackGroup;
-            jetpackInteractMesh = jpHitBox;
+// Jetpack aus Gaming-Raum entfernt (befindet sich nun 4-fach im Lager)
         }
 
         // 4. ART (Ost-Nord-Ost, Pentagon-Position bei rx = 15.692, rz = -5.099)
@@ -5124,12 +5159,12 @@
                     baseR: baseR,
                     baseY: baseY,
                     angle: angle,
-                    rotSpeed: (1.4 + Math.random() * 2.6) * (Math.random() > 0.5 ? 1 : -1),
-                    flutterFreq: 24.0 + Math.random() * 16.0,
-                    flutterAmp: 0.035 + Math.random() * 0.035,
-                    wanderFreqX: 1.2 + Math.random() * 2.2,
-                    wanderFreqY: 1.0 + Math.random() * 2.0,
-                    wanderFreqZ: 1.3 + Math.random() * 2.0,
+                    rotSpeed: (0.35 + Math.random() * 0.45) * (Math.random() > 0.5 ? 1 : -1),
+                    flutterFreq: 8.0 + Math.random() * 6.0,
+                    flutterAmp: 0.018 + Math.random() * 0.015,
+                    wanderFreqX: 0.35 + Math.random() * 0.45,
+                    wanderFreqY: 0.30 + Math.random() * 0.40,
+                    wanderFreqZ: 0.35 + Math.random() * 0.45,
                     phaseX: Math.random() * Math.PI * 2,
                     phaseY: Math.random() * Math.PI * 2,
                     phaseZ: Math.random() * Math.PI * 2
@@ -5175,8 +5210,8 @@
                 const m = data[i];
                 m.angle += m.rotSpeed * delta;
 
-                const wanderR = Math.sin(t * m.wanderFreqX + m.phaseX) * 0.35;
-                const wanderY = Math.sin(t * m.wanderFreqY + m.phaseY) * 0.40;
+                const wanderR = Math.sin(t * m.wanderFreqX + m.phaseX) * 0.20;
+                const wanderY = Math.sin(t * m.wanderFreqY + m.phaseY) * 0.22;
                 const curR = Math.max(0.08, m.baseR + wanderR);
 
                 const flX = Math.sin(t * m.flutterFreq + i * 2.3) * m.flutterAmp;
@@ -5385,91 +5420,311 @@
             plinthGroup.rotation.y = plinthAngle + Math.PI;
             scene.add(plinthGroup);
 
-            // ── 5 VERSCHIEBBARE LAGER-STUEHLE (IM LEEREN RAUM BEREITGESTELLT) ──
+            // ── 12 VERSCHIEBBARE LAGER-STUEHLE (4 NORMALE BLAUE, 4 GELBE BARHOCKER, 4 ROTE SESSEL IM 2X2 MUSTER) ──
             buildWarehouseChairs(rx, rz, doorAngle);
+
+            // ── 4 JETPACKS IM LAGER (AUCH SYNCHRON DROPPBAR & MIT ORANGEN FLAMMEN) ──
+            buildWarehouseJetpacks(rx, rz, doorAngle);
         }
 
-        function createWarehouseChairMesh() {
+        // 1. Normaler Stuhl in Sofablau (analog Chill-Area Couch)
+        function createNormalChairMesh() {
             const chairGroup = new THREE.Group();
 
-            const seatMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
-            const seatGeo = new THREE.BoxGeometry(0.48, 0.06, 0.46);
-            const seatMesh = new THREE.Mesh(seatGeo, seatMat);
+            const cushionBlueMat = new THREE.MeshLambertMaterial({ color: 0x1d4ed8 }); // Sofablau
+            const darkBlueMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
+            const legMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+
+            // Sitzflaeche (Sitzpolster)
+            const seatGeo = new THREE.BoxGeometry(0.48, 0.08, 0.46);
+            const seatMesh = new THREE.Mesh(seatGeo, cushionBlueMat);
             seatMesh.position.y = 0.46;
             chairGroup.add(seatMesh);
 
-            const backMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
-            const backGeo = new THREE.BoxGeometry(0.46, 0.28, 0.05);
-            const backMesh = new THREE.Mesh(backGeo, backMat);
-            backMesh.position.set(0, 0.74, -0.20);
+            const seatUnder = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.04, 0.44), darkBlueMat);
+            seatUnder.position.y = 0.41;
+            chairGroup.add(seatUnder);
+
+            // Rueckenlehne
+            const backGeo = new THREE.BoxGeometry(0.46, 0.32, 0.06);
+            const backMesh = new THREE.Mesh(backGeo, darkBlueMat);
+            backMesh.position.set(0, 0.72, -0.20);
             chairGroup.add(backMesh);
 
-            const pipeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.35, metalness: 0.85 });
-            const pipeGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.32, 12);
+            // Rueckenlehnen-Halterung
             [-0.14, 0.14].forEach(px => {
-                const pipe = new THREE.Mesh(pipeGeo, pipeMat);
-                pipe.position.set(px, 0.60, -0.20);
-                chairGroup.add(pipe);
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.28, 12), legMat);
+                post.position.set(px, 0.56, -0.20);
+                chairGroup.add(post);
             });
 
-            const legGeo = new THREE.CylinderGeometry(0.015, 0.012, 0.45, 12);
-            const rubberFootGeo = new THREE.SphereGeometry(0.018, 10, 8);
-            const rubberMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
-
+            // 4 Beine
             [[-0.20, -0.19], [0.20, -0.19], [-0.20, 0.19], [0.20, 0.19]].forEach(([lx, lz]) => {
-                const leg = new THREE.Mesh(legGeo, pipeMat);
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.012, 0.45, 12), legMat);
                 leg.position.set(lx, 0.225, lz);
                 chairGroup.add(leg);
+            });
 
-                const foot = new THREE.Mesh(rubberFootGeo, rubberMat);
-                foot.position.set(lx, 0.01, lz);
+            return { chairGroup, seatMesh, type: 'normal' };
+        }
+
+        // 2. Gelber Barhocker
+        function createBarStoolMesh() {
+            const chairGroup = new THREE.Group();
+
+            const yellowMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 }); // Gelb (wie Chillen Tisch)
+            const darkMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const chromeMat = new THREE.MeshLambertMaterial({ color: 0x71717a });
+
+            // Runder gelber Sitzpolster
+            const seatGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.08, 24);
+            const seatMesh = new THREE.Mesh(seatGeo, yellowMat);
+            seatMesh.position.y = 0.74;
+            chairGroup.add(seatMesh);
+
+            const seatPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 16), darkMat);
+            seatPlate.position.y = 0.69;
+            chairGroup.add(seatPlate);
+
+            // Fussraste-Ring
+            const footRing = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.012, 8, 24), chromeMat);
+            footRing.rotation.x = Math.PI / 2;
+            footRing.position.y = 0.28;
+            chairGroup.add(footRing);
+
+            // 4 hohe Beine (leicht ausgestellt)
+            [[-0.14, -0.14], [0.14, -0.14], [-0.14, 0.14], [0.14, 0.14]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.011, 0.72, 12), darkMat);
+                leg.position.set(lx, 0.35, lz);
+                leg.rotation.z = -lx * 0.12;
+                leg.rotation.x = lz * 0.12;
+                chairGroup.add(leg);
+            });
+
+            return { chairGroup, seatMesh, type: 'barstool' };
+        }
+
+        // 3. Roter Sessel (Club-Sessel)
+        function createRedArmchairMesh() {
+            const chairGroup = new THREE.Group();
+
+            const redMat = new THREE.MeshLambertMaterial({ color: 0xdc2626 }); // Kraeftiges Rot
+            const darkRedMat = new THREE.MeshLambertMaterial({ color: 0x991b1b }); // Dunkleres Rot fuer Wangen
+            const footMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+
+            // Tiefes bequemes Sitzkissen
+            const seatGeo = new THREE.BoxGeometry(0.58, 0.14, 0.54);
+            const seatMesh = new THREE.Mesh(seatGeo, redMat);
+            seatMesh.position.y = 0.38;
+            chairGroup.add(seatMesh);
+
+            const baseBox = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.16, 0.56), darkRedMat);
+            baseBox.position.y = 0.22;
+            chairGroup.add(baseBox);
+
+            // Breite Rueckenlehne
+            const backMesh = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.44, 0.14), darkRedMat);
+            backMesh.position.set(0, 0.58, -0.22);
+            chairGroup.add(backMesh);
+
+            // Seiten-Armlehnen
+            [-0.34, 0.34].forEach(ax => {
+                const arm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.28, 0.56), darkRedMat);
+                arm.position.set(ax, 0.44, 0);
+                chairGroup.add(arm);
+            });
+
+            // 4 niedrige Fuesschen
+            [[-0.26, -0.24], [0.26, -0.24], [-0.26, 0.24], [0.26, 0.24]].forEach(([fx, fz]) => {
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), footMat);
+                foot.position.set(fx, 0.04, fz);
                 chairGroup.add(foot);
             });
 
-            const braceGeoX = new THREE.BoxGeometry(0.40, 0.016, 0.016);
-            const brace1 = new THREE.Mesh(braceGeoX, pipeMat);
-            brace1.position.set(0, 0.14, -0.19);
-            chairGroup.add(brace1);
-            const brace2 = new THREE.Mesh(braceGeoX, pipeMat);
-            brace2.position.set(0, 0.14, 0.19);
-            chairGroup.add(brace2);
-
-            return { chairGroup, seatMesh };
+            return { chairGroup, seatMesh, type: 'sessel' };
         }
 
         function buildWarehouseChairs(rx, rz, doorAngle) {
             warehouseChairs = [];
 
-            for (let i = 0; i < 5; i++) {
-                const chairId = 'chair_' + i;
-                const { chairGroup, seatMesh } = createWarehouseChairMesh();
+            const groups = [
+                {
+                    type: 'normal',
+                    creator: createNormalChairMesh,
+                    title: 'Blauer Stuhl',
+                    sitH: 1.15,
+                    cx: -2.0,
+                    cz: -2.0,
+                    spacingX: 0.45,
+                    spacingZ: 0.45
+                },
+                {
+                    type: 'barstool',
+                    creator: createBarStoolMesh,
+                    title: 'Gelber Barhocker',
+                    sitH: 1.40,
+                    cx: -2.4,
+                    cz: 1.4,
+                    spacingX: 0.42,
+                    spacingZ: 0.42
+                },
+                {
+                    type: 'sessel',
+                    creator: createRedArmchairMesh,
+                    title: 'Roter Sessel',
+                    sitH: 1.05,
+                    cx: 2.0,
+                    cz: -2.2,
+                    spacingX: 0.55,
+                    spacingZ: 0.55
+                }
+            ];
 
-                const lateralOffset = (i - 2) * 0.72;
-                const forwardOffset = 0.8;
-                const defX = rx + lateralOffset * Math.cos(doorAngle + Math.PI/2) + forwardOffset * Math.cos(doorAngle);
-                const defZ = rz + lateralOffset * Math.sin(doorAngle + Math.PI/2) + forwardOffset * Math.sin(doorAngle);
-                const defRotY = doorAngle;
+            groups.forEach((g) => {
+                let idx = 0;
+                [-g.spacingX, g.spacingX].forEach((dx) => {
+                    [-g.spacingZ, g.spacingZ].forEach((dz) => {
+                        const chairId = 'chair_' + g.type + '_' + idx;
+                        const { chairGroup, seatMesh } = g.creator();
 
-                chairGroup.position.set(defX, 0, defZ);
-                chairGroup.rotation.y = defRotY;
-                scene.add(chairGroup);
+                        const defX = rx + g.cx + dx;
+                        const defZ = rz + g.cz + dz;
+                        const defRotY = Math.atan2(-g.cx - dx, -g.cz - dz);
 
-                const sitPos = new THREE.Vector3(defX, 1.15, defZ);
-                const lookDir = new THREE.Vector3(Math.sin(defRotY), 0, Math.cos(defRotY));
-                registerSeat(seatMesh, 'Lagerstuhl ' + (i + 1), sitPos, lookDir);
+                        chairGroup.position.set(defX, 0, defZ);
+                        chairGroup.rotation.y = defRotY;
+                        scene.add(chairGroup);
 
-                seatMesh.userData.isMovableChair = true;
-                seatMesh.userData.chairId = chairId;
+                        const sitPos = new THREE.Vector3(defX, g.sitH, defZ);
+                        const lookDir = new THREE.Vector3(Math.sin(defRotY), 0, Math.cos(defRotY));
+                        registerSeat(seatMesh, g.title + ' (Platz ' + (idx + 1) + ')', sitPos, lookDir);
 
-                const chairObj = {
-                    id: chairId,
-                    group: chairGroup,
-                    seatMesh: seatMesh,
-                    seat: seatMesh.userData.seat,
-                    defaultPos: { x: Number(defX.toFixed(3)), z: Number(defZ.toFixed(3)), rotY: Number(defRotY.toFixed(3)) }
+                        seatMesh.userData.isMovableChair = true;
+                        seatMesh.userData.chairId = chairId;
+
+                        const chairObj = {
+                            id: chairId,
+                            type: g.type,
+                            group: chairGroup,
+                            seatMesh: seatMesh,
+                            seat: seatMesh.userData.seat,
+                            defaultPos: { x: Number(defX.toFixed(3)), z: Number(defZ.toFixed(3)), rotY: Number(defRotY.toFixed(3)) }
+                        };
+                        seatMesh.userData.chairObj = chairObj;
+                        warehouseChairs.push(chairObj);
+                        idx++;
+                    });
+                });
+            });
+        }
+
+        // 4. Ueberarbeitetes, groesseres Jetpack-Modell
+        function createWarehouseJetpackMesh(id) {
+            const jp = new THREE.Group();
+
+            const darkMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+            const chromeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 });
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35, metalness: 0.80 });
+            const cyanMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+            const standMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+
+            // Stabiler Geraete-Aufsteller am Boden
+            const stand = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.05, 0.36), standMat);
+            stand.position.y = 0.025;
+            jp.add(stand);
+
+            const standTrim = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.015, 0.38), chromeMat);
+            standTrim.position.y = 0.01;
+            jp.add(standTrim);
+
+            // Zwei grosse Treibstoff-Tanks
+            [-0.18, 0.18].forEach(tx => {
+                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.52, 16), darkMat);
+                tank.position.set(tx, 0.40, 0);
+                jp.add(tank);
+
+                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.10, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), chromeMat);
+                cap.position.set(tx, 0.66, 0);
+                jp.add(cap);
+
+                // Druckbaender
+                [-0.10, 0.10].forEach(by => {
+                    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.104, 0.104, 0.025, 16), chromeMat);
+                    band.position.set(tx, 0.40 + by, 0);
+                    jp.add(band);
+                });
+
+                // Duesen mit Hitzeschild und goldenem Rand
+                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.10, 0.14, 16), chromeMat);
+                nozzle.position.set(tx, 0.12, 0);
+                jp.add(nozzle);
+
+                const rim = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.01, 8, 16), goldMat);
+                rim.rotation.x = Math.PI / 2;
+                rim.position.set(tx, 0.055, 0);
+                jp.add(rim);
+            });
+
+            // Zentraler Reaktorkern
+            const coreBox = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.12), darkMat);
+            coreBox.position.set(0, 0.40, 0.01);
+            jp.add(coreBox);
+
+            const coreGlow = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.26, 0.13), cyanMat);
+            coreGlow.position.set(0, 0.40, 0.01);
+            jp.add(coreGlow);
+
+            // Tragegurte
+            const strapMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            [-0.12, 0.12].forEach(sx => {
+                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.46, 0.04), strapMat);
+                strap.position.set(sx, 0.44, 0.08);
+                jp.add(strap);
+            });
+
+            // Unsichtbare Klick- und Raycast-Hitbox
+            const hitBox = new THREE.Mesh(
+                new THREE.BoxGeometry(0.85, 0.90, 0.60),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            hitBox.position.set(0, 0.45, 0);
+            hitBox.userData = { isJetpackItem: true, jetpackId: id };
+            jp.add(hitBox);
+
+            jp.userData = { hitBox: hitBox, id: id };
+            return jp;
+        }
+
+        function buildWarehouseJetpacks(rx, rz, doorAngle) {
+            warehouseJetpacks = [];
+            const jetpackOffsets = [-1.05, -0.35, 0.35, 1.05];
+
+            for (let i = 0; i < 4; i++) {
+                const id = 'jetpack_' + i;
+                const jpGroup = createWarehouseJetpackMesh(id);
+
+                const defX = rx + jetpackOffsets[i];
+                const defY = 0.0;
+                const defZ = rz + 3.10;
+                const defRotY = 0; // Nach vorne in den Raum gerichtet
+
+                jpGroup.position.set(defX, defY, defZ);
+                jpGroup.rotation.y = defRotY;
+                scene.add(jpGroup);
+
+                const jpObj = {
+                    id: id,
+                    group: jpGroup,
+                    hitBox: jpGroup.userData.hitBox,
+                    defaultPos: { x: Number(defX.toFixed(3)), y: 0.0, z: Number(defZ.toFixed(3)), rotY: 0 },
+                    isEquipped: false
                 };
-                seatMesh.userData.chairObj = chairObj;
-                warehouseChairs.push(chairObj);
+                jpGroup.userData.hitBox.userData.jetpackObj = jpObj;
+                warehouseJetpacks.push(jpObj);
+            }
+
+            if (warehouseJetpacks.length > 0) {
+                worldJetpackGroup = warehouseJetpacks[0].group;
             }
         }
 
@@ -5479,109 +5734,60 @@
 
             const ghostGroup = new THREE.Group();
 
-            const w = 0.54, h = 0.86, d = 0.54;
+            const size = 0.68;
+            const planeGeo = new THREE.PlaneGeometry(size, size);
+            planeGeo.rotateX(-Math.PI / 2); // Flach auf den Boden gelegt
 
-            // 1. Blauer Grundriss auf dem Boden (y = 0.015)
-            const floorOutlineGeo = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(-w/2, 0.015, -d/2),
-                new THREE.Vector3( w/2, 0.015, -d/2),
-                new THREE.Vector3( w/2, 0.015,  d/2),
-                new THREE.Vector3(-w/2, 0.015,  d/2),
-                new THREE.Vector3(-w/2, 0.015, -d/2)
-            ]);
-            const floorLine = new THREE.Line(floorOutlineGeo, new THREE.LineBasicMaterial({
+            // 1. Blauer 2D-Rahmen (analog Notiz-Vorschau)
+            const edgesGeo = new THREE.EdgesGeometry(planeGeo);
+            const lineMat = new THREE.LineBasicMaterial({
                 color: 0x38bdf8,
                 linewidth: 3,
                 depthWrite: false
-            }));
-            ghostGroup.add(floorLine);
-
-            // 2. Blauer 3D-Kastenrahmen (analog Notiz-Vorschau) mit korrekter Tiefenpruefung
-            const boxGeo = new THREE.BoxGeometry(w, h, d);
-            const edgesGeo = new THREE.EdgesGeometry(boxGeo);
-            const lineMat = new THREE.LineBasicMaterial({
-                color: 0x38bdf8,
-                linewidth: 2,
-                transparent: true,
-                opacity: 0.85,
-                depthWrite: false
             });
-            const ghostFrame = new THREE.LineSegments(edgesGeo, lineMat);
-            ghostFrame.position.y = h / 2;
-            ghostGroup.add(ghostFrame);
+            const frame = new THREE.LineSegments(edgesGeo, lineMat);
+            frame.position.y = 0.02;
+            ghostGroup.add(frame);
 
-            // Dezente halbtransparente blaue Füllung
+            // 2. Dezente transparente blaue Füllung
             const fillMat = new THREE.MeshBasicMaterial({
                 color: 0x0284c7,
                 transparent: true,
-                opacity: 0.10,
+                opacity: 0.20,
+                side: THREE.DoubleSide,
                 depthWrite: false
             });
-            const fillMesh = new THREE.Mesh(boxGeo, fillMat);
-            fillMesh.position.y = h / 2;
+            const fillMesh = new THREE.Mesh(planeGeo, fillMat);
+            fillMesh.position.y = 0.018;
             ghostGroup.add(fillMesh);
 
-            // 3. Holografischer Stuhl-Geist im Blueprint-Stil
-            const ghostChairMat = new THREE.MeshBasicMaterial({
+            // 3. Flacher 2D-Pfeil auf dem Boden, der nach +Z zeigt
+            const arrowMat = new THREE.MeshBasicMaterial({
                 color: 0x38bdf8,
-                transparent: true,
-                opacity: 0.35,
+                side: THREE.DoubleSide,
                 depthWrite: false
             });
-            const gSeat = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.06, 0.46), ghostChairMat);
-            gSeat.position.y = 0.46;
-            ghostGroup.add(gSeat);
 
-            const gBack = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.28, 0.05), ghostChairMat);
-            gBack.position.set(0, 0.74, -0.20);
-            ghostGroup.add(gBack);
+            // Pfeilschaft (flaches Rechteck auf dem Boden)
+            const shaftGeo = new THREE.PlaneGeometry(0.09, 0.24);
+            shaftGeo.rotateX(-Math.PI / 2);
+            const shaft = new THREE.Mesh(shaftGeo, arrowMat);
+            shaft.position.set(0, 0.022, -0.04);
+            ghostGroup.add(shaft);
 
-            const gLegMat = new THREE.MeshBasicMaterial({
-                color: 0x7dd3fc,
-                transparent: true,
-                opacity: 0.45,
-                depthWrite: false
-            });
-            [[-0.20, -0.19], [0.20, -0.19], [-0.20, 0.19], [0.20, 0.19]].forEach(([lx, lz]) => {
-                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.012, 0.45, 8), gLegMat);
-                leg.position.set(lx, 0.225, lz);
-                ghostGroup.add(leg);
-            });
+            // Pfeilspitze (flaches Dreieck auf dem Boden)
+            const arrowShape = new THREE.Shape();
+            arrowShape.moveTo(0, 0.16);
+            arrowShape.lineTo(-0.13, -0.03);
+            arrowShape.lineTo(0.13, -0.03);
+            arrowShape.closePath();
+            const arrowTipGeo = new THREE.ShapeGeometry(arrowShape);
+            arrowTipGeo.rotateX(-Math.PI / 2);
+            const arrowTip = new THREE.Mesh(arrowTipGeo, arrowMat);
+            arrowTip.position.set(0, 0.022, 0.09);
+            ghostGroup.add(arrowTip);
 
-            // 4. Eindeutiger leuchtend blauer Richtungspfeil auf der Sitzflaeche (zeigt exakt nach +Z)
-            const arrowGroup = new THREE.Group();
-            arrowGroup.position.y = 0.50; // Direkt ueber der Sitzflaeche schwebend
-
-            const shaft = new THREE.Mesh(
-                new THREE.BoxGeometry(0.08, 0.024, 0.22),
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthWrite: false })
-            );
-            shaft.position.z = 0.02;
-            arrowGroup.add(shaft);
-
-            const tipGeo = new THREE.ConeGeometry(0.13, 0.20, 16);
-            tipGeo.rotateX(Math.PI / 2);
-            const tip = new THREE.Mesh(
-                tipGeo,
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthWrite: false })
-            );
-            tip.position.z = 0.21;
-            arrowGroup.add(tip);
-
-            const wingGeo = new THREE.BoxGeometry(0.05, 0.02, 0.12);
-            const leftWing = new THREE.Mesh(wingGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthWrite: false }));
-            leftWing.position.set(-0.07, 0, 0.13);
-            leftWing.rotation.y = Math.PI / 4;
-            arrowGroup.add(leftWing);
-
-            const rightWing = new THREE.Mesh(wingGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthWrite: false }));
-            rightWing.position.set(0.07, 0, 0.13);
-            rightWing.rotation.y = -Math.PI / 4;
-            arrowGroup.add(rightWing);
-
-            ghostGroup.add(arrowGroup);
-
-            // Fuer alle Ghost-Elemente Raycasting deaktivieren (verhindert Selbst-Kollision und Zucken)
+            // Fuer alle Ghost-Elemente Raycasting deaktivieren
             ghostGroup.traverse(c => {
                 c.raycast = () => {};
             });
@@ -5619,7 +5825,8 @@
             chairObj.group.visible = true;
 
             if (chairObj.seat) {
-                chairObj.seat.sitPos.set(target.x, 1.15, target.z);
+                const sitH = chairObj.type === 'barstool' ? 1.40 : (chairObj.type === 'sessel' ? 1.05 : 1.15);
+                chairObj.seat.sitPos.set(target.x, sitH, target.z);
                 chairObj.seat.lookDir.set(Math.sin(target.rotY), 0, Math.cos(target.rotY));
             }
 
@@ -5682,7 +5889,8 @@
                 chairObj.group.rotation.y = def.rotY;
                 chairObj.group.visible = true;
                 if (chairObj.seat) {
-                    chairObj.seat.sitPos.set(def.x, 1.15, def.z);
+                    const sitH = chairObj.type === 'barstool' ? 1.40 : (chairObj.type === 'sessel' ? 1.05 : 1.15);
+                    chairObj.seat.sitPos.set(def.x, sitH, def.z);
                     chairObj.seat.lookDir.set(Math.sin(def.rotY), 0, Math.cos(def.rotY));
                 }
                 updatePayload[chairObj.id] = {
@@ -5700,7 +5908,33 @@
                 console.warn("RTDB reset chairs error:", err);
             }
 
-            interactPrompt.textContent = "Alle Stuehle ins Lager aufgeraeumt!";
+            const jpPayload = {};
+            warehouseJetpacks.forEach(jp => {
+                const def = jp.defaultPos;
+                if (!isJetpackEquipped || !currentEquippedJetpack || currentEquippedJetpack.id !== jp.id) {
+                    jp.group.position.set(def.x, def.y || 0.05, def.z);
+                    jp.group.rotation.y = def.rotY;
+                    jp.group.visible = true;
+                    jp.isEquipped = false;
+                }
+                jpPayload[jp.id] = {
+                    isEquipped: false,
+                    equippedBy: null,
+                    x: def.x,
+                    z: def.z,
+                    rotY: def.rotY,
+                    updatedAt: Date.now()
+                };
+            });
+
+            try {
+                const allJpRef = rtdbRef(rtdb, "worldState/warehouseJetpacks");
+                rtdbSet(allJpRef, jpPayload);
+            } catch (err) {
+                console.warn("RTDB reset jetpacks error:", err);
+            }
+
+            interactPrompt.textContent = "Alle Stuehle und Jetpacks ins Lager aufgeraeumt!";
             interactPrompt.classList.add("visible");
             setTimeout(() => {
                 if (interactPrompt.textContent === "Alle Stuehle ins Lager aufgeraeumt!") {
@@ -5719,7 +5953,8 @@
                     chair.group.rotation.y = Number(chairData.rotY || 0);
                     chair.group.visible = true;
                     if (chair.seat) {
-                        chair.seat.sitPos.set(chairData.x, 1.15, chairData.z);
+                        const sitH = chair.type === 'barstool' ? 1.40 : (chair.type === 'sessel' ? 1.05 : 1.15);
+                        chair.seat.sitPos.set(chairData.x, sitH, chairData.z);
                         chair.seat.lookDir.set(Math.sin(chair.group.rotation.y), 0, Math.cos(chair.group.rotation.y));
                     }
                 }
@@ -6355,6 +6590,63 @@
 
             localBikeCockpit.visible = false;
             camera.add(localBikeCockpit);
+
+            // ── LOKALES FIRST-PERSON JETPACK RIG MIT ORANGEN FLAMMEN & LICHT ──
+            localJetpackCockpit = new THREE.Group();
+            localJetpackFlames = new THREE.Group();
+
+            const fpFlameOuterMat = new THREE.MeshBasicMaterial({
+                color: 0xf97316,
+                transparent: true,
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+            const fpFlameCoreMat = new THREE.MeshBasicMaterial({
+                color: 0xfef08a,
+                transparent: true,
+                opacity: 0.95,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+
+            [-0.38, 0.38].forEach(fx => {
+                const thrusterHousing = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.045, 0.07, 0.14, 16),
+                    new THREE.MeshLambertMaterial({ color: 0x27272a, roughness: 0.4, metalness: 0.8 })
+                );
+                thrusterHousing.rotation.x = Math.PI / 8;
+                thrusterHousing.position.set(fx, -0.28, -0.42);
+                localJetpackCockpit.add(thrusterHousing);
+
+                const outerFlame = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.015, 0.08, 0.40, 16, 1, true),
+                    fpFlameOuterMat
+                );
+                outerFlame.position.set(fx, -0.48, -0.48);
+                outerFlame.rotation.x = Math.PI / 8;
+                localJetpackFlames.add(outerFlame);
+
+                const coreFlame = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.008, 0.04, 0.28, 12, 1, true),
+                    fpFlameCoreMat
+                );
+                coreFlame.position.set(fx, -0.42, -0.46);
+                coreFlame.rotation.x = Math.PI / 8;
+                localJetpackFlames.add(coreFlame);
+            });
+
+            localJetpackLight = new THREE.PointLight(0xf97316, 0, 8, 1.5);
+            localJetpackLight.position.set(0, -0.45, -0.40);
+            localJetpackCockpit.add(localJetpackLight);
+
+            localJetpackFlames.visible = false;
+            localJetpackCockpit.add(localJetpackFlames);
+            localJetpackCockpit.visible = false;
+            camera.add(localJetpackCockpit);
+
             scene.add(camera);
 
             // Klick direkt in Spiel-Leinwand aktiviert die Steuerung (ohne Willkommens-Fenster!)
@@ -6524,7 +6816,7 @@
                 } else if (currentInteractTarget.type === 'bike') {
                     mountBike();
                 } else if (currentInteractTarget.type === 'jetpack') {
-                    equipJetpack();
+                    equipJetpack(currentInteractTarget.jetpackObj);
                 } else if (currentInteractTarget.type === 'pinboard') {
                     openNoteModal(currentInteractTarget.hit);
                 } else if (currentInteractTarget.type === 'artWall') {
@@ -6711,7 +7003,7 @@
                         } else if (currentInteractTarget.type === 'bike') {
                             mountBike();
                         } else if (currentInteractTarget.type === 'jetpack') {
-                            equipJetpack();
+                            equipJetpack(currentInteractTarget.jetpackObj);
                         } else if (currentInteractTarget.type === 'pinboard') {
                             openNoteModal(currentInteractTarget.hit);
                         } else if (currentInteractTarget.type === 'artWall') {
@@ -6824,7 +7116,26 @@
                             isJetpackThrusting = false;
                             jetpackAudio.setThrust(false);
                         }
+                    }
 
+                    // First-Person Jetpack Flammen & Leuchten
+                    if (isJetpackEquipped && localJetpackCockpit) {
+                        if (isJetpackThrusting) {
+                            if (localJetpackFlames) {
+                                localJetpackFlames.visible = true;
+                                const flick = 0.85 + Math.random() * 0.35;
+                                localJetpackFlames.scale.set(1.0, flick, 1.0);
+                            }
+                            if (localJetpackLight) {
+                                localJetpackLight.intensity = 2.4 + Math.random() * 0.8;
+                            }
+                        } else {
+                            if (localJetpackFlames) localJetpackFlames.visible = false;
+                            if (localJetpackLight) localJetpackLight.intensity = 0;
+                        }
+                    }
+
+                    if (!isJetpackThrusting) {
                         if (!isOnGround || velocityY !== 0) {
                             velocityY += GRAVITY * delta;
                             camera.position.y += velocityY * delta;
@@ -7025,15 +7336,22 @@
                             }
                         }
 
-                        // 3. Jetpack Interaktion
+                        // 3. Jetpack Interaktion (4 Jetpacks im Lager oder wo sie gedroppt wurden)
                         let hitJp = false;
-                        if (!hitBike && jetpackInteractMesh && worldJetpackGroup && worldJetpackGroup.visible && !isJetpackEquipped) {
-                            const jpHits = raycaster.intersectObject(jetpackInteractMesh, false);
-                            if (jpHits.length > 0 && jpHits[0].distance <= 2.8) {
-                                currentInteractTarget = { type: 'jetpack' };
-                                interactPrompt.textContent = "[E] Jetpack anlegen";
-                                interactPrompt.classList.add("visible");
-                                hitJp = true;
+                        if (!hitBike && !isJetpackEquipped && warehouseJetpacks.length > 0) {
+                            const availableHitBoxes = warehouseJetpacks
+                                .filter(jp => jp.group && jp.group.visible && !jp.isEquipped && jp.hitBox)
+                                .map(jp => jp.hitBox);
+
+                            if (availableHitBoxes.length > 0) {
+                                const jpHits = raycaster.intersectObjects(availableHitBoxes, false);
+                                if (jpHits.length > 0 && jpHits[0].distance <= 3.8) {
+                                    const hitJpObj = jpHits[0].object.userData.jetpackObj;
+                                    currentInteractTarget = { type: 'jetpack', jetpackObj: hitJpObj };
+                                    interactPrompt.textContent = "[E] Jetpack anlegen";
+                                    interactPrompt.classList.add("visible");
+                                    hitJp = true;
+                                }
                             }
                         }
 
@@ -7928,30 +8246,71 @@
 
         function createRemoteJetpackModel() {
             const jp = new THREE.Group();
-            const darkMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
-            const chromeMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
+            const darkMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+            const chromeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 });
             const cyanMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-            const fireMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+            const flameOuterMat = new THREE.MeshBasicMaterial({
+                color: 0xf97316,
+                transparent: true,
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+            const flameCoreMat = new THREE.MeshBasicMaterial({
+                color: 0xfef08a,
+                transparent: true,
+                opacity: 0.95,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
 
             const plumes = new THREE.Group();
 
-            [-0.14, 0.14].forEach(tx => {
-                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.40, 12), darkMat);
+            [-0.18, 0.18].forEach(tx => {
+                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.52, 16), darkMat);
                 tank.position.set(tx, 0, 0);
                 jp.add(tank);
 
-                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.07, 0.08, 12), chromeMat);
-                nozzle.position.set(tx, -0.22, 0);
+                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.10, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), chromeMat);
+                cap.position.set(tx, 0.26, 0);
+                jp.add(cap);
+
+                [-0.10, 0.10].forEach(by => {
+                    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.104, 0.104, 0.02, 16), chromeMat);
+                    band.position.set(tx, by, 0);
+                    jp.add(band);
+                });
+
+                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.10, 0.14, 16), chromeMat);
+                nozzle.position.set(tx, -0.32, 0);
                 jp.add(nozzle);
 
-                const flame = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 8), fireMat);
-                flame.rotation.x = Math.PI;
-                flame.position.set(tx, -0.34, 0);
-                plumes.add(flame);
+                const outerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.11, 0.45, 16, 1, true), flameOuterMat);
+                outerFlame.position.set(tx, -0.58, 0);
+                plumes.add(outerFlame);
+
+                const innerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.05, 0.30, 12, 1, true), flameCoreMat);
+                innerFlame.position.set(tx, -0.50, 0);
+                plumes.add(innerFlame);
             });
 
-            const core = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.24, 0.08), cyanMat);
-            jp.add(core);
+            const coreBox = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.12), darkMat);
+            coreBox.position.set(0, 0, 0.01);
+            jp.add(coreBox);
+
+            const coreGlow = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.26, 0.13), cyanMat);
+            coreGlow.position.set(0, 0, 0.01);
+            jp.add(coreGlow);
+
+            const strapMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            [-0.12, 0.12].forEach(sx => {
+                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.46, 0.04), strapMat);
+                strap.position.set(sx, 0.04, 0.08);
+                jp.add(strap);
+            });
 
             plumes.visible = false;
             jp.add(plumes);
@@ -8078,7 +8437,12 @@
                     player.mesh.add(player.remoteJetpack);
                 }
                 if (player.remoteJetpack && player.remoteJetpack.userData && player.remoteJetpack.userData.plumes) {
-                    player.remoteJetpack.userData.plumes.visible = Boolean(data.isFlying);
+                    const isFlying = Boolean(data.isFlying);
+                    player.remoteJetpack.userData.plumes.visible = isFlying;
+                    if (isFlying) {
+                        const flick = 0.85 + Math.random() * 0.35;
+                        player.remoteJetpack.userData.plumes.scale.set(1.0, flick, 1.0);
+                    }
                 }
             } else if (player.remoteJetpack) {
                 player.mesh.remove(player.remoteJetpack);
