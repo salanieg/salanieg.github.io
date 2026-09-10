@@ -409,6 +409,129 @@
 
         
 
+        /* ── CINEMA SCREEN MODAL ── */
+        .cinema-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.90);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9000;
+        }
+        .cinema-modal-backdrop.visible {
+            display: flex;
+        }
+        .cinema-card {
+            background: #18181b;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 16px;
+            padding: 2rem;
+            width: min(540px, 92vw);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.75);
+            font-family: inherit;
+        }
+        .cinema-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #f4f4f5;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .cinema-input-row {
+            display: flex;
+            gap: 0.6rem;
+        }
+        .cinema-input-row input {
+            flex: 1;
+            background: #09090b;
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 8px;
+            color: #f4f4f5;
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 0.6rem 0.9rem;
+            outline: none;
+        }
+        .cinema-input-row input:focus {
+            border-color: #6366f1;
+        }
+        .cinema-input-row button {
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .cinema-input-row button:hover { background: #4f46e5; }
+        .cinema-presets-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #a1a1aa;
+            margin-bottom: -0.5rem;
+        }
+        .cinema-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .cinema-preset-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 6px;
+            color: #e4e4e7;
+            font-family: inherit;
+            font-size: 0.82rem;
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .cinema-preset-btn:hover {
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+        }
+        .cinema-controls-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            flex-wrap: wrap;
+            padding-top: 0.25rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .cinema-controls-row button {
+            background: rgba(255,255,255,0.09);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: #f4f4f5;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.5rem 1.1rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .cinema-controls-row button:hover { background: rgba(255,255,255,0.18); }
+        .cinema-status {
+            font-size: 0.82rem;
+            color: #a1a1aa;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* ── NOTE MODAL DIALOG ── */
         .modal-backdrop {
             position: fixed;
@@ -788,6 +911,44 @@
         </div>
     </div>
 
+    <!-- 6. SYNCHRON-SCREEN MODAL -->
+    <div id="cinema-modal" class="cinema-modal-backdrop">
+        <div class="cinema-card">
+            <h3>
+                <span>Synchron-Bildschirm (Chillen)</span>
+                <span style="font-size: 0.8rem; color: #a1a1aa; font-weight: normal;">Live-Sync</span>
+            </h3>
+            <p style="font-size: 0.88rem; color: #a1a1aa; margin: 0;">
+                Füge einen YouTube-Link oder eine Video-ID ein. Was du startest, sehen und hören alle Mitspieler synchron.
+            </p>
+            <div class="cinema-input-row">
+                <input type="text" id="cinema-url-input" placeholder="https://www.youtube.com/watch?v=... oder Video-ID" />
+                <button type="button" id="btn-cinema-play">Abspielen</button>
+            </div>
+            <div class="cinema-presets-title">Schnellauswahl</div>
+            <div class="cinema-presets">
+                <button type="button" class="cinema-preset-btn" data-vid="jfKfPfyJRdk">Lofi Hip Hop Radio</button>
+                <button type="button" class="cinema-preset-btn" data-vid="5qap5aO4i9A">Lofi Girl Synthwave</button>
+                <button type="button" class="cinema-preset-btn" data-vid="DWcJFNfaw9c">Jazz Cafe &amp; Rain</button>
+                <button type="button" class="cinema-preset-btn" data-vid="M5QY2_8704o">Chillhop Essentials</button>
+                <button type="button" class="cinema-preset-btn" data-vid="HuFYqnbVbzY">4K Nature Relax</button>
+            </div>
+            <div class="cinema-controls-row">
+                <button type="button" id="btn-cinema-pause">Pause / Play</button>
+                <button type="button" id="btn-cinema-stop">Stoppen</button>
+                <span id="cinema-status" class="cinema-status">Kein Video aktiv.</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end;">
+                <button type="button" id="btn-cinema-close" class="cinema-preset-btn" style="border-color:rgba(255,255,255,0.3); font-weight: 600;">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden YouTube player (audio/video for local user, synchronized across clients) -->
+    <div id="yt-player-container" style="position:fixed; bottom:16px; right:16px; width:280px; height:158px; border-radius:10px; overflow:hidden; z-index:8000; box-shadow:0 8px 32px rgba(0,0,0,0.7); display:none; background:#000;">
+        <div id="yt-player-iframe"></div>
+    </div>
+
     <!-- Firebase SDK via CDN Modules & Three.js via ImportMap -->
     <script type="module">
         import * as THREE from 'three';
@@ -850,6 +1011,16 @@
             });
         } catch (e) {
             console.warn("RTDB initial lamp listener error:", e);
+        }
+
+        // Initialen Zustand des Cinema-Screens für alle synchron abhören
+        try {
+            const initialCinemaRef = rtdbRef(rtdb, "worldState/cinema");
+            onValue(initialCinemaRef, (snapshot) => {
+                syncCinemaState(snapshot.val(), false);
+            });
+        } catch (e) {
+            console.warn("RTDB initial cinema listener error:", e);
         }
 
         // ── DOM ELEMENTE ──
@@ -1137,6 +1308,214 @@
 
         // ── CHILLEN-LAMPE & STERNENHIMMEL STATUSVARIABLEN ──
         let isChillenLampOn = false;
+
+        // ── CINEMA SCREEN STATUSVARIABLEN & YOUTUBE API ──
+        let cinemaScreenMesh = null;
+        let cinemaInteractMesh = null;
+        let ytPlayer = null;
+        let ytApiReady = false;
+        let ytApiLoading = false;
+        let currentCinemaVideoId = null;
+        let isCinemaModalOpen = false;
+
+        function ensureYouTubeAPI(cb) {
+            if (ytApiReady) { if (cb) cb(); return; }
+            if (ytApiLoading) {
+                if (cb) {
+                    window._ytReadyCbs = (window._ytReadyCbs || []);
+                    window._ytReadyCbs.push(cb);
+                }
+                return;
+            }
+            ytApiLoading = true;
+            window._ytReadyCbs = cb ? [cb] : [];
+            window.onYouTubeIframeAPIReady = function() {
+                ytApiReady = true;
+                ytApiLoading = false;
+                (window._ytReadyCbs || []).forEach(fn => fn());
+                window._ytReadyCbs = [];
+            };
+            const s = document.createElement('script');
+            s.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(s);
+        }
+
+        function parseYouTubeId(raw) {
+            raw = (raw || '').trim();
+            if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
+            try {
+                const u = new URL(raw);
+                if (u.hostname.includes('youtu.be')) return u.pathname.slice(1, 12);
+                return u.searchParams.get('v') || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function setCinemaVideo(videoId, playing, seekSec) {
+            if (!videoId) return;
+            currentCinemaVideoId = videoId;
+            updateCinemaScreenTexture(videoId, playing);
+            ensureYouTubeAPI(() => {
+                const container = document.getElementById('yt-player-container');
+                if (container) container.style.display = 'block';
+                if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                    ytPlayer.loadVideoById({ videoId: videoId, startSeconds: seekSec || 0 });
+                    if (playing) { ytPlayer.playVideo(); } else { ytPlayer.pauseVideo(); }
+                } else {
+                    ytPlayer = new YT.Player('yt-player-iframe', {
+                        videoId: videoId,
+                        width: '280',
+                        height: '158',
+                        playerVars: { autoplay: playing ? 1 : 0, controls: 1, rel: 0, modestbranding: 1, start: Math.floor(seekSec || 0) },
+                        events: {}
+                    });
+                }
+            });
+        }
+
+        function updateCinemaScreenTexture(videoId, playing) {
+            if (!cinemaScreenMesh) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = 1536;
+            canvas.height = 768;
+            const ctx = canvas.getContext('2d');
+
+            // Tiefschwarzer Bildschirm-Hintergrund
+            ctx.fillStyle = '#08080c';
+            ctx.fillRect(0, 0, 1536, 768);
+
+            // Robuster matter Rahmen
+            ctx.lineWidth = 16;
+            ctx.strokeStyle = '#18181b';
+            ctx.strokeRect(8, 8, 1536 - 16, 768 - 16);
+
+            if (videoId) {
+                const thumbUrl = 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg';
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    // Zeichne Thumbnail mit zentrierter Skalierung
+                    ctx.drawImage(img, 24, 24, 1536 - 48, 768 - 48);
+
+                    // Header-Balken
+                    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+                    ctx.fillRect(24, 24, 1536 - 48, 80);
+
+                    ctx.save();
+                    ctx.translate(1536 / 2, 64);
+                    ctx.scale(-1, 1); // ungespiegelt für Innenansicht
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 36px "Quicksand", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('SYNCHRON-SCREEN: ' + (playing ? 'WIEDERGABE' : 'PAUSIERT'), 0, 0);
+                    ctx.restore();
+
+                    // Play/Pause Overlay
+                    if (!playing) {
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                        ctx.fillRect(24, 24, 1536 - 48, 768 - 48);
+
+                        ctx.save();
+                        ctx.translate(1536 / 2, 768 / 2);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 60, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#09090b';
+                        ctx.beginPath();
+                        ctx.moveTo(-16, -28);
+                        ctx.lineTo(32, 0);
+                        ctx.lineTo(-16, 28);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+                    }
+
+                    if (cinemaScreenMesh.material.map) {
+                        cinemaScreenMesh.material.map.needsUpdate = true;
+                    }
+                };
+                img.src = thumbUrl;
+            } else {
+                // Standby-Screen
+                ctx.save();
+                ctx.translate(1536 / 2, 768 / 2);
+                ctx.scale(-1, 1); // ungespiegelt
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+                ctx.font = 'bold 72px "Quicksand", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('CHILLEN CINEMA', 0, -30);
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+                ctx.font = 'bold 32px "Quicksand", sans-serif';
+                ctx.fillText('[E] Taste drücken zum Starten', 0, 45);
+                ctx.restore();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.needsUpdate = true;
+            cinemaScreenMesh.material.map = texture;
+            cinemaScreenMesh.material.needsUpdate = true;
+        }
+
+        function syncCinemaState(state, fromNetwork) {
+            if (!state || !state.videoId) {
+                currentCinemaVideoId = null;
+                updateCinemaScreenTexture(null, false);
+                if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
+                const container = document.getElementById('yt-player-container');
+                if (container) container.style.display = 'none';
+                const el = document.getElementById('cinema-status');
+                if (el) el.textContent = 'Kein Video aktiv.';
+                return;
+            }
+
+            const vid = state.videoId;
+            const playing = state.isPlaying !== false;
+            const serverNow = state.startedAt || 0;
+            const elapsed = playing && serverNow > 0
+                ? Math.max(0, (Date.now() - serverNow) / 1000) + (state.seekSec || 0)
+                : (state.seekSec || 0);
+
+            if (vid !== currentCinemaVideoId) {
+                setCinemaVideo(vid, playing, elapsed);
+            } else {
+                if (ytPlayer && typeof ytPlayer.seekTo === 'function' && fromNetwork) {
+                    ytPlayer.seekTo(elapsed, true);
+                    if (playing) { ytPlayer.playVideo(); } else { ytPlayer.pauseVideo(); }
+                }
+                updateCinemaScreenTexture(vid, playing);
+            }
+
+            const el = document.getElementById('cinema-status');
+            if (el) el.textContent = playing ? ('Live: ' + vid) : ('Pausiert: ' + vid);
+        }
+
+        function pushCinemaState(videoId, isPlaying, seekSec) {
+            rtdbSet(rtdbRef(rtdb, 'worldState/cinema'), {
+                videoId: videoId || null,
+                isPlaying: Boolean(isPlaying),
+                seekSec: Number(seekSec || 0),
+                startedAt: isPlaying ? Date.now() : 0,
+                updatedBy: currentUser ? currentUser.uid : 'guest',
+                updatedAt: Date.now()
+            }).catch(err => console.warn('RTDB cinema update error:', err));
+        }
+
+        function openCinemaModal() {
+            isCinemaModalOpen = true;
+            document.getElementById('cinema-modal').classList.add('visible');
+            if (controls && controls.isLocked) controls.unlock();
+        }
+
+        function closeCinemaModal() {
+            isCinemaModalOpen = false;
+            document.getElementById('cinema-modal').classList.remove('visible');
+        }
         let targetNightTransition = 0.0;
         let nightTransition = 0.0;
         let chillenLampInteractMesh = null;
@@ -3629,6 +4008,74 @@
 
             lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
             scene.add(lampGroup);
+
+            // ── SYNCHRONER CINEMA-SCREEN (EXAKT GLEICHE GRÖSSE WIE NOTIZBOARD) ──
+            // Pinboard-Maße: boardRadius = 5.46, boardHeight = 2.2, boardArc = 1.05
+            const csRadius = 5.46;
+            const csHeight = 2.2;
+            const csArc = 1.05;
+
+            // Idle-Screen Canvas
+            const csCanvas = document.createElement('canvas');
+            csCanvas.width = 1536;
+            csCanvas.height = 768;
+            const csCtx = csCanvas.getContext('2d');
+            csCtx.fillStyle = '#08080c';
+            csCtx.fillRect(0, 0, 1536, 768);
+            csCtx.lineWidth = 16;
+            csCtx.strokeStyle = '#18181b';
+            csCtx.strokeRect(8, 8, 1536 - 16, 768 - 16);
+
+            csCtx.save();
+            csCtx.translate(1536 / 2, 768 / 2);
+            csCtx.scale(-1, 1);
+            csCtx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+            csCtx.font = 'bold 72px "Quicksand", sans-serif';
+            csCtx.textAlign = 'center';
+            csCtx.textBaseline = 'middle';
+            csCtx.fillText('CHILLEN CINEMA', 0, -30);
+            csCtx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            csCtx.font = 'bold 32px "Quicksand", sans-serif';
+            csCtx.fillText('[E] Taste drücken zum Starten', 0, 45);
+            csCtx.restore();
+
+            const csTexture = new THREE.CanvasTexture(csCanvas);
+            csTexture.colorSpace = THREE.SRGBColorSpace;
+            csTexture.needsUpdate = true;
+
+            const csGeo = new THREE.CylinderGeometry(csRadius, csRadius, csHeight, 32, 1, true, -csArc / 2, csArc);
+            const csMat = new THREE.MeshBasicMaterial({
+                map: csTexture,
+                side: THREE.DoubleSide,
+                toneMapped: false
+            });
+            cinemaScreenMesh = new THREE.Mesh(csGeo, csMat);
+
+            // An der Westwand des Chillen-Raums (rx=0, rz=16.5), symmetrisch gegenüber dem Notizboard an der Ostwand
+            // Notizboard hat rotY = -pinAngle + PI/2 = PI/2 (Ostwand). Screen an der Westwand hat rotY = -PI/2.
+            const csRotY = -Math.PI / 2;
+            cinemaScreenMesh.position.set(rx, 2.0, rz);
+            cinemaScreenMesh.rotation.y = csRotY;
+            cinemaScreenMesh.userData = { isCinemaScreen: true };
+            scene.add(cinemaScreenMesh);
+
+            // Eleganter matter Rahmen um den Bildschirm
+            const csFrameGeo = new THREE.CylinderGeometry(csRadius + 0.04, csRadius + 0.04, csHeight + 0.10, 32, 1, true, -csArc / 2 - 0.015, csArc + 0.030);
+            const csFrameMat = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.3, metalness: 0.7, side: THREE.BackSide });
+            const csFrame = new THREE.Mesh(csFrameGeo, csFrameMat);
+            csFrame.position.set(rx, 2.0, rz);
+            csFrame.rotation.y = csRotY;
+            scene.add(csFrame);
+
+            // Unsichtbares Interaktions-Volumen (Raycasting bis 5.5 m)
+            cinemaInteractMesh = new THREE.Mesh(
+                new THREE.CylinderGeometry(csRadius + 0.10, csRadius + 0.10, csHeight + 0.25, 24, 1, true, -csArc / 2 - 0.05, csArc + 0.10),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            cinemaInteractMesh.position.set(rx, 2.0, rz);
+            cinemaInteractMesh.rotation.y = csRotY;
+            cinemaInteractMesh.userData = { isCinemaScreen: true };
+            scene.add(cinemaInteractMesh);
         }
 
         // 3. GAMING (West)
@@ -5222,7 +5669,9 @@
                     window.getSelection().removeAllRanges();
                 }
 
-                if (currentInteractTarget.type === 'chillenLamp') {
+                if (currentInteractTarget.type === 'cinema') {
+                    openCinemaModal();
+                } else if (currentInteractTarget.type === 'chillenLamp') {
                     toggleChillenLamp();
                 } else if (currentInteractTarget.type === 'note') {
                     openViewNoteModal(currentInteractTarget.noteId, currentInteractTarget.data);
@@ -5241,6 +5690,62 @@
 
             clock.start();
             animate();
+
+            // ── CINEMA MODAL BUTTON-EREIGNISSE ──
+            const btnPlay = document.getElementById('btn-cinema-play');
+            if (btnPlay) {
+                btnPlay.addEventListener('click', () => {
+                    const raw = (document.getElementById('cinema-url-input').value || '').trim();
+                    const vid = parseYouTubeId(raw);
+                    if (!vid) {
+                        const el = document.getElementById('cinema-status');
+                        if (el) el.textContent = 'Ungültige YouTube-URL oder Video-ID.';
+                        return;
+                    }
+                    pushCinemaState(vid, true, 0);
+                });
+            }
+
+            const btnPause = document.getElementById('btn-cinema-pause');
+            if (btnPause) {
+                btnPause.addEventListener('click', () => {
+                    if (!currentCinemaVideoId) return;
+                    const isPlayingNow = ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === 1;
+                    const elapsed = ytPlayer && typeof ytPlayer.getCurrentTime === 'function' ? ytPlayer.getCurrentTime() : 0;
+                    pushCinemaState(currentCinemaVideoId, !isPlayingNow, elapsed);
+                });
+            }
+
+            const btnStop = document.getElementById('btn-cinema-stop');
+            if (btnStop) {
+                btnStop.addEventListener('click', () => {
+                    pushCinemaState(null, false, 0);
+                    document.getElementById('cinema-url-input').value = '';
+                });
+            }
+
+            const btnCloseCinema = document.getElementById('btn-cinema-close');
+            if (btnCloseCinema) {
+                btnCloseCinema.addEventListener('click', closeCinemaModal);
+            }
+
+            const cinemaModalEl = document.getElementById('cinema-modal');
+            if (cinemaModalEl) {
+                cinemaModalEl.addEventListener('click', (e) => {
+                    if (e.target === cinemaModalEl) closeCinemaModal();
+                });
+            }
+
+            document.querySelectorAll('.cinema-preset-btn[data-vid]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const vid = btn.dataset.vid;
+                    if (vid) {
+                        pushCinemaState(vid, true, 0);
+                        const inputEl = document.getElementById('cinema-url-input');
+                        if (inputEl) inputEl.value = vid;
+                    }
+                });
+            });
         }
 
         function onWindowResize() {
@@ -5320,7 +5825,9 @@
                         return;
                     }
                     if (currentInteractTarget) {
-                        if (currentInteractTarget.type === 'chillenLamp') {
+                        if (currentInteractTarget.type === 'cinema') {
+                            openCinemaModal();
+                        } else if (currentInteractTarget.type === 'chillenLamp') {
                             toggleChillenLamp();
                         } else if (currentInteractTarget.type === 'note') {
                             startMovingNote();
@@ -5390,6 +5897,27 @@
             if (sceneDirLight) {
                 sceneDirLight.intensity = THREE.MathUtils.lerp(0.35, 0.08, nightTransition);
                 sceneDirLight.color.lerpColors(new THREE.Color(0xffffff), new THREE.Color(0x9cbde6), nightTransition);
+            }
+
+            // ── MULTIPLAYER FIX: LIVE-BEWEGUNGEN ALLER MITSPIELER LERPEN & POSITIONIEREN ──
+            if (remotePlayersMap && remotePlayersMap.size > 0) {
+                const pLerp = Math.min(1.0, delta * 14.0);
+                remotePlayersMap.forEach((player) => {
+                    if (!player || !player.mesh) return;
+
+                    // Bei Teleport/Spawn sofort setzen, sonst weich interpolieren
+                    if (player.mesh.position.distanceTo(player.targetPos) > 8.0) {
+                        player.mesh.position.copy(player.targetPos);
+                    } else {
+                        player.mesh.position.lerp(player.targetPos, pLerp);
+                    }
+
+                    // Kürzeste Winkeldifferenz für weiche Y-Drehung
+                    let rotDiff = player.targetRotY - player.mesh.rotation.y;
+                    while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
+                    while (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
+                    player.mesh.rotation.y += rotDiff * pLerp;
+                });
             }
 
             if (artSculpture) {
@@ -5591,9 +6119,21 @@
                             }
                         }
 
-                        // 3b. Chillen-Stehlampe Interaktion
+                        // 3b. Cinema Screen Interaktion
+                        let hitCinema = false;
+                        if (!hitBike && !hitJp && cinemaInteractMesh) {
+                            const cHits = raycaster.intersectObject(cinemaInteractMesh, false);
+                            if (cHits.length > 0 && cHits[0].distance <= 5.5) {
+                                currentInteractTarget = { type: 'cinema' };
+                                interactPrompt.textContent = "[E] oder [LMB] Bildschirm steuern";
+                                interactPrompt.classList.add("visible");
+                                hitCinema = true;
+                            }
+                        }
+
+                        // 3c. Chillen-Stehlampe Interaktion
                         let hitLamp = false;
-                        if (!hitBike && !hitJp && chillenLampInteractMesh) {
+                        if (!hitBike && !hitJp && !hitCinema && chillenLampInteractMesh) {
                             const lampHits = raycaster.intersectObject(chillenLampInteractMesh, false);
                             if (lampHits.length > 0 && lampHits[0].distance <= 3.8) {
                                 currentInteractTarget = { type: 'chillenLamp' };
@@ -5605,7 +6145,7 @@
                             }
                         }
 
-                        if (!hitBike && !hitJp && !hitLamp) {
+                        if (!hitBike && !hitJp && !hitCinema && !hitLamp) {
                             // 4. Sitze
                             const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
                             if (hitSeats.length > 0 && hitSeats[0].distance <= 2.8) {
@@ -6650,7 +7190,13 @@
                 }
             });
 
-            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved, unsubLamp];
+            // Globalen Zustand des Cinema-Screens in Echtzeit abhören
+            const worldCinemaRef = rtdbRef(rtdb, "worldState/cinema");
+            const unsubCinema = onValue(worldCinemaRef, (snapshot) => {
+                syncCinemaState(snapshot.val(), true);
+            });
+
+            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved, unsubLamp, unsubCinema];
         }
 </script>
 </body>
