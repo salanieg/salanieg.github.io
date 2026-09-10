@@ -1393,10 +1393,11 @@
             cinemaIframe.setAttribute('allowfullscreen', 'true');
 
             cssCinemaObject = new CSS3DObject(cinemaIframe);
-            // 3D-Skalierung: 1280x720 px -> 2.88m x 1.62m (exakt vertikal und horizontal zentriert im Viewing Screen)
+            // 3D-Skalierung: 1280x720 px -> 2.88m x 1.62m (16:9, exakt zentriert auf der 3.4m x 2.2m 2D-Leinwand)
             cssCinemaObject.scale.set(0.00225, 0.00225, 0.00225);
-            // Westwand des Chillen-Zimmers (rx = 0, rz = 16.5, radius = 5.46)
-            cssCinemaObject.position.set(-5.25, 1.86, 16.5);
+            // Westwand des Chillen-Zimmers: 2D-Flachbildschirm (rx = 0, rz = 16.5)
+            // Liegt exakt 1 cm vor der 2D-Traegerleinwand bei x = -5.11m
+            cssCinemaObject.position.set(-5.11, 1.86, 16.5);
             // Drehung nach innen zur Raummitte/Couch (Richtung +X)
             cssCinemaObject.rotation.y = Math.PI / 2;
             cssScene.add(cssCinemaObject);
@@ -3968,19 +3969,18 @@
             lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
             scene.add(lampGroup);
 
-            // ── VIEWING SCREEN (EXAKT WIE NOTIZENLEINWAND, MIT GESTREIFTEM RAHMEN & "VIEWING SCREEN") ──
-            // Exakt wie createCurvedPinboard: boardRadius = 5.46, boardHeight = 2.2, boardArc = 1.05
-            const csRadius = 5.46;
-            const csHeight = 2.2;
-            const csArc = 1.05;
+            // ── VIEWING SCREEN (2D-FLACHBILDWAND IM RAUM, GESTREIFTER RAHMEN, STEHT AUSSEN NICHT UEBER) ──
+            const csWidth = 3.40;
+            const csHeight = 2.20;
 
             const csCanvas = document.createElement("canvas");
             csCanvas.width = 1536;
-            csCanvas.height = 768;
+            csCanvas.height = 990;
             const csCtx = csCanvas.getContext("2d");
 
-            // Vollkommen transparent wie die Notizenleinwand
-            csCtx.clearRect(0, 0, 1536, 768);
+            // Dunkler matter Hintergrund für das Kinopanel
+            csCtx.fillStyle = "#0c0c0e";
+            csCtx.fillRect(0, 0, 1536, 990);
 
             // Gestreifter Rahmen (Cinema / Filmklappen-Streifenmuster 45-Grad)
             const stripeCanvas = document.createElement("canvas");
@@ -4010,56 +4010,77 @@
             // Dunkle Kantenkontur für perfekten Kontrast
             csCtx.lineWidth = 32;
             csCtx.strokeStyle = "#18181b";
-            csCtx.strokeRect(16, 16, 1536 - 32, 768 - 32);
+            csCtx.strokeRect(16, 16, 1536 - 32, 990 - 32);
 
-            // Gestreifter Rahmen (wie Notizenrahmen, aber gestreift)
+            // Gestreifter Rahmen
             csCtx.lineWidth = 26;
             csCtx.strokeStyle = stripePattern;
-            csCtx.strokeRect(16, 16, 1536 - 32, 768 - 32);
+            csCtx.strokeRect(16, 16, 1536 - 32, 990 - 32);
 
             // Dünne Innenlinie
             csCtx.lineWidth = 3;
             csCtx.strokeStyle = "#18181b";
-            csCtx.strokeRect(29, 29, 1536 - 58, 768 - 58);
+            csCtx.strokeRect(29, 29, 1536 - 58, 990 - 58);
 
-            // Header-Label: "VIEWING SCREEN" statt "NOTIZEN" (horizontal gespiegelt für ungespiegelte Innenansicht)
-            csCtx.save();
-            csCtx.translate(1536 / 2, 85);
-            csCtx.scale(-1, 1);
-            csCtx.fillStyle = "#18181b";
-            csCtx.font = 'bold 46px "Quicksand", sans-serif';
+            // Header-Label: "VIEWING SCREEN"
+            csCtx.fillStyle = "#ffffff";
+            csCtx.font = 'bold 44px "Quicksand", sans-serif';
             csCtx.textAlign = "center";
             csCtx.textBaseline = "middle";
-            csCtx.fillText("VIEWING SCREEN", 0, 0);
-            csCtx.restore();
+            csCtx.fillText("VIEWING SCREEN", 1536 / 2, 75);
+
+            // Dezenter Hinweistext in der Mitte, wenn noch kein Video läuft
+            csCtx.fillStyle = "rgba(255, 255, 255, 0.45)";
+            csCtx.font = '500 28px "Quicksand", sans-serif';
+            csCtx.fillText("Kein Video aktiv", 1536 / 2, 990 / 2 - 15);
+            csCtx.font = '400 20px "Quicksand", sans-serif';
+            csCtx.fillText("[E] Taste druecken zum Abspielen", 1536 / 2, 990 / 2 + 25);
 
             const csTexture = new THREE.CanvasTexture(csCanvas);
             csTexture.colorSpace = THREE.SRGBColorSpace;
             csTexture.needsUpdate = true;
 
-            const csGeo = new THREE.CylinderGeometry(csRadius, csRadius, csHeight, 32, 1, true, -csArc / 2, csArc);
+            // 2D-Flachbildschirm (PlaneGeometry)
+            const csGeo = new THREE.PlaneGeometry(csWidth, csHeight);
             const csMat = new THREE.MeshBasicMaterial({
                 map: csTexture,
-                side: THREE.DoubleSide,
-                transparent: true,
+                side: THREE.FrontSide,
                 toneMapped: false
             });
             cinemaScreenMesh = new THREE.Mesh(csGeo, csMat);
 
-            // Westwand des Chillen-Raums (rx=0, rz=16.5), symmetrisch gegenüber dem Notizboard an der Ostwand
-            const csRotY = -Math.PI / 2;
-            cinemaScreenMesh.position.set(rx, 2.0, rz);
-            cinemaScreenMesh.rotation.y = csRotY;
+            // Westwand des Chillen-Raums: Hängt frei im Raum bei x = -5.12m
+            // Radius zur Raummitte an den Aussenkanten ist ca. 5.39m (< 5.46m Wandradius) -> steht aussen niemals ueber!
+            cinemaScreenMesh.position.set(-5.12, 2.0, rz);
+            cinemaScreenMesh.rotation.y = Math.PI / 2;
             cinemaScreenMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaScreenMesh);
 
-            // Unsichtbares Interaktions-Volumen für verlässliches Raycasting (DoubleSide, transparent)
+            // Schlanke schwarze Rueckplatte fuer sauberes Finish von hinten
+            const csBackMat = new THREE.MeshBasicMaterial({ color: 0x111113, side: THREE.BackSide });
+            const csBackMesh = new THREE.Mesh(csGeo, csBackMat);
+            csBackMesh.position.set(-5.122, 2.0, rz);
+            csBackMesh.rotation.y = Math.PI / 2;
+            scene.add(csBackMesh);
+
+            // Wandhalterungs-Elemente / Distanz-Streben zur runden Wand
+            const bracketMat = new THREE.MeshBasicMaterial({ color: 0x18181b });
+            const bracketZOffsets = [-1.35, 1.35];
+            bracketZOffsets.forEach(bz => {
+                const wallX = -Math.sqrt(Math.max(0, 5.46 * 5.46 - bz * bz));
+                const bracketLen = Math.abs(wallX - (-5.12));
+                const bracket = new THREE.Mesh(new THREE.BoxGeometry(bracketLen, 0.05, 0.05), bracketMat);
+                bracket.position.set(-5.12 - bracketLen / 2, 2.0, rz + bz);
+                scene.add(bracket);
+            });
+
+            // Unsichtbares Interaktions-Volumen für verlässliches Raycasting (PlaneGeometry, DoubleSide)
             cinemaInteractMesh = new THREE.Mesh(
-                new THREE.CylinderGeometry(csRadius + 0.12, csRadius + 0.12, csHeight + 0.30, 24, 1, true, -csArc / 2 - 0.08, csArc + 0.16),
+                new THREE.PlaneGeometry(csWidth + 0.30, csHeight + 0.30),
                 new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide })
             );
-            cinemaInteractMesh.position.set(rx, 2.0, rz);
-            cinemaInteractMesh.rotation.y = csRotY;
+            cinemaInteractMesh.position.set(-5.10, 2.0, rz);
+            cinemaInteractMesh.rotation.y = Math.PI / 2;
             cinemaInteractMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaInteractMesh);
 
@@ -6260,8 +6281,8 @@
                     const pz = camera.position.z;
                     const distToChillen = Math.hypot(px - 0, pz - 16.5);
 
-                    // 1. Wenn der Spieler hinter der Bildwand steht (x <= -5.20), ist er in/hinter der Wand oder draussen
-                    if (px <= -5.20) {
+                    // 1. Wenn der Spieler hinter der Bildwand steht (x <= -5.05), ist er in/hinter der Wand oder draussen
+                    if (px <= -5.05) {
                         shouldShow = false;
                     }
                     // 2. Befindet sich der Spieler auf Hoehe des Chillen-Zimmers (z >= 11.0):
@@ -6285,7 +6306,7 @@
                     if (shouldShow) {
                         const camDir = new THREE.Vector3();
                         camera.getWorldDirection(camDir);
-                        const toScreenX = -5.25 - px;
+                        const toScreenX = -5.11 - px;
                         const toScreenZ = 16.5 - pz;
                         if (camDir.x * toScreenX + camDir.z * toScreenZ < -1.0) {
                             shouldShow = false;
