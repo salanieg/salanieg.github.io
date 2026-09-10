@@ -2318,24 +2318,96 @@
             pinboardMeshes.push(pinMesh);
         }
 
+        // ── ZIEGELSTEIN-TEXTUR FUER DIE LAGER-INNENWAND (EINFACH GEHALTEN) ──
+        function createWarehouseBrickTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            // Moertel / Fugen: mineralisches Zementgrau
+            ctx.fillStyle = "#9ca3af";
+            ctx.fillRect(0, 0, 512, 256);
+
+            const rows = 8;
+            const rowH = 256 / rows;
+            const brickW = 64;
+            const mortar = 4;
+
+            // Harmonische Farbpalette roter Lagerhausziegel
+            const brickColors = [
+                "#9a3c2b", "#a44331", "#8e3423", "#ad4c38", "#963827", "#883121"
+            ];
+
+            for (let r = 0; r < rows; r++) {
+                const y = r * rowH + mortar / 2;
+                const h = rowH - mortar;
+                const offsetX = (r % 2 === 1) ? -brickW / 2 : 0;
+                for (let x = offsetX - brickW; x < 512 + brickW; x += brickW) {
+                    const colorIndex = Math.floor(Math.random() * brickColors.length);
+                    ctx.fillStyle = brickColors[colorIndex];
+                    ctx.fillRect(x + mortar / 2, y, brickW - mortar, h);
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(18, 4);
+            return texture;
+        }
+
         // ── RUNDE RAUMWÄNDE MIT TÜREN ──
         function createCircularRoomWall(room) {
             const doorGap = 0.70;
             const wallArc = Math.PI * 2 - doorGap;
 
-            const wallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
-            const wallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-            const wallMesh = new THREE.Mesh(wallGeo, wallMat);
-            wallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
-            wallMesh.rotation.y = room.rotY;
-            wallMesh.userData = {
-                isRoomWall: true,
-                roomName: room.name,
-                roomCenter: new THREE.Vector2(room.cx, room.cz),
-                radius: room.radius
-            };
-            scene.add(wallMesh);
-            wallMeshes.push(wallMesh);
+            if (room.name === "Lager") {
+                // Aussenwand zum Hof hin: Standard-Weiss (FrontSide)
+                const outerWallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
+                const outerWallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.FrontSide });
+                const outerWallMesh = new THREE.Mesh(outerWallGeo, outerWallMat);
+                outerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+                outerWallMesh.rotation.y = room.rotY;
+                outerWallMesh.userData = {
+                    isRoomWall: true,
+                    roomName: room.name,
+                    roomCenter: new THREE.Vector2(room.cx, room.cz),
+                    radius: room.radius
+                };
+                scene.add(outerWallMesh);
+                wallMeshes.push(outerWallMesh);
+
+                // Innenseite: Ziegelsteinwand (Innenseite! BackSide)
+                const innerWallGeo = new THREE.CylinderGeometry(room.radius - 0.005, room.radius - 0.005, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
+                const brickTex = createWarehouseBrickTexture();
+                const innerWallMat = new THREE.MeshLambertMaterial({ map: brickTex, side: THREE.BackSide });
+                const innerWallMesh = new THREE.Mesh(innerWallGeo, innerWallMat);
+                innerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+                innerWallMesh.rotation.y = room.rotY;
+                innerWallMesh.userData = {
+                    isRoomWall: true,
+                    roomName: room.name,
+                    roomCenter: new THREE.Vector2(room.cx, room.cz),
+                    radius: room.radius - 0.005
+                };
+                scene.add(innerWallMesh);
+                wallMeshes.push(innerWallMesh);
+            } else {
+                const wallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
+                const wallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+                const wallMesh = new THREE.Mesh(wallGeo, wallMat);
+                wallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+                wallMesh.rotation.y = room.rotY;
+                wallMesh.userData = {
+                    isRoomWall: true,
+                    roomName: room.name,
+                    roomCenter: new THREE.Vector2(room.cx, room.cz),
+                    radius: room.radius
+                };
+                scene.add(wallMesh);
+                wallMeshes.push(wallMesh);
+            }
 
             // Türpfosten
             const pillarGeo = new THREE.CylinderGeometry(0.06, 0.06, WALL_HEIGHT, 16);
@@ -5230,16 +5302,57 @@
             geo.attributes.position.needsUpdate = true;
         }
 
+        // ── HELLGRAUER KOERNIGER LAGERHAUSBODEN (EINFACH GEHALTEN) ──
+        function createGrainyWarehouseFloorTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+
+            // Hellgraue Grundierung
+            ctx.fillStyle = "#d1d5db";
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Feines mineralisches Korn / Rauschen
+            const imgData = ctx.getImageData(0, 0, 512, 512);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const grain = (Math.random() - 0.5) * 38;
+                data[i]     = Math.min(255, Math.max(0, data[i] + grain));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + grain));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + grain));
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            // Vereinzelte zarte Sprenkel fuer authentischen Estrich
+            ctx.fillStyle = "rgba(75, 85, 99, 0.18)";
+            for (let s = 0; s < 450; s++) {
+                const sx = Math.random() * 512;
+                const sy = Math.random() * 512;
+                const sr = Math.random() * 1.5 + 0.5;
+                ctx.beginPath();
+                ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(8, 8);
+            return texture;
+        }
+
         function buildLagerRaum() {
             const rx = -15.692, rz = -5.099;
             const doorAngle = 0.3141593; // 18 Grad, zeigt frontal zum Hofzentrum
 
-            // 1. Dunkler Industrie-Betonboden (Raum ansonsten komplett leer!)
+            // 1. Hellgrauer koerniger Lagerhausboden
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
+            const warehouseFloorTex = createGrainyWarehouseFloorTexture();
             const floorMat = new THREE.MeshStandardMaterial({
-                color: 0x242427,
-                roughness: 0.90,
-                metalness: 0.10
+                map: warehouseFloorTex,
+                roughness: 0.85,
+                metalness: 0.05
             });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
@@ -5761,31 +5874,54 @@
             fillMesh.position.y = 0.018;
             ghostGroup.add(fillMesh);
 
-            // 3. Flacher 2D-Pfeil auf dem Boden, der nach +Z zeigt
+            // 3. Sauberer, flacher 2D-Richtungspfeil auf dem Boden in Blickrichtung (+Z)
+            const arrowY = 0.022;
+            const arrowGeo = new THREE.BufferGeometry();
+            // Pfeilschaft (Breite 0.08m, Z von -0.16 bis +0.04) und Pfeilspitze (Breite 0.28m bei Z = 0.04, Spitze bei Z = 0.22)
+            const arrowVerts = new Float32Array([
+                // Schaft: Dreieck 1
+                -0.04, arrowY, -0.16,
+                -0.04, arrowY,  0.04,
+                 0.04, arrowY,  0.04,
+                // Schaft: Dreieck 2
+                -0.04, arrowY, -0.16,
+                 0.04, arrowY,  0.04,
+                 0.04, arrowY, -0.16,
+                // Pfeilspitze: Dreieck 3
+                -0.14, arrowY,  0.04,
+                 0.00, arrowY,  0.22,
+                 0.14, arrowY,  0.04
+            ]);
+            arrowGeo.setAttribute('position', new THREE.BufferAttribute(arrowVerts, 3));
+            arrowGeo.computeVertexNormals();
+
             const arrowMat = new THREE.MeshBasicMaterial({
                 color: 0x38bdf8,
                 side: THREE.DoubleSide,
                 depthWrite: false
             });
+            const arrowMesh = new THREE.Mesh(arrowGeo, arrowMat);
+            ghostGroup.add(arrowMesh);
 
-            // Pfeilschaft (flaches Rechteck auf dem Boden)
-            const shaftGeo = new THREE.PlaneGeometry(0.09, 0.24);
-            shaftGeo.rotateX(-Math.PI / 2);
-            const shaft = new THREE.Mesh(shaftGeo, arrowMat);
-            shaft.position.set(0, 0.022, -0.04);
-            ghostGroup.add(shaft);
-
-            // Pfeilspitze (flaches Dreieck auf dem Boden)
-            const arrowShape = new THREE.Shape();
-            arrowShape.moveTo(0, 0.16);
-            arrowShape.lineTo(-0.13, -0.03);
-            arrowShape.lineTo(0.13, -0.03);
-            arrowShape.closePath();
-            const arrowTipGeo = new THREE.ShapeGeometry(arrowShape);
-            arrowTipGeo.rotateX(-Math.PI / 2);
-            const arrowTip = new THREE.Mesh(arrowTipGeo, arrowMat);
-            arrowTip.position.set(0, 0.022, 0.09);
-            ghostGroup.add(arrowTip);
+            // Zusaetzliche klare Konturlinie um die Pfeilsilhouette
+            const arrowBorderPoints = [
+                new THREE.Vector3(-0.04, arrowY + 0.001, -0.16),
+                new THREE.Vector3( 0.04, arrowY + 0.001, -0.16),
+                new THREE.Vector3( 0.04, arrowY + 0.001,  0.04),
+                new THREE.Vector3( 0.14, arrowY + 0.001,  0.04),
+                new THREE.Vector3( 0.00, arrowY + 0.001,  0.22),
+                new THREE.Vector3(-0.14, arrowY + 0.001,  0.04),
+                new THREE.Vector3(-0.04, arrowY + 0.001,  0.04),
+                new THREE.Vector3(-0.04, arrowY + 0.001, -0.16)
+            ];
+            const arrowBorderGeo = new THREE.BufferGeometry().setFromPoints(arrowBorderPoints);
+            const arrowBorderMat = new THREE.LineBasicMaterial({
+                color: 0x7dd3fc,
+                linewidth: 2,
+                depthWrite: false
+            });
+            const arrowBorder = new THREE.Line(arrowBorderGeo, arrowBorderMat);
+            ghostGroup.add(arrowBorder);
 
             // Fuer alle Ghost-Elemente Raycasting deaktivieren
             ghostGroup.traverse(c => {
