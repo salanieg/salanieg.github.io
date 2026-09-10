@@ -7545,12 +7545,17 @@
                     const speedMultiplier = isRidingBike ? 1.85 : 1.0;
                     const actualSpeed = moveSpeed * speedMultiplier * delta;
 
-                    // Vorwaerts- und Seitwaerts-Bewegung aus Kamera-Yaw
-                    const camYaw = camera.rotation.y;
-                    const fwdX = -Math.sin(camYaw);
-                    const fwdZ = -Math.cos(camYaw);
-                    const rgtX = Math.cos(camYaw);
-                    const rgtZ = -Math.sin(camYaw);
+                    // Echte horizontale Blickrichtung der Kamera auf der XZ-Ebene (vollkommen unabhaengig von Neigung/Pitch)
+                    const camDir = new THREE.Vector3();
+                    camera.getWorldDirection(camDir);
+                    const fwdLen = Math.hypot(camDir.x, camDir.z);
+                    let fwdX = 0, fwdZ = -1;
+                    if (fwdLen > 0.0001) {
+                        fwdX = camDir.x / fwdLen;
+                        fwdZ = camDir.z / fwdLen;
+                    }
+                    const rgtX = -fwdZ;
+                    const rgtZ = fwdX;
 
                     let mX = 0, mZ = 0;
                     if (moveState.forward) { mX += fwdX * actualSpeed; mZ += fwdZ * actualSpeed; isMoving = true; }
@@ -7590,6 +7595,11 @@
                 }
 
                 // ── KAMERA- & AVATAR-POSITIONIERUNG (1ST PERSON VS 3RD PERSON) ──
+                const camDir = new THREE.Vector3();
+                camera.getWorldDirection(camDir);
+                const fwdLen = Math.hypot(camDir.x, camDir.z);
+                const playerYaw = fwdLen > 0.0001 ? Math.atan2(-camDir.x, -camDir.z) : 0;
+
                 if (isThirdPersonMode) {
                     if (localPlayerGroup) {
                         localPlayerGroup.visible = true;
@@ -7600,7 +7610,7 @@
                             }
                         } else {
                             localPlayerGroup.position.set(playerPos.x, Math.max(0, playerPos.y - EYE_HEIGHT), playerPos.z);
-                            localPlayerGroup.rotation.y = camera.rotation.y;
+                            localPlayerGroup.rotation.y = playerYaw;
                         }
                         if (localPlayerJetpack) {
                             localPlayerJetpack.visible = isJetpackEquipped;
@@ -7613,7 +7623,7 @@
                         ? currentSeat.sitPos.clone().add(new THREE.Vector3(0, 0.15, 0))
                         : playerPos.clone().add(new THREE.Vector3(0, 0.15, 0));
 
-                    const camForward = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation);
+                    const camForward = camDir.clone();
                     const maxCamDist = 2.65;
                     const idealCamPos = lookTarget.clone().sub(camForward.clone().multiplyScalar(maxCamDist));
                     idealCamPos.y += 0.30;
@@ -8879,6 +8889,10 @@
             const color = getPlayerColor(currentUser.uid);
             const nickname = getStoredNickname();
 
+            const initCamDir = new THREE.Vector3();
+            camera.getWorldDirection(initCamDir);
+            const initYaw = Math.atan2(-initCamDir.x, -initCamDir.z);
+
             rtdbSet(myPlayerRef, {
                 uid: currentUser.uid,
                 email: currentUser.email || "Anonym",
@@ -8887,7 +8901,7 @@
                 x: Number(playerPos.x.toFixed(3)),
                 y: Number(playerPos.y.toFixed(3)),
                 z: Number(playerPos.z.toFixed(3)),
-                rotationY: Number(camera.rotation.y.toFixed(3)),
+                rotationY: Number(initYaw.toFixed(3)),
                 isBike: Boolean(isRidingBike),
                 isJetpack: Boolean(isJetpackEquipped),
                 isFlying: Boolean(isJetpackEquipped && isJetpackThrusting),
@@ -8895,27 +8909,31 @@
             }).catch(err => console.error("RTDB initial set error:", err));
 
             lastSent = {
-                x: camera.position.x,
-                y: camera.position.y,
-                z: camera.position.z,
-                rotY: camera.rotation.y
+                x: playerPos.x,
+                y: playerPos.y,
+                z: playerPos.z,
+                rotY: initYaw
             };
 
             if (syncTimer) clearInterval(syncTimer);
             syncTimer = setInterval(() => {
                 if (!controls || !controls.isLocked || !myPlayerRef) return;
 
-                const dx = Math.abs(camera.position.x - lastSent.x);
-                const dy = Math.abs(camera.position.y - lastSent.y);
-                const dz = Math.abs(camera.position.z - lastSent.z);
-                const drot = Math.abs(camera.rotation.y - lastSent.rotY);
+                const curCamDir = new THREE.Vector3();
+                camera.getWorldDirection(curCamDir);
+                const curYaw = Math.atan2(-curCamDir.x, -curCamDir.z);
+
+                const dx = Math.abs(playerPos.x - lastSent.x);
+                const dy = Math.abs(playerPos.y - lastSent.y);
+                const dz = Math.abs(playerPos.z - lastSent.z);
+                const drot = Math.abs(curYaw - lastSent.rotY);
 
                 if (dx > 0.015 || dz > 0.015 || dy > 0.015 || drot > 0.015) {
                     rtdbUpdate(myPlayerRef, {
-                        x: Number(camera.position.x.toFixed(3)),
-                        y: Number(camera.position.y.toFixed(3)),
-                        z: Number(camera.position.z.toFixed(3)),
-                        rotationY: Number(camera.rotation.y.toFixed(3)),
+                        x: Number(playerPos.x.toFixed(3)),
+                        y: Number(playerPos.y.toFixed(3)),
+                        z: Number(playerPos.z.toFixed(3)),
+                        rotationY: Number(curYaw.toFixed(3)),
                         isBike: Boolean(isRidingBike),
                         isJetpack: Boolean(isJetpackEquipped),
                         isFlying: Boolean(isJetpackEquipped && isJetpackThrusting),
@@ -8923,10 +8941,10 @@
                     }).catch(() => {});
 
                     lastSent = {
-                        x: camera.position.x,
-                        y: camera.position.y,
-                        z: camera.position.z,
-                        rotY: camera.rotation.y
+                        x: playerPos.x,
+                        y: playerPos.y,
+                        z: playerPos.z,
+                        rotY: curYaw
                     };
                 }
             }, 60);
