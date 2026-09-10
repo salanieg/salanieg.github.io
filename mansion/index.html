@@ -804,7 +804,7 @@
             <div id="player-count-badge" class="player-count-badge">
                 <span id="player-count-text">1 online</span>
             </div>
-            <button type="button" id="btn-settings" class="btn-settings" title="Spielername anpassen">Name</button>
+            <button type="button" id="btn-settings" class="btn-settings" title="Einstellungen & Kamera anpassen">Einstellungen</button>
             <button type="button" id="btn-logout" class="btn-logout">Abmelden</button>
         </header>
 
@@ -818,7 +818,7 @@
 
         <!-- Steuerungs-Leiste am unteren Rand -->
         <footer class="bottom-bar">
-            WASD: Laufen | LEER: Springen | LMB: Interagieren / Hinsetzen | E: Verschieben / Aktionen | ESC: Menü
+            WASD: Laufen | LEER: Springen | LMB: Interagieren / Hinsetzen | E: Verschieben / Aktionen | V: 1st/3rd Person | ESC: Menü
         </footer>
 
         </div>
@@ -898,14 +898,22 @@
         </div>
     </div>
 
-    <!-- 5. EINSTELLUNGEN MODAL (SPIELERNAME) -->
+    <!-- 5. EINSTELLUNGEN MODAL (SPIELERNAME & KAMERA) -->
     <div id="settings-modal" class="modal-backdrop">
         <div class="note-card">
-            <h3>Spielerprofil</h3>
-            <p>Wähle einen Spielernamen, der über deiner Figur und auf Notizen angezeigt wird.</p>
-            <div class="form-group" style="margin-bottom: 1.25rem; text-align: left;">
+            <h3>Einstellungen & Spielerprofil</h3>
+            <p>Passe deinen Spielernamen und die Kameraperspektive an.</p>
+            <div class="form-group" style="margin-bottom: 1.15rem; text-align: left;">
                 <label class="form-label" for="settings-nickname">Dein Name</label>
                 <input type="text" id="settings-nickname" class="input-field" maxlength="20" placeholder="z. B. Dennis">
+            </div>
+            <div class="form-group" style="margin-bottom: 1.25rem; text-align: left;">
+                <label class="form-label">Kameraperspektive</label>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+                    <button type="button" id="btn-cam-first" class="btn-cam-toggle" style="flex: 1; padding: 0.6rem 0.5rem; font-size: 0.85rem; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #e4e4e7;">1st Person (Ego)</button>
+                    <button type="button" id="btn-cam-third" class="btn-cam-toggle" style="flex: 1; padding: 0.6rem 0.5rem; font-size: 0.85rem; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #e4e4e7;">3rd Person (Verfolger)</button>
+                </div>
+                <div style="font-size: 0.75rem; color: #a1a1aa; margin-top: 0.35rem;">Schnellwechsel im Spiel auch mit Taste [V] möglich.</div>
             </div>
             <div class="modal-actions">
                 <button type="button" id="btn-cancel-settings" class="btn-cancel">Abbrechen</button>
@@ -1059,6 +1067,51 @@
         const settingsNickname = document.getElementById("settings-nickname");
         const btnCancelSettings = document.getElementById("btn-cancel-settings");
         const btnSaveSettings = document.getElementById("btn-save-settings");
+        const btnCamFirst = document.getElementById("btn-cam-first");
+        const btnCamThird = document.getElementById("btn-cam-third");
+
+        let isThirdPersonMode = localStorage.getItem("mansion_camera_mode") === "3rd";
+        let tempThirdPersonChoice = isThirdPersonMode;
+        let localPlayerGroup = null;
+        let localPlayerJetpack = null;
+
+        function updateCamButtonsUI(isThird) {
+            if (btnCamFirst && btnCamThird) {
+                if (isThird) {
+                    btnCamFirst.style.background = "rgba(255,255,255,0.08)";
+                    btnCamFirst.style.borderColor = "rgba(255,255,255,0.2)";
+                    btnCamFirst.style.color = "#e4e4e7";
+                    btnCamFirst.style.fontWeight = "normal";
+
+                    btnCamThird.style.background = "#0284c7";
+                    btnCamThird.style.borderColor = "#38bdf8";
+                    btnCamThird.style.color = "#ffffff";
+                    btnCamThird.style.fontWeight = "bold";
+                } else {
+                    btnCamFirst.style.background = "#0284c7";
+                    btnCamFirst.style.borderColor = "#38bdf8";
+                    btnCamFirst.style.color = "#ffffff";
+                    btnCamFirst.style.fontWeight = "bold";
+
+                    btnCamThird.style.background = "rgba(255,255,255,0.08)";
+                    btnCamThird.style.borderColor = "rgba(255,255,255,0.2)";
+                    btnCamThird.style.color = "#e4e4e7";
+                    btnCamThird.style.fontWeight = "normal";
+                }
+            }
+        }
+
+        function setCameraMode(isThird) {
+            isThirdPersonMode = isThird;
+            localStorage.setItem("mansion_camera_mode", isThird ? "3rd" : "1st");
+            if (localPlayerGroup) {
+                localPlayerGroup.visible = isThird;
+            }
+            if (localJetpackCockpit) {
+                localJetpackCockpit.visible = (!isThird && isJetpackEquipped);
+            }
+            updateCamButtonsUI(isThird);
+        }
 
         // View Note Modal
         const viewNoteModal = document.getElementById("view-note-modal");
@@ -1619,7 +1672,8 @@
             jpObj.isEquipped = true;
             jpObj.group.visible = false;
 
-            if (localJetpackCockpit) localJetpackCockpit.visible = true;
+            if (localJetpackCockpit) localJetpackCockpit.visible = !isThirdPersonMode;
+            if (localPlayerJetpack) localPlayerJetpack.visible = true;
 
             interactPrompt.textContent = "[LEERTASTE] Schub nach oben\n[E] Jetpack ablegen";
             interactPrompt.classList.add("visible");
@@ -1646,6 +1700,7 @@
                 isJetpackThrusting = false;
                 jetpackAudio.setThrust(false);
             }
+            if (localPlayerJetpack) localPlayerJetpack.visible = false;
             if (localJetpackCockpit) {
                 localJetpackCockpit.visible = false;
                 if (localJetpackFlames) localJetpackFlames.visible = false;
@@ -1655,8 +1710,8 @@
             const camDir = new THREE.Vector3();
             camera.getWorldDirection(camDir);
             const dropRotY = Math.atan2(camDir.x, camDir.z);
-            const dropX = Number(camera.position.x.toFixed(3));
-            const dropZ = Number(camera.position.z.toFixed(3));
+            const dropX = Number(playerPos.x.toFixed(3));
+            const dropZ = Number(playerPos.z.toFixed(3));
 
             jpObj.group.position.set(dropX, 0.05, dropZ);
             jpObj.group.rotation.y = dropRotY;
@@ -1928,10 +1983,26 @@
         btnSettings.addEventListener("click", () => {
             if (controls && controls.isLocked) controls.unlock();
             settingsNickname.value = getStoredNickname();
+            tempThirdPersonChoice = isThirdPersonMode;
+            updateCamButtonsUI(tempThirdPersonChoice);
             isModalOpen = true;
             settingsModal.classList.add("visible");
             setTimeout(() => settingsNickname.focus(), 60);
         });
+
+        if (btnCamFirst) {
+            btnCamFirst.addEventListener("click", () => {
+                tempThirdPersonChoice = false;
+                updateCamButtonsUI(false);
+            });
+        }
+
+        if (btnCamThird) {
+            btnCamThird.addEventListener("click", () => {
+                tempThirdPersonChoice = true;
+                updateCamButtonsUI(true);
+            });
+        }
 
         function closeSettingsModal() {
             isModalOpen = false;
@@ -1954,6 +2025,10 @@
             const cleanNick = val.slice(0, 20);
             localStorage.setItem("mansion_nickname", cleanNick);
             updateNavUserDisplay();
+
+            setCameraMode(tempThirdPersonChoice);
+            const myColor = currentUser ? getPlayerColor(currentUser.uid) : "#3b82f6";
+            createLocalPlayerModel(myColor, cleanNick);
 
             if (myPlayerRef) {
                 rtdbUpdate(myPlayerRef, { nickname: cleanNick }).catch(err => console.error("RTDB Nick-Update Fehler:", err));
@@ -2063,6 +2138,7 @@
             velocityY = 0;
             isOnGround = true;
 
+            playerPos.copy(seat.sitPos);
             camera.position.copy(seat.sitPos);
             interactPrompt.textContent = "Taste [E], [LEERTASTE] oder [W,A,S,D]: Aufstehen";
             interactPrompt.classList.add("visible");
@@ -2075,9 +2151,10 @@
             isOnGround = true;
 
             if (currentSeat && currentSeat.lookDir) {
-                camera.position.add(currentSeat.lookDir.clone().multiplyScalar(0.7));
+                playerPos.add(currentSeat.lookDir.clone().multiplyScalar(0.7));
             }
-            camera.position.y = EYE_HEIGHT;
+            playerPos.y = EYE_HEIGHT;
+            camera.position.copy(playerPos);
             currentSeat = null;
             interactPrompt.classList.remove("visible");
         }
@@ -2097,6 +2174,7 @@
         const COURTYARD_RADIUS = 24.0;
         const WALL_HEIGHT = 5.0;
         const EYE_HEIGHT = 1.70;
+        const playerPos = new THREE.Vector3(0, EYE_HEIGHT, 0);
 
         // 5 Satellitenraeume in exakter 5-Eck-Symmetrie (Pentagon, alle 72 Grad um den Innenhof):
         // 0: Nord (-90 deg): Arbeit
@@ -5732,80 +5810,191 @@
         }
 
         // 4. Ueberarbeitetes, groesseres Jetpack-Modell
-        function createWarehouseJetpackMesh(id) {
+        // ── KOMPLETT NEU DESIGNTES AEROSPACE-JETPACK (MODULAR FUER LAGER, REMOTE & 3RD PERSON) ──
+        function createRedesignedJetpackModel(opts = {}) {
             const jp = new THREE.Group();
 
-            const darkMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
-            const chromeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 });
-            const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35, metalness: 0.80 });
-            const cyanMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-            const standMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const carbonMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.55, metalness: 0.40 });
+            const titaniumMat = new THREE.MeshStandardMaterial({ color: 0x71717a, roughness: 0.25, metalness: 0.85 });
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.30, metalness: 0.80 });
+            const cyanGlowMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+            const darkChromeMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.35, metalness: 0.75 });
+            const strapMat = new THREE.MeshLambertMaterial({ color: 0x09090b });
+            const nozzleHotMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
 
-            // Stabiler Geraete-Aufsteller am Boden
-            const stand = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.05, 0.36), standMat);
-            stand.position.y = 0.025;
-            jp.add(stand);
+            // 1. Aerodynamische Carbon-Rueckenplatte mit goldener Zierleiste
+            const backplateGeo = new THREE.BoxGeometry(0.32, 0.52, 0.05);
+            const backplate = new THREE.Mesh(backplateGeo, carbonMat);
+            backplate.position.set(0, 0.42, -0.01);
+            jp.add(backplate);
 
-            const standTrim = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.015, 0.38), chromeMat);
-            standTrim.position.y = 0.01;
-            jp.add(standTrim);
+            const spineTrimGeo = new THREE.BoxGeometry(0.08, 0.54, 0.065);
+            const spineTrim = new THREE.Mesh(spineTrimGeo, titaniumMat);
+            spineTrim.position.set(0, 0.42, 0.005);
+            jp.add(spineTrim);
 
-            // Zwei grosse Treibstoff-Tanks
-            [-0.18, 0.18].forEach(tx => {
-                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.52, 16), darkMat);
-                tank.position.set(tx, 0.40, 0);
-                jp.add(tank);
+            const hazardBadgeGeo = new THREE.BoxGeometry(0.18, 0.04, 0.075);
+            const hazardBadge = new THREE.Mesh(hazardBadgeGeo, goldMat);
+            hazardBadge.position.set(0, 0.62, 0.01);
+            jp.add(hazardBadge);
 
-                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.10, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), chromeMat);
-                cap.position.set(tx, 0.66, 0);
-                jp.add(cap);
+            // 2. Zentraler Reaktorkern (Hexagonal mit leuchtendem Cyan-Energiefeld)
+            const reactorGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.24, 6);
+            const reactorHousing = new THREE.Mesh(reactorGeo, darkChromeMat);
+            reactorHousing.position.set(0, 0.40, 0.035);
+            jp.add(reactorHousing);
 
-                // Druckbaender
-                [-0.10, 0.10].forEach(by => {
-                    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.104, 0.104, 0.025, 16), chromeMat);
-                    band.position.set(tx, 0.40 + by, 0);
-                    jp.add(band);
-                });
+            const reactorCoreGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.16, 6);
+            const reactorCore = new THREE.Mesh(reactorCoreGeo, cyanGlowMat);
+            reactorCore.position.set(0, 0.40, 0.04);
+            jp.add(reactorCore);
 
-                // Duesen mit Hitzeschild und goldenem Rand
-                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.10, 0.14, 16), chromeMat);
-                nozzle.position.set(tx, 0.12, 0);
-                jp.add(nozzle);
+            // 3. Zwillings-Turbinen-Pods (Links und Rechts bei X = +/- 0.20, leicht nach aussen geneigt)
+            const flameMeshes = [];
 
-                const rim = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.01, 8, 16), goldMat);
-                rim.rotation.x = Math.PI / 2;
-                rim.position.set(tx, 0.055, 0);
-                jp.add(rim);
+            const flameOuterMat = new THREE.MeshBasicMaterial({
+                color: 0xf97316,
+                transparent: true,
+                opacity: 0.88,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+            const flameCoreMat = new THREE.MeshBasicMaterial({
+                color: 0xfef08a,
+                transparent: true,
+                opacity: 0.95,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
             });
 
-            // Zentraler Reaktorkern
-            const coreBox = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.12), darkMat);
-            coreBox.position.set(0, 0.40, 0.01);
-            jp.add(coreBox);
+            [-0.20, 0.20].forEach((tx) => {
+                const podGroup = new THREE.Group();
+                podGroup.position.set(tx, 0.42, 0);
+                podGroup.rotation.z = (tx < 0 ? 0.07 : -0.07);
 
-            const coreGlow = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.26, 0.13), cyanMat);
-            coreGlow.position.set(0, 0.40, 0.01);
-            jp.add(coreGlow);
+                // Haupt-Treibstoff- und Turbinenkoerper
+                const podCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.48, 16), titaniumMat);
+                podGroup.add(podCyl);
+
+                // Oberer Lufteinlass-Kopf
+                const intakeCowl = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.095, 0.12, 16), darkChromeMat);
+                intakeCowl.position.y = 0.30;
+                podGroup.add(intakeCowl);
+
+                // Einlass-Zentrierkegel / Spinner
+                const spinner = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.035, 0.08, 12), goldMat);
+                spinner.position.y = 0.34;
+                podGroup.add(spinner);
+
+                // Titan- und Gold-Klemmringe
+                [-0.12, 0.12].forEach(ry => {
+                    const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.096, 0.096, 0.024, 16), goldMat);
+                    ring.position.y = ry;
+                    podGroup.add(ring);
+                });
+
+                // Leuchtende Energie-Leiste
+                const conduit = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.34, 0.03), cyanGlowMat);
+                conduit.position.set(tx < 0 ? -0.09 : 0.09, 0, 0.02);
+                podGroup.add(conduit);
+
+                // Schubduese mit Hitzeschild
+                const nozzleBase = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.065, 0.06, 16), darkChromeMat);
+                nozzleBase.position.y = -0.27;
+                podGroup.add(nozzleBase);
+
+                const nozzleBell = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.095, 0.12, 16), titaniumMat);
+                nozzleBell.position.y = -0.34;
+                podGroup.add(nozzleBell);
+
+                const goldLip = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.009, 8, 16), goldMat);
+                goldLip.rotation.x = Math.PI / 2;
+                goldLip.position.y = -0.40;
+                podGroup.add(goldLip);
+
+                const glowCore = new THREE.Mesh(new THREE.CircleGeometry(0.055, 12), nozzleHotMat);
+                glowCore.rotation.x = Math.PI / 2;
+                glowCore.position.y = -0.395;
+                podGroup.add(glowCore);
+
+                // Flammenkegel
+                const outerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.12, 0.52, 16, 1, true), flameOuterMat);
+                outerFlame.position.set(0, -0.66, 0);
+                podGroup.add(outerFlame);
+
+                const innerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.055, 0.36, 12, 1, true), flameCoreMat);
+                innerFlame.position.set(0, -0.56, 0);
+                podGroup.add(innerFlame);
+
+                flameMeshes.push({ outer: outerFlame, inner: innerFlame });
+                jp.add(podGroup);
+            });
 
             // Tragegurte
-            const strapMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
-            [-0.12, 0.12].forEach(sx => {
-                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.46, 0.04), strapMat);
+            [-0.11, 0.11].forEach(sx => {
+                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.48, 0.04), strapMat);
                 strap.position.set(sx, 0.44, 0.08);
                 jp.add(strap);
             });
 
+            // Falls auf Lagerstaender montiert: Industrieller Geraetestaender
+            if (opts.isOnStand) {
+                const standBase = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.05, 0.42), carbonMat);
+                standBase.position.y = 0.025;
+                jp.add(standBase);
+
+                const standTrim = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.015, 0.44), titaniumMat);
+                standTrim.position.y = 0.01;
+                jp.add(standTrim);
+
+                [-0.20, 0.20].forEach(sx => {
+                    const stanchion = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.24, 0.04), titaniumMat);
+                    stanchion.position.set(sx, 0.14, 0);
+                    jp.add(stanchion);
+
+                    const cradle = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.015, 8, 12, Math.PI), goldMat);
+                    cradle.position.set(sx, 0.26, 0);
+                    jp.add(cradle);
+                });
+            }
+
             // Unsichtbare Klick- und Raycast-Hitbox
             const hitBox = new THREE.Mesh(
-                new THREE.BoxGeometry(0.85, 0.90, 0.60),
+                new THREE.BoxGeometry(0.90, 0.95, 0.65),
                 new THREE.MeshBasicMaterial({ visible: false })
             );
             hitBox.position.set(0, 0.45, 0);
-            hitBox.userData = { isJetpackItem: true, jetpackId: id };
+            hitBox.userData = { isJetpackItem: true, jetpackId: opts.id || 'jetpack' };
             jp.add(hitBox);
 
-            jp.userData = { hitBox: hitBox, id: id };
+            flameMeshes.forEach(f => {
+                f.outer.visible = false;
+                f.inner.visible = false;
+            });
+
+            jp.userData = {
+                hitBox: hitBox,
+                id: opts.id || 'jetpack',
+                flameMeshes: flameMeshes,
+                setFlamesVisible: function(visible, scale = 1.0) {
+                    flameMeshes.forEach(f => {
+                        f.outer.visible = visible;
+                        f.inner.visible = visible;
+                        if (visible) {
+                            f.outer.scale.set(1.0, scale, 1.0);
+                            f.inner.scale.set(1.0, scale, 1.0);
+                        }
+                    });
+                }
+            };
+
             return jp;
+        }
+
+        function createWarehouseJetpackMesh(id) {
+            return createRedesignedJetpackModel({ isOnStand: true, id: id });
         }
 
         function buildWarehouseJetpacks(rx, rz, doorAngle) {
@@ -6727,7 +6916,86 @@
             localBikeCockpit.visible = false;
             camera.add(localBikeCockpit);
 
-            // ── LOKALES FIRST-PERSON JETPACK RIG MIT ORANGEN FLAMMEN & LICHT ──
+        // ── LOKALER SPIELER-AVATAR FUER 3RD-PERSON-MODUS ──
+        function createLocalPlayerModel(color, nickname) {
+            if (localPlayerGroup) {
+                scene.remove(localPlayerGroup);
+            }
+            const group = new THREE.Group();
+
+            const shoeMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+            const shoeLeft = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.24), shoeMat);
+            shoeLeft.position.set(-0.12, 0.06, -0.02);
+            group.add(shoeLeft);
+
+            const shoeRight = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.24), shoeMat);
+            shoeRight.position.set(0.12, 0.06, -0.02);
+            group.add(shoeRight);
+
+            const legMat = new THREE.MeshLambertMaterial({ color: 0x27272a });
+            const legLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.60, 12), legMat);
+            legLeft.position.set(-0.12, 0.40, 0);
+            group.add(legLeft);
+
+            const legRight = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.60, 12), legMat);
+            legRight.position.set(0.12, 0.40, 0);
+            group.add(legRight);
+
+            const bodyMat = new THREE.MeshLambertMaterial({ color: color });
+            const torsoGeo = new THREE.CylinderGeometry(0.24, 0.22, 0.65, 16);
+            const torso = new THREE.Mesh(torsoGeo, bodyMat);
+            torso.position.y = 1.05;
+            group.add(torso);
+
+            const shoulderGeo = new THREE.SphereGeometry(0.24, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+            const shoulders = new THREE.Mesh(shoulderGeo, bodyMat);
+            shoulders.position.y = 1.375;
+            group.add(shoulders);
+
+            const neckGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.10, 12);
+            const neckMat = new THREE.MeshLambertMaterial({ color: 0x27272a });
+            const neck = new THREE.Mesh(neckGeo, neckMat);
+            neck.position.y = 1.48;
+            group.add(neck);
+
+            // Kopf exakt auf Augenhöhe y = 1.70
+            const headGeo = new THREE.SphereGeometry(0.20, 16, 16);
+            const headMat = new THREE.MeshLambertMaterial({ color: color });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.70;
+            group.add(head);
+
+            // Visier / Augen
+            const visorGeo = new THREE.BoxGeometry(0.20, 0.07, 0.10);
+            const visorMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
+            const visor = new THREE.Mesh(visorGeo, visorMat);
+            visor.position.set(0, 1.70, -0.17);
+            group.add(visor);
+
+            // Nametag ueber Kopf
+            const nameTag = createNameTagSprite(nickname, color);
+            nameTag.position.set(0, 2.15, 0);
+            group.add(nameTag);
+
+            // Ausgeruestetes High-Tech Jetpack auf dem Ruecken
+            localPlayerJetpack = createRedesignedJetpackModel({ isOnStand: false, id: 'local_equipped' });
+            localPlayerJetpack.rotation.y = Math.PI;
+            localPlayerJetpack.position.set(0, 0.65, 0.22);
+            localPlayerJetpack.visible = isJetpackEquipped;
+            group.add(localPlayerJetpack);
+
+            // Eigene Spielfigur blockiert niemals Raycasts / Klicks
+            group.traverse(c => {
+                c.raycast = () => {};
+            });
+
+            group.visible = isThirdPersonMode;
+            scene.add(group);
+            localPlayerGroup = group;
+            return group;
+        }
+
+        // ── LOKALES FIRST-PERSON JETPACK RIG MIT ORANGEN FLAMMEN & LICHT ──
             localJetpackCockpit = new THREE.Group();
             localJetpackFlames = new THREE.Group();
 
@@ -6877,6 +7145,11 @@
             buildGamingRaum();
             buildArtRaum();
             buildLagerRaum();
+
+            // Lokalen 3D-Avatar erzeugen & Kamera initialisieren
+            const myColor = currentUser ? getPlayerColor(currentUser.uid) : "#3b82f6";
+            createLocalPlayerModel(myColor, getStoredNickname());
+            setCameraMode(isThirdPersonMode);
 
             raycaster = new THREE.Raycaster();
             raycaster.far = 4.5;
@@ -7110,6 +7383,11 @@
                     }
                     break;
 
+                case "KeyV":
+                    if (!isModalOpen && controls && controls.isLocked) {
+                        setCameraMode(!isThirdPersonMode);
+                    }
+                    break;
                 case "KeyE":
                     if (movingChairState) {
                         placeMovingChair();
@@ -7238,11 +7516,11 @@
                         isOnGround = false;
                         velocityY += (38.0 + GRAVITY) * delta;
                         if (velocityY > 7.0) velocityY = 7.0;
-                        camera.position.y += velocityY * delta;
+                        playerPos.y += velocityY * delta;
 
-                        const domeCeilY = getDomeCeilingY(camera.position.x, camera.position.z);
-                        if (camera.position.y >= domeCeilY) {
-                            camera.position.y = domeCeilY;
+                        const domeCeilY = getDomeCeilingY(playerPos.x, playerPos.z);
+                        if (playerPos.y >= domeCeilY) {
+                            playerPos.y = domeCeilY;
                             velocityY = 0;
                         }
 
@@ -7254,30 +7532,35 @@
                         }
                     }
 
-                    // First-Person Jetpack Flammen & Leuchten
-                    if (isJetpackEquipped && localJetpackCockpit) {
-                        if (isJetpackThrusting) {
-                            if (localJetpackFlames) {
-                                localJetpackFlames.visible = true;
-                                const flick = 0.85 + Math.random() * 0.35;
-                                localJetpackFlames.scale.set(1.0, flick, 1.0);
+                    // Flammen am lokalen Jetpack (3rd Person) und Cockpit (1st Person)
+                    if (isJetpackEquipped) {
+                        const flick = 0.85 + Math.random() * 0.35;
+                        if (localPlayerJetpack && localPlayerJetpack.userData.setFlamesVisible) {
+                            localPlayerJetpack.userData.setFlamesVisible(isJetpackThrusting, flick);
+                        }
+                        if (localJetpackCockpit) {
+                            if (isJetpackThrusting) {
+                                if (localJetpackFlames) {
+                                    localJetpackFlames.visible = true;
+                                    localJetpackFlames.scale.set(1.0, flick, 1.0);
+                                }
+                                if (localJetpackLight) {
+                                    localJetpackLight.intensity = 2.4 + Math.random() * 0.8;
+                                }
+                            } else {
+                                if (localJetpackFlames) localJetpackFlames.visible = false;
+                                if (localJetpackLight) localJetpackLight.intensity = 0;
                             }
-                            if (localJetpackLight) {
-                                localJetpackLight.intensity = 2.4 + Math.random() * 0.8;
-                            }
-                        } else {
-                            if (localJetpackFlames) localJetpackFlames.visible = false;
-                            if (localJetpackLight) localJetpackLight.intensity = 0;
                         }
                     }
 
                     if (!isJetpackThrusting) {
                         if (!isOnGround || velocityY !== 0) {
                             velocityY += GRAVITY * delta;
-                            camera.position.y += velocityY * delta;
+                            playerPos.y += velocityY * delta;
 
-                            if (camera.position.y <= EYE_HEIGHT) {
-                                camera.position.y = EYE_HEIGHT;
+                            if (playerPos.y <= EYE_HEIGHT) {
+                                playerPos.y = EYE_HEIGHT;
                                 velocityY = 0;
                                 isOnGround = true;
                             }
@@ -7286,23 +7569,35 @@
 
                     const speedMultiplier = isRidingBike ? 1.85 : 1.0;
                     const actualSpeed = moveSpeed * speedMultiplier * delta;
-                    if (moveState.forward) { controls.moveForward(actualSpeed); isMoving = true; }
-                    if (moveState.backward) { controls.moveForward(-actualSpeed); isMoving = true; }
-                    if (moveState.right) { controls.moveRight(actualSpeed); isMoving = true; }
-                    if (moveState.left) { controls.moveRight(-actualSpeed); isMoving = true; }
+
+                    // Vorwaerts- und Seitwaerts-Bewegung aus Kamera-Yaw
+                    const camYaw = camera.rotation.y;
+                    const fwdX = -Math.sin(camYaw);
+                    const fwdZ = -Math.cos(camYaw);
+                    const rgtX = Math.cos(camYaw);
+                    const rgtZ = -Math.sin(camYaw);
+
+                    let mX = 0, mZ = 0;
+                    if (moveState.forward) { mX += fwdX * actualSpeed; mZ += fwdZ * actualSpeed; isMoving = true; }
+                    if (moveState.backward) { mX -= fwdX * actualSpeed; mZ -= fwdZ * actualSpeed; isMoving = true; }
+                    if (moveState.right) { mX += rgtX * actualSpeed; mZ += rgtZ * actualSpeed; isMoving = true; }
+                    if (moveState.left) { mX -= rgtX * actualSpeed; mZ -= rgtZ * actualSpeed; isMoving = true; }
+
+                    playerPos.x += mX;
+                    playerPos.z += mZ;
 
                     // Hof-Außengrenze
-                    const distFromCenter = Math.sqrt(camera.position.x * camera.position.x + camera.position.z * camera.position.z);
+                    const distFromCenter = Math.hypot(playerPos.x, playerPos.z);
                     if (distFromCenter > 23.3) {
-                        const angle = Math.atan2(camera.position.z, camera.position.x);
-                        camera.position.x = Math.cos(angle) * 23.3;
-                        camera.position.z = Math.sin(angle) * 23.3;
+                        const angle = Math.atan2(playerPos.z, playerPos.x);
+                        playerPos.x = Math.cos(angle) * 23.3;
+                        playerPos.z = Math.sin(angle) * 23.3;
                     }
 
-                    // Kollisionsabfrage: 4 Räume
+                    // Kollisionsabfrage: Satellitenraeume
                     for (const room of SATELLITE_ROOMS) {
-                        const dx = camera.position.x - room.cx;
-                        const dz = camera.position.z - room.cz;
+                        const dx = playerPos.x - room.cx;
+                        const dz = playerPos.z - room.cz;
                         const dist = Math.sqrt(dx * dx + dz * dz);
 
                         if (dist >= 4.85 && dist <= 6.15) {
@@ -7312,11 +7607,66 @@
 
                             if (angleDiff > 0.36) {
                                 const pushDist = dist > room.radius ? 6.18 : 4.82;
-                                camera.position.x = room.cx + Math.cos(playerAngle) * pushDist;
-                                camera.position.z = room.cz + Math.sin(playerAngle) * pushDist;
+                                playerPos.x = room.cx + Math.cos(playerAngle) * pushDist;
+                                playerPos.z = room.cz + Math.sin(playerAngle) * pushDist;
                             }
                         }
                     }
+                }
+
+                // ── KAMERA- & AVATAR-POSITIONIERUNG (1ST PERSON VS 3RD PERSON) ──
+                if (isThirdPersonMode) {
+                    if (localPlayerGroup) {
+                        localPlayerGroup.visible = true;
+                        if (isSitting && currentSeat) {
+                            localPlayerGroup.position.set(currentSeat.sitPos.x, currentSeat.sitPos.y - EYE_HEIGHT, currentSeat.sitPos.z);
+                            if (currentSeat.lookDir) {
+                                localPlayerGroup.rotation.y = Math.atan2(currentSeat.lookDir.x, currentSeat.lookDir.z);
+                            }
+                        } else {
+                            localPlayerGroup.position.set(playerPos.x, Math.max(0, playerPos.y - EYE_HEIGHT), playerPos.z);
+                            localPlayerGroup.rotation.y = camera.rotation.y;
+                        }
+                        if (localPlayerJetpack) {
+                            localPlayerJetpack.visible = isJetpackEquipped;
+                        }
+                    }
+                    if (localJetpackCockpit) localJetpackCockpit.visible = false;
+                    if (localBikeCockpit) localBikeCockpit.visible = false;
+
+                    const lookTarget = (isSitting && currentSeat)
+                        ? currentSeat.sitPos.clone().add(new THREE.Vector3(0, 0.15, 0))
+                        : playerPos.clone().add(new THREE.Vector3(0, 0.15, 0));
+
+                    const camForward = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation);
+                    const maxCamDist = 2.65;
+                    const idealCamPos = lookTarget.clone().sub(camForward.clone().multiplyScalar(maxCamDist));
+                    idealCamPos.y += 0.30;
+
+                    // Wandschutz fuer 3rd Person Kamera
+                    const camRayDir = idealCamPos.clone().sub(lookTarget);
+                    const camRayDist = camRayDir.length();
+                    camRayDir.normalize();
+
+                    const camRay = new THREE.Raycaster(lookTarget, camRayDir, 0.15, camRayDist);
+                    const wallHits = camRay.intersectObjects(wallMeshes, false);
+                    let actualDist = maxCamDist;
+                    if (wallHits.length > 0 && wallHits[0].distance < camRayDist) {
+                        actualDist = Math.max(0.65, wallHits[0].distance - 0.25);
+                    }
+
+                    const actualCamPos = lookTarget.clone().sub(camForward.clone().multiplyScalar(actualDist));
+                    actualCamPos.y += (0.30 * (actualDist / maxCamDist));
+                    camera.position.copy(actualCamPos);
+                } else {
+                    if (localPlayerGroup) localPlayerGroup.visible = false;
+                    if (isSitting && currentSeat) {
+                        camera.position.copy(currentSeat.sitPos);
+                    } else {
+                        camera.position.copy(playerPos);
+                    }
+                    if (localJetpackCockpit) localJetpackCockpit.visible = isJetpackEquipped;
+                    if (localBikeCockpit) localBikeCockpit.visible = isRidingBike;
                 }
 
                 // ── TEPPICH-SCHRITTGERÄUSCHE UPDATE ──
@@ -8381,77 +8731,9 @@
         }
 
         function createRemoteJetpackModel() {
-            const jp = new THREE.Group();
-            const darkMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
-            const chromeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 });
-            const cyanMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-
-            const flameOuterMat = new THREE.MeshBasicMaterial({
-                color: 0xf97316,
-                transparent: true,
-                opacity: 0.85,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                side: THREE.DoubleSide
-            });
-            const flameCoreMat = new THREE.MeshBasicMaterial({
-                color: 0xfef08a,
-                transparent: true,
-                opacity: 0.95,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                side: THREE.DoubleSide
-            });
-
-            const plumes = new THREE.Group();
-
-            [-0.18, 0.18].forEach(tx => {
-                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.52, 16), darkMat);
-                tank.position.set(tx, 0, 0);
-                jp.add(tank);
-
-                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.10, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), chromeMat);
-                cap.position.set(tx, 0.26, 0);
-                jp.add(cap);
-
-                [-0.10, 0.10].forEach(by => {
-                    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.104, 0.104, 0.02, 16), chromeMat);
-                    band.position.set(tx, by, 0);
-                    jp.add(band);
-                });
-
-                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.10, 0.14, 16), chromeMat);
-                nozzle.position.set(tx, -0.32, 0);
-                jp.add(nozzle);
-
-                const outerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.11, 0.45, 16, 1, true), flameOuterMat);
-                outerFlame.position.set(tx, -0.58, 0);
-                plumes.add(outerFlame);
-
-                const innerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.05, 0.30, 12, 1, true), flameCoreMat);
-                innerFlame.position.set(tx, -0.50, 0);
-                plumes.add(innerFlame);
-            });
-
-            const coreBox = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.12), darkMat);
-            coreBox.position.set(0, 0, 0.01);
-            jp.add(coreBox);
-
-            const coreGlow = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.26, 0.13), cyanMat);
-            coreGlow.position.set(0, 0, 0.01);
-            jp.add(coreGlow);
-
-            const strapMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
-            [-0.12, 0.12].forEach(sx => {
-                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.46, 0.04), strapMat);
-                strap.position.set(sx, 0.04, 0.08);
-                jp.add(strap);
-            });
-
-            plumes.visible = false;
-            jp.add(plumes);
-            jp.userData.plumes = plumes;
-
+            const jp = createRedesignedJetpackModel({ isOnStand: false, id: 'remote' });
+            jp.rotation.y = Math.PI;
+            jp.position.set(0, 0.65, 0.22);
             return jp;
         }
 
@@ -8572,13 +8854,10 @@
                     player.remoteJetpack.position.set(0, 1.15, 0.24);
                     player.mesh.add(player.remoteJetpack);
                 }
-                if (player.remoteJetpack && player.remoteJetpack.userData && player.remoteJetpack.userData.plumes) {
+                if (player.remoteJetpack && player.remoteJetpack.userData && player.remoteJetpack.userData.setFlamesVisible) {
                     const isFlying = Boolean(data.isFlying);
-                    player.remoteJetpack.userData.plumes.visible = isFlying;
-                    if (isFlying) {
-                        const flick = 0.85 + Math.random() * 0.35;
-                        player.remoteJetpack.userData.plumes.scale.set(1.0, flick, 1.0);
-                    }
+                    const flick = 0.85 + Math.random() * 0.35;
+                    player.remoteJetpack.userData.setFlamesVisible(isFlying, flick);
                 }
             } else if (player.remoteJetpack) {
                 player.mesh.remove(player.remoteJetpack);
@@ -8630,9 +8909,9 @@
                 email: currentUser.email || "Anonym",
                 nickname: nickname,
                 color: color,
-                x: Number(camera.position.x.toFixed(3)),
-                y: Number(camera.position.y.toFixed(3)),
-                z: Number(camera.position.z.toFixed(3)),
+                x: Number(playerPos.x.toFixed(3)),
+                y: Number(playerPos.y.toFixed(3)),
+                z: Number(playerPos.z.toFixed(3)),
                 rotationY: Number(camera.rotation.y.toFixed(3)),
                 isBike: Boolean(isRidingBike),
                 isJetpack: Boolean(isJetpackEquipped),
