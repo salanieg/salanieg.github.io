@@ -1307,6 +1307,9 @@
         let cssCinemaObject = null;
         let cinemaIframe = null;
         let currentCinemaVideoId = null;
+        let currentCinemaPlaying = false;
+        let currentCinemaStartedAt = 0;
+        let currentCinemaSeekSec = 0;
         let isCinemaModalOpen = false;
 
         function ensureYouTubeAPI(cb) {
@@ -1349,6 +1352,7 @@
 
         function setCinemaVideo(videoId, playing, seekSec) {
             currentCinemaVideoId = videoId;
+            currentCinemaPlaying = Boolean(playing);
 
             if (!cinemaIframe && cssScene) {
                 initCSS3DCinema();
@@ -1364,16 +1368,27 @@
 
             if (cinemaIframe) {
                 cinemaIframe.style.opacity = '1';
+                const startSec = Math.floor(seekSec || 0);
                 const autoplayParam = playing ? '1' : '0';
-                const startParam = Math.floor(seekSec || 0);
                 const originParam = (window.location.origin && window.location.origin.startsWith('http')) ? ('&origin=' + encodeURIComponent(window.location.origin)) : '';
-                const targetSrc = 'https://www.youtube.com/embed/' + videoId + '?autoplay=' + autoplayParam + '&enablejsapi=1&rel=0&playsinline=1' + originParam + '&start=' + startParam;
+                const targetSrc = 'https://www.youtube.com/embed/' + videoId + '?autoplay=' + autoplayParam + '&enablejsapi=1&rel=0&playsinline=1' + originParam + '&start=' + startSec;
 
                 if (!cinemaIframe.src || !cinemaIframe.src.includes(videoId)) {
                     cinemaIframe.src = targetSrc;
                 } else if (cinemaIframe.contentWindow) {
+                    // YouTube IFrame API PostMessage-Befehle mit valider Array-Syntax:
+                    cinemaIframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'command',
+                        func: 'seekTo',
+                        args: [seekSec || 0, true]
+                    }), '*');
+
                     const cmd = playing ? 'playVideo' : 'pauseVideo';
-                    cinemaIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: '' }), '*');
+                    cinemaIframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'command',
+                        func: cmd,
+                        args: []
+                    }), '*');
                 }
             }
         }
@@ -1386,18 +1401,17 @@
             cinemaIframe.style.height = '720px';
             cinemaIframe.style.border = '0';
             cinemaIframe.style.background = '#09090b';
-            cinemaIframe.style.borderRadius = '8px';
+            cinemaIframe.style.borderRadius = '4px';
             cinemaIframe.style.opacity = '0';
             cinemaIframe.style.transition = 'opacity 0.4s ease';
             cinemaIframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen');
             cinemaIframe.setAttribute('allowfullscreen', 'true');
 
             cssCinemaObject = new CSS3DObject(cinemaIframe);
-            // 3D-Skalierung: 1280x720 px -> 2.88m x 1.62m (16:9, exakt zentriert auf der 3.4m x 2.2m 2D-Leinwand)
-            cssCinemaObject.scale.set(0.00225, 0.00225, 0.00225);
-            // Westwand des Chillen-Zimmers: 2D-Flachbildschirm (rx = 0, rz = 16.5)
-            // Liegt exakt 1 cm vor der 2D-Traegerleinwand bei x = -5.11m
-            cssCinemaObject.position.set(-5.11, 1.86, 16.5);
+            // 3D-Skalierung: 1280x720 px -> 3.84m x 2.16m (30% groesser, fuellt die 2D-Leinwand komplett von oben bis unten aus)
+            cssCinemaObject.scale.set(0.0030, 0.0030, 0.0030);
+            // Westwand des Chillen-Zimmers: exakt 1 cm vor der 2D-Traegerleinwand bei x = -5.01m, y = 2.0m zentriert
+            cssCinemaObject.position.set(-5.01, 2.0, 16.5);
             // Drehung nach innen zur Raummitte/Couch (Richtung +X)
             cssCinemaObject.rotation.y = Math.PI / 2;
             cssScene.add(cssCinemaObject);
@@ -1406,6 +1420,9 @@
         function syncCinemaState(state, fromNetwork) {
             if (!state || !state.videoId) {
                 currentCinemaVideoId = null;
+                currentCinemaPlaying = false;
+                currentCinemaStartedAt = 0;
+                currentCinemaSeekSec = 0;
                 setCinemaVideo(null, false, 0);
                 const el = document.getElementById('cinema-status');
                 if (el) el.textContent = 'Kein Video aktiv.';
@@ -1414,28 +1431,33 @@
 
             const vid = state.videoId;
             const playing = state.isPlaying !== false;
-            const serverNow = state.startedAt || 0;
-            const elapsed = playing && serverNow > 0
-                ? Math.max(0, (Date.now() - serverNow) / 1000) + (state.seekSec || 0)
-                : (state.seekSec || 0);
+            currentCinemaPlaying = playing;
+            currentCinemaStartedAt = state.startedAt || 0;
+            currentCinemaSeekSec = state.seekSec || 0;
 
-            setCinemaVideo(vid, playing, elapsed);
+            let targetTime = currentCinemaSeekSec;
+            if (playing && currentCinemaStartedAt > 0) {
+                targetTime += Math.max(0, (Date.now() - currentCinemaStartedAt) / 1000);
+            }
+
+            setCinemaVideo(vid, playing, targetTime);
 
             const el = document.getElementById('cinema-status');
             if (el) el.textContent = playing ? 'Wiedergabe aktiv (Synchron für alle)' : 'Pausiert';
         }
 
         function pushCinemaState(videoId, isPlaying, seekSec) {
+            const now = Date.now();
             const state = {
                 videoId: videoId || null,
                 isPlaying: Boolean(isPlaying),
                 seekSec: Number(seekSec || 0),
-                startedAt: isPlaying ? Date.now() : 0,
+                startedAt: isPlaying ? now : 0,
                 updatedBy: currentUser ? currentUser.uid : 'guest',
-                updatedAt: Date.now()
+                updatedAt: now
             };
 
-            // Sofort lokal anwenden, damit das Video ohne Verzögerung startet
+            // Sofort lokal anwenden, damit das Video ohne Verzoegerung reagiert
             syncCinemaState(state, false);
 
             if (rtdb) {
@@ -3969,72 +3991,30 @@
             lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
             scene.add(lampGroup);
 
-            // ── VIEWING SCREEN (2D-FLACHBILDWAND IM RAUM, GESTREIFTER RAHMEN, STEHT AUSSEN NICHT UEBER) ──
-            const csWidth = 3.40;
-            const csHeight = 2.20;
+            // ── VIEWING SCREEN (2D-FLACHBILDWAND, 30% GROESSER, SCHWARZER RAHMEN WIE NOTIZENLEINWAND, KEIN SCHRIFTZUG) ──
+            const csWidth = 3.84;
+            const csHeight = 2.16;
 
             const csCanvas = document.createElement("canvas");
             csCanvas.width = 1536;
-            csCanvas.height = 990;
+            csCanvas.height = 864;
             const csCtx = csCanvas.getContext("2d");
 
-            // Dunkler matter Hintergrund für das Kinopanel
-            csCtx.fillStyle = "#0c0c0e";
-            csCtx.fillRect(0, 0, 1536, 990);
+            // Tiefschwarzer matter Hintergrund fuer die Kinoleinwand
+            csCtx.fillStyle = "#000000";
+            csCtx.fillRect(0, 0, 1536, 864);
 
-            // Gestreifter Rahmen (Cinema / Filmklappen-Streifenmuster 45-Grad)
-            const stripeCanvas = document.createElement("canvas");
-            stripeCanvas.width = 48;
-            stripeCanvas.height = 48;
-            const sCtx = stripeCanvas.getContext("2d");
-            sCtx.fillStyle = "#18181b";
-            sCtx.fillRect(0, 0, 48, 48);
-            sCtx.fillStyle = "#ffffff";
-            sCtx.beginPath();
-            sCtx.moveTo(0, 48);
-            sCtx.lineTo(48, 0);
-            sCtx.lineTo(24, 0);
-            sCtx.lineTo(0, 24);
-            sCtx.closePath();
-            sCtx.fill();
-            sCtx.beginPath();
-            sCtx.moveTo(24, 48);
-            sCtx.lineTo(48, 24);
-            sCtx.lineTo(48, 48);
-            sCtx.lineTo(0, 48);
-            sCtx.closePath();
-            sCtx.fill();
+            // Robuster schwarzer Rahmen exakt wie beim Notizboard (kein gestreifter Rahmen)
+            csCtx.lineWidth = 28;
+            csCtx.strokeStyle = "#000000";
+            csCtx.strokeRect(14, 14, 1536 - 28, 864 - 28);
 
-            const stripePattern = csCtx.createPattern(stripeCanvas, "repeat");
-
-            // Dunkle Kantenkontur für perfekten Kontrast
-            csCtx.lineWidth = 32;
-            csCtx.strokeStyle = "#18181b";
-            csCtx.strokeRect(16, 16, 1536 - 32, 990 - 32);
-
-            // Gestreifter Rahmen
-            csCtx.lineWidth = 26;
-            csCtx.strokeStyle = stripePattern;
-            csCtx.strokeRect(16, 16, 1536 - 32, 990 - 32);
-
-            // Dünne Innenlinie
-            csCtx.lineWidth = 3;
-            csCtx.strokeStyle = "#18181b";
-            csCtx.strokeRect(29, 29, 1536 - 58, 990 - 58);
-
-            // Header-Label: "VIEWING SCREEN"
-            csCtx.fillStyle = "#ffffff";
-            csCtx.font = 'bold 44px "Quicksand", sans-serif';
+            // Dezenter Hinweistext in der Mitte, wenn noch kein Video läuft (kein oberer Header)
+            csCtx.fillStyle = "rgba(255, 255, 255, 0.45)";
+            csCtx.font = '500 32px "Quicksand", sans-serif';
             csCtx.textAlign = "center";
             csCtx.textBaseline = "middle";
-            csCtx.fillText("VIEWING SCREEN", 1536 / 2, 75);
-
-            // Dezenter Hinweistext in der Mitte, wenn noch kein Video läuft
-            csCtx.fillStyle = "rgba(255, 255, 255, 0.45)";
-            csCtx.font = '500 28px "Quicksand", sans-serif';
-            csCtx.fillText("Kein Video aktiv", 1536 / 2, 990 / 2 - 15);
-            csCtx.font = '400 20px "Quicksand", sans-serif';
-            csCtx.fillText("[E] Taste druecken zum Abspielen", 1536 / 2, 990 / 2 + 25);
+            csCtx.fillText("[E] Kinoleinwand oeffnen", 1536 / 2, 864 / 2);
 
             const csTexture = new THREE.CanvasTexture(csCanvas);
             csTexture.colorSpace = THREE.SRGBColorSpace;
@@ -4049,28 +4029,28 @@
             });
             cinemaScreenMesh = new THREE.Mesh(csGeo, csMat);
 
-            // Westwand des Chillen-Raums: Hängt frei im Raum bei x = -5.12m
-            // Radius zur Raummitte an den Aussenkanten ist ca. 5.39m (< 5.46m Wandradius) -> steht aussen niemals ueber!
-            cinemaScreenMesh.position.set(-5.12, 2.0, rz);
+            // Westwand des Chillen-Raums: Hängt frei im Raum bei x = -5.02m (30% groesser)
+            // Radius zur Raummitte an den Außenkanten: sqrt((-5.02)^2 + 1.92^2) = 5.375m (< 5.46m Wandradius) -> steht außen nicht über!
+            cinemaScreenMesh.position.set(-5.02, 2.0, rz);
             cinemaScreenMesh.rotation.y = Math.PI / 2;
             cinemaScreenMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaScreenMesh);
 
-            // Schlanke schwarze Rueckplatte fuer sauberes Finish von hinten
-            const csBackMat = new THREE.MeshBasicMaterial({ color: 0x111113, side: THREE.BackSide });
+            // Schlanke schwarze Rückplatte für sauberes Finish von hinten
+            const csBackMat = new THREE.MeshBasicMaterial({ color: 0x050507, side: THREE.BackSide });
             const csBackMesh = new THREE.Mesh(csGeo, csBackMat);
-            csBackMesh.position.set(-5.122, 2.0, rz);
+            csBackMesh.position.set(-5.022, 2.0, rz);
             csBackMesh.rotation.y = Math.PI / 2;
             scene.add(csBackMesh);
 
             // Wandhalterungs-Elemente / Distanz-Streben zur runden Wand
             const bracketMat = new THREE.MeshBasicMaterial({ color: 0x18181b });
-            const bracketZOffsets = [-1.35, 1.35];
+            const bracketZOffsets = [-1.55, 1.55];
             bracketZOffsets.forEach(bz => {
                 const wallX = -Math.sqrt(Math.max(0, 5.46 * 5.46 - bz * bz));
-                const bracketLen = Math.abs(wallX - (-5.12));
+                const bracketLen = Math.abs(wallX - (-5.02));
                 const bracket = new THREE.Mesh(new THREE.BoxGeometry(bracketLen, 0.05, 0.05), bracketMat);
-                bracket.position.set(-5.12 - bracketLen / 2, 2.0, rz + bz);
+                bracket.position.set(-5.02 - bracketLen / 2, 2.0, rz + bz);
                 scene.add(bracket);
             });
 
@@ -4079,7 +4059,7 @@
                 new THREE.PlaneGeometry(csWidth + 0.30, csHeight + 0.30),
                 new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide })
             );
-            cinemaInteractMesh.position.set(-5.10, 2.0, rz);
+            cinemaInteractMesh.position.set(-5.00, 2.0, rz);
             cinemaInteractMesh.rotation.y = Math.PI / 2;
             cinemaInteractMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaInteractMesh);
@@ -5749,13 +5729,12 @@
             if (btnPause) {
                 btnPause.addEventListener('click', () => {
                     if (!currentCinemaVideoId) return;
-                    const isPlayingNow = cinemaIframe && !cinemaIframe.src.includes('autoplay=0');
-                    const nextPlaying = !isPlayingNow;
-                    if (cinemaIframe && cinemaIframe.contentWindow) {
-                        const cmd = nextPlaying ? 'playVideo' : 'pauseVideo';
-                        cinemaIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: '' }), '*');
+                    let currentPos = currentCinemaSeekSec;
+                    if (currentCinemaPlaying && currentCinemaStartedAt > 0) {
+                        currentPos += Math.max(0, (Date.now() - currentCinemaStartedAt) / 1000);
                     }
-                    pushCinemaState(currentCinemaVideoId, nextPlaying, 0);
+                    const nextPlaying = !currentCinemaPlaying;
+                    pushCinemaState(currentCinemaVideoId, nextPlaying, currentPos);
                 });
             }
 
@@ -6281,8 +6260,8 @@
                     const pz = camera.position.z;
                     const distToChillen = Math.hypot(px - 0, pz - 16.5);
 
-                    // 1. Wenn der Spieler hinter der Bildwand steht (x <= -5.05), ist er in/hinter der Wand oder draussen
-                    if (px <= -5.05) {
+                    // 1. Wenn der Spieler hinter der Bildwand steht (x <= -4.95), ist er in/hinter der Wand oder draussen
+                    if (px <= -4.95) {
                         shouldShow = false;
                     }
                     // 2. Befindet sich der Spieler auf Hoehe des Chillen-Zimmers (z >= 11.0):
@@ -6306,7 +6285,7 @@
                     if (shouldShow) {
                         const camDir = new THREE.Vector3();
                         camera.getWorldDirection(camDir);
-                        const toScreenX = -5.11 - px;
+                        const toScreenX = -5.01 - px;
                         const toScreenZ = 16.5 - pz;
                         if (camDir.x * toScreenX + camDir.z * toScreenZ < -1.0) {
                             shouldShow = false;
