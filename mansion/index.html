@@ -1306,6 +1306,9 @@
         let cssRenderer = null;
         let cssCinemaObject = null;
         let cinemaIframe = null;
+        let projectorBeamMesh = null;
+        let projectorFlareMesh = null;
+        let projectorLedMesh = null;
         let currentCinemaVideoId = null;
         let currentCinemaPlaying = false;
         let currentCinemaStartedAt = 0;
@@ -1408,10 +1411,10 @@
             cinemaIframe.setAttribute('allowfullscreen', 'true');
 
             cssCinemaObject = new CSS3DObject(cinemaIframe);
-            // 3D-Skalierung: 1280x720 px -> 3.84m x 2.16m (30% groesser, fuellt die 2D-Leinwand komplett von oben bis unten aus)
-            cssCinemaObject.scale.set(0.0030, 0.0030, 0.0030);
-            // Westwand des Chillen-Zimmers: exakt 1 cm vor der 2D-Traegerleinwand bei x = -5.01m, y = 2.0m zentriert
-            cssCinemaObject.position.set(-5.01, 2.0, 16.5);
+            // 3D-Skalierung: 1280x720 px -> 5.00m x 2.81m (erneut 30% groesser, fuellt die 2D-Leinwand komplett aus)
+            cssCinemaObject.scale.set(0.00390, 0.00390, 0.00390);
+            // Westwand des Chillen-Zimmers: exakt 1 cm vor der 2D-Traegerleinwand bei x = -4.74m, y = 2.05m zentriert
+            cssCinemaObject.position.set(-4.74, 2.05, 16.5);
             // Drehung nach innen zur Raummitte/Couch (Richtung +X)
             cssCinemaObject.rotation.y = Math.PI / 2;
             cssScene.add(cssCinemaObject);
@@ -3894,12 +3897,84 @@
                 tableGroup.add(leg);
             });
 
-            const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.10, 16), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-            cup.position.set(0.25, 0.54, 0.15);
-            tableGroup.add(cup);
-
+            // Becher entfernt. Tischgruppe zur Szene hinzufuegen.
             tableGroup.position.set(rx, 0, rz + 0.4);
             scene.add(tableGroup);
+
+            // ── KLEINER PROJEKTOR AUF DEM GELBEN TISCH ──
+            const projectorGroup = new THREE.Group();
+
+            // Gehaeuse (kompakt, edles anthrazitfarbenes Schiefergrau)
+            const projBodyMat = new THREE.MeshLambertMaterial({ color: 0x27272a });
+            const projBody = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.09, 0.22), projBodyMat);
+            projBody.position.y = 0.045;
+            projectorGroup.add(projBody);
+
+            // Gummifuesse
+            const footMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
+            [[-0.12, -0.08], [0.12, -0.08], [-0.12, 0.08], [0.12, 0.08]].forEach(([fx, fz]) => {
+                const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.012, 10), footMat);
+                foot.position.set(fx, 0.006, fz);
+                projectorGroup.add(foot);
+            });
+
+            // Objektiv-Tubus (vorne bei local +Z)
+            const lensRimMat = new THREE.MeshLambertMaterial({ color: 0x71717a });
+            const lensRim = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.04, 20), lensRimMat);
+            lensRim.rotation.x = Math.PI / 2;
+            lensRim.position.set(0.06, 0.05, 0.12);
+            projectorGroup.add(lensRim);
+
+            // Glaslinse
+            const lensGlassMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+            const lensGlass = new THREE.Mesh(new THREE.SphereGeometry(0.034, 16, 12), lensGlassMat);
+            lensGlass.position.set(0.06, 0.05, 0.135);
+            projectorGroup.add(lensGlass);
+
+            // Status-LED (oben)
+            const ledMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+            projectorLedMesh = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 8), ledMat);
+            projectorLedMesh.position.set(-0.10, 0.092, -0.06);
+            projectorGroup.add(projectorLedMesh);
+
+            // Lichtstrahl-Effekt (kurzer, geformter Lichtkegel aus der Linse in Richtung Leinwand)
+            const beamLen = 1.95;
+            const beamGeo = new THREE.CylinderGeometry(0.58, 0.040, beamLen, 24, 1, true);
+            beamGeo.translate(0, beamLen / 2, 0);
+            beamGeo.rotateX(Math.PI / 2);
+            const beamMat = new THREE.MeshBasicMaterial({
+                color: 0xe0f2fe,
+                transparent: true,
+                opacity: 0.22,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+            projectorBeamMesh = new THREE.Mesh(beamGeo, beamMat);
+            projectorBeamMesh.position.set(0.06, 0.05, 0.14);
+            projectorBeamMesh.visible = false;
+            projectorGroup.add(projectorBeamMesh);
+
+            // Linse-Leuchtpunkt
+            const flareGeo = new THREE.CircleGeometry(0.05, 16);
+            const flareMat = new THREE.MeshBasicMaterial({
+                color: 0xf0f9ff,
+                transparent: true,
+                opacity: 0.70,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+            projectorFlareMesh = new THREE.Mesh(flareGeo, flareMat);
+            projectorFlareMesh.position.set(0.06, 0.05, 0.142);
+            projectorFlareMesh.visible = false;
+            projectorGroup.add(projectorFlareMesh);
+
+            // Positionierung auf dem gelben Tisch (Tischplatte bei y = 0.49m)
+            projectorGroup.position.set(-0.25, 0.49, 16.85);
+            // Exakt auf die Mitte der Kinoleinwand (-4.75, 2.05, 16.5) ausgerichtet
+            projectorGroup.lookAt(-4.75, 2.05, 16.5);
+            scene.add(projectorGroup);
 
             // Dunkelblaue Polstercouch für 4 Personen
             const couchGroup = new THREE.Group();
@@ -3991,17 +4066,17 @@
             lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
             scene.add(lampGroup);
 
-            // ── VIEWING SCREEN (WEISSE 2D-LEINWAND, SCHWARZER RAHMEN WIE NOTIZENLEINWAND, KEINE HALTERUNGEN) ──
-            const csWidth = 3.84;
-            const csHeight = 2.16;
+            // ── VIEWING SCREEN (GRAUE 2D-LEINWAND WIE WANDFARBE, 30% GROESSER, SCHWARZER RAHMEN, "Video") ──
+            const csWidth = 5.00;
+            const csHeight = 2.81;
 
             const csCanvas = document.createElement("canvas");
             csCanvas.width = 1536;
             csCanvas.height = 864;
             const csCtx = csCanvas.getContext("2d");
 
-            // Reine weisse Leinwandfläche
-            csCtx.fillStyle = "#ffffff";
+            // Schlichtes mattes Wandgrau wie die Raumwände
+            csCtx.fillStyle = "#dcdce0";
             csCtx.fillRect(0, 0, 1536, 864);
 
             // Robuster schwarzer Rahmen exakt wie beim Notizboard
@@ -4009,29 +4084,28 @@
             csCtx.strokeStyle = "#000000";
             csCtx.strokeRect(14, 14, 1536 - 28, 864 - 28);
 
-            // Dezenter Hinweistext in der Mitte, wenn noch kein Video läuft
-            csCtx.fillStyle = "rgba(0, 0, 0, 0.40)";
-            csCtx.font = '500 32px "Quicksand", sans-serif';
+            // Schlichter Schriftzug "Video" in der Mitte
+            csCtx.fillStyle = "rgba(0, 0, 0, 0.45)";
+            csCtx.font = 'bold 54px "Quicksand", sans-serif';
             csCtx.textAlign = "center";
             csCtx.textBaseline = "middle";
-            csCtx.fillText("[E] Kinoleinwand oeffnen", 1536 / 2, 864 / 2);
+            csCtx.fillText("Video", 1536 / 2, 864 / 2);
 
             const csTexture = new THREE.CanvasTexture(csCanvas);
             csTexture.colorSpace = THREE.SRGBColorSpace;
             csTexture.needsUpdate = true;
 
-            // 2D-Flachbildschirm (PlaneGeometry, DoubleSide, absolut blickdicht)
+            // 2D-Flachbildschirm (PlaneGeometry, DoubleSide, blickdicht mit natuerlicher Wandbeleuchtung)
             const csGeo = new THREE.PlaneGeometry(csWidth, csHeight);
-            const csMat = new THREE.MeshBasicMaterial({
+            const csMat = new THREE.MeshLambertMaterial({
                 map: csTexture,
-                side: THREE.DoubleSide,
-                toneMapped: false
+                side: THREE.DoubleSide
             });
             cinemaScreenMesh = new THREE.Mesh(csGeo, csMat);
 
-            // Westwand des Chillen-Raums: Hängt frei im Raum bei x = -5.02m (30% groesser)
-            // Radius zur Raummitte an den Außenkanten: sqrt((-5.02)^2 + 1.92^2) = 5.375m (< 5.46m Wandradius) -> steht außen nicht über!
-            cinemaScreenMesh.position.set(-5.02, 2.0, rz);
+            // Westwand des Chillen-Raums: Hängt frei im Raum bei x = -4.75m (nochmals 30% groesser)
+            // Radius zur Raummitte an den Außenkanten: sqrt((-4.75)^2 + 2.50^2) = 5.368m (< 5.46m Wandradius) -> steht außen nicht über!
+            cinemaScreenMesh.position.set(-4.75, 2.05, rz);
             cinemaScreenMesh.rotation.y = Math.PI / 2;
             cinemaScreenMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaScreenMesh);
@@ -4041,7 +4115,7 @@
                 new THREE.PlaneGeometry(csWidth + 0.30, csHeight + 0.30),
                 new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide })
             );
-            cinemaInteractMesh.position.set(-5.00, 2.0, rz);
+            cinemaInteractMesh.position.set(-4.73, 2.05, rz);
             cinemaInteractMesh.rotation.y = Math.PI / 2;
             cinemaInteractMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaInteractMesh);
@@ -6231,6 +6305,20 @@
                 interactPrompt.classList.remove("visible");
             }
 
+            // ── PROJEKTOR-LICHTSTRAHL & STATUS-LED SYNCHRONISIEREN ──
+            if (projectorBeamMesh) {
+                const isVideoPlaying = Boolean(currentCinemaVideoId) && Boolean(currentCinemaPlaying);
+                projectorBeamMesh.visible = isVideoPlaying;
+                if (projectorFlareMesh) projectorFlareMesh.visible = isVideoPlaying;
+                if (projectorLedMesh) {
+                    projectorLedMesh.material.color.setHex(isVideoPlaying ? 0x10b981 : 0xf59e0b);
+                }
+                if (isVideoPlaying) {
+                    const t = clock.getElapsedTime();
+                    projectorBeamMesh.material.opacity = 0.18 + 0.04 * Math.sin(t * 8.5) + 0.02 * Math.cos(t * 14.0);
+                }
+            }
+
             renderer.render(scene, camera);
 
             // ── CSS3D ON-WALL VIDEO RENDERN ──
@@ -6242,8 +6330,8 @@
                     const pz = camera.position.z;
                     const distToChillen = Math.hypot(px - 0, pz - 16.5);
 
-                    // 1. Wenn der Spieler hinter der Bildwand steht (x <= -4.95), ist er in/hinter der Wand oder draussen
-                    if (px <= -4.95) {
+                    // 1. Wenn der Spieler hinter der Bildwand steht (x <= -4.68), ist er in/hinter der Wand oder draussen
+                    if (px <= -4.68) {
                         shouldShow = false;
                     }
                     // 2. Befindet sich der Spieler auf Hoehe des Chillen-Zimmers (z >= 11.0):
@@ -6267,7 +6355,7 @@
                     if (shouldShow) {
                         const camDir = new THREE.Vector3();
                         camera.getWorldDirection(camDir);
-                        const toScreenX = -5.01 - px;
+                        const toScreenX = -4.74 - px;
                         const toScreenZ = 16.5 - pz;
                         if (camDir.x * toScreenX + camDir.z * toScreenZ < -1.0) {
                             shouldShow = false;
