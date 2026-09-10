@@ -1366,8 +1366,8 @@
                 cinemaIframe.style.opacity = '1';
                 const autoplayParam = playing ? '1' : '0';
                 const startParam = Math.floor(seekSec || 0);
-                const origin = encodeURIComponent(window.location.origin || 'https://salanieg.github.io');
-                const targetSrc = 'https://www.youtube.com/embed/' + videoId + '?autoplay=' + autoplayParam + '&enablejsapi=1&rel=0&playsinline=1&origin=' + origin + '&start=' + startParam;
+                const originParam = (window.location.origin && window.location.origin.startsWith('http')) ? ('&origin=' + encodeURIComponent(window.location.origin)) : '';
+                const targetSrc = 'https://www.youtube.com/embed/' + videoId + '?autoplay=' + autoplayParam + '&enablejsapi=1&rel=0&playsinline=1' + originParam + '&start=' + startParam;
 
                 if (!cinemaIframe.src || !cinemaIframe.src.includes(videoId)) {
                     cinemaIframe.src = targetSrc;
@@ -5699,16 +5699,6 @@
                     camera.rotation.y = a * (Math.PI / 2);
                     camera.updateMatrixWorld(true);
                     renderer.render(scene, camera);
-
-            // CSS3D-Wand-Video rendern
-            if (cssRenderer && cssScene) {
-                // Nur rendern, wenn im oder am Chillen-Zimmer
-                const distToChillen = Math.hypot(camera.position.x - 0, camera.position.z - 16.5);
-                if (cssRenderer.domElement) {
-                    cssRenderer.domElement.style.display = (distToChillen <= 14.0 && Boolean(currentCinemaVideoId)) ? 'block' : 'none';
-                }
-                cssRenderer.render(cssScene, camera);
-            }
                 }
                 camera.rotation.y = savedRotY;
                 camera.updateMatrixWorld(true);
@@ -6260,6 +6250,28 @@
             }
 
             renderer.render(scene, camera);
+
+            // ── CSS3D ON-WALL VIDEO RENDERN ──
+            if (cssRenderer && cssScene) {
+                const distToChillen = Math.hypot(camera.position.x - 0, camera.position.z - 16.5);
+                let shouldShow = (distToChillen <= 16.0 && Boolean(currentCinemaVideoId));
+                if (shouldShow) {
+                    // Culling: Nicht rendern, wenn die Leinwand deutlich im Ruecken der Kamera liegt
+                    const toScreenX = -5.38 - camera.position.x;
+                    const toScreenZ = 16.5 - camera.position.z;
+                    const camDir = new THREE.Vector3();
+                    camera.getWorldDirection(camDir);
+                    if (camDir.x * toScreenX + camDir.z * toScreenZ < -1.5) {
+                        shouldShow = false;
+                    }
+                }
+                if (cssRenderer.domElement) {
+                    cssRenderer.domElement.style.display = shouldShow ? 'block' : 'none';
+                }
+                if (shouldShow) {
+                    cssRenderer.render(cssScene, camera);
+                }
+            }
         }
 
         // ── TEXT-NOTIZ MODAL (PINBOARD) ──
