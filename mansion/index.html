@@ -933,15 +933,13 @@
         </div>
     </div>
 
-    <!-- Hidden YouTube player (audio/video for local user, synchronized across clients) -->
-    <div id="yt-player-container" style="position:fixed; bottom:16px; right:16px; width:280px; height:158px; border-radius:10px; overflow:hidden; z-index:8000; box-shadow:0 8px 32px rgba(0,0,0,0.7); display:none; background:#000;">
-        <div id="yt-player-iframe"></div>
-    </div>
+
 
     <!-- Firebase SDK via CDN Modules & Three.js via ImportMap -->
     <script type="module">
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+        import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
         import { 
@@ -1298,12 +1296,13 @@
         // ── CHILLEN-LAMPE & STERNENHIMMEL STATUSVARIABLEN ──
         let isChillenLampOn = false;
 
-        // ── CINEMA SCREEN STATUSVARIABLEN & YOUTUBE API ──
+        // ── VIEWING SCREEN & CSS3D STATUSVARIABLEN ──
         let cinemaScreenMesh = null;
         let cinemaInteractMesh = null;
-        let ytPlayer = null;
-        let ytApiReady = false;
-        let ytApiLoading = false;
+        let cssScene = null;
+        let cssRenderer = null;
+        let cssCinemaObject = null;
+        let cinemaIframe = null;
         let currentCinemaVideoId = null;
         let isCinemaModalOpen = false;
 
@@ -1345,180 +1344,62 @@
             return null;
         }
 
-        function createYTPlayer(videoId, playing, seekSec) {
-            const container = document.getElementById('yt-player-container');
-            if (container) {
-                container.innerHTML = '<div id="yt-player-iframe"></div>';
-            }
-            ytPlayer = new YT.Player('yt-player-iframe', {
-                videoId: videoId,
-                width: '320',
-                height: '180',
-                playerVars: {
-                    autoplay: 1,
-                    controls: 1,
-                    rel: 0,
-                    modestbranding: 1,
-                    playsinline: 1,
-                    enablejsapi: 1,
-                    start: Math.floor(seekSec || 0)
-                },
-                events: {
-                    onReady: function(event) {
-                        if (playing) {
-                            event.target.seekTo(seekSec || 0, true);
-                            event.target.playVideo();
-                        }
-                    },
-                    onError: function(err) {
-                        console.warn('YouTube Error:', err.data);
-                        const el = document.getElementById('cinema-status');
-                        let msg = 'Wiedergabefehler (Code ' + err.data + ')';
-                        if (err.data === 101 || err.data === 150) msg = 'Uploader erlaubt keine externe Einbettung.';
-                        else if (err.data === 100) msg = 'Video nicht gefunden oder privat.';
-                        else if (err.data === 2) msg = 'Ungültige Video-ID.';
-                        if (el) el.textContent = msg;
-                    }
-                }
-            });
-        }
-
         function setCinemaVideo(videoId, playing, seekSec) {
-            if (!videoId) return;
             currentCinemaVideoId = videoId;
-            updateCinemaScreenTexture(videoId, playing);
 
-            const container = document.getElementById('yt-player-container');
-            if (container) container.style.display = 'block';
-
-            ensureYouTubeAPI(() => {
-                if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-                    try {
-                        ytPlayer.loadVideoById({ videoId: videoId, startSeconds: Math.floor(seekSec || 0) });
-                        if (playing) { ytPlayer.playVideo(); } else { ytPlayer.pauseVideo(); }
-                    } catch (e) {
-                        createYTPlayer(videoId, playing, seekSec);
-                    }
-                } else {
-                    createYTPlayer(videoId, playing, seekSec);
+            if (!videoId) {
+                if (cinemaIframe) {
+                    cinemaIframe.src = '';
                 }
-            });
-        }
-
-        function updateCinemaScreenTexture(videoId, playing) {
-            if (!cinemaScreenMesh) return;
-            const canvas = document.createElement('canvas');
-            canvas.width = 1536;
-            canvas.height = 768;
-            const ctx = canvas.getContext('2d');
-
-            // Tiefschwarzer Bildschirm-Hintergrund
-            ctx.fillStyle = '#08080c';
-            ctx.fillRect(0, 0, 1536, 768);
-
-            // Robuster matter Rahmen
-            ctx.lineWidth = 16;
-            ctx.strokeStyle = '#18181b';
-            ctx.strokeRect(8, 8, 1536 - 16, 768 - 16);
-
-            if (videoId) {
-                const thumbUrl = 'https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg';
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onerror = () => {
-                    ctx.fillStyle = '#18181b';
-                    ctx.fillRect(24, 24, 1536 - 48, 768 - 48);
-                    ctx.save();
-                    ctx.translate(1536 / 2, 768 / 2);
-                    ctx.scale(-1, 1);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 50px "Quicksand", sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('VIDEO WIRD ABGESPIELT', 0, -20);
-                    ctx.font = '32px "Quicksand", sans-serif';
-                    ctx.fillStyle = '#818cf8';
-                    ctx.fillText(videoId, 0, 40);
-                    ctx.restore();
-                    if (cinemaScreenMesh && cinemaScreenMesh.material.map) {
-                        cinemaScreenMesh.material.map.needsUpdate = true;
-                    }
-                };
-                img.onload = () => {
-                    // Zeichne Thumbnail mit zentrierter Skalierung
-                    ctx.drawImage(img, 24, 24, 1536 - 48, 768 - 48);
-
-                    // Header-Balken
-                    ctx.fillStyle = 'rgba(0,0,0,0.65)';
-                    ctx.fillRect(24, 24, 1536 - 48, 80);
-
-                    ctx.save();
-                    ctx.translate(1536 / 2, 64);
-                    ctx.scale(-1, 1); // ungespiegelt für Innenansicht
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 36px "Quicksand", sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('SYNCHRON-SCREEN: ' + (playing ? 'WIEDERGABE' : 'PAUSIERT'), 0, 0);
-                    ctx.restore();
-
-                    // Play/Pause Overlay
-                    if (!playing) {
-                        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-                        ctx.fillRect(24, 24, 1536 - 48, 768 - 48);
-
-                        ctx.save();
-                        ctx.translate(1536 / 2, 768 / 2);
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-                        ctx.beginPath();
-                        ctx.arc(0, 0, 60, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.fillStyle = '#09090b';
-                        ctx.beginPath();
-                        ctx.moveTo(-16, -28);
-                        ctx.lineTo(32, 0);
-                        ctx.lineTo(-16, 28);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.restore();
-                    }
-
-                    if (cinemaScreenMesh.material.map) {
-                        cinemaScreenMesh.material.map.needsUpdate = true;
-                    }
-                };
-                img.src = thumbUrl;
-            } else {
-                // Standby-Screen
-                ctx.save();
-                ctx.translate(1536 / 2, 768 / 2);
-                ctx.scale(-1, 1); // ungespiegelt
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
-                ctx.font = 'bold 72px "Quicksand", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('CHILLEN CINEMA', 0, -30);
-
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-                ctx.font = 'bold 32px "Quicksand", sans-serif';
-                ctx.fillText('[E] Taste drücken zum Starten', 0, 45);
-                ctx.restore();
+                if (cssCinemaObject) {
+                    cssCinemaObject.visible = false;
+                }
+                return;
             }
 
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.needsUpdate = true;
-            cinemaScreenMesh.material.map = texture;
-            cinemaScreenMesh.material.needsUpdate = true;
+            if (!cinemaIframe && cssScene) {
+                initCSS3DCinema();
+            }
+
+            if (cinemaIframe) {
+                const autoplayParam = playing ? '1' : '0';
+                const startParam = Math.floor(seekSec || 0);
+                const targetSrc = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=' + autoplayParam + '&enablejsapi=1&rel=0&start=' + startParam;
+                if (!cinemaIframe.src || !cinemaIframe.src.includes(videoId)) {
+                    cinemaIframe.src = targetSrc;
+                }
+                if (cssCinemaObject) {
+                    cssCinemaObject.visible = true;
+                }
+            }
+        }
+
+        function initCSS3DCinema() {
+            if (!cssScene) return;
+
+            cinemaIframe = document.createElement('iframe');
+            cinemaIframe.style.width = '1280px';
+            cinemaIframe.style.height = '720px';
+            cinemaIframe.style.border = '0';
+            cinemaIframe.style.background = '#000000';
+            cinemaIframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen');
+            cinemaIframe.setAttribute('allowfullscreen', 'true');
+
+            cssCinemaObject = new CSS3DObject(cinemaIframe);
+            // 3D-Skalierung: 1280x720 px -> 3.46m x 1.94m (passt optimal in den 5.7m x 2.2m Viewing Screen)
+            cssCinemaObject.scale.set(0.0027, 0.0027, 0.0027);
+            // Westwand des Chillen-Zimmers (rx = 0, rz = 16.5, radius = 5.46)
+            cssCinemaObject.position.set(-5.40, 1.95, 16.5);
+            // Drehung nach innen zur Raummitte/Couch (Richtung +X)
+            cssCinemaObject.rotation.y = Math.PI / 2;
+            cssCinemaObject.visible = false;
+            cssScene.add(cssCinemaObject);
         }
 
         function syncCinemaState(state, fromNetwork) {
             if (!state || !state.videoId) {
                 currentCinemaVideoId = null;
-                updateCinemaScreenTexture(null, false);
-                if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
-                const container = document.getElementById('yt-player-container');
-                if (container) container.style.display = 'none';
+                setCinemaVideo(null, false, 0);
                 const el = document.getElementById('cinema-status');
                 if (el) el.textContent = 'Kein Video aktiv.';
                 return;
@@ -1531,18 +1412,10 @@
                 ? Math.max(0, (Date.now() - serverNow) / 1000) + (state.seekSec || 0)
                 : (state.seekSec || 0);
 
-            if (vid !== currentCinemaVideoId) {
-                setCinemaVideo(vid, playing, elapsed);
-            } else {
-                if (ytPlayer && typeof ytPlayer.seekTo === 'function' && fromNetwork) {
-                    ytPlayer.seekTo(elapsed, true);
-                    if (playing) { ytPlayer.playVideo(); } else { ytPlayer.pauseVideo(); }
-                }
-                updateCinemaScreenTexture(vid, playing);
-            }
+            setCinemaVideo(vid, playing, elapsed);
 
             const el = document.getElementById('cinema-status');
-            if (el) el.textContent = playing ? ('Live: ' + vid) : ('Pausiert: ' + vid);
+            if (el) el.textContent = playing ? ('Live auf Leinwand: ' + vid) : ('Pausiert: ' + vid);
         }
 
         function pushCinemaState(videoId, isPlaying, seekSec) {
@@ -4083,34 +3956,69 @@
             lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
             scene.add(lampGroup);
 
-            // ── SYNCHRONER CINEMA-SCREEN (EXAKT GLEICHE GRÖSSE WIE NOTIZBOARD) ──
-            // Pinboard-Maße: boardRadius = 5.46, boardHeight = 2.2, boardArc = 1.05
+            // ── VIEWING SCREEN (EXAKT WIE NOTIZENLEINWAND, MIT GESTREIFTEM RAHMEN & "VIEWING SCREEN") ──
+            // Exakt wie createCurvedPinboard: boardRadius = 5.46, boardHeight = 2.2, boardArc = 1.05
             const csRadius = 5.46;
             const csHeight = 2.2;
             const csArc = 1.05;
 
-            // Idle-Screen Canvas
-            const csCanvas = document.createElement('canvas');
+            const csCanvas = document.createElement("canvas");
             csCanvas.width = 1536;
             csCanvas.height = 768;
-            const csCtx = csCanvas.getContext('2d');
-            csCtx.fillStyle = '#08080c';
-            csCtx.fillRect(0, 0, 1536, 768);
-            csCtx.lineWidth = 16;
-            csCtx.strokeStyle = '#18181b';
-            csCtx.strokeRect(8, 8, 1536 - 16, 768 - 16);
+            const csCtx = csCanvas.getContext("2d");
 
+            // Vollkommen transparent wie die Notizenleinwand
+            csCtx.clearRect(0, 0, 1536, 768);
+
+            // Gestreifter Rahmen (Cinema / Filmklappen-Streifenmuster 45-Grad)
+            const stripeCanvas = document.createElement("canvas");
+            stripeCanvas.width = 48;
+            stripeCanvas.height = 48;
+            const sCtx = stripeCanvas.getContext("2d");
+            sCtx.fillStyle = "#18181b";
+            sCtx.fillRect(0, 0, 48, 48);
+            sCtx.fillStyle = "#ffffff";
+            sCtx.beginPath();
+            sCtx.moveTo(0, 48);
+            sCtx.lineTo(48, 0);
+            sCtx.lineTo(24, 0);
+            sCtx.lineTo(0, 24);
+            sCtx.closePath();
+            sCtx.fill();
+            sCtx.beginPath();
+            sCtx.moveTo(24, 48);
+            sCtx.lineTo(48, 24);
+            sCtx.lineTo(48, 48);
+            sCtx.lineTo(0, 48);
+            sCtx.closePath();
+            sCtx.fill();
+
+            const stripePattern = csCtx.createPattern(stripeCanvas, "repeat");
+
+            // Dunkle Kantenkontur für perfekten Kontrast
+            csCtx.lineWidth = 32;
+            csCtx.strokeStyle = "#18181b";
+            csCtx.strokeRect(16, 16, 1536 - 32, 768 - 32);
+
+            // Gestreifter Rahmen (wie Notizenrahmen, aber gestreift)
+            csCtx.lineWidth = 26;
+            csCtx.strokeStyle = stripePattern;
+            csCtx.strokeRect(16, 16, 1536 - 32, 768 - 32);
+
+            // Dünne Innenlinie
+            csCtx.lineWidth = 3;
+            csCtx.strokeStyle = "#18181b";
+            csCtx.strokeRect(29, 29, 1536 - 58, 768 - 58);
+
+            // Header-Label: "VIEWING SCREEN" statt "NOTIZEN" (horizontal gespiegelt für ungespiegelte Innenansicht)
             csCtx.save();
-            csCtx.translate(1536 / 2, 768 / 2);
+            csCtx.translate(1536 / 2, 85);
             csCtx.scale(-1, 1);
-            csCtx.fillStyle = 'rgba(255, 255, 255, 0.18)';
-            csCtx.font = 'bold 72px "Quicksand", sans-serif';
-            csCtx.textAlign = 'center';
-            csCtx.textBaseline = 'middle';
-            csCtx.fillText('CHILLEN CINEMA', 0, -30);
-            csCtx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-            csCtx.font = 'bold 32px "Quicksand", sans-serif';
-            csCtx.fillText('[E] Taste drücken zum Starten', 0, 45);
+            csCtx.fillStyle = "#18181b";
+            csCtx.font = 'bold 46px "Quicksand", sans-serif';
+            csCtx.textAlign = "center";
+            csCtx.textBaseline = "middle";
+            csCtx.fillText("VIEWING SCREEN", 0, 0);
             csCtx.restore();
 
             const csTexture = new THREE.CanvasTexture(csCanvas);
@@ -4121,25 +4029,17 @@
             const csMat = new THREE.MeshBasicMaterial({
                 map: csTexture,
                 side: THREE.DoubleSide,
+                transparent: true,
                 toneMapped: false
             });
             cinemaScreenMesh = new THREE.Mesh(csGeo, csMat);
 
-            // An der Westwand des Chillen-Raums (rx=0, rz=16.5), symmetrisch gegenüber dem Notizboard an der Ostwand
-            // Notizboard hat rotY = -pinAngle + PI/2 = PI/2 (Ostwand). Screen an der Westwand hat rotY = -PI/2.
+            // Westwand des Chillen-Raums (rx=0, rz=16.5), symmetrisch gegenüber dem Notizboard an der Ostwand
             const csRotY = -Math.PI / 2;
             cinemaScreenMesh.position.set(rx, 2.0, rz);
             cinemaScreenMesh.rotation.y = csRotY;
             cinemaScreenMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaScreenMesh);
-
-            // Eleganter matter Rahmen um den Bildschirm
-            const csFrameGeo = new THREE.CylinderGeometry(csRadius + 0.04, csRadius + 0.04, csHeight + 0.10, 32, 1, true, -csArc / 2 - 0.015, csArc + 0.030);
-            const csFrameMat = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.3, metalness: 0.7, side: THREE.BackSide });
-            const csFrame = new THREE.Mesh(csFrameGeo, csFrameMat);
-            csFrame.position.set(rx, 2.0, rz);
-            csFrame.rotation.y = csRotY;
-            scene.add(csFrame);
 
             // Unsichtbares Interaktions-Volumen für verlässliches Raycasting (DoubleSide, transparent)
             cinemaInteractMesh = new THREE.Mesh(
@@ -4150,6 +4050,9 @@
             cinemaInteractMesh.rotation.y = csRotY;
             cinemaInteractMesh.userData = { isCinemaScreen: true };
             scene.add(cinemaInteractMesh);
+
+            // CSS3D Cinema initialisieren
+            initCSS3DCinema();
         }
 
         // 3. GAMING (West)
@@ -5559,6 +5462,19 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+            // CSS3D Renderer für echten Video-Screen an der 3D-Wand
+            cssScene = new THREE.Scene();
+            cssRenderer = new CSS3DRenderer();
+            cssRenderer.setSize(window.innerWidth, window.innerHeight);
+            cssRenderer.domElement.style.position = 'absolute';
+            cssRenderer.domElement.style.top = '0';
+            cssRenderer.domElement.style.left = '0';
+            cssRenderer.domElement.style.width = '100%';
+            cssRenderer.domElement.style.height = '100%';
+            cssRenderer.domElement.style.pointerEvents = 'none';
+            cssRenderer.domElement.style.zIndex = '5';
+            gameContainer.appendChild(cssRenderer.domElement);
+
             controls = new PointerLockControls(camera, document.body);
 
             // First-Person Fahrrad-Cockpit (am unteren Sichtrand bei Fahrt eingeblendet)
@@ -5770,6 +5686,15 @@
                     camera.rotation.y = a * (Math.PI / 2);
                     camera.updateMatrixWorld(true);
                     renderer.render(scene, camera);
+
+            // CSS3D-Wand-Video rendern
+            if (cssRenderer && cssScene) {
+                const distToChillen = Math.hypot(camera.position.x - 0, camera.position.z - 16.5);
+                if (cssCinemaObject) {
+                    cssCinemaObject.visible = (distToChillen <= 12.0 && Boolean(currentCinemaVideoId));
+                }
+                cssRenderer.render(cssScene, camera);
+            }
                 }
                 camera.rotation.y = savedRotY;
                 camera.updateMatrixWorld(true);
@@ -5799,9 +5724,13 @@
             if (btnPause) {
                 btnPause.addEventListener('click', () => {
                     if (!currentCinemaVideoId) return;
-                    const isPlayingNow = ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === 1;
-                    const elapsed = ytPlayer && typeof ytPlayer.getCurrentTime === 'function' ? ytPlayer.getCurrentTime() : 0;
-                    pushCinemaState(currentCinemaVideoId, !isPlayingNow, elapsed);
+                    const isPlayingNow = cinemaIframe && !cinemaIframe.src.includes('autoplay=0');
+                    const nextPlaying = !isPlayingNow;
+                    if (cinemaIframe && cinemaIframe.contentWindow) {
+                        const cmd = nextPlaying ? 'playVideo' : 'pauseVideo';
+                        cinemaIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: '' }), '*');
+                    }
+                    pushCinemaState(currentCinemaVideoId, nextPlaying, 0);
                 });
             }
 
@@ -5833,6 +5762,9 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            if (cssRenderer) {
+                cssRenderer.setSize(window.innerWidth, window.innerHeight);
+            }
         }
 
         // Tastatur- und Maussteuerung
