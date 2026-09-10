@@ -1330,8 +1330,10 @@
         // ── LAGER & VERSCHIEBBARE STUEHLE STATE ──
         let warehouseChairs = []; // [{ id, group, seatMesh, seat, defaultPos: {x, z, rotY} }]
         let warehouseResetButtonMesh = null;
-        let movingChairState = null; // { chairObj, ghostFrame, currentRotY, validTarget }
+        let movingChairState = null; // { chairObj, ghostGroup, currentRotY, validTarget }
         let isResettingChairs = false;
+        let warehouseLampBeamMesh = null;
+        let warehouseMosquitoes = null;
         let isCinemaModalOpen = false;
 
         function ensureYouTubeAPI(cb) {
@@ -5062,104 +5064,259 @@
             registerSeat(benchSeat, "Galerie-Sitzbank", new THREE.Vector3(rx + 2.853, 1.15, rz - 0.927), new THREE.Vector3(-Math.cos(dRot), 0, -Math.sin(dRot)));
         }
 
-        // 5. LAGER (West-Nord-West, Pentagon-Position bei rx = -15.692, rz = -5.099)
+        // 5. LAGER (SONST LEER BIS AUF STUEHLE, EINZELNE LAMPE MIT LICHTKEGEL & MUECKEN)
+        function createMosquitoTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext("2d");
+
+            // Weiche Leucht-Aura (Muecke im warmen Lichtstrahl)
+            const grad = ctx.createRadialGradient(16, 16, 1, 16, 16, 15);
+            grad.addColorStop(0, "rgba(254, 240, 138, 1.0)");
+            grad.addColorStop(0.35, "rgba(253, 224, 71, 0.7)");
+            grad.addColorStop(0.7, "rgba(250, 204, 21, 0.25)");
+            grad.addColorStop(1, "rgba(250, 204, 21, 0.0)");
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(16, 16, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Dunkler Insektenkoerper in der Mitte
+            ctx.fillStyle = "#18181b";
+            ctx.beginPath();
+            ctx.ellipse(16, 16, 3.5, 2.0, Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            return tex;
+        }
+
+        function buildWarehouseMosquitoes(rx, rz) {
+            const count = 45;
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const data = [];
+
+            for (let i = 0; i < count; i++) {
+                const baseR = 0.20 + Math.random() * 1.55;
+                const baseY = 1.25 + Math.random() * 1.70;
+                const angle = Math.random() * Math.PI * 2;
+                data.push({
+                    baseR: baseR,
+                    baseY: baseY,
+                    angle: angle,
+                    rotSpeed: (1.4 + Math.random() * 2.6) * (Math.random() > 0.5 ? 1 : -1),
+                    flutterFreq: 24.0 + Math.random() * 16.0,
+                    flutterAmp: 0.035 + Math.random() * 0.035,
+                    wanderFreqX: 1.2 + Math.random() * 2.2,
+                    wanderFreqY: 1.0 + Math.random() * 2.0,
+                    wanderFreqZ: 1.3 + Math.random() * 2.0,
+                    phaseX: Math.random() * Math.PI * 2,
+                    phaseY: Math.random() * Math.PI * 2,
+                    phaseZ: Math.random() * Math.PI * 2
+                });
+
+                positions[i * 3] = rx + baseR * Math.cos(angle);
+                positions[i * 3 + 1] = baseY;
+                positions[i * 3 + 2] = rz + baseR * Math.sin(angle);
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const mat = new THREE.PointsMaterial({
+                size: 0.055,
+                map: createMosquitoTexture(),
+                transparent: true,
+                opacity: 0.90,
+                depthWrite: false,
+                blending: THREE.NormalBlending,
+                sizeAttenuation: true
+            });
+
+            const points = new THREE.Points(geo, mat);
+            points.renderOrder = 995;
+            scene.add(points);
+
+            warehouseMosquitoes = {
+                points: points,
+                geo: geo,
+                positions: positions,
+                data: data,
+                rx: rx,
+                rz: rz
+            };
+        }
+
+        function updateWarehouseMosquitoes(delta) {
+            if (!warehouseMosquitoes) return;
+            const t = clock.getElapsedTime ? clock.getElapsedTime() : performance.now() * 0.001;
+            const { positions, data, rx, rz, geo } = warehouseMosquitoes;
+
+            for (let i = 0; i < data.length; i++) {
+                const m = data[i];
+                m.angle += m.rotSpeed * delta;
+
+                const wanderR = Math.sin(t * m.wanderFreqX + m.phaseX) * 0.35;
+                const wanderY = Math.sin(t * m.wanderFreqY + m.phaseY) * 0.40;
+                const curR = Math.max(0.08, m.baseR + wanderR);
+
+                const flX = Math.sin(t * m.flutterFreq + i * 2.3) * m.flutterAmp;
+                const flY = Math.cos(t * (m.flutterFreq * 1.15) + i * 3.1) * m.flutterAmp;
+                const flZ = Math.sin(t * (m.flutterFreq * 0.85) + i * 1.7) * m.flutterAmp;
+
+                const px = rx + curR * Math.cos(m.angle) + flX;
+                const pz = rz + curR * Math.sin(m.angle) + flZ;
+                const py = Math.max(0.60, Math.min(3.18, m.baseY + wanderY + flY));
+
+                positions[i * 3] = px;
+                positions[i * 3 + 1] = py;
+                positions[i * 3 + 2] = pz;
+            }
+
+            geo.attributes.position.needsUpdate = true;
+        }
+
         function buildLagerRaum() {
             const rx = -15.692, rz = -5.099;
             const doorAngle = 0.3141593; // 18 Grad, zeigt frontal zum Hofzentrum
 
-            // Dunkler industrieller Werkstatt-Estrich
+            // 1. Dunkler Industrie-Betonboden (Raum ansonsten komplett leer!)
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
             const floorMat = new THREE.MeshStandardMaterial({
-                color: 0x27272a,
-                roughness: 0.88,
-                metalness: 0.12
+                color: 0x242427,
+                roughness: 0.90,
+                metalness: 0.10
             });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
             floor.position.set(rx, 0.015, rz);
             scene.add(floor);
 
-            // Industrielle Deckenbeleuchtung (2 Werkstatt-Pendelleuchten mit warmem Licht)
-            [-1.5, 1.5].forEach(ox => {
-                const lampGroup = new THREE.Group();
-                const shade = new THREE.Mesh(
-                    new THREE.ConeGeometry(0.42, 0.28, 20, 1, true),
-                    new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4, metalness: 0.8, side: THREE.DoubleSide })
-                );
-                shade.position.y = 4.0;
-                lampGroup.add(shade);
+            // 2. EINZELNE ZENTRALE LAGER-LAMPE MIT LEUCHTENDEM LICHT
+            const lampGroup = new THREE.Group();
 
-                const bulb = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.08, 16, 16),
-                    new THREE.MeshBasicMaterial({ color: 0xffedd5 })
-                );
-                bulb.position.y = 3.92;
-                lampGroup.add(bulb);
+            // Deckenkabel & Baldachin
+            const cableGeo = new THREE.CylinderGeometry(0.006, 0.006, 1.25, 8);
+            const cableMat = new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.8, roughness: 0.4 });
+            const cable = new THREE.Mesh(cableGeo, cableMat);
+            cable.position.set(0, 3.875, 0);
+            lampGroup.add(cable);
 
-                const light = new THREE.PointLight(0xffedd5, 1.8, 12, 1.5);
-                light.position.y = 3.85;
-                lampGroup.add(light);
+            const canopy = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.04, 16), cableMat);
+            canopy.position.set(0, 4.48, 0);
+            lampGroup.add(canopy);
 
-                lampGroup.position.set(rx + ox * Math.cos(doorAngle + Math.PI/2), 0, rz + ox * Math.sin(doorAngle + Math.PI/2));
-                scene.add(lampGroup);
+            const socket = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.12, 16), cableMat);
+            socket.position.set(0, 3.31, 0);
+            lampGroup.add(socket);
+
+            // Schwarzer Industrie-Reflektorschirm (Breiter Trichter)
+            const shadeGeo = new THREE.CylinderGeometry(0.10, 0.46, 0.26, 24, 1, true);
+            const shadeMatOuter = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.6, metalness: 0.4, side: THREE.FrontSide });
+            const shadeMatInner = new THREE.MeshBasicMaterial({ color: 0xfef3c7, side: THREE.BackSide });
+            const shadeOuter = new THREE.Mesh(shadeGeo, shadeMatOuter);
+            shadeOuter.position.set(0, 3.22, 0);
+            lampGroup.add(shadeOuter);
+            const shadeInner = new THREE.Mesh(shadeGeo, shadeMatInner);
+            shadeInner.position.set(0, 3.22, 0);
+            lampGroup.add(shadeInner);
+
+            // Warm leuchtende Gluehbirne
+            const bulbGeo = new THREE.SphereGeometry(0.075, 16, 16);
+            const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffedd5 });
+            const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+            bulb.position.set(0, 3.15, 0);
+            lampGroup.add(bulb);
+
+            // Echte PointLight-Lichtquelle fuer realistische Raumausleuchtung
+            const lampLight = new THREE.PointLight(0xffedd5, 2.4, 15, 1.2);
+            lampLight.position.set(0, 3.12, 0);
+            lampGroup.add(lampLight);
+
+            lampGroup.position.set(rx, 0, rz);
+            scene.add(lampGroup);
+
+            // 3. VOLUMETRISCHER LICHTKEGEL DER LAGERLAMPE (WIE BEIM PROJEKTOR)
+            const coneH = 3.12;
+            const warehouseBeamGeo = new THREE.CylinderGeometry(0.38, 2.35, coneH, 32, 16, true);
+            warehouseBeamGeo.translate(0, -coneH / 2, 0);
+
+            const coneMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uColor: { value: new THREE.Color(0xfff7ed) },
+                    uOpacity: { value: 0.28 }
+                },
+                vertexShader: [
+                    'varying float vHeight;',
+                    'varying vec3 vNormal;',
+                    'varying vec3 vViewPos;',
+                    'void main() {',
+                    '    vHeight = position.y;',
+                    '    vNormal = normalize(normalMatrix * normal);',
+                    '    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);',
+                    '    vViewPos = -mvPos.xyz;',
+                    '    gl_Position = projectionMatrix * mvPos;',
+                    '}'
+                ].join('\n'),
+                fragmentShader: [
+                    'uniform vec3 uColor;',
+                    'uniform float uOpacity;',
+                    'varying float vHeight;',
+                    'varying vec3 vNormal;',
+                    'varying vec3 vViewPos;',
+                    'void main() {',
+                    '    float normY = clamp(-vHeight / 3.12, 0.0, 1.0);',
+                    '    float floorFade = smoothstep(1.0, 0.76, normY);',
+                    '    float vertFade = pow(1.0 - normY * 0.70, 1.3);',
+                    '    vec3 n = normalize(vNormal);',
+                    '    vec3 v = normalize(vViewPos);',
+                    '    float rim = pow(1.0 - abs(dot(n, v)), 1.3) * 0.55 + 0.45;',
+                    '    float alpha = uOpacity * floorFade * vertFade * rim;',
+                    '    gl_FragColor = vec4(uColor, alpha);',
+                    '}'
+                ].join('\n'),
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
             });
 
-            // ── SCHWERE STAHLREGALE AN DER RUECKWAND MIT KISTEN ──
-            const rackMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 });
-            const crateWoodMat = new THREE.MeshLambertMaterial({ color: 0xa16207 });
-            const boxCardboardMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+            warehouseLampBeamMesh = new THREE.Mesh(warehouseBeamGeo, coneMat);
+            warehouseLampBeamMesh.position.set(rx, 3.15, rz);
+            scene.add(warehouseLampBeamMesh);
 
-            function createStorageRack(w, h, d) {
-                const rackGroup = new THREE.Group();
-                const postGeo = new THREE.BoxGeometry(0.06, h, 0.06);
-                [[-w/2, -d/2], [w/2, -d/2], [-w/2, d/2], [w/2, d/2]].forEach(([px, pz]) => {
-                    const post = new THREE.Mesh(postGeo, rackMat);
-                    post.position.set(px, h/2, pz);
-                    rackGroup.add(post);
-                });
-                const shelfGeo = new THREE.BoxGeometry(w, 0.04, d);
-                [0.12, 1.10, 2.05].forEach(sy => {
-                    const shelf = new THREE.Mesh(shelfGeo, rackMat);
-                    shelf.position.y = sy;
-                    rackGroup.add(shelf);
-                });
-                const crateGeo1 = new THREE.BoxGeometry(0.55, 0.42, 0.50);
-                const crate1 = new THREE.Mesh(crateGeo1, crateWoodMat);
-                crate1.position.set(-0.55, 0.12 + 0.21, 0);
-                rackGroup.add(crate1);
+            // Weicher warmer Leuchtfleck auf dem Betonboden
+            const spotCanvas = document.createElement("canvas");
+            spotCanvas.width = 256;
+            spotCanvas.height = 256;
+            const spCtx = spotCanvas.getContext("2d");
+            const spGrad = spCtx.createRadialGradient(128, 128, 0, 128, 128, 126);
+            spGrad.addColorStop(0, "rgba(254, 240, 138, 0.50)");
+            spGrad.addColorStop(0.45, "rgba(253, 224, 71, 0.22)");
+            spGrad.addColorStop(0.85, "rgba(250, 204, 21, 0.05)");
+            spGrad.addColorStop(1, "rgba(250, 204, 21, 0.0)");
+            spCtx.fillStyle = spGrad;
+            spCtx.fillRect(0, 0, 256, 256);
 
-                const crate2 = new THREE.Mesh(crateGeo1, crateWoodMat);
-                crate2.position.set(0.55, 0.12 + 0.21, 0);
-                rackGroup.add(crate2);
+            const spotTex = new THREE.CanvasTexture(spotCanvas);
+            spotTex.colorSpace = THREE.SRGBColorSpace;
+            const spotMat = new THREE.MeshBasicMaterial({
+                map: spotTex,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            const spotMesh = new THREE.Mesh(new THREE.CircleGeometry(2.30, 32), spotMat);
+            spotMesh.rotation.x = -Math.PI / 2;
+            spotMesh.position.set(rx, 0.022, rz);
+            scene.add(spotMesh);
 
-                const boxGeo = new THREE.BoxGeometry(0.48, 0.38, 0.46);
-                const box1 = new THREE.Mesh(boxGeo, boxCardboardMat);
-                box1.position.set(0, 1.10 + 0.19, 0);
-                rackGroup.add(box1);
+            // 4. MUECKEN IM LICHTKEGEL
+            buildWarehouseMosquitoes(rx, rz);
 
-                return rackGroup;
-            }
-
-            const rack1 = createStorageRack(2.2, 2.4, 0.75);
-            const rackAngle = doorAngle + Math.PI;
-            const r1Pos = {
-                x: rx + Math.cos(rackAngle) * 4.2 - Math.sin(rackAngle) * 1.3,
-                z: rz + Math.sin(rackAngle) * 4.2 + Math.cos(rackAngle) * 1.3
-            };
-            rack1.position.set(r1Pos.x, 0, r1Pos.z);
-            rack1.rotation.y = doorAngle;
-            scene.add(rack1);
-
-            const rack2 = createStorageRack(2.2, 2.4, 0.75);
-            const r2Pos = {
-                x: rx + Math.cos(rackAngle) * 4.2 + Math.sin(rackAngle) * 1.3,
-                z: rz + Math.sin(rackAngle) * 4.2 - Math.cos(rackAngle) * 1.3
-            };
-            rack2.position.set(r2Pos.x, 0, r2Pos.z);
-            rack2.rotation.y = doorAngle;
-            scene.add(rack2);
-
-            // ── MASSIVER BETONKLOTZ MIT ROTEM AUFRAEUMEN-BUTTON ──
+            // ── MASSIVER BETONKLOTZ MIT ROTEM AUFRAEUMEN-BUTTON AN DER WAND ──
             const plinthGroup = new THREE.Group();
             const plinthGeo = new THREE.BoxGeometry(0.80, 0.88, 0.80);
             const plinthMat = new THREE.MeshStandardMaterial({
@@ -5206,12 +5363,12 @@
             signMesh.position.set(0, 0.52, 0.405);
             plinthGroup.add(signMesh);
 
-            const plinthAngle = doorAngle + Math.PI * 0.55;
-            plinthGroup.position.set(rx + Math.cos(plinthAngle) * 3.4, 0, rz + Math.sin(plinthAngle) * 3.4);
-            plinthGroup.rotation.y = doorAngle + Math.PI;
+            const plinthAngle = doorAngle + Math.PI * 0.65;
+            plinthGroup.position.set(rx + Math.cos(plinthAngle) * 3.8, 0, rz + Math.sin(plinthAngle) * 3.8);
+            plinthGroup.rotation.y = plinthAngle + Math.PI;
             scene.add(plinthGroup);
 
-            // ── 5 VERSCHIEBBARE LAGER-STUEHLE ──
+            // ── 5 VERSCHIEBBARE LAGER-STUEHLE (IM LEEREN RAUM BEREITGESTELLT) ──
             buildWarehouseChairs(rx, rz, doorAngle);
         }
 
@@ -5303,49 +5460,115 @@
         function startMovingChair(chairObj) {
             if (!chairObj || movingChairState || isSitting) return;
 
-            // Blauer 3D-Vorschauraum (analog Notiz-Vorschau)
+            const ghostGroup = new THREE.Group();
+
             const w = 0.54, h = 0.86, d = 0.54;
+
+            // 1. Blauer Grundriss auf dem Boden (y = 0.015)
+            const floorOutlineGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-w/2, 0.015, -d/2),
+                new THREE.Vector3( w/2, 0.015, -d/2),
+                new THREE.Vector3( w/2, 0.015,  d/2),
+                new THREE.Vector3(-w/2, 0.015,  d/2),
+                new THREE.Vector3(-w/2, 0.015, -d/2)
+            ]);
+            const floorLine = new THREE.Line(floorOutlineGeo, new THREE.LineBasicMaterial({
+                color: 0x38bdf8,
+                linewidth: 3,
+                depthWrite: false
+            }));
+            ghostGroup.add(floorLine);
+
+            // 2. Blauer 3D-Kastenrahmen (analog Notiz-Vorschau) mit korrekter Tiefenpruefung
             const boxGeo = new THREE.BoxGeometry(w, h, d);
             const edgesGeo = new THREE.EdgesGeometry(boxGeo);
             const lineMat = new THREE.LineBasicMaterial({
                 color: 0x38bdf8,
-                linewidth: 3,
-                depthTest: false
+                linewidth: 2,
+                transparent: true,
+                opacity: 0.85,
+                depthWrite: false
             });
             const ghostFrame = new THREE.LineSegments(edgesGeo, lineMat);
             ghostFrame.position.y = h / 2;
-            ghostFrame.renderOrder = 999;
+            ghostGroup.add(ghostFrame);
 
+            // Dezente halbtransparente blaue Füllung
             const fillMat = new THREE.MeshBasicMaterial({
                 color: 0x0284c7,
                 transparent: true,
-                opacity: 0.18,
-                depthTest: false
+                opacity: 0.10,
+                depthWrite: false
             });
             const fillMesh = new THREE.Mesh(boxGeo, fillMat);
-            fillMesh.renderOrder = 998;
-            ghostFrame.add(fillMesh);
+            fillMesh.position.y = h / 2;
+            ghostGroup.add(fillMesh);
 
-            // Blauer Pfeil in Blickrichtung der Sitzflaeche (Sitzhoehe y = 0.46)
-            const arrowShaft = new THREE.Mesh(
-                new THREE.BoxGeometry(0.06, 0.02, 0.28),
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false })
+            // 3. Holografischer Stuhl-Geist im Blueprint-Stil
+            const ghostChairMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                transparent: true,
+                opacity: 0.35,
+                depthWrite: false
+            });
+            const gSeat = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.06, 0.46), ghostChairMat);
+            gSeat.position.y = 0.46;
+            ghostGroup.add(gSeat);
+
+            const gBack = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.28, 0.05), ghostChairMat);
+            gBack.position.set(0, 0.74, -0.20);
+            ghostGroup.add(gBack);
+
+            const gLegMat = new THREE.MeshBasicMaterial({
+                color: 0x7dd3fc,
+                transparent: true,
+                opacity: 0.45,
+                depthWrite: false
+            });
+            [[-0.20, -0.19], [0.20, -0.19], [-0.20, 0.19], [0.20, 0.19]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.012, 0.45, 8), gLegMat);
+                leg.position.set(lx, 0.225, lz);
+                ghostGroup.add(leg);
+            });
+
+            // 4. Eindeutiger leuchtend blauer Richtungspfeil auf der Sitzflaeche (zeigt exakt nach +Z)
+            const arrowGroup = new THREE.Group();
+            arrowGroup.position.y = 0.50; // Direkt ueber der Sitzflaeche schwebend
+
+            const shaft = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, 0.024, 0.22),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthWrite: false })
             );
-            arrowShaft.position.set(0, 0.47 - h/2, 0.04);
-            arrowShaft.renderOrder = 1000;
-            ghostFrame.add(arrowShaft);
+            shaft.position.z = 0.02;
+            arrowGroup.add(shaft);
 
-            const arrowTip = new THREE.Mesh(
-                new THREE.ConeGeometry(0.10, 0.16, 16),
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false })
+            const tipGeo = new THREE.ConeGeometry(0.13, 0.20, 16);
+            tipGeo.rotateX(Math.PI / 2);
+            const tip = new THREE.Mesh(
+                tipGeo,
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthWrite: false })
             );
-            arrowTip.rotation.x = Math.PI / 2;
-            arrowTip.position.set(0, 0.47 - h/2, 0.24);
-            arrowTip.renderOrder = 1000;
-            ghostFrame.add(arrowTip);
+            tip.position.z = 0.21;
+            arrowGroup.add(tip);
 
-            const ghostGroup = new THREE.Group();
-            ghostGroup.add(ghostFrame);
+            const wingGeo = new THREE.BoxGeometry(0.05, 0.02, 0.12);
+            const leftWing = new THREE.Mesh(wingGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthWrite: false }));
+            leftWing.position.set(-0.07, 0, 0.13);
+            leftWing.rotation.y = Math.PI / 4;
+            arrowGroup.add(leftWing);
+
+            const rightWing = new THREE.Mesh(wingGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthWrite: false }));
+            rightWing.position.set(0.07, 0, 0.13);
+            rightWing.rotation.y = -Math.PI / 4;
+            arrowGroup.add(rightWing);
+
+            ghostGroup.add(arrowGroup);
+
+            // Fuer alle Ghost-Elemente Raycasting deaktivieren (verhindert Selbst-Kollision und Zucken)
+            ghostGroup.traverse(c => {
+                c.raycast = () => {};
+            });
+
             ghostGroup.visible = false;
             scene.add(ghostGroup);
 
@@ -6641,38 +6864,31 @@
                 raycaster.setFromCamera(centerCoords, camera);
 
                 if (movingChairState) {
-                    // Auf dem gesamten Boden ueberall verschiebbar
-                    const floorHits = raycaster.intersectObjects(scene.children, true);
+                    // Praezise und ruckelfreie Bodenprojektion per mathematischer Ebenen-Schnittpunkt-Berechnung
+                    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                    const groundHit = new THREE.Vector3();
                     let validHit = null;
-                    for (const hit of floorHits) {
-                        if (hit.point && Math.abs(hit.point.y) <= 0.35 && hit.distance <= 9.0) {
-                            if (!hit.object.userData || (!hit.object.userData.isMovableChair && hit.object !== movingChairState.ghostGroup)) {
-                                validHit = hit;
-                                break;
-                            }
-                        }
-                    }
 
-                    if (!validHit) {
-                        // Mathematischer Bodenschnittpunkt bei y = 0
-                        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-                        const intersectPt = new THREE.Vector3();
-                        if (raycaster.ray.intersectPlane(plane, intersectPt)) {
-                            const d = camera.position.distanceTo(intersectPt);
-                            if (d <= 9.0 && Math.hypot(intersectPt.x, intersectPt.z) <= 24.5) {
-                                validHit = { point: intersectPt };
+                    if (raycaster.ray.direction.y < -0.01) {
+                        if (raycaster.ray.intersectPlane(groundPlane, groundHit)) {
+                            const d = camera.position.distanceTo(groundHit);
+                            if (d >= 0.8 && d <= 12.0) {
+                                const distFromCenter = Math.hypot(groundHit.x, groundHit.z);
+                                if (distFromCenter <= 24.5) {
+                                    validHit = groundHit;
+                                }
                             }
                         }
                     }
 
                     if (validHit) {
                         movingChairState.ghostGroup.visible = true;
-                        movingChairState.ghostGroup.position.set(validHit.point.x, 0, validHit.point.z);
+                        movingChairState.ghostGroup.position.set(validHit.x, 0, validHit.z);
                         movingChairState.ghostGroup.rotation.y = movingChairState.currentRotY;
 
                         movingChairState.validTarget = {
-                            x: Number(validHit.point.x.toFixed(3)),
-                            z: Number(validHit.point.z.toFixed(3)),
+                            x: Number(validHit.x.toFixed(3)),
+                            z: Number(validHit.z.toFixed(3)),
                             rotY: Number(movingChairState.currentRotY.toFixed(3))
                         };
 
@@ -6955,6 +7171,16 @@
                         projectorBeamMesh.material.uniforms.uOpacity.value = flicker;
                     }
                 }
+            }
+
+            // ── LAGER-MUECKEN & LICHTSTRAHL DER LAGERLAMPE ANIMIEREN ──
+            if (warehouseMosquitoes) {
+                updateWarehouseMosquitoes(delta);
+            }
+            if (warehouseLampBeamMesh && warehouseLampBeamMesh.material.uniforms && warehouseLampBeamMesh.material.uniforms.uOpacity) {
+                const t = clock.getElapsedTime ? clock.getElapsedTime() : performance.now() * 0.001;
+                const lampFlicker = 0.28 + 0.025 * Math.sin(t * 4.2) + 0.015 * Math.cos(t * 9.1);
+                warehouseLampBeamMesh.material.uniforms.uOpacity.value = lampFlicker;
             }
 
             renderer.render(scene, camera);
