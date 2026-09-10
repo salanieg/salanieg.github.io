@@ -1013,6 +1013,19 @@
             console.warn("RTDB initial cinema listener error:", e);
         }
 
+        // Initialen Zustand der Lagerstuehle fuer alle synchron abhoeren
+        try {
+            const initialChairsRef = rtdbRef(rtdb, "worldState/warehouseChairs");
+            onValue(initialChairsRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val && typeof val === "object") {
+                    syncWarehouseChairsFromNetwork(val);
+                }
+            });
+        } catch (e) {
+            console.warn("RTDB initial chairs listener error:", e);
+        }
+
         // ── DOM ELEMENTE ──
         const authContainer = document.getElementById("auth-container");
         const loadingState = document.getElementById("loading-state");
@@ -1313,6 +1326,12 @@
         let currentCinemaPlaying = false;
         let currentCinemaStartedAt = 0;
         let currentCinemaSeekSec = 0;
+
+        // ── LAGER & VERSCHIEBBARE STUEHLE STATE ──
+        let warehouseChairs = []; // [{ id, group, seatMesh, seat, defaultPos: {x, z, rotY} }]
+        let warehouseResetButtonMesh = null;
+        let movingChairState = null; // { chairObj, ghostFrame, currentRotY, validTarget }
+        let isResettingChairs = false;
         let isCinemaModalOpen = false;
 
         function ensureYouTubeAPI(cb) {
@@ -1413,10 +1432,16 @@
             cssCinemaObject = new CSS3DObject(cinemaIframe);
             // 3D-Skalierung: 1280x720 px -> 4.71m x 2.65m (sitzt exakt innerhalb des schwarzen Rahmens)
             cssCinemaObject.scale.set(0.00368, 0.00368, 0.00368);
-            // Westwand des Chillen-Zimmers: 1 cm vor der Traegerleinwand, angehoben auf y = 2.35m
-            cssCinemaObject.position.set(-4.74, 2.35, 16.5);
-            // Drehung nach innen zur Raummitte/Couch (Richtung +X)
-            cssCinemaObject.rotation.y = Math.PI / 2;
+            
+            if (cinemaScreenMesh) {
+                cssCinemaObject.position.copy(cinemaScreenMesh.position);
+                cssCinemaObject.rotation.y = cinemaScreenMesh.rotation.y;
+                // 1 cm vor der Traegerleinwand platzieren
+                cssCinemaObject.translateZ(0.01);
+            } else {
+                cssCinemaObject.position.set(5.86, 2.35, 16.14);
+                cssCinemaObject.rotation.y = 0.9425;
+            }
             cssScene.add(cssCinemaObject);
         }
 
@@ -1980,13 +2005,18 @@
         const WALL_HEIGHT = 5.0;
         const EYE_HEIGHT = 1.70;
 
-        // 4 Satellitenräume mit den vom Nutzer vorgegebenen Namen:
-        // Nord: Arbeit, Süd: Chillen, West: Gaming, Ost: Art
+        // 5 Satellitenraeume in exakter 5-Eck-Symmetrie (Pentagon, alle 72 Grad um den Innenhof):
+        // 0: Nord (-90 deg): Arbeit
+        // 1: Ost-Nord-Ost (-18 deg): Kunst
+        // 2: Sued-Ost (+54 deg): Chillen
+        // 3: Sued-West (+126 deg): Gaming
+        // 4: West-Nord-West (+198 deg / -162 deg): Lager
         const SATELLITE_ROOMS = [
-            { name: "Arbeit", cx: 0, cz: -16.5, radius: 5.5, rotY: 0, doorAngle: Math.PI / 2, pinAngle: Math.PI },
-            { name: "Chillen", cx: 0, cz: 16.5, radius: 5.5, rotY: Math.PI, doorAngle: -Math.PI / 2, pinAngle: 0 },
-            { name: "Gaming", cx: -16.5, cz: 0, radius: 5.5, rotY: Math.PI / 2, doorAngle: 0, pinAngle: Math.PI / 2 },
-            { name: "Kunst", cx: 16.5, cz: 0, radius: 5.5, rotY: -Math.PI / 2, doorAngle: Math.PI } // Keine Beschränkung auf Pinboard
+            { name: "Arbeit", cx: 0.0, cz: -16.5, radius: 5.5, rotY: 0.0, doorAngle: Math.PI / 2, pinAngle: Math.PI },
+            { name: "Kunst", cx: 15.692, cz: -5.099, radius: 5.5, rotY: -1.2566, doorAngle: 2.8274, pinAngle: -0.3142 },
+            { name: "Chillen", cx: 9.698, cz: 13.349, radius: 5.5, rotY: -2.5133, doorAngle: -2.1991, pinAngle: 0.9425 },
+            { name: "Gaming", cx: -9.698, cz: 13.349, radius: 5.5, rotY: 2.5133, doorAngle: -0.9425, pinAngle: 2.1991 },
+            { name: "Lager", cx: -15.692, cz: -5.099, radius: 5.5, rotY: 1.2566, doorAngle: 0.3142, pinAngle: -2.8274 }
         ];
 
         // ── KRONENDÄCHER & TÜRSCHILDER ──
@@ -3861,9 +3891,15 @@
             scene.add(tableGroup);
         }
 
-        // 2. CHILLEN (Süd)
+        // 2. CHILLEN (Sued-Ost, Pentagon-Position bei rx = 9.698, rz = 13.349)
         function buildChillenRaum() {
-            const rx = 0, rz = 16.5;
+            const rx = 9.698, rz = 13.349;
+            const dRot = -0.6283185; // Drehung um -36 Grad
+
+            function rot(dx, dz) {
+                const c = Math.cos(dRot), s = Math.sin(dRot);
+                return { x: dx * c - dz * s, z: dx * s + dz * c };
+            }
 
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
             const floorMat = new THREE.MeshBasicMaterial({ color: 0x1c1917 });
@@ -3871,8 +3907,6 @@
             floor.rotation.x = -Math.PI / 2;
             floor.position.set(rx, 0.015, rz);
             scene.add(floor);
-
-
 
             // Roter runder Teppich
             const rugGeo = new THREE.CircleGeometry(3.4, 48);
@@ -3897,8 +3931,9 @@
                 tableGroup.add(leg);
             });
 
-            // Becher entfernt. Tischgruppe zur Szene hinzufuegen.
-            tableGroup.position.set(rx, 0, rz + 0.4);
+            const rTable = rot(0, 0.4);
+            tableGroup.position.set(rx + rTable.x, 0, rz + rTable.z);
+            tableGroup.rotation.y = dRot;
             scene.add(tableGroup);
 
             // ── MINI-TRIPOD (STATIV) AUF DEM GELBEN TISCH ──
@@ -3944,11 +3979,13 @@
                 tripodGroup.add(legPivot);
             });
 
-            // Auf dem Tisch platziert (Tischplatte bei y = 0.49m)
-            tripodGroup.position.set(-0.25, 0.49, 16.85);
+            // Auf dem Tisch platziert
+            const rTripod = rot(-0.25, 0.35);
+            tripodGroup.position.set(rx + rTripod.x, 0.49, rz + rTripod.z);
+            tripodGroup.rotation.y = dRot;
             scene.add(tripodGroup);
 
-            // ── KINOPROJEKTOR AUF DEM STATIV (SCHWEBT FREI UEBER DEM TISCH) ──
+            // ── KINOPROJEKTOR AUF DEM STATIV ──
             const projectorGroup = new THREE.Group();
 
             // Gehaeuse (edles anthrazitfarbenes Schiefergrau)
@@ -3981,7 +4018,7 @@
             projectorLedMesh.position.set(-0.14, 0.142, -0.09);
             projectorGroup.add(projectorLedMesh);
 
-            // Lichtstrahl-Effekt mit stufenlosem Ausfaden (ShaderMaterial mit sanftem Alpha-Abfall)
+            // Lichtstrahl-Effekt mit stufenlosem Ausfaden
             const beamLen = 2.40;
             const beamGeo = new THREE.CylinderGeometry(0.72, 0.055, beamLen, 32, 16, true);
             beamGeo.translate(0, beamLen / 2, 0);
@@ -4035,14 +4072,65 @@
             projectorFlareMesh.visible = false;
             projectorGroup.add(projectorFlareMesh);
 
-            // Montage direkt auf dem Kugelkopf-Stativteller (y = 0.49 + 0.21 = 0.70m)
-            // Durch die Erhoehung auf dem Stativ verbleiben selbst bei Aufwaertsneigung ca. 8cm Luft zum Tisch!
-            projectorGroup.position.set(-0.25, 0.70, 16.85);
-            // Exakt auf die Kinoleinwand (-4.75, 2.35, 16.5) ausgerichtet
-            projectorGroup.lookAt(-4.75, 2.35, 16.5);
+            // Montage direkt auf dem Kugelkopf-Stativteller
+            const rProj = rot(-0.25, 0.35);
+            projectorGroup.position.set(rx + rProj.x, 0.70, rz + rProj.z);
+
+            // ── VIEWING SCREEN (GRAUE 2D-LEINWAND, WANDFARBE, "Video") ──
+            const csWidth = 5.00;
+            const csHeight = 2.81;
+
+            const csCanvas = document.createElement("canvas");
+            csCanvas.width = 1536;
+            csCanvas.height = 864;
+            const csCtx = csCanvas.getContext("2d");
+
+            csCtx.fillStyle = "#dcdce0";
+            csCtx.fillRect(0, 0, 1536, 864);
+
+            csCtx.lineWidth = 28;
+            csCtx.strokeStyle = "#000000";
+            csCtx.strokeRect(14, 14, 1536 - 28, 864 - 28);
+
+            csCtx.fillStyle = "rgba(0, 0, 0, 0.45)";
+            csCtx.font = 'bold 54px "Quicksand", sans-serif';
+            csCtx.textAlign = "center";
+            csCtx.textBaseline = "middle";
+            csCtx.fillText("Video", 1536 / 2, 864 / 2);
+
+            const csTexture = new THREE.CanvasTexture(csCanvas);
+            csTexture.colorSpace = THREE.SRGBColorSpace;
+            csTexture.needsUpdate = true;
+
+            const csGeo = new THREE.PlaneGeometry(csWidth, csHeight);
+            const csMat = new THREE.MeshLambertMaterial({
+                map: csTexture,
+                side: THREE.DoubleSide
+            });
+            cinemaScreenMesh = new THREE.Mesh(csGeo, csMat);
+
+            const rScreen = rot(-4.75, 0);
+            cinemaScreenMesh.position.set(rx + rScreen.x, 2.35, rz + rScreen.z);
+            cinemaScreenMesh.rotation.y = Math.PI / 2 + dRot;
+            cinemaScreenMesh.userData = { isCinemaScreen: true };
+            scene.add(cinemaScreenMesh);
+
+            // Exakt auf die Kinoleinwand ausgerichtet
+            projectorGroup.lookAt(cinemaScreenMesh.position.x, 2.35, cinemaScreenMesh.position.z);
             scene.add(projectorGroup);
 
-            // Dunkelblaue Polstercouch für 4 Personen
+            // Unsichtbares Interaktions-Volumen fuer verlaessliches Raycasting
+            const rInteract = rot(-4.73, 0);
+            cinemaInteractMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(csWidth + 0.30, csHeight + 0.30),
+                new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide })
+            );
+            cinemaInteractMesh.position.set(rx + rInteract.x, 2.35, rz + rInteract.z);
+            cinemaInteractMesh.rotation.y = Math.PI / 2 + dRot;
+            cinemaInteractMesh.userData = { isCinemaScreen: true };
+            scene.add(cinemaInteractMesh);
+
+            // Dunkelblaue Polstercouch fuer 4 Personen
             const couchGroup = new THREE.Group();
             const blueMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
             const cushionMat = new THREE.MeshLambertMaterial({ color: 0x1d4ed8 });
@@ -4066,21 +4154,24 @@
             const cushionWidth = 0.95;
             const cushionX = [-1.42, -0.47, 0.47, 1.42];
 
+            const rCouch = rot(0, 3.4);
+            couchGroup.position.set(rx + rCouch.x, 0, rz + rCouch.z);
+            couchGroup.rotation.y = dRot;
+
             cushionX.forEach((cx, idx) => {
                 const cushionGeo = new THREE.BoxGeometry(cushionWidth, 0.18, 0.78);
                 const cushionMesh = new THREE.Mesh(cushionGeo, cushionMat);
                 cushionMesh.position.set(cx, 0.31, -0.08);
                 couchGroup.add(cushionMesh);
 
-                const seatWorldPos = new THREE.Vector3(rx + cx, 1.10, rz + 3.4 - 0.08);
-                const lookDir = new THREE.Vector3(0, 0, -1);
+                const rCushion = rot(cx, 3.4 - 0.08);
+                const seatWorldPos = new THREE.Vector3(rx + rCushion.x, 1.10, rz + rCushion.z);
+                const lookDir = new THREE.Vector3(-Math.sin(dRot), 0, -Math.cos(dRot));
                 registerSeat(cushionMesh, `Blaue Couch (Platz ${idx + 1})`, seatWorldPos, lookDir);
             });
-
-            couchGroup.position.set(rx, 0, rz + 3.4);
             scene.add(couchGroup);
 
-            // Stehlampe (interaktiv schaltbar mit [E] / [LMB] & Multiplayer-Sync)
+            // Stehlampe
             const lampGroup = new THREE.Group();
 
             const lampBase = new THREE.Mesh(
@@ -4120,7 +4211,6 @@
             chillenLampLight.visible = false;
             lampGroup.add(chillenLampLight);
 
-            // Unsichtbares Interaktions-Volumen für verlässliches Anvisieren
             chillenLampInteractMesh = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.48, 0.48, 2.3, 12),
                 new THREE.MeshBasicMaterial({ visible: false })
@@ -4129,70 +4219,19 @@
             chillenLampInteractMesh.userData = { isChillenLamp: true };
             lampGroup.add(chillenLampInteractMesh);
 
-            lampGroup.position.set(rx + 3.8, 0, rz + 2.8);
+            const rLamp = rot(3.8, 2.8);
+            lampGroup.position.set(rx + rLamp.x, 0, rz + rLamp.z);
+            lampGroup.rotation.y = dRot;
             scene.add(lampGroup);
-
-            // ── VIEWING SCREEN (GRAUE 2D-LEINWAND WIE WANDFARBE, 30% GROESSER, SCHWARZER RAHMEN, "Video") ──
-            const csWidth = 5.00;
-            const csHeight = 2.81;
-
-            const csCanvas = document.createElement("canvas");
-            csCanvas.width = 1536;
-            csCanvas.height = 864;
-            const csCtx = csCanvas.getContext("2d");
-
-            // Schlichtes mattes Wandgrau wie die Raumwände
-            csCtx.fillStyle = "#dcdce0";
-            csCtx.fillRect(0, 0, 1536, 864);
-
-            // Robuster schwarzer Rahmen exakt wie beim Notizboard
-            csCtx.lineWidth = 28;
-            csCtx.strokeStyle = "#000000";
-            csCtx.strokeRect(14, 14, 1536 - 28, 864 - 28);
-
-            // Schlichter Schriftzug "Video" in der Mitte
-            csCtx.fillStyle = "rgba(0, 0, 0, 0.45)";
-            csCtx.font = 'bold 54px "Quicksand", sans-serif';
-            csCtx.textAlign = "center";
-            csCtx.textBaseline = "middle";
-            csCtx.fillText("Video", 1536 / 2, 864 / 2);
-
-            const csTexture = new THREE.CanvasTexture(csCanvas);
-            csTexture.colorSpace = THREE.SRGBColorSpace;
-            csTexture.needsUpdate = true;
-
-            // 2D-Flachbildschirm (PlaneGeometry, DoubleSide, blickdicht mit natuerlicher Wandbeleuchtung)
-            const csGeo = new THREE.PlaneGeometry(csWidth, csHeight);
-            const csMat = new THREE.MeshLambertMaterial({
-                map: csTexture,
-                side: THREE.DoubleSide
-            });
-            cinemaScreenMesh = new THREE.Mesh(csGeo, csMat);
-
-            // Westwand des Chillen-Raums: Hängt frei im Raum bei x = -4.75m, angehoben auf y = 2.35m
-            // Radius zur Raummitte an den Außenkanten: sqrt((-4.75)^2 + 2.50^2) = 5.368m (< 5.46m Wandradius) -> steht außen nicht über!
-            cinemaScreenMesh.position.set(-4.75, 2.35, rz);
-            cinemaScreenMesh.rotation.y = Math.PI / 2;
-            cinemaScreenMesh.userData = { isCinemaScreen: true };
-            scene.add(cinemaScreenMesh);
-
-            // Unsichtbares Interaktions-Volumen für verlässliches Raycasting (PlaneGeometry, DoubleSide)
-            cinemaInteractMesh = new THREE.Mesh(
-                new THREE.PlaneGeometry(csWidth + 0.30, csHeight + 0.30),
-                new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide })
-            );
-            cinemaInteractMesh.position.set(-4.73, 2.35, rz);
-            cinemaInteractMesh.rotation.y = Math.PI / 2;
-            cinemaInteractMesh.userData = { isCinemaScreen: true };
-            scene.add(cinemaInteractMesh);
 
             // CSS3D Cinema initialisieren
             initCSS3DCinema();
         }
 
-        // 3. GAMING (West)
+        // 3. GAMING (Sued-West, Pentagon-Position bei rx = -9.698, rz = 13.349)
         function buildGamingRaum() {
-            const rx = -16.5, rz = 0;
+            const rx = -9.698, rz = 13.349;
+            const dRot = -0.9424778; // Drehung um -54 Grad
 
             // Dunkler runder Bodenbelag
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
@@ -4570,11 +4609,11 @@
                 dragonGroup.add(buckle);
             });
 
-            dragonGroup.position.set(rx - 2.3, 0, rz - 2.2);
-            dragonGroup.rotation.y = Math.PI * 0.28;
+            dragonGroup.position.set(rx - 3.132, 0, rz + 0.568);
+            dragonGroup.rotation.y = Math.PI * 0.28 + dRot;
             scene.add(dragonGroup);
 
-            const dragonSitPos = new THREE.Vector3(rx - 2.3, 1.45, rz - 2.2);
+            const dragonSitPos = new THREE.Vector3(rx - 3.132, 1.45, rz + 0.568);
             const dragonLookDir = new THREE.Vector3(Math.sin(dragonGroup.rotation.y), 0, Math.cos(dragonGroup.rotation.y));
             registerSeat(saddle, "Freundlicher Gelber Drache", dragonSitPos, dragonLookDir);
 
@@ -4737,11 +4776,11 @@
                 racingGroup.add(pedal);
             });
 
-            racingGroup.position.set(rx + 2.0, 0, rz - 2.0);
-            racingGroup.rotation.y = -Math.PI * 0.30;
+            racingGroup.position.set(rx - 0.442, 0, rz - 2.794);
+            racingGroup.rotation.y = -Math.PI * 0.30 + dRot;
             scene.add(racingGroup);
 
-            const racingSitPos = new THREE.Vector3(rx + 2.0, 0.88, rz - 2.0);
+            const racingSitPos = new THREE.Vector3(rx - 0.442, 0.88, rz - 2.794);
             const racingLookDir = new THREE.Vector3(Math.sin(racingGroup.rotation.y), 0, Math.cos(racingGroup.rotation.y));
             registerSeat(seatBase, "Rennsport-Sitz & Sim-Rig", racingSitPos, racingLookDir);
 
@@ -4960,16 +4999,18 @@
             jpHitBox.userData.isJetpackItem = true;
             jetpackGroup.add(jpHitBox);
 
-            jetpackGroup.position.set(rx - 0.5, 0, rz);
+            jetpackGroup.position.set(rx - 0.294, 0, rz + 0.405);
+            jetpackGroup.rotation.y = dRot;
             scene.add(jetpackGroup);
 
             worldJetpackGroup = jetpackGroup;
             jetpackInteractMesh = jpHitBox;
         }
 
-        // 4. ART (Ost)
+        // 4. ART (Ost-Nord-Ost, Pentagon-Position bei rx = 15.692, rz = -5.099)
         function buildArtRaum() {
-            const rx = 16.5, rz = 0;
+            const rx = 15.692, rz = -5.099;
+            const dRot = -0.3141593; // Drehung um -18 Grad
 
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
             const floorMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f7 });
@@ -5014,11 +5055,437 @@
                 benchGroup.add(leg);
             });
 
-            benchGroup.position.set(rx + 3.2, 0, rz);
-            benchGroup.rotation.y = -Math.PI / 2;
+            benchGroup.position.set(rx + 3.043, 0, rz - 0.989);
+            benchGroup.rotation.y = -Math.PI / 2 + dRot;
             scene.add(benchGroup);
 
-            registerSeat(benchSeat, "Galerie-Sitzbank", new THREE.Vector3(rx + 3.0, 1.15, rz), new THREE.Vector3(-1, 0, 0));
+            registerSeat(benchSeat, "Galerie-Sitzbank", new THREE.Vector3(rx + 2.853, 1.15, rz - 0.927), new THREE.Vector3(-Math.cos(dRot), 0, -Math.sin(dRot)));
+        }
+
+        // 5. LAGER (West-Nord-West, Pentagon-Position bei rx = -15.692, rz = -5.099)
+        function buildLagerRaum() {
+            const rx = -15.692, rz = -5.099;
+            const doorAngle = 0.3141593; // 18 Grad, zeigt frontal zum Hofzentrum
+
+            // Dunkler industrieller Werkstatt-Estrich
+            const floorGeo = new THREE.CircleGeometry(5.42, 48);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x27272a,
+                roughness: 0.88,
+                metalness: 0.12
+            });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(rx, 0.015, rz);
+            scene.add(floor);
+
+            // Industrielle Deckenbeleuchtung (2 Werkstatt-Pendelleuchten mit warmem Licht)
+            [-1.5, 1.5].forEach(ox => {
+                const lampGroup = new THREE.Group();
+                const shade = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.42, 0.28, 20, 1, true),
+                    new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4, metalness: 0.8, side: THREE.DoubleSide })
+                );
+                shade.position.y = 4.0;
+                lampGroup.add(shade);
+
+                const bulb = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.08, 16, 16),
+                    new THREE.MeshBasicMaterial({ color: 0xffedd5 })
+                );
+                bulb.position.y = 3.92;
+                lampGroup.add(bulb);
+
+                const light = new THREE.PointLight(0xffedd5, 1.8, 12, 1.5);
+                light.position.y = 3.85;
+                lampGroup.add(light);
+
+                lampGroup.position.set(rx + ox * Math.cos(doorAngle + Math.PI/2), 0, rz + ox * Math.sin(doorAngle + Math.PI/2));
+                scene.add(lampGroup);
+            });
+
+            // ── SCHWERE STAHLREGALE AN DER RUECKWAND MIT KISTEN ──
+            const rackMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 });
+            const crateWoodMat = new THREE.MeshLambertMaterial({ color: 0xa16207 });
+            const boxCardboardMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+
+            function createStorageRack(w, h, d) {
+                const rackGroup = new THREE.Group();
+                const postGeo = new THREE.BoxGeometry(0.06, h, 0.06);
+                [[-w/2, -d/2], [w/2, -d/2], [-w/2, d/2], [w/2, d/2]].forEach(([px, pz]) => {
+                    const post = new THREE.Mesh(postGeo, rackMat);
+                    post.position.set(px, h/2, pz);
+                    rackGroup.add(post);
+                });
+                const shelfGeo = new THREE.BoxGeometry(w, 0.04, d);
+                [0.12, 1.10, 2.05].forEach(sy => {
+                    const shelf = new THREE.Mesh(shelfGeo, rackMat);
+                    shelf.position.y = sy;
+                    rackGroup.add(shelf);
+                });
+                const crateGeo1 = new THREE.BoxGeometry(0.55, 0.42, 0.50);
+                const crate1 = new THREE.Mesh(crateGeo1, crateWoodMat);
+                crate1.position.set(-0.55, 0.12 + 0.21, 0);
+                rackGroup.add(crate1);
+
+                const crate2 = new THREE.Mesh(crateGeo1, crateWoodMat);
+                crate2.position.set(0.55, 0.12 + 0.21, 0);
+                rackGroup.add(crate2);
+
+                const boxGeo = new THREE.BoxGeometry(0.48, 0.38, 0.46);
+                const box1 = new THREE.Mesh(boxGeo, boxCardboardMat);
+                box1.position.set(0, 1.10 + 0.19, 0);
+                rackGroup.add(box1);
+
+                return rackGroup;
+            }
+
+            const rack1 = createStorageRack(2.2, 2.4, 0.75);
+            const rackAngle = doorAngle + Math.PI;
+            const r1Pos = {
+                x: rx + Math.cos(rackAngle) * 4.2 - Math.sin(rackAngle) * 1.3,
+                z: rz + Math.sin(rackAngle) * 4.2 + Math.cos(rackAngle) * 1.3
+            };
+            rack1.position.set(r1Pos.x, 0, r1Pos.z);
+            rack1.rotation.y = doorAngle;
+            scene.add(rack1);
+
+            const rack2 = createStorageRack(2.2, 2.4, 0.75);
+            const r2Pos = {
+                x: rx + Math.cos(rackAngle) * 4.2 + Math.sin(rackAngle) * 1.3,
+                z: rz + Math.sin(rackAngle) * 4.2 - Math.cos(rackAngle) * 1.3
+            };
+            rack2.position.set(r2Pos.x, 0, r2Pos.z);
+            rack2.rotation.y = doorAngle;
+            scene.add(rack2);
+
+            // ── MASSIVER BETONKLOTZ MIT ROTEM AUFRAEUMEN-BUTTON ──
+            const plinthGroup = new THREE.Group();
+            const plinthGeo = new THREE.BoxGeometry(0.80, 0.88, 0.80);
+            const plinthMat = new THREE.MeshStandardMaterial({
+                color: 0x64748b,
+                roughness: 0.95,
+                metalness: 0.05
+            });
+            const plinthMesh = new THREE.Mesh(plinthGeo, plinthMat);
+            plinthMesh.position.y = 0.44;
+            plinthGroup.add(plinthMesh);
+
+            const rimGeo = new THREE.CylinderGeometry(0.20, 0.23, 0.04, 24);
+            const rimMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.3, metalness: 0.8 });
+            const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+            rimMesh.position.y = 0.88 + 0.02;
+            plinthGroup.add(rimMesh);
+
+            const btnGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.06, 24);
+            const btnMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3, emissive: 0x7f1d1d, emissiveIntensity: 0.4 });
+            warehouseResetButtonMesh = new THREE.Mesh(btnGeo, btnMat);
+            warehouseResetButtonMesh.position.y = 0.88 + 0.06;
+            warehouseResetButtonMesh.userData = { isWarehouseResetButton: true };
+            plinthGroup.add(warehouseResetButtonMesh);
+
+            const signCanvas = document.createElement("canvas");
+            signCanvas.width = 512;
+            signCanvas.height = 160;
+            const sCtx = signCanvas.getContext("2d");
+            sCtx.fillStyle = "#0f172a";
+            sCtx.fillRect(0, 0, 512, 160);
+            sCtx.strokeStyle = "#eab308";
+            sCtx.lineWidth = 12;
+            sCtx.strokeRect(6, 6, 500, 148);
+            sCtx.fillStyle = "#facc15";
+            sCtx.font = 'bold 54px "Quicksand", sans-serif';
+            sCtx.textAlign = "center";
+            sCtx.textBaseline = "middle";
+            sCtx.fillText("AUFRAEUMEN", 256, 80);
+
+            const signTex = new THREE.CanvasTexture(signCanvas);
+            signTex.colorSpace = THREE.SRGBColorSpace;
+            const signMat = new THREE.MeshBasicMaterial({ map: signTex });
+            const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.20), signMat);
+            signMesh.position.set(0, 0.52, 0.405);
+            plinthGroup.add(signMesh);
+
+            const plinthAngle = doorAngle + Math.PI * 0.55;
+            plinthGroup.position.set(rx + Math.cos(plinthAngle) * 3.4, 0, rz + Math.sin(plinthAngle) * 3.4);
+            plinthGroup.rotation.y = doorAngle + Math.PI;
+            scene.add(plinthGroup);
+
+            // ── 5 VERSCHIEBBARE LAGER-STUEHLE ──
+            buildWarehouseChairs(rx, rz, doorAngle);
+        }
+
+        function createWarehouseChairMesh() {
+            const chairGroup = new THREE.Group();
+
+            const seatMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+            const seatGeo = new THREE.BoxGeometry(0.48, 0.06, 0.46);
+            const seatMesh = new THREE.Mesh(seatGeo, seatMat);
+            seatMesh.position.y = 0.46;
+            chairGroup.add(seatMesh);
+
+            const backMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+            const backGeo = new THREE.BoxGeometry(0.46, 0.28, 0.05);
+            const backMesh = new THREE.Mesh(backGeo, backMat);
+            backMesh.position.set(0, 0.74, -0.20);
+            chairGroup.add(backMesh);
+
+            const pipeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.35, metalness: 0.85 });
+            const pipeGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.32, 12);
+            [-0.14, 0.14].forEach(px => {
+                const pipe = new THREE.Mesh(pipeGeo, pipeMat);
+                pipe.position.set(px, 0.60, -0.20);
+                chairGroup.add(pipe);
+            });
+
+            const legGeo = new THREE.CylinderGeometry(0.015, 0.012, 0.45, 12);
+            const rubberFootGeo = new THREE.SphereGeometry(0.018, 10, 8);
+            const rubberMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
+
+            [[-0.20, -0.19], [0.20, -0.19], [-0.20, 0.19], [0.20, 0.19]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(legGeo, pipeMat);
+                leg.position.set(lx, 0.225, lz);
+                chairGroup.add(leg);
+
+                const foot = new THREE.Mesh(rubberFootGeo, rubberMat);
+                foot.position.set(lx, 0.01, lz);
+                chairGroup.add(foot);
+            });
+
+            const braceGeoX = new THREE.BoxGeometry(0.40, 0.016, 0.016);
+            const brace1 = new THREE.Mesh(braceGeoX, pipeMat);
+            brace1.position.set(0, 0.14, -0.19);
+            chairGroup.add(brace1);
+            const brace2 = new THREE.Mesh(braceGeoX, pipeMat);
+            brace2.position.set(0, 0.14, 0.19);
+            chairGroup.add(brace2);
+
+            return { chairGroup, seatMesh };
+        }
+
+        function buildWarehouseChairs(rx, rz, doorAngle) {
+            warehouseChairs = [];
+
+            for (let i = 0; i < 5; i++) {
+                const chairId = 'chair_' + i;
+                const { chairGroup, seatMesh } = createWarehouseChairMesh();
+
+                const lateralOffset = (i - 2) * 0.72;
+                const forwardOffset = 0.8;
+                const defX = rx + lateralOffset * Math.cos(doorAngle + Math.PI/2) + forwardOffset * Math.cos(doorAngle);
+                const defZ = rz + lateralOffset * Math.sin(doorAngle + Math.PI/2) + forwardOffset * Math.sin(doorAngle);
+                const defRotY = doorAngle;
+
+                chairGroup.position.set(defX, 0, defZ);
+                chairGroup.rotation.y = defRotY;
+                scene.add(chairGroup);
+
+                const sitPos = new THREE.Vector3(defX, 1.15, defZ);
+                const lookDir = new THREE.Vector3(Math.sin(defRotY), 0, Math.cos(defRotY));
+                registerSeat(seatMesh, 'Lagerstuhl ' + (i + 1), sitPos, lookDir);
+
+                seatMesh.userData.isMovableChair = true;
+                seatMesh.userData.chairId = chairId;
+
+                const chairObj = {
+                    id: chairId,
+                    group: chairGroup,
+                    seatMesh: seatMesh,
+                    seat: seatMesh.userData.seat,
+                    defaultPos: { x: Number(defX.toFixed(3)), z: Number(defZ.toFixed(3)), rotY: Number(defRotY.toFixed(3)) }
+                };
+                seatMesh.userData.chairObj = chairObj;
+                warehouseChairs.push(chairObj);
+            }
+        }
+
+        // ── VERSCHIEBE-SYSTEM FUER DIE LAGERSTUEHLE (BLAUER RAHMEN & RICHTUNGSPFEIL) ──
+        function startMovingChair(chairObj) {
+            if (!chairObj || movingChairState || isSitting) return;
+
+            // Blauer 3D-Vorschauraum (analog Notiz-Vorschau)
+            const w = 0.54, h = 0.86, d = 0.54;
+            const boxGeo = new THREE.BoxGeometry(w, h, d);
+            const edgesGeo = new THREE.EdgesGeometry(boxGeo);
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 0x38bdf8,
+                linewidth: 3,
+                depthTest: false
+            });
+            const ghostFrame = new THREE.LineSegments(edgesGeo, lineMat);
+            ghostFrame.position.y = h / 2;
+            ghostFrame.renderOrder = 999;
+
+            const fillMat = new THREE.MeshBasicMaterial({
+                color: 0x0284c7,
+                transparent: true,
+                opacity: 0.18,
+                depthTest: false
+            });
+            const fillMesh = new THREE.Mesh(boxGeo, fillMat);
+            fillMesh.renderOrder = 998;
+            ghostFrame.add(fillMesh);
+
+            // Blauer Pfeil in Blickrichtung der Sitzflaeche (Sitzhoehe y = 0.46)
+            const arrowShaft = new THREE.Mesh(
+                new THREE.BoxGeometry(0.06, 0.02, 0.28),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false })
+            );
+            arrowShaft.position.set(0, 0.47 - h/2, 0.04);
+            arrowShaft.renderOrder = 1000;
+            ghostFrame.add(arrowShaft);
+
+            const arrowTip = new THREE.Mesh(
+                new THREE.ConeGeometry(0.10, 0.16, 16),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false })
+            );
+            arrowTip.rotation.x = Math.PI / 2;
+            arrowTip.position.set(0, 0.47 - h/2, 0.24);
+            arrowTip.renderOrder = 1000;
+            ghostFrame.add(arrowTip);
+
+            const ghostGroup = new THREE.Group();
+            ghostGroup.add(ghostFrame);
+            ghostGroup.visible = false;
+            scene.add(ghostGroup);
+
+            chairObj.group.visible = false;
+
+            movingChairState = {
+                chairObj: chairObj,
+                ghostGroup: ghostGroup,
+                currentRotY: chairObj.group.rotation.y,
+                validTarget: null
+            };
+
+            currentInteractTarget = null;
+            interactPrompt.textContent = "[E] oder [LMB] Abstellen\n[R] Drehen\n[ESC] Abbrechen";
+            interactPrompt.classList.add("visible");
+        }
+
+        function rotateMovingChair(delta) {
+            if (!movingChairState) return;
+            movingChairState.currentRotY = (movingChairState.currentRotY + delta) % (Math.PI * 2);
+            if (movingChairState.ghostGroup) {
+                movingChairState.ghostGroup.rotation.y = movingChairState.currentRotY;
+            }
+        }
+
+        function placeMovingChair() {
+            if (!movingChairState || !movingChairState.validTarget) return;
+            const target = movingChairState.validTarget;
+            const chairObj = movingChairState.chairObj;
+
+            chairObj.group.position.set(target.x, 0, target.z);
+            chairObj.group.rotation.y = target.rotY;
+            chairObj.group.visible = true;
+
+            if (chairObj.seat) {
+                chairObj.seat.sitPos.set(target.x, 1.15, target.z);
+                chairObj.seat.lookDir.set(Math.sin(target.rotY), 0, Math.cos(target.rotY));
+            }
+
+            const ghost = movingChairState.ghostGroup;
+            if (ghost) {
+                scene.remove(ghost);
+                ghost.traverse(c => {
+                    if (c.geometry) c.geometry.dispose();
+                    if (c.material) c.material.dispose();
+                });
+            }
+            movingChairState = null;
+            interactPrompt.classList.remove("visible");
+
+            try {
+                const chairRef = rtdbRef(rtdb, "worldState/warehouseChairs/" + chairObj.id);
+                rtdbSet(chairRef, {
+                    x: Number(target.x.toFixed(3)),
+                    z: Number(target.z.toFixed(3)),
+                    rotY: Number(target.rotY.toFixed(3)),
+                    updatedAt: Date.now()
+                });
+            } catch (err) {
+                console.warn("RTDB chair sync error:", err);
+            }
+        }
+
+        function cancelMovingChair() {
+            if (!movingChairState) return;
+            const chairObj = movingChairState.chairObj;
+            if (chairObj && chairObj.group) {
+                chairObj.group.visible = true;
+            }
+            const ghost = movingChairState.ghostGroup;
+            if (ghost) {
+                scene.remove(ghost);
+                ghost.traverse(c => {
+                    if (c.geometry) c.geometry.dispose();
+                    if (c.material) c.material.dispose();
+                });
+            }
+            movingChairState = null;
+            interactPrompt.classList.remove("visible");
+        }
+
+        function triggerWarehouseReset() {
+            if (isResettingChairs || !warehouseResetButtonMesh) return;
+            isResettingChairs = true;
+
+            warehouseResetButtonMesh.position.y -= 0.035;
+            setTimeout(() => {
+                if (warehouseResetButtonMesh) warehouseResetButtonMesh.position.y += 0.035;
+                isResettingChairs = false;
+            }, 180);
+
+            const updatePayload = {};
+            warehouseChairs.forEach(chairObj => {
+                const def = chairObj.defaultPos;
+                chairObj.group.position.set(def.x, 0, def.z);
+                chairObj.group.rotation.y = def.rotY;
+                chairObj.group.visible = true;
+                if (chairObj.seat) {
+                    chairObj.seat.sitPos.set(def.x, 1.15, def.z);
+                    chairObj.seat.lookDir.set(Math.sin(def.rotY), 0, Math.cos(def.rotY));
+                }
+                updatePayload[chairObj.id] = {
+                    x: def.x,
+                    z: def.z,
+                    rotY: def.rotY,
+                    updatedAt: Date.now()
+                };
+            });
+
+            try {
+                const allChairsRef = rtdbRef(rtdb, "worldState/warehouseChairs");
+                rtdbSet(allChairsRef, updatePayload);
+            } catch (err) {
+                console.warn("RTDB reset chairs error:", err);
+            }
+
+            interactPrompt.textContent = "Alle Stuehle ins Lager aufgeraeumt!";
+            interactPrompt.classList.add("visible");
+            setTimeout(() => {
+                if (interactPrompt.textContent === "Alle Stuehle ins Lager aufgeraeumt!") {
+                    interactPrompt.classList.remove("visible");
+                }
+            }, 2500);
+        }
+
+        function syncWarehouseChairsFromNetwork(data) {
+            if (!data || typeof data !== "object") return;
+            warehouseChairs.forEach(chair => {
+                if (movingChairState && movingChairState.chairObj.id === chair.id) return;
+                const chairData = data[chair.id];
+                if (chairData && typeof chairData.x === "number" && typeof chairData.z === "number") {
+                    chair.group.position.set(chairData.x, 0, chairData.z);
+                    chair.group.rotation.y = Number(chairData.rotY || 0);
+                    chair.group.visible = true;
+                    if (chair.seat) {
+                        chair.seat.sitPos.set(chairData.x, 1.15, chairData.z);
+                        chair.seat.lookDir.set(Math.sin(chair.group.rotation.y), 0, Math.cos(chair.group.rotation.y));
+                    }
+                }
+            });
         }
 
 
@@ -5734,7 +6201,7 @@
             const glassDome = createGeodesicGlassDome();
             scene.add(glassDome);
 
-            // 4. Die 4 Satellitenräume
+            // 4. Die 5 Satellitenraeume
             SATELLITE_ROOMS.forEach((room) => {
                 createCircularRoomWall(room);
             });
@@ -5743,6 +6210,7 @@
             buildChillenRaum();
             buildGamingRaum();
             buildArtRaum();
+            buildLagerRaum();
 
             raycaster = new THREE.Raycaster();
             raycaster.far = 4.5;
@@ -5778,6 +6246,14 @@
                     return;
                 }
 
+                if (movingChairState) {
+                    if (movingChairState.validTarget) {
+                        e.preventDefault();
+                        placeMovingChair();
+                    }
+                    return;
+                }
+
                 if (movingNoteState) {
                     if (movingNoteState.validTarget) {
                         e.preventDefault();
@@ -5795,7 +6271,11 @@
                     window.getSelection().removeAllRanges();
                 }
 
-                if (currentInteractTarget.type === 'cinema') {
+                if (currentInteractTarget.type === 'movableChair') {
+                    sitDown(currentInteractTarget.seat);
+                } else if (currentInteractTarget.type === 'warehouseResetButton') {
+                    triggerWarehouseReset();
+                } else if (currentInteractTarget.type === 'cinema') {
                     openCinemaModal();
                 } else if (currentInteractTarget.type === 'chillenLamp') {
                     toggleChillenLamp();
@@ -5907,6 +6387,10 @@
             }
 
             if (e.code === "Escape") {
+                if (movingChairState) {
+                    cancelMovingChair();
+                    return;
+                }
                 if (movingNoteState) {
                     cancelMovingNote();
                     return;
@@ -5954,7 +6438,17 @@
                     }
                     break;
 
+                case "KeyR":
+                    if (movingChairState) {
+                        rotateMovingChair(Math.PI / 4);
+                    }
+                    break;
+
                 case "KeyE":
+                    if (movingChairState) {
+                        placeMovingChair();
+                        return;
+                    }
                     if (movingNoteState) {
                         pinMovingNote();
                         return;
@@ -5964,14 +6458,18 @@
                         return;
                     }
                     if (currentInteractTarget) {
-                        if (currentInteractTarget.type === 'cinema') {
+                        if (currentInteractTarget.type === 'movableChair') {
+                            startMovingChair(currentInteractTarget.chair);
+                        } else if (currentInteractTarget.type === 'warehouseResetButton') {
+                            triggerWarehouseReset();
+                        } else if (currentInteractTarget.type === 'cinema') {
                             openCinemaModal();
                         } else if (currentInteractTarget.type === 'chillenLamp') {
                             toggleChillenLamp();
                         } else if (currentInteractTarget.type === 'note') {
                             startMovingNote();
                         } else if (currentInteractTarget.type === 'seat') {
-                            sitDown(currentInteractTarget.seat);
+                            // Sitzen ist ab jetzt ausschliesslich LMB (Linksklick)
                         } else if (currentInteractTarget.type === 'bike') {
                             mountBike();
                         } else if (currentInteractTarget.type === 'jetpack') {
@@ -6142,7 +6640,51 @@
                 // ── RAYCASTING INTERAKTIONS-PRÜFUNG ──
                 raycaster.setFromCamera(centerCoords, camera);
 
-                if (movingNoteState) {
+                if (movingChairState) {
+                    // Auf dem gesamten Boden ueberall verschiebbar
+                    const floorHits = raycaster.intersectObjects(scene.children, true);
+                    let validHit = null;
+                    for (const hit of floorHits) {
+                        if (hit.point && Math.abs(hit.point.y) <= 0.35 && hit.distance <= 9.0) {
+                            if (!hit.object.userData || (!hit.object.userData.isMovableChair && hit.object !== movingChairState.ghostGroup)) {
+                                validHit = hit;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!validHit) {
+                        // Mathematischer Bodenschnittpunkt bei y = 0
+                        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                        const intersectPt = new THREE.Vector3();
+                        if (raycaster.ray.intersectPlane(plane, intersectPt)) {
+                            const d = camera.position.distanceTo(intersectPt);
+                            if (d <= 9.0 && Math.hypot(intersectPt.x, intersectPt.z) <= 24.5) {
+                                validHit = { point: intersectPt };
+                            }
+                        }
+                    }
+
+                    if (validHit) {
+                        movingChairState.ghostGroup.visible = true;
+                        movingChairState.ghostGroup.position.set(validHit.point.x, 0, validHit.point.z);
+                        movingChairState.ghostGroup.rotation.y = movingChairState.currentRotY;
+
+                        movingChairState.validTarget = {
+                            x: Number(validHit.point.x.toFixed(3)),
+                            z: Number(validHit.point.z.toFixed(3)),
+                            rotY: Number(movingChairState.currentRotY.toFixed(3))
+                        };
+
+                        interactPrompt.textContent = "[E] oder [LMB] Abstellen\n[R] Drehen\n[ESC] Abbrechen";
+                        interactPrompt.classList.add("visible");
+                    } else {
+                        movingChairState.ghostGroup.visible = false;
+                        movingChairState.validTarget = null;
+                        interactPrompt.textContent = "Boden anvisieren zum Abstellen\n[ESC] Abbrechen";
+                        interactPrompt.classList.add("visible");
+                    }
+                } else if (movingNoteState) {
                     let validHit = null;
                     const maxRayDist = 6.5;
 
@@ -6260,8 +6802,11 @@
 
                         // 3b. Cinema Screen Interaktion (NUR wenn man sich im Chillen-Kreis-Raum vor dem Screen befindet)
                         let hitCinema = false;
-                        const distToChillenInteract = Math.hypot(camera.position.x - 0, camera.position.z - 16.5);
-                        const inChillenForInteract = (camera.position.z >= 11.0) && (distToChillenInteract <= 5.25) && (camera.position.x > -4.68);
+                        const chillenRoomInteractObj = SATELLITE_ROOMS.find(r => r.name === "Chillen");
+                        const chIntX = chillenRoomInteractObj ? chillenRoomInteractObj.cx : 9.698;
+                        const chIntZ = chillenRoomInteractObj ? chillenRoomInteractObj.cz : 13.349;
+                        const distToChillenInteract = Math.hypot(camera.position.x - chIntX, camera.position.z - chIntZ);
+                        const inChillenForInteract = (distToChillenInteract <= 5.25);
 
                         if (!hitBike && !hitJp && inChillenForInteract && (cinemaScreenMesh || cinemaInteractMesh)) {
                             const cinemaTargets = [];
@@ -6312,17 +6857,38 @@
                             }
                         }
 
-                        if (!hitBike && !hitJp && !hitCinema && !hitLamp) {
-                            // 4. Sitze
+                        // 3d. Lager Aufraeumen-Button
+                        let hitResetBtn = false;
+                        if (!hitBike && !hitJp && !hitCinema && !hitLamp && warehouseResetButtonMesh) {
+                            const btnHits = raycaster.intersectObject(warehouseResetButtonMesh, true);
+                            if (btnHits.length > 0 && btnHits[0].distance <= 3.2) {
+                                currentInteractTarget = { type: 'warehouseResetButton' };
+                                interactPrompt.textContent = "[E] oder [LMB] Stuehle aufraeumen";
+                                interactPrompt.classList.add("visible");
+                                hitResetBtn = true;
+                            }
+                        }
+
+                        if (!hitBike && !hitJp && !hitCinema && !hitLamp && !hitResetBtn) {
+                            // 4. Sitze (Sitzen immer LMB, Stuhl verschieben immer E)
                             const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
                             if (hitSeats.length > 0 && hitSeats[0].distance <= 2.8) {
                                 const hitObj = hitSeats[0].object;
                                 const seat = hitObj.userData.seat;
-                                currentInteractTarget = {
-                                    type: 'seat',
-                                    seat: seat
-                                };
-                                interactPrompt.textContent = "[E] oder [LMB] Hinsetzen";
+                                if (hitObj.userData.isMovableChair) {
+                                    currentInteractTarget = {
+                                        type: 'movableChair',
+                                        chair: hitObj.userData.chairObj,
+                                        seat: seat
+                                    };
+                                    interactPrompt.textContent = "[LMB] Hinsetzen\n[E] Stuhl verschieben";
+                                } else {
+                                    currentInteractTarget = {
+                                        type: 'seat',
+                                        seat: seat
+                                    };
+                                    interactPrompt.textContent = "[LMB] Hinsetzen";
+                                }
                                 interactPrompt.classList.add("visible");
                             } else {
                                 // 5. Pinboards
@@ -6401,37 +6967,34 @@
                     const px = camera.position.x;
                     const py = camera.position.y;
                     const pz = camera.position.z;
-                    const distToChillen = Math.hypot(px - 0, pz - 16.5);
+                    const chillenRoomObj = SATELLITE_ROOMS.find(r => r.name === "Chillen");
+                    const chX = chillenRoomObj ? chillenRoomObj.cx : 9.698;
+                    const chZ = chillenRoomObj ? chillenRoomObj.cz : 13.349;
+                    const distToChillen = Math.hypot(px - chX, pz - chZ);
 
                     // Video ausschliesslich sichtbar, wenn man sich im "Chillen"-Kreis-Raum befindet:
-                    // 1. Z-Position ab Tueruebergang (pz >= 11.0m)
-                    // 2. Innerhalb der Raumhoehe unter der Decke (py >= -0.5m && py <= 4.8m)
-                    // 3. Innerhalb des Kreis-Raumradius:
-                    //    - Kern-Innenraum: distToChillen <= 4.85m
-                    //    - Tuerbereich (distToChillen bis 5.35m): nur innerhalb der Tueroeffnung (|px| <= 1.85m)
                     let inChillenRoom = false;
-                    if (pz >= 11.0 && py >= -0.5 && py <= 4.8) {
+                    if (py >= -0.5 && py <= 4.8 && distToChillen <= 5.35) {
                         if (distToChillen <= 4.85) {
                             inChillenRoom = true;
-                        } else if (distToChillen <= 5.35 && Math.abs(px) <= 1.85) {
-                            inChillenRoom = true;
+                        } else {
+                            const toCourtyard = new THREE.Vector2(-chX, -chZ).normalize();
+                            const pRel = new THREE.Vector2(px - chX, pz - chZ);
+                            if (pRel.dot(toCourtyard) > 0 && Math.abs(pRel.x * toCourtyard.y - pRel.y * toCourtyard.x) <= 1.85) {
+                                inChillenRoom = true;
+                            }
                         }
                     }
 
                     if (!inChillenRoom) {
                         shouldShow = false; // Ausserhalb des Raumes (Flur, Hof, andere Zimmer, Aussenbereich, Luftraum)
-                    }
-                    // 4. Hinter der Leinwand (x <= -4.68m): Bildrueckseite nicht anzeigen
-                    else if (px <= -4.68) {
-                        shouldShow = false;
-                    }
-                    // 5. Frustum/Blickrichtung: Wenn die Leinwand komplett im Ruecken liegt, ausblenden
-                    else {
+                    } else if (cinemaScreenMesh) {
+                        // Frustum/Blickrichtung: Wenn die Leinwand komplett im Ruecken liegt, ausblenden
                         const camDir = new THREE.Vector3();
                         camera.getWorldDirection(camDir);
-                        const toScreenX = -4.74 - px;
-                        const toScreenZ = 16.5 - pz;
-                        if (camDir.x * toScreenX + camDir.z * toScreenZ < -1.0) {
+                        const toScreenX = cinemaScreenMesh.position.x - px;
+                        const toScreenZ = cinemaScreenMesh.position.z - pz;
+                        if (camDir.x * toScreenX + camDir.z * toScreenZ < -0.8) {
                             shouldShow = false;
                         }
                     }
@@ -7435,7 +7998,16 @@
                 syncCinemaState(snapshot.val(), true);
             });
 
-            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved, unsubLamp, unsubCinema];
+            // Globalen Zustand der Lagerstuehle in Echtzeit abhoeren
+            const worldChairsRef = rtdbRef(rtdb, "worldState/warehouseChairs");
+            const unsubChairs = onValue(worldChairsRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val && typeof val === "object") {
+                    syncWarehouseChairsFromNetwork(val);
+                }
+            });
+
+            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved, unsubLamp, unsubCinema, unsubChairs];
         }
 </script>
 </body>
