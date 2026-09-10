@@ -5810,49 +5810,50 @@
         }
 
         // 4. Ueberarbeitetes, groesseres Jetpack-Modell
-        // ── KOMPLETT NEU DESIGNTES AEROSPACE-JETPACK (MODULAR FUER LAGER, REMOTE & 3RD PERSON) ──
+        // ── KOMPLETT NEU DESIGNTES MINIMALISTISCHES JETPACK (MODULAR FUER LAGER, REMOTE & 3RD PERSON) ──
         function createRedesignedJetpackModel(opts = {}) {
             const jp = new THREE.Group();
 
-            const carbonMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.55, metalness: 0.40 });
-            const titaniumMat = new THREE.MeshStandardMaterial({ color: 0x71717a, roughness: 0.25, metalness: 0.85 });
-            const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.30, metalness: 0.80 });
-            const cyanGlowMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-            const darkChromeMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.35, metalness: 0.75 });
+            // Minimalistische Material-Palette: Mattes Schiefergrau, gebuerstetes Aluminium, Gunmetal & leuchtendes Orange
+            const chassisMat = new THREE.MeshStandardMaterial({
+                color: 0x1e293b,
+                roughness: 0.70,
+                metalness: 0.20
+            });
+            const aluMat = new THREE.MeshStandardMaterial({
+                color: 0x94a3b8,
+                roughness: 0.30,
+                metalness: 0.85
+            });
+            const thrusterMat = new THREE.MeshStandardMaterial({
+                color: 0x0f172a,
+                roughness: 0.50,
+                metalness: 0.50
+            });
+            const nozzleMat = new THREE.MeshStandardMaterial({
+                color: 0x18181b,
+                roughness: 0.35,
+                metalness: 0.85
+            });
             const strapMat = new THREE.MeshLambertMaterial({ color: 0x09090b });
-            const nozzleHotMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
+            const heatRingMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
 
-            // 1. Aerodynamische Carbon-Rueckenplatte mit goldener Zierleiste
-            const backplateGeo = new THREE.BoxGeometry(0.32, 0.52, 0.05);
-            const backplate = new THREE.Mesh(backplateGeo, carbonMat);
-            backplate.position.set(0, 0.42, -0.01);
-            jp.add(backplate);
+            // 1. Schlankes, monolithisches Hauptgehaeuse (Unibody)
+            const mainBodyGeo = new THREE.BoxGeometry(0.26, 0.40, 0.09);
+            const mainBody = new THREE.Mesh(mainBodyGeo, chassisMat);
+            mainBody.position.set(0, 0.40, 0);
+            jp.add(mainBody);
 
-            const spineTrimGeo = new THREE.BoxGeometry(0.08, 0.54, 0.065);
-            const spineTrim = new THREE.Mesh(spineTrimGeo, titaniumMat);
-            spineTrim.position.set(0, 0.42, 0.005);
-            jp.add(spineTrim);
+            // Minimalistischer Aluminium-Akzentstreifen oben
+            const topCapGeo = new THREE.BoxGeometry(0.264, 0.06, 0.094);
+            const topCap = new THREE.Mesh(topCapGeo, aluMat);
+            topCap.position.set(0, 0.57, 0);
+            jp.add(topCap);
 
-            const hazardBadgeGeo = new THREE.BoxGeometry(0.18, 0.04, 0.075);
-            const hazardBadge = new THREE.Mesh(hazardBadgeGeo, goldMat);
-            hazardBadge.position.set(0, 0.62, 0.01);
-            jp.add(hazardBadge);
-
-            // 2. Zentraler Reaktorkern (Hexagonal mit leuchtendem Cyan-Energiefeld)
-            const reactorGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.24, 6);
-            const reactorHousing = new THREE.Mesh(reactorGeo, darkChromeMat);
-            reactorHousing.position.set(0, 0.40, 0.035);
-            jp.add(reactorHousing);
-
-            const reactorCoreGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.16, 6);
-            const reactorCore = new THREE.Mesh(reactorCoreGeo, cyanGlowMat);
-            reactorCore.position.set(0, 0.40, 0.04);
-            jp.add(reactorCore);
-
-            // 3. Zwillings-Turbinen-Pods (Links und Rechts bei X = +/- 0.20, leicht nach aussen geneigt)
+            // 2. Schlanke Zwillings-Duesenkoerper (links und rechts buendig integriert)
             const flameMeshes = [];
 
-            const flameOuterMat = new THREE.MeshBasicMaterial({
+            const jetFlameOuterMat = new THREE.MeshBasicMaterial({
                 color: 0xf97316,
                 transparent: true,
                 opacity: 0.88,
@@ -5860,7 +5861,7 @@
                 depthWrite: false,
                 side: THREE.DoubleSide
             });
-            const flameCoreMat = new THREE.MeshBasicMaterial({
+            const jetFlameCoreMat = new THREE.MeshBasicMaterial({
                 color: 0xfef08a,
                 transparent: true,
                 opacity: 0.95,
@@ -5869,103 +5870,69 @@
                 side: THREE.DoubleSide
             });
 
-            [-0.20, 0.20].forEach((tx) => {
-                const podGroup = new THREE.Group();
-                podGroup.position.set(tx, 0.42, 0);
-                podGroup.rotation.z = (tx < 0 ? 0.07 : -0.07);
+            [-0.14, 0.14].forEach((tx) => {
+                const thrusterGroup = new THREE.Group();
+                thrusterGroup.position.set(tx, 0.40, 0);
 
-                // Haupt-Treibstoff- und Turbinenkoerper
-                const podCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.48, 16), titaniumMat);
-                podGroup.add(podCyl);
+                // Zylindrischer Duesenkoerper
+                const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.36, 16), thrusterMat);
+                thrusterGroup.add(pod);
 
-                // Oberer Lufteinlass-Kopf
-                const intakeCowl = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.095, 0.12, 16), darkChromeMat);
-                intakeCowl.position.y = 0.30;
-                podGroup.add(intakeCowl);
+                // Oberer Aluminium-Abschluss
+                const podTop = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.052, 0.04, 16), aluMat);
+                podTop.position.y = 0.20;
+                thrusterGroup.add(podTop);
 
-                // Einlass-Zentrierkegel / Spinner
-                const spinner = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.035, 0.08, 12), goldMat);
-                spinner.position.y = 0.34;
-                podGroup.add(spinner);
+                // Konische Auslass-Duese
+                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.054, 0.07, 16), nozzleMat);
+                nozzle.position.y = -0.215;
+                thrusterGroup.add(nozzle);
 
-                // Titan- und Gold-Klemmringe
-                [-0.12, 0.12].forEach(ry => {
-                    const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.096, 0.096, 0.024, 16), goldMat);
-                    ring.position.y = ry;
-                    podGroup.add(ring);
-                });
+                // Oranger Hitze-Ring im Duesenmund
+                const ring = new THREE.Mesh(new THREE.RingGeometry(0.012, 0.036, 16), heatRingMat);
+                ring.rotation.x = Math.PI / 2;
+                ring.position.y = -0.252;
+                thrusterGroup.add(ring);
 
-                // Leuchtende Energie-Leiste
-                const conduit = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.34, 0.03), cyanGlowMat);
-                conduit.position.set(tx < 0 ? -0.09 : 0.09, 0, 0.02);
-                podGroup.add(conduit);
+                // Flammenkegel (Aussen orange, Kern leuchtend hellgelb)
+                const outerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.085, 0.48, 16, 1, true), jetFlameOuterMat);
+                outerFlame.position.set(0, -0.50, 0);
+                thrusterGroup.add(outerFlame);
 
-                // Schubduese mit Hitzeschild
-                const nozzleBase = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.065, 0.06, 16), darkChromeMat);
-                nozzleBase.position.y = -0.27;
-                podGroup.add(nozzleBase);
-
-                const nozzleBell = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.095, 0.12, 16), titaniumMat);
-                nozzleBell.position.y = -0.34;
-                podGroup.add(nozzleBell);
-
-                const goldLip = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.009, 8, 16), goldMat);
-                goldLip.rotation.x = Math.PI / 2;
-                goldLip.position.y = -0.40;
-                podGroup.add(goldLip);
-
-                const glowCore = new THREE.Mesh(new THREE.CircleGeometry(0.055, 12), nozzleHotMat);
-                glowCore.rotation.x = Math.PI / 2;
-                glowCore.position.y = -0.395;
-                podGroup.add(glowCore);
-
-                // Flammenkegel
-                const outerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.12, 0.52, 16, 1, true), flameOuterMat);
-                outerFlame.position.set(0, -0.66, 0);
-                podGroup.add(outerFlame);
-
-                const innerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.055, 0.36, 12, 1, true), flameCoreMat);
-                innerFlame.position.set(0, -0.56, 0);
-                podGroup.add(innerFlame);
+                const innerFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.038, 0.32, 12, 1, true), jetFlameCoreMat);
+                innerFlame.position.set(0, -0.42, 0);
+                thrusterGroup.add(innerFlame);
 
                 flameMeshes.push({ outer: outerFlame, inner: innerFlame });
-                jp.add(podGroup);
+                jp.add(thrusterGroup);
             });
 
-            // Tragegurte
-            [-0.11, 0.11].forEach(sx => {
-                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.48, 0.04), strapMat);
-                strap.position.set(sx, 0.44, 0.08);
+            // 3. Schlichte Rueckengurte
+            [-0.08, 0.08].forEach(sx => {
+                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.36, 0.02), strapMat);
+                strap.position.set(sx, 0.40, 0.055);
                 jp.add(strap);
             });
 
-            // Falls auf Lagerstaender montiert: Industrieller Geraetestaender
+            // 4. Minimalistischer Standfuss (nur wenn im Lager auf dem Geraetestaender)
             if (opts.isOnStand) {
-                const standBase = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.05, 0.42), carbonMat);
-                standBase.position.y = 0.025;
-                jp.add(standBase);
+                const standPlate = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.02, 0.24), chassisMat);
+                standPlate.position.y = 0.01;
+                jp.add(standPlate);
 
-                const standTrim = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.015, 0.44), titaniumMat);
-                standTrim.position.y = 0.01;
-                jp.add(standTrim);
-
-                [-0.20, 0.20].forEach(sx => {
-                    const stanchion = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.24, 0.04), titaniumMat);
-                    stanchion.position.set(sx, 0.14, 0);
-                    jp.add(stanchion);
-
-                    const cradle = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.015, 8, 12, Math.PI), goldMat);
-                    cradle.position.set(sx, 0.26, 0);
-                    jp.add(cradle);
+                [-0.14, 0.14].forEach(sx => {
+                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.20, 10), aluMat);
+                    post.position.set(sx, 0.11, 0);
+                    jp.add(post);
                 });
             }
 
             // Unsichtbare Klick- und Raycast-Hitbox
             const hitBox = new THREE.Mesh(
-                new THREE.BoxGeometry(0.90, 0.95, 0.65),
+                new THREE.BoxGeometry(0.55, 0.65, 0.35),
                 new THREE.MeshBasicMaterial({ visible: false })
             );
-            hitBox.position.set(0, 0.45, 0);
+            hitBox.position.set(0, 0.40, 0);
             hitBox.userData = { isJetpackItem: true, jetpackId: opts.id || 'jetpack' };
             jp.add(hitBox);
 
@@ -7386,6 +7353,14 @@
                 case "KeyV":
                     if (!isModalOpen && controls && controls.isLocked) {
                         setCameraMode(!isThirdPersonMode);
+                        interactPrompt.textContent = isThirdPersonMode ? "Kamera: 3rd Person (Verfolger)" : "Kamera: 1st Person (Ego)";
+                        interactPrompt.classList.add("visible");
+                        clearTimeout(window._camPromptTimeout);
+                        window._camPromptTimeout = setTimeout(() => {
+                            if (!movingChairState && !movingNoteState) {
+                                interactPrompt.classList.remove("visible");
+                            }
+                        }, 1500);
                     }
                     break;
                 case "KeyE":
@@ -7621,7 +7596,7 @@
                         if (isSitting && currentSeat) {
                             localPlayerGroup.position.set(currentSeat.sitPos.x, currentSeat.sitPos.y - EYE_HEIGHT, currentSeat.sitPos.z);
                             if (currentSeat.lookDir) {
-                                localPlayerGroup.rotation.y = Math.atan2(currentSeat.lookDir.x, currentSeat.lookDir.z);
+                                localPlayerGroup.rotation.y = Math.atan2(currentSeat.lookDir.x, currentSeat.lookDir.z) + Math.PI;
                             }
                         } else {
                             localPlayerGroup.position.set(playerPos.x, Math.max(0, playerPos.y - EYE_HEIGHT), playerPos.z);
