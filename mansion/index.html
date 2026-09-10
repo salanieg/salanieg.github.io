@@ -2016,9 +2016,9 @@
         const SATELLITE_ROOMS = [
             { name: "Arbeit", cx: 0.0, cz: -16.5, radius: 5.5, rotY: 0.0, doorAngle: Math.PI / 2, pinAngle: Math.PI },
             { name: "Kunst", cx: 15.692, cz: -5.099, radius: 5.5, rotY: -1.2566, doorAngle: 2.8274, pinAngle: -0.3142 },
-            { name: "Chillen", cx: 9.698, cz: 13.349, radius: 5.5, rotY: -2.5133, doorAngle: -2.1991, pinAngle: 0.9425 },
-            { name: "Gaming", cx: -9.698, cz: 13.349, radius: 5.5, rotY: 2.5133, doorAngle: -0.9425, pinAngle: 2.1991 },
-            { name: "Lager", cx: -15.692, cz: -5.099, radius: 5.5, rotY: 1.2566, doorAngle: 0.3142, pinAngle: -2.8274 }
+            { name: "Chillen", cx: 9.698, cz: 13.349, radius: 5.5, rotY: -2.5133, doorAngle: -2.1991, pinAngle: -0.6283 },
+            { name: "Gaming", cx: -9.698, cz: 13.349, radius: 5.5, rotY: 2.5133, doorAngle: -0.9425, pinAngle: 0.6283 },
+            { name: "Lager", cx: -15.692, cz: -5.099, radius: 5.5, rotY: 1.2566, doorAngle: 0.3142, pinAngle: 1.8850 }
         ];
 
         // ── KRONENDÄCHER & TÜRSCHILDER ──
@@ -3896,11 +3896,11 @@
         // 2. CHILLEN (Sued-Ost, Pentagon-Position bei rx = 9.698, rz = 13.349)
         function buildChillenRaum() {
             const rx = 9.698, rz = 13.349;
-            const dRot = -0.6283185; // Drehung um -36 Grad
+            const dRot = 0.6283185; // Drehung um +36 Grad
 
             function rot(dx, dz) {
                 const c = Math.cos(dRot), s = Math.sin(dRot);
-                return { x: dx * c - dz * s, z: dx * s + dz * c };
+                return { x: dx * c + dz * s, z: -dx * s + dz * c };
             }
 
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
@@ -4233,7 +4233,12 @@
         // 3. GAMING (Sued-West, Pentagon-Position bei rx = -9.698, rz = 13.349)
         function buildGamingRaum() {
             const rx = -9.698, rz = 13.349;
-            const dRot = -0.9424778; // Drehung um -54 Grad
+            const dRot = 0.9424778; // Drehung um +54 Grad
+
+            function rot(dx, dz) {
+                const c = Math.cos(dRot), s = Math.sin(dRot);
+                return { x: dx * c + dz * s, z: -dx * s + dz * c };
+            }
 
             // Dunkler runder Bodenbelag
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
@@ -4611,11 +4616,12 @@
                 dragonGroup.add(buckle);
             });
 
-            dragonGroup.position.set(rx - 3.132, 0, rz + 0.568);
+            const rDragon = rot(-2.3, -2.2);
+            dragonGroup.position.set(rx + rDragon.x, 0, rz + rDragon.z);
             dragonGroup.rotation.y = Math.PI * 0.28 + dRot;
             scene.add(dragonGroup);
 
-            const dragonSitPos = new THREE.Vector3(rx - 3.132, 1.45, rz + 0.568);
+            const dragonSitPos = new THREE.Vector3(rx + rDragon.x, 1.45, rz + rDragon.z);
             const dragonLookDir = new THREE.Vector3(Math.sin(dragonGroup.rotation.y), 0, Math.cos(dragonGroup.rotation.y));
             registerSeat(saddle, "Freundlicher Gelber Drache", dragonSitPos, dragonLookDir);
 
@@ -4778,11 +4784,12 @@
                 racingGroup.add(pedal);
             });
 
-            racingGroup.position.set(rx - 0.442, 0, rz - 2.794);
+            const rRacing = rot(2.0, -2.0);
+            racingGroup.position.set(rx + rRacing.x, 0, rz + rRacing.z);
             racingGroup.rotation.y = -Math.PI * 0.30 + dRot;
             scene.add(racingGroup);
 
-            const racingSitPos = new THREE.Vector3(rx - 0.442, 0.88, rz - 2.794);
+            const racingSitPos = new THREE.Vector3(rx + rRacing.x, 0.88, rz + rRacing.z);
             const racingLookDir = new THREE.Vector3(Math.sin(racingGroup.rotation.y), 0, Math.cos(racingGroup.rotation.y));
             registerSeat(seatBase, "Rennsport-Sitz & Sim-Rig", racingSitPos, racingLookDir);
 
@@ -4906,14 +4913,15 @@
             bikeHitBox.userData.isBikeMount = true;
             bikeGroup.add(bikeHitBox);
 
-            bikeGroup.position.set(rx - 2.0, 0, rz + 2.0);
-            bikeGroup.rotation.y = -Math.PI * 0.35;
+            const rBike = rot(-2.0, 2.0);
+            bikeGroup.position.set(rx + rBike.x, 0, rz + rBike.z);
+            bikeGroup.rotation.y = -Math.PI * 0.35 + dRot;
             scene.add(bikeGroup);
 
             worldBikeGroup = bikeGroup;
             bikeInteractMesh = bikeHitBox;
 
-            const bikeSitPos = new THREE.Vector3(rx - 2.0, 1.15, rz + 2.0);
+            const bikeSitPos = new THREE.Vector3(rx + rBike.x, 1.15, rz + rBike.z);
             const bikeLookDir = new THREE.Vector3(Math.sin(bikeGroup.rotation.y), 0, Math.cos(bikeGroup.rotation.y));
             registerSeat(bikeSaddle, "Blaues Fahrrad", bikeSitPos, bikeLookDir);
 
@@ -4943,11 +4951,12 @@
             beanRim.position.set(0, 0.38, 0);
             beanbagGroup.add(beanRim);
 
-            beanbagGroup.position.set(rx + 2.0, 0, rz + 2.0);
-            beanbagGroup.rotation.y = -Math.PI * 0.75;
+            const rBean = rot(2.0, 2.0);
+            beanbagGroup.position.set(rx + rBean.x, 0, rz + rBean.z);
+            beanbagGroup.rotation.y = -Math.PI * 0.75 + dRot;
             scene.add(beanbagGroup);
 
-            const beanSitPos = new THREE.Vector3(rx + 2.0, 0.72, rz + 2.0);
+            const beanSitPos = new THREE.Vector3(rx + rBean.x, 0.72, rz + rBean.z);
             const beanLookDir = new THREE.Vector3(Math.sin(beanbagGroup.rotation.y), 0, Math.cos(beanbagGroup.rotation.y));
             registerSeat(beanSeat, "Fetter Sitzsack", beanSitPos, beanLookDir);
 
@@ -5001,7 +5010,8 @@
             jpHitBox.userData.isJetpackItem = true;
             jetpackGroup.add(jpHitBox);
 
-            jetpackGroup.position.set(rx - 0.294, 0, rz + 0.405);
+            const rJp = rot(-0.5, 0);
+            jetpackGroup.position.set(rx + rJp.x, 0, rz + rJp.z);
             jetpackGroup.rotation.y = dRot;
             scene.add(jetpackGroup);
 
@@ -5012,7 +5022,12 @@
         // 4. ART (Ost-Nord-Ost, Pentagon-Position bei rx = 15.692, rz = -5.099)
         function buildArtRaum() {
             const rx = 15.692, rz = -5.099;
-            const dRot = -0.3141593; // Drehung um -18 Grad
+            const dRot = 0.3141593; // Drehung um +18 Grad
+
+            function rot(dx, dz) {
+                const c = Math.cos(dRot), s = Math.sin(dRot);
+                return { x: dx * c + dz * s, z: -dx * s + dz * c };
+            }
 
             const floorGeo = new THREE.CircleGeometry(5.42, 48);
             const floorMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f7 });
@@ -5057,11 +5072,13 @@
                 benchGroup.add(leg);
             });
 
-            benchGroup.position.set(rx + 3.043, 0, rz - 0.989);
+            const rBench = rot(3.2, 0);
+            benchGroup.position.set(rx + rBench.x, 0, rz + rBench.z);
             benchGroup.rotation.y = -Math.PI / 2 + dRot;
             scene.add(benchGroup);
 
-            registerSeat(benchSeat, "Galerie-Sitzbank", new THREE.Vector3(rx + 2.853, 1.15, rz - 0.927), new THREE.Vector3(-Math.cos(dRot), 0, -Math.sin(dRot)));
+            const rBenchSit = rot(3.0, 0);
+            registerSeat(benchSeat, "Galerie-Sitzbank", new THREE.Vector3(rx + rBenchSit.x, 1.15, rz + rBenchSit.z), new THREE.Vector3(-Math.cos(dRot), 0, Math.sin(dRot)));
         }
 
         // 5. LAGER (SONST LEER BIS AUF STUEHLE, EINZELNE LAMPE MIT LICHTKEGEL & MUECKEN)
@@ -5578,6 +5595,7 @@
                 chairObj: chairObj,
                 ghostGroup: ghostGroup,
                 currentRotY: chairObj.group.rotation.y,
+                rotOffset: 0,
                 validTarget: null
             };
 
@@ -5588,10 +5606,7 @@
 
         function rotateMovingChair(delta) {
             if (!movingChairState) return;
-            movingChairState.currentRotY = (movingChairState.currentRotY + delta) % (Math.PI * 2);
-            if (movingChairState.ghostGroup) {
-                movingChairState.ghostGroup.rotation.y = movingChairState.currentRotY;
-            }
+            movingChairState.rotOffset = ((movingChairState.rotOffset || 0) + delta) % (Math.PI * 2);
         }
 
         function placeMovingChair() {
@@ -6865,6 +6880,12 @@
 
                 if (movingChairState) {
                     // Praezise und ruckelfreie Bodenprojektion per mathematischer Ebenen-Schnittpunkt-Berechnung
+                    const camDir = new THREE.Vector3();
+                    camera.getWorldDirection(camDir);
+                    const playerYaw = Math.atan2(camDir.x, camDir.z);
+                    const chairRotY = playerYaw + (movingChairState.rotOffset || 0);
+                    movingChairState.currentRotY = chairRotY;
+
                     const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
                     const groundHit = new THREE.Vector3();
                     let validHit = null;
@@ -6884,12 +6905,12 @@
                     if (validHit) {
                         movingChairState.ghostGroup.visible = true;
                         movingChairState.ghostGroup.position.set(validHit.x, 0, validHit.z);
-                        movingChairState.ghostGroup.rotation.y = movingChairState.currentRotY;
+                        movingChairState.ghostGroup.rotation.y = chairRotY;
 
                         movingChairState.validTarget = {
                             x: Number(validHit.x.toFixed(3)),
                             z: Number(validHit.z.toFixed(3)),
-                            rotY: Number(movingChairState.currentRotY.toFixed(3))
+                            rotY: Number(chairRotY.toFixed(3))
                         };
 
                         interactPrompt.textContent = "[E] oder [LMB] Abstellen\n[R] Drehen\n[ESC] Abbrechen";
@@ -7042,8 +7063,9 @@
                                         const cx = wHit.object.userData.roomCenter.x;
                                         const cz = wHit.object.userData.roomCenter.y;
                                         const hitAngle = Math.atan2(wHit.point.z - cz, wHit.point.x - cx);
-                                        // Westwand liegt bei hitAngle ca. +PI oder -PI
-                                        let diff = Math.abs(Math.abs(hitAngle) - Math.PI);
+                                        const screenAngle = 2.5133; // Leinwand-Wand im Chillen-Raum (144 Grad)
+                                        let diff = Math.abs(hitAngle - screenAngle);
+                                        while (diff > Math.PI) diff = Math.abs(diff - Math.PI * 2);
                                         if (diff <= 0.65) {
                                             validCinemaHit = true;
                                         }
