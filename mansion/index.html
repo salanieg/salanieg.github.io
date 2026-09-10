@@ -4195,53 +4195,62 @@
         }
 
         // 2. CHILLEN (Sued-Ost, Pentagon-Position bei rx = 9.698, rz = 13.349)
-        // ── EINFACHER WARMER PARKETTBODEN FUER DEN CHILLEN-RAUM ──
+        // ── SCHLICHTER, ELEGANTER PARKETTBODEN FUER DEN CHILLEN-RAUM (MINIMALISTISCH) ──
         function createSimpleParquetTexture() {
             const canvas = document.createElement("canvas");
             canvas.width = 512;
             canvas.height = 512;
             const ctx = canvas.getContext("2d");
 
-            // Warme Grundfarbe: Eichenparkett
-            ctx.fillStyle = "#b88a52";
+            // Warmer, harmonischer Eichenholz-Grundton
+            ctx.fillStyle = "#b89060";
             ctx.fillRect(0, 0, 512, 512);
 
-            const plankW = 32;
-            const plankL = 128;
-            const plankColors = ["#ba8c54", "#c2945c", "#b0824a", "#c79961", "#a97b43", "#bd8f57"];
+            const numCols = 6;
+            const plankW = 512 / numCols;
+            const plankH = 256;
 
-            const cols = 512 / plankW;
-            for (let c = 0; c < cols; c++) {
+            // Sehr dezente, ruhige Helligkeitsvariation im Halbversatz (kein unruhiger Farbmix)
+            for (let c = 0; c < numCols; c++) {
                 const x = c * plankW;
-                // Versatz pro Diele fuer natuerlichen Parkettverband
-                const offset = (c * 53) % plankL;
-                for (let y = -plankL + offset; y < 512 + plankL; y += plankL) {
-                    const colIdx = Math.floor(Math.random() * plankColors.length);
-                    ctx.fillStyle = plankColors[colIdx];
-                    ctx.fillRect(x + 1, y + 1, plankW - 2, plankL - 2);
-
-                    // Feine dezente Holzmaserung entlang der Planke
-                    ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
-                    for (let g = 4; g < plankW - 4; g += 6) {
-                        ctx.fillRect(x + g, y + 1, 1, plankL - 2);
+                const offset = (c % 2 === 1) ? 128 : 0;
+                for (let y = -plankH + offset; y < 512 + plankH; y += plankH) {
+                    if ((c + (y > 100 ? 1 : 0)) % 2 === 0) {
+                        ctx.fillStyle = "rgba(0, 0, 0, 0.035)";
+                        ctx.fillRect(x, y, plankW, plankH);
                     }
                 }
             }
 
-            // Feine Fugenlinien zwischen den Dielen
-            ctx.strokeStyle = "rgba(70, 45, 20, 0.45)";
-            ctx.lineWidth = 1;
-            for (let x = 0; x <= 512; x += plankW) {
+            // Sehr feine, dezente Fugenlinien
+            ctx.strokeStyle = "rgba(50, 30, 15, 0.25)";
+            ctx.lineWidth = 1.5;
+
+            // Laengsfugen
+            for (let c = 0; c <= numCols; c++) {
+                const x = c * plankW;
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, 512);
                 ctx.stroke();
             }
 
+            // Querfugen im Halbversatz
+            for (let c = 0; c < numCols; c++) {
+                const x = c * plankW;
+                const offset = (c % 2 === 1) ? 128 : 0;
+                for (let y = offset; y <= 512; y += plankH) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + plankW, y);
+                    ctx.stroke();
+                }
+            }
+
             const texture = new THREE.CanvasTexture(canvas);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(6, 6);
+            texture.repeat.set(3, 3);
             return texture;
         }
 
@@ -4259,8 +4268,8 @@
             const parquetTex = createSimpleParquetTexture();
             const floorMat = new THREE.MeshStandardMaterial({
                 map: parquetTex,
-                roughness: 0.55,
-                metalness: 0.05
+                roughness: 0.70,
+                metalness: 0.02
             });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
