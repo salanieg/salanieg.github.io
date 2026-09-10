@@ -912,7 +912,7 @@
     </div>
 
     <!-- 6. SYNCHRON-SCREEN MODAL -->
-    <div id="cinema-modal" class="cinema-modal-backdrop">
+    <div id="cinema-modal" class="modal-backdrop">
         <div class="cinema-card">
             <h3>
                 <span>Synchron-Bildschirm (Chillen)</span>
@@ -1507,12 +1507,14 @@
         }
 
         function openCinemaModal() {
+            isModalOpen = true;
             isCinemaModalOpen = true;
             document.getElementById('cinema-modal').classList.add('visible');
             if (controls && controls.isLocked) controls.unlock();
         }
 
         function closeCinemaModal() {
+            isModalOpen = false;
             isCinemaModalOpen = false;
             document.getElementById('cinema-modal').classList.remove('visible');
         }
@@ -4067,10 +4069,10 @@
             csFrame.rotation.y = csRotY;
             scene.add(csFrame);
 
-            // Unsichtbares Interaktions-Volumen (Raycasting bis 5.5 m)
+            // Unsichtbares Interaktions-Volumen für verlässliches Raycasting (DoubleSide, transparent)
             cinemaInteractMesh = new THREE.Mesh(
-                new THREE.CylinderGeometry(csRadius + 0.10, csRadius + 0.10, csHeight + 0.25, 24, 1, true, -csArc / 2 - 0.05, csArc + 0.10),
-                new THREE.MeshBasicMaterial({ visible: false })
+                new THREE.CylinderGeometry(csRadius + 0.12, csRadius + 0.12, csHeight + 0.30, 24, 1, true, -csArc / 2 - 0.08, csArc + 0.16),
+                new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide })
             );
             cinemaInteractMesh.position.set(rx, 2.0, rz);
             cinemaInteractMesh.rotation.y = csRotY;
@@ -5688,6 +5690,21 @@
                 }
             });
 
+            // ── GPU PIPELINE WARMUP & PRE-COMPILATION GEGEN INITIALES RUCKELN ──
+            try {
+                renderer.compile(scene, camera);
+                const savedRotY = camera.rotation.y;
+                for (let a = 0; a < 4; a++) {
+                    camera.rotation.y = a * (Math.PI / 2);
+                    camera.updateMatrixWorld(true);
+                    renderer.render(scene, camera);
+                }
+                camera.rotation.y = savedRotY;
+                camera.updateMatrixWorld(true);
+            } catch (warmupErr) {
+                console.warn("GPU warmup note:", warmupErr);
+            }
+
             clock.start();
             animate();
 
@@ -5763,6 +5780,7 @@
                     closeArtModal();
                     closeViewNoteModal();
                     closeSettingsModal();
+                    closeCinemaModal();
                 }
                 return;
             }
@@ -5877,7 +5895,7 @@
         function animate() {
             animationFrameId = requestAnimationFrame(animate);
 
-            const delta = Math.min(clock.getDelta(), 0.1);
+            const delta = Math.min(clock.getDelta(), 0.05);
 
             // Realistischer Himmel & Sternenhimmel: Zeit & sanftes Überblenden fortführen
             if (skyUniforms) {
@@ -6119,11 +6137,36 @@
                             }
                         }
 
-                        // 3b. Cinema Screen Interaktion
+                        // 3b. Cinema Screen Interaktion (Screen + InteractMesh + Kulante Wandprüfung bis 9.0 m)
                         let hitCinema = false;
-                        if (!hitBike && !hitJp && cinemaInteractMesh) {
-                            const cHits = raycaster.intersectObject(cinemaInteractMesh, false);
-                            if (cHits.length > 0 && cHits[0].distance <= 5.5) {
+                        if (!hitBike && !hitJp && (cinemaScreenMesh || cinemaInteractMesh)) {
+                            const cinemaTargets = [];
+                            if (cinemaScreenMesh) cinemaTargets.push(cinemaScreenMesh);
+                            if (cinemaInteractMesh) cinemaTargets.push(cinemaInteractMesh);
+                            const cHits = raycaster.intersectObjects(cinemaTargets, false);
+
+                            let validCinemaHit = false;
+                            if (cHits.length > 0 && cHits[0].distance <= 9.0) {
+                                validCinemaHit = true;
+                            } else {
+                                // Kulante Erkennung: Wand im Chillen-Zimmer an der Westwand anvisieren
+                                const hitWalls = raycaster.intersectObjects(wallMeshes, false);
+                                if (hitWalls.length > 0 && hitWalls[0].distance <= 9.0) {
+                                    const wHit = hitWalls[0];
+                                    if (wHit.object.userData && wHit.object.userData.isRoomWall && wHit.object.userData.roomName === "Chillen") {
+                                        const cx = wHit.object.userData.roomCenter.x;
+                                        const cz = wHit.object.userData.roomCenter.y;
+                                        const hitAngle = Math.atan2(wHit.point.z - cz, wHit.point.x - cx);
+                                        // Westwand liegt bei hitAngle ca. +PI oder -PI
+                                        let diff = Math.abs(Math.abs(hitAngle) - Math.PI);
+                                        if (diff <= 0.65) {
+                                            validCinemaHit = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (validCinemaHit) {
                                 currentInteractTarget = { type: 'cinema' };
                                 interactPrompt.textContent = "[E] oder [LMB] Bildschirm steuern";
                                 interactPrompt.classList.add("visible");
