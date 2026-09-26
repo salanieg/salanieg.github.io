@@ -4,3 +4,5 @@ dist/
 .claude/
 .vscode/
 *.blend1
+*.bak.html
+blender/output/
