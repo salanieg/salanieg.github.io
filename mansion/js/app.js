@@ -2516,15 +2516,151 @@
             return texture;
         }
 
-        // â”€â”€ RUNDE RAUMWÃ„NDE MIT TÃœREN â”€â”€
+        // ── PBR PLASTER (PUTZ) TEXTUREN & MATERIALIEN ──
+        const pbrTextureLoader = new THREE.TextureLoader();
+
+        const plasterBaseColor = pbrTextureLoader.load('assets/textures/pbr/plaster_color.webp');
+        plasterBaseColor.wrapS = THREE.RepeatWrapping;
+        plasterBaseColor.wrapT = THREE.RepeatWrapping;
+        plasterBaseColor.colorSpace = THREE.SRGBColorSpace;
+        plasterBaseColor.anisotropy = 4;
+
+        const plasterBaseNormal = pbrTextureLoader.load('assets/textures/pbr/plaster_normal.webp');
+        plasterBaseNormal.wrapS = THREE.RepeatWrapping;
+        plasterBaseNormal.wrapT = THREE.RepeatWrapping;
+        plasterBaseNormal.colorSpace = THREE.NoColorSpace;
+        plasterBaseNormal.anisotropy = 4;
+
+        const plasterBaseRoughness = pbrTextureLoader.load('assets/textures/pbr/plaster_roughness.webp');
+        plasterBaseRoughness.wrapS = THREE.RepeatWrapping;
+        plasterBaseRoughness.wrapT = THREE.RepeatWrapping;
+        plasterBaseRoughness.colorSpace = THREE.NoColorSpace;
+        plasterBaseRoughness.anisotropy = 4;
+
+        function createPlasterWallMaterial(repeatX, repeatY, side = THREE.FrontSide) {
+            const colorTex = plasterBaseColor.clone();
+            colorTex.wrapS = THREE.RepeatWrapping;
+            colorTex.wrapT = THREE.RepeatWrapping;
+            colorTex.repeat.set(repeatX, repeatY);
+            colorTex.colorSpace = THREE.SRGBColorSpace;
+            colorTex.anisotropy = 4;
+            colorTex.needsUpdate = true;
+
+            const normalTex = plasterBaseNormal.clone();
+            normalTex.wrapS = THREE.RepeatWrapping;
+            normalTex.wrapT = THREE.RepeatWrapping;
+            normalTex.repeat.set(repeatX, repeatY);
+            normalTex.colorSpace = THREE.NoColorSpace;
+            normalTex.anisotropy = 4;
+            normalTex.needsUpdate = true;
+
+            const roughnessTex = plasterBaseRoughness.clone();
+            roughnessTex.wrapS = THREE.RepeatWrapping;
+            roughnessTex.wrapT = THREE.RepeatWrapping;
+            roughnessTex.repeat.set(repeatX, repeatY);
+            roughnessTex.colorSpace = THREE.NoColorSpace;
+            roughnessTex.anisotropy = 4;
+            roughnessTex.needsUpdate = true;
+
+            return new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                map: colorTex,
+                normalMap: normalTex,
+                normalScale: new THREE.Vector2(0.9, 0.9),
+                roughnessMap: roughnessTex,
+                roughness: 0.92,
+                metalness: 0.0,
+                side: side
+            });
+        }
+
+        // Geteilte Material-Instanzen zur optimalen GPU-Performance und Shader-Kompilierung
+        const plasterCourtyardWallMat = createPlasterWallMaterial(48, 1.65, THREE.BackSide);
+        const plasterRoomOuterWallMat = createPlasterWallMaterial(10, 1.65, THREE.FrontSide);
+        const plasterRoomInnerWallMat = createPlasterWallMaterial(10, 1.65, THREE.BackSide);
+
+        // ── PBR TILES109 (TERRAZZO FLIESEN) TEXTUREN & MATERIALIEN ──
+        const tiles109BaseColor = pbrTextureLoader.load('assets/textures/pbr/tiles109_color.webp');
+        tiles109BaseColor.wrapS = THREE.RepeatWrapping;
+        tiles109BaseColor.wrapT = THREE.RepeatWrapping;
+        tiles109BaseColor.colorSpace = THREE.SRGBColorSpace;
+        tiles109BaseColor.anisotropy = 4;
+
+        const tiles109BaseNormal = pbrTextureLoader.load('assets/textures/pbr/tiles109_normal.webp');
+        tiles109BaseNormal.wrapS = THREE.RepeatWrapping;
+        tiles109BaseNormal.wrapT = THREE.RepeatWrapping;
+        tiles109BaseNormal.colorSpace = THREE.NoColorSpace;
+        tiles109BaseNormal.anisotropy = 4;
+
+        const tiles109BaseRoughness = pbrTextureLoader.load('assets/textures/pbr/tiles109_roughness.webp');
+        tiles109BaseRoughness.wrapS = THREE.RepeatWrapping;
+        tiles109BaseRoughness.wrapT = THREE.RepeatWrapping;
+        tiles109BaseRoughness.colorSpace = THREE.NoColorSpace;
+        tiles109BaseRoughness.anisotropy = 4;
+
+        const tiles109BaseAo = pbrTextureLoader.load('assets/textures/pbr/tiles109_ao.webp');
+        tiles109BaseAo.wrapS = THREE.RepeatWrapping;
+        tiles109BaseAo.wrapT = THREE.RepeatWrapping;
+        tiles109BaseAo.colorSpace = THREE.NoColorSpace;
+        tiles109BaseAo.anisotropy = 4;
+
+        function createTiles109FloorMaterial(repeatX = 16, repeatY = 16) {
+            const colorTex = tiles109BaseColor.clone();
+            colorTex.wrapS = THREE.RepeatWrapping;
+            colorTex.wrapT = THREE.RepeatWrapping;
+            colorTex.repeat.set(repeatX, repeatY);
+            colorTex.colorSpace = THREE.SRGBColorSpace;
+            colorTex.anisotropy = 4;
+            colorTex.needsUpdate = true;
+
+            const normalTex = tiles109BaseNormal.clone();
+            normalTex.wrapS = THREE.RepeatWrapping;
+            normalTex.wrapT = THREE.RepeatWrapping;
+            normalTex.repeat.set(repeatX, repeatY);
+            normalTex.colorSpace = THREE.NoColorSpace;
+            normalTex.anisotropy = 4;
+            normalTex.needsUpdate = true;
+
+            const roughnessTex = tiles109BaseRoughness.clone();
+            roughnessTex.wrapS = THREE.RepeatWrapping;
+            roughnessTex.wrapT = THREE.RepeatWrapping;
+            roughnessTex.repeat.set(repeatX, repeatY);
+            roughnessTex.colorSpace = THREE.NoColorSpace;
+            roughnessTex.anisotropy = 4;
+            roughnessTex.needsUpdate = true;
+
+            const aoTex = tiles109BaseAo.clone();
+            aoTex.wrapS = THREE.RepeatWrapping;
+            aoTex.wrapT = THREE.RepeatWrapping;
+            aoTex.repeat.set(repeatX, repeatY);
+            aoTex.colorSpace = THREE.NoColorSpace;
+            aoTex.anisotropy = 4;
+            aoTex.needsUpdate = true;
+
+            return new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                map: colorTex,
+                normalMap: normalTex,
+                normalScale: new THREE.Vector2(0.85, 0.85),
+                roughnessMap: roughnessTex,
+                roughness: 0.85,
+                aoMap: aoTex,
+                aoMapIntensity: 1.0,
+                metalness: 0.02
+            });
+        }
+
+        const tiles109CourtyardFloorMat = createTiles109FloorMaterial(16, 16);
+
+        // ── RUNDE RAUMWÄNDE MIT TÜREN ──
         function createCircularRoomWall(room) {
             const doorGap = 0.70;
             const wallArc = Math.PI * 2 - doorGap;
 
             if (room.name === "Lager") {
-                // Aussenwand zum Hof hin: Standard-Weiss (FrontSide)
+                // Aussenwand zum Hof hin: PBR-Plaster (FrontSide)
                 const outerWallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
-                const outerWallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.FrontSide });
+                const outerWallMat = plasterRoomOuterWallMat;
                 const outerWallMesh = new THREE.Mesh(outerWallGeo, outerWallMat);
                 outerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
                 outerWallMesh.rotation.y = room.rotY;
@@ -2553,9 +2689,9 @@
                 scene.add(innerWallMesh);
                 wallMeshes.push(innerWallMesh);
             } else if (room.name === "Chillen") {
-                // Aussenwand zum Hof hin: Standard-Weiss (FrontSide)
+                // Aussenwand zum Hof hin: PBR-Plaster (FrontSide)
                 const outerWallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
-                const outerWallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.FrontSide });
+                const outerWallMat = plasterRoomOuterWallMat;
                 const outerWallMesh = new THREE.Mesh(outerWallGeo, outerWallMat);
                 outerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
                 outerWallMesh.rotation.y = room.rotY;
@@ -2584,19 +2720,36 @@
                 scene.add(innerWallMesh);
                 wallMeshes.push(innerWallMesh);
             } else {
-                const wallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
-                const wallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-                const wallMesh = new THREE.Mesh(wallGeo, wallMat);
-                wallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
-                wallMesh.rotation.y = room.rotY;
-                wallMesh.userData = {
+                // Alle weiteren Räume (Arbeit, Kunst, Gaming):
+                // Aussenwand (zum Hof hin): PBR-Plaster (FrontSide)
+                const outerWallGeo = new THREE.CylinderGeometry(room.radius, room.radius, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
+                const outerWallMat = plasterRoomOuterWallMat;
+                const outerWallMesh = new THREE.Mesh(outerWallGeo, outerWallMat);
+                outerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+                outerWallMesh.rotation.y = room.rotY;
+                outerWallMesh.userData = {
                     isRoomWall: true,
                     roomName: room.name,
                     roomCenter: new THREE.Vector2(room.cx, room.cz),
                     radius: room.radius
                 };
-                scene.add(wallMesh);
-                wallMeshes.push(wallMesh);
+                scene.add(outerWallMesh);
+                wallMeshes.push(outerWallMesh);
+
+                // Innenwand (im Raum): PBR-Plaster (BackSide)
+                const innerWallGeo = new THREE.CylinderGeometry(room.radius - 0.005, room.radius - 0.005, WALL_HEIGHT, 48, 1, true, doorGap / 2, wallArc);
+                const innerWallMat = plasterRoomInnerWallMat;
+                const innerWallMesh = new THREE.Mesh(innerWallGeo, innerWallMat);
+                innerWallMesh.position.set(room.cx, WALL_HEIGHT / 2, room.cz);
+                innerWallMesh.rotation.y = room.rotY;
+                innerWallMesh.userData = {
+                    isRoomWall: true,
+                    roomName: room.name,
+                    roomCenter: new THREE.Vector2(room.cx, room.cz),
+                    radius: room.radius - 0.005
+                };
+                scene.add(innerWallMesh);
+                wallMeshes.push(innerWallMesh);
             }
 
             // TÃ¼rpfosten
@@ -3276,123 +3429,6 @@
             const tex = new THREE.CanvasTexture(canvas);
             tex.needsUpdate = true;
             return tex;
-        }
-
-
-        // â”€â”€ HOCHFEINER, DUNKELGRAUER FILZTEPPICH FÃœR DEN HAUPTRAUM (100% NAHTLOS & FRAMELESS) â”€â”€
-        function createDarkGrayFeltCarpetTexture() {
-            const size = 512;
-            const canvas = document.createElement("canvas");
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext("2d");
-
-            // 1. Dunkelgrauer Grundton (Anthrazit / Schiefergrau)
-            ctx.fillStyle = "#272a30";
-            ctx.fillRect(0, 0, size, size);
-
-            const imgData = ctx.getImageData(0, 0, size, size);
-            const data = imgData.data;
-
-            // Deterministischer Zufallsgenerator fÃ¼r gleichmÃ¤ÃŸige, konsistente Wollmischung
-            let seed = 42891;
-            function rnd() {
-                seed = (seed * 16807) % 2147483647;
-                return (seed - 1) / 2147483646;
-            }
-
-            // Exakt periodische Frequenzen (Vielfache von 2*PI/size) fÃ¼r absolut nahtloses, rahmenloses Kacheln
-            const TWO_PI = Math.PI * 2;
-
-            // 2. Feines Filz-Grundrauschen & periodische Melange-Marmorierung
-            for (let y = 0; y < size; y++) {
-                for (let x = 0; x < size; x++) {
-                    const idx = (y * size + x) * 4;
-                    // Hochfrequentes Wollfaser-Korn
-                    const grain = (rnd() - 0.5) * 22;
-                    // Absolut nahtlose, periodische Melange-Wollflocken
-                    const s1 = Math.sin(x * TWO_PI * 6 / size);
-                    const c1 = Math.cos(y * TWO_PI * 6 / size);
-                    const s2 = Math.sin((x + y) * TWO_PI * 4 / size);
-                    const s3 = Math.cos((x - y) * TWO_PI * 3 / size);
-                    const melange = (s1 + c1 + s2 + s3) * 2.5;
-
-                    const baseGray = 38 + grain + melange;
-                    data[idx]     = Math.max(16, Math.min(62, baseGray - 2)); // R
-                    data[idx + 1] = Math.max(18, Math.min(65, baseGray));     // G
-                    data[idx + 2] = Math.max(22, Math.min(70, baseGray + 4)); // B
-                    data[idx + 3] = 255;
-                }
-            }
-            ctx.putImageData(imgData, 0, 0);
-
-            // 3. Tausende feine, wirre Filz-Mikrofasern (nahtlos gekachelt ohne Kantensprung)
-            function drawSeamlessFibers(count, color, alpha, width, minLen, maxLen) {
-                ctx.strokeStyle = color;
-                ctx.lineWidth = width;
-                ctx.lineCap = "round";
-                for (let i = 0; i < count; i++) {
-                    const x0 = rnd() * size;
-                    const y0 = rnd() * size;
-                    const angle = rnd() * Math.PI * 2;
-                    const len = minLen + rnd() * (maxLen - minLen);
-                    const curve = (rnd() - 0.5) * 3.5;
-                    const xm = x0 + Math.cos(angle) * (len * 0.5) + Math.sin(angle) * curve;
-                    const ym = y0 + Math.sin(angle) * (len * 0.5) - Math.cos(angle) * curve;
-                    const x1 = x0 + Math.cos(angle) * len;
-                    const y1 = y0 + Math.sin(angle) * len;
-
-                    ctx.globalAlpha = alpha * (0.6 + rnd() * 0.4);
-
-                    for (let ox of [-size, 0, size]) {
-                        for (let oy of [-size, 0, size]) {
-                            ctx.beginPath();
-                            ctx.moveTo(x0 + ox, y0 + oy);
-                            ctx.quadraticCurveTo(xm + ox, ym + oy, x1 + ox, y1 + oy);
-                            ctx.stroke();
-                        }
-                    }
-                }
-            }
-
-            // Dunkle Tiefenfasern (erzeugen Tiefe und Schatten im Flor)
-            drawSeamlessFibers(1800, "#16181c", 0.55, 0.8, 3, 9);
-            drawSeamlessFibers(1400, "#1f2227", 0.60, 0.9, 4, 11);
-
-            // Mittlere Filzfasern (HauptkÃ¶rper des Teppichs)
-            drawSeamlessFibers(2200, "#2c3037", 0.65, 0.9, 3, 10);
-            drawSeamlessFibers(1800, "#363a43", 0.55, 0.8, 4, 12);
-
-            // Feine helle Melange-Fasern (WollflÃ¶ckchen)
-            drawSeamlessFibers(900, "#484e5a", 0.45, 0.7, 2, 7);
-            drawSeamlessFibers(450, "#565e6d", 0.35, 0.6, 2, 5);
-
-            // 4. Mikroporen von Nadelfilz
-            ctx.fillStyle = "#141518";
-            for (let i = 0; i < 600; i++) {
-                const px = rnd() * size;
-                const py = rnd() * size;
-                const pr = 0.5 + rnd() * 0.8;
-                ctx.globalAlpha = 0.45 * rnd();
-                for (let ox of [-size, 0, size]) {
-                    for (let oy of [-size, 0, size]) {
-                        ctx.beginPath();
-                        ctx.arc(px + ox, py + oy, pr, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-            }
-
-            ctx.globalAlpha = 1.0;
-
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(36, 36); // Ca. 1.33 m KantenlÃ¤nge pro Kachel auf 48 m Durchmesser
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.anisotropy = 8;
-            texture.needsUpdate = true;
-            return texture;
         }
 
         // â”€â”€ MAáºžSTABSGETREUE UV-SKALIERUNG NACH OBJEKTMAáºžEN â”€â”€
@@ -5708,17 +5744,10 @@
 
 
 
-            // 1. Runder Hof-Boden (Radius 24 m): Dunkelgrauer feiner filziger Teppich
+            // 1. Runder Hof-Boden (Radius 24 m): PBR Terrazzo-Fliesen (Tiles109)
             const courtyardFloorGeo = new THREE.CircleGeometry(COURTYARD_RADIUS + 0.2, 64);
-            const feltCarpetTex = createDarkGrayFeltCarpetTexture();
-            const courtyardFloorMat = new THREE.MeshStandardMaterial({
-                map: feltCarpetTex,
-                bumpMap: feltCarpetTex,
-                bumpScale: 0.015,
-                roughness: 0.96, // Filz ist absolut matt und absorbiert Licht gleichmÃ¤ÃŸig
-                metalness: 0.02,
-                color: 0xffffff
-            });
+            courtyardFloorGeo.attributes.uv2 = courtyardFloorGeo.attributes.uv;
+            const courtyardFloorMat = tiles109CourtyardFloorMat;
             const courtyardFloor = new THREE.Mesh(courtyardFloorGeo, courtyardFloorMat);
             courtyardFloor.rotation.x = -Math.PI / 2;
             courtyardFloor.position.y = 0;
@@ -5752,9 +5781,9 @@
             const curvedSpawn = createCurvedSpawnMesh();
             scene.add(curvedSpawn);
 
-            // 3. Hof-AuÃŸenwand (Radius 24)
+            // 3. Hof-Außenwand (Radius 24)
             const outerWallGeo = new THREE.CylinderGeometry(COURTYARD_RADIUS, COURTYARD_RADIUS, WALL_HEIGHT, 64, 1, true);
-            const outerWallMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.BackSide });
+            const outerWallMat = plasterCourtyardWallMat;
             const outerWall = new THREE.Mesh(outerWallGeo, outerWallMat);
             outerWall.position.set(0, WALL_HEIGHT / 2, 0);
             outerWall.userData = { isOuterWall: true };
