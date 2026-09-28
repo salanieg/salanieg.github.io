@@ -8664,10 +8664,9 @@
             // Licht (dynamisch angepasst bei Tag- und Nacht-/Sternenhimmel)
             sceneAmbientLight = new THREE.AmbientLight(0xffffff, 0.7);
             sceneDirLight = new THREE.DirectionalLight(0xfff1e0, 0.6);
-            const chillenRad = (54 * Math.PI) / 180;
-            const lx = Math.cos(chillenRad) * 40;
-            const lz = Math.sin(chillenRad) * 40;
-            sceneDirLight.position.set(lx, 35, lz);
+            // Lichtrichtung exakt aus der Sonnenposition im Himmel (12, 35, 12)
+            const sunDir = new THREE.Vector3(12.0, 35.0, 12.0).normalize();
+            sceneDirLight.position.copy(sunDir.multiplyScalar(50));
             scene.add(sceneDirLight);
             scene.add(sceneAmbientLight);
 
