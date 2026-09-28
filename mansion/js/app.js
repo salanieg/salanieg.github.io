@@ -5565,6 +5565,7 @@
         let heliSearchLight = null;
         let heliBellyLight = null;
         let matBellyLens = null;
+        let heliSearchLightOn = true;
         let heliRemotePilotMesh = null;
         let heliHitBox = null;
         let helipadMesh = null;
@@ -5638,53 +5639,119 @@
             ctx.fillStyle = "#0f172a";
             ctx.fillRect(0, 250, 2048, 6);
 
-            if (!isLeft) {
-                // RECHTE RUMPFFLANKE (+X):
-                // Für den Betrachter von außen: Heck ist links (x=0), Nase ist rechts (x=2048)
-                // Großer roter Schriftzug "SERVERAUFSICHT"
-                ctx.fillStyle = "#dc2626";
-                ctx.font = "bold 84px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
-                ctx.textAlign = "left";
-                ctx.textBaseline = "middle";
-                ctx.fillText("SERVERAUFSICHT", 240, 95);
+            // Großer roter Schriftzug "SERVERAUFSICHT"
+            ctx.fillStyle = "#dc2626";
+            ctx.font = "bold 84px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText("SERVERAUFSICHT", 240, 95);
 
-                // Modellname "FALCON 300 TURBO" in Kobaltblau unter dem Streifen
-                ctx.fillStyle = cobaltBlue;
-                ctx.font = "bold 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
-                ctx.textAlign = "left";
-                ctx.fillText("FALCON 300 TURBO", 245, 205);
-
-                // Luftfahrtkennzeichen "D-SLNG" am Heckrumpf in Kobaltblau
-                ctx.font = "bold 44px monospace";
-                ctx.textAlign = "right";
-                ctx.fillText("D-SLNG", 1850, 95);
-            } else {
-                // LINKE RUMPFFLANKE (-X):
-                // Für den Betrachter von außen: Nase ist links (x=0), Heck ist rechts (x=2048)
-                // Großer roter Schriftzug "SERVERAUFSICHT"
-                ctx.fillStyle = "#dc2626";
-                ctx.font = "bold 84px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
-                ctx.textAlign = "left";
-                ctx.textBaseline = "middle";
-                ctx.fillText("SERVERAUFSICHT", 240, 95);
-
-                // Modellname "FALCON 300 TURBO" in Kobaltblau unter dem Streifen
-                ctx.fillStyle = cobaltBlue;
-                ctx.font = "bold 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
-                ctx.textAlign = "left";
-                ctx.fillText("FALCON 300 TURBO", 245, 205);
-
-                // Luftfahrtkennzeichen "D-SLNG" am Heckrumpf in Kobaltblau
-                ctx.font = "bold 44px monospace";
-                ctx.textAlign = "right";
-                ctx.fillText("D-SLNG", 1850, 95);
-            }
+            // Modellname "FALCON 300 TURBO" in Kobaltblau unter dem Streifen
+            ctx.fillStyle = cobaltBlue;
+            ctx.font = "bold 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText("FALCON 300 TURBO", 245, 205);
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.wrapS = THREE.ClampToEdgeWrapping;
             texture.wrapT = THREE.ClampToEdgeWrapping;
             texture.anisotropy = 8;
             return texture;
+        }
+
+        // Luftfahrtkennzeichen "D-SLNG" für den Heckstab
+        function createTailBoomRegistrationTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, 512, 128);
+
+            ctx.fillStyle = "#0047ab";
+            ctx.font = "bold 64px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("D-SLNG", 256, 64);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.anisotropy = 8;
+            return tex;
+        }
+
+        // Aerodynamische Schnauze am Bug - Aus einem Guss, nahtlos und organisch
+        function createHelicopterNoseGeometry() {
+            const geo = new THREE.BufferGeometry();
+            const rings = 20;
+            const segments = 32;
+            const positions = [];
+            const indices = [];
+
+            for (let i = 0; i < rings; i++) {
+                const u = i / rings;
+                // Exponent p: am Übergang zur Kabine (u=0) leicht eckig (p=4.5) für nahtlosen Anschluss an Boden & Scheibe, zur Spitze (u=1) strömungsgünstig oval (p=2.0)
+                const p = 4.5 * (1 - u) + 2.0 * u;
+                const n = 2 / p;
+
+                const widthFactor = Math.cos(u * Math.PI * 0.5);
+                const rx = 1.02 * Math.pow(Math.max(0, widthFactor), 0.55);
+
+                const yTop = 0.88 - 0.32 * Math.pow(u, 1.2);
+                const yBottom = 0.22 + 0.16 * Math.pow(u, 1.2);
+
+                const cy = (yTop + yBottom) / 2;
+                const ry = (yTop - yBottom) / 2;
+                const cz = 2.75 + u * 0.95;
+
+                for (let j = 0; j < segments; j++) {
+                    const theta = (j / segments) * Math.PI * 2;
+                    const cosT = Math.cos(theta);
+                    const sinT = Math.sin(theta);
+
+                    const sx = Math.sign(cosT) * Math.pow(Math.abs(cosT), n);
+                    const sy = Math.sign(sinT) * Math.pow(Math.abs(sinT), n);
+
+                    const x = rx * sx;
+                    const y = cy + ry * sy;
+                    const z = cz;
+                    positions.push(x, y, z);
+                }
+            }
+
+            const tipIndex = positions.length / 3;
+            const finalYTop = 0.88 - 0.32;
+            const finalYBottom = 0.22 + 0.16;
+            const tipY = (finalYTop + finalYBottom) / 2;
+            const tipZ = 2.75 + 0.95;
+            positions.push(0, tipY, tipZ);
+
+            for (let i = 0; i < rings - 1; i++) {
+                for (let j = 0; j < segments; j++) {
+                    const nextJ = (j + 1) % segments;
+                    const curRow = i * segments;
+                    const nextRow = (i + 1) * segments;
+
+                    const a = curRow + j;
+                    const b = curRow + nextJ;
+                    const c = nextRow + nextJ;
+                    const d = nextRow + j;
+
+                    indices.push(a, b, c);
+                    indices.push(a, c, d);
+                }
+            }
+
+            const lastRow = (rings - 1) * segments;
+            for (let j = 0; j < segments; j++) {
+                const nextJ = (j + 1) % segments;
+                const a = lastRow + j;
+                const b = lastRow + nextJ;
+                indices.push(a, b, tipIndex);
+            }
+
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geo.setIndex(indices);
+            geo.computeVertexNormals();
+            return geo;
         }
 
         function createRotorBlurTexture() {
@@ -5722,61 +5789,32 @@
             return heliMfdTexture;
         }
 
-        // Live-Zeichnen der 3 Cockpit-MFD-Bildschirme (Strikte Farbpalette: Reines Schwarz #000000, Weiß #ffffff, Cybergrün #00ff66)
-        // 1536 x 256 Pixel entsprechen exakt dem 1.50m x 0.25m 3D-Bildschirm (6:1 Seitenverhältnis -> 0% Verzerrung)
-        function updateCockpitMFDs(pitch, roll, yaw, rpm, collective, altitude, speed) {
-            if (!heliMfdContext) return;
-            const ctx = heliMfdContext;
-
-            // Hintergrund: Reines Tiefschwarz
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(0, 0, 1536, 256);
-
-            // Cybergrüne High-Tech Rahmen für die 3 Displays mit Ecken-Akzenten
-            ctx.strokeStyle = "#00ff66";
-            ctx.lineWidth = 2;
-            [8, 520, 1032].forEach(x => {
-                ctx.strokeRect(x, 8, 496, 240);
-                // Subtile Ecken-Markierungen für präzisen Avionik-Look
-                ctx.fillStyle = "#00ff66";
-                ctx.fillRect(x, 8, 10, 3);
-                ctx.fillRect(x, 8, 3, 10);
-                ctx.fillRect(x + 486, 8, 10, 3);
-                ctx.fillRect(x + 493, 8, 3, 10);
-                ctx.fillRect(x, 245, 10, 3);
-                ctx.fillRect(x, 238, 3, 10);
-                ctx.fillRect(x + 486, 245, 10, 3);
-                ctx.fillRect(x + 493, 238, 3, 10);
-            });
-
-            // ── DISPLAY 1: PFD (PRIMARY FLIGHT DISPLAY) ──
+        // Minimalistisches Zeichnen des PFD mit künstlichem Horizont, SPD und ALT
+        function drawPFDScreen(ctx, x0, y0, w, h, pitch, roll, speed, altitude) {
             ctx.save();
             ctx.beginPath();
-            ctx.rect(10, 10, 492, 236);
+            ctx.rect(x0, y0, w, h);
             ctx.clip();
 
-            // PFD Titel
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 12px monospace";
-            ctx.textAlign = "left";
-            ctx.fillText("PFD // ATTITUDE DIRECTOR", 20, 26);
+            // Minimalistischer Cybergrün-Rahmen
+            ctx.strokeStyle = "#00ff66";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x0, y0, w, h);
+
+            const cx = x0 + w / 2;
+            const cy = y0 + h / 2;
 
             // Künstlicher Horizont (Pitch & Roll)
-            const pfdCenterX = 256;
-            const pfdCenterY = 128;
             ctx.save();
-            // Horizont-Clipping zwischen Speed- und Alt-Tapes
             ctx.beginPath();
-            ctx.rect(100, 32, 312, 192);
+            ctx.rect(x0 + 82, y0 + 8, w - 164, h - 16);
             ctx.clip();
 
-            ctx.translate(pfdCenterX, pfdCenterY);
+            ctx.translate(cx, cy);
             ctx.rotate(-roll);
-            // Nase nach vorne neigen: Horizont wandert im Sichtfeld nach oben (-Y in Canvas)
-            const pitchPixelOffset = -pitch * 160;
-            ctx.translate(0, pitchPixelOffset);
+            ctx.translate(0, -pitch * 160);
 
-            // Horizont-Linie (Reinweiß, gestochen scharf)
+            // Horizont-Linie (Reinweiß)
             ctx.strokeStyle = "#ffffff";
             ctx.lineWidth = 2.5;
             ctx.beginPath();
@@ -5786,327 +5824,261 @@
             ctx.lineTo(110, 0);
             ctx.stroke();
 
-            // Nick-Leiter (Pitch Ladder Ticks in Cybergrün)
+            // Nick-Leiter (Pitch Ticks bei 10° und 20° in Cybergrün)
             ctx.strokeStyle = "#00ff66";
             ctx.lineWidth = 1.5;
             ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 10px monospace";
+            ctx.font = "bold 11px monospace";
             ctx.textAlign = "right";
-            for (let deg = -30; deg <= 30; deg += 10) {
-                if (deg === 0) continue;
+            ctx.textBaseline = "middle";
+            [-20, -10, 10, 20].forEach(deg => {
                 const yPos = -deg * (160 / 57.3);
                 ctx.beginPath();
-                ctx.moveTo(-24, yPos);
-                ctx.lineTo(-8, yPos);
-                ctx.moveTo(8, yPos);
-                ctx.lineTo(24, yPos);
+                ctx.moveTo(-18, yPos);
+                ctx.lineTo(-6, yPos);
+                ctx.moveTo(6, yPos);
+                ctx.lineTo(18, yPos);
                 ctx.stroke();
-                ctx.fillText(`${deg > 0 ? "+" : ""}${deg}`, -28, yPos + 3);
-            }
+                ctx.fillText(`${Math.abs(deg)}`, -22, yPos);
+            });
+
             ctx.restore();
 
-            // Flugzeug-Referenzkreuz (Boresight Reticle in Cybergrün & Weiß)
+            // Flugzeug-Referenzkreuz im Zentrum
             ctx.strokeStyle = "#00ff66";
             ctx.lineWidth = 2.5;
             ctx.beginPath();
-            ctx.moveTo(226, 128);
-            ctx.lineTo(246, 128);
-            ctx.lineTo(246, 134);
-            ctx.moveTo(266, 134);
-            ctx.lineTo(266, 128);
-            ctx.lineTo(286, 128);
+            ctx.moveTo(cx - 30, cy);
+            ctx.lineTo(cx - 10, cy);
+            ctx.lineTo(cx - 10, cy + 6);
+            ctx.moveTo(cx + 10, cy + 6);
+            ctx.lineTo(cx + 10, cy);
+            ctx.lineTo(cx + 30, cy);
             ctx.stroke();
 
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
-            ctx.arc(256, 128, 2.5, 0, Math.PI * 2);
+            ctx.arc(cx, cy, 3, 0, Math.PI * 2);
             ctx.fill();
 
-            // Airspeed Tape links
+            // ── SPD ANZEIGE LINKS ──
+            const spdBoxX = x0 + 12;
+            const spdBoxY = y0 + 36;
+            const spdBoxW = 68;
+            const spdBoxH = 168;
+
             ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-            ctx.fillRect(18, 44, 76, 168);
+            ctx.fillRect(spdBoxX, spdBoxY, spdBoxW, spdBoxH);
             ctx.strokeStyle = "#00ff66";
             ctx.lineWidth = 1.5;
-            ctx.strokeRect(18, 44, 76, 168);
+            ctx.strokeRect(spdBoxX, spdBoxY, spdBoxW, spdBoxH);
 
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 10px monospace";
             ctx.textAlign = "center";
-            ctx.fillText("IAS", 56, 62);
+            ctx.textBaseline = "alphabetic";
+            ctx.fillStyle = "#00ff66";
+            ctx.font = "bold 14px monospace";
+            ctx.fillText("SPD", spdBoxX + spdBoxW / 2, spdBoxY + 30);
+
             ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 26px monospace";
-            ctx.fillText(`${Math.round(speed * 3.6)}`, 56, 136);
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 10px monospace";
-            ctx.fillText("KM/H", 56, 160);
+            ctx.font = "bold 30px monospace";
+            ctx.fillText(`${Math.round(speed * 3.6)}`, spdBoxX + spdBoxW / 2, spdBoxY + 98);
 
-            // Altitude Tape rechts
-            ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-            ctx.fillRect(418, 44, 76, 168);
-            ctx.strokeStyle = "#00ff66";
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(418, 44, 76, 168);
-
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 10px monospace";
-            ctx.textAlign = "center";
-            ctx.fillText("ALT", 456, 62);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 26px monospace";
-            ctx.fillText(`${Math.max(0, Math.round(altitude))}`, 456, 136);
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 10px monospace";
-            ctx.fillText("METERS", 456, 160);
-
-            // Status-Zeile unten im PFD
-            ctx.textAlign = "center";
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "10px monospace";
-            ctx.fillText("RADALT: ACTIVE  |  BARO: 1013 HPA", 256, 236);
-            ctx.restore();
-
-            // ── DISPLAY 2: EICAS (ENGINE & ROTOR SYSTEM) ──
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(522, 10, 492, 236);
-            ctx.clip();
-
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 12px monospace";
-            ctx.textAlign = "left";
-            ctx.fillText("EICAS // POWERPLANT", 532, 26);
-
-            // Rotor RPM Kreisbogen (perfekt rund im 6:1 Aspekt)
-            const rpmCenterX = 624;
-            const rpmCenterY = 132;
-            const rpmRadius = 58;
-
-            // Hintergrund-Bogen
-            ctx.strokeStyle = "rgba(0, 255, 102, 0.25)";
-            ctx.lineWidth = 8;
-            ctx.beginPath();
-            ctx.arc(rpmCenterX, rpmCenterY, rpmRadius, Math.PI * 0.75, Math.PI * 2.25);
-            ctx.stroke();
-
-            // Aktiver RPM Bogen in Cybergrün
-            const rpmClamped = Math.max(0, Math.min(1.0, rpm));
-            ctx.strokeStyle = "#00ff66";
-            ctx.lineWidth = 8;
-            ctx.beginPath();
-            ctx.arc(rpmCenterX, rpmCenterY, rpmRadius, Math.PI * 0.75, Math.PI * 0.75 + Math.PI * 1.5 * rpmClamped);
-            ctx.stroke();
-
-            // Digitaler RPM Wert in Weiß
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 24px monospace";
-            ctx.textAlign = "center";
-            ctx.fillText(`${Math.round(rpm * 100)}%`, rpmCenterX, rpmCenterY - 6);
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 10px monospace";
-            ctx.fillText("ROTOR RPM", rpmCenterX, rpmCenterY + 12);
-            const rState = rpm > 0.85 ? "FLIGHT 100%" : (rpm > 0.05 ? "SPOOLING" : "OFF");
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "10px monospace";
-            ctx.fillText(rState, rpmCenterX, rpmCenterY + 28);
-
-            // Rechte Hälfte: Schub & Zwillings-Turbinen
-            // Collective Thrust
-            ctx.textAlign = "left";
             ctx.fillStyle = "#00ff66";
             ctx.font = "bold 11px monospace";
-            ctx.fillText("COLLECTIVE THRUST:", 724, 58);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 12px monospace";
-            ctx.textAlign = "right";
-            ctx.fillText(`${Math.round(collective * 100)}%`, 998, 58);
+            ctx.fillText("KM/H", spdBoxX + spdBoxW / 2, spdBoxY + 138);
 
-            // Schub-Balken
+            // ── ALT ANZEIGE RECHTS ──
+            const altBoxX = x0 + w - 80;
+            const altBoxY = y0 + 36;
+            const altBoxW = 68;
+            const altBoxH = 168;
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+            ctx.fillRect(altBoxX, altBoxY, altBoxW, altBoxH);
             ctx.strokeStyle = "#00ff66";
             ctx.lineWidth = 1.5;
-            ctx.strokeRect(724, 66, 274, 14);
-            ctx.fillStyle = "rgba(0, 255, 102, 0.15)";
-            ctx.fillRect(724, 66, 274, 14);
+            ctx.strokeRect(altBoxX, altBoxY, altBoxW, altBoxH);
 
+            ctx.textAlign = "center";
             ctx.fillStyle = "#00ff66";
-            const colWidth = 274 * Math.max(0, Math.min(1.0, collective));
-            ctx.fillRect(724, 66, colWidth, 14);
+            ctx.font = "bold 14px monospace";
+            ctx.fillText("ALT", altBoxX + altBoxW / 2, altBoxY + 30);
 
-            // 50% Hover-Markierung in Weiß
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(724 + 137, 63);
-            ctx.lineTo(724 + 137, 83);
-            ctx.stroke();
-
-            // Turbine 1 (N1)
-            ctx.textAlign = "left";
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "10px monospace";
-            ctx.fillText("TURBINE 1 (N1):", 724, 106);
             ctx.fillStyle = "#ffffff";
-            ctx.textAlign = "right";
-            ctx.fillText(`${Math.round(rpm * 88)}%`, 998, 106);
-            ctx.fillStyle = "rgba(0, 255, 102, 0.2)";
-            ctx.fillRect(724, 112, 274, 7);
-            ctx.fillStyle = "#00ff66";
-            ctx.fillRect(724, 112, 274 * (rpmClamped * 0.88), 7);
+            ctx.font = "bold 30px monospace";
+            ctx.fillText(`${Math.max(0, Math.round(altitude))}`, altBoxX + altBoxW / 2, altBoxY + 98);
 
-            // Turbine 2 (N2)
-            ctx.textAlign = "left";
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "10px monospace";
-            ctx.fillText("TURBINE 2 (N2):", 724, 138);
-            ctx.fillStyle = "#ffffff";
-            ctx.textAlign = "right";
-            ctx.fillText(`${Math.round(rpm * 89)}%`, 998, 138);
-            ctx.fillStyle = "rgba(0, 255, 102, 0.2)";
-            ctx.fillRect(724, 144, 274, 7);
-            ctx.fillStyle = "#00ff66";
-            ctx.fillRect(724, 144, 274 * (rpmClamped * 0.89), 7);
-
-            // System Statusmeldung
-            ctx.strokeStyle = "#00ff66";
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(724, 172, 274, 52);
-            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-            ctx.fillRect(724, 172, 274, 52);
             ctx.fillStyle = "#00ff66";
             ctx.font = "bold 11px monospace";
-            ctx.textAlign = "center";
-            ctx.fillText("FALCON 300 TURBO // D-SLNG", 861, 192);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "10px monospace";
-            ctx.fillText("SYSTEM STATUS: ALL NOMINAL", 861, 210);
-            ctx.restore();
+            ctx.fillText("M", altBoxX + altBoxW / 2, altBoxY + 138);
 
-            // ── DISPLAY 3: ND (NAVIGATION DISPLAY & KOMPASS) ──
+            ctx.restore();
+        }
+
+        // Live-Zeichnen der Cockpit-Displays (Ultra-clean: Schwarz #000000, Weiß #ffffff, Cybergrün #00ff66)
+        // 1536 x 256 Pixel entsprechen exakt dem 1.50m x 0.25m 3D-Bildschirm (6:1 Seitenverhältnis -> 0% Verzerrung)
+        function updateCockpitMFDs(pitch, roll, yaw, rpm, collective, altitude, speed) {
+            if (!heliMfdContext) return;
+            const ctx = heliMfdContext;
+
+            // Hintergrund: Tiefschwarz
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, 1536, 256);
+
+            // ── BILDSCHIRM LINKS: PFD MIT SPD UND ALT ──
+            drawPFDScreen(ctx, 8, 8, 496, 240, pitch, roll, speed, altitude);
+
+            // ── BILDSCHIRM RECHTS: PFD MIT SPD UND ALT (IDENTISCH FÜR COPILOT) ──
+            drawPFDScreen(ctx, 1032, 8, 496, 240, pitch, roll, speed, altitude);
+
+            // ── MITTLERER BILDSCHIRM: NAV-KREIS (MIT HELIPAD) & PWR-KREIS (SCHUBKRAFT MIT 50% WEISSER MARKIERUNG) ──
             ctx.save();
             ctx.beginPath();
-            ctx.rect(1034, 10, 492, 236);
+            ctx.rect(520, 8, 496, 240);
             ctx.clip();
 
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 12px monospace";
-            ctx.textAlign = "left";
-            ctx.fillText("NAV // TACTICAL RADAR", 1044, 26);
+            ctx.strokeStyle = "#00ff66";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(520, 8, 496, 240);
 
-            const compX = 1146;
-            const compY = 132;
-            const compRadius = 74;
+            // 1. NAV-KREIS (LINKE HÄLFTE DES MITTLEREN BILDSCHIRMS)
+            const navCenterX = 644;
+            const navCenterY = 120;
+            const navRadius = 66;
 
-            // Radar Distanzringe
-            ctx.strokeStyle = "rgba(0, 255, 102, 0.25)";
-            ctx.lineWidth = 1;
+            // Äußerer Kompass-Kreis
+            ctx.strokeStyle = "#00ff66";
+            ctx.lineWidth = 2.0;
             ctx.beginPath();
-            ctx.arc(compX, compY, 42, 0, Math.PI * 2);
+            ctx.arc(navCenterX, navCenterY, navRadius, 0, Math.PI * 2);
             ctx.stroke();
-
-            // Fadenkreuz
-            ctx.beginPath();
-            ctx.moveTo(compX - compRadius, compY);
-            ctx.lineTo(compX + compRadius, compY);
-            ctx.moveTo(compX, compY - compRadius);
-            ctx.lineTo(compX, compY + compRadius);
-            ctx.stroke();
-
-            // Flugzeugsymbol im Zentrum (Reinweißes Dreieck)
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath();
-            ctx.moveTo(compX, compY - 8);
-            ctx.lineTo(compX - 6, compY + 7);
-            ctx.lineTo(compX, compY + 3);
-            ctx.lineTo(compX + 6, compY + 7);
-            ctx.closePath();
-            ctx.fill();
 
             // Rotierende Kompassrose
             ctx.save();
-            ctx.translate(compX, compY);
+            ctx.translate(navCenterX, navCenterY);
             ctx.rotate(-yaw);
 
-            // Äußerer Kompassring in Cybergrün
-            ctx.strokeStyle = "#00ff66";
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(0, 0, compRadius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Striche alle 30 Grad
+            // Gradstriche alle 30 Grad
             for (let a = 0; a < 360; a += 30) {
                 const rad = (a * Math.PI) / 180;
+                ctx.strokeStyle = (a % 90 === 0) ? "#00ff66" : "rgba(0, 255, 102, 0.4)";
+                ctx.lineWidth = (a % 90 === 0) ? 2 : 1;
                 ctx.beginPath();
-                ctx.moveTo(Math.cos(rad) * 66, Math.sin(rad) * 66);
-                ctx.lineTo(Math.cos(rad) * compRadius, Math.sin(rad) * compRadius);
+                ctx.moveTo(Math.cos(rad) * (navRadius - 10), Math.sin(rad) * (navRadius - 10));
+                ctx.lineTo(Math.cos(rad) * navRadius, Math.sin(rad) * navRadius);
                 ctx.stroke();
             }
 
-            // Himmelsrichtungen (N in Cybergrün, E, S, W in Weiß)
+            // Himmelsrichtungen
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.font = "bold 13px monospace";
 
+            // N in Cybergrün mit kleiner Dreiecksspitze
             ctx.fillStyle = "#00ff66";
-            ctx.fillText("N", 0, -56);
+            ctx.fillText("N", 0, -(navRadius - 18));
             ctx.beginPath();
-            ctx.moveTo(0, -71);
-            ctx.lineTo(-4, -64);
-            ctx.lineTo(4, -64);
+            ctx.moveTo(0, -navRadius + 2);
+            ctx.lineTo(-4, -navRadius + 9);
+            ctx.lineTo(4, -navRadius + 9);
             ctx.closePath();
             ctx.fill();
 
             ctx.fillStyle = "#ffffff";
-            ctx.fillText("S", 0, 56);
-            ctx.fillText("E", 56, 0);
-            ctx.fillText("W", -56, 0);
+            ctx.fillText("S", 0, navRadius - 18);
+            ctx.fillText("E", navRadius - 18, 0);
+            ctx.fillText("W", -(navRadius - 18), 0);
 
-            // Helipad Marker [H] auf der Kompasskarte
-            const relPadX = (0.0 - heliPos.x) * 1.5;
-            const relPadZ = (36.0 - heliPos.z) * 1.5;
+            // Helipad-Marker [H] relative Position
+            const relPadX = (0.0 - heliPos.x);
+            const relPadZ = (36.0 - heliPos.z);
             const padDist = Math.hypot(relPadX, relPadZ);
-            const clampedDist = Math.min(58, padDist);
-            const padAng = Math.atan2(relPadX, relPadZ);
-            const drawHeliX = Math.sin(padAng) * clampedDist;
-            const drawHeliY = -Math.cos(padAng) * clampedDist;
+            const radarScale = 0.55;
+            const padPlotDist = Math.min(navRadius - 12, padDist * radarScale);
+            const padAngle = Math.atan2(relPadX, relPadZ);
+
+            const padDrawX = Math.sin(padAngle) * padPlotDist;
+            const padDrawY = -Math.cos(padAngle) * padPlotDist;
 
             ctx.fillStyle = "#00ff66";
-            ctx.fillRect(drawHeliX - 7, drawHeliY - 7, 14, 14);
+            ctx.fillRect(padDrawX - 8, padDrawY - 8, 16, 16);
             ctx.fillStyle = "#000000";
-            ctx.font = "bold 10px monospace";
-            ctx.fillText("H", drawHeliX, drawHeliY + 1);
+            ctx.font = "bold 11px monospace";
+            ctx.fillText("H", padDrawX, padDrawY + 1);
 
             ctx.restore();
 
-            // Digitale Kurs- & Positionsanzeigen rechts
-            let degHeading = Math.round(((yaw * 180) / Math.PI) % 360);
-            if (degHeading < 0) degHeading += 360;
+            // Flugzeug-Zentrum (Weißes Dreieck / Chevron)
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.moveTo(navCenterX, navCenterY - 7);
+            ctx.lineTo(navCenterX - 5, navCenterY + 6);
+            ctx.lineTo(navCenterX, navCenterY + 3);
+            ctx.lineTo(navCenterX + 5, navCenterY + 6);
+            ctx.closePath();
+            ctx.fill();
 
-            ctx.textAlign = "left";
+            // Distanz zum Helipad & NAV Beschriftung unten
+            ctx.textAlign = "center";
             ctx.textBaseline = "alphabetic";
-            ctx.fillStyle = "#00ff66";
+            ctx.fillStyle = "#ffffff";
             ctx.font = "bold 11px monospace";
-            ctx.fillText("HEADING (HDG):", 1264, 58);
+            ctx.fillText(`${Math.round(padDist)}M`, navCenterX, 202);
+            ctx.fillStyle = "#00ff66";
+            ctx.font = "bold 12px monospace";
+            ctx.fillText("NAV", navCenterX, 218);
 
+            // 2. PWR-KREIS (RECHTE HÄLFTE DES MITTLEREN BILDSCHIRMS)
+            const pwrCenterX = 892;
+            const pwrCenterY = 120;
+            const pwrRadius = 66;
+
+            // Hintergrund-Bogen (270 Grad, von 135° bis 405°)
+            ctx.strokeStyle = "rgba(0, 255, 102, 0.20)";
+            ctx.lineWidth = 10;
+            ctx.beginPath();
+            ctx.arc(pwrCenterX, pwrCenterY, pwrRadius, Math.PI * 0.75, Math.PI * 2.25);
+            ctx.stroke();
+
+            // Aktiver Schub-Bogen in Cybergrün
+            const pwrClamped = Math.max(0, Math.min(1.0, collective));
+            ctx.strokeStyle = "#00ff66";
+            ctx.lineWidth = 10;
+            ctx.beginPath();
+            ctx.arc(pwrCenterX, pwrCenterY, pwrRadius, Math.PI * 0.75, Math.PI * 0.75 + Math.PI * 1.5 * pwrClamped);
+            ctx.stroke();
+
+            // WEISSE MARKIERUNG BEI 50% SCHUB (senkrecht nach oben bei Math.PI * 1.5)
+            const markAngle = Math.PI * 1.5;
+            const markCos = Math.cos(markAngle);
+            const markSin = Math.sin(markAngle);
+
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(pwrCenterX + markCos * (pwrRadius - 12), pwrCenterY + markSin * (pwrRadius - 12));
+            ctx.lineTo(pwrCenterX + markCos * (pwrRadius + 12), pwrCenterY + markSin * (pwrRadius + 12));
+            ctx.stroke();
+
+            // Kleines 50% Label an der weißen Markierung
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 10px monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            ctx.fillText("50%", pwrCenterX, pwrCenterY - pwrRadius - 4);
+
+            // Digitaler Schubwert im Zentrum
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 28px monospace";
-            ctx.fillText(`${degHeading.toString().padStart(3, "0")}°`, 1264, 94);
+            ctx.fillText(`${Math.round(collective * 100)}%`, pwrCenterX, pwrCenterY);
 
+            // PWR Beschriftung unten
+            ctx.textBaseline = "alphabetic";
             ctx.fillStyle = "#00ff66";
-            ctx.font = "bold 11px monospace";
-            ctx.fillText("WAYPOINT:", 1264, 132);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 13px monospace";
-            ctx.fillText("HELIPAD (0, 36)", 1264, 150);
-
-            const distToHelipad = Math.round(Math.hypot(heliPos.x - 0, heliPos.z - 36.0));
-            ctx.font = "12px monospace";
-            ctx.fillText(`RANGE: ${distToHelipad} M`, 1264, 168);
-
-            ctx.fillStyle = "#00ff66";
-            ctx.font = "10px monospace";
-            ctx.fillText("NAV MODE: VFR DIRECT", 1264, 198);
-            ctx.fillStyle = "#ffffff";
-            ctx.fillText("GNSS: 3D FIX (DIFF-GPS)", 1264, 214);
+            ctx.font = "bold 12px monospace";
+            ctx.fillText("PWR", pwrCenterX, 218);
 
             ctx.restore();
 
@@ -6324,53 +6296,13 @@
             windshield.position.set(0, 1.45, 2.50);
             heliGroup.add(windshield);
 
-            // Aerodynamische Schnauze (Snout / Nose Cone) am Bug
-            // Verjüngt sich elegant nach vorne von z = 2.75 bis z = 3.65 mit Radom-Spitze und Staurohr
-            const snoutGroup = new THREE.Group();
-            snoutGroup.position.set(0, 0.64, 2.75);
-
-            // Snout Übergangskörper
-            const snoutBaseGeo = new THREE.BoxGeometry(2.04, 0.44, 0.40);
-            const snoutBase = new THREE.Mesh(snoutBaseGeo, matGlossWhite);
-            snoutBase.position.set(0, 0, 0.20);
-            snoutBase.castShadow = true;
-            snoutGroup.add(snoutBase);
-
-            // Schnauzen-Mittelteil (nach vorne keilförmig schmäler werdend)
-            const snoutMidGeo = new THREE.BoxGeometry(1.60, 0.38, 0.40);
-            const snoutMid = new THREE.Mesh(snoutMidGeo, matGlossWhite);
-            snoutMid.position.set(0, -0.01, 0.52);
-            snoutMid.castShadow = true;
-            snoutGroup.add(snoutMid);
-
-            // Abgerundete Radom-Kappe an der Schnauzenspitze
-            const radomeGeo = new THREE.SphereGeometry(0.32, 16, 16);
-            radomeGeo.scale(1.7, 0.58, 1.3);
-            const radome = new THREE.Mesh(radomeGeo, matGlossWhite);
-            radome.position.set(0, -0.02, 0.74);
-            radome.castShadow = true;
-            snoutGroup.add(radome);
-
-            // Staurohr (Pitot Tube) an der äußersten Spitze der Schnauze
-            const pitotBaseGeo = new THREE.CylinderGeometry(0.018, 0.026, 0.05, 8);
-            pitotBaseGeo.rotateX(Math.PI / 2);
-            const pitotBase = new THREE.Mesh(pitotBaseGeo, matDarkGraphite);
-            pitotBase.position.set(0, -0.02, 1.02);
-            snoutGroup.add(pitotBase);
-
-            const pitotGeo = new THREE.CylinderGeometry(0.007, 0.007, 0.18, 8);
-            pitotGeo.rotateX(Math.PI / 2);
-            const pitot = new THREE.Mesh(pitotGeo, matTitanium);
-            pitot.position.set(0, -0.02, 1.13);
-            snoutGroup.add(pitot);
-
-            // Unteres Kinnfenster (Chin Window für vertikalen Bodenblick des Piloten)
-            const chinGlassGeo = new THREE.BoxGeometry(1.85, 0.36, 0.04);
-            const chinGlass = new THREE.Mesh(chinGlassGeo, matClearGlass);
-            chinGlass.position.set(0, 0.03, 0.01);
-            snoutGroup.add(chinGlass);
-
-            heliGroup.add(snoutGroup);
+            // Aerodynamische Schnauze am Bug - Aus einem Guss, fließend und nahtlos
+            const noseGeo = createHelicopterNoseGeometry();
+            const noseMesh = new THREE.Mesh(noseGeo, matGlossWhite);
+            noseMesh.position.set(0, 0, 0);
+            noseMesh.castShadow = true;
+            noseMesh.receiveShadow = true;
+            heliGroup.add(noseMesh);
 
             // 3. FLIEGENDES INSTRUMENTENBRETT (DASHBOARD) - NACH OBEN ZUM PILOTEN GENEIGT
             // Tief platziert (y=0.88, z=2.36) und um ~33° nach oben angewinkelt
@@ -6664,6 +6596,28 @@
             boom.castShadow = true;
             heliGroup.add(boom);
 
+            // Luftfahrtkennzeichen "D-SLNG" beidseitig am Heckstab
+            const dslngTex = createTailBoomRegistrationTexture();
+            const matDslng = new THREE.MeshBasicMaterial({
+                map: dslngTex,
+                transparent: true,
+                depthWrite: false,
+                side: THREE.FrontSide
+            });
+            const dslngPlaneGeo = new THREE.PlaneGeometry(1.20, 0.30);
+
+            // Rechte Seite des Heckauslegers (+X)
+            const dslngRight = new THREE.Mesh(dslngPlaneGeo, matDslng);
+            dslngRight.position.set(0.28, 1.45, -4.50);
+            dslngRight.rotation.y = Math.PI / 2;
+            heliGroup.add(dslngRight);
+
+            // Linke Seite des Heckauslegers (-X)
+            const dslngLeft = new THREE.Mesh(dslngPlaneGeo, matDslng);
+            dslngLeft.position.set(-0.28, 1.45, -4.50);
+            dslngLeft.rotation.y = -Math.PI / 2;
+            heliGroup.add(dslngLeft);
+
             // Vertikale Heckflosse
             const finGeo = new THREE.BoxGeometry(0.08, 1.60, 0.85);
             const fin = new THREE.Mesh(finGeo, matGlossWhite);
@@ -6742,13 +6696,13 @@
             downlightLens.position.set(0, 0.135, 0.50);
             heliGroup.add(downlightLens);
 
-            heliSearchLight = new THREE.SpotLight(0xf0f8ff, 0, 80, Math.PI / 4, 0.45, 1.2);
+            heliSearchLight = new THREE.SpotLight(0xf0f8ff, 0, 180, Math.PI / 3.5, 0.40, 1.0);
             heliSearchLight.position.set(0, 0.13, 0.50);
             heliSearchLight.target.position.set(0, -20.0, 0.50);
             heliGroup.add(heliSearchLight);
             heliGroup.add(heliSearchLight.target);
 
-            heliBellyLight = new THREE.PointLight(0xd0e8ff, 0, 25, 1.5);
+            heliBellyLight = new THREE.PointLight(0xd0e8ff, 0, 45, 1.2);
             heliBellyLight.position.set(0, 0.10, 0.50);
             heliGroup.add(heliBellyLight);
 
@@ -6901,6 +6855,7 @@
 
             try {
                 const heliRef = rtdbRef(rtdb, "worldState/helicopter");
+                heliSearchLightOn = true;
                 rtdbUpdate(heliRef, {
                     x: 0,
                     y: 0.50,
@@ -6913,6 +6868,7 @@
                     pilotUid: null,
                     pilotNick: null,
                     engineRunning: false,
+                    searchLight: true,
                     lastSeen: Date.now()
                 }).catch((e) => console.warn("rtdbUpdate reset error:", e));
             } catch (err) {
@@ -7077,6 +7033,7 @@
                     pilotUid: currentUser.uid,
                     pilotNick: getStoredNickname(),
                     engineRunning: heliEngineRunning,
+                    searchLight: heliSearchLightOn,
                     lastSeen: Date.now()
                 }).catch(() => {});
             } catch (e) {
@@ -7098,6 +7055,8 @@
             getCamera: () => camera,
             getPilotUid: () => heliPilotUid,
             getEngine: () => heliEngineRunning,
+            getLightOn: () => heliSearchLightOn,
+            toggleLight: () => { heliSearchLightOn = !heliSearchLightOn; },
             getPlayerPos: () => playerPos,
             getIsOnGround: () => isOnGround,
             getVelocityY: () => velocityY,
@@ -7139,6 +7098,7 @@
                 // Bei abgestelltem Triebwerk ohne Pilot läuft der Rotor lokal flüssig aus
             }
             if (typeof data.collective === "number") heliCollective = data.collective;
+            if (typeof data.searchLight === "boolean") heliSearchLightOn = data.searchLight;
 
             heliPilotUid = activePilotUid;
             heliPilotNick = isStale ? null : (data.pilotNick || null);
@@ -7476,15 +7436,15 @@
                 const beaconPulse = 0.5 + 0.5 * Math.sin(timeSec * 8.0);
                 heliBeaconLight.material.color.setRGB(beaconPulse, 0.05, 0.05);
             }
-            const isLightOn = (isFlyingHelicopter || heliEngineRunning || heliRpm > 0.05);
+            const isLightOn = (isFlyingHelicopter || heliEngineRunning || heliRpm > 0.05) && heliSearchLightOn;
             if (heliSearchLight) {
-                heliSearchLight.intensity = isLightOn ? 4.0 : 0.0;
+                heliSearchLight.intensity = isLightOn ? 80.0 : 0.0;
             }
             if (heliBellyLight) {
-                heliBellyLight.intensity = isLightOn ? 1.8 : 0.0;
+                heliBellyLight.intensity = isLightOn ? 36.0 : 0.0;
             }
             if (matBellyLens) {
-                matBellyLens.emissiveIntensity = isLightOn ? 1.5 : 0.0;
+                matBellyLens.emissiveIntensity = isLightOn ? 25.0 : 0.0;
             }
             if (!isFlyingHelicopter && heliCollectiveLever) {
                 heliCollectiveLever.rotation.x = (0.50 - heliCollective) * 0.70;
@@ -8572,6 +8532,10 @@
                             camera.rotation.order = "YXZ";
                             camera.rotation.set(-0.16, heliYaw + Math.PI, 0);
                         }
+                        break;
+                    case "KeyL":
+                        heliSearchLightOn = !heliSearchLightOn;
+                        broadcastHelicopterState();
                         break;
                     case "KeyF":
                         exitHelicopter();
