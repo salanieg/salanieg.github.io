@@ -3352,9 +3352,9 @@
                         discard;
                     }
 
-                    // Terrain unter Wasserspiegel (-47.25m) im Shader verwerfen:
-                    // Verhindert Z-Fighting zwischen Terrain und Ozean an Küsten und Binnenseen
-                    if (vTerrainWorldPos.y < -47.25) {
+                    // Terrain knapp ÜBER Wasserspiegel verwerfen (-46.75 statt -47.25):
+                    // Erzeugt Tiefenabstand an der Küste → kein Z-Fighting mehr
+                    if (vTerrainWorldPos.y < -46.75) {
                         discard;
                     }
 
