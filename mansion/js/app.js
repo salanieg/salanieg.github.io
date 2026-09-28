@@ -3281,10 +3281,7 @@
                 map: grassColor,
                 roughnessMap: grassRoughness,
                 roughness: 0.88,
-                metalness: 0.05,
-                polygonOffset: true,
-                polygonOffsetFactor: 2.0,
-                polygonOffsetUnits: 4.0
+                metalness: 0.05
             });
 
             mat.userData.terrainTextures = [
@@ -3535,9 +3532,6 @@
                 uniforms: oceanUniforms,
                 vertexShader,
                 fragmentShader,
-                polygonOffset: true,
-                polygonOffsetFactor: -2.0,
-                polygonOffsetUnits: -4.0,
                 depthWrite: true
             });
 
