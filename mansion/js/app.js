@@ -3355,9 +3355,9 @@
                         discard;
                     }
 
-                    // Meeresboden tief unter Wasser (-56.0m) im Shader verwerfen:
-                    // Spart GPU-Rasterisierung ohne jegliche Krissel- oder Treppeneffekte an der Wasserkante
-                    if (vTerrainWorldPos.y < -56.0) {
+                    // Terrain unter Wasserspiegel (-47.25m) im Shader verwerfen:
+                    // Verhindert Z-Fighting zwischen Terrain und Ozean an Küsten und Binnenseen
+                    if (vTerrainWorldPos.y < -47.25) {
                         discard;
                     }
 
@@ -3605,8 +3605,8 @@
             terrainMesh.receiveShadow = true;
             scene.add(terrainMesh);
 
-            // Ozean genau so groß wie das Terrain (2000×2000m) — Fog schließt den Horizont ab
-            const oceanGeo = new THREE.PlaneGeometry(2000, 2000, 1, 1);
+            // Ozean bis zum Horizont — folgt der Kamera (XZ), Ränder nie sichtbar
+            const oceanGeo = new THREE.PlaneGeometry(16000, 16000, 1, 1);
             oceanGeo.rotateX(-Math.PI / 2);
             const oceanMat = createRealisticOceanMaterial();
             oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
@@ -9217,6 +9217,11 @@
             }
 
             // Realistischer PBR-Ozean: Zeit für Wellenbewegung und Tag/Nacht-Transition fortführen
+            if (oceanMesh && camera) {
+                // Ozean folgt der Kamera horizontal — Ränder bleiben immer weit jenseits der Sichtweite
+                oceanMesh.position.x = camera.position.x;
+                oceanMesh.position.z = camera.position.z;
+            }
             if (oceanUniforms) {
                 if (oceanUniforms.uTime) oceanUniforms.uTime.value += delta;
                 if (oceanUniforms.uNightTransition) oceanUniforms.uNightTransition.value = nightTransition;
