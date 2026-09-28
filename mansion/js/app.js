@@ -876,6 +876,196 @@
         let oceanUniforms = null;
         let terrainHeightTexture = null;
 
+        // ── INSTANCED GRASS SYSTEM ──
+        let grassMesh = null;
+        let grassUniforms = null;
+        let grassLastCenter = new THREE.Vector3(99999, 0, 99999);
+        const GRASS_COUNT = 20000;
+        const GRASS_RADIUS = 80;
+        const GRASS_REBUILD_DIST = 15;
+
+        function getTerrainSlope(x, z) {
+            const d = 2.0;
+            const hC = getTerrainHeight(x, z);
+            const hR = getTerrainHeight(x + d, z);
+            const hF = getTerrainHeight(x, z + d);
+            const dx = (hR - hC) / d;
+            const dz = (hF - hC) / d;
+            return Math.sqrt(dx * dx + dz * dz);
+        }
+
+        function getGrassFactor(x, z, terrainY) {
+            // Unter Wasser → kein Gras
+            if (terrainY < TERRAIN_OCEAN_LEVEL + 1.5) return 0;
+            // Innenhof (Radius 24m) → kein Gras
+            if (x * x + z * z < 33 * 33) return 0;
+            // Helipad (Radius 12m um z=36)
+            if (x * x + (z - 36) * (z - 36) < 12 * 12) return 0;
+            // Steigung → Felsfaktor
+            const slope = getTerrainSlope(x, z);
+            const rockFactor = Math.min(1, Math.max(0, (slope - 0.3) / 0.5));
+            // Strand (niedrige Höhen)
+            const beachFactor = Math.min(1, Math.max(0, 1.0 - (terrainY - TERRAIN_OCEAN_LEVEL - 1.5) / 9.0));
+            const grassF = Math.max(0, 1.0 - rockFactor - beachFactor);
+            return grassF;
+        }
+
+        function createGrassTexture() {
+            const c = document.createElement('canvas');
+            c.width = 32; c.height = 64;
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, 32, 64);
+            // 3 Halme pro Textur für natürliche Büscheloptik
+            const blades = [
+                { x: 10, w: 3, bend: -1.5 },
+                { x: 16, w: 4, bend: 0.8 },
+                { x: 22, w: 3, bend: 2.0 }
+            ];
+            for (const b of blades) {
+                for (let y = 0; y < 60; y++) {
+                    const t = y / 60;
+                    const tipTaper = 1.0 - t * t;
+                    const w = Math.max(1, b.w * tipTaper);
+                    const bendX = b.x + b.bend * t * t;
+                    // Farbverlauf: dunkelgrün unten → hellgrün oben
+                    const r = Math.floor(30 + t * 60);
+                    const g = Math.floor(70 + t * 110);
+                    const bv = Math.floor(15 + t * 20);
+                    ctx.fillStyle = `rgba(${r},${g},${bv},${Math.round((0.7 + 0.3 * tipTaper) * 255)})`;
+                    ctx.fillRect(bendX - w / 2, 63 - y, w, 1);
+                }
+            }
+            const tex = new THREE.CanvasTexture(c);
+            tex.magFilter = THREE.LinearFilter;
+            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.premultiplyAlpha = false;
+            return tex;
+        }
+
+        function buildGrassSystem() {
+            if (grassMesh) { scene.remove(grassMesh); grassMesh.dispose(); }
+
+            const grassTex = createGrassTexture();
+
+            // Cross-Billboard: 2 Quads im 90°-Winkel
+            const bw = 0.5, bh = 0.7;
+            const positions = [];
+            const uvs = [];
+            // Quad 1 (XY-Ebene)
+            positions.push(-bw/2,0,0, bw/2,0,0, bw/2,bh,0, -bw/2,bh,0);
+            uvs.push(0,0, 1,0, 1,1, 0,1);
+            // Quad 2 (ZY-Ebene, 90° gedreht)
+            positions.push(0,0,-bw/2, 0,0,bw/2, 0,bh,bw/2, 0,bh,-bw/2);
+            uvs.push(0,0, 1,0, 1,1, 0,1);
+            const indices = [0,1,2, 0,2,3, 4,5,6, 4,6,7];
+
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+            geo.setIndex(indices);
+
+            grassUniforms = {
+                uTime: { value: 0 },
+                uGrassTex: { value: grassTex },
+                uNightTransition: { value: 0 }
+            };
+
+            const mat = new THREE.ShaderMaterial({
+                uniforms: grassUniforms,
+                vertexShader: `
+                    uniform float uTime;
+                    varying vec2 vUv;
+                    varying float vHeight;
+
+                    void main() {
+                        vUv = uv;
+                        // Höhe im Halm (0 = Boden, 1 = Spitze)
+                        vHeight = position.y / 0.7;
+
+                        // Instanz-Weltposition aus der Matrix
+                        vec3 worldPos = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+
+                        // Wind: sanftes Wogen basierend auf Weltposition + Zeit
+                        float windStrength = sin(worldPos.x * 0.08 + uTime * 1.2)
+                                           * cos(worldPos.z * 0.06 + uTime * 0.9) * 0.5 + 0.5;
+                        float windDisp = vHeight * vHeight * windStrength * 0.3;
+                        vec3 displaced = position;
+                        displaced.x += windDisp;
+                        displaced.z += windDisp * 0.4;
+
+                        vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(displaced, 1.0);
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D uGrassTex;
+                    uniform float uNightTransition;
+                    varying vec2 vUv;
+                    varying float vHeight;
+
+                    void main() {
+                        vec4 texColor = texture2D(uGrassTex, vUv);
+                        if (texColor.a < 0.3) discard;
+
+                        // Leichte Aufhellung an Spitzen + Nachtabdunklung
+                        vec3 col = texColor.rgb * (0.85 + vHeight * 0.3);
+                        col = mix(col, col * vec3(0.25, 0.3, 0.4), uNightTransition);
+
+                        gl_FragColor = vec4(col, texColor.a);
+                    }
+                `,
+                side: THREE.DoubleSide,
+                transparent: false,
+                alphaTest: 0.3,
+                depthWrite: true
+            });
+
+            grassMesh = new THREE.InstancedMesh(geo, mat, GRASS_COUNT);
+            grassMesh.frustumCulled = false;
+            scene.add(grassMesh);
+        }
+
+        function updateGrassPositions(cx, cz) {
+            if (!grassMesh || !terrainHeightGrid) return;
+            const dummy = new THREE.Object3D();
+            let placed = 0;
+
+            for (let attempt = 0; attempt < GRASS_COUNT * 3 && placed < GRASS_COUNT; attempt++) {
+                // Gleichmäßige Verteilung im Kreis
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.sqrt(Math.random()) * GRASS_RADIUS;
+                const wx = cx + Math.cos(angle) * radius;
+                const wz = cz + Math.sin(angle) * radius;
+                const wy = getTerrainHeight(wx, wz);
+
+                const gf = getGrassFactor(wx, wz, wy);
+                // Wahrscheinlichkeitsbasiert: dichtes Gras auf Wiese, dünn an Übergängen
+                if (Math.random() > gf) continue;
+
+                dummy.position.set(wx, wy, wz);
+                // Zufällige Drehung für natürliche Optik
+                dummy.rotation.set(0, Math.random() * Math.PI, 0);
+                // Leichte Größenvariation (0.6x bis 1.2x)
+                const s = 0.6 + Math.random() * 0.6;
+                dummy.scale.set(s, s, s);
+                dummy.updateMatrix();
+                grassMesh.setMatrixAt(placed, dummy.matrix);
+                placed++;
+            }
+
+            // Restliche Instanzen unsichtbar machen (Skalierung 0)
+            if (placed < GRASS_COUNT) {
+                dummy.scale.set(0, 0, 0);
+                dummy.updateMatrix();
+                for (let i = placed; i < GRASS_COUNT; i++) {
+                    grassMesh.setMatrixAt(i, dummy.matrix);
+                }
+            }
+
+            grassMesh.instanceMatrix.needsUpdate = true;
+            grassLastCenter.set(cx, 0, cz);
+        }
+
         function getOrCreateTerrainHeightTexture() {
             if (terrainHeightTexture) return terrainHeightTexture;
             if (!terrainHeightGrid) initTerrainDataSync();
@@ -8750,6 +8940,7 @@
 
             // Außenterrain & Ozean initialisieren & rendern
             buildTerrain();
+            buildGrassSystem();
 
             // Helipad & AW169 Hubschrauber "SERVERAUFSICHT" vor Ausgang 1 initialisieren
             buildHelipad();
@@ -9218,6 +9409,20 @@
             if (oceanUniforms) {
                 if (oceanUniforms.uTime) oceanUniforms.uTime.value += delta;
                 if (oceanUniforms.uNightTransition) oceanUniforms.uNightTransition.value = nightTransition;
+            }
+
+            // Instanced Grass: Wind-Animation & dynamische Platzierung um Spieler
+            if (grassUniforms) {
+                grassUniforms.uTime.value += delta;
+                grassUniforms.uNightTransition.value = nightTransition;
+            }
+            if (grassMesh && camera) {
+                const px = camera.position.x;
+                const pz = camera.position.z;
+                const distMoved = Math.hypot(px - grassLastCenter.x, pz - grassLastCenter.z);
+                if (distMoved > GRASS_REBUILD_DIST) {
+                    updateGrassPositions(px, pz);
+                }
             }
 
             // AtmosphÃ¤rische Beleuchtungsanpassung bei Sternenhimmel
