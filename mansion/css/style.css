@@ -686,56 +686,35 @@
         .hidden {
             display: none !important;
         }
-        /* Hubschrauber HUD Telemetrie */
+        /* Falcon 300 Turbo Zentriertes Steuerungsoverlay */
         .heli-hud {
             position: fixed;
             top: 24px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(10, 15, 25, 0.90);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(10, 15, 25, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.20);
             color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-            font-size: 0.85rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            text-align: center;
+            padding: 8px 24px;
             z-index: 40;
             pointer-events: none;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
         }
 
-        .heli-hud-top {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 8px 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(15, 23, 42, 0.95);
-        }
-
-        .heli-badge {
-            background: #dc2626;
+        .heli-hud-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.10em;
             color: #ffffff;
-            font-weight: 800;
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            letter-spacing: 0.05em;
+            margin-bottom: 3px;
+            text-transform: uppercase;
         }
 
-        .heli-metric {
+        .heli-hud-sub {
+            font-size: 0.78rem;
             color: #94a3b8;
-            font-size: 0.8rem;
-        }
-
-        .heli-metric strong {
-            color: #38bdf8;
-            font-size: 0.95rem;
-            font-family: monospace;
-        }
-
-        .heli-hud-bottom {
-            padding: 6px 16px;
-            font-size: 0.75rem;
-            color: #cbd5e1;
-            text-align: center;
             letter-spacing: 0.03em;
         }
     
