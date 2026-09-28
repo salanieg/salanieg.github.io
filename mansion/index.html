@@ -117,7 +117,22 @@
 
         <!-- Wand-Interaktions-Prompt -->
         <div id="interact-prompt" class="interact-prompt">
-            Taste [E] drÃ¼cken
+            Taste [E] drücken
+        </div>
+
+        <!-- Hubschrauber HUD Telemetrie & Steuerung -->
+        <div id="heli-hud" class="heli-hud" style="display: none;">
+            <div class="heli-hud-top">
+                <span class="heli-badge">AW169 SERVERAUFSICHT</span>
+                <span class="heli-metric">SPD: <strong id="heli-speed">0</strong> KM/H</span>
+                <span class="heli-metric">ALT: <strong id="heli-alt">0</strong> M</span>
+                <span class="heli-metric">ROTOR: <strong id="heli-rpm">0%</strong></span>
+                <span class="heli-metric">SCHUB: <strong id="heli-collective">0%</strong></span>
+                <span class="heli-metric">HDG: <strong id="heli-hdg">180°</strong></span>
+            </div>
+            <div class="heli-hud-bottom">
+                WASD: Steuern | MAUSRAD / LEER / SHIFT: Schub (Collective) | Q/E: Drehen | V: Cockpit/3rd-Person | F: Aussteigen
+            </div>
         </div>
 
         <!-- Steuerungs-Leiste am unteren Rand -->
@@ -125,7 +140,6 @@
             WASD: Laufen | LEER: Springen | LMB: Interagieren / Hinsetzen | E: Verschieben / Aktionen | V: 1st/3rd Person | ESC: MenÃ¼
         </footer>
 
-        </div>
     </div>
 
     <!-- 3. NOTIZ-EINGABE MODAL -->
@@ -248,6 +262,8 @@
 
 
 
+    <!-- Embedded Terrain Height Data (Synchronous, Zero-CORS) -->
+    <script src="js/terrain_data.js"></script>
     <!-- Firebase SDK via CDN Modules & Three.js via ImportMap -->
     <script type="module" src="js/app.js"></script>
 </body>

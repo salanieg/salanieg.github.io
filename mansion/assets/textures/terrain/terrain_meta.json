@@ -1,0 +1,8 @@
+{
+  "worldSize": 1024.0,
+  "gridSize": 256,
+  "centerHeightNorm": 0.34117648005485535,
+  "maxHeight": 140.0,
+  "oceanLevel": -31.5,
+  "calderaFloorY": 0.0
+}

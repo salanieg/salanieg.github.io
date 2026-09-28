@@ -72,25 +72,45 @@
             console.warn("RTDB initial cinema listener error:", e);
         }
 
-        // Initialen Zustand der Lagerstuehle & Jetpacks fuer alle synchron abhoeren
+        // Initialen Zustand der Lagerstuehle, Jetpacks & Helikopter fuer alle synchron abhoeren
         try {
             const initialChairsRef = rtdbRef(rtdb, "worldState/warehouseChairs");
             onValue(initialChairsRef, (snapshot) => {
-                const val = snapshot.val();
-                if (val && typeof val === "object") {
-                    syncWarehouseChairsFromNetwork(val);
+                try {
+                    const val = snapshot.val();
+                    if (val && typeof val === "object" && typeof syncWarehouseChairsFromNetwork === "function") {
+                        syncWarehouseChairsFromNetwork(val);
+                    }
+                } catch (err) {
+                    console.warn("RTDB chairs callback warning:", err);
                 }
             });
 
             const initialJetpacksRef = rtdbRef(rtdb, "worldState/warehouseJetpacks");
             onValue(initialJetpacksRef, (snapshot) => {
-                const val = snapshot.val();
-                if (val && typeof val === "object") {
-                    syncWarehouseJetpacksFromNetwork(val);
+                try {
+                    const val = snapshot.val();
+                    if (val && typeof val === "object" && typeof syncWarehouseJetpacksFromNetwork === "function") {
+                        syncWarehouseJetpacksFromNetwork(val);
+                    }
+                } catch (err) {
+                    console.warn("RTDB jetpacks callback warning:", err);
+                }
+            });
+
+            const initialHeliRef = rtdbRef(rtdb, "worldState/helicopter");
+            onValue(initialHeliRef, (snapshot) => {
+                try {
+                    const val = snapshot.val();
+                    if (val && typeof val === "object" && typeof syncHelicopterFromNetwork === "function") {
+                        syncHelicopterFromNetwork(val);
+                    }
+                } catch (err) {
+                    console.warn("RTDB heli callback warning:", err);
                 }
             });
         } catch (e) {
-            console.warn("RTDB initial chairs/jetpacks listener error:", e);
+            console.warn("RTDB initial chairs/jetpacks/heli listener error:", e);
         }
 
         // â”€â”€ DOM ELEMENTE â”€â”€
@@ -410,16 +430,289 @@
 
         const jetpackAudio = new JetpackAudio();
 
+        // ── AGUSTAWESTLAND AW169 PROZEDURALES WEB AUDIO SOUNDSYSTEM ──
+        class HelicopterAudio {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.cabinFilter = null;
+                this.turbineOsc1 = null;
+                this.turbineOsc2 = null;
+                this.turbineGain = null;
+                this.rotorSlapSource = null;
+                this.rotorSlapGain = null;
+                this.subBassOsc = null;
+                this.subBassGain = null;
+                this.tailWashSource = null;
+                this.tailWashGain = null;
+                this.isInitialized = false;
+                this.currentRpm = 0.0;
+                this.currentCollective = 0.0;
+            }
+
+            init(audioCtx) {
+                if (!audioCtx || this.isInitialized) return;
+                this.ctx = audioCtx;
+                try {
+                    this.masterGain = this.ctx.createGain();
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.masterGain.connect(this.ctx.destination);
+
+                    // Kabinenfilter: im Cockpit (1st Person) gedämpft (1350 Hz), draußen offen (18000 Hz)
+                    this.cabinFilter = this.ctx.createBiquadFilter();
+                    this.cabinFilter.type = "lowpass";
+                    this.cabinFilter.frequency.value = 18000;
+                    this.cabinFilter.connect(this.masterGain);
+
+                    // 1. Zwillings-Turbinen (Twin Turboshaft) Schwebung & Pfeifen
+                    this.turbineGain = this.ctx.createGain();
+                    this.turbineGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                    const turbineFilter = this.ctx.createBiquadFilter();
+                    turbineFilter.type = "bandpass";
+                    turbineFilter.frequency.value = 750;
+                    turbineFilter.Q.value = 2.0;
+
+                    this.turbineOsc1 = this.ctx.createOscillator();
+                    this.turbineOsc1.type = "triangle";
+                    this.turbineOsc1.frequency.value = 140;
+
+                    this.turbineOsc2 = this.ctx.createOscillator();
+                    this.turbineOsc2.type = "sawtooth";
+                    this.turbineOsc2.frequency.value = 143.5; // akustische Interferenz / Schwebung
+
+                    const turbSubGain = this.ctx.createGain();
+                    turbSubGain.gain.value = 0.35;
+                    this.turbineOsc2.connect(turbSubGain);
+                    turbSubGain.connect(turbineFilter);
+
+                    this.turbineOsc1.connect(turbineFilter);
+                    turbineFilter.connect(this.turbineGain);
+                    this.turbineGain.connect(this.cabinFilter);
+
+                    this.turbineOsc1.start(0);
+                    this.turbineOsc2.start(0);
+
+                    // 2. 5-Blatt Rotor Blattspitzen-Knattern & Verdrängungs-Chop
+                    // Periodischer Impuls-Puffer (5 Schläge pro Rotorumdrehung)
+                    const sampleRate = this.ctx.sampleRate;
+                    const slapBufferLen = Math.floor(sampleRate * 1.0);
+                    const slapBuffer = this.ctx.createBuffer(1, slapBufferLen, sampleRate);
+                    const slapData = slapBuffer.getChannelData(0);
+                    const pulsesPerSec = 30; // 5 Blätter x 6 U/s bei 100% RPM
+                    const pulsePeriod = Math.floor(sampleRate / pulsesPerSec);
+                    for (let i = 0; i < slapBufferLen; i++) {
+                        const phase = i % pulsePeriod;
+                        if (phase < 180) {
+                            const env = Math.exp(-phase / 24.0);
+                            slapData[i] = (Math.sin(phase * 0.45) + (Math.random() * 2 - 1) * 0.4) * env * 0.65;
+                        } else {
+                            slapData[i] = 0;
+                        }
+                    }
+
+                    this.rotorSlapSource = this.ctx.createBufferSource();
+                    this.rotorSlapSource.buffer = slapBuffer;
+                    this.rotorSlapSource.loop = true;
+
+                    const slapFilter = this.ctx.createBiquadFilter();
+                    slapFilter.type = "lowpass";
+                    slapFilter.frequency.value = 260;
+                    slapFilter.Q.value = 2.8;
+
+                    this.rotorSlapGain = this.ctx.createGain();
+                    this.rotorSlapGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                    this.rotorSlapSource.connect(slapFilter);
+                    slapFilter.connect(this.rotorSlapGain);
+                    this.rotorSlapGain.connect(this.cabinFilter);
+                    this.rotorSlapSource.start(0);
+
+                    // 3. Sub-Bass Thump (44 Hz) für physischen Druck
+                    this.subBassOsc = this.ctx.createOscillator();
+                    this.subBassOsc.type = "sine";
+                    this.subBassOsc.frequency.value = 44;
+
+                    this.subBassGain = this.ctx.createGain();
+                    this.subBassGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                    this.subBassOsc.connect(this.subBassGain);
+                    this.subBassGain.connect(this.cabinFilter);
+                    this.subBassOsc.start(0);
+
+                    // 4. Heckrotor & Verwirbelungsrauschen
+                    const washBufSize = Math.floor(sampleRate * 1.5);
+                    const washBuffer = this.ctx.createBuffer(1, washBufSize, sampleRate);
+                    const washData = washBuffer.getChannelData(0);
+                    for (let i = 0; i < washBufSize; i++) {
+                        washData[i] = (Math.random() * 2 - 1) * 0.3;
+                    }
+                    this.tailWashSource = this.ctx.createBufferSource();
+                    this.tailWashSource.buffer = washBuffer;
+                    this.tailWashSource.loop = true;
+
+                    const washFilter = this.ctx.createBiquadFilter();
+                    washFilter.type = "bandpass";
+                    washFilter.frequency.value = 650;
+                    washFilter.Q.value = 1.8;
+
+                    this.tailWashGain = this.ctx.createGain();
+                    this.tailWashGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                    this.tailWashSource.connect(washFilter);
+                    washFilter.connect(this.tailWashGain);
+                    this.tailWashGain.connect(this.cabinFilter);
+                    this.tailWashSource.start(0);
+
+                    this.isInitialized = true;
+                } catch (e) {
+                    console.warn("Helicopter audio init warning:", e);
+                }
+            }
+
+            update(rpm, collective, speed, isCockpitView, distanceToPlayer = 0) {
+                if (!this.ctx && footstepAudio && footstepAudio.ctx) {
+                    this.init(footstepAudio.ctx);
+                }
+                if (!this.ctx || !this.isInitialized) return;
+                if (this.ctx.state === "suspended") {
+                    this.ctx.resume().catch(() => {});
+                }
+
+                const now = this.ctx.currentTime;
+                this.currentRpm = rpm;
+                this.currentCollective = collective;
+
+                // Räumliche Distanzdämpfung (falls Spieler zu Fuß in der Nähe oder remote)
+                let distGain = 1.0;
+                if (distanceToPlayer > 0) {
+                    distGain = Math.max(0, 1.0 / (1.0 + distanceToPlayer * 0.035));
+                    if (distanceToPlayer > 260) distGain = 0;
+                }
+
+                // Cockpit-Dämpfung vs Außenansicht
+                if (this.cabinFilter) {
+                    const targetFreq = isCockpitView ? 1350 : 18000;
+                    this.cabinFilter.frequency.setTargetAtTime(targetFreq, now, 0.08);
+                }
+
+                // Turbinen-Frequenz modulierend nach RPM (von 110 Hz bis 820 Hz)
+                if (this.turbineOsc1 && this.turbineOsc2) {
+                    const baseFreq = 110 + rpm * 710;
+                    this.turbineOsc1.frequency.setTargetAtTime(baseFreq, now, 0.06);
+                    this.turbineOsc2.frequency.setTargetAtTime(baseFreq * 1.004 + 2.5, now, 0.06);
+                }
+
+                // Turbinen-Lautstärke
+                if (this.turbineGain) {
+                    const turbVol = Math.pow(rpm, 1.6) * 0.16 * distGain;
+                    this.turbineGain.gain.setTargetAtTime(turbVol, now, 0.06);
+                }
+
+                // Rotor-Knattern: RPM steuert Frequenz / Rate, Collective & Manöver verstärken Amplitude
+                if (this.rotorSlapSource && this.rotorSlapGain) {
+                    this.rotorSlapSource.playbackRate.setTargetAtTime(Math.max(0.12, rpm), now, 0.06);
+                    // Erhöhter Blatt-Schlag bei Anstellwinkel (Collective)
+                    const slapVol = Math.pow(rpm, 1.4) * (0.08 + collective * 0.18) * distGain;
+                    this.rotorSlapGain.gain.setTargetAtTime(slapVol, now, 0.06);
+                }
+
+                // Sub-Bass Kick
+                if (this.subBassGain) {
+                    const subVol = Math.pow(rpm, 1.5) * (0.06 + collective * 0.14) * distGain;
+                    this.subBassGain.gain.setTargetAtTime(subVol, now, 0.06);
+                }
+
+                // Heckrotor & Wind
+                if (this.tailWashGain) {
+                    const washVol = (rpm * 0.08 + Math.min(speed / 40.0, 1.0) * 0.10) * distGain;
+                    this.tailWashGain.gain.setTargetAtTime(washVol, now, 0.08);
+                }
+
+                // Master Gain
+                if (this.masterGain) {
+                    const activeVol = rpm > 0.01 ? (isCockpitView ? 0.38 : 0.48) : 0.0;
+                    this.masterGain.gain.setTargetAtTime(activeVol, now, 0.1);
+                }
+            }
+
+            stop() {
+                if (!this.ctx || !this.isInitialized) return;
+                const now = this.ctx.currentTime;
+                if (this.masterGain) {
+                    this.masterGain.gain.setTargetAtTime(0.0001, now, 0.2);
+                }
+            }
+        }
+
+        const helicopterAudio = new HelicopterAudio();
+
         // â”€â”€ NOTIZ-VERSCHIEBEN STATUSVARIABLEN â”€â”€
         let movingNoteState = null; // { noteId, data, mesh, ghostFrame, isImage, validTarget }
 
-        // â”€â”€ FAHRRAD & JETPACK STATUSVARIABLEN â”€â”€
-        let isRidingBike = false;
-        let worldBikeGroup = null;
-        let bikeInteractMesh = null;
-        let localBikeCockpit = null;
         let skyDomeMesh = null;
         let skyUniforms = null;
+
+        // ── VOLCANO ISLAND TERRAIN STATUSVARIABLEN & HÖHENABFRAGE ──
+        const TERRAIN_CENTER_HEIGHT_NORM = 0.34117648;
+        const TERRAIN_MAX_HEIGHT = 140.0;
+        const TERRAIN_OCEAN_LEVEL = -31.5;
+
+        let terrainHeightGrid = null;
+        let terrainMesh = null;
+        let oceanMesh = null;
+
+        function initTerrainDataSync() {
+            if (terrainHeightGrid) return true;
+            if (typeof window !== 'undefined' && window.TERRAIN_HEIGHTS_256) {
+                try {
+                    const binary = atob(window.TERRAIN_HEIGHTS_256);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    terrainHeightGrid = new Float32Array(bytes.buffer);
+                    return true;
+                } catch (e) {
+                    console.warn('Failed to decode embedded terrain data:', e);
+                }
+            }
+            return false;
+        }
+        initTerrainDataSync();
+
+        function getTerrainHeight(x, z) {
+            const dist = Math.hypot(x, z);
+            if (dist <= 33.0) return 0.0;
+            if (!terrainHeightGrid) {
+                initTerrainDataSync();
+                if (!terrainHeightGrid) return 0.0;
+            }
+
+            const u = (x + 512.0) / 1024.0;
+            const v = (z + 512.0) / 1024.0;
+            if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) return TERRAIN_OCEAN_LEVEL;
+
+            const gx = Math.max(0.0, Math.min(255.0, u * 255.0));
+            const gz = Math.max(0.0, Math.min(255.0, v * 255.0));
+            const x0 = Math.floor(gx);
+            const z0 = Math.floor(gz);
+            const x1 = Math.min(255, x0 + 1);
+            const z1 = Math.min(255, z0 + 1);
+            const fx = gx - x0;
+            const fz = gz - z0;
+
+            const h00 = terrainHeightGrid[z0 * 256 + x0];
+            const h10 = terrainHeightGrid[z0 * 256 + x1];
+            const h01 = terrainHeightGrid[z1 * 256 + x0];
+            const h11 = terrainHeightGrid[z1 * 256 + x1];
+
+            const h0 = h00 * (1.0 - fx) + h10 * fx;
+            const h1 = h01 * (1.0 - fx) + h11 * fx;
+            const h = h0 * (1.0 - fz) + h1 * fz;
+
+            return (h - TERRAIN_CENTER_HEIGHT_NORM) * TERRAIN_MAX_HEIGHT;
+        }
 
         // â”€â”€ CHILLEN-LAMPE & STERNENHIMMEL STATUSVARIABLEN â”€â”€
         let isChillenLampOn = false;
@@ -1587,29 +1880,6 @@
         let localJetpackFlames = null;
         let localJetpackLight = null;
 
-        function mountBike() {
-            if (isSitting) standUp();
-            isRidingBike = true;
-            if (worldBikeGroup) worldBikeGroup.visible = false;
-            if (localBikeCockpit) localBikeCockpit.visible = true;
-            interactPrompt.textContent = "[E] oder [ESC] Absteigen";
-            interactPrompt.classList.add("visible");
-        }
-
-        function dismountBike() {
-            if (!isRidingBike) return;
-            isRidingBike = false;
-            if (localBikeCockpit) localBikeCockpit.visible = false;
-            if (worldBikeGroup && camera) {
-                // Fahrrad auf Boden am aktuellen Spielerstandort abstellen
-                worldBikeGroup.position.set(camera.position.x, 0, camera.position.z);
-                const camDir = new THREE.Vector3();
-                camera.getWorldDirection(camDir);
-                worldBikeGroup.rotation.y = Math.atan2(camDir.x, camDir.z);
-                worldBikeGroup.visible = true;
-            }
-            interactPrompt.classList.remove("visible");
-        }
 
         function equipJetpack(targetJpObj) {
             if (isSitting) standUp();
@@ -1635,7 +1905,7 @@
                 const jpRef = rtdbRef(rtdb, "worldState/warehouseJetpacks/" + jpObj.id);
                 rtdbSet(jpRef, {
                     isEquipped: true,
-                    equippedBy: myUserId || 'local',
+                    equippedBy: (currentUser ? currentUser.uid : 'local'),
                     updatedAt: Date.now()
                 });
             } catch (err) {
@@ -2192,20 +2462,41 @@
 
             playerPos.copy(seat.sitPos);
             camera.position.copy(seat.sitPos);
-            interactPrompt.textContent = "Taste [E], [LEERTASTE] oder [W,A,S,D]: Aufstehen";
+
+            if (seat.lookDir) {
+                const seatAngle = Math.atan2(seat.lookDir.x, seat.lookDir.z) + Math.PI;
+                camera.rotation.set(0, seatAngle, 0);
+            }
+
+            if (seat.isHeliSeat) {
+                interactPrompt.textContent = "Mitflug im AW169 'SERVERAUFSICHT' | [E], [F] oder [LEERTASTE] Aufstehen";
+            } else {
+                interactPrompt.textContent = "Taste [E], [LEERTASTE] oder [W,A,S,D]: Aufstehen";
+            }
             interactPrompt.classList.add("visible");
         }
 
         function standUp() {
             if (!isSitting) return;
+            const wasHeliSeat = currentSeat && currentSeat.isHeliSeat;
+            const savedSeat = currentSeat;
             isSitting = false;
             velocityY = 0;
             isOnGround = true;
 
-            if (currentSeat && currentSeat.lookDir) {
-                playerPos.add(currentSeat.lookDir.clone().multiplyScalar(0.7));
+            if (wasHeliSeat && heliGroup) {
+                // Spieler sicher neben oder im Helikopter absetzen
+                const exitOffset = new THREE.Vector3(2.0, 0, 0.6).applyEuler(heliGroup.rotation);
+                const groundY = getTerrainHeight(heliPos.x + exitOffset.x, heliPos.z + exitOffset.z);
+                const safeY = Math.max(groundY + EYE_HEIGHT, heliPos.y);
+                playerPos.set(heliPos.x + exitOffset.x, safeY, heliPos.z + exitOffset.z);
+            } else {
+                if (savedSeat && savedSeat.lookDir) {
+                    playerPos.add(savedSeat.lookDir.clone().multiplyScalar(0.7));
+                }
+                const groundY = getTerrainHeight(playerPos.x, playerPos.z);
+                playerPos.y = groundY + EYE_HEIGHT;
             }
-            playerPos.y = EYE_HEIGHT;
             camera.position.copy(playerPos);
             currentSeat = null;
             interactPrompt.classList.remove("visible");
@@ -2241,6 +2532,33 @@
             { name: "Gaming", cx: -9.698, cz: 13.349, radius: 5.5, rotY: 2.5133, doorAngle: -0.9425, pinAngle: 0.6283 },
             { name: "Lager", cx: -15.692, cz: -5.099, radius: 5.5, rotY: 1.2566, doorAngle: 0.3142, pinAngle: 1.8850 }
         ];
+
+        // 5 symmetrische Villa-Ausgänge perfekt mittig zwischen den 5 Satellitenräumen:
+        // Exit 0: Kunst & Chillen (+18°)
+        // Exit 1: Chillen & Gaming (+90° / Süd)
+        // Exit 2: Gaming & Lager (+162°)
+        // Exit 3: Lager & Arbeit (+234° / -126°)
+        // Exit 4: Arbeit & Kunst (+306° / -54°)
+        const EXIT_ANGLES = [
+            0.314159265,  // 18°
+            1.570796327,  // 90° (Süd)
+            2.827433388,  // 162°
+            -2.199114858, // 234° (-126°)
+            -0.942477796  // 306° (-54°)
+        ];
+        const EXIT_OPENING_WIDTH = 7.5; // Meter
+        const EXIT_OPENING_ANGLE = EXIT_OPENING_WIDTH / COURTYARD_RADIUS; // ~0.3125 rad (~17.9°)
+        const EXIT_HALF_ANGLE = EXIT_OPENING_ANGLE * 0.5; // ~0.15625 rad
+
+        function isPlayerInAnyPortal(px, pz) {
+            const curAngle = Math.atan2(pz, px);
+            for (let i = 0; i < EXIT_ANGLES.length; i++) {
+                let diff = Math.abs(curAngle - EXIT_ANGLES[i]);
+                while (diff > Math.PI) diff = Math.abs(diff - 2 * Math.PI);
+                if (diff <= EXIT_HALF_ANGLE) return true;
+            }
+            return false;
+        }
 
         // â”€â”€ KRONENDÃ„CHER & TÃœRSCHILDER â”€â”€
         function createDoorSign(title, x, y, z, rotY) {
@@ -2575,7 +2893,7 @@
         }
 
         // Geteilte Material-Instanzen zur optimalen GPU-Performance und Shader-Kompilierung
-        const plasterCourtyardWallMat = createPlasterWallMaterial(48, 1.65, THREE.BackSide);
+        const plasterCourtyardWallMat = createPlasterWallMaterial(48, 1.65, THREE.DoubleSide);
         const plasterRoomOuterWallMat = createPlasterWallMaterial(10, 1.65, THREE.FrontSide);
         const plasterRoomInnerWallMat = createPlasterWallMaterial(10, 1.65, THREE.BackSide);
 
@@ -2651,6 +2969,200 @@
         }
 
         const tiles109CourtyardFloorMat = createTiles109FloorMaterial(16, 16);
+
+        // ── PBR VOLCANO ISLAND TERRAIN MATERIAL & LOADER ──
+        function createTerrainMaterial() {
+            const grassColor = pbrTextureLoader.load('assets/textures/terrain/grass_color.webp');
+            const grassNormal = pbrTextureLoader.load('assets/textures/terrain/grass_normal.webp');
+            const grassRoughness = pbrTextureLoader.load('assets/textures/terrain/grass_roughness.webp');
+
+            const rockColor = pbrTextureLoader.load('assets/textures/terrain/rock_color.webp');
+            const rockNormal = pbrTextureLoader.load('assets/textures/terrain/rock_normal.webp');
+            const rockRoughness = pbrTextureLoader.load('assets/textures/terrain/rock_roughness.webp');
+
+            const sandColor = pbrTextureLoader.load('assets/textures/terrain/sand_color.webp');
+            const sandNormal = pbrTextureLoader.load('assets/textures/terrain/sand_normal.webp');
+            const sandRoughness = pbrTextureLoader.load('assets/textures/terrain/sand_roughness.webp');
+
+            [grassColor, grassNormal, grassRoughness, rockColor, rockNormal, rockRoughness, sandColor, sandNormal, sandRoughness].forEach(tex => {
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                tex.anisotropy = 4;
+            });
+            grassColor.colorSpace = THREE.SRGBColorSpace;
+            rockColor.colorSpace = THREE.SRGBColorSpace;
+            sandColor.colorSpace = THREE.SRGBColorSpace;
+
+            const mat = new THREE.MeshStandardMaterial({
+                map: grassColor,
+                roughnessMap: grassRoughness,
+                roughness: 0.88,
+                metalness: 0.05
+            });
+
+            mat.onBeforeCompile = (shader) => {
+                shader.uniforms.uGrassMap = { value: grassColor };
+                shader.uniforms.uGrassNormal = { value: grassNormal };
+                shader.uniforms.uGrassRoughness = { value: grassRoughness };
+
+                shader.uniforms.uRockMap = { value: rockColor };
+                shader.uniforms.uRockNormal = { value: rockNormal };
+                shader.uniforms.uRockRoughness = { value: rockRoughness };
+
+                shader.uniforms.uSandMap = { value: sandColor };
+                shader.uniforms.uSandNormal = { value: sandNormal };
+                shader.uniforms.uSandRoughness = { value: sandRoughness };
+
+                shader.vertexShader = shader.vertexShader.replace(
+                    '#include <common>',
+                    `
+                    #include <common>
+                    varying vec3 vTerrainWorldPos;
+                    varying vec3 vTerrainWorldNormal;
+                    varying vec2 vTerrainUv;
+                    `
+                );
+
+                shader.vertexShader = shader.vertexShader.replace(
+                    '#include <worldpos_vertex>',
+                    `
+                    #include <worldpos_vertex>
+                    vTerrainWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+                    vTerrainWorldNormal = normalize(mat3(modelMatrix) * normal);
+                    vTerrainUv = uv;
+                    `
+                );
+
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <common>',
+                    `
+                    #include <common>
+                    varying vec3 vTerrainWorldPos;
+                    varying vec3 vTerrainWorldNormal;
+                    varying vec2 vTerrainUv;
+
+                    uniform sampler2D uGrassMap;
+                    uniform sampler2D uGrassNormal;
+                    uniform sampler2D uGrassRoughness;
+                    uniform sampler2D uRockMap;
+                    uniform sampler2D uRockNormal;
+                    uniform sampler2D uRockRoughness;
+                    uniform sampler2D uSandMap;
+                    uniform sampler2D uSandNormal;
+                    uniform sampler2D uSandRoughness;
+                    `
+                );
+
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <map_fragment>',
+                    `
+                    // Villa-Innenhof (Radius 24.0m) im Shader verwerfen:
+                    // Verhindert 100% jegliches Z-Fighting mit dem Fliesenboden der Villa!
+                    if (dot(vTerrainWorldPos.xz, vTerrainWorldPos.xz) < 576.0) {
+                        discard;
+                    }
+
+                    vec2 tileUV = vTerrainUv * 64.0;
+                    
+                    // Steigung (Slope): Steile Klippen > 25° werden zu Felsgestein
+                    float slope = 1.0 - abs(vTerrainWorldNormal.y);
+                    float rockFactor = smoothstep(0.18, 0.44, slope);
+                    
+                    // Meeresspiegel & Strand (-33m bis -27m)
+                    float beachFactor = 1.0 - smoothstep(-33.0, -27.0, vTerrainWorldPos.y);
+                    beachFactor = clamp(beachFactor, 0.0, 1.0);
+                    
+                    // Wiese / Gras fuer sanfte Haenge und Caldera-Boden
+                    float grassFactor = max(0.0, 1.0 - rockFactor - beachFactor);
+                    float totalWeight = max(0.001, grassFactor + rockFactor + beachFactor);
+                    grassFactor /= totalWeight;
+                    rockFactor  /= totalWeight;
+                    beachFactor /= totalWeight;
+
+                    vec3 cG = texture2D(uGrassMap, tileUV).rgb;
+                    vec3 cR = texture2D(uRockMap,  tileUV).rgb;
+                    vec3 cS = texture2D(uSandMap,  tileUV).rgb;
+
+                    // Feine Grossraum-Farbvarianz ueber die 1000m Insel
+                    float macro = sin(vTerrainUv.x * 24.0) * cos(vTerrainUv.y * 24.0) * 0.04;
+                    vec3 finalAlbedo = (cG * grassFactor + cR * rockFactor + cS * beachFactor) + macro;
+                    diffuseColor.rgb = finalAlbedo;
+                    `
+                );
+
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <roughnessmap_fragment>',
+                    `
+                    float roughnessFactor = roughness;
+                    float rG = texture2D(uGrassRoughness, tileUV).r;
+                    float rR = texture2D(uRockRoughness,  tileUV).r;
+                    float rS = texture2D(uSandRoughness,  tileUV).r;
+                    roughnessFactor = clamp(rG * grassFactor + rR * rockFactor + rS * beachFactor, 0.45, 0.95);
+                    `
+                );
+            };
+
+            return mat;
+        }
+
+        function buildTerrain() {
+            if (!terrainHeightGrid) {
+                initTerrainDataSync();
+            }
+
+            const terrainGeo = new THREE.PlaneGeometry(1024, 1024, 255, 255);
+            terrainGeo.rotateX(-Math.PI / 2);
+
+            function applyHeightsToGeometry() {
+                if (!terrainHeightGrid) return;
+                const posAttr = terrainGeo.attributes.position;
+                for (let i = 0; i < posAttr.count; i++) {
+                    const vx = posAttr.getX(i);
+                    const vz = posAttr.getZ(i);
+                    const r = Math.hypot(vx, vz);
+                    const u = (vx + 512.0) / 1024.0;
+                    const v = (vz + 512.0) / 1024.0;
+                    const gx = Math.max(0, Math.min(255, Math.round(u * 255.0)));
+                    const gz = Math.max(0, Math.min(255, Math.round(v * 255.0)));
+                    const hNorm = terrainHeightGrid[gz * 256 + gx];
+                    const vy = (hNorm - TERRAIN_CENTER_HEIGHT_NORM) * TERRAIN_MAX_HEIGHT;
+                    posAttr.setY(i, vy);
+                }
+                posAttr.needsUpdate = true;
+                terrainGeo.computeVertexNormals();
+            }
+
+            if (terrainHeightGrid) {
+                applyHeightsToGeometry();
+            } else {
+                fetch('assets/textures/terrain/terrain_heights_256.bin')
+                    .then(r => r.arrayBuffer())
+                    .then(buf => {
+                        terrainHeightGrid = new Float32Array(buf);
+                        applyHeightsToGeometry();
+                    })
+                    .catch(e => console.warn('Terrain async fallback notice:', e));
+            }
+
+            const terrainMat = createTerrainMaterial();
+            terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+            terrainMesh.receiveShadow = true;
+            scene.add(terrainMesh);
+
+            // Tropischer Ozean um die Insel bei TERRAIN_OCEAN_LEVEL (-31.5m)
+            const oceanGeo = new THREE.PlaneGeometry(1800, 1800, 1, 1);
+            oceanGeo.rotateX(-Math.PI / 2);
+            const oceanMat = new THREE.MeshStandardMaterial({
+                color: 0x0284c7,
+                roughness: 0.12,
+                metalness: 0.18,
+                transparent: true,
+                opacity: 0.88
+            });
+            oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
+            oceanMesh.position.set(0, TERRAIN_OCEAN_LEVEL, 0);
+            scene.add(oceanMesh);
+        }
 
         // ── RUNDE RAUMWÄNDE MIT TÜREN ──
         function createCircularRoomWall(room) {
@@ -4973,10 +5485,13 @@
                 console.warn("RTDB reset jetpacks error:", err);
             }
 
-            interactPrompt.textContent = "Alle Stuehle und Jetpacks ins Lager aufgeraeumt!";
+            // Hubschrauber "SERVERAUFSICHT" zurück auf das Helipad versetzen
+            resetHelicopterToHelipad();
+
+            interactPrompt.textContent = "Stühle, Jetpacks und Helikopter wurden aufgeräumt!";
             interactPrompt.classList.add("visible");
             setTimeout(() => {
-                if (interactPrompt.textContent === "Alle Stuehle ins Lager aufgeraeumt!") {
+                if (interactPrompt.textContent === "Stühle, Jetpacks und Helikopter wurden aufgeräumt!") {
                     interactPrompt.classList.remove("visible");
                 }
             }, 2500);
@@ -5000,9 +5515,1782 @@
             });
         }
 
+        // ── AGUSTAWESTLAND AW169 "SERVERAUFSICHT" STATUSVARIABLEN ──
+        let heliGroup = null;
+        let heliMainRotorGroup = null;
+        let heliTailRotorGroup = null;
+        let heliBlurDiscMesh = null;
+        let heliTailBlurMesh = null;
+        let heliCyclicStick = null;
+        let heliCollectiveLever = null;
+        let heliMfdCanvas = null;
+        let heliMfdContext = null;
+        let heliMfdTexture = null;
+        let heliStrobeLight = null;
+        let heliBeaconLight = null;
+        let heliSearchLight = null;
+        let heliRemotePilotMesh = null;
+        let heliHitBox = null;
+        let helipadMesh = null;
 
+        // Flugphysik & Status
+        let isFlyingHelicopter = false;
+        let isHeliFirstPerson = true;
+        let heliEngineRunning = false;
+        const HELI_GEAR_Y = 0.50;
+        let heliPos = new THREE.Vector3(0, 0.50, 36.0);
+        let heliVelocity = new THREE.Vector3(0, 0, 0);
+        let heliPitch = 0.0;
+        let heliRoll = 0.0;
+        let heliYaw = Math.PI; // Nach Süden blickend zur Vulkanlandschaft
+        let heliRpm = 0.0;
+        let heliCollective = 0.0;
+        let heliPilotUid = null;
+        let heliPilotNick = null;
+        let heliLastExitTime = 0;
 
+        // Remote Interpolation
+        let remoteHeliTargetPos = new THREE.Vector3(0, 0.50, 36.0);
+        let remoteHeliTargetPitch = 0.0;
+        let remoteHeliTargetYaw = Math.PI;
+        let remoteHeliTargetRoll = 0.0;
+        let lastHeliNetworkSend = 0;
+        let lastMfdUpdateTime = 0;
 
+        // Tastensteuerung für Helikopter (Arcade-Steuerung)
+        const heliMoveState = {
+            forward: false,   // W
+            backward: false,  // S
+            left: false,      // A
+            right: false,     // D
+            ascend: false,    // Leertaste (Steigen)
+            descend: false,   // Shift / C (Sinken)
+            yawLeft: false,   // Q
+            yawRight: false   // E
+        };
+
+        // Passagiersitzplätze im Helikopter-Rumpf (2 vis-à-vis 3er-Sitzreihen)
+        const heliPassengerSeats = [];
+
+        // ── PROZEDURALE TEXTUREN FÜR AW169 "SERVERAUFSICHT" ──
+        function createAW169LiveryTexture(isLeft) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 2048;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            // Hochglanz Aviation-Weiß als Basis
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillRect(0, 0, 2048, 256);
+
+            // Subtile Panel-Fugen (vertikal)
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 2;
+            for (let x = 120; x < 2048; x += 180) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, 256);
+                ctx.stroke();
+            }
+
+            // Obere & untere Zierkanten (Graphit & Gold)
+            ctx.fillStyle = "#0f172a";
+            ctx.fillRect(0, 0, 2048, 8);
+            ctx.fillRect(0, 248, 2048, 8);
+
+            ctx.fillStyle = "#d97706";
+            ctx.fillRect(0, 8, 2048, 3);
+            ctx.fillRect(0, 245, 2048, 3);
+
+            if (!isLeft) {
+                // RECHTE RUMPFFLANKE (+X):
+                // Für den Betrachter von außen: Heck ist links, Nase ist rechts
+                // Dynamischer Karminrot- & Graphit-Schwung (AW169 VIP Design)
+                ctx.fillStyle = "#1e293b";
+                ctx.beginPath();
+                ctx.moveTo(0, 195);
+                ctx.bezierCurveTo(450, 190, 950, 150, 1600, 95);
+                ctx.lineTo(2048, 75);
+                ctx.lineTo(2048, 115);
+                ctx.bezierCurveTo(1600, 135, 950, 180, 0, 222);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#dc2626";
+                ctx.beginPath();
+                ctx.moveTo(0, 178);
+                ctx.bezierCurveTo(450, 172, 950, 132, 1650, 80);
+                ctx.lineTo(2048, 60);
+                ctx.lineTo(2048, 76);
+                ctx.bezierCurveTo(1650, 96, 950, 150, 0, 195);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#f59e0b";
+                ctx.beginPath();
+                ctx.moveTo(0, 205);
+                ctx.bezierCurveTo(450, 200, 950, 162, 1650, 108);
+                ctx.lineTo(2048, 88);
+                ctx.lineTo(2048, 94);
+                ctx.bezierCurveTo(1650, 114, 950, 168, 0, 212);
+                ctx.closePath();
+                ctx.fill();
+
+                // Hoheitsabzeichen / Dienstwappen
+                ctx.fillStyle = "#d97706";
+                ctx.fillRect(260, 68, 70, 70);
+                ctx.fillStyle = "#0f172a";
+                ctx.font = "bold 44px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("S", 295, 105);
+
+                // Haupt-Schriftzug "SERVERAUFSICHT" (glasklar von links nach rechts)
+                ctx.fillStyle = "#0f172a";
+                ctx.font = "bold 72px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+                ctx.textAlign = "left";
+                ctx.textBaseline = "middle";
+                ctx.fillText("SERVERAUFSICHT", 360, 105);
+
+                // Zierlinie unter dem Schriftzug
+                ctx.fillStyle = "#dc2626";
+                ctx.fillRect(360, 145, 640, 6);
+
+                // Subtext VIP-Kennung
+                ctx.fillStyle = "#475569";
+                ctx.font = "bold 24px monospace";
+                ctx.fillText("AW169 VIP  |  REG: D-MANSION  |  BUNDESREPUBLIK", 360, 175);
+
+                // Notfall-Hinweis Kanzelbereich
+                ctx.fillStyle = "#b91c1c";
+                ctx.font = "bold 20px monospace";
+                ctx.textAlign = "left";
+                ctx.fillText("RESCUE ▶", 1720, 140);
+            } else {
+                // LINKE RUMPFFLANKE (-X):
+                // Für den Betrachter von außen: Nase ist links, Heck ist rechts
+                // Dynamischer Schwung vom Heck nach vorne zum Bug
+                ctx.fillStyle = "#1e293b";
+                ctx.beginPath();
+                ctx.moveTo(2048, 195);
+                ctx.bezierCurveTo(1598, 190, 1098, 150, 448, 95);
+                ctx.lineTo(0, 75);
+                ctx.lineTo(0, 115);
+                ctx.bezierCurveTo(448, 135, 1098, 180, 2048, 222);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#dc2626";
+                ctx.beginPath();
+                ctx.moveTo(2048, 178);
+                ctx.bezierCurveTo(1598, 172, 1098, 132, 398, 80);
+                ctx.lineTo(0, 60);
+                ctx.lineTo(0, 76);
+                ctx.bezierCurveTo(398, 96, 1098, 150, 2048, 195);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#f59e0b";
+                ctx.beginPath();
+                ctx.moveTo(2048, 205);
+                ctx.bezierCurveTo(1598, 200, 1098, 162, 398, 108);
+                ctx.lineTo(0, 88);
+                ctx.lineTo(0, 94);
+                ctx.bezierCurveTo(398, 114, 1098, 168, 2048, 212);
+                ctx.closePath();
+                ctx.fill();
+
+                // Notfall-Hinweis vorne bei der Kanzel
+                ctx.fillStyle = "#b91c1c";
+                ctx.font = "bold 20px monospace";
+                ctx.textAlign = "left";
+                ctx.textBaseline = "middle";
+                ctx.fillText("◀ RESCUE", 100, 140);
+
+                // Hoheitsabzeichen / Dienstwappen
+                ctx.fillStyle = "#d97706";
+                ctx.fillRect(400, 68, 70, 70);
+                ctx.fillStyle = "#0f172a";
+                ctx.font = "bold 44px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("S", 435, 105);
+
+                // Haupt-Schriftzug "SERVERAUFSICHT" (glasklar von links nach rechts)
+                ctx.fillStyle = "#0f172a";
+                ctx.font = "bold 72px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+                ctx.textAlign = "left";
+                ctx.fillText("SERVERAUFSICHT", 500, 105);
+
+                // Zierlinie unter dem Schriftzug
+                ctx.fillStyle = "#dc2626";
+                ctx.fillRect(500, 145, 640, 6);
+
+                // Subtext VIP-Kennung
+                ctx.fillStyle = "#475569";
+                ctx.font = "bold 24px monospace";
+                ctx.fillText("AW169 VIP  |  REG: D-MANSION  |  BUNDESREPUBLIK", 500, 175);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.ClampToEdgeWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            texture.anisotropy = 8;
+            return texture;
+        }
+
+        function createRotorBlurTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+
+            const grad = ctx.createRadialGradient(256, 256, 30, 256, 256, 256);
+            grad.addColorStop(0.0, "rgba(0, 0, 0, 0.0)");
+            grad.addColorStop(0.18, "rgba(15, 23, 42, 0.08)");
+            grad.addColorStop(0.75, "rgba(15, 23, 42, 0.18)");
+            grad.addColorStop(0.88, "rgba(250, 204, 21, 0.65)"); // Gelbe Blattspitzen-Spur
+            grad.addColorStop(0.96, "rgba(220, 38, 38, 0.75)"); // Rote Blattspitzen-Spur
+            grad.addColorStop(1.0, "rgba(0, 0, 0, 0.0)");
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(256, 256, 256, 0, Math.PI * 2);
+            ctx.fill();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        function createCockpitMFDTexture() {
+            heliMfdCanvas = document.createElement("canvas");
+            heliMfdCanvas.width = 1024;
+            heliMfdCanvas.height = 512;
+            heliMfdContext = heliMfdCanvas.getContext("2d");
+
+            heliMfdTexture = new THREE.CanvasTexture(heliMfdCanvas);
+            heliMfdTexture.anisotropy = 4;
+            updateCockpitMFDs(0, 0, Math.PI, 0, 0, 0, 0);
+            return heliMfdTexture;
+        }
+
+        // Live-Zeichnen der 3 Cockpit-MFD-Bildschirme
+        function updateCockpitMFDs(pitch, roll, yaw, rpm, collective, altitude, speed) {
+            if (!heliMfdContext) return;
+            const ctx = heliMfdContext;
+
+            // Hintergrund: Tiefdunkles Avionik-Grau
+            ctx.fillStyle = "#090d16";
+            ctx.fillRect(0, 0, 1024, 512);
+
+            // Rahmen für die 3 Displays
+            ctx.strokeStyle = "#1e293b";
+            ctx.lineWidth = 6;
+            ctx.strokeRect(8, 8, 324, 496);
+            ctx.strokeRect(350, 8, 324, 496);
+            ctx.strokeRect(692, 8, 324, 496);
+
+            // ── DISPLAY 1: PFD (PRIMARY FLIGHT DISPLAY) ──
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(12, 12, 316, 488);
+            ctx.clip();
+
+            // Künstlicher Horizont (Sky / Ground mit Roll & Pitch Neigung)
+            const pfdCenterX = 170;
+            const pfdCenterY = 256;
+            ctx.translate(pfdCenterX, pfdCenterY);
+            ctx.rotate(-roll);
+            const pitchPixelOffset = -pitch * 280;
+            ctx.translate(0, pitchPixelOffset);
+
+            // Himmel (Azurblau)
+            ctx.fillStyle = "#0284c7";
+            ctx.fillRect(-280, -400, 560, 400);
+
+            // Boden (Braun-Grau)
+            ctx.fillStyle = "#78350f";
+            ctx.fillRect(-280, 0, 560, 400);
+
+            // Horizont-Linie
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-240, 0);
+            ctx.lineTo(240, 0);
+            ctx.stroke();
+
+            // Nick-Leiter (Pitch Ladder Ticks)
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+            ctx.lineWidth = 2;
+            for (let deg = -30; deg <= 30; deg += 10) {
+                if (deg === 0) continue;
+                const yPos = -deg * (280 / 57.3);
+                ctx.beginPath();
+                ctx.moveTo(-35, yPos);
+                ctx.lineTo(35, yPos);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+
+            // Flugzeug-Referenzkreuz
+            ctx.strokeStyle = "#facc15";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(130, 256);
+            ctx.lineTo(155, 256);
+            ctx.lineTo(155, 264);
+            ctx.moveTo(185, 264);
+            ctx.lineTo(185, 256);
+            ctx.lineTo(210, 256);
+            ctx.arc(170, 256, 5, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Airspeed Tape links
+            ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+            ctx.fillRect(16, 120, 60, 270);
+            ctx.fillStyle = "#38bdf8";
+            ctx.font = "bold 20px monospace";
+            ctx.fillText(`${Math.round(speed * 3.6)}`, 22, 262);
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "12px sans-serif";
+            ctx.fillText("KM/H", 22, 140);
+
+            // Altitude Tape rechts
+            ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+            ctx.fillRect(260, 120, 64, 270);
+            ctx.fillStyle = "#4ade80";
+            ctx.font = "bold 20px monospace";
+            ctx.fillText(`${Math.max(0, Math.round(altitude))}`, 266, 262);
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "12px sans-serif";
+            ctx.fillText("ALT (M)", 266, 140);
+
+            // PFD Titel
+            ctx.fillStyle = "#f8fafc";
+            ctx.font = "bold 15px sans-serif";
+            ctx.fillText("PFD / FLIGHT", 24, 36);
+
+            // ── DISPLAY 2: EICAS (ENGINE & ROTOR SYSTEM) ──
+            ctx.fillStyle = "#38bdf8";
+            ctx.font = "bold 15px sans-serif";
+            ctx.fillText("EICAS / SYSTEMS", 366, 36);
+
+            // Rotor RPM Kreisbogen
+            const rpmCenterX = 512;
+            const rpmCenterY = 150;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+            ctx.lineWidth = 14;
+            ctx.beginPath();
+            ctx.arc(rpmCenterX, rpmCenterY, 65, Math.PI * 0.75, Math.PI * 2.25);
+            ctx.stroke();
+
+            // Grüner Bereich (90% bis 105%)
+            ctx.strokeStyle = "#22c55e";
+            ctx.beginPath();
+            ctx.arc(rpmCenterX, rpmCenterY, 65, Math.PI * 0.75 + Math.PI * 1.5 * 0.75, Math.PI * 0.75 + Math.PI * 1.5 * 0.95);
+            ctx.stroke();
+
+            // Aktueller RPM Füllstand
+            const rpmArc = Math.min(1.0, rpm);
+            ctx.strokeStyle = rpm > 0.85 ? "#22c55e" : (rpm > 0.3 ? "#eab308" : "#ef4444");
+            ctx.beginPath();
+            ctx.arc(rpmCenterX, rpmCenterY, 65, Math.PI * 0.75, Math.PI * 0.75 + Math.PI * 1.5 * rpmArc);
+            ctx.stroke();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 26px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(`${Math.round(rpm * 100)}%`, rpmCenterX, rpmCenterY + 8);
+            ctx.font = "13px sans-serif";
+            ctx.fillStyle = "#94a3b8";
+            ctx.fillText("ROTOR RPM", rpmCenterX, rpmCenterY + 30);
+
+            // Collective Thrust Fortschrittsbalken
+            ctx.textAlign = "left";
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "14px sans-serif";
+            ctx.fillText("COLLECTIVE (SCHUB):", 370, 275);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 16px monospace";
+            ctx.fillText(`${Math.round(collective * 100)}%`, 590, 275);
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+            ctx.fillRect(370, 288, 280, 20);
+            ctx.fillStyle = collective > 0.75 ? "#f97316" : "#06b6d4";
+            ctx.fillRect(370, 288, 280 * Math.max(0, Math.min(1, collective)), 20);
+
+            // Zwillings-Turbinen Status
+            ctx.fillStyle = "#94a3b8";
+            ctx.fillText("ENG 1 TORQUE:", 370, 345);
+            ctx.fillStyle = "#4ade80";
+            ctx.fillText(`${Math.round(rpm * 88)}%`, 510, 345);
+
+            ctx.fillStyle = "#94a3b8";
+            ctx.fillText("ENG 2 TORQUE:", 370, 375);
+            ctx.fillStyle = "#4ade80";
+            ctx.fillText(`${Math.round(rpm * 89)}%`, 510, 375);
+
+            // System Statusmeldung
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(370, 420, 280, 50);
+            ctx.strokeStyle = "#22c55e";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(370, 420, 280, 50);
+            ctx.fillStyle = "#22c55e";
+            ctx.font = "bold 14px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText("SERVERAUFSICHT D-MANSION", 510, 442);
+            ctx.font = "12px monospace";
+            ctx.fillText("ALL SYSTEMS NOMINAL", 510, 460);
+
+            // ── DISPLAY 3: ND (NAVIGATION DISPLAY & KOMPASS) ──
+            ctx.textAlign = "left";
+            ctx.fillStyle = "#38bdf8";
+            ctx.font = "bold 15px sans-serif";
+            ctx.fillText("NAV / RADAR", 708, 36);
+
+            // Kompassrose
+            const compX = 854;
+            const compY = 240;
+            const compRadius = 110;
+
+            ctx.save();
+            ctx.translate(compX, compY);
+            ctx.rotate(-yaw);
+
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, compRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Himmelsrichtungen
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = "bold 18px monospace";
+
+            ctx.fillStyle = "#ef4444";
+            ctx.fillText("N", 0, -compRadius + 18);
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillText("S", 0, compRadius - 18);
+            ctx.fillText("E", compRadius - 18, 0);
+            ctx.fillText("W", -compRadius + 18, 0);
+
+            // Striche alle 30 Grad
+            for (let a = 0; a < 360; a += 30) {
+                const rad = (a * Math.PI) / 180;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(rad) * (compRadius - 8), Math.sin(rad) * (compRadius - 8));
+                ctx.lineTo(Math.cos(rad) * compRadius, Math.sin(rad) * compRadius);
+                ctx.stroke();
+            }
+
+            // Helipad Marker
+            ctx.fillStyle = "#22c55e";
+            ctx.fillRect(-6, -6, 12, 12);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 10px monospace";
+            ctx.fillText("H", 0, 0);
+
+            ctx.restore();
+
+            // Aktuelle Gradanzeige oben
+            let degHeading = Math.round(((yaw * 180) / Math.PI) % 360);
+            if (degHeading < 0) degHeading += 360;
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 24px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(`HDG: ${degHeading.toString().padStart(3, "0")}°`, compX, 395);
+
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "12px sans-serif";
+            ctx.fillText("GPS: CALDERA DOME", compX, 430);
+
+            if (heliMfdTexture) heliMfdTexture.needsUpdate = true;
+        }
+
+        // ── AGUSTAWESTLAND AW169 3D MODELL-KONSTRUKTION (SAUBER & ÜBERSICHTLICH) ──
+        function buildAW169Helicopter() {
+            // Vorherige Helikopter-Sitze sauber aufräumen, falls Funktion erneut aufgerufen wird
+            if (heliPassengerSeats.length > 0) {
+                heliPassengerSeats.forEach(s => {
+                    const sIdx = seats.indexOf(s);
+                    if (sIdx !== -1) seats.splice(sIdx, 1);
+                    const mIdx = seatMeshes.indexOf(s.mesh);
+                    if (mIdx !== -1) seatMeshes.splice(mIdx, 1);
+                });
+                heliPassengerSeats.length = 0;
+            }
+
+            heliGroup = new THREE.Group();
+            heliGroup.name = "AW169_SERVERAUFSICHT";
+
+            const liveryTexRight = createAW169LiveryTexture(false);
+            const liveryTexLeft = createAW169LiveryTexture(true);
+            const blurTex = createRotorBlurTexture();
+            const mfdTex = createCockpitMFDTexture();
+
+            // Materialien (PBR Clean Fidelity)
+            const matGlossWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.25, metalness: 0.12 });
+            const matLiveryRight = new THREE.MeshStandardMaterial({ map: liveryTexRight, roughness: 0.28, metalness: 0.14 });
+            const matLiveryLeft = new THREE.MeshStandardMaterial({ map: liveryTexLeft, roughness: 0.28, metalness: 0.14 });
+            const matDarkGraphite = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.35, metalness: 0.40 });
+            const matCrimson = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.28, metalness: 0.18 });
+            const matTitanium = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.22, metalness: 0.85 });
+            const matRotorBlade = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.40, metalness: 0.20 });
+            const matSeatLeather = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.72, metalness: 0.10 });
+            const matMFD = new THREE.MeshStandardMaterial({
+                map: mfdTex,
+                emissive: 0xffffff,
+                emissiveMap: mfdTex,
+                emissiveIntensity: 0.95,
+                roughness: 0.25,
+                side: THREE.DoubleSide
+            });
+            const matBlurDisc = new THREE.MeshBasicMaterial({
+                map: blurTex,
+                transparent: true,
+                opacity: 0.0,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+
+            // 100% UNGETÖNTES, KRISTALLKLARES GLAS FÜR MAXIMALE COCKPIT- & RUNDUMSICHT
+            const matClearGlass = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.02,
+                metalness: 0.05,
+                transparent: true,
+                opacity: 0.15,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+
+            // 1. RUMPF-STRUKTUR: VOLLSTÄNDIG BÜNDIG, WASSERDICHT & LÜCKENLOS
+            // Bodenplatte (tragendes Fundament der Kabine)
+            const floorGeo = new THREE.BoxGeometry(2.10, 0.10, 4.90);
+            const floorMesh = new THREE.Mesh(floorGeo, matDarkGraphite);
+            floorMesh.position.set(0, 0.47, 0.25);
+            floorMesh.receiveShadow = true;
+            heliGroup.add(floorMesh);
+
+            // Unterrumpf-Wanne (Belly Fairing - bündig unter der Bodenplatte abschließend)
+            const bellyGeo = new THREE.BoxGeometry(2.04, 0.24, 4.80);
+            const belly = new THREE.Mesh(bellyGeo, matDarkGraphite);
+            belly.position.set(0, 0.30, 0.25);
+            belly.castShadow = true;
+            heliGroup.add(belly);
+
+            // Kabinendach (bündig von der Heckwand bis zum oberen Scheibenrand)
+            const roofGeo = new THREE.BoxGeometry(2.10, 0.10, 4.45);
+            const roofMesh = new THREE.Mesh(roofGeo, matGlossWhite);
+            roofMesh.position.set(0, 2.05, 0.025);
+            roofMesh.castShadow = true;
+            heliGroup.add(roofMesh);
+
+            // Massive Heckwand (schließt Kabinenrückseite bündig von Boden bis Decke)
+            const rearWallGeo = new THREE.BoxGeometry(2.10, 1.68, 0.10);
+            const rearWall = new THREE.Mesh(rearWallGeo, matGlossWhite);
+            rearWall.position.set(0, 1.26, -2.20);
+            rearWall.castShadow = true;
+            heliGroup.add(rearWall);
+
+            // Aerodynamischer Übergangskonus von Heckwand zum Heckausleger (schließt jede Lücke zum Boom)
+            // radiusTop = 0.85 (vorne zur breiten Kabine bei z=-2.10), radiusBottom = 0.38 (hinten zum schlanken Boom bei z=-2.80)
+            const fairingGeo = new THREE.CylinderGeometry(0.85, 0.38, 0.80, 16);
+            fairingGeo.rotateX(Math.PI / 2);
+            const boomFairing = new THREE.Mesh(fairingGeo, matGlossWhite);
+            boomFairing.position.set(0, 1.45, -2.50);
+            boomFairing.castShadow = true;
+            heliGroup.add(boomFairing);
+
+            // C-Säulen / Hintere Rumpfseitenwände (schließen die Ecken zwischen Heckwand und Fenstern nahtlos)
+            [-1.03, 1.03].forEach(x => {
+                const cPillarGeo = new THREE.BoxGeometry(0.06, 1.63, 0.80);
+                const cPillar = new THREE.Mesh(cPillarGeo, matGlossWhite);
+                cPillar.position.set(x, 1.235, -1.80);
+                cPillar.castShadow = true;
+                heliGroup.add(cPillar);
+            });
+
+            // 2. SEITENVERKLEIDUNGEN & PANORAMA-VERGLASUNG (100% BÜNDIG)
+            // Untere Rumpfseitenwand mit "SERVERAUFSICHT"-Lackierung:
+            // Reicht von der C-Säule (z = -1.40) durchgehend bis zur Kanzelnase (z = 2.75) über die gesamte Rumpflänge (4.15m).
+            // Außenfläche zeigt die VIP-Lackierung mit ungespiegeltem Text, Innenfläche ist sauberes Kabinen-Weiß.
+
+            // Rechte Flanke (+X): Face 0 ist außen (+X), Face 1 ist innen (-X)
+            const sidePanelGeoRight = new THREE.BoxGeometry(0.06, 0.46, 4.15);
+            const sidePanelRight = new THREE.Mesh(sidePanelGeoRight, [
+                matLiveryRight,
+                matGlossWhite,
+                matGlossWhite,
+                matGlossWhite,
+                matGlossWhite,
+                matGlossWhite
+            ]);
+            sidePanelRight.position.set(1.03, 0.65, 0.675);
+            sidePanelRight.castShadow = true;
+            heliGroup.add(sidePanelRight);
+
+            // Linke Flanke (-X): Face 0 ist innen (+X), Face 1 ist außen (-X)
+            const sidePanelGeoLeft = new THREE.BoxGeometry(0.06, 0.46, 4.15);
+            const sidePanelLeft = new THREE.Mesh(sidePanelGeoLeft, [
+                matGlossWhite,
+                matLiveryLeft,
+                matGlossWhite,
+                matGlossWhite,
+                matGlossWhite,
+                matGlossWhite
+            ]);
+            sidePanelLeft.position.set(-1.03, 0.65, 0.675);
+            sidePanelLeft.castShadow = true;
+            heliGroup.add(sidePanelLeft);
+
+            [-1.03, 1.03].forEach(x => {
+                // Große rechteckige Seitenscheibe der Kabine (von C-Säule z = -1.40 bis vertikale Stange z = 2.25)
+                const sideWindowGeo = new THREE.BoxGeometry(0.04, 1.14, 3.65);
+                const sideWindow = new THREE.Mesh(sideWindowGeo, matClearGlass);
+                sideWindow.position.set(x, 1.45, 0.425);
+                heliGroup.add(sideWindow);
+
+                // Vertikale Trennstange zwischen Seitenscheibe und Dreiecksscheibe bei z = 2.25
+                const vPostGeo = new THREE.BoxGeometry(0.05, 1.14, 0.05);
+                const vPost = new THREE.Mesh(vPostGeo, matDarkGraphite);
+                vPost.position.set(x, 1.45, 2.25);
+                vPost.castShadow = true;
+                heliGroup.add(vPost);
+
+                // Schräge A-Säule vorne (von Dach z = 2.25, y = 2.02 bis Bug y = 0.88, z = 2.75)
+                const aPillarGeo = new THREE.BoxGeometry(0.06, 1.25, 0.08);
+                aPillarGeo.rotateX(-0.4135);
+                const aPillar = new THREE.Mesh(aPillarGeo, matDarkGraphite);
+                aPillar.position.set(x, 1.45, 2.50);
+                aPillar.castShadow = true;
+                heliGroup.add(aPillar);
+
+                // Dreieckige Cockpit-Seitenscheibe in der Lücke zwischen vertikaler Stange (z = 2.25), Schweller (y = 0.88) und schräger A-Säule
+                const triGeo = new THREE.BufferGeometry();
+                const triVerts = new Float32Array([
+                    x, 0.88, 2.25,
+                    x, 0.88, 2.75,
+                    x, 2.02, 2.25,
+                    // Rückseite für beidseitige Sichtbarkeit
+                    x, 0.88, 2.25,
+                    x, 2.02, 2.25,
+                    x, 0.88, 2.75
+                ]);
+                triGeo.setAttribute('position', new THREE.BufferAttribute(triVerts, 3));
+                triGeo.computeVertexNormals();
+                const triGlass = new THREE.Mesh(triGeo, matClearGlass);
+                heliGroup.add(triGlass);
+            });
+
+            // 3. PANORAMA-COCKPIT AUS KRISTALLKLAREM GLAS & KANZELNASE
+            // Front-Windschutzscheibe (schließt exakt am Dach an und reicht bündig bis zur Kanzelnase)
+            const windshieldGeo = new THREE.BoxGeometry(2.04, 1.25, 0.05);
+            windshieldGeo.rotateX(-0.41);
+            const windshield = new THREE.Mesh(windshieldGeo, matClearGlass);
+            windshield.position.set(0, 1.45, 2.50);
+            heliGroup.add(windshield);
+
+            // Kanzelnase unter der Frontscheibe (bündig mit Boden und Scheibenunterkante)
+            const noseGeo = new THREE.BoxGeometry(2.06, 0.46, 0.50);
+            const nose = new THREE.Mesh(noseGeo, matGlossWhite);
+            nose.position.set(0, 0.65, 2.50);
+            nose.castShadow = true;
+            heliGroup.add(nose);
+
+            // Unteres Kinnfenster (Chin Window im Bugbereich für vertikalen Bodenblick)
+            const chinGlassGeo = new THREE.BoxGeometry(1.85, 0.36, 0.04);
+            const chinGlass = new THREE.Mesh(chinGlassGeo, matClearGlass);
+            chinGlass.position.set(0, 0.66, 2.76);
+            heliGroup.add(chinGlass);
+
+            // 3. FLIEGENDES INSTRUMENTENBRETT (DASHBOARD) - NACH OBEN ZUM PILOTEN GENEIGT
+            // Tief platziert (y=0.88, z=2.36) und um ~33° nach oben angewinkelt, sodass die 3 Instrumente
+            // perfekt im unteren Drittel des Blickfelds liegen, ohne den Horizont zu verdecken
+            const dashGeo = new THREE.BoxGeometry(1.68, 0.28, 0.38);
+            const dash = new THREE.Mesh(dashGeo, matDarkGraphite);
+            dash.position.set(0, 0.88, 2.36);
+            dash.rotation.x = 0.58; // Positiver Winkel: neigt die Bildschirmfläche direkt nach oben zu den Augen des Piloten
+            dash.castShadow = true;
+            heliGroup.add(dash);
+
+            // Blendschutz-Haube (Glareshield) über den Bildschirmen
+            const visorGeo = new THREE.BoxGeometry(1.70, 0.03, 0.10);
+            const visor = new THREE.Mesh(visorGeo, matDarkGraphite);
+            visor.position.set(0, 0.145, -0.16);
+            dash.add(visor);
+
+            // MFD Glas-Cockpit Bildschirme (PFD links, EICAS Mitte, Nav/Radar rechts)
+            const mfdScreenGeo = new THREE.PlaneGeometry(1.52, 0.22);
+            mfdScreenGeo.rotateY(Math.PI); // Zeigt zum Piloten (-Z), kein UV-Invertieren nötig damit Schrift ungespiegelt ist
+            const mfdScreen = new THREE.Mesh(mfdScreenGeo, matMFD);
+            mfdScreen.position.set(0, 0.01, -0.192);
+            dash.add(mfdScreen);
+
+            // 4. PILOTEN- & COPILOTENSITZ IM COCKPIT
+            // Nach hinten versetzt auf z = 1.35, um großzügigen Raum für frei stehende Steuerknüppel zu schaffen
+            [-0.48, 0.48].forEach((x, idx) => {
+                const seatGroup = new THREE.Group();
+                seatGroup.position.set(x, 0.52, 1.35);
+
+                const sBase = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.14, 0.48), matSeatLeather);
+                seatGroup.add(sBase);
+
+                const sBack = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.68, 0.10), matSeatLeather);
+                sBack.position.set(0, 0.38, -0.22);
+                seatGroup.add(sBack);
+
+                const sHead = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.20, 0.08), matSeatLeather);
+                sHead.position.set(0, 0.76, -0.22);
+                seatGroup.add(sHead);
+
+                heliGroup.add(seatGroup);
+            });
+
+            // Frei stehender Steuerknüppel (Cyclic Stick) des Piloten
+            // Steht frei auf dem Kabinenboden vor dem Pilotensitz bei z = 1.85 (viel Platz zu Sitz z=1.35 und Dashboard z=2.36)
+            heliCyclicStick = new THREE.Group();
+            heliCyclicStick.position.set(0.48, 0.52, 1.85);
+
+            const stickBootGeo = new THREE.CylinderGeometry(0.06, 0.10, 0.08, 12);
+            const stickBoot = new THREE.Mesh(stickBootGeo, matDarkGraphite);
+            stickBoot.position.set(0, 0.04, 0);
+            heliCyclicStick.add(stickBoot);
+
+            const stickShaftGeo = new THREE.CylinderGeometry(0.016, 0.016, 0.36, 8);
+            const stickShaft = new THREE.Mesh(stickShaftGeo, matTitanium);
+            stickShaft.position.set(0, 0.24, 0);
+            heliCyclicStick.add(stickShaft);
+
+            const stickGripGeo = new THREE.BoxGeometry(0.045, 0.11, 0.055);
+            const stickGrip = new THREE.Mesh(stickGripGeo, matDarkGraphite);
+            stickGrip.position.set(0, 0.42, 0.01);
+            heliCyclicStick.add(stickGrip);
+
+            const stickTriggerGeo = new THREE.BoxGeometry(0.015, 0.025, 0.018);
+            const stickTrigger = new THREE.Mesh(stickTriggerGeo, matCrimson);
+            stickTrigger.position.set(0, 0.41, 0.038);
+            heliCyclicStick.add(stickTrigger);
+
+            heliGroup.add(heliCyclicStick);
+
+            // Symmetrischer Copilot-Steuerknüppel links
+            const copilotStick = heliCyclicStick.clone();
+            copilotStick.position.set(-0.48, 0.52, 1.85);
+            heliGroup.add(copilotStick);
+
+            // Echter Pitch-Hebel (Collective Lever) links neben dem Pilotensitz
+            heliCollectiveLever = new THREE.Group();
+            heliCollectiveLever.position.set(0.20, 0.52, 1.35);
+
+            const colBaseGeo = new THREE.BoxGeometry(0.08, 0.12, 0.20);
+            const colBase = new THREE.Mesh(colBaseGeo, matDarkGraphite);
+            colBase.position.set(0, 0.06, 0);
+            heliCollectiveLever.add(colBase);
+
+            const colArmGeo = new THREE.CylinderGeometry(0.014, 0.014, 0.28, 8);
+            colArmGeo.rotateX(0.40);
+            const colArm = new THREE.Mesh(colArmGeo, matTitanium);
+            colArm.position.set(0, 0.16, 0.06);
+            heliCollectiveLever.add(colArm);
+
+            const colGripGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.10, 10);
+            colGripGeo.rotateX(Math.PI / 2);
+            const colGrip = new THREE.Mesh(colGripGeo, matDarkGraphite);
+            colGrip.position.set(0, 0.26, 0.14);
+            heliCollectiveLever.add(colGrip);
+
+            heliGroup.add(heliCollectiveLever);
+
+            // 5. PASSAGIERKABINE: 2 GEGENÜBERLIEGENDE 3ER-SITZREIHEN (VIS-À-VIS)
+            // Nach hinten zusammengerückt für bequeme Beinfreiheit und maximale Cockpit-Fläche
+            // Reihe Vorne (Position z = -0.35): 3 Sitze, Passagiere blicken nach HINTEN (Richtung -Z)
+            // Reihe Hinten (Position z = -1.35): 3 Sitze, Passagiere blicken nach VORNE (Richtung +Z)
+            const rowConfigs = [
+                { rowName: "Vorne (Rückwärts)", zPos: -0.35, lookDirZ: -1.0, backOffsetZ: 0.22 },
+                { rowName: "Hinten (Vorwärts)", zPos: -1.35, lookDirZ: 1.0, backOffsetZ: -0.22 }
+            ];
+
+            const seatXOffsets = [-0.62, 0.0, 0.62]; // Links (Fenster), Mitte, Rechts (Fenster)
+
+            rowConfigs.forEach((rc, rIdx) => {
+                // Sitzbank-Untergestell
+                const benchBaseGeo = new THREE.BoxGeometry(1.85, 0.15, 0.52);
+                const benchBase = new THREE.Mesh(benchBaseGeo, matDarkGraphite);
+                benchBase.position.set(0, 0.54, rc.zPos);
+                benchBase.castShadow = true;
+                heliGroup.add(benchBase);
+
+                // Rückenlehne
+                const benchBackGeo = new THREE.BoxGeometry(1.85, 0.68, 0.10);
+                const benchBack = new THREE.Mesh(benchBackGeo, matSeatLeather);
+                benchBack.position.set(0, 0.90, rc.zPos + rc.backOffsetZ);
+                benchBack.castShadow = true;
+                heliGroup.add(benchBack);
+
+                // Die 3 einzelnen Sitzkissen (klickbar via Raycast zum Hinsetzen)
+                seatXOffsets.forEach((xPos, sIdx) => {
+                    const seatCushionGeo = new THREE.BoxGeometry(0.52, 0.12, 0.46);
+                    const seatCushion = new THREE.Mesh(seatCushionGeo, matSeatLeather);
+                    seatCushion.position.set(xPos, 0.62, rc.zPos);
+                    heliGroup.add(seatCushion);
+
+                    // Im globalen Sitzsystem registrieren (Kopfhöhe bei y = 1.30 für Rundumblick)
+                    const localSitPos = new THREE.Vector3(xPos, 1.30, rc.zPos);
+                    const localLookDir = new THREE.Vector3(0, 0, rc.lookDirZ);
+                    const seatName = `AW169 ${rIdx === 0 ? 'Reihe Vorne' : 'Reihe Hinten'} ${sIdx === 0 ? 'Links (Fenster)' : (sIdx === 1 ? 'Mitte' : 'Rechts (Fenster)')}`;
+
+                    const seatObj = {
+                        name: seatName,
+                        isHeliSeat: true,
+                        localPos: localSitPos.clone(),
+                        localLookDir: localLookDir.clone(),
+                        sitPos: localSitPos.clone(),
+                        lookDir: localLookDir.clone(),
+                        mesh: seatCushion
+                    };
+
+                    seatCushion.userData.isSeat = true;
+                    seatCushion.userData.seat = seatObj;
+                    seatCushion.userData.isHeliSeat = true;
+                    seats.push(seatObj);
+                    seatMeshes.push(seatCushion);
+                    heliPassengerSeats.push(seatObj);
+                });
+            });
+
+            // 6. SYMMETRISCHE LANDER-KUFEN (SKIDS) MIT AUTHENTISCHEN BÜGELN (CROSS-TUBES)
+            // Um 50 cm tiefer platziert (Kufenrohr bei y = -0.45) für realistischen, hohen Helikopter-Stand
+            [-1.25, 1.25].forEach(x => {
+                // Hauptkufe mit sanft nach oben geschwungener Kufenspitze vorne
+                const skidCurve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(x, -0.45, -1.85),
+                    new THREE.Vector3(x, -0.45, 0.0),
+                    new THREE.Vector3(x, -0.45, 2.10),
+                    new THREE.Vector3(x, -0.40, 2.50),
+                    new THREE.Vector3(x, -0.28, 2.80),
+                    new THREE.Vector3(x, -0.18, 2.92)
+                ]);
+                const skidGeo = new THREE.TubeGeometry(skidCurve, 32, 0.045, 10, false);
+                const skid = new THREE.Mesh(skidGeo, matTitanium);
+                skid.castShadow = true;
+                heliGroup.add(skid);
+
+                // Aerodynamische Endkappen an den Kufenrohren
+                const capGeo = new THREE.SphereGeometry(0.045, 8, 8);
+                const rearCap = new THREE.Mesh(capGeo, matTitanium);
+                rearCap.position.set(x, -0.45, -1.85);
+                heliGroup.add(rearCap);
+
+                const frontCap = new THREE.Mesh(capGeo, matTitanium);
+                frontCap.position.set(x, -0.18, 2.92);
+                heliGroup.add(frontCap);
+
+                // Rutschfeste Trittstufen an den Kufen für Cockpit- und Kabineneinstieg
+                [0.0, 1.50].forEach(zStep => {
+                    const stepGeo = new THREE.BoxGeometry(0.12, 0.02, 0.28);
+                    const stepMesh = new THREE.Mesh(stepGeo, matDarkGraphite);
+                    stepMesh.position.set(x + (x > 0 ? 0.02 : -0.02), -0.41, zStep);
+                    heliGroup.add(stepMesh);
+                });
+            });
+
+            // Vorderer und hinterer Kufenbügel (Arched Cross-Tubes unter dem Rumpf)
+            [1.40, -0.70].forEach(zArch => {
+                const archCurve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(-1.25, -0.45, zArch),
+                    new THREE.Vector3(-1.10, -0.32, zArch),
+                    new THREE.Vector3(-0.85, -0.08, zArch),
+                    new THREE.Vector3(-0.40, 0.18, zArch),
+                    new THREE.Vector3(0.0, 0.21, zArch),
+                    new THREE.Vector3(0.40, 0.18, zArch),
+                    new THREE.Vector3(0.85, -0.08, zArch),
+                    new THREE.Vector3(1.10, -0.32, zArch),
+                    new THREE.Vector3(1.25, -0.45, zArch)
+                ]);
+                const archGeo = new THREE.TubeGeometry(archCurve, 28, 0.040, 10, false);
+                const archMesh = new THREE.Mesh(archGeo, matTitanium);
+                archMesh.castShadow = true;
+                heliGroup.add(archMesh);
+
+                // Befestigungsschellen an den Kufenverbindungspunkten
+                [-1.25, 1.25].forEach(x => {
+                    const clampGeo = new THREE.CylinderGeometry(0.058, 0.058, 0.10, 8);
+                    const clampMesh = new THREE.Mesh(clampGeo, matDarkGraphite);
+                    clampMesh.position.set(x, -0.45, zArch);
+                    heliGroup.add(clampMesh);
+                });
+            });
+
+            // 7. TRIEBWERKSVERKLEIDUNG & HAUPT-ROTOR (DACH)
+            const cowlGeo = new THREE.BoxGeometry(1.50, 0.45, 2.20);
+            const cowling = new THREE.Mesh(cowlGeo, matGlossWhite);
+            cowling.position.set(0, 2.30, 0.10);
+            cowling.castShadow = true;
+            heliGroup.add(cowling);
+
+            // Vertikaler Rotormast & Gruppe
+            heliMainRotorGroup = new THREE.Group();
+            heliMainRotorGroup.position.set(0, 2.65, 0.20);
+            heliGroup.add(heliMainRotorGroup);
+
+            const mastGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.50, 16);
+            const mast = new THREE.Mesh(mastGeo, matTitanium);
+            heliMainRotorGroup.add(mast);
+
+            const hubGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.16, 12);
+            const hub = new THREE.Mesh(hubGeo, matTitanium);
+            hub.position.set(0, 0.20, 0);
+            heliMainRotorGroup.add(hub);
+
+            // 4 Rotorblätter (perfekt horizontal in der XZ-Ebene)
+            for (let i = 0; i < 4; i++) {
+                const bladeArm = new THREE.Group();
+                bladeArm.rotation.y = i * (Math.PI / 2);
+
+                const bladeGeo = new THREE.BoxGeometry(0.22, 0.025, 4.60);
+                const blade = new THREE.Mesh(bladeGeo, matRotorBlade);
+                blade.position.set(0, 0.20, 2.50);
+                blade.castShadow = true;
+                bladeArm.add(blade);
+
+                const tipGeo = new THREE.BoxGeometry(0.222, 0.026, 0.60);
+                const tip = new THREE.Mesh(tipGeo, matCrimson);
+                tip.position.set(0, 0.20, 4.50);
+                bladeArm.add(tip);
+
+                heliMainRotorGroup.add(bladeArm);
+            }
+
+            // Rotor Motion Blur Disc
+            const blurDiscGeo = new THREE.CircleGeometry(5.20, 32);
+            blurDiscGeo.rotateX(-Math.PI / 2);
+            heliBlurDiscMesh = new THREE.Mesh(blurDiscGeo, matBlurDisc);
+            heliBlurDiscMesh.position.set(0, 0.22, 0);
+            heliMainRotorGroup.add(heliBlurDiscMesh);
+
+            // 8. HECKAUSLEGER (TAIL BOOM) & HECKROTOR
+            // radiusTop = 0.38 (vorne nahtlos an die Manschette bei z=-2.80 anschließend), radiusBottom = 0.12 (hinten verjüngend zum Heckrotor bei z=-7.50)
+            const boomGeo = new THREE.CylinderGeometry(0.38, 0.12, 5.40, 16);
+            boomGeo.rotateX(Math.PI / 2);
+            const boom = new THREE.Mesh(boomGeo, matGlossWhite);
+            boom.position.set(0, 1.45, -4.80);
+            boom.castShadow = true;
+            heliGroup.add(boom);
+
+            // Vertikale Heckflosse
+            const finGeo = new THREE.BoxGeometry(0.08, 1.60, 0.85);
+            const fin = new THREE.Mesh(finGeo, matGlossWhite);
+            fin.position.set(0, 2.15, -7.40);
+            fin.rotation.x = -0.35;
+            fin.castShadow = true;
+            heliGroup.add(fin);
+
+            // Horizontaler Stabilisator
+            const hStabGeo = new THREE.BoxGeometry(1.80, 0.05, 0.40);
+            const hStab = new THREE.Mesh(hStabGeo, matGlossWhite);
+            hStab.position.set(0, 1.45, -5.80);
+            heliGroup.add(hStab);
+
+            // Heckrotor (rotiert in der YZ-Ebene um die X-Achse an der Steuerbordseite)
+            heliTailRotorGroup = new THREE.Group();
+            heliTailRotorGroup.position.set(0.14, 2.25, -7.50);
+            heliGroup.add(heliTailRotorGroup);
+
+            const tHubGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.12, 8);
+            tHubGeo.rotateZ(Math.PI / 2);
+            const tHub = new THREE.Mesh(tHubGeo, matTitanium);
+            heliTailRotorGroup.add(tHub);
+
+            for (let i = 0; i < 2; i++) {
+                const tBladeArm = new THREE.Group();
+                tBladeArm.rotation.x = i * (Math.PI / 2);
+
+                const tBladeGeo = new THREE.BoxGeometry(0.02, 1.50, 0.12);
+                const tBlade = new THREE.Mesh(tBladeGeo, matRotorBlade);
+                tBladeArm.add(tBlade);
+
+                heliTailRotorGroup.add(tBladeArm);
+            }
+
+            // 9. REMOTE-PILOT IM SITZ (SICHTBAR BEI MITSPIELERN)
+            heliRemotePilotMesh = new THREE.Group();
+            heliRemotePilotMesh.position.set(0.48, 0.65, 1.35);
+
+            const rPilotTorso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.50, 0.28), new THREE.MeshStandardMaterial({ color: 0x3b82f6 }));
+            rPilotTorso.position.set(0, 0.25, 0);
+            heliRemotePilotMesh.add(rPilotTorso);
+
+            const rPilotHead = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+            rPilotHead.position.set(0, 0.60, 0);
+            heliRemotePilotMesh.add(rPilotHead);
+
+            heliRemotePilotMesh.visible = false;
+            heliGroup.add(heliRemotePilotMesh);
+
+            // 10. BELEUCHTUNG
+            const strobeGeo = new THREE.SphereGeometry(0.06, 8, 8);
+            heliStrobeLight = new THREE.Mesh(strobeGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            heliStrobeLight.position.set(0, 3.0, -7.6);
+            heliGroup.add(heliStrobeLight);
+
+            const beaconGeo = new THREE.SphereGeometry(0.06, 8, 8);
+            heliBeaconLight = new THREE.Mesh(beaconGeo, new THREE.MeshBasicMaterial({ color: 0xdc2626 }));
+            heliBeaconLight.position.set(0, 0.25, 0.3);
+            heliGroup.add(heliBeaconLight);
+
+            heliSearchLight = new THREE.SpotLight(0xfffaed, 0, 120, Math.PI / 6, 0.35, 1.2);
+            heliSearchLight.position.set(0, 0.50, 3.0);
+            heliSearchLight.target.position.set(0, -10.0, 35.0);
+            heliGroup.add(heliSearchLight);
+            heliGroup.add(heliSearchLight.target);
+
+            // 11. EINSTIEGS-HITBOX FÜR PILOT (COCKPIT-BEREICH)
+            const hitBoxGeo = new THREE.BoxGeometry(2.40, 2.20, 2.40);
+            const hitBoxMat = new THREE.MeshBasicMaterial({ visible: false });
+            heliHitBox = new THREE.Mesh(hitBoxGeo, hitBoxMat);
+            heliHitBox.position.set(0, 1.30, 1.90);
+            heliHitBox.userData = { isHelicopter: true };
+            heliGroup.add(heliHitBox);
+
+            // Parkposition auf dem Helipad vor Ausgang 1 (Südausgang)
+            heliGroup.position.copy(heliPos);
+            heliGroup.rotation.set(0, heliYaw, 0);
+
+            scene.add(heliGroup);
+            return heliGroup;
+        }
+
+        // ── HELIPAD AUSSERHALB DES DUMS (SÜDAUSGANG, x=0, z=36m) ──
+        function buildHelipad() {
+            const padGeo = new THREE.CylinderGeometry(7.0, 7.0, 0.04, 48);
+
+            // Prozedurale Textur für das Helipad
+            const canvas = document.createElement("canvas");
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext("2d");
+
+            // Dunkler Asphalt
+            ctx.fillStyle = "#1e242d";
+            ctx.fillRect(0, 0, 1024, 1024);
+
+            // Äußerer Sicherheitsring
+            ctx.strokeStyle = "#eab308";
+            ctx.lineWidth = 28;
+            ctx.beginPath();
+            ctx.arc(512, 512, 470, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Schwarz-Gelbe Warnstreifen am Außenring
+            ctx.strokeStyle = "#0f172a";
+            ctx.lineWidth = 28;
+            ctx.setLineDash([45, 45]);
+            ctx.beginPath();
+            ctx.arc(512, 512, 470, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Innerer weißer Kreis
+            ctx.strokeStyle = "#f8fafc";
+            ctx.lineWidth = 14;
+            ctx.beginPath();
+            ctx.arc(512, 512, 380, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Großes weißes "H" in der Mitte
+            ctx.fillStyle = "#f8fafc";
+            ctx.font = "bold 340px -apple-system, BlinkMacSystemFont, Arial, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("H", 512, 512);
+
+            // Anflugskennungen "00" und "18"
+            ctx.font = "bold 44px monospace";
+            ctx.fillText("00", 512, 190);
+            ctx.fillText("18", 512, 834);
+
+            ctx.font = "bold 24px monospace";
+            ctx.fillText("MAX 4.8T", 512, 360);
+            ctx.fillText("AW169 VIP", 512, 664);
+
+            const padTex = new THREE.CanvasTexture(canvas);
+            padTex.anisotropy = 8;
+
+            const padMat = new THREE.MeshStandardMaterial({
+                map: padTex,
+                roughness: 0.88,
+                metalness: 0.08
+            });
+
+            helipadMesh = new THREE.Mesh(padGeo, padMat);
+            helipadMesh.position.set(0, 0.015, 36.0);
+            helipadMesh.receiveShadow = true;
+            scene.add(helipadMesh);
+
+            // 8 grüne Randbefeuerungs-LEDs um das Helipad
+            const ledGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.12, 12);
+            const ledMat = new THREE.MeshStandardMaterial({
+                color: 0x22c55e,
+                emissive: 0x22c55e,
+                emissiveIntensity: 1.2,
+                roughness: 0.2
+            });
+
+            for (let i = 0; i < 8; i++) {
+                const ang = i * ((Math.PI * 2) / 8);
+                const led = new THREE.Mesh(ledGeo, ledMat);
+                led.position.set(Math.cos(ang) * 6.8, 0.07, 36.0 + Math.sin(ang) * 6.8);
+                scene.add(led);
+            }
+
+            // Sanftes grünes Vorfeldlicht
+            const padLight = new THREE.PointLight(0x22c55e, 1.2, 18, 1.5);
+            padLight.position.set(0, 1.2, 36.0);
+            scene.add(padLight);
+        }
+
+        // ── HUBSCHRAUBER ZURÜCK AUF DAS HELIPAD VERSETZEN ──
+        function resetHelicopterToHelipad() {
+            if (isFlyingHelicopter) {
+                exitHelicopter();
+            }
+            heliPos.set(0, 0.50, 36.0);
+            heliVelocity.set(0, 0, 0);
+            heliPitch = 0.0;
+            heliRoll = 0.0;
+            heliYaw = Math.PI;
+            heliRpm = 0.0;
+            heliCollective = 0.0;
+            heliEngineRunning = false;
+            heliPilotUid = null;
+            heliPilotNick = null;
+            heliLastExitTime = 0;
+            if (heliGroup) {
+                heliGroup.position.set(0, 0.50, 36.0);
+                heliGroup.rotation.set(0, Math.PI, 0);
+                heliGroup.updateMatrixWorld(true);
+                if (heliPassengerSeats && heliPassengerSeats.length > 0) {
+                    heliPassengerSeats.forEach(seat => {
+                        const worldSitPos = seat.localPos.clone().applyEuler(heliGroup.rotation).add(heliGroup.position);
+                        seat.sitPos.copy(worldSitPos);
+                        const worldLookDir = seat.localLookDir.clone().applyEuler(heliGroup.rotation);
+                        seat.lookDir.copy(worldLookDir);
+                    });
+                }
+            }
+            if (remoteHeliTargetPos) {
+                remoteHeliTargetPos.set(0, 0.50, 36.0);
+                remoteHeliTargetPitch = 0.0;
+                remoteHeliTargetYaw = Math.PI;
+                remoteHeliTargetRoll = 0.0;
+            }
+            if (heliRemotePilotMesh) {
+                heliRemotePilotMesh.visible = false;
+            }
+            if (helicopterAudio) {
+                helicopterAudio.stop();
+            }
+
+            try {
+                const heliRef = rtdbRef(rtdb, "worldState/helicopter");
+                rtdbSet(heliRef, {
+                    x: 0,
+                    y: 0.50,
+                    z: 36.0,
+                    pitch: 0,
+                    roll: 0,
+                    yaw: Number(Math.PI.toFixed(4)),
+                    rpm: 0,
+                    collective: 0,
+                    pilotUid: null,
+                    pilotNick: null,
+                    engineRunning: false,
+                    lastSeen: Date.now()
+                }).catch(() => {});
+            } catch (err) {
+                console.warn("RTDB reset helicopter error:", err);
+            }
+        }
+
+        // ── EINSTEIGEN & AUSSTEIGEN LOGIK ──
+        function enterHelicopter() {
+            if (isFlyingHelicopter) return;
+            if (isSitting) standUp();
+            if (movingChairState) cancelMovingChair();
+            if (movingNoteState) cancelMovingNote();
+
+            // Prüfen, ob bereits ein anderer Spieler Pilot ist
+            if (heliPilotUid && currentUser && heliPilotUid !== currentUser.uid) {
+                interactPrompt.textContent = `Hubschrauber ist besetzt von ${heliPilotNick || "einem Piloten"}!`;
+                interactPrompt.classList.add("visible");
+                setTimeout(() => { interactPrompt.classList.remove("visible"); }, 2000);
+                return;
+            }
+
+            isFlyingHelicopter = true;
+            isHeliFirstPerson = true;
+            heliEngineRunning = true;
+            heliPilotUid = currentUser ? currentUser.uid : "local";
+            heliPilotNick = getStoredNickname();
+
+            // HUD aktivieren
+            const hud = document.getElementById("heli-hud");
+            if (hud) hud.style.display = "block";
+            interactPrompt.classList.remove("visible");
+
+            // Blickrichtung exakt nach vorne durch die Kanzel ausrichten (leichter Blick nach unten ca. 9°, Displays & Horizont perfekt im Blick)
+            camera.rotation.order = "YXZ";
+            camera.rotation.set(-0.16, heliYaw + Math.PI, 0);
+
+            // Eigene Spielfigur unsichtbar für Ego-Ansicht (oder in Sitz platzieren)
+            if (localPlayerGroup) localPlayerGroup.visible = false;
+
+            // Audio aktivieren
+            if (helicopterAudio) {
+                helicopterAudio.update(heliRpm, heliCollective, 0, isHeliFirstPerson, 0);
+            }
+
+            // Sofortigen Netzwerk-Broadcast senden
+            broadcastHelicopterState();
+        }
+
+        function exitHelicopter() {
+            if (!isFlyingHelicopter) return;
+
+            isFlyingHelicopter = false;
+            heliPilotUid = null;
+            heliPilotNick = null;
+
+            // Tastenstatus zurücksetzen
+            heliMoveState.forward = false;
+            heliMoveState.backward = false;
+            heliMoveState.left = false;
+            heliMoveState.right = false;
+            heliMoveState.ascend = false;
+            heliMoveState.descend = false;
+            heliMoveState.yawLeft = false;
+            heliMoveState.yawRight = false;
+
+            // HUD ausblenden
+            const hud = document.getElementById("heli-hud");
+            if (hud) hud.style.display = "none";
+
+            const groundY = getTerrainHeight(heliPos.x, heliPos.z);
+            const isMidAir = (heliPos.y - groundY) > (HELI_GEAR_Y + 0.8);
+            const exitOffset = new THREE.Vector3(2.2, -0.2, 0.6).applyEuler(new THREE.Euler(0, heliYaw, 0));
+
+            if (isMidAir) {
+                // In der Luft ausgestiegen: Spieler fällt sofort mit Gravitationsbeschleunigung nach unten
+                playerPos.set(heliPos.x + exitOffset.x, heliPos.y + exitOffset.y, heliPos.z + exitOffset.z);
+                velocityY = Math.min(0, heliVelocity.y);
+                isOnGround = false;
+
+                // Hubschrauber bleibt in der Luft im Schwebeflug (Auto-Hover) stehen, Rotoren drehen weiter, Sound läuft weiter
+                heliEngineRunning = true;
+                heliRpm = 1.0;
+                heliCollective = 0.50;
+                heliVelocity.set(0, 0, 0);
+                heliPitch = 0.0;
+                heliRoll = 0.0;
+                heliLastExitTime = Date.now();
+                if (remoteHeliTargetPos) {
+                    remoteHeliTargetPos.copy(heliPos);
+                }
+            } else {
+                // Am Boden gelandet: Spieler sicher neben der rechten Tür absetzen, Triebwerk abstellen
+                playerPos.set(heliPos.x + exitOffset.x, groundY + EYE_HEIGHT, heliPos.z + exitOffset.z);
+                velocityY = 0;
+                isOnGround = true;
+
+                heliEngineRunning = false;
+                heliCollective = 0.0;
+                heliVelocity.set(0, 0, 0);
+                heliPitch = 0.0;
+                heliRoll = 0.0;
+                if (remoteHeliTargetPos) {
+                    remoteHeliTargetPos.copy(heliPos);
+                }
+
+                if (helicopterAudio) {
+                    helicopterAudio.stop();
+                }
+            }
+
+            // Kamera-Roll sperren und Modus zurücksetzen
+            camera.rotation.order = "YXZ";
+            camera.rotation.z = 0.0;
+            setCameraMode(isThirdPersonMode);
+
+            // Zustand an Netzwerk melden
+            try {
+                const heliRef = rtdbRef(rtdb, "worldState/helicopter");
+                rtdbUpdate(heliRef, {
+                    x: Number(heliPos.x.toFixed(3)),
+                    y: Number(heliPos.y.toFixed(3)),
+                    z: Number(heliPos.z.toFixed(3)),
+                    pitch: 0,
+                    roll: 0,
+                    yaw: Number(heliYaw.toFixed(4)),
+                    rpm: heliEngineRunning ? 1.0 : 0.0,
+                    collective: heliCollective,
+                    pilotUid: null,
+                    pilotNick: null,
+                    engineRunning: heliEngineRunning,
+                    lastSeen: Date.now()
+                }).catch(() => {});
+            } catch (e) {
+                console.warn("RTDB heli exit broadcast error:", e);
+            }
+        }
+
+        function broadcastHelicopterState() {
+            if (!currentUser || !isFlyingHelicopter) return;
+            try {
+                const heliRef = rtdbRef(rtdb, "worldState/helicopter");
+                rtdbUpdate(heliRef, {
+                    x: Number(heliPos.x.toFixed(3)),
+                    y: Number(heliPos.y.toFixed(3)),
+                    z: Number(heliPos.z.toFixed(3)),
+                    pitch: Number(heliPitch.toFixed(4)),
+                    yaw: Number(heliYaw.toFixed(4)),
+                    roll: Number(heliRoll.toFixed(4)),
+                    rpm: Number(heliRpm.toFixed(3)),
+                    collective: Number(heliCollective.toFixed(3)),
+                    pilotUid: currentUser.uid,
+                    pilotNick: getStoredNickname(),
+                    engineRunning: heliEngineRunning,
+                    lastSeen: Date.now()
+                }).catch(() => {});
+            } catch (e) {
+                console.warn("RTDB heli broadcast error:", e);
+            }
+        }
+
+        window.__heliDebug = {
+            enter: () => enterHelicopter(),
+            exit: () => exitHelicopter(),
+            getGroup: () => heliGroup,
+            getCollective: () => heliCollective,
+            setCollective: (c) => { heliCollective = c; },
+            getRpm: () => heliRpm,
+            getPos: () => heliPos,
+            getVel: () => heliVelocity,
+            getControls: () => heliMoveState,
+            isFlying: () => isFlyingHelicopter,
+            getCamera: () => camera,
+            getPilotUid: () => heliPilotUid,
+            getEngine: () => heliEngineRunning,
+            getPlayerPos: () => playerPos,
+            getIsOnGround: () => isOnGround,
+            getVelocityY: () => velocityY,
+            reset: () => resetHelicopterToHelipad()
+        };
+
+        function syncHelicopterFromNetwork(data) {
+            if (!data || typeof data !== "object") return;
+            if (typeof isFlyingHelicopter === "undefined" || !remoteHeliTargetPos) return;
+
+            // Falls der Pilot seit über 12 Sekunden kein Lebenszeichen gesendet hat -> Pilot als disconnected freigeben
+            const isStale = data.lastSeen && (Date.now() - data.lastSeen > 12000);
+            const activePilotUid = isStale ? null : (data.pilotUid || null);
+            const activeEngine = isStale ? false : Boolean(data.engineRunning);
+
+            // Falls die Aufräumtaste auf einem anderen Client gedrückt wurde (pilotUid = null, engineRunning = false, Helipad Pos)
+            if (isFlyingHelicopter && activePilotUid === null && !activeEngine && data.x === 0 && data.z === 36.0) {
+                exitHelicopter();
+            }
+
+            // Falls lokaler Spieler vor kurzem in der Luft ausgestiegen ist, hat lokaler Schwebeflug Vorrang
+            if (Date.now() - heliLastExitTime < 6000) return;
+
+            // Wenn lokaler Spieler Pilot ist, behält die lokale Flugphysik die Autorität
+            if (isFlyingHelicopter) return;
+
+            if (typeof data.x === "number" && typeof data.y === "number" && typeof data.z === "number") {
+                remoteHeliTargetPos.set(data.x, data.y, data.z);
+            }
+            if (typeof data.pitch === "number") remoteHeliTargetPitch = data.pitch;
+            if (typeof data.yaw === "number") remoteHeliTargetYaw = data.yaw;
+            if (typeof data.roll === "number") remoteHeliTargetRoll = data.roll;
+            if (typeof data.rpm === "number") heliRpm = data.rpm;
+            if (typeof data.collective === "number") heliCollective = data.collective;
+
+            heliPilotUid = activePilotUid;
+            heliPilotNick = isStale ? null : (data.pilotNick || null);
+
+            // Wenn der Heli unbemannt in der Luft schwebt, nur durch einen expliziten Helipad-Reset abstellen
+            if (!activePilotUid && !activeEngine && heliEngineRunning) {
+                if (data.x === 0 && data.z === 36.0) {
+                    heliEngineRunning = false;
+                }
+            } else {
+                heliEngineRunning = activeEngine;
+            }
+
+            // Wenn der Hubschrauber nicht besetzt ist und weit von der Sollposition entfernt ist (z. B. nach Aufräumen), sofort versetzen
+            if (!heliPilotUid && !heliEngineRunning && heliPos.distanceTo(remoteHeliTargetPos) > 3.0) {
+                heliPos.copy(remoteHeliTargetPos);
+                heliVelocity.set(0, 0, 0);
+                heliPitch = remoteHeliTargetPitch;
+                heliYaw = remoteHeliTargetYaw;
+                heliRoll = remoteHeliTargetRoll;
+                if (heliGroup) {
+                    heliGroup.position.copy(heliPos);
+                    heliGroup.rotation.set(heliPitch, heliYaw, heliRoll, "YXZ");
+                }
+            }
+
+            // Remote-Pilot im Cockpitsitz anzeigen
+            if (heliRemotePilotMesh) {
+                heliRemotePilotMesh.visible = Boolean(heliPilotUid);
+            }
+        }
+
+        // ── FLUGPHYSIK & STEUERUNG DES HUBSCHRAUBERS (ARCADE-FLUGMODELL MIT AUTO-HOVER) ──
+        function updateHelicopterFlight(delta) {
+            // 1. Turbinen- & Rotor-Hochlauf (Spool Up / Spool Down)
+            const targetRpm = heliEngineRunning ? 1.0 : 0.0;
+            heliRpm += (targetRpm - heliRpm) * Math.min(1.0, delta * 1.5);
+
+            // 2. Gieren / Drehen (Yaw via Q / E)
+            let yawRate = 0.0;
+            if (heliMoveState.yawLeft) yawRate += 1.6;  // Linksdrehen (Counter-Clockwise)
+            if (heliMoveState.yawRight) yawRate -= 1.6; // Rechtsdrehen (Clockwise)
+            heliYaw += yawRate * delta;
+
+            if (isHeliFirstPerson && yawRate !== 0) {
+                camera.rotation.order = "YXZ";
+                camera.rotation.y += yawRate * delta;
+                camera.rotation.z = 0.0;
+            }
+
+            // Horizontale Richtungsvektoren basierend auf der Hubschrauberausrichtung (Yaw)
+            // AW169 Kanzel/Nase zeigt in +Z bei yaw = 0, Steuerbord (+X) bei yaw = 0
+            const fwdX = Math.sin(heliYaw);
+            const fwdZ = Math.cos(heliYaw);
+            const rgtX = Math.cos(heliYaw);
+            const rgtZ = -Math.sin(heliYaw);
+
+            // 3. Vorwärts / Rückwärts & Seitwärts Flugsteuerung (WASD Arcade)
+            // Spezifikation: Max-Geschwindigkeit 180 km/h (50.0 m/s), Beschleunigung 7.0 m/s²
+            const MAX_HORIZ_SPEED = 50.0;  // 180 km/h exakt
+            const MAX_BACK_SPEED = 32.0;   // ~115 km/h
+            const MAX_STRAFE_SPEED = 35.0; // ~126 km/h
+            const ACCEL = 7.0;             // 7.0 m/s² lineare Beschleunigung
+            const BRAKE = 6.0;             // 6.0 m/s² Ausrollen / Bremsen
+
+            let targetVelX = 0;
+            let targetVelZ = 0;
+            let targetPitch = 0.0;
+            let targetRoll = 0.0;
+
+            const hasHorizInput = heliMoveState.forward || heliMoveState.backward || heliMoveState.left || heliMoveState.right;
+
+            if (heliMoveState.forward) {
+                targetVelX += fwdX * MAX_HORIZ_SPEED;
+                targetVelZ += fwdZ * MAX_HORIZ_SPEED;
+                targetPitch -= 0.22; // Aerodynamische Vorwärtsneigung bei hoher Reisegeschwindigkeit
+            }
+            if (heliMoveState.backward) {
+                targetVelX -= fwdX * MAX_BACK_SPEED;
+                targetVelZ -= fwdZ * MAX_BACK_SPEED;
+                targetPitch += 0.16;
+            }
+            if (heliMoveState.left) {
+                targetVelX += rgtX * MAX_STRAFE_SPEED;
+                targetVelZ += rgtZ * MAX_STRAFE_SPEED;
+                targetRoll -= 0.20; // Rollen/Kurvenlage nach links
+            }
+            if (heliMoveState.right) {
+                targetVelX -= rgtX * MAX_STRAFE_SPEED;
+                targetVelZ -= rgtZ * MAX_STRAFE_SPEED;
+                targetRoll += 0.20; // Rollen/Kurvenlage nach rechts
+            }
+            if (heliMoveState.yawRight) {
+                targetRoll += 0.07;
+            }
+            if (heliMoveState.yawLeft) {
+                targetRoll -= 0.07;
+            }
+
+            // Exakte Vektorbeschleunigung mit a = 7.0 m/s²
+            const diffX = targetVelX - heliVelocity.x;
+            const diffZ = targetVelZ - heliVelocity.z;
+            const diffLen = Math.hypot(diffX, diffZ);
+            if (diffLen > 0.001) {
+                const step = Math.min(diffLen, (hasHorizInput ? ACCEL : BRAKE) * delta);
+                heliVelocity.x += (diffX / diffLen) * step;
+                heliVelocity.z += (diffZ / diffLen) * step;
+            } else {
+                heliVelocity.x = targetVelX;
+                heliVelocity.z = targetVelZ;
+            }
+
+            // Neigungswinkel glätten
+            heliPitch = THREE.MathUtils.damp(heliPitch, targetPitch, 4.5, delta);
+            heliRoll = THREE.MathUtils.damp(heliRoll, targetRoll, 4.5, delta);
+
+            // 4. Echter aerodynamischer Rotorschub (Collective Pitch) & Physik
+            // Space / Shift Tasten verstellen den Schub ebenfalls flüssig
+            if (heliMoveState.ascend) {
+                heliCollective = Math.min(1.0, heliCollective + delta * 0.35);
+            }
+            if (heliMoveState.descend) {
+                heliCollective = Math.max(0.0, heliCollective - delta * 0.35);
+            }
+
+            const groundY = getTerrainHeight(heliPos.x, heliPos.z);
+            const minY = groundY + HELI_GEAR_Y;
+            const isGrounded = heliPos.y <= minY + 0.05;
+
+            // Auf dem Boden ohne aktiven Schub: Kollektiv fällt sanft auf 0
+            if (isGrounded && heliCollective < 0.40 && !heliMoveState.ascend) {
+                heliCollective = THREE.MathUtils.damp(heliCollective, 0.0, 3.0, delta);
+            }
+
+            // Physikalischer Rotorauftrieb vs. Schwerkraft
+            // Bei 50% Schub (Collective = 0.50) und 100% RPM entspricht der Auftrieb exakt der Schwerkraft (Schwebeflug / Hover)
+            const MAX_ROTOR_ACCEL = 19.62; // 2G Maximalbeschleunigung
+            const rotorLift = heliRpm * heliCollective * MAX_ROTOR_ACCEL;
+            const GRAVITY = 9.81;
+            const vertDrag = 1.20;
+
+            const vertAccel = rotorLift - GRAVITY - (heliVelocity.y * vertDrag);
+            heliVelocity.y += vertAccel * delta;
+
+            // Schwebeflug-Stabilisierung (Sanfter Höhen-Halteassistent nahe neutralem 50% Schub)
+            if (Math.abs(heliCollective - 0.50) < 0.03 && !heliMoveState.ascend && !heliMoveState.descend && !isGrounded) {
+                heliVelocity.y = THREE.MathUtils.damp(heliVelocity.y, 0.0, 3.0, delta);
+            }
+
+            // Position integrieren
+            heliPos.x += heliVelocity.x * delta;
+            heliPos.z += heliVelocity.z * delta;
+            heliPos.y += heliVelocity.y * delta;
+
+            // 5. Bodenkollision & Landung auf Terrain / Helipad
+            if (heliPos.y <= minY) {
+                heliPos.y = minY;
+                if (heliVelocity.y < 0) heliVelocity.y = 0;
+                heliVelocity.x *= Math.max(0, 1.0 - delta * 8.0);
+                heliVelocity.z *= Math.max(0, 1.0 - delta * 8.0);
+                heliPitch = THREE.MathUtils.damp(heliPitch, 0, 6.0, delta);
+                heliRoll = THREE.MathUtils.damp(heliRoll, 0, 6.0, delta);
+            }
+
+            // Maximale Flughöhe deckeln (z.B. 120m)
+            if (heliPos.y > 120.0) {
+                heliPos.y = 120.0;
+                if (heliVelocity.y > 0) heliVelocity.y = 0;
+            }
+
+            // Dom-Kollisionsbarriere (Radius 24.5m um den Dom bei Höhe < 14.5m)
+            const distCenter = Math.hypot(heliPos.x, heliPos.z);
+            if (distCenter < 24.5 && heliPos.y < 14.5) {
+                const ang = Math.atan2(heliPos.z, heliPos.x);
+                heliPos.x = Math.cos(ang) * 24.6;
+                heliPos.z = Math.sin(ang) * 24.6;
+                heliVelocity.x *= -0.2;
+                heliVelocity.z *= -0.2;
+            }
+
+            // Insel-Außengrenze (max 490m)
+            if (distCenter > 490.0) {
+                const ang = Math.atan2(heliPos.z, heliPos.x);
+                heliPos.x = Math.cos(ang) * 490.0;
+                heliPos.z = Math.sin(ang) * 490.0;
+            }
+
+            // 6. 3D-Transform der Helikopter-Gruppe anwenden
+            const heliEuler = new THREE.Euler(heliPitch, heliYaw, heliRoll, "YXZ");
+            if (heliGroup) {
+                heliGroup.position.copy(heliPos);
+                heliGroup.rotation.copy(heliEuler);
+                heliGroup.updateMatrixWorld(true);
+            }
+
+            // 7. Steuerhebel im Cockpit animieren
+            if (heliCyclicStick) {
+                heliCyclicStick.rotation.x = -heliPitch * 1.8;
+                heliCyclicStick.rotation.z = -heliRoll * 1.8;
+            }
+            if (heliCollectiveLever) {
+                heliCollectiveLever.rotation.x = -heliCollective * 0.45;
+            }
+
+            // 8. Cockpit-MFD Bildschirme aktualisieren (30 FPS gedrosselt)
+            const nowTime = performance.now();
+            if (nowTime - lastMfdUpdateTime > 32) {
+                lastMfdUpdateTime = nowTime;
+                const spd = Math.hypot(heliVelocity.x, heliVelocity.z);
+                updateCockpitMFDs(heliPitch, heliRoll, heliYaw, heliRpm, heliCollective, heliPos.y, spd);
+            }
+
+            // 9. HUD Telemetrie aktualisieren
+            const spdKmH = Math.round(Math.hypot(heliVelocity.x, heliVelocity.z) * 3.6);
+            let degHeading = Math.round(((heliYaw * 180) / Math.PI) % 360);
+            if (degHeading < 0) degHeading += 360;
+
+            const elSpd = document.getElementById("heli-speed");
+            if (elSpd) elSpd.textContent = spdKmH;
+            const elAlt = document.getElementById("heli-alt");
+            if (elAlt) elAlt.textContent = Math.max(0, Math.round(heliPos.y));
+            const elRpm = document.getElementById("heli-rpm");
+            if (elRpm) elRpm.textContent = `${Math.round(heliRpm * 100)}%`;
+            const elCol = document.getElementById("heli-collective");
+            if (elCol) {
+                const colPct = Math.round(heliCollective * 100);
+                const statusText = isGrounded && heliCollective < 0.10 ? "PARKED" : (heliCollective > 0.53 ? "CLIMB" : (heliCollective < 0.47 ? "DESCENT" : "HOVER"));
+                elCol.textContent = `${colPct}% (${statusText})`;
+            }
+            const elHdg = document.getElementById("heli-hdg");
+            if (elHdg) elHdg.textContent = `${degHeading.toString().padStart(3, "0")}°`;
+
+            // 10. Netzwerk-Broadcast (gedrosselt auf ~60ms / 16 Hz)
+            if (nowTime - lastHeliNetworkSend > 60) {
+                lastHeliNetworkSend = nowTime;
+                broadcastHelicopterState();
+            }
+
+            // 11. Audio aktualisieren
+            if (helicopterAudio) {
+                helicopterAudio.update(heliRpm, heliCollective, heliVelocity.length(), isHeliFirstPerson, 0);
+            }
+        }
+
+        // ── HUBSCHRAUBER KAMERA-SYSTEM (1ST PERSON COCKPIT VS 3RD PERSON VERFOLGER) ──
+        function updateHelicopterCamera(delta) {
+            if (!isFlyingHelicopter || !heliGroup) return;
+
+            if (isHeliFirstPerson) {
+                // Cockpit Ego-Sicht: Kamera sitzt exakt auf Augenhöhe des rechten Pilotensitzes
+                // Pilotensitz ist bei x = 0.48, y = 0.52, z = 1.35.
+                // Augenhöhe: y = 1.35, z = 1.35 (perfekt über dem Armaturenbrett bei y = 0.88, z = 2.36)
+                const eyeLocal = new THREE.Vector3(0.48, 1.35, 1.35);
+                const eyeWorld = eyeLocal.applyEuler(heliGroup.rotation).add(heliPos);
+
+                camera.position.copy(eyeWorld);
+
+                // Kamera-Roll absolut sperren um seitliches FOV-Kippen zu verhindern
+                camera.rotation.order = "YXZ";
+                camera.rotation.z = 0.0;
+
+                // Spieler-Avatar im Cockpit für die eigene Kamera unsichtbar machen
+                if (localPlayerGroup) localPlayerGroup.visible = false;
+            } else {
+                // 3rd Person Verfolger-Kamera (flüssig hinter & über dem Helikopter)
+                const camBackDist = 13.5;
+                const camHeight = 4.0;
+
+                const heliRotY = heliYaw;
+                const camOffset = new THREE.Vector3(
+                    -Math.sin(heliRotY) * camBackDist,
+                    camHeight,
+                    -Math.cos(heliRotY) * camBackDist
+                );
+
+                const targetCamPos = heliPos.clone().add(camOffset);
+                camera.position.lerp(targetCamPos, Math.min(1.0, delta * 8.0));
+
+                const lookTarget = heliPos.clone().add(new THREE.Vector3(0, 1.2, 0));
+                camera.lookAt(lookTarget);
+
+                // Eigene Spielfigur im Pilotensitz sichtbar machen
+                if (localPlayerGroup) {
+                    localPlayerGroup.visible = true;
+                    const seatLocal = new THREE.Vector3(0.48, 0.72, 1.35);
+                    const seatWorld = seatLocal.applyEuler(heliGroup.rotation).add(heliPos);
+                    localPlayerGroup.position.set(seatWorld.x, seatWorld.y - EYE_HEIGHT + 0.35, seatWorld.z);
+                    localPlayerGroup.rotation.y = heliYaw + Math.PI;
+                }
+            }
+        }
+
+        // ── HUBSCHRAUBER WELT-ANIMATIONEN & REMOTE INTERPOLATION ──
+        function updateHelicopterWorld(delta) {
+            if (!heliGroup) return;
+
+            // Turbinen- & Rotor-RPM aufrechterhalten wenn Heli in der Luft schwebt (auch unbemannt)
+            if (!isFlyingHelicopter && !heliPilotUid) {
+                const targetRpm = heliEngineRunning ? 1.0 : 0.0;
+                heliRpm += (targetRpm - heliRpm) * Math.min(1.0, delta * 1.5);
+            }
+
+            // 1. Rotordrehung & Motion-Blur
+            if (heliMainRotorGroup) {
+                heliMainRotorGroup.rotation.y += heliRpm * 38.0 * delta;
+            }
+            if (heliTailRotorGroup) {
+                heliTailRotorGroup.rotation.x += heliRpm * 152.0 * delta;
+            }
+
+            // Motion-Blur Scheiben Deckkraft (blendet zwischen 25% und 90% RPM weich ein)
+            if (heliBlurDiscMesh) {
+                const blurOp = Math.max(0, Math.min(0.55, (heliRpm - 0.25) * 0.85));
+                heliBlurDiscMesh.material.opacity = blurOp;
+                if (heliTailBlurMesh) heliTailBlurMesh.material.opacity = blurOp * 0.9;
+            }
+
+            // 2. Blitzendes Heck-Stroboskoplicht & rotierende Rumpfbake
+            const timeSec = performance.now() * 0.001;
+            if (heliStrobeLight) {
+                // Xenon Doppelblitz alle 1.2 Sekunden
+                const strobeCycle = timeSec % 1.2;
+                const isFlash = (strobeCycle < 0.05) || (strobeCycle > 0.12 && strobeCycle < 0.17);
+                heliStrobeLight.material.color.setHex(isFlash ? 0xffffff : 0x222222);
+            }
+            if (heliBeaconLight) {
+                const beaconPulse = 0.5 + 0.5 * Math.sin(timeSec * 8.0);
+                heliBeaconLight.material.color.setRGB(beaconPulse, 0.05, 0.05);
+            }
+            if (heliSearchLight) {
+                heliSearchLight.intensity = (isFlyingHelicopter || heliEngineRunning) ? 3.5 : 0.0;
+            }
+
+            // 3. Remote Helikopter Interpolation & Unbemannter Schwebeflug
+            if (!isFlyingHelicopter) {
+                if (heliPilotUid) {
+                    const distToTarget = heliPos.distanceTo(remoteHeliTargetPos);
+                    if (distToTarget > 15.0) {
+                        heliPos.copy(remoteHeliTargetPos);
+                    } else if (distToTarget > 0.01) {
+                        heliPos.lerp(remoteHeliTargetPos, Math.min(1.0, delta * 10.0));
+                    }
+
+                    heliPitch = THREE.MathUtils.damp(heliPitch, remoteHeliTargetPitch, 8.0, delta);
+                    heliYaw = THREE.MathUtils.damp(heliYaw, remoteHeliTargetYaw, 8.0, delta);
+                    heliRoll = THREE.MathUtils.damp(heliRoll, remoteHeliTargetRoll, 8.0, delta);
+                }
+
+                heliGroup.position.copy(heliPos);
+                heliGroup.rotation.set(heliPitch, heliYaw, heliRoll, "YXZ");
+                heliGroup.updateMatrixWorld(true);
+
+                // Spatial Audio für umstehende Spieler zu Fuß
+                if (helicopterAudio) {
+                    const distToPlayer = playerPos.distanceTo(heliPos);
+                    helicopterAudio.update(heliRpm, heliCollective, 0, false, distToPlayer);
+                }
+            }
+
+            // 4. Helikopter-Passagiersitze mit der Rumpfbewegung im Weltraum transformieren
+            if (heliPassengerSeats && heliPassengerSeats.length > 0) {
+                heliPassengerSeats.forEach(seat => {
+                    const worldSitPos = seat.localPos.clone().applyEuler(heliGroup.rotation).add(heliGroup.position);
+                    seat.sitPos.copy(worldSitPos);
+                    const worldLookDir = seat.localLookDir.clone().applyEuler(heliGroup.rotation);
+                    seat.lookDir.copy(worldLookDir);
+                });
+            }
+            if (isSitting && currentSeat && currentSeat.isHeliSeat) {
+                playerPos.copy(currentSeat.sitPos);
+            }
+        }
 
         // â”€â”€ REALISTISCHER HIMMEL: FLIESSENDE WOLKEN AM TAG & SPEKTAKULÃ„RER STERNENHIMMEL BEI NACHT â”€â”€
         function createRealisticProceduralSky() {
@@ -5359,15 +7647,15 @@
                 fog: false
             });
 
-            const skyGeom = new THREE.SphereGeometry(750, 48, 24);
+            const skyGeom = new THREE.SphereGeometry(1600, 48, 24);
             const dome = new THREE.Mesh(skyGeom, skyMaterial);
             dome.renderOrder = -99999;
             return dome;
         }
 
 
-        // â”€â”€ ECHTE HALBKUGELFÃ–RMIGE GEODÃ„TISCHE KUPPEL (HALBKUGEL R = 24 m) â”€â”€
-        const DOME_RADIUS = COURTYARD_RADIUS; // Exakt 24.0 m Radius fÃ¼r eine echte, perfekte Halbkugel
+        // ── ECHTE HALBKUGELFÖRMIGE GEODÄTISCHE KUPPEL (HALBKUGEL R = 24 m) ──
+        const DOME_RADIUS = COURTYARD_RADIUS; // Exakt 24.0 m Radius für eine echte, perfekte Halbkugel
         const DOME_APEX_Y = WALL_HEIGHT + DOME_RADIUS; // Scheitelpunkt bei y = 29.0 m
 
         function getDomeHeightAt(r) {
@@ -5379,7 +7667,7 @@
 
         function getDomeCeilingY(x, z) {
             const r = Math.hypot(x, z);
-            if (r >= COURTYARD_RADIUS) return WALL_HEIGHT - 0.4;
+            if (r >= COURTYARD_RADIUS) return 200.0; // Freier Himmel über dem Außengelände
             const domeY = getDomeHeightAt(r);
             return Math.max(WALL_HEIGHT - 0.4, domeY - 0.6);
         }
@@ -5555,84 +7843,9 @@
             return domeGroup;
         }
 
-        // â”€â”€ 3D INIT â”€â”€
-        function initThreeWorld() {
-            if (scene) {
-                onWindowResize();
-                if (!animationFrameId) animate();
-                return;
-            }
-
-            scene = new THREE.Scene();
-            scene.background = null; // ErmÃ¶glicht Durchsicht auf die Himmelskuppel
-
-            skyDomeMesh = createRealisticProceduralSky();
-            scene.add(skyDomeMesh);
-
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, EYE_HEIGHT, 0); // Spawn im Zentrum
-
-            renderer = new THREE.WebGLRenderer({ canvas: gameCanvas, antialias: true, powerPreference: "high-performance" });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-            // CSS3D Renderer fÃ¼r echten Video-Screen an der 3D-Wand
-            cssScene = new THREE.Scene();
-            cssRenderer = new CSS3DRenderer();
-            cssRenderer.setSize(window.innerWidth, window.innerHeight);
-            cssRenderer.domElement.style.position = 'absolute';
-            cssRenderer.domElement.style.top = '0';
-            cssRenderer.domElement.style.left = '0';
-            cssRenderer.domElement.style.width = '100%';
-            cssRenderer.domElement.style.height = '100%';
-            cssRenderer.domElement.style.pointerEvents = 'none';
-            cssRenderer.domElement.style.zIndex = '2';
-            gameContainer.appendChild(cssRenderer.domElement);
-
-            controls = new PointerLockControls(camera, document.body);
-
-            // First-Person Fahrrad-Cockpit (am unteren Sichtrand bei Fahrt eingeblendet)
-            localBikeCockpit = new THREE.Group();
-            const rubberMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
-            const chromeMat = new THREE.MeshLambertMaterial({ color: 0xcbd5e1 });
-
-            // Querlenker
-            const cBar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.52, 12), chromeMat);
-            cBar.rotation.z = Math.PI / 2;
-            cBar.position.set(0, -0.28, -0.55);
-            localBikeCockpit.add(cBar);
-
-            // Griffe & Bremshebel
-            [-0.24, 0.24].forEach(gx => {
-                const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.09, 10), rubberMat);
-                grip.rotation.z = Math.PI / 2;
-                grip.position.set(gx, -0.28, -0.55);
-                localBikeCockpit.add(grip);
-
-                const lever = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.008, 0.08), chromeMat);
-                lever.position.set(gx * 0.85, -0.29, -0.58);
-                lever.rotation.y = gx > 0 ? -0.2 : 0.2;
-                localBikeCockpit.add(lever);
-            });
-
-            // Vorbau & Steuerrohr
-            const cStem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.16, 8), chromeMat);
-            cStem.position.set(0, -0.35, -0.56);
-            cStem.rotation.x = -0.35;
-            localBikeCockpit.add(cStem);
-
-            // Sichtbarer oberer Vorderrad-Reifenbogen in YZ-Ebene (Fahrtrichtung nach vorn)
-            const cTire = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.035, 10, 24, Math.PI * 0.5), rubberMat);
-            cTire.rotation.y = Math.PI / 2;
-            cTire.position.set(0, -0.58, -0.42);
-            localBikeCockpit.add(cTire);
-
-            localBikeCockpit.visible = false;
-            camera.add(localBikeCockpit);
-
-        // â”€â”€ LOKALER SPIELER-AVATAR FUER 3RD-PERSON-MODUS â”€â”€
+        // ── LOKALER SPIELER-AVATAR FUER 3RD-PERSON-MODUS ──
         function createLocalPlayerModel(color, nickname) {
-            if (localPlayerGroup) {
+            if (localPlayerGroup && scene) {
                 scene.remove(localPlayerGroup);
             }
             const group = new THREE.Group();
@@ -5672,7 +7885,7 @@
             neck.position.y = 1.48;
             group.add(neck);
 
-            // Kopf exakt auf AugenhÃ¶he y = 1.70
+            // Kopf exakt auf Augenhöhe y = 1.70
             const headGeo = new THREE.SphereGeometry(0.20, 16, 16);
             const headMat = new THREE.MeshLambertMaterial({ color: color });
             const head = new THREE.Mesh(headGeo, headMat);
@@ -5704,12 +7917,49 @@
             });
 
             group.visible = isThirdPersonMode;
-            scene.add(group);
+            if (scene) scene.add(group);
             localPlayerGroup = group;
             return group;
         }
 
-        // â”€â”€ FIRST-PERSON: KEINE STOERENDEN MESHS VOR DER KAMERA â”€â”€
+        // ── 3D INIT ──
+        function initThreeWorld() {
+            if (scene) {
+                onWindowResize();
+                if (!animationFrameId) animate();
+                return;
+            }
+
+            scene = new THREE.Scene();
+            scene.background = null; // Ermöglicht Durchsicht auf die Himmelskuppel
+
+            skyDomeMesh = createRealisticProceduralSky();
+            scene.add(skyDomeMesh);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, EYE_HEIGHT, 0); // Spawn im Zentrum
+            scene.fog = new THREE.FogExp2(0xa5c9eb, 0.00075);
+
+            renderer = new THREE.WebGLRenderer({ canvas: gameCanvas, antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // CSS3D Renderer für echten Video-Screen an der 3D-Wand
+            cssScene = new THREE.Scene();
+            cssRenderer = new CSS3DRenderer();
+            cssRenderer.setSize(window.innerWidth, window.innerHeight);
+            cssRenderer.domElement.style.position = 'absolute';
+            cssRenderer.domElement.style.top = '0';
+            cssRenderer.domElement.style.left = '0';
+            cssRenderer.domElement.style.width = '100%';
+            cssRenderer.domElement.style.height = '100%';
+            cssRenderer.domElement.style.pointerEvents = 'none';
+            cssRenderer.domElement.style.zIndex = '2';
+            gameContainer.appendChild(cssRenderer.domElement);
+
+            controls = new PointerLockControls(camera, document.body);
+
+            // ── FIRST-PERSON: KEINE STOERENDEN MESHS VOR DER KAMERA ──
             localJetpackCockpit = null;
             localJetpackFlames = null;
             localJetpackLight = null;
@@ -5745,12 +7995,12 @@
 
 
             // 1. Runder Hof-Boden (Radius 24 m): PBR Terrazzo-Fliesen (Tiles109)
-            const courtyardFloorGeo = new THREE.CircleGeometry(COURTYARD_RADIUS + 0.2, 64);
+            const courtyardFloorGeo = new THREE.CircleGeometry(COURTYARD_RADIUS + 0.15, 64);
             courtyardFloorGeo.attributes.uv2 = courtyardFloorGeo.attributes.uv;
             const courtyardFloorMat = tiles109CourtyardFloorMat;
             const courtyardFloor = new THREE.Mesh(courtyardFloorGeo, courtyardFloorMat);
             courtyardFloor.rotation.x = -Math.PI / 2;
-            courtyardFloor.position.y = 0;
+            courtyardFloor.position.y = 0.001;
             courtyardFloor.receiveShadow = true;
             scene.add(courtyardFloor);
 
@@ -5781,14 +8031,51 @@
             const curvedSpawn = createCurvedSpawnMesh();
             scene.add(curvedSpawn);
 
-            // 3. Hof-Außenwand (Radius 24)
-            const outerWallGeo = new THREE.CylinderGeometry(COURTYARD_RADIUS, COURTYARD_RADIUS, WALL_HEIGHT, 64, 1, true);
-            const outerWallMat = plasterCourtyardWallMat;
-            const outerWall = new THREE.Mesh(outerWallGeo, outerWallMat);
-            outerWall.position.set(0, WALL_HEIGHT / 2, 0);
-            outerWall.userData = { isOuterWall: true };
-            scene.add(outerWall);
-            wallMeshes.push(outerWall);
+            // 3. Hof-Außenwände (Radius 24) mit 5 symmetrischen Ausgängen zwischen den 5 Räumen
+            const wallSpan = (2 * Math.PI / 5) - EXIT_OPENING_ANGLE;
+            const wallFraction = wallSpan / (2 * Math.PI); // Exakter Anteil am Vollkreis (~0.1503)
+
+            SATELLITE_ROOMS.forEach((room) => {
+                const roomAlpha = Math.atan2(room.cz, room.cx);
+                const wallSegGeo = new THREE.CylinderGeometry(COURTYARD_RADIUS, COURTYARD_RADIUS, WALL_HEIGHT, 32, 1, true, -wallSpan / 2, wallSpan);
+                
+                // UV-Skalierung korrigieren: Hebt die 6.6-fache horizontale Stauchung vollständig auf!
+                // Durch Multiplikation mit wallFraction entspricht die Kachelung exakt dem unbeschnittenen
+                // Originalzylinder (3.14m Kachelbreite auf 3.03m Kachelhöhe = perfekte 1:1 Quadratur).
+                const uvs = wallSegGeo.attributes.uv;
+                for (let i = 0; i < uvs.count; i++) {
+                    uvs.setX(i, uvs.getX(i) * wallFraction);
+                }
+                uvs.needsUpdate = true;
+
+                const wallSeg = new THREE.Mesh(wallSegGeo, plasterCourtyardWallMat);
+                wallSeg.position.set(0, WALL_HEIGHT / 2, 0);
+                wallSeg.rotation.y = Math.PI / 2 - roomAlpha;
+                wallSeg.userData = { isOuterWall: true };
+                scene.add(wallSeg);
+                wallMeshes.push(wallSeg);
+            });
+
+            // Elegante Portal-Pfeiler (Anthrazit-Titan) an allen 5 Ausgängen
+            const gatePillarGeo = new THREE.CylinderGeometry(0.14, 0.14, WALL_HEIGHT, 16);
+            const gatePillarMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.35, metalness: 0.85 });
+
+            EXIT_ANGLES.forEach((exitAngle) => {
+                // 2 Pfeiler pro Ausgang (links & rechts des Portals)
+                [-EXIT_HALF_ANGLE, EXIT_HALF_ANGLE].forEach((sideOffset) => {
+                    const pillarAng = exitAngle + sideOffset;
+                    const pMesh = new THREE.Mesh(gatePillarGeo, gatePillarMat);
+                    pMesh.position.set(Math.cos(pillarAng) * COURTYARD_RADIUS, WALL_HEIGHT / 2, Math.sin(pillarAng) * COURTYARD_RADIUS);
+                    scene.add(pMesh);
+                });
+            });
+
+            // Außenterrain & Ozean initialisieren & rendern
+            buildTerrain();
+
+            // Helipad & AW169 Hubschrauber "SERVERAUFSICHT" vor Ausgang 1 initialisieren
+            buildHelipad();
+            buildAW169Helicopter();
 
             // DomfÃ¶rmige Glaskuppel aus dreieckigen, eingerahmten Glaspolygonen bÃ¼ndig auf AuÃŸenwand
             const glassDome = createGeodesicGlassDome();
@@ -5816,6 +8103,16 @@
             window.addEventListener("resize", onWindowResize);
             document.addEventListener("keydown", onKeyDown);
             document.addEventListener("keyup", onKeyUp);
+
+            // Mausrad-Steuerung für Hubschrauber (Echter physikalischer Rotorschub / Collective Pitch)
+            window.addEventListener("wheel", (e) => {
+                if (isFlyingHelicopter) {
+                    e.preventDefault();
+                    // Scroll nach vorne (oben) = Schub erhöhen, Scroll nach hinten (unten) = Schub verringern
+                    const step = -Math.sign(e.deltaY) * 0.04;
+                    heliCollective = Math.max(0.0, Math.min(1.0, heliCollective + step));
+                }
+            }, { passive: false });
 
             // Mousedown im First-Person-Modus unterbindet Textselektions-Ziehgesten
             // Verhindert native Browser-Textselektion im Dokument (auÃŸer in echten Eingabefeldern)
@@ -5883,8 +8180,6 @@
                     openViewNoteModal(currentInteractTarget.noteId, currentInteractTarget.data);
                 } else if (currentInteractTarget.type === 'seat') {
                     sitDown(currentInteractTarget.seat);
-                } else if (currentInteractTarget.type === 'bike') {
-                    mountBike();
                 } else if (currentInteractTarget.type === 'jetpack') {
                     equipJetpack(currentInteractTarget.jetpackObj);
                 } else if (currentInteractTarget.type === 'pinboard') {
@@ -5995,19 +8290,76 @@
                     cancelMovingNote();
                     return;
                 }
-                if (isRidingBike) {
-                    dismountBike();
+            }
+
+            if (isFlyingHelicopter) {
+                switch (e.code) {
+                    case "KeyW":
+                    case "ArrowUp":
+                        heliMoveState.forward = true;
+                        break;
+                    case "KeyS":
+                    case "ArrowDown":
+                        heliMoveState.backward = true;
+                        break;
+                    case "KeyA":
+                    case "ArrowLeft":
+                        heliMoveState.left = true;
+                        break;
+                    case "KeyD":
+                    case "ArrowRight":
+                        heliMoveState.right = true;
+                        break;
+                    case "Space":
+                        heliMoveState.ascend = true;
+                        break;
+                    case "ShiftLeft":
+                    case "ShiftRight":
+                    case "KeyC":
+                        heliMoveState.descend = true;
+                        break;
+                    case "KeyQ":
+                        heliMoveState.yawLeft = true;
+                        break;
+                    case "KeyE":
+                        heliMoveState.yawRight = true;
+                        break;
+                    case "KeyV":
+                        isHeliFirstPerson = !isHeliFirstPerson;
+                        if (isHeliFirstPerson) {
+                            camera.rotation.order = "YXZ";
+                            camera.rotation.set(-0.16, heliYaw + Math.PI, 0);
+                        }
+                        break;
+                    case "KeyF":
+                        exitHelicopter();
+                        break;
+                }
+                return;
+            }
+
+            if (e.code === "KeyF") {
+                const heliDist = playerPos.distanceTo(heliPos);
+                if (heliDist <= 5.5) {
+                    enterHelicopter();
                     return;
                 }
             }
 
             if (isSitting) {
-                if (e.code === "KeyE" || e.code === "Space" || 
-                    e.code === "KeyW" || e.code === "KeyS" || 
-                    e.code === "KeyA" || e.code === "KeyD" ||
-                    e.code.startsWith("Arrow")) {
-                    standUp();
-                    return;
+                if (currentSeat && currentSeat.isHeliSeat) {
+                    if (e.code === "KeyE" || e.code === "Space" || e.code === "KeyF") {
+                        standUp();
+                        return;
+                    }
+                } else {
+                    if (e.code === "KeyE" || e.code === "Space" || 
+                        e.code === "KeyW" || e.code === "KeyS" || 
+                        e.code === "KeyA" || e.code === "KeyD" ||
+                        e.code.startsWith("Arrow")) {
+                        standUp();
+                        return;
+                    }
                 }
             }
 
@@ -6066,10 +8418,6 @@
                         pinMovingNote();
                         return;
                     }
-                    if (isRidingBike) {
-                        dismountBike();
-                        return;
-                    }
                     if (currentInteractTarget) {
                         if (currentInteractTarget.type === 'movableChair') {
                             startMovingChair(currentInteractTarget.chair);
@@ -6085,10 +8433,10 @@
                             startMovingNote();
                         } else if (currentInteractTarget.type === 'seat') {
                             // Sitzen ist ab jetzt ausschliesslich LMB (Linksklick)
-                        } else if (currentInteractTarget.type === 'bike') {
-                            mountBike();
                         } else if (currentInteractTarget.type === 'jetpack') {
                             equipJetpack(currentInteractTarget.jetpackObj);
+                        } else if (currentInteractTarget.type === 'helicopter') {
+                            enterHelicopter();
                         } else if (currentInteractTarget.type === 'pinboard') {
                             openNoteModal(currentInteractTarget.hit);
                         } else if (currentInteractTarget.type === 'artWall') {
@@ -6102,6 +8450,42 @@
         }
 
         function onKeyUp(e) {
+            if (isFlyingHelicopter) {
+                switch (e.code) {
+                    case "KeyW":
+                    case "ArrowUp":
+                        heliMoveState.forward = false;
+                        break;
+                    case "KeyS":
+                    case "ArrowDown":
+                        heliMoveState.backward = false;
+                        break;
+                    case "KeyA":
+                    case "ArrowLeft":
+                        heliMoveState.left = false;
+                        break;
+                    case "KeyD":
+                    case "ArrowRight":
+                        heliMoveState.right = false;
+                        break;
+                    case "Space":
+                        heliMoveState.ascend = false;
+                        break;
+                    case "ShiftLeft":
+                    case "ShiftRight":
+                    case "KeyC":
+                        heliMoveState.descend = false;
+                        break;
+                    case "KeyQ":
+                        heliMoveState.yawLeft = false;
+                        break;
+                    case "KeyE":
+                        heliMoveState.yawRight = false;
+                        break;
+                }
+                return;
+            }
+
             switch (e.code) {
                 case "KeyW":
                 case "ArrowUp":
@@ -6180,7 +8564,38 @@
 
             let isMoving = false;
 
-            if (controls && controls.isLocked) {
+            // Hubschrauber Welt-Animationen (Rotoren, Blitze, 3D Sound, Remote-Sync)
+            updateHelicopterWorld(delta);
+
+            // Freier Fall & Gravitation auf den Spieler (wirkt IMMER, wenn der Spieler nicht fliegt oder sitzt)
+            if (!isFlyingHelicopter && !isSitting) {
+                const targetGroundY = getTerrainHeight(playerPos.x, playerPos.z);
+                if (!isJetpackThrusting) {
+                    if (!isOnGround || velocityY !== 0) {
+                        velocityY += GRAVITY * delta;
+                        playerPos.y += velocityY * delta;
+
+                        if (playerPos.y <= targetGroundY + EYE_HEIGHT) {
+                            playerPos.y = targetGroundY + EYE_HEIGHT;
+                            velocityY = 0;
+                            isOnGround = true;
+                        }
+                    } else {
+                        playerPos.y = targetGroundY + EYE_HEIGHT;
+                    }
+                }
+                if (!controls || !controls.isLocked) {
+                    if (!isThirdPersonMode) {
+                        camera.position.copy(playerPos);
+                    }
+                }
+            }
+
+            if (isFlyingHelicopter) {
+                // Lokaler Flugbetrieb: Flugphysik, MFDs, Telemetrie & Kamera
+                updateHelicopterFlight(delta);
+                updateHelicopterCamera(delta);
+            } else if (controls && controls.isLocked) {
                 if (!isSitting) {
                     // Jetpack Flug-Physik mit Schub via Leertaste
                     if (isJetpackEquipped && spacePressed) {
@@ -6226,21 +8641,7 @@
                         }
                     }
 
-                    if (!isJetpackThrusting) {
-                        if (!isOnGround || velocityY !== 0) {
-                            velocityY += GRAVITY * delta;
-                            playerPos.y += velocityY * delta;
-
-                            if (playerPos.y <= EYE_HEIGHT) {
-                                playerPos.y = EYE_HEIGHT;
-                                velocityY = 0;
-                                isOnGround = true;
-                            }
-                        }
-                    }
-
-                    const speedMultiplier = isRidingBike ? 1.85 : 1.0;
-                    const actualSpeed = moveSpeed * speedMultiplier * delta;
+                    const actualSpeed = moveSpeed * delta;
 
                     // Echte horizontale Blickrichtung der Kamera auf der XZ-Ebene (vollkommen unabhaengig von Neigung/Pitch)
                     const camDir = new THREE.Vector3();
@@ -6263,12 +8664,23 @@
                     playerPos.x += mX;
                     playerPos.z += mZ;
 
-                    // Hof-AuÃŸengrenze
+                    // Hof-Außengrenze & 5 Caldera-Ausgänge (nahtlos begehbar)
                     const distFromCenter = Math.hypot(playerPos.x, playerPos.z);
-                    if (distFromCenter > 23.3) {
-                        const angle = Math.atan2(playerPos.z, playerPos.x);
-                        playerPos.x = Math.cos(angle) * 23.3;
-                        playerPos.z = Math.sin(angle) * 23.3;
+                    const curAngle = Math.atan2(playerPos.z, playerPos.x);
+                    const inPortal = isPlayerInAnyPortal(playerPos.x, playerPos.z);
+
+                    if (!inPortal) {
+                        if (distFromCenter > 23.3 && distFromCenter <= 24.0) {
+                            playerPos.x = Math.cos(curAngle) * 23.3;
+                            playerPos.z = Math.sin(curAngle) * 23.3;
+                        } else if (distFromCenter > 24.0 && distFromCenter < 24.7) {
+                            playerPos.x = Math.cos(curAngle) * 24.7;
+                            playerPos.z = Math.sin(curAngle) * 24.7;
+                        }
+                    }
+                    if (distFromCenter > 495.0) {
+                        playerPos.x = Math.cos(curAngle) * 495.0;
+                        playerPos.z = Math.sin(curAngle) * 495.0;
                     }
 
                     // Kollisionsabfrage: Satellitenraeume
@@ -6306,7 +8718,7 @@
                                 localPlayerGroup.rotation.y = Math.atan2(currentSeat.lookDir.x, currentSeat.lookDir.z) + Math.PI;
                             }
                         } else {
-                            localPlayerGroup.position.set(playerPos.x, Math.max(0, playerPos.y - EYE_HEIGHT), playerPos.z);
+                            localPlayerGroup.position.set(playerPos.x, playerPos.y - EYE_HEIGHT, playerPos.z);
                             localPlayerGroup.rotation.y = playerYaw;
                         }
                         if (localPlayerJetpack) {
@@ -6314,7 +8726,6 @@
                         }
                     }
                     if (localJetpackCockpit) localJetpackCockpit.visible = false;
-                    if (localBikeCockpit) localBikeCockpit.visible = false;
 
                     const lookTarget = (isSitting && currentSeat)
                         ? currentSeat.sitPos.clone().add(new THREE.Vector3(0, 0.15, 0))
@@ -6348,7 +8759,6 @@
                         camera.position.copy(playerPos);
                     }
                     if (localJetpackCockpit) localJetpackCockpit.visible = isJetpackEquipped;
-                    if (localBikeCockpit) localBikeCockpit.visible = isRidingBike;
                 }
 
                 // â”€â”€ TEPPICH-SCHRITTGERÃ„USCHE UPDATE â”€â”€
@@ -6492,21 +8902,9 @@
                             : "[LMB] Notiz ansehen\n[E] Verschieben";
                         interactPrompt.classList.add("visible");
                     } else {
-                        // 2. Fahrrad Interaktion
-                        let hitBike = false;
-                        if (bikeInteractMesh && worldBikeGroup && worldBikeGroup.visible && !isRidingBike) {
-                            const bikeHits = raycaster.intersectObject(bikeInteractMesh, false);
-                            if (bikeHits.length > 0 && bikeHits[0].distance <= 2.8) {
-                                currentInteractTarget = { type: 'bike' };
-                                interactPrompt.textContent = "[E] Fahrrad fahren";
-                                interactPrompt.classList.add("visible");
-                                hitBike = true;
-                            }
-                        }
-
-                        // 3. Jetpack Interaktion (4 Jetpacks im Lager oder wo sie gedroppt wurden)
+                        // 2. Jetpack Interaktion (4 Jetpacks im Lager oder wo sie gedroppt wurden)
                         let hitJp = false;
-                        if (!hitBike && !isJetpackEquipped && warehouseJetpacks.length > 0) {
+                        if (!isJetpackEquipped && warehouseJetpacks.length > 0) {
                             const availableHitBoxes = warehouseJetpacks
                                 .filter(jp => jp.group && jp.group.visible && !jp.isEquipped && jp.hitBox)
                                 .map(jp => jp.hitBox);
@@ -6531,7 +8929,7 @@
                         const distToChillenInteract = Math.hypot(camera.position.x - chIntX, camera.position.z - chIntZ);
                         const inChillenForInteract = (distToChillenInteract <= 8.5);
 
-                        if (!hitBike && !hitJp && inChillenForInteract) {
+                        if (!hitJp && inChillenForInteract) {
                             // 1. Raycast auf Cinema Bedienpult Meshes (3D Buttons & Scrubber)
                             let hitCinemaControl = false;
                             if (cinemaControlMeshes.length > 0) {
@@ -6601,7 +8999,7 @@
 
                         // 3c. Chillen-Stehlampe Interaktion
                         let hitLamp = false;
-                        if (!hitBike && !hitJp && !hitCinema && chillenLampInteractMesh) {
+                        if (!hitJp && !hitCinema && chillenLampInteractMesh) {
                             const lampHits = raycaster.intersectObject(chillenLampInteractMesh, false);
                             if (lampHits.length > 0 && lampHits[0].distance <= 3.8) {
                                 currentInteractTarget = { type: 'chillenLamp' };
@@ -6615,7 +9013,7 @@
 
                         // 3d. Lager Aufraeumen-Button
                         let hitResetBtn = false;
-                        if (!hitBike && !hitJp && !hitCinema && !hitLamp && warehouseResetButtonMesh) {
+                        if (!hitJp && !hitCinema && !hitLamp && warehouseResetButtonMesh) {
                             const btnHits = raycaster.intersectObject(warehouseResetButtonMesh, true);
                             if (btnHits.length > 0 && btnHits[0].distance <= 3.2) {
                                 currentInteractTarget = { type: 'warehouseResetButton' };
@@ -6625,29 +9023,54 @@
                             }
                         }
 
-                        if (!hitBike && !hitJp && !hitCinema && !hitLamp && !hitResetBtn) {
-                            // 4. Sitze (Sitzen immer LMB, Stuhl verschieben immer E)
-                            const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
-                            if (hitSeats.length > 0 && hitSeats[0].distance <= 2.8) {
-                                const hitObj = hitSeats[0].object;
-                                const seat = hitObj.userData.seat;
-                                if (hitObj.userData.isMovableChair) {
-                                    currentInteractTarget = {
-                                        type: 'movableChair',
-                                        chair: hitObj.userData.chairObj,
-                                        seat: seat
-                                    };
-                                    interactPrompt.textContent = "[LMB] Hinsetzen\n[E] Stuhl verschieben";
+                        // 4. Sitze (Sitzen immer LMB, Stuhl verschieben immer E, Heli-Passagiersitze)
+                        const hitSeats = !isSitting ? raycaster.intersectObjects(seatMeshes, false) : [];
+                        let hitSeat = false;
+                        if (!hitJp && !hitCinema && !hitLamp && !hitResetBtn && hitSeats.length > 0 && hitSeats[0].distance <= 4.0) {
+                            const hitObj = hitSeats[0].object;
+                            const seat = hitObj.userData.seat;
+                            hitSeat = true;
+                            if (hitObj.userData.isMovableChair) {
+                                currentInteractTarget = {
+                                    type: 'movableChair',
+                                    chair: hitObj.userData.chairObj,
+                                    seat: seat
+                                };
+                                interactPrompt.textContent = "[LMB] Hinsetzen\n[E] Stuhl verschieben";
+                            } else if (hitObj.userData.isHeliSeat) {
+                                currentInteractTarget = {
+                                    type: 'seat',
+                                    seat: seat
+                                };
+                                interactPrompt.textContent = `[LMB] Hinsetzen (${seat.name})\n[F] Pilotensitz einsteigen`;
+                            } else {
+                                currentInteractTarget = {
+                                    type: 'seat',
+                                    seat: seat
+                                };
+                                interactPrompt.textContent = "[LMB] Hinsetzen";
+                            }
+                            interactPrompt.classList.add("visible");
+                        }
+
+                        // 5. Hubschrauber AW169 Interaktion (Cockpit / Rumpf)
+                        let hitHeli = false;
+                        if (!hitJp && !hitCinema && !hitLamp && !hitResetBtn && !hitSeat && heliHitBox) {
+                            const heliHits = raycaster.intersectObject(heliHitBox, false);
+                            if (heliHits.length > 0 && heliHits[0].distance <= 5.5) {
+                                hitHeli = true;
+                                if (heliPilotUid && currentUser && heliPilotUid !== currentUser.uid) {
+                                    interactPrompt.textContent = `Hubschrauber im Flug\nPilot: ${heliPilotNick || "Mitspieler"}`;
                                 } else {
-                                    currentInteractTarget = {
-                                        type: 'seat',
-                                        seat: seat
-                                    };
-                                    interactPrompt.textContent = "[LMB] Hinsetzen";
+                                    currentInteractTarget = { type: 'helicopter' };
+                                    interactPrompt.textContent = "[F] In AW169 'SERVERAUFSICHT' einsteigen";
                                 }
                                 interactPrompt.classList.add("visible");
-                            } else {
-                                // 5. Pinboards
+                            }
+                        }
+
+                        if (!hitJp && !hitCinema && !hitLamp && !hitResetBtn && !hitSeat && !hitHeli) {
+                            // 6. Pinboards
                                 const hitPinboards = raycaster.intersectObjects(pinboardMeshes, false);
                                 if (hitPinboards.length > 0 && hitPinboards[0].distance <= 4.0) {
                                     currentInteractTarget = {
@@ -6677,24 +9100,31 @@
                                         if (isSitting) {
                                             interactPrompt.textContent = "[LMB] oder [LEERTASTE] Aufstehen";
                                             interactPrompt.classList.add("visible");
-                                        } else if (isRidingBike) {
-                                            interactPrompt.textContent = "[E] oder [ESC] Absteigen";
-                                            interactPrompt.classList.add("visible");
                                         } else if (isJetpackEquipped) {
                                             interactPrompt.textContent = "[LEERTASTE] Schub nach oben\n[E] Jetpack ablegen";
                                             interactPrompt.classList.add("visible");
                                         } else {
-                                            interactPrompt.classList.remove("visible");
+                                            const heliDist = playerPos.distanceTo(heliPos);
+                                            if (heliDist <= 5.5) {
+                                                if (heliPilotUid && currentUser && heliPilotUid !== currentUser.uid) {
+                                                    interactPrompt.textContent = `Hubschrauber im Flug\nPilot: ${heliPilotNick || "Mitspieler"}`;
+                                                } else {
+                                                    currentInteractTarget = { type: 'helicopter' };
+                                                    interactPrompt.textContent = "[F] In AW169 'SERVERAUFSICHT' einsteigen";
+                                                }
+                                                interactPrompt.classList.add("visible");
+                                            } else {
+                                                interactPrompt.classList.remove("visible");
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                } else {
+                    interactPrompt.classList.remove("visible");
                 }
-            } else {
-                interactPrompt.classList.remove("visible");
-            }
 
             // â”€â”€ PROJEKTOR-LICHTSTRAHL & STATUS-LED SYNCHRONISIEREN â”€â”€
             if (projectorBeamMesh) {
@@ -7368,51 +9798,7 @@
             });
         }
 
-        // â”€â”€ REMOTE SPIELER AVATAR ZUSATZ-MODELLE (FAHRRAD & JETPACK) â”€â”€
-        function createRemoteBikeModel() {
-            const b = new THREE.Group();
-            const blueMat = new THREE.MeshLambertMaterial({ color: 0x2563eb });
-            const blackMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
-            const silverMat = new THREE.MeshLambertMaterial({ color: 0xd4d4d8 });
-
-            // RÃ¤der in Fahrtrichtung (YZ-Ebene) drehen: Vorderrad bei -0.45, Hinterrad bei +0.45
-            [-0.45, 0.45].forEach(wz => {
-                const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.03, 8, 16), blackMat);
-                wheel.rotation.y = Math.PI / 2;
-                wheel.position.set(0, 0.24, wz);
-                b.add(wheel);
-            });
-
-            // Hauptrahmenrohr entlang Z
-            const frame = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.85, 8), blueMat);
-            frame.rotation.x = Math.PI / 2;
-            frame.position.set(0, 0.38, 0);
-            b.add(frame);
-
-            // Sattelrohr hinten (+Z)
-            const sTube = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.45, 8), blueMat);
-            sTube.position.set(0, 0.52, 0.12);
-            b.add(sTube);
-
-            // Sattel auf dem Sattelrohr
-            const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.22), blackMat);
-            saddle.position.set(0, 0.74, 0.12);
-            b.add(saddle);
-
-            // Lenker vorne (-Z, wo das Avatar-Visier hinschaut)
-            const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.44, 8), silverMat);
-            bar.rotation.z = Math.PI / 2;
-            bar.position.set(0, 0.78, -0.35);
-            b.add(bar);
-
-            // Vorbau / Gabelrohr nach vorn
-            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.40, 8), blueMat);
-            stem.position.set(0, 0.58, -0.38);
-            stem.rotation.x = 0.25;
-            b.add(stem);
-
-            return b;
-        }
+        // ── REMOTE SPIELER AVATAR ZUSATZ-MODELLE (JETPACK) ──
 
         function createRemoteJetpackModel() {
             const jp = createRedesignedJetpackModel({ id: 'remote' });
@@ -7520,17 +9906,6 @@
                 player.targetRotY = data.rotationY;
             }
 
-            if (data.isBike) {
-                if (!player.remoteBike) {
-                    player.remoteBike = createRemoteBikeModel();
-                    player.remoteBike.position.set(0, 0, 0);
-                    player.mesh.add(player.remoteBike);
-                }
-            } else if (player.remoteBike) {
-                player.mesh.remove(player.remoteBike);
-                disposeHierarchy(player.remoteBike);
-                player.remoteBike = null;
-            }
 
             if (data.isJetpack) {
                 if (!player.remoteJetpack) {
@@ -7601,7 +9976,6 @@
                 y: Number(playerPos.y.toFixed(3)),
                 z: Number(playerPos.z.toFixed(3)),
                 rotationY: Number(initYaw.toFixed(3)),
-                isBike: Boolean(isRidingBike),
                 isJetpack: Boolean(isJetpackEquipped),
                 isFlying: Boolean(isJetpackEquipped && isJetpackThrusting),
                 lastSeen: Date.now()
@@ -7633,7 +10007,6 @@
                         y: Number(playerPos.y.toFixed(3)),
                         z: Number(playerPos.z.toFixed(3)),
                         rotationY: Number(curYaw.toFixed(3)),
-                        isBike: Boolean(isRidingBike),
                         isJetpack: Boolean(isJetpackEquipped),
                         isFlying: Boolean(isJetpackEquipped && isJetpackThrusting),
                         lastSeen: Date.now()
@@ -7652,6 +10025,9 @@
         }
 
         function stopPlayerSync() {
+            if (isFlyingHelicopter) {
+                exitHelicopter();
+            }
             if (syncTimer) {
                 clearInterval(syncTimer);
                 syncTimer = null;
@@ -7726,6 +10102,12 @@
                 }
             });
 
-            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved, unsubLamp, unsubCinema, unsubChairs];
+            // Globalen Zustand des Hubschraubers in Echtzeit abhoeren
+            const worldHeliRef = rtdbRef(rtdb, "worldState/helicopter");
+            const unsubHeli = onValue(worldHeliRef, (snapshot) => {
+                syncHelicopterFromNetwork(snapshot.val());
+            });
+
+            rtdbListeners = [unsubAdded, unsubChanged, unsubRemoved, unsubLamp, unsubCinema, unsubChairs, unsubHeli];
         }
 
