@@ -443,8 +443,22 @@
                 this.rotorSlapGain = null;
                 this.subBassOsc = null;
                 this.subBassGain = null;
+                this.subBassLfoOsc = null;
+                this.subBassLfoGain = null;
                 this.tailWashSource = null;
                 this.tailWashGain = null;
+                // NEU: Tiefes Motor-Dröhnen (Engine Drone)
+                this.engineDroneOsc1 = null;
+                this.engineDroneOsc2 = null;
+                this.engineDroneOsc3 = null;
+                this.engineDroneGain = null;
+                // NEU: Rotor-Bassdruck (gleichmäßige Oszillatoren)
+                this.rotorPressureOsc1 = null;
+                this.rotorPressureOsc2 = null;
+                this.rotorPressureGain = null;
+                // NEU: Getrieberauschen (mechanisches Brummen)
+                this.gearboxSource = null;
+                this.gearboxGain = null;
                 this.isInitialized = false;
                 this.currentRpm = 0.0;
                 this.currentCollective = 0.0;
@@ -454,24 +468,42 @@
                 if (!audioCtx || this.isInitialized) return;
                 this.ctx = audioCtx;
                 try {
+                    const sampleRate = this.ctx.sampleRate;
+                    const now = this.ctx.currentTime;
+
                     this.masterGain = this.ctx.createGain();
-                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.masterGain.gain.setValueAtTime(0, now);
                     this.masterGain.connect(this.ctx.destination);
 
-                    // Kabinenfilter: im Cockpit (1st Person) gedämpft (1350 Hz), draußen offen (18000 Hz)
+                    // Kabinenfilter: im Cockpit (1st Person) gedämpft, draußen offen
                     this.cabinFilter = this.ctx.createBiquadFilter();
                     this.cabinFilter.type = "lowpass";
                     this.cabinFilter.frequency.value = 18000;
                     this.cabinFilter.connect(this.masterGain);
 
-                    // 1. Zwillings-Turbinen (Twin Turboshaft) Schwebung & Pfeifen
+                    // ══════════════════════════════════════════════════════════════
+                    // 1. Zwillings-Turbinen (Twin Turboshaft) — etwas wärmer
+                    //    Waveshaper statt reinem Sawtooth für weniger elektrischen Klang
+                    // ══════════════════════════════════════════════════════════════
                     this.turbineGain = this.ctx.createGain();
-                    this.turbineGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.turbineGain.gain.setValueAtTime(0, now);
 
                     const turbineFilter = this.ctx.createBiquadFilter();
                     turbineFilter.type = "bandpass";
-                    turbineFilter.frequency.value = 750;
-                    turbineFilter.Q.value = 2.0;
+                    turbineFilter.frequency.value = 680;
+                    turbineFilter.Q.value = 1.5;
+
+                    // Waveshaper für organischere, weniger synthetische Obertöne
+                    const turbineShaper = this.ctx.createWaveShaper();
+                    const curveLen = 8192;
+                    const turbineCurve = new Float32Array(curveLen);
+                    for (let i = 0; i < curveLen; i++) {
+                        const x = (i * 2) / curveLen - 1;
+                        // Sanfte Sättigung: tanh-ähnlich — macht den Klang "voller"
+                        turbineCurve[i] = Math.tanh(x * 1.8);
+                    }
+                    turbineShaper.curve = turbineCurve;
+                    turbineShaper.oversample = "2x";
 
                     this.turbineOsc1 = this.ctx.createOscillator();
                     this.turbineOsc1.type = "triangle";
@@ -479,33 +511,38 @@
 
                     this.turbineOsc2 = this.ctx.createOscillator();
                     this.turbineOsc2.type = "sawtooth";
-                    this.turbineOsc2.frequency.value = 143.5; // akustische Interferenz / Schwebung
+                    this.turbineOsc2.frequency.value = 143.5;
 
                     const turbSubGain = this.ctx.createGain();
-                    turbSubGain.gain.value = 0.35;
+                    turbSubGain.gain.value = 0.30;
                     this.turbineOsc2.connect(turbSubGain);
-                    turbSubGain.connect(turbineFilter);
+                    turbSubGain.connect(turbineShaper);
 
-                    this.turbineOsc1.connect(turbineFilter);
+                    this.turbineOsc1.connect(turbineShaper);
+                    turbineShaper.connect(turbineFilter);
                     turbineFilter.connect(this.turbineGain);
                     this.turbineGain.connect(this.cabinFilter);
 
                     this.turbineOsc1.start(0);
                     this.turbineOsc2.start(0);
 
+                    // ══════════════════════════════════════════════════════════════
                     // 2. 5-Blatt Rotor Blattspitzen-Knattern & Verdrängungs-Chop
-                    // Periodischer Impuls-Puffer (5 Schläge pro Rotorumdrehung)
-                    const sampleRate = this.ctx.sampleRate;
+                    //    Verbesserter Buffer mit stärkerem tiefem Impuls
+                    // ══════════════════════════════════════════════════════════════
                     const slapBufferLen = Math.floor(sampleRate * 1.0);
                     const slapBuffer = this.ctx.createBuffer(1, slapBufferLen, sampleRate);
                     const slapData = slapBuffer.getChannelData(0);
-                    const pulsesPerSec = 30; // 5 Blätter x 6 U/s bei 100% RPM
+                    const pulsesPerSec = 30;
                     const pulsePeriod = Math.floor(sampleRate / pulsesPerSec);
                     for (let i = 0; i < slapBufferLen; i++) {
                         const phase = i % pulsePeriod;
-                        if (phase < 180) {
-                            const env = Math.exp(-phase / 24.0);
-                            slapData[i] = (Math.sin(phase * 0.45) + (Math.random() * 2 - 1) * 0.4) * env * 0.65;
+                        if (phase < 220) {
+                            const env = Math.exp(-phase / 30.0);
+                            // Tieferer Impuls + leichtes Rauschen
+                            const tonal = Math.sin(phase * 0.32) * 0.7 + Math.sin(phase * 0.16) * 0.3;
+                            const noise = (Math.random() * 2 - 1) * 0.3;
+                            slapData[i] = (tonal + noise) * env * 0.7;
                         } else {
                             slapData[i] = 0;
                         }
@@ -517,30 +554,45 @@
 
                     const slapFilter = this.ctx.createBiquadFilter();
                     slapFilter.type = "lowpass";
-                    slapFilter.frequency.value = 260;
-                    slapFilter.Q.value = 2.8;
+                    slapFilter.frequency.value = 240;
+                    slapFilter.Q.value = 2.2;
 
                     this.rotorSlapGain = this.ctx.createGain();
-                    this.rotorSlapGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.rotorSlapGain.gain.setValueAtTime(0, now);
 
                     this.rotorSlapSource.connect(slapFilter);
                     slapFilter.connect(this.rotorSlapGain);
                     this.rotorSlapGain.connect(this.cabinFilter);
                     this.rotorSlapSource.start(0);
 
-                    // 3. Sub-Bass Thump (44 Hz) für physischen Druck
+                    // ══════════════════════════════════════════════════════════════
+                    // 3. Sub-Bass Thump — jetzt mit FM-Modulation für organisches Dröhnen
+                    //    Ein LFO moduliert die Frequenz leicht, dadurch "lebt" der Bass
+                    // ══════════════════════════════════════════════════════════════
                     this.subBassOsc = this.ctx.createOscillator();
                     this.subBassOsc.type = "sine";
-                    this.subBassOsc.frequency.value = 44;
+                    this.subBassOsc.frequency.value = 42;
+
+                    // LFO für Sub-Bass FM: langsame Frequenzmodulation (Vibrato-artig)
+                    this.subBassLfoOsc = this.ctx.createOscillator();
+                    this.subBassLfoOsc.type = "sine";
+                    this.subBassLfoOsc.frequency.value = 0.8; // 0.8 Hz Modulation
+                    this.subBassLfoGain = this.ctx.createGain();
+                    this.subBassLfoGain.gain.value = 3.0; // ±3 Hz Frequenz-Wobble
+                    this.subBassLfoOsc.connect(this.subBassLfoGain);
+                    this.subBassLfoGain.connect(this.subBassOsc.frequency);
+                    this.subBassLfoOsc.start(0);
 
                     this.subBassGain = this.ctx.createGain();
-                    this.subBassGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.subBassGain.gain.setValueAtTime(0, now);
 
                     this.subBassOsc.connect(this.subBassGain);
                     this.subBassGain.connect(this.cabinFilter);
                     this.subBassOsc.start(0);
 
-                    // 4. Heckrotor & Verwirbelungsrauschen
+                    // ══════════════════════════════════════════════════════════════
+                    // 4. Heckrotor & Verwirbelungsrauschen — breiter Filter
+                    // ══════════════════════════════════════════════════════════════
                     const washBufSize = Math.floor(sampleRate * 1.5);
                     const washBuffer = this.ctx.createBuffer(1, washBufSize, sampleRate);
                     const washData = washBuffer.getChannelData(0);
@@ -553,16 +605,139 @@
 
                     const washFilter = this.ctx.createBiquadFilter();
                     washFilter.type = "bandpass";
-                    washFilter.frequency.value = 650;
-                    washFilter.Q.value = 1.8;
+                    washFilter.frequency.value = 580;
+                    washFilter.Q.value = 1.4;
 
                     this.tailWashGain = this.ctx.createGain();
-                    this.tailWashGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.tailWashGain.gain.setValueAtTime(0, now);
 
                     this.tailWashSource.connect(washFilter);
                     washFilter.connect(this.tailWashGain);
                     this.tailWashGain.connect(this.cabinFilter);
                     this.tailWashSource.start(0);
+
+                    // ══════════════════════════════════════════════════════════════
+                    // 5. NEU: Tiefes Motor-Dröhnen (Engine Drone)
+                    //    Drei Oszillatoren: Grundton (~65Hz) + 2. Harmonische (~130Hz)
+                    //    + 3. Harmonische (~195Hz) → volles, tiefes Maschinenbrummen
+                    // ══════════════════════════════════════════════════════════════
+                    this.engineDroneGain = this.ctx.createGain();
+                    this.engineDroneGain.gain.setValueAtTime(0, now);
+
+                    // Warmer Tiefpass um den Drone weniger harsch zu machen
+                    const droneFilter = this.ctx.createBiquadFilter();
+                    droneFilter.type = "lowpass";
+                    droneFilter.frequency.value = 220;
+                    droneFilter.Q.value = 0.7;
+
+                    // Grundton: warmes Sinus-Dröhnen
+                    this.engineDroneOsc1 = this.ctx.createOscillator();
+                    this.engineDroneOsc1.type = "sine";
+                    this.engineDroneOsc1.frequency.value = 65;
+                    const droneGain1 = this.ctx.createGain();
+                    droneGain1.gain.value = 1.0;
+                    this.engineDroneOsc1.connect(droneGain1);
+                    droneGain1.connect(droneFilter);
+
+                    // 2. Harmonische: etwas Triangle für Textur
+                    this.engineDroneOsc2 = this.ctx.createOscillator();
+                    this.engineDroneOsc2.type = "triangle";
+                    this.engineDroneOsc2.frequency.value = 130;
+                    const droneGain2 = this.ctx.createGain();
+                    droneGain2.gain.value = 0.45;
+                    this.engineDroneOsc2.connect(droneGain2);
+                    droneGain2.connect(droneFilter);
+
+                    // 3. Harmonische: leicht für Obertonfarbe
+                    this.engineDroneOsc3 = this.ctx.createOscillator();
+                    this.engineDroneOsc3.type = "triangle";
+                    this.engineDroneOsc3.frequency.value = 195;
+                    const droneGain3 = this.ctx.createGain();
+                    droneGain3.gain.value = 0.2;
+                    this.engineDroneOsc3.connect(droneGain3);
+                    droneGain3.connect(droneFilter);
+
+
+
+                    droneFilter.connect(this.engineDroneGain);
+                    this.engineDroneGain.connect(this.cabinFilter);
+
+                    this.engineDroneOsc1.start(0);
+                    this.engineDroneOsc2.start(0);
+                    this.engineDroneOsc3.start(0);
+
+                    // ══════════════════════════════════════════════════════════════
+                    // 6. Rotor-Bassdruck (gleichmäßiges tiefes Dröhnen, kein Pulsieren)
+                    //    Zwei Oszillatoren für konstanten, vollen Tiefton
+                    // ══════════════════════════════════════════════════════════════
+                    this.rotorPressureOsc1 = this.ctx.createOscillator();
+                    this.rotorPressureOsc1.type = "sine";
+                    this.rotorPressureOsc1.frequency.value = 28;
+
+                    this.rotorPressureOsc2 = this.ctx.createOscillator();
+                    this.rotorPressureOsc2.type = "sine";
+                    this.rotorPressureOsc2.frequency.value = 55;
+
+                    const pressOsc2Gain = this.ctx.createGain();
+                    pressOsc2Gain.gain.value = 0.5;
+                    this.rotorPressureOsc2.connect(pressOsc2Gain);
+
+                    const pressureFilter = this.ctx.createBiquadFilter();
+                    pressureFilter.type = "lowpass";
+                    pressureFilter.frequency.value = 80;
+                    pressureFilter.Q.value = 0.7;
+
+                    this.rotorPressureGain = this.ctx.createGain();
+                    this.rotorPressureGain.gain.setValueAtTime(0, now);
+
+                    this.rotorPressureOsc1.connect(pressureFilter);
+                    pressOsc2Gain.connect(pressureFilter);
+                    pressureFilter.connect(this.rotorPressureGain);
+                    this.rotorPressureGain.connect(this.cabinFilter);
+                    this.rotorPressureOsc1.start(0);
+                    this.rotorPressureOsc2.start(0);
+
+                    // ══════════════════════════════════════════════════════════════
+                    // 7. NEU: Getrieberauschen (Gearbox Rumble)
+                    //    Mechanisches, metallisches Brummen — gefiltertes Rauschen
+                    //    mit Resonanzen, die sich mit RPM verschieben
+                    // ══════════════════════════════════════════════════════════════
+                    const gearBufLen = Math.floor(sampleRate * 1.0);
+                    const gearBuffer = this.ctx.createBuffer(1, gearBufLen, sampleRate);
+                    const gearData = gearBuffer.getChannelData(0);
+                    // Mischung aus Rauschen und periodischen Impulsen (Zahnrad-Repetition)
+                    const gearTeethRate = 48; // ~48 Zähne pro Sekunde bei Vollgas
+                    const gearToothPeriod = Math.floor(sampleRate / gearTeethRate);
+                    for (let i = 0; i < gearBufLen; i++) {
+                        const toothPhase = i % gearToothPeriod;
+                        const toothPulse = toothPhase < 20 ? Math.exp(-toothPhase / 6.0) * 0.5 : 0;
+                        const noise = (Math.random() * 2 - 1) * 0.15;
+                        gearData[i] = toothPulse + noise;
+                    }
+
+                    this.gearboxSource = this.ctx.createBufferSource();
+                    this.gearboxSource.buffer = gearBuffer;
+                    this.gearboxSource.loop = true;
+
+                    const gearFilter1 = this.ctx.createBiquadFilter();
+                    gearFilter1.type = "bandpass";
+                    gearFilter1.frequency.value = 320;
+                    gearFilter1.Q.value = 3.0;
+
+                    const gearFilter2 = this.ctx.createBiquadFilter();
+                    gearFilter2.type = "peaking";
+                    gearFilter2.frequency.value = 180;
+                    gearFilter2.Q.value = 2.0;
+                    gearFilter2.gain.value = 6;
+
+                    this.gearboxGain = this.ctx.createGain();
+                    this.gearboxGain.gain.setValueAtTime(0, now);
+
+                    this.gearboxSource.connect(gearFilter1);
+                    gearFilter1.connect(gearFilter2);
+                    gearFilter2.connect(this.gearboxGain);
+                    this.gearboxGain.connect(this.cabinFilter);
+                    this.gearboxSource.start(0);
 
                     this.isInitialized = true;
                 } catch (e) {
@@ -596,42 +771,79 @@
                     this.cabinFilter.frequency.setTargetAtTime(targetFreq, now, 0.08);
                 }
 
-                // Turbinen-Frequenz modulierend nach RPM (von 110 Hz bis 820 Hz)
+                // ── Turbinen (etwas leiser im Mix, weniger dominant) ──
                 if (this.turbineOsc1 && this.turbineOsc2) {
                     const baseFreq = 110 + rpm * 710;
                     this.turbineOsc1.frequency.setTargetAtTime(baseFreq, now, 0.06);
                     this.turbineOsc2.frequency.setTargetAtTime(baseFreq * 1.004 + 2.5, now, 0.06);
                 }
-
-                // Turbinen-Lautstärke
                 if (this.turbineGain) {
-                    const turbVol = Math.pow(rpm, 1.6) * 0.16 * distGain;
+                    // Reduziert von 0.16 auf 0.11 — Turbine tritt zurück zugunsten des Dröhnens
+                    const turbVol = Math.pow(rpm, 1.6) * 0.11 * distGain;
                     this.turbineGain.gain.setTargetAtTime(turbVol, now, 0.06);
                 }
 
-                // Rotor-Knattern: RPM steuert Frequenz / Rate, Collective & Manöver verstärken Amplitude
+                // ── Rotor-Knattern ──
                 if (this.rotorSlapSource && this.rotorSlapGain) {
                     this.rotorSlapSource.playbackRate.setTargetAtTime(Math.max(0.12, rpm), now, 0.06);
-                    // Erhöhter Blatt-Schlag bei Anstellwinkel (Collective)
-                    const slapVol = Math.pow(rpm, 1.4) * (0.08 + collective * 0.18) * distGain;
+                    const slapVol = Math.pow(rpm, 1.4) * (0.10 + collective * 0.20) * distGain;
                     this.rotorSlapGain.gain.setTargetAtTime(slapVol, now, 0.06);
                 }
 
-                // Sub-Bass Kick
-                if (this.subBassGain) {
-                    const subVol = Math.pow(rpm, 1.5) * (0.06 + collective * 0.14) * distGain;
+                // ── Sub-Bass (stärker, FM macht ihn lebendig) ──
+                if (this.subBassOsc && this.subBassGain) {
+                    // Frequenz steigt leicht mit RPM (38-48 Hz)
+                    const subFreq = 38 + rpm * 10;
+                    this.subBassOsc.frequency.setTargetAtTime(subFreq, now, 0.1);
+                    // LFO-Tiefe steigt mit Collective (mehr Vibration bei Last)
+                    if (this.subBassLfoGain) {
+                        this.subBassLfoGain.gain.setTargetAtTime(2.0 + collective * 4.0, now, 0.1);
+                    }
+                    // Deutlich stärker als vorher: 0.12 + collective * 0.22 (war 0.06 + 0.14)
+                    const subVol = Math.pow(rpm, 1.3) * (0.12 + collective * 0.22) * distGain;
                     this.subBassGain.gain.setTargetAtTime(subVol, now, 0.06);
                 }
 
-                // Heckrotor & Wind
+                // ── Heckrotor & Wind ──
                 if (this.tailWashGain) {
                     const washVol = (rpm * 0.08 + Math.min(speed / 40.0, 1.0) * 0.10) * distGain;
                     this.tailWashGain.gain.setTargetAtTime(washVol, now, 0.08);
                 }
 
-                // Master Gain
+                // ── NEU: Engine Drone (tiefes Dröhnen — Herzstück des neuen Sounds) ──
+                if (this.engineDroneOsc1 && this.engineDroneOsc2 && this.engineDroneOsc3) {
+                    // Frequenzen steigen leicht mit RPM für Doppler-artigen Effekt
+                    const droneBase = 58 + rpm * 18;
+                    this.engineDroneOsc1.frequency.setTargetAtTime(droneBase, now, 0.12);
+                    this.engineDroneOsc2.frequency.setTargetAtTime(droneBase * 2.01, now, 0.12);
+                    this.engineDroneOsc3.frequency.setTargetAtTime(droneBase * 3.02, now, 0.12);
+                }
+                if (this.engineDroneGain) {
+                    // Drone ist laut und präsent — das "Herz" des Sounds
+                    const droneVol = Math.pow(rpm, 1.2) * (0.18 + collective * 0.10) * distGain;
+                    this.engineDroneGain.gain.setTargetAtTime(droneVol, now, 0.08);
+                }
+
+                // ── Rotor-Bassdruck (gleichmäßig, kein Pulsieren) ──
+                if (this.rotorPressureOsc1 && this.rotorPressureOsc2 && this.rotorPressureGain) {
+                    // Frequenzen verschieben sich leicht mit RPM
+                    const pressBase = 25 + rpm * 8;
+                    this.rotorPressureOsc1.frequency.setTargetAtTime(pressBase, now, 0.1);
+                    this.rotorPressureOsc2.frequency.setTargetAtTime(pressBase * 2.0, now, 0.1);
+                    const pressVol = Math.pow(rpm, 1.3) * (0.10 + collective * 0.12) * distGain;
+                    this.rotorPressureGain.gain.setTargetAtTime(pressVol, now, 0.08);
+                }
+
+                // ── NEU: Getrieberauschen ──
+                if (this.gearboxSource && this.gearboxGain) {
+                    this.gearboxSource.playbackRate.setTargetAtTime(Math.max(0.2, rpm * 1.2), now, 0.06);
+                    const gearVol = Math.pow(rpm, 1.8) * 0.06 * distGain;
+                    this.gearboxGain.gain.setTargetAtTime(gearVol, now, 0.06);
+                }
+
+                // ── Master Gain (leicht erhöht für den volleren Klang) ──
                 if (this.masterGain) {
-                    const activeVol = rpm > 0.01 ? (isCockpitView ? 0.38 : 0.48) : 0.0;
+                    const activeVol = rpm > 0.01 ? (isCockpitView ? 0.42 : 0.52) : 0.0;
                     this.masterGain.gain.setTargetAtTime(activeVol, now, 0.1);
                 }
             }
@@ -3393,8 +3605,8 @@
             terrainMesh.receiveShadow = true;
             scene.add(terrainMesh);
 
-            // Endloser realistischer PBR-Ozean bis zum Horizont (16x16 km, ultraleicht)
-            const oceanGeo = new THREE.PlaneGeometry(16000, 16000, 1, 1);
+            // Ozean genau so groß wie das Terrain (2000×2000m) — Fog schließt den Horizont ab
+            const oceanGeo = new THREE.PlaneGeometry(2000, 2000, 1, 1);
             oceanGeo.rotateX(-Math.PI / 2);
             const oceanMat = createRealisticOceanMaterial();
             oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
