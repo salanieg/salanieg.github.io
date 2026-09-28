@@ -654,13 +654,34 @@
         let skyUniforms = null;
 
         // ── VOLCANO ISLAND TERRAIN STATUSVARIABLEN & HÖHENABFRAGE ──
-        const TERRAIN_CENTER_HEIGHT_NORM = 0.34117648;
-        const TERRAIN_MAX_HEIGHT = 140.0;
-        const TERRAIN_OCEAN_LEVEL = -31.5;
+        const TERRAIN_CENTER_HEIGHT_NORM = 0.35714286;
+        const TERRAIN_MAX_HEIGHT = 210.0;
+        const TERRAIN_OCEAN_LEVEL = -47.25;
 
         let terrainHeightGrid = null;
         let terrainMesh = null;
         let oceanMesh = null;
+        let oceanUniforms = null;
+        let terrainHeightTexture = null;
+
+        function getOrCreateTerrainHeightTexture() {
+            if (terrainHeightTexture) return terrainHeightTexture;
+            if (!terrainHeightGrid) initTerrainDataSync();
+            if (!terrainHeightGrid) return null;
+            terrainHeightTexture = new THREE.DataTexture(
+                terrainHeightGrid,
+                256,
+                256,
+                THREE.RedFormat,
+                THREE.FloatType
+            );
+            terrainHeightTexture.minFilter = THREE.NearestFilter;
+            terrainHeightTexture.magFilter = THREE.NearestFilter;
+            terrainHeightTexture.wrapS = THREE.ClampToEdgeWrapping;
+            terrainHeightTexture.wrapT = THREE.ClampToEdgeWrapping;
+            terrainHeightTexture.needsUpdate = true;
+            return terrainHeightTexture;
+        }
 
         function initTerrainDataSync() {
             if (terrainHeightGrid) return true;
@@ -695,8 +716,8 @@
                 if (!terrainHeightGrid) return 0.0;
             }
 
-            const u = (x + 512.0) / 1024.0;
-            const v = (z + 512.0) / 1024.0;
+            const u = (x + 1000.0) / 2000.0;
+            const v = (z + 1000.0) / 2000.0;
             if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) return TERRAIN_OCEAN_LEVEL;
 
             const gx = Math.max(0.0, Math.min(255.0, u * 255.0));
@@ -2145,19 +2166,20 @@
         }
 
         // â”€â”€ AUTH LISTENER â”€â”€
-        onAuthStateChanged(auth, (user) => {
-            loadingState.classList.add("hidden");
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                authContainer.classList.add("hidden");
-                gameContainer.style.display = "block";
                 updateNavUserDisplay();
                 
-                initThreeWorld();
+                await initThreeWorld();
+                loadingState.classList.add("hidden");
+                authContainer.classList.add("hidden");
+                gameContainer.style.display = "block";
                 subscribeToNotes();
                 startPlayerSync();
                 subscribeToRemotePlayers();
             } else {
+                loadingState.classList.add("hidden");
                 currentUser = null;
                 if (controls && controls.isLocked) controls.unlock();
                 if (unsubscribeNotes) {
@@ -2173,12 +2195,12 @@
             }
         });
 
-        window.__devInitWorld = () => {
+        window.__devInitWorld = async () => {
             currentUser = { uid: "guest-dev", email: "dev@denmuen.ch" };
+            await initThreeWorld();
             authContainer.classList.add("hidden");
             gameContainer.style.display = "block";
             updateNavUserDisplay();
-            initThreeWorld();
         };
         window.__teleport = (x, y, z, lookAtX, lookAtY, lookAtZ) => {
             if (camera) {
@@ -2853,6 +2875,37 @@
             return texture;
         }
 
+        // ── ASSET LOADING TRACKER MIT THREE.DefaultLoadingManager ──
+        let pendingAssetCount = 0;
+        const assetWaitResolvers = [];
+
+        THREE.DefaultLoadingManager.onStart = (url, itemsLoaded, itemsTotal) => {
+            pendingAssetCount = Math.max(0, itemsTotal - itemsLoaded);
+        };
+
+        THREE.DefaultLoadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+            pendingAssetCount = Math.max(0, itemsTotal - itemsLoaded);
+        };
+
+        THREE.DefaultLoadingManager.onLoad = () => {
+            pendingAssetCount = 0;
+            const resolvers = assetWaitResolvers.slice();
+            assetWaitResolvers.length = 0;
+            resolvers.forEach(r => r());
+        };
+
+        THREE.DefaultLoadingManager.onError = (url) => {
+            console.warn("Ladefehler bei Asset:", url);
+        };
+
+        function waitForAllTextures() {
+            if (pendingAssetCount <= 0) return Promise.resolve();
+            return new Promise((resolve) => {
+                assetWaitResolvers.push(resolve);
+                setTimeout(resolve, 5000); // 5s Fallback-Timeout
+            });
+        }
+
         // ── PBR PLASTER (PUTZ) TEXTUREN & MATERIALIEN ──
         const pbrTextureLoader = new THREE.TextureLoader();
 
@@ -3016,8 +3069,17 @@
                 map: grassColor,
                 roughnessMap: grassRoughness,
                 roughness: 0.88,
-                metalness: 0.05
+                metalness: 0.05,
+                polygonOffset: true,
+                polygonOffsetFactor: 2.0,
+                polygonOffsetUnits: 4.0
             });
+
+            mat.userData.terrainTextures = [
+                grassColor, grassNormal, grassRoughness,
+                rockColor, rockNormal, rockRoughness,
+                sandColor, sandNormal, sandRoughness
+            ];
 
             mat.onBeforeCompile = (shader) => {
                 shader.uniforms.uGrassMap = { value: grassColor };
@@ -3081,14 +3143,20 @@
                         discard;
                     }
 
-                    vec2 tileUV = vTerrainUv * 64.0;
+                    // Meeresboden tief unter Wasser (-56.0m) im Shader verwerfen:
+                    // Spart GPU-Rasterisierung ohne jegliche Krissel- oder Treppeneffekte an der Wasserkante
+                    if (vTerrainWorldPos.y < -56.0) {
+                        discard;
+                    }
+
+                    vec2 tileUV = vTerrainUv * 125.0;
                     
                     // Steigung (Slope): Steile Klippen > 25° werden zu Felsgestein
                     float slope = 1.0 - abs(vTerrainWorldNormal.y);
                     float rockFactor = smoothstep(0.18, 0.44, slope);
                     
-                    // Meeresspiegel & Strand (-33m bis -27m)
-                    float beachFactor = 1.0 - smoothstep(-33.0, -27.0, vTerrainWorldPos.y);
+                    // Meeresspiegel & Strand (-49m bis -40m)
+                    float beachFactor = 1.0 - smoothstep(-49.0, -40.0, vTerrainWorldPos.y);
                     beachFactor = clamp(beachFactor, 0.0, 1.0);
                     
                     // Wiese / Gras fuer sanfte Haenge und Caldera-Boden
@@ -3102,7 +3170,7 @@
                     vec3 cR = texture2D(uRockMap,  tileUV).rgb;
                     vec3 cS = texture2D(uSandMap,  tileUV).rgb;
 
-                    // Feine Grossraum-Farbvarianz ueber die 1000m Insel
+                    // Feine Grossraum-Farbvarianz ueber die 2000m Insel
                     float macro = sin(vTerrainUv.x * 24.0) * cos(vTerrainUv.y * 24.0) * 0.04;
                     vec3 finalAlbedo = (cG * grassFactor + cR * rockFactor + cS * beachFactor) + macro;
                     diffuseColor.rgb = finalAlbedo;
@@ -3124,12 +3192,154 @@
             return mat;
         }
 
+        function createRealisticOceanMaterial() {
+            const waterNormal = pbrTextureLoader.load('assets/textures/terrain/water_normal.webp');
+            waterNormal.wrapS = THREE.RepeatWrapping;
+            waterNormal.wrapT = THREE.RepeatWrapping;
+
+            oceanUniforms = THREE.UniformsUtils.merge([
+                THREE.UniformsLib.fog,
+                {
+                    uNormalMap: { value: waterNormal },
+                    uTime: { value: 0.0 },
+                    uNormalScale: { value: 1.55 },
+                    uNightTransition: { value: 0.0 },
+                    uSunDirection: { value: (skyUniforms && skyUniforms.uSunPosition) ? skyUniforms.uSunPosition.value : new THREE.Vector3(12.0, 35.0, 12.0).normalize() },
+                    uSunColor: { value: (skyUniforms && skyUniforms.uSunColor) ? skyUniforms.uSunColor.value : new THREE.Color('#fff7ed') },
+                    uHorizonColor: { value: (skyUniforms && skyUniforms.uHorizonColor) ? skyUniforms.uHorizonColor.value : new THREE.Color('#a8d3f8') },
+                    uZenithColor: { value: (skyUniforms && skyUniforms.uZenithColor) ? skyUniforms.uZenithColor.value : new THREE.Color('#195cc7') }
+                }
+            ]);
+
+            const vertexShader = `
+                #include <common>
+                #include <fog_pars_vertex>
+
+                varying vec3 vWorldPosition;
+
+                void main() {
+                    vec4 worldPos = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPos.xyz;
+                    vec4 mvPosition = viewMatrix * worldPos;
+                    gl_Position = projectionMatrix * mvPosition;
+                    #include <fog_vertex>
+                }
+            `;
+
+            const fragmentShader = `
+                #include <common>
+                #include <fog_pars_fragment>
+
+                uniform sampler2D uNormalMap;
+                uniform float uTime;
+                uniform float uNormalScale;
+                uniform float uNightTransition;
+                uniform vec3 uSunDirection;
+                uniform vec3 uSunColor;
+                uniform vec3 uHorizonColor;
+                uniform vec3 uZenithColor;
+
+                varying vec3 vWorldPosition;
+
+                // 2D Rotations-Hilfsfunktion für natürliche, unregelmässige Wellenwinkel ohne Gittermuster
+                vec2 rotUV(vec2 uv, float cosA, float sinA) {
+                    return vec2(cosA * uv.x - sinA * uv.y, sinA * uv.x + cosA * uv.y);
+                }
+
+                void main() {
+                    vec3 viewDir = normalize(cameraPosition - vWorldPosition);
+
+                    // ── 1. NATÜRLICHE, UNREGELMÄSSIG ROTIERTE WELLEN-OKTAVEN (KEIN GRID!) ──
+                    // Schicht 1: Hauptdünung (Winkel ca. +22°)
+                    vec2 uv1 = rotUV(vWorldPosition.xz, 0.9272, 0.3746) * 0.055 + vec2(uTime * 0.022, uTime * 0.012);
+                    vec3 n1 = texture2D(uNormalMap, uv1).rgb * 2.0 - 1.0;
+
+                    // Domain Warping: Die kleineren Wellen werden von der Dünung leicht verzogen (wie in echter Meeresströmung)
+                    vec2 warpedPos = vWorldPosition.xz + n1.xy * 2.6;
+
+                    // Schicht 2: Wind-Kabbelung (Winkel ca. +73°)
+                    vec2 uv2 = rotUV(warpedPos, 0.2924, 0.9563) * 0.125 + vec2(-uTime * 0.028, uTime * 0.020);
+                    vec3 n2 = texture2D(uNormalMap, uv2).rgb * 2.0 - 1.0;
+
+                    // Schicht 3: Feine Quer-Rippel (Winkel ca. -47°)
+                    vec2 uv3 = rotUV(warpedPos, 0.6820, -0.7314) * 0.280 + vec2(uTime * 0.045, -uTime * 0.035);
+                    vec3 n3 = texture2D(uNormalMap, uv3).rgb * 2.0 - 1.0;
+
+                    // Schicht 4: Kapillar-Wellendetail (Winkel ca. +118°)
+                    vec2 uv4 = rotUV(vWorldPosition.xz, -0.4695, 0.8829) * 0.550 + vec2(-uTime * 0.060, -uTime * 0.045);
+                    vec3 n4 = texture2D(uNormalMap, uv4).rgb * 2.0 - 1.0;
+
+                    // Gewichtete Überlagerung aller 4 rotierenden Wellen
+                    vec2 wavePerturb = (n1.xy * 0.44 + n2.xy * 0.32 + n3.xy * 0.16 + n4.xy * 0.08) * uNormalScale;
+                    vec3 worldNormal = normalize(vec3(wavePerturb.x, 1.0, wavePerturb.y));
+
+                    // ── 2. FRESNEL-HIMMELSREFLEXION & TIEFWASSER ──
+                    float NdotV = max(dot(worldNormal, viewDir), 0.0);
+                    float fresnel = 0.02 + 0.98 * pow(1.0 - NdotV, 5.0);
+
+                    vec3 reflectDir = reflect(-viewDir, worldNormal);
+                    float skyGrad = clamp(reflectDir.y * 1.6 + 0.08, 0.0, 1.0);
+                    vec3 daySky = mix(uHorizonColor, uZenithColor, skyGrad);
+                    vec3 nightSky = mix(vec3(0.012, 0.020, 0.038), vec3(0.002, 0.005, 0.012), skyGrad);
+                    vec3 skyReflectColor = mix(daySky, nightSky, uNightTransition);
+
+                    vec3 dayDeep = vec3(0.014, 0.075, 0.17);
+                    vec3 nightDeep = vec3(0.002, 0.005, 0.012);
+                    vec3 deepColor = mix(dayDeep, nightDeep, uNightTransition);
+
+                    // Subsurface Scattering bei Sonneneinstrahlung
+                    float sunSubsurface = max(dot(worldNormal, uSunDirection), 0.0);
+                    vec3 scatterColor = mix(vec3(0.01, 0.20, 0.24), vec3(0.0, 0.02, 0.03), uNightTransition);
+                    deepColor += scatterColor * sunSubsurface * 0.30;
+
+                    // Sonnenreflexion: Brillanter Glanzpfad ("Lichtstrasse") ueber die Wellen
+                    vec3 halfVector = normalize(uSunDirection + viewDir);
+                    float NdotH = max(dot(worldNormal, halfVector), 0.0);
+                    float sunDisc = pow(NdotH, 220.0) * 4.0;
+                    float sunGlint = pow(NdotH, 28.0) * 0.70;
+                    vec3 sunHighlight = uSunColor * (sunDisc + sunGlint) * (1.0 - uNightTransition * 0.95);
+
+                    // Offene Schaumkronen auf Wellenkämmen
+                    float crestSteepness = length(wavePerturb);
+                    float openFoam = smoothstep(0.48, 0.85, crestSteepness) * 0.20;
+
+                    vec3 foamColor = mix(vec3(0.96, 0.98, 1.0), vec3(0.12, 0.16, 0.22), uNightTransition);
+
+                    // Finale Komposition: Tiefsee + Fresnel-Himmel + Sonnenreflexion + Schaumkronen
+                    vec3 waterColor = mix(deepColor, skyReflectColor, fresnel);
+                    waterColor += sunHighlight;
+                    waterColor = mix(waterColor, foamColor, openFoam);
+
+                    gl_FragColor = vec4(waterColor, 1.0);
+
+                    #include <fog_fragment>
+                    #include <tonemapping_fragment>
+                    #include <colorspace_fragment>
+                }
+            `;
+
+            const mat = new THREE.ShaderMaterial({
+                fog: true,
+                uniforms: oceanUniforms,
+                vertexShader,
+                fragmentShader,
+                polygonOffset: true,
+                polygonOffsetFactor: -2.0,
+                polygonOffsetUnits: -4.0,
+                depthWrite: true
+            });
+
+            mat.userData.waterTextures = [waterNormal];
+
+            return mat;
+        }
+
         function buildTerrain() {
             if (!terrainHeightGrid) {
                 initTerrainDataSync();
             }
 
-            const terrainGeo = new THREE.PlaneGeometry(1024, 1024, 255, 255);
+            const terrainGeo = new THREE.PlaneGeometry(2000, 2000, 255, 255);
             terrainGeo.rotateX(-Math.PI / 2);
 
             function applyHeightsToGeometry() {
@@ -3147,8 +3357,8 @@
                         continue;
                     }
 
-                    const u = (vx + 512.0) / 1024.0;
-                    const v = (vz + 512.0) / 1024.0;
+                    const u = (vx + 1000.0) / 2000.0;
+                    const v = (vz + 1000.0) / 2000.0;
                     const gx = Math.max(0, Math.min(255, Math.round(u * 255.0)));
                     const gz = Math.max(0, Math.min(255, Math.round(v * 255.0)));
                     const hNorm = terrainHeightGrid[gz * 256 + gx];
@@ -3183,16 +3393,10 @@
             terrainMesh.receiveShadow = true;
             scene.add(terrainMesh);
 
-            // Tropischer Ozean um die Insel bei TERRAIN_OCEAN_LEVEL (-31.5m)
-            const oceanGeo = new THREE.PlaneGeometry(1800, 1800, 1, 1);
+            // Endloser realistischer PBR-Ozean bis zum Horizont (16x16 km, ultraleicht)
+            const oceanGeo = new THREE.PlaneGeometry(16000, 16000, 1, 1);
             oceanGeo.rotateX(-Math.PI / 2);
-            const oceanMat = new THREE.MeshStandardMaterial({
-                color: 0x0284c7,
-                roughness: 0.12,
-                metalness: 0.18,
-                transparent: true,
-                opacity: 0.88
-            });
+            const oceanMat = createRealisticOceanMaterial();
             oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
             oceanMesh.position.set(0, TERRAIN_OCEAN_LEVEL, 0);
             scene.add(oceanMesh);
@@ -7265,9 +7469,9 @@
                 heliRoll = THREE.MathUtils.damp(heliRoll, 0, 6.0, delta);
             }
 
-            // Maximale Flughöhe deckeln (z.B. 120m)
-            if (heliPos.y > 120.0) {
-                heliPos.y = 120.0;
+            // Maximale Flughöhe deckeln (z.B. 160m über 2x2 km Terrain mit 40m Bergen)
+            if (heliPos.y > 160.0) {
+                heliPos.y = 160.0;
                 if (heliVelocity.y > 0) heliVelocity.y = 0;
             }
 
@@ -7281,12 +7485,9 @@
                 heliVelocity.z *= -0.2;
             }
 
-            // Insel-Außengrenze (max 490m)
-            if (distCenter > 490.0) {
-                const ang = Math.atan2(heliPos.z, heliPos.x);
-                heliPos.x = Math.cos(ang) * 490.0;
-                heliPos.z = Math.sin(ang) * 490.0;
-            }
+            // Quadratische 2x2 km Inselgrenze (±990m): Voller Flugbereich bis in alle 4 Ecken
+            heliPos.x = Math.max(-990.0, Math.min(990.0, heliPos.x));
+            heliPos.z = Math.max(-990.0, Math.min(990.0, heliPos.z));
 
             // 6. 3D-Transform der Helikopter-Gruppe anwenden
             const heliEuler = new THREE.Euler(heliPitch, heliYaw, heliRoll, "YXZ");
@@ -7849,7 +8050,7 @@
                 fog: false
             });
 
-            const skyGeom = new THREE.SphereGeometry(1600, 48, 24);
+            const skyGeom = new THREE.SphereGeometry(3500, 48, 24);
             const dome = new THREE.Mesh(skyGeom, skyMaterial);
             dome.renderOrder = -99999;
             return dome;
@@ -8124,8 +8325,78 @@
             return group;
         }
 
+        // ── GPU VRAM TEXTURE UPLOAD & SHADER PRE-COMPILATION ──
+        function warmupAndUploadGPU() {
+            if (!renderer || !scene || !camera) return;
+
+            const initializedTextures = new Set();
+            function initTex(tex) {
+                if (!tex || !tex.isTexture || initializedTextures.has(tex)) return;
+                initializedTextures.add(tex);
+                if (!tex.image) return;
+                if (typeof HTMLImageElement !== 'undefined' && tex.image instanceof HTMLImageElement && !tex.image.complete) return;
+                try {
+                    renderer.initTexture(tex);
+                } catch (e) {
+                    console.warn("initTexture note:", e);
+                }
+            }
+
+            // Vollautomatischer Scan des gesamten Szenengraphen nach allen Materialien und Texturen
+            scene.traverse((obj) => {
+                const mat = obj.material;
+                if (!mat) return;
+                const mats = Array.isArray(mat) ? mat : [mat];
+                mats.forEach((m) => {
+                    if (!m) return;
+                    if (m.map) initTex(m.map);
+                    if (m.normalMap) initTex(m.normalMap);
+                    if (m.roughnessMap) initTex(m.roughnessMap);
+                    if (m.metalnessMap) initTex(m.metalnessMap);
+                    if (m.aoMap) initTex(m.aoMap);
+                    if (m.emissiveMap) initTex(m.emissiveMap);
+                    if (m.specularMap) initTex(m.specularMap);
+                    if (m.alphaMap) initTex(m.alphaMap);
+                    if (m.envMap) initTex(m.envMap);
+
+                    // Automatische Erfassung von Texturen in userData (z. B. Terrain-Uniform-Texturen)
+                    if (m.userData) {
+                        for (const k in m.userData) {
+                            const val = m.userData[k];
+                            if (val && val.isTexture) initTex(val);
+                            if (Array.isArray(val)) {
+                                val.forEach(item => { if (item && item.isTexture) initTex(item); });
+                            }
+                        }
+                    }
+
+                    // ShaderMaterial Uniforms
+                    if (m.uniforms) {
+                        for (const u in m.uniforms) {
+                            const uVal = m.uniforms[u]?.value;
+                            if (uVal && uVal.isTexture) initTex(uVal);
+                        }
+                    }
+                });
+            });
+
+            // Shader-Pipelines für die gesamte Szene und Kamera vorkompilieren
+            try {
+                renderer.compile(scene, camera);
+            } catch (compileErr) {
+                console.warn("renderer.compile note:", compileErr);
+            }
+
+            // Initialen Frame rendern, um Render-Pipeline und Buffer im GPU-Treiber zu binden
+            try {
+                renderer.render(scene, camera);
+            } catch (renderErr) {
+                console.warn("initial render note:", renderErr);
+            }
+        }
+
         // ── 3D INIT ──
-        function initThreeWorld() {
+        async function initThreeWorld() {
             if (scene) {
                 onWindowResize();
                 if (!animationFrameId) animate();
@@ -8138,7 +8409,7 @@
             skyDomeMesh = createRealisticProceduralSky();
             scene.add(skyDomeMesh);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.4, 6500);
             camera.position.set(0, EYE_HEIGHT, 0); // Spawn im Zentrum
             scene.fog = new THREE.FogExp2(0xa5c9eb, 0.00075);
 
@@ -8391,17 +8662,13 @@
                 }
             });
 
-            // â”€â”€ GPU PIPELINE WARMUP & PRE-COMPILATION GEGEN INITIALES RUCKELN â”€â”€
+            // ── ASSET PRELOADING & GPU PIPELINE WARMUP GEGEN INITIALES RUCKELN ──
             try {
-                renderer.compile(scene, camera);
-                const savedRotY = camera.rotation.y;
-                for (let a = 0; a < 4; a++) {
-                    camera.rotation.y = a * (Math.PI / 2);
-                    camera.updateMatrixWorld(true);
-                    renderer.render(scene, camera);
-                }
-                camera.rotation.y = savedRotY;
-                camera.updateMatrixWorld(true);
+                // 1. Warten, bis alle PBR- und WebP-Texturen fertig geladen sind
+                await waitForAllTextures();
+
+                // 2. Sämtliche Texturen der Szene (PBR-Maps, Canvas-Texturen, Terrain-Uniforms) vorab in den VRAM hochladen & Shader vorkompilieren
+                warmupAndUploadGPU();
             } catch (warmupErr) {
                 console.warn("GPU warmup note:", warmupErr);
             }
@@ -8737,6 +9004,12 @@
                 skyDomeMesh.position.copy(camera.position);
             }
 
+            // Realistischer PBR-Ozean: Zeit für Wellenbewegung und Tag/Nacht-Transition fortführen
+            if (oceanUniforms) {
+                if (oceanUniforms.uTime) oceanUniforms.uTime.value += delta;
+                if (oceanUniforms.uNightTransition) oceanUniforms.uNightTransition.value = nightTransition;
+            }
+
             // AtmosphÃ¤rische Beleuchtungsanpassung bei Sternenhimmel
             if (sceneAmbientLight) {
                 sceneAmbientLight.intensity = THREE.MathUtils.lerp(0.7, 0.28, nightTransition);
@@ -8889,10 +9162,9 @@
                             playerPos.z = Math.sin(curAngle) * 24.7;
                         }
                     }
-                    if (distFromCenter > 495.0) {
-                        playerPos.x = Math.cos(curAngle) * 495.0;
-                        playerPos.z = Math.sin(curAngle) * 495.0;
-                    }
+                    // Quadratische 2x2 km Begrenzung (±995m): Voller Zugang bis in alle 4 Ecken
+                    playerPos.x = Math.max(-995.0, Math.min(995.0, playerPos.x));
+                    playerPos.z = Math.max(-995.0, Math.min(995.0, playerPos.z));
 
                     // Kollisionsabfrage: Satellitenraeume
                     for (const room of SATELLITE_ROOMS) {
@@ -9838,6 +10110,9 @@
                     img.onload = () => {
                         const texture = createImageNoteTexture(img, data.caption, data.author, dateStr);
                         texture.colorSpace = THREE.SRGBColorSpace;
+                        if (renderer) {
+                            try { renderer.initTexture(texture); } catch (e) {}
+                        }
                         mat.map = texture;
                         mat.needsUpdate = true;
                     };
@@ -9845,6 +10120,9 @@
                 } else {
                     const texture = createTextNoteTexture(data.text, data.author, dateStr);
                     texture.colorSpace = THREE.SRGBColorSpace;
+                    if (renderer) {
+                        try { renderer.initTexture(texture); } catch (e) {}
+                    }
                     const geo = new THREE.PlaneGeometry(0.85, 0.85);
                     const mat = new THREE.MeshBasicMaterial({
                         map: texture,
@@ -9985,6 +10263,9 @@
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
+            if (renderer) {
+                try { renderer.initTexture(texture); } catch (e) {}
+            }
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
             sprite.position.set(0, 2.15, 0);

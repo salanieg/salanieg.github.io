@@ -1,8 +1,9 @@
 {
-  "worldSize": 1024.0,
+  "worldSize": 2000.0,
   "gridSize": 256,
-  "centerHeightNorm": 0.34117648005485535,
-  "maxHeight": 140.0,
-  "oceanLevel": -31.5,
+  "centerHeightNorm": 0.35714285714285715,
+  "maxHeight": 210.0,
+  "oceanLevel": -47.25,
+  "peakHeightMeters": 60.63105392456055,
   "calderaFloorY": 0.0
 }

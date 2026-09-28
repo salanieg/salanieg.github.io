@@ -16,15 +16,18 @@ const terrainGrid = new Float32Array(bin.buffer, bin.byteOffset, bin.byteLength 
 console.log('Grid length:', terrainGrid.length, '(expected 65536 points)');
 
 // 2. Test getTerrainHeight logic
-const TERRAIN_CENTER_HEIGHT_NORM = 0.34117648;
-const TERRAIN_MAX_HEIGHT = 140.0;
-const TERRAIN_OCEAN_LEVEL = -31.5;
+const TERRAIN_CENTER_HEIGHT_NORM = 0.35714286;
+const TERRAIN_MAX_HEIGHT = 210.0;
+const TERRAIN_OCEAN_LEVEL = -47.25;
 
 function getTerrainHeight(x, z) {
-    const dist = Math.hypot(x, z);
-    if (dist <= 33.0) return 0.0;
-    const u = (x + 512.0) / 1024.0;
-    const v = (z + 512.0) / 1024.0;
+    const distDome = Math.hypot(x, z);
+    if (distDome <= 33.0) return 0.0;
+    const distHeli = Math.hypot(x, z - 36.0);
+    if (distHeli <= 10.0) return 0.0;
+
+    const u = (x + 1000.0) / 2000.0;
+    const v = (z + 1000.0) / 2000.0;
     if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) return TERRAIN_OCEAN_LEVEL;
     const gx = Math.max(0.0, Math.min(255.0, u * 255.0));
     const gz = Math.max(0.0, Math.min(255.0, v * 255.0));
@@ -41,12 +44,20 @@ function getTerrainHeight(x, z) {
     const h0 = h00 * (1.0 - fx) + h10 * fx;
     const h1 = h01 * (1.0 - fx) + h11 * fx;
     const h = h0 * (1.0 - fz) + h1 * fz;
-    return (h - TERRAIN_CENTER_HEIGHT_NORM) * TERRAIN_MAX_HEIGHT;
+    let hTerrain = (h - TERRAIN_CENTER_HEIGHT_NORM) * TERRAIN_MAX_HEIGHT;
+    if (distHeli < 18.0) {
+        const t = (distHeli - 10.0) / (18.0 - 10.0);
+        hTerrain *= t * t * (3.0 - 2.0 * t);
+    }
+    return hTerrain;
 }
 
 console.log('Center height (x=0, z=0):', getTerrainHeight(0, 0));
+console.log('Helipad center height (x=0, z=36):', getTerrainHeight(0, 36).toFixed(2));
 console.log('Exit 1 South height (x=0, z=28):', getTerrainHeight(0, 28).toFixed(2));
-console.log('Mountain peak around r=150:', getTerrainHeight(100, 100).toFixed(2));
+console.log('Mountain peak around (x=-238, z=166):', getTerrainHeight(-238, 166).toFixed(2));
+console.log('Coastline/Ocean at (x=950, z=0):', getTerrainHeight(950, 0).toFixed(2));
+console.log('Beyond island at (x=1050, z=0):', getTerrainHeight(1050, 0).toFixed(2));
 
 // 3. Test 5 Exits and Wall Gaps
 const COURTYARD_RADIUS = 24.0;
@@ -98,7 +109,7 @@ SATELLITE_ROOMS.forEach(room => {
 });
 
 // 4. Test Mesh creation & Shader chunks
-const terrainGeo = new THREE.PlaneGeometry(1024, 1024, 255, 255);
+const terrainGeo = new THREE.PlaneGeometry(2000, 2000, 255, 255);
 terrainGeo.rotateX(-Math.PI / 2);
 const posAttr = terrainGeo.attributes.position;
 for (let i = 0; i < posAttr.count; i++) {
