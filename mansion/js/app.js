@@ -6707,6 +6707,115 @@
             if (heliMfdTexture) heliMfdTexture.needsUpdate = true;
         }
 
+        // Graue Stofftextur für Helikoptersitze
+        function createHeliGrayFabricTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext("2d");
+
+            // Neutraler schiefergrauer Grundton
+            ctx.fillStyle = "#4b5563";
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Subtiles Webmuster / Kreuzstruktur für edlen Stoff
+            ctx.fillStyle = "rgba(255, 255, 255, 0.07)";
+            for (let i = 0; i < 256; i += 4) {
+                ctx.fillRect(i, 0, 2, 256);
+            }
+            ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+            for (let j = 0; j < 256; j += 4) {
+                ctx.fillRect(0, j, 256, 2);
+            }
+
+            // Feines Stofffaser-Mikrorauschen
+            const imgData = ctx.getImageData(0, 0, 256, 256);
+            const data = imgData.data;
+            for (let k = 0; k < data.length; k += 4) {
+                const noise = (Math.random() - 0.5) * 22;
+                data[k]     = Math.min(255, Math.max(0, data[k] + noise));
+                data[k + 1] = Math.min(255, Math.max(0, data[k + 1] + noise));
+                data[k + 2] = Math.min(255, Math.max(0, data[k + 2] + noise));
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        // Metallische Bodentextur für den Helikopterraum (Riffelblech / Metallplatte)
+        function createHeliMetalFloorTexture() {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext("2d");
+
+            // Stahlgraue Metallbasis
+            ctx.fillStyle = "#334155";
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Gebürstete horizontale Metalllinien
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 512; i += 2) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(512, i);
+                ctx.stroke();
+            }
+
+            // Metall-Riffelblech (Diamond Plate) Noppenmuster
+            const step = 32;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.28)";
+            ctx.lineWidth = 1.5;
+
+            for (let y = 0; y < 512; y += step) {
+                for (let x = 0; x < 512; x += step) {
+                    const offsetX = ((y / step) % 2 === 0) ? 0 : step / 2;
+                    const px = x + offsetX;
+                    const py = y;
+
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.rotate(Math.PI / 4);
+                    ctx.beginPath();
+                    if (typeof ctx.roundRect === "function") {
+                        ctx.roundRect(-4, -10, 8, 20, 3);
+                    } else {
+                        ctx.rect(-4, -10, 8, 20);
+                    }
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            // Feines metallisches Körnungsrauschen
+            const imgData = ctx.getImageData(0, 0, 512, 512);
+            const data = imgData.data;
+            for (let k = 0; k < data.length; k += 4) {
+                const grain = (Math.random() - 0.5) * 18;
+                data[k]     = Math.min(255, Math.max(0, data[k] + grain));
+                data[k + 1] = Math.min(255, Math.max(0, data[k + 1] + grain));
+                data[k + 2] = Math.min(255, Math.max(0, data[k + 2] + grain));
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 8);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
         // ── AGUSTAWESTLAND AW169 3D MODELL-KONSTRUKTION (SAUBER & ÜBERSICHTLICH) ──
         function buildAW169Helicopter() {
             // Vorherige Helikopter-Sitze sauber aufräumen, falls Funktion erneut aufgerufen wird
@@ -6727,6 +6836,8 @@
             const liveryTexLeft = createAW169LiveryTexture(true);
             const blurTex = createRotorBlurTexture();
             const mfdTex = createCockpitMFDTexture();
+            const fabricTex = createHeliGrayFabricTexture();
+            const metalFloorTex = createHeliMetalFloorTexture();
 
             // Materialien (PBR Clean Fidelity)
             const matGlossWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.25, metalness: 0.12 });
@@ -6736,7 +6847,8 @@
             const matCrimson = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.28, metalness: 0.18 });
             const matTitanium = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.22, metalness: 0.85 });
             const matRotorBlade = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.40, metalness: 0.20 });
-            const matSeatLeather = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.72, metalness: 0.10 });
+            const matSeatFabric = new THREE.MeshStandardMaterial({ map: fabricTex, roughness: 0.82, metalness: 0.05 });
+            const matHeliFloor = new THREE.MeshStandardMaterial({ map: metalFloorTex, roughness: 0.38, metalness: 0.65 });
             const matMFD = new THREE.MeshStandardMaterial({
                 map: mfdTex,
                 emissive: 0xffffff,
@@ -6765,9 +6877,9 @@
             });
 
             // 1. RUMPF-STRUKTUR: VOLLSTÄNDIG BÜNDIG, WASSERDICHT & LÜCKENLOS
-            // Bodenplatte (tragendes Fundament der Kabine)
+            // Bodenplatte (tragendes Fundament der Kabine mit Metallbodentextur)
             const floorGeo = new THREE.BoxGeometry(2.10, 0.10, 4.90);
-            const floorMesh = new THREE.Mesh(floorGeo, matDarkGraphite);
+            const floorMesh = new THREE.Mesh(floorGeo, matHeliFloor);
             floorMesh.position.set(0, 0.47, 0.25);
             floorMesh.receiveShadow = true;
             heliGroup.add(floorMesh);
@@ -6955,14 +7067,14 @@
                 const seatGroup = new THREE.Group();
                 seatGroup.position.set(x, 0.52, 1.35);
 
-                const sBase = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.14, 0.48), matSeatLeather);
+                const sBase = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.14, 0.48), matSeatFabric);
                 seatGroup.add(sBase);
 
-                const sBack = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.68, 0.10), matSeatLeather);
+                const sBack = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.68, 0.10), matSeatFabric);
                 sBack.position.set(0, 0.38, -0.22);
                 seatGroup.add(sBack);
 
-                const sHead = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.20, 0.08), matSeatLeather);
+                const sHead = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.20, 0.08), matSeatFabric);
                 sHead.position.set(0, 0.76, -0.22);
                 seatGroup.add(sHead);
 
@@ -7043,18 +7155,15 @@
 
             heliGroup.add(heliCollectiveLever);
 
-            // 5. PASSAGIERKABINE: 2 GEGENÜBERLIEGENDE 3ER-SITZREIHEN (VIS-À-VIS)
-            // Nach hinten zusammengerückt für bequeme Beinfreiheit und maximale Cockpit-Fläche
-            // Reihe Vorne (Position z = -0.35): 3 Sitze, Passagiere blicken nach HINTEN (Richtung -Z)
-            // Reihe Hinten (Position z = -1.35): 3 Sitze, Passagiere blicken nach VORNE (Richtung +Z)
+            // 5. PASSAGIERKABINE: 1 VORWÄRTS GERICHTETE 3ER-SITZREIHE
+            // Position z = -1.35: 3 Sitze, Passagiere blicken nach VORNE (Richtung +Z)
             const rowConfigs = [
-                { rowName: "Vorne (Rückwärts)", zPos: -0.35, lookDirZ: -1.0, backOffsetZ: 0.22 },
-                { rowName: "Hinten (Vorwärts)", zPos: -1.35, lookDirZ: 1.0, backOffsetZ: -0.22 }
+                { rowName: "Passagierreihe", zPos: -1.35, lookDirZ: 1.0, backOffsetZ: -0.22 }
             ];
 
             const seatXOffsets = [-0.62, 0.0, 0.62]; // Links (Fenster), Mitte, Rechts (Fenster)
 
-            rowConfigs.forEach((rc, rIdx) => {
+            rowConfigs.forEach((rc) => {
                 // Sitzbank-Untergestell
                 const benchBaseGeo = new THREE.BoxGeometry(1.85, 0.15, 0.52);
                 const benchBase = new THREE.Mesh(benchBaseGeo, matDarkGraphite);
@@ -7064,7 +7173,7 @@
 
                 // Rückenlehne
                 const benchBackGeo = new THREE.BoxGeometry(1.85, 0.68, 0.10);
-                const benchBack = new THREE.Mesh(benchBackGeo, matSeatLeather);
+                const benchBack = new THREE.Mesh(benchBackGeo, matSeatFabric);
                 benchBack.position.set(0, 0.90, rc.zPos + rc.backOffsetZ);
                 benchBack.castShadow = true;
                 heliGroup.add(benchBack);
@@ -7072,14 +7181,14 @@
                 // Die 3 einzelnen Sitzkissen (klickbar via Raycast zum Hinsetzen)
                 seatXOffsets.forEach((xPos, sIdx) => {
                     const seatCushionGeo = new THREE.BoxGeometry(0.52, 0.12, 0.46);
-                    const seatCushion = new THREE.Mesh(seatCushionGeo, matSeatLeather);
+                    const seatCushion = new THREE.Mesh(seatCushionGeo, matSeatFabric);
                     seatCushion.position.set(xPos, 0.62, rc.zPos);
                     heliGroup.add(seatCushion);
 
                     // Im globalen Sitzsystem registrieren (Kopfhöhe bei y = 1.30 für Rundumblick)
                     const localSitPos = new THREE.Vector3(xPos, 1.30, rc.zPos);
                     const localLookDir = new THREE.Vector3(0, 0, rc.lookDirZ);
-                    const seatName = `Falcon 300 Turbo ${rIdx === 0 ? 'Reihe Vorne' : 'Reihe Hinten'} ${sIdx === 0 ? 'Links (Fenster)' : (sIdx === 1 ? 'Mitte' : 'Rechts (Fenster)')}`;
+                    const seatName = `Falcon 300 Turbo ${sIdx === 0 ? 'Links (Fenster)' : (sIdx === 1 ? 'Mitte' : 'Rechts (Fenster)')}`;
 
                     const seatObj = {
                         name: seatName,
