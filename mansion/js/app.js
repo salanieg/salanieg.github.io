@@ -876,13 +876,14 @@
         let oceanUniforms = null;
         let terrainHeightTexture = null;
 
-        // ── INSTANCED GRASS SYSTEM ──
-        let grassMesh = null;
+        // ── INSTANCED GRASS SYSTEM (Chunk-basiert, ganze Insel) ──
+        let grassChunks = [];          // Array von { mesh: InstancedMesh }
         let grassUniforms = null;
-        let grassLastCenter = new THREE.Vector3(99999, 0, 99999);
-        const GRASS_COUNT = 20000;
-        const GRASS_RADIUS = 80;
-        const GRASS_REBUILD_DIST = 15;
+        let grassMaterial = null;
+        const GRASS_GRID = 32;         // 32×32 Chunk-Raster
+        const GRASS_WORLD_SIZE = 800;  // Bereich -400..+400 (Inselkern)
+        const GRASS_CHUNK_SIZE = GRASS_WORLD_SIZE / GRASS_GRID; // 25m pro Chunk
+        const GRASS_DENSITY = 1.0;     // ~1 Grashalm pro m² (wie bisher)
 
         function getTerrainSlope(x, z) {
             const d = 2.0;
@@ -943,7 +944,17 @@
         }
 
         function buildGrassSystem() {
-            if (grassMesh) { scene.remove(grassMesh); grassMesh.dispose(); }
+            // Alte Chunks entfernen falls vorhanden
+            for (const chunk of grassChunks) {
+                scene.remove(chunk.mesh);
+                chunk.mesh.geometry.dispose();
+            }
+            grassChunks = [];
+
+            if (!terrainHeightGrid) {
+                initTerrainDataSync();
+                if (!terrainHeightGrid) return;
+            }
 
             const grassTex = createGrassTexture();
 
@@ -970,7 +981,7 @@
                 uNightTransition: { value: 0 }
             };
 
-            const mat = new THREE.ShaderMaterial({
+            grassMaterial = new THREE.ShaderMaterial({
                 uniforms: grassUniforms,
                 vertexShader: `
                     uniform float uTime;
@@ -1020,50 +1031,63 @@
                 depthWrite: true
             });
 
-            grassMesh = new THREE.InstancedMesh(geo, mat, GRASS_COUNT);
-            grassMesh.frustumCulled = false;
-            scene.add(grassMesh);
-        }
-
-        function updateGrassPositions(cx, cz) {
-            if (!grassMesh || !terrainHeightGrid) return;
+            // Gras-Positionen für alle Chunks vorberechnen
             const dummy = new THREE.Object3D();
-            let placed = 0;
+            const halfWorld = GRASS_WORLD_SIZE / 2;
+            const targetPerChunk = Math.floor(GRASS_DENSITY * GRASS_CHUNK_SIZE * GRASS_CHUNK_SIZE);
 
-            for (let attempt = 0; attempt < GRASS_COUNT * 3 && placed < GRASS_COUNT; attempt++) {
-                // Gleichmäßige Verteilung im Kreis
-                const angle = Math.random() * Math.PI * 2;
-                const radius = Math.sqrt(Math.random()) * GRASS_RADIUS;
-                const wx = cx + Math.cos(angle) * radius;
-                const wz = cz + Math.sin(angle) * radius;
-                const wy = getTerrainHeight(wx, wz);
+            for (let cz = 0; cz < GRASS_GRID; cz++) {
+                for (let cx = 0; cx < GRASS_GRID; cx++) {
+                    const chunkMinX = -halfWorld + cx * GRASS_CHUNK_SIZE;
+                    const chunkMinZ = -halfWorld + cz * GRASS_CHUNK_SIZE;
+                    const chunkMaxX = chunkMinX + GRASS_CHUNK_SIZE;
+                    const chunkMaxZ = chunkMinZ + GRASS_CHUNK_SIZE;
 
-                const gf = getGrassFactor(wx, wz, wy);
-                // Wahrscheinlichkeitsbasiert: dichtes Gras auf Wiese, dünn an Übergängen
-                if (Math.random() > gf) continue;
+                    // Positionen für diesen Chunk sammeln
+                    const chunkPositions = [];
+                    const maxAttempts = targetPerChunk * 3;
 
-                dummy.position.set(wx, wy, wz);
-                // Zufällige Drehung für natürliche Optik
-                dummy.rotation.set(0, Math.random() * Math.PI, 0);
-                // Leichte Größenvariation (0.6x bis 1.2x)
-                const s = 0.6 + Math.random() * 0.6;
-                dummy.scale.set(s, s, s);
-                dummy.updateMatrix();
-                grassMesh.setMatrixAt(placed, dummy.matrix);
-                placed++;
-            }
+                    for (let attempt = 0; attempt < maxAttempts && chunkPositions.length < targetPerChunk; attempt++) {
+                        const wx = chunkMinX + Math.random() * GRASS_CHUNK_SIZE;
+                        const wz = chunkMinZ + Math.random() * GRASS_CHUNK_SIZE;
+                        const wy = getTerrainHeight(wx, wz);
 
-            // Restliche Instanzen unsichtbar machen (Skalierung 0)
-            if (placed < GRASS_COUNT) {
-                dummy.scale.set(0, 0, 0);
-                dummy.updateMatrix();
-                for (let i = placed; i < GRASS_COUNT; i++) {
-                    grassMesh.setMatrixAt(i, dummy.matrix);
+                        const gf = getGrassFactor(wx, wz, wy);
+                        if (Math.random() > gf) continue;
+
+                        const s = 0.6 + Math.random() * 0.6;
+                        const rot = Math.random() * Math.PI;
+                        chunkPositions.push({ x: wx, y: wy, z: wz, s, rot });
+                    }
+
+                    // Chunk nur erstellen wenn Gras vorhanden
+                    if (chunkPositions.length === 0) continue;
+
+                    const chunkMesh = new THREE.InstancedMesh(geo, grassMaterial, chunkPositions.length);
+                    chunkMesh.frustumCulled = true;
+
+                    let minY = Infinity, maxY = -Infinity;
+                    for (let i = 0; i < chunkPositions.length; i++) {
+                        const p = chunkPositions[i];
+                        dummy.position.set(p.x, p.y, p.z);
+                        dummy.rotation.set(0, p.rot, 0);
+                        dummy.scale.set(p.s, p.s, p.s);
+                        dummy.updateMatrix();
+                        chunkMesh.setMatrixAt(i, dummy.matrix);
+                        if (p.y < minY) minY = p.y;
+                        if (p.y + 0.7 * p.s > maxY) maxY = p.y + 0.7 * p.s;
+                    }
+
+                    chunkMesh.instanceMatrix.needsUpdate = true;
+
+                    // Bounding-Box für Frustum-Culling korrekt setzen
+                    chunkMesh.computeBoundingBox();
+                    chunkMesh.computeBoundingSphere();
+
+                    scene.add(chunkMesh);
+                    grassChunks.push({ mesh: chunkMesh });
                 }
             }
-
-            grassMesh.instanceMatrix.needsUpdate = true;
-            grassLastCenter.set(cx, 0, cz);
         }
 
         function getOrCreateTerrainHeightTexture() {
@@ -6156,6 +6180,7 @@
         let heliBlurDiscMesh = null;
         let heliTailBlurMesh = null;
         let heliCyclicStick = null;
+        let heliCopilotStick = null;
         let heliCollectiveLever = null;
         let heliMfdCanvas = null;
         let heliMfdContext = null;
@@ -6220,16 +6245,6 @@
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, 2048, 256);
 
-            // Subtile vertikale Panel-Fugen
-            ctx.strokeStyle = "#e2e8f0";
-            ctx.lineWidth = 1.5;
-            for (let x = 120; x < 2048; x += 180) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, 256);
-                ctx.stroke();
-            }
-
             // Schmaler kobaltblauer Streifen über die gesamte Flankenlänge
             const cobaltBlue = "#0047ab";
             ctx.fillStyle = cobaltBlue;
@@ -6256,25 +6271,28 @@
             texture.wrapS = THREE.ClampToEdgeWrapping;
             texture.wrapT = THREE.ClampToEdgeWrapping;
             texture.anisotropy = 8;
+            texture.colorSpace = THREE.SRGBColorSpace;
             return texture;
         }
 
         // Luftfahrtkennzeichen "D-SLNG" für den Heckstab
         function createTailBoomRegistrationTexture() {
             const canvas = document.createElement("canvas");
-            canvas.width = 512;
-            canvas.height = 128;
+            canvas.width = 1024;
+            canvas.height = 256;
             const ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, 512, 128);
+            ctx.clearRect(0, 0, 1024, 256);
 
-            ctx.fillStyle = "#0047ab";
-            ctx.font = "bold 64px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+            const cobaltBlue = "#0047ab";
+            ctx.fillStyle = cobaltBlue;
+            ctx.font = "bold 128px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText("D-SLNG", 256, 64);
+            ctx.fillText("D-SLNG", 512, 128);
 
             const tex = new THREE.CanvasTexture(canvas);
             tex.anisotropy = 8;
+            tex.colorSpace = THREE.SRGBColorSpace;
             return tex;
         }
 
@@ -6569,14 +6587,14 @@
                 ctx.stroke();
             }
 
-            // Himmelsrichtungen
+            // Himmelsrichtungen (Süden +Z ist Grund-Flugrichtung yaw=0)
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.font = "bold 13px monospace";
 
-            // N in Cybergrün mit kleiner Dreiecksspitze
+            // S (Süden/+Z) oben in Cybergrün mit kleiner Dreiecksspitze
             ctx.fillStyle = "#00ff66";
-            ctx.fillText("N", 0, -(navRadius - 18));
+            ctx.fillText("S", 0, -(navRadius - 18));
             ctx.beginPath();
             ctx.moveTo(0, -navRadius + 2);
             ctx.lineTo(-4, -navRadius + 9);
@@ -6585,28 +6603,32 @@
             ctx.fill();
 
             ctx.fillStyle = "#ffffff";
-            ctx.fillText("S", 0, navRadius - 18);
-            ctx.fillText("E", navRadius - 18, 0);
-            ctx.fillText("W", -(navRadius - 18), 0);
-
-            // Helipad-Marker [H] relative Position
-            const relPadX = (0.0 - heliPos.x);
-            const relPadZ = (36.0 - heliPos.z);
-            const padDist = Math.hypot(relPadX, relPadZ);
-            const radarScale = 0.55;
-            const padPlotDist = Math.min(navRadius - 12, padDist * radarScale);
-            const padAngle = Math.atan2(relPadX, relPadZ);
-
-            const padDrawX = Math.sin(padAngle) * padPlotDist;
-            const padDrawY = -Math.cos(padAngle) * padPlotDist;
-
-            ctx.fillStyle = "#00ff66";
-            ctx.fillRect(padDrawX - 8, padDrawY - 8, 16, 16);
-            ctx.fillStyle = "#000000";
-            ctx.font = "bold 11px monospace";
-            ctx.fillText("H", padDrawX, padDrawY + 1);
+            ctx.fillText("N", 0, navRadius - 18);
+            ctx.fillText("W", navRadius - 18, 0);
+            ctx.fillText("E", -(navRadius - 18), 0);
 
             ctx.restore();
+
+            // Helipad-Marker [H] in lokalen Helikopter-Koordinaten
+            const relWorld = new THREE.Vector3(0.0 - heliPos.x, 0.0, 36.0 - heliPos.z);
+            const relLocal = relWorld.applyEuler(new THREE.Euler(0, -yaw, 0, "YXZ"));
+            const padDist = Math.hypot(relLocal.x, relLocal.z);
+            const radarScale = 0.55;
+            const padPlotDist = Math.min(navRadius - 12, padDist * radarScale);
+
+            let padDrawX = 0;
+            let padDrawY = 0;
+            if (padDist > 0.001) {
+                const padAngle = Math.atan2(relLocal.x, relLocal.z);
+                padDrawX = -Math.sin(padAngle) * padPlotDist;
+                padDrawY = -Math.cos(padAngle) * padPlotDist;
+            }
+
+            ctx.fillStyle = "#00ff66";
+            ctx.fillRect(navCenterX + padDrawX - 8, navCenterY + padDrawY - 8, 16, 16);
+            ctx.fillStyle = "#000000";
+            ctx.font = "bold 11px monospace";
+            ctx.fillText("H", navCenterX + padDrawX, navCenterY + padDrawY + 1);
 
             // Flugzeug-Zentrum (Weißes Dreieck / Chevron)
             ctx.fillStyle = "#ffffff";
@@ -6780,22 +6802,22 @@
             boomFairing.castShadow = true;
             heliGroup.add(boomFairing);
 
-            // C-Säulen / Hintere Rumpfseitenwände (schließen die Ecken zwischen Heckwand und Fenstern nahtlos)
+            // C-Säulen / Hintere Rumpfseitenwände oberhalb der Lackierungsplatte (auf Höhe der Seitenscheiben)
             [-1.03, 1.03].forEach(x => {
-                const cPillarGeo = new THREE.BoxGeometry(0.06, 1.63, 0.80);
+                const cPillarGeo = new THREE.BoxGeometry(0.06, 1.17, 0.80);
                 const cPillar = new THREE.Mesh(cPillarGeo, matGlossWhite);
-                cPillar.position.set(x, 1.235, -1.80);
+                cPillar.position.set(x, 1.465, -1.80);
                 cPillar.castShadow = true;
                 heliGroup.add(cPillar);
             });
 
             // 2. SEITENVERKLEIDUNGEN & PANORAMA-VERGLASUNG (100% BÜNDIG)
             // Untere Rumpfseitenwand mit "SERVERAUFSICHT"-Lackierung:
-            // Reicht von der C-Säule (z = -1.40) durchgehend bis zur Kanzelnase (z = 2.75) über die gesamte Rumpflänge (4.15m).
+            // Reicht durchgehend von der Heckwand (z = -2.20) bis zur Kanzelnase (z = 2.75) über die gesamte Rumpflänge (4.95m).
             // Außenfläche zeigt die VIP-Lackierung mit ungespiegeltem Text, Innenfläche ist sauberes Kabinen-Weiß.
 
             // Rechte Flanke (+X): Face 0 ist außen (+X), Face 1 ist innen (-X)
-            const sidePanelGeoRight = new THREE.BoxGeometry(0.06, 0.46, 4.15);
+            const sidePanelGeoRight = new THREE.BoxGeometry(0.06, 0.46, 4.95);
             const sidePanelRight = new THREE.Mesh(sidePanelGeoRight, [
                 matLiveryRight,
                 matGlossWhite,
@@ -6804,12 +6826,12 @@
                 matGlossWhite,
                 matGlossWhite
             ]);
-            sidePanelRight.position.set(1.03, 0.65, 0.675);
+            sidePanelRight.position.set(1.03, 0.65, 0.275);
             sidePanelRight.castShadow = true;
             heliGroup.add(sidePanelRight);
 
             // Linke Flanke (-X): Face 0 ist innen (+X), Face 1 ist außen (-X)
-            const sidePanelGeoLeft = new THREE.BoxGeometry(0.06, 0.46, 4.15);
+            const sidePanelGeoLeft = new THREE.BoxGeometry(0.06, 0.46, 4.95);
             const sidePanelLeft = new THREE.Mesh(sidePanelGeoLeft, [
                 matGlossWhite,
                 matLiveryLeft,
@@ -6818,7 +6840,7 @@
                 matGlossWhite,
                 matGlossWhite
             ]);
-            sidePanelLeft.position.set(-1.03, 0.65, 0.675);
+            sidePanelLeft.position.set(-1.03, 0.65, 0.275);
             sidePanelLeft.castShadow = true;
             heliGroup.add(sidePanelLeft);
 
@@ -6977,7 +6999,8 @@
             // Symmetrischer Copilot-Steuerknüppel links
             const copilotStick = heliCyclicStick.clone();
             copilotStick.position.set(-0.48, 0.52, 1.85);
-            heliGroup.add(copilotStick);
+            heliCopilotStick = copilotStick;
+            heliGroup.add(heliCopilotStick);
 
             // Mittelkonsole (Center Pedestal) zwischen den beiden Vordersitzen bei x = 0.0
             const consolePedestalGeo = new THREE.BoxGeometry(0.26, 0.28, 0.70);
@@ -7198,23 +7221,25 @@
 
             // Luftfahrtkennzeichen "D-SLNG" beidseitig am Heckstab
             const dslngTex = createTailBoomRegistrationTexture();
-            const matDslng = new THREE.MeshBasicMaterial({
+            const matDslng = new THREE.MeshStandardMaterial({
                 map: dslngTex,
                 transparent: true,
                 depthWrite: false,
+                roughness: 0.28,
+                metalness: 0.14,
                 side: THREE.FrontSide
             });
-            const dslngPlaneGeo = new THREE.PlaneGeometry(1.20, 0.30);
+            const dslngPlaneGeo = new THREE.PlaneGeometry(2.20, 0.55);
 
             // Rechte Seite des Heckauslegers (+X)
             const dslngRight = new THREE.Mesh(dslngPlaneGeo, matDslng);
-            dslngRight.position.set(0.28, 1.45, -4.50);
+            dslngRight.position.set(0.30, 1.45, -4.50);
             dslngRight.rotation.y = Math.PI / 2;
             heliGroup.add(dslngRight);
 
             // Linke Seite des Heckauslegers (-X)
             const dslngLeft = new THREE.Mesh(dslngPlaneGeo, matDslng);
-            dslngLeft.position.set(-0.28, 1.45, -4.50);
+            dslngLeft.position.set(-0.30, 1.45, -4.50);
             dslngLeft.rotation.y = -Math.PI / 2;
             heliGroup.add(dslngLeft);
 
@@ -7896,7 +7921,11 @@
             // 7. Steuerhebel im Cockpit animieren
             if (heliCyclicStick) {
                 heliCyclicStick.rotation.x = heliPitch * 1.8;
-                heliCyclicStick.rotation.z = -heliRoll * 1.8;
+                heliCyclicStick.rotation.z = heliRoll * 1.8;
+            }
+            if (heliCopilotStick) {
+                heliCopilotStick.rotation.x = heliPitch * 1.8;
+                heliCopilotStick.rotation.z = heliRoll * 1.8;
             }
             if (heliCollectiveLever) {
                 // Vorne = mehr Schub (negativer Pitch-Winkel), Hinten = Leerlauf/Bremse (positiver Pitch-Winkel)
@@ -9411,18 +9440,10 @@
                 if (oceanUniforms.uNightTransition) oceanUniforms.uNightTransition.value = nightTransition;
             }
 
-            // Instanced Grass: Wind-Animation & dynamische Platzierung um Spieler
+            // Instanced Grass: Wind-Animation & Nacht-Überblendung (Chunks sind statisch vorberechnet)
             if (grassUniforms) {
                 grassUniforms.uTime.value += delta;
                 grassUniforms.uNightTransition.value = nightTransition;
-            }
-            if (grassMesh && camera) {
-                const px = camera.position.x;
-                const pz = camera.position.z;
-                const distMoved = Math.hypot(px - grassLastCenter.x, pz - grassLastCenter.z);
-                if (distMoved > GRASS_REBUILD_DIST) {
-                    updateGrassPositions(px, pz);
-                }
             }
 
             // AtmosphÃ¤rische Beleuchtungsanpassung bei Sternenhimmel
