@@ -2930,6 +2930,11 @@
             playerPos.copy(seat.sitPos);
             camera.position.copy(seat.sitPos);
 
+            if (camera.near !== 0.05) {
+                camera.near = 0.05;
+                camera.updateProjectionMatrix();
+            }
+
             if (seat.lookDir) {
                 const seatAngle = Math.atan2(seat.lookDir.x, seat.lookDir.z) + Math.PI;
                 camera.rotation.set(0, seatAngle, 0);
@@ -7647,6 +7652,12 @@
             camera.rotation.order = "YXZ";
             camera.rotation.set(-0.16, heliYaw + Math.PI, 0);
 
+            // Nah-Clipping-Ebene auf 0.05m (5 cm) setzen gegen Cockpit- & Scheiben-Clipping
+            if (camera.near !== 0.05) {
+                camera.near = 0.05;
+                camera.updateProjectionMatrix();
+            }
+
             // Eigene Spielfigur unsichtbar für Ego-Ansicht (oder in Sitz platzieren)
             if (localPlayerGroup) localPlayerGroup.visible = false;
 
@@ -8090,6 +8101,12 @@
 
             if (isHeliFirstPerson) {
                 // Cockpit Ego-Sicht: Kamera sitzt exakt auf Augenhöhe des rechten Pilotensitzes
+                // Nah-Clipping-Ebene auf 0.05m (5 cm) erzwingen gegen Scheiben- & Geometrie-Clipping
+                if (camera.near !== 0.05) {
+                    camera.near = 0.05;
+                    camera.updateProjectionMatrix();
+                }
+
                 // Pilotensitz ist bei x = 0.48, y = 0.52, z = 1.35.
                 // Augenhöhe: y = 1.35, z = 1.35 (perfekt über dem Armaturenbrett bei y = 0.88, z = 2.36)
                 const eyeLocal = new THREE.Vector3(0.48, 1.35, 1.35);
@@ -8943,7 +8960,7 @@
             skyDomeMesh = createRealisticProceduralSky();
             scene.add(skyDomeMesh);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.4, 6500);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.05, 6500);
             camera.position.set(0, EYE_HEIGHT, 0); // Spawn im Zentrum
             scene.fog = new THREE.FogExp2(0xa5c9eb, 0.00075);
 
