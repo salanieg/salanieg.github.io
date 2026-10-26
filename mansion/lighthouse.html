@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Amrumer Leuchtturm - 3D Gebäude auf der Mansion-Insel (Three.js)">
+    <title>Amrumer Leuchtturm | Mansion 3D</title>
+    
+    <link rel="icon" type="image/png" href="../images/favicon/favicon-48x48.png" sizes="48x48">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon/favicon.svg">
+    <link rel="shortcut icon" href="../images/favicon/favicon.ico">
+
+    <!-- Three.js Import Map (unpkg CDN) -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@latest/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
+      }
+    }
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #090d16;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #f3f4f6;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #webgl-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* HUD Overlay */
+        .hud-header {
+            position: absolute;
+            top: 20px;
+            left: 24px;
+            z-index: 10;
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+            padding: 16px 20px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+            max-width: 360px;
+        }
+
+        .hud-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-red {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            box-shadow: 0 0 12px #ef4444;
+            animation: pulse-beacon 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-beacon {
+            0%, 100% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .hud-subtitle {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .hud-specs {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 12px;
+            font-size: 0.78rem;
+        }
+
+        .spec-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .spec-label {
+            color: #64748b;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .spec-val {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        /* Top Right Controls */
+        .controls-panel {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .btn-group {
+            display: flex;
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .hud-btn {
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .hud-btn.active {
+            background: #38bdf8;
+            color: #0f172a;
+        }
+
+        .link-mansion {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 10px;
+            padding: 8px 14px;
+            color: #f8fafc;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .link-mansion:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        /* Bottom Bar Hint */
+        .bottom-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            pointer-events: none;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .bottom-hint span {
+            color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        @media (max-width: 640px) {
+            .hud-header {
+                top: 12px;
+                left: 12px;
+                right: 12px;
+                max-width: none;
+            }
+            .controls-panel {
+                top: auto;
+                bottom: 64px;
+                right: 12px;
+                left: 12px;
+                align-items: center;
+            }
+            .btn-group {
+                width: 100%;
+                justify-content: center;
+            }
+            .bottom-hint {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <canvas id="webgl-canvas"></canvas>
+    </div>
+
+    <!-- Info Overlay -->
+    <header class="hud-header">
+        <h1 class="hud-title">
+            <span class="badge-red"></span>
+            Leuchtturm Amrum
+        </h1>
+        <p class="hud-subtitle">Ikonisches Baudenkmal auf der Düne im Nordosten der Insel</p>
+        
+        <div class="hud-specs">
+            <div class="spec-item">
+                <span class="spec-label">Gesamthöhe</span>
+                <span class="spec-val">42 m (41,8 m)</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Turmschaft</span>
+                <span class="spec-val">34 m (konisch)</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Koordinaten</span>
+                <span class="spec-val">X: 280 | Y: -44.5 | Z: 811</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Kennung</span>
+                <span class="spec-val">Fl. 7.5s (Drehfeuer)</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Treppe</span>
+                <span class="spec-val">172 Stufen (begehbar)</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Farbgebung</span>
+                <span class="spec-val">2 rote Bänder / weiß</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Kamera & Beleuchtungs-Steuerung -->
+    <div class="controls-panel">
+        <a href="index.html" class="link-mansion">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Zurück zur Mansion-Welt
+        </a>
+
+        <div class="btn-group">
+            <button type="button" class="hud-btn" id="btn-view-full" title="Gesamtansicht">Gesamt</button>
+            <button type="button" class="hud-btn" id="btn-view-lantern" title="Laternenhaus & Drehfeuer">Laterne</button>
+            <button type="button" class="hud-btn" id="btn-view-gallery" title="Aussichtsplattform">Galerie</button>
+            <button type="button" class="hud-btn" id="btn-view-stairs" title="Wendeltreppe">Treppe</button>
+            <button type="button" class="hud-btn" id="btn-view-base" title="Eingangsvorbau">Portal</button>
+        </div>
+
+        <div class="btn-group">
+            <button type="button" class="hud-btn active" id="btn-time-night">Nacht (Leuchtfeuer)</button>
+            <button type="button" class="hud-btn" id="btn-time-dusk">Dämmerung</button>
+            <button type="button" class="hud-btn" id="btn-time-day">Tag</button>
+        </div>
+    </div>
+
+    <!-- Steuerungshinweis -->
+    <div class="bottom-hint">
+        <span>Linksklick & Ziehen:</span> Rotieren &nbsp;|&nbsp; <span>Mausrad:</span> Zoomen &nbsp;|&nbsp; <span>Rechtsklick:</span> Verschieben
+    </div>
+
+    <!-- Standalone Three.js über CDN mit unpkg (Exakte Vorgabe aus Anforderung 3) -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { createAmrumLighthouse } from './js/entities/lighthouse.js';
+
+        // ── 1. INITIALISIERUNG THREE.JS ──
+        const canvas = document.getElementById('webgl-canvas');
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+            antialias: true,
+            powerPreference: 'high-performance'
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        // Begrenzung auf max 1.5 schont GPU/CPU massiv vor Überhitzung auf 4K/Retina-Displays
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.shadowMap.enabled = false;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0b1329, 0.0035);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.2, 2000);
+        // Startposition mit dramatischer Untersicht auf den 42m Turm
+        camera.position.set(315, -20, 845);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 220;
+        controls.minDistance = 2.0;
+        // Fokuspunkt: untere Mitte des Turms
+        controls.target.set(280, -25, 811);
+        controls.update();
+
+        // ── 2. BELEUCHTUNG & ATMOSPHÄRE (Perfomant ohne teure Schattenpuffer) ──
+        const ambientLight = new THREE.AmbientLight(0x2d3748, 0.9);
+        scene.add(ambientLight);
+
+        const moonDirLight = new THREE.DirectionalLight(0x94a3b8, 1.1);
+        moonDirLight.position.set(380, 140, 720);
+        moonDirLight.castShadow = false;
+        scene.add(moonDirLight);
+
+        // Sternenhimmel
+        const starsCount = 1800;
+        const starsGeo = new THREE.BufferGeometry();
+        const starPositions = new Float32Array(starsCount * 3);
+        for (let i = 0; i < starsCount; i++) {
+            const rad = 450 + Math.random() * 250;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(Math.random() * 0.95); // Über dem Horizont
+            starPositions[i * 3] = 280 + rad * Math.sin(phi) * Math.cos(theta);
+            starPositions[i * 3 + 1] = -44.5 + rad * Math.cos(phi);
+            starPositions[i * 3 + 2] = 811 + rad * Math.sin(phi) * Math.sin(theta);
+        }
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.8, transparent: true, opacity: 0.85 });
+        const starPoints = new THREE.Points(starsGeo, starsMat);
+        scene.add(starPoints);
+
+        // ── 3. DÜNEN-TERRAIN & NORDSEE-STRAND ──
+        // Dünensand-Plateau um den Leuchtturm (y = -44.5m)
+        const duneGeo = new THREE.PlaneGeometry(320, 320, 64, 64);
+        duneGeo.rotateX(-Math.PI / 2);
+        const dunePos = duneGeo.attributes.position;
+        for (let i = 0; i < dunePos.count; i++) {
+            const vx = dunePos.getX(i);
+            const vz = dunePos.getZ(i);
+            const distFromTower = Math.hypot(vx, vz);
+            let dy = -0.6;
+            if (distFromTower > 8.0) {
+                // Sanfte Dünenschwünge
+                dy += Math.sin(vx * 0.04) * 1.8 + Math.cos(vz * 0.05) * 1.4 - (distFromTower - 8.0) * 0.035;
+            }
+            dunePos.setY(i, dy);
+        }
+        duneGeo.computeVertexNormals();
+        const duneMat = new THREE.MeshStandardMaterial({
+            color: 0xcaa472, // Warmer Nordsee-Dünensand
+            roughness: 0.95,
+            metalness: 0.05
+        });
+        const duneMesh = new THREE.Mesh(duneGeo, duneMat);
+        duneMesh.position.set(280, -44.5, 811);
+        duneMesh.receiveShadow = true;
+        scene.add(duneMesh);
+
+        // Meeresoberfläche (Nordsee)
+        const seaGeo = new THREE.PlaneGeometry(800, 800, 32, 32);
+        seaGeo.rotateX(-Math.PI / 2);
+        const seaMat = new THREE.MeshStandardMaterial({
+            color: 0x0f2d4a,
+            roughness: 0.15,
+            metalness: 0.8,
+            transparent: true,
+            opacity: 0.92
+        });
+        const seaMesh = new THREE.Mesh(seaGeo, seaMat);
+        seaMesh.position.set(280, -47.25, 811);
+        scene.add(seaMesh);
+
+        // ── 4. AMRUMER LEUCHTTURM ERSTELLEN ──
+        const lighthouse = createAmrumLighthouse({
+            x: 280.0,
+            y: -44.5,
+            z: 811.0
+        });
+        scene.add(lighthouse.group);
+
+        // ── 5. KAMERA-POSITIONEN ──
+        const cameraPresets = {
+            full: { pos: new THREE.Vector3(330, -15, 860), target: new THREE.Vector3(280, -24, 811) },
+            lantern: { pos: new THREE.Vector3(286, -7.5, 817), target: new THREE.Vector3(280, -7.8, 811) },
+            // Zeigt exakt auf den neuen Austritt zur Galerie & die Treppenmündung
+            gallery: { pos: new THREE.Vector3(281.8, -8.6, 816.2), target: new THREE.Vector3(280.8, -9.6, 813.1) },
+            stairs: { pos: new THREE.Vector3(281.5, -28.0, 812.5), target: new THREE.Vector3(280.0, -29.0, 811.0) },
+            base: { pos: new THREE.Vector3(274.5, -42.5, 803.5), target: new THREE.Vector3(278.5, -43.0, 808.5) }
+        };
+
+        let targetCamPos = camera.position.clone();
+        let targetLookAt = controls.target.clone();
+        let isTransitioningCam = false;
+
+        function setCameraPreset(key) {
+            const p = cameraPresets[key];
+            if (!p) return;
+            targetCamPos.copy(p.pos);
+            targetLookAt.copy(p.target);
+            isTransitioningCam = true;
+        }
+
+        document.getElementById('btn-view-full').addEventListener('click', () => setCameraPreset('full'));
+        document.getElementById('btn-view-lantern').addEventListener('click', () => setCameraPreset('lantern'));
+        document.getElementById('btn-view-gallery').addEventListener('click', () => setCameraPreset('gallery'));
+        document.getElementById('btn-view-stairs').addEventListener('click', () => setCameraPreset('stairs'));
+        document.getElementById('btn-view-base').addEventListener('click', () => setCameraPreset('base'));
+
+        // Tageszeit-Umschaltung
+        const timeButtons = {
+            night: document.getElementById('btn-time-night'),
+            dusk: document.getElementById('btn-time-dusk'),
+            day: document.getElementById('btn-time-day')
+        };
+
+        function setLightingMode(mode) {
+            Object.values(timeButtons).forEach(b => b.classList.remove('active'));
+            timeButtons[mode].classList.add('active');
+
+            if (mode === 'night') {
+                scene.background = new THREE.Color(0x060913);
+                scene.fog.color.setHex(0x0b1329);
+                ambientLight.color.setHex(0x2d3748);
+                ambientLight.intensity = 0.85;
+                moonDirLight.color.setHex(0x94a3b8);
+                moonDirLight.intensity = 0.95;
+                starPoints.visible = true;
+                lighthouse.spotLights.forEach(s => s.intensity = 15.0);
+                lighthouse.beamMeshes.forEach(b => b.material.opacity = 0.25);
+            } else if (mode === 'dusk') {
+                scene.background = new THREE.Color(0x272738);
+                scene.fog.color.setHex(0x3e3547);
+                ambientLight.color.setHex(0xdd8e71);
+                ambientLight.intensity = 1.2;
+                moonDirLight.color.setHex(0xf97316);
+                moonDirLight.intensity = 1.8;
+                starPoints.visible = true;
+                lighthouse.spotLights.forEach(s => s.intensity = 12.0);
+                lighthouse.beamMeshes.forEach(b => b.material.opacity = 0.18);
+            } else if (mode === 'day') {
+                scene.background = new THREE.Color(0x7fb2d9);
+                scene.fog.color.setHex(0x8bc0e8);
+                ambientLight.color.setHex(0xffffff);
+                ambientLight.intensity = 1.5;
+                moonDirLight.color.setHex(0xfff6e6);
+                moonDirLight.intensity = 2.4;
+                starPoints.visible = false;
+                lighthouse.spotLights.forEach(s => s.intensity = 6.0);
+                lighthouse.beamMeshes.forEach(b => b.material.opacity = 0.08);
+            }
+        }
+
+        document.getElementById('btn-time-night').addEventListener('click', () => setLightingMode('night'));
+        document.getElementById('btn-time-dusk').addEventListener('click', () => setLightingMode('dusk'));
+        document.getElementById('btn-time-day').addEventListener('click', () => setLightingMode('day'));
+
+        setLightingMode('night');
+
+        // ── 6. RESPONSIVES CANVAS ──
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // ── 7. ANIMATIONSSCHLEIFE ──
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            // Kontinuierliche Rotation des Drehfeuers & Lichtkegel
+            lighthouse.update(delta);
+
+            // Weiche Kamerafahrt bei Preset-Klick
+            if (isTransitioningCam) {
+                camera.position.lerp(targetCamPos, 0.06);
+                controls.target.lerp(targetLookAt, 0.06);
+                controls.update();
+                if (camera.position.distanceTo(targetCamPos) < 0.2 && controls.target.distanceTo(targetLookAt) < 0.2) {
+                    isTransitioningCam = false;
+                }
+            } else {
+                controls.update();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

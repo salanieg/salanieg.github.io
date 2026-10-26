@@ -2,6 +2,7 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
         import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+        import { createAmrumLighthouse, getLighthouseFloorY, handleLighthouseCollision } from './entities/lighthouse.js';
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
         import { 
@@ -435,6 +436,7 @@
             constructor() {
                 this.ctx = null;
                 this.masterGain = null;
+                this.hpFilter = null;
                 this.cabinFilter = null;
                 this.turbineOsc1 = null;
                 this.turbineOsc2 = null;
@@ -447,16 +449,16 @@
                 this.subBassLfoGain = null;
                 this.tailWashSource = null;
                 this.tailWashGain = null;
-                // NEU: Tiefes Motor-Dröhnen (Engine Drone)
+                // Tiefes Motor-Brummen (Engine Drone)
                 this.engineDroneOsc1 = null;
                 this.engineDroneOsc2 = null;
                 this.engineDroneOsc3 = null;
                 this.engineDroneGain = null;
-                // NEU: Rotor-Bassdruck (gleichmäßige Oszillatoren)
+                // Rotor-Bassdruck (gleichmäßige Oszillatoren)
                 this.rotorPressureOsc1 = null;
                 this.rotorPressureOsc2 = null;
                 this.rotorPressureGain = null;
-                // NEU: Getrieberauschen (mechanisches Brummen)
+                // Getrieberauschen (mechanisches Brummen)
                 this.gearboxSource = null;
                 this.gearboxGain = null;
                 this.isInitialized = false;
@@ -475,15 +477,21 @@
                     this.masterGain.gain.setValueAtTime(0, now);
                     this.masterGain.connect(this.ctx.destination);
 
+                    // Highpass-Filter (~42 Hz): Schneidet störendes Sub-Bass-Rumpeln ab
+                    this.hpFilter = this.ctx.createBiquadFilter();
+                    this.hpFilter.type = "highpass";
+                    this.hpFilter.frequency.value = 42;
+                    this.hpFilter.Q.value = 0.7;
+                    this.hpFilter.connect(this.masterGain);
+
                     // Kabinenfilter: im Cockpit (1st Person) gedämpft, draußen offen
                     this.cabinFilter = this.ctx.createBiquadFilter();
                     this.cabinFilter.type = "lowpass";
                     this.cabinFilter.frequency.value = 18000;
-                    this.cabinFilter.connect(this.masterGain);
+                    this.cabinFilter.connect(this.hpFilter);
 
                     // ══════════════════════════════════════════════════════════════
-                    // 1. Zwillings-Turbinen (Twin Turboshaft) — etwas wärmer
-                    //    Waveshaper statt reinem Sawtooth für weniger elektrischen Klang
+                    // 1. Zwillings-Turbinen (Twin Turboshaft) — angenehmer Turbinensound
                     // ══════════════════════════════════════════════════════════════
                     this.turbineGain = this.ctx.createGain();
                     this.turbineGain.gain.setValueAtTime(0, now);
@@ -499,7 +507,6 @@
                     const turbineCurve = new Float32Array(curveLen);
                     for (let i = 0; i < curveLen; i++) {
                         const x = (i * 2) / curveLen - 1;
-                        // Sanfte Sättigung: tanh-ähnlich — macht den Klang "voller"
                         turbineCurve[i] = Math.tanh(x * 1.8);
                     }
                     turbineShaper.curve = turbineCurve;
@@ -527,8 +534,7 @@
                     this.turbineOsc2.start(0);
 
                     // ══════════════════════════════════════════════════════════════
-                    // 2. 5-Blatt Rotor Blattspitzen-Knattern & Verdrängungs-Chop
-                    //    Verbesserter Buffer mit stärkerem tiefem Impuls
+                    // 2. 5-Blatt Rotor Blattspitzen-Knattern — sanfter Impuls (ohne Dröhnen)
                     // ══════════════════════════════════════════════════════════════
                     const slapBufferLen = Math.floor(sampleRate * 1.0);
                     const slapBuffer = this.ctx.createBuffer(1, slapBufferLen, sampleRate);
@@ -538,11 +544,10 @@
                     for (let i = 0; i < slapBufferLen; i++) {
                         const phase = i % pulsePeriod;
                         if (phase < 220) {
-                            const env = Math.exp(-phase / 30.0);
-                            // Tieferer Impuls + leichtes Rauschen
-                            const tonal = Math.sin(phase * 0.32) * 0.7 + Math.sin(phase * 0.16) * 0.3;
-                            const noise = (Math.random() * 2 - 1) * 0.3;
-                            slapData[i] = (tonal + noise) * env * 0.7;
+                            const env = Math.exp(-phase / 45.0);
+                            const tonal = Math.sin(phase * 0.32) * 0.5 + Math.sin(phase * 0.16) * 0.2;
+                            const noise = (Math.random() * 2 - 1) * 0.2;
+                            slapData[i] = (tonal + noise) * env * 0.4;
                         } else {
                             slapData[i] = 0;
                         }
@@ -552,10 +557,11 @@
                     this.rotorSlapSource.buffer = slapBuffer;
                     this.rotorSlapSource.loop = true;
 
+                    // Q auf 0.7 reduziert (keine scharfe Resonanzspitze bei 240 Hz)
                     const slapFilter = this.ctx.createBiquadFilter();
                     slapFilter.type = "lowpass";
-                    slapFilter.frequency.value = 240;
-                    slapFilter.Q.value = 2.2;
+                    slapFilter.frequency.value = 260;
+                    slapFilter.Q.value = 0.7;
 
                     this.rotorSlapGain = this.ctx.createGain();
                     this.rotorSlapGain.gain.setValueAtTime(0, now);
@@ -566,19 +572,18 @@
                     this.rotorSlapSource.start(0);
 
                     // ══════════════════════════════════════════════════════════════
-                    // 3. Sub-Bass Thump — jetzt mit FM-Modulation für organisches Dröhnen
-                    //    Ein LFO moduliert die Frequenz leicht, dadurch "lebt" der Bass
+                    // 3. Sub-Bass — sanftes Fundament ohne hartes Wummern
                     // ══════════════════════════════════════════════════════════════
                     this.subBassOsc = this.ctx.createOscillator();
                     this.subBassOsc.type = "sine";
                     this.subBassOsc.frequency.value = 42;
 
-                    // LFO für Sub-Bass FM: langsame Frequenzmodulation (Vibrato-artig)
+                    // Sanfter LFO für dezente Vibration statt hartem Wobble
                     this.subBassLfoOsc = this.ctx.createOscillator();
                     this.subBassLfoOsc.type = "sine";
-                    this.subBassLfoOsc.frequency.value = 0.8; // 0.8 Hz Modulation
+                    this.subBassLfoOsc.frequency.value = 0.8;
                     this.subBassLfoGain = this.ctx.createGain();
-                    this.subBassLfoGain.gain.value = 3.0; // ±3 Hz Frequenz-Wobble
+                    this.subBassLfoGain.gain.value = 0.8;
                     this.subBassLfoOsc.connect(this.subBassLfoGain);
                     this.subBassLfoGain.connect(this.subBassOsc.frequency);
                     this.subBassLfoOsc.start(0);
@@ -591,7 +596,7 @@
                     this.subBassOsc.start(0);
 
                     // ══════════════════════════════════════════════════════════════
-                    // 4. Heckrotor & Verwirbelungsrauschen — breiter Filter
+                    // 4. Heckrotor & Verwirbelungsrauschen
                     // ══════════════════════════════════════════════════════════════
                     const washBufSize = Math.floor(sampleRate * 1.5);
                     const washBuffer = this.ctx.createBuffer(1, washBufSize, sampleRate);
@@ -617,47 +622,39 @@
                     this.tailWashSource.start(0);
 
                     // ══════════════════════════════════════════════════════════════
-                    // 5. NEU: Tiefes Motor-Dröhnen (Engine Drone)
-                    //    Drei Oszillatoren: Grundton (~65Hz) + 2. Harmonische (~130Hz)
-                    //    + 3. Harmonische (~195Hz) → volles, tiefes Maschinenbrummen
+                    // 5. Motor-Brummen (Engine Drone) — warmer Mittenbass (~75Hz)
                     // ══════════════════════════════════════════════════════════════
                     this.engineDroneGain = this.ctx.createGain();
                     this.engineDroneGain.gain.setValueAtTime(0, now);
 
-                    // Warmer Tiefpass um den Drone weniger harsch zu machen
                     const droneFilter = this.ctx.createBiquadFilter();
                     droneFilter.type = "lowpass";
-                    droneFilter.frequency.value = 220;
+                    droneFilter.frequency.value = 240;
                     droneFilter.Q.value = 0.7;
 
-                    // Grundton: warmes Sinus-Dröhnen
                     this.engineDroneOsc1 = this.ctx.createOscillator();
                     this.engineDroneOsc1.type = "sine";
-                    this.engineDroneOsc1.frequency.value = 65;
+                    this.engineDroneOsc1.frequency.value = 75;
                     const droneGain1 = this.ctx.createGain();
-                    droneGain1.gain.value = 1.0;
+                    droneGain1.gain.value = 0.8;
                     this.engineDroneOsc1.connect(droneGain1);
                     droneGain1.connect(droneFilter);
 
-                    // 2. Harmonische: etwas Triangle für Textur
                     this.engineDroneOsc2 = this.ctx.createOscillator();
                     this.engineDroneOsc2.type = "triangle";
-                    this.engineDroneOsc2.frequency.value = 130;
+                    this.engineDroneOsc2.frequency.value = 150;
                     const droneGain2 = this.ctx.createGain();
-                    droneGain2.gain.value = 0.45;
+                    droneGain2.gain.value = 0.35;
                     this.engineDroneOsc2.connect(droneGain2);
                     droneGain2.connect(droneFilter);
 
-                    // 3. Harmonische: leicht für Obertonfarbe
                     this.engineDroneOsc3 = this.ctx.createOscillator();
                     this.engineDroneOsc3.type = "triangle";
-                    this.engineDroneOsc3.frequency.value = 195;
+                    this.engineDroneOsc3.frequency.value = 225;
                     const droneGain3 = this.ctx.createGain();
-                    droneGain3.gain.value = 0.2;
+                    droneGain3.gain.value = 0.15;
                     this.engineDroneOsc3.connect(droneGain3);
                     droneGain3.connect(droneFilter);
-
-
 
                     droneFilter.connect(this.engineDroneGain);
                     this.engineDroneGain.connect(this.cabinFilter);
@@ -667,24 +664,23 @@
                     this.engineDroneOsc3.start(0);
 
                     // ══════════════════════════════════════════════════════════════
-                    // 6. Rotor-Bassdruck (gleichmäßiges tiefes Dröhnen, kein Pulsieren)
-                    //    Zwei Oszillatoren für konstanten, vollen Tiefton
+                    // 6. Rotor-Bassdruck (harmonisches tiefes Brummen)
                     // ══════════════════════════════════════════════════════════════
                     this.rotorPressureOsc1 = this.ctx.createOscillator();
                     this.rotorPressureOsc1.type = "sine";
-                    this.rotorPressureOsc1.frequency.value = 28;
+                    this.rotorPressureOsc1.frequency.value = 32;
 
                     this.rotorPressureOsc2 = this.ctx.createOscillator();
                     this.rotorPressureOsc2.type = "sine";
-                    this.rotorPressureOsc2.frequency.value = 55;
+                    this.rotorPressureOsc2.frequency.value = 64;
 
                     const pressOsc2Gain = this.ctx.createGain();
-                    pressOsc2Gain.gain.value = 0.5;
+                    pressOsc2Gain.gain.value = 0.4;
                     this.rotorPressureOsc2.connect(pressOsc2Gain);
 
                     const pressureFilter = this.ctx.createBiquadFilter();
                     pressureFilter.type = "lowpass";
-                    pressureFilter.frequency.value = 80;
+                    pressureFilter.frequency.value = 90;
                     pressureFilter.Q.value = 0.7;
 
                     this.rotorPressureGain = this.ctx.createGain();
@@ -698,20 +694,17 @@
                     this.rotorPressureOsc2.start(0);
 
                     // ══════════════════════════════════════════════════════════════
-                    // 7. NEU: Getrieberauschen (Gearbox Rumble)
-                    //    Mechanisches, metallisches Brummen — gefiltertes Rauschen
-                    //    mit Resonanzen, die sich mit RPM verschieben
+                    // 7. Getrieberauschen (Gearbox Rumble)
                     // ══════════════════════════════════════════════════════════════
                     const gearBufLen = Math.floor(sampleRate * 1.0);
                     const gearBuffer = this.ctx.createBuffer(1, gearBufLen, sampleRate);
                     const gearData = gearBuffer.getChannelData(0);
-                    // Mischung aus Rauschen und periodischen Impulsen (Zahnrad-Repetition)
-                    const gearTeethRate = 48; // ~48 Zähne pro Sekunde bei Vollgas
+                    const gearTeethRate = 48;
                     const gearToothPeriod = Math.floor(sampleRate / gearTeethRate);
                     for (let i = 0; i < gearBufLen; i++) {
                         const toothPhase = i % gearToothPeriod;
-                        const toothPulse = toothPhase < 20 ? Math.exp(-toothPhase / 6.0) * 0.5 : 0;
-                        const noise = (Math.random() * 2 - 1) * 0.15;
+                        const toothPulse = toothPhase < 20 ? Math.exp(-toothPhase / 6.0) * 0.4 : 0;
+                        const noise = (Math.random() * 2 - 1) * 0.12;
                         gearData[i] = toothPulse + noise;
                     }
 
@@ -722,13 +715,13 @@
                     const gearFilter1 = this.ctx.createBiquadFilter();
                     gearFilter1.type = "bandpass";
                     gearFilter1.frequency.value = 320;
-                    gearFilter1.Q.value = 3.0;
+                    gearFilter1.Q.value = 2.5;
 
                     const gearFilter2 = this.ctx.createBiquadFilter();
                     gearFilter2.type = "peaking";
                     gearFilter2.frequency.value = 180;
-                    gearFilter2.Q.value = 2.0;
-                    gearFilter2.gain.value = 6;
+                    gearFilter2.Q.value = 1.8;
+                    gearFilter2.gain.value = 4;
 
                     this.gearboxGain = this.ctx.createGain();
                     this.gearboxGain.gain.setValueAtTime(0, now);
@@ -758,7 +751,7 @@
                 this.currentRpm = rpm;
                 this.currentCollective = collective;
 
-                // Räumliche Distanzdämpfung (falls Spieler zu Fuß in der Nähe oder remote)
+                // Räumliche Distanzdämpfung
                 let distGain = 1.0;
                 if (distanceToPlayer > 0) {
                     distGain = Math.max(0, 1.0 / (1.0 + distanceToPlayer * 0.035));
@@ -771,36 +764,32 @@
                     this.cabinFilter.frequency.setTargetAtTime(targetFreq, now, 0.08);
                 }
 
-                // ── Turbinen (etwas leiser im Mix, weniger dominant) ──
+                // ── Turbinen ──
                 if (this.turbineOsc1 && this.turbineOsc2) {
                     const baseFreq = 110 + rpm * 710;
                     this.turbineOsc1.frequency.setTargetAtTime(baseFreq, now, 0.06);
                     this.turbineOsc2.frequency.setTargetAtTime(baseFreq * 1.004 + 2.5, now, 0.06);
                 }
                 if (this.turbineGain) {
-                    // Reduziert von 0.16 auf 0.11 — Turbine tritt zurück zugunsten des Dröhnens
-                    const turbVol = Math.pow(rpm, 1.6) * 0.11 * distGain;
+                    const turbVol = Math.pow(rpm, 1.5) * 0.12 * distGain;
                     this.turbineGain.gain.setTargetAtTime(turbVol, now, 0.06);
                 }
 
-                // ── Rotor-Knattern ──
+                // ── Rotor-Knattern (sanfter, ohne heftiges Dröhnen) ──
                 if (this.rotorSlapSource && this.rotorSlapGain) {
                     this.rotorSlapSource.playbackRate.setTargetAtTime(Math.max(0.12, rpm), now, 0.06);
-                    const slapVol = Math.pow(rpm, 1.4) * (0.10 + collective * 0.20) * distGain;
+                    const slapVol = Math.pow(rpm, 1.4) * (0.05 + collective * 0.08) * distGain;
                     this.rotorSlapGain.gain.setTargetAtTime(slapVol, now, 0.06);
                 }
 
-                // ── Sub-Bass (stärker, FM macht ihn lebendig) ──
+                // ── Sub-Bass (dezent, abgemildertes Wummern) ──
                 if (this.subBassOsc && this.subBassGain) {
-                    // Frequenz steigt leicht mit RPM (38-48 Hz)
-                    const subFreq = 38 + rpm * 10;
+                    const subFreq = 40 + rpm * 8;
                     this.subBassOsc.frequency.setTargetAtTime(subFreq, now, 0.1);
-                    // LFO-Tiefe steigt mit Collective (mehr Vibration bei Last)
                     if (this.subBassLfoGain) {
-                        this.subBassLfoGain.gain.setTargetAtTime(2.0 + collective * 4.0, now, 0.1);
+                        this.subBassLfoGain.gain.setTargetAtTime(0.4 + collective * 0.8, now, 0.1);
                     }
-                    // Deutlich stärker als vorher: 0.12 + collective * 0.22 (war 0.06 + 0.14)
-                    const subVol = Math.pow(rpm, 1.3) * (0.12 + collective * 0.22) * distGain;
+                    const subVol = Math.pow(rpm, 1.3) * (0.04 + collective * 0.08) * distGain;
                     this.subBassGain.gain.setTargetAtTime(subVol, now, 0.06);
                 }
 
@@ -810,40 +799,37 @@
                     this.tailWashGain.gain.setTargetAtTime(washVol, now, 0.08);
                 }
 
-                // ── NEU: Engine Drone (tiefes Dröhnen — Herzstück des neuen Sounds) ──
+                // ── Engine Drone (warmer Mittenbass) ──
                 if (this.engineDroneOsc1 && this.engineDroneOsc2 && this.engineDroneOsc3) {
-                    // Frequenzen steigen leicht mit RPM für Doppler-artigen Effekt
-                    const droneBase = 58 + rpm * 18;
+                    const droneBase = 75 + rpm * 25;
                     this.engineDroneOsc1.frequency.setTargetAtTime(droneBase, now, 0.12);
-                    this.engineDroneOsc2.frequency.setTargetAtTime(droneBase * 2.01, now, 0.12);
-                    this.engineDroneOsc3.frequency.setTargetAtTime(droneBase * 3.02, now, 0.12);
+                    this.engineDroneOsc2.frequency.setTargetAtTime(droneBase * 2.0, now, 0.12);
+                    this.engineDroneOsc3.frequency.setTargetAtTime(droneBase * 3.0, now, 0.12);
                 }
                 if (this.engineDroneGain) {
-                    // Drone ist laut und präsent — das "Herz" des Sounds
-                    const droneVol = Math.pow(rpm, 1.2) * (0.18 + collective * 0.10) * distGain;
+                    const droneVol = Math.pow(rpm, 1.2) * (0.08 + collective * 0.06) * distGain;
                     this.engineDroneGain.gain.setTargetAtTime(droneVol, now, 0.08);
                 }
 
-                // ── Rotor-Bassdruck (gleichmäßig, kein Pulsieren) ──
+                // ── Rotor-Bassdruck ──
                 if (this.rotorPressureOsc1 && this.rotorPressureOsc2 && this.rotorPressureGain) {
-                    // Frequenzen verschieben sich leicht mit RPM
-                    const pressBase = 25 + rpm * 8;
+                    const pressBase = 32 + rpm * 10;
                     this.rotorPressureOsc1.frequency.setTargetAtTime(pressBase, now, 0.1);
                     this.rotorPressureOsc2.frequency.setTargetAtTime(pressBase * 2.0, now, 0.1);
-                    const pressVol = Math.pow(rpm, 1.3) * (0.10 + collective * 0.12) * distGain;
+                    const pressVol = Math.pow(rpm, 1.3) * (0.03 + collective * 0.05) * distGain;
                     this.rotorPressureGain.gain.setTargetAtTime(pressVol, now, 0.08);
                 }
 
-                // ── NEU: Getrieberauschen ──
+                // ── Getrieberauschen ──
                 if (this.gearboxSource && this.gearboxGain) {
                     this.gearboxSource.playbackRate.setTargetAtTime(Math.max(0.2, rpm * 1.2), now, 0.06);
-                    const gearVol = Math.pow(rpm, 1.8) * 0.06 * distGain;
+                    const gearVol = Math.pow(rpm, 1.8) * 0.05 * distGain;
                     this.gearboxGain.gain.setTargetAtTime(gearVol, now, 0.06);
                 }
 
-                // ── Master Gain (leicht erhöht für den volleren Klang) ──
+                // ── Master Gain ──
                 if (this.masterGain) {
-                    const activeVol = rpm > 0.01 ? (isCockpitView ? 0.42 : 0.52) : 0.0;
+                    const activeVol = rpm > 0.01 ? (isCockpitView ? 0.38 : 0.45) : 0.0;
                     this.masterGain.gain.setTargetAtTime(activeVol, now, 0.1);
                 }
             }
@@ -880,10 +866,10 @@
         let grassChunks = [];          // Array von { mesh: InstancedMesh }
         let grassUniforms = null;
         let grassMaterial = null;
-        const GRASS_GRID = 32;         // 32×32 Chunk-Raster
-        const GRASS_WORLD_SIZE = 800;  // Bereich -400..+400 (Inselkern)
-        const GRASS_CHUNK_SIZE = GRASS_WORLD_SIZE / GRASS_GRID; // 25m pro Chunk
-        const GRASS_DENSITY = 1.0;     // ~1 Grashalm pro m² (wie bisher)
+        const GRASS_GRID = 20;         // 20×20 Chunks (100m statt 200m für schnelles Distanz-Culling)
+        const GRASS_WORLD_SIZE = 2000; // Bereich -1000..+1000 (Gesamte Insel)
+        const GRASS_CHUNK_SIZE = GRASS_WORLD_SIZE / GRASS_GRID; // 100m pro Chunk
+        const GRASS_DENSITY = 0.22;    // Optimierte Dichte (~2 Halme pro m² visuell durch 9er-Büscheltextur)
 
         function getTerrainSlope(x, z) {
             const d = 2.0;
@@ -896,46 +882,78 @@
         }
 
         function getGrassFactor(x, z, terrainY) {
-            // Unter Wasser → kein Gras
-            if (terrainY < TERRAIN_OCEAN_LEVEL + 1.5) return 0;
-            // Innenhof (Radius 24m) → kein Gras
+            // Unter Wasser / knapp über Wasserspiegel → kein Gras
+            if (terrainY < TERRAIN_OCEAN_LEVEL + 0.5) return 0;
+            // Innenhof / Kuppelgebäude (Radius 33m) → kein Gras
             if (x * x + z * z < 33 * 33) return 0;
-            // Helipad (Radius 12m um z=36)
+            // Helipad (Radius 12m um z=36) → kein Gras
             if (x * x + (z - 36) * (z - 36) < 12 * 12) return 0;
-            // Steigung → Felsfaktor
+            // Amrumer Leuchtturm (Radius 10m um x=280, z=811) → kein Gras
+            if ((x - 280) * (x - 280) + (z - 811) * (z - 811) < 10 * 10) return 0;
+
+            // Performance-Optimierung: Gras nur in bespielten Zonen erzeugen (Caldera/Zentrum R<=250m & Leuchtturm-Düne R<=80m)
+            const distCenter = Math.hypot(x, z);
+            const distLighthouse = Math.hypot(x - 280, z - 811);
+            if (distCenter > 250 && distLighthouse > 80) return 0;
+
+            // Steigung → Felsfaktor analog zum Terrain-Shader (smoothstep 0.18 .. 0.44 auf 1 - normal.y)
             const slope = getTerrainSlope(x, z);
-            const rockFactor = Math.min(1, Math.max(0, (slope - 0.3) / 0.5));
-            // Strand (niedrige Höhen)
-            const beachFactor = Math.min(1, Math.max(0, 1.0 - (terrainY - TERRAIN_OCEAN_LEVEL - 1.5) / 9.0));
+            const slopeNorm = 1.0 - 1.0 / Math.sqrt(1.0 + slope * slope);
+            const rockFactor = Math.min(1, Math.max(0, (slopeNorm - 0.18) / (0.44 - 0.18)));
+            // Strand (-49m bis -40m) analog zum Terrain-Shader
+            const beachFactor = Math.min(1, Math.max(0, (-40.0 - terrainY) / 9.0));
             const grassF = Math.max(0, 1.0 - rockFactor - beachFactor);
             return grassF;
         }
 
         function createGrassTexture() {
             const c = document.createElement('canvas');
-            c.width = 32; c.height = 64;
+            c.width = 64; c.height = 128;
             const ctx = c.getContext('2d');
-            ctx.clearRect(0, 0, 32, 64);
-            // 3 Halme pro Textur für natürliche Büscheloptik
+            ctx.clearRect(0, 0, 64, 128);
+
+            // Rein vertikale Halme — kein Aliasing möglich
+            // lean: 1px Versatz in der oberen Hälfte für natürliche Neigung
             const blades = [
-                { x: 10, w: 3, bend: -1.5 },
-                { x: 16, w: 4, bend: 0.8 },
-                { x: 22, w: 3, bend: 2.0 }
+                { x: 3,  w: 2, h: 88,  hue: 0,   lean: -1 },
+                { x: 10, w: 3, h: 110, hue: 10,  lean: 1 },
+                { x: 18, w: 2, h: 78,  hue: -4,  lean: 0 },
+                { x: 24, w: 3, h: 120, hue: 16,  lean: -1 },
+                { x: 32, w: 2, h: 94,  hue: 4,   lean: 1 },
+                { x: 38, w: 3, h: 104, hue: 8,   lean: -1 },
+                { x: 46, w: 2, h: 74,  hue: -2,  lean: 0 },
+                { x: 52, w: 3, h: 114, hue: 14,  lean: 1 },
+                { x: 59, w: 2, h: 84,  hue: 6,   lean: -1 },
             ];
+
             for (const b of blades) {
-                for (let y = 0; y < 60; y++) {
-                    const t = y / 60;
-                    const tipTaper = 1.0 - t * t;
-                    const w = Math.max(1, b.w * tipTaper);
-                    const bendX = b.x + b.bend * t * t;
-                    // Farbverlauf: dunkelgrün unten → hellgrün oben
-                    const r = Math.floor(30 + t * 60);
-                    const g = Math.floor(70 + t * 110);
-                    const bv = Math.floor(15 + t * 20);
-                    ctx.fillStyle = `rgba(${r},${g},${bv},${Math.round((0.7 + 0.3 * tipTaper) * 255)})`;
-                    ctx.fillRect(bendX - w / 2, 63 - y, w, 1);
-                }
+                const baseY = 127;
+                const grad = ctx.createLinearGradient(0, baseY, 0, baseY - b.h);
+                const h = Math.max(0, b.hue);
+                grad.addColorStop(0,   `rgb(${34},${50 + h},${20})`);
+                grad.addColorStop(0.4, `rgb(${48},${112 + h},${28})`);
+                grad.addColorStop(0.8, `rgb(${65 + h},${146 + h},${36})`);
+                grad.addColorStop(1,   `rgb(${86 + h},${168 + h},${48})`);
+                ctx.fillStyle = grad;
+
+                // 3 Segmente: Stamm (unten 55%) → Mitte (30%) → Spitze (15%)
+                const seg1H = Math.floor(b.h * 0.55);
+                const seg2H = Math.floor(b.h * 0.30);
+                const seg3H = b.h - seg1H - seg2H;
+
+                // Stamm: volle Breite
+                ctx.fillRect(b.x, baseY - seg1H, b.w, seg1H);
+
+                // Mitte: lean-Versatz, bei 3px-Halmen auf 2px verschmälert
+                const midX = b.x + b.lean;
+                const midW = Math.max(1, b.w - 1);
+                ctx.fillRect(midX, baseY - seg1H - seg2H, midW, seg2H);
+
+                // Spitze: 1px breit, nochmal lean
+                const tipX = midX + (b.lean !== 0 ? b.lean : 0);
+                ctx.fillRect(tipX, baseY - b.h, 1, seg3H);
             }
+
             const tex = new THREE.CanvasTexture(c);
             tex.magFilter = THREE.LinearFilter;
             tex.minFilter = THREE.LinearMipmapLinearFilter;
@@ -987,6 +1005,7 @@
                     uniform float uTime;
                     varying vec2 vUv;
                     varying float vHeight;
+                    varying float vColorHash;
 
                     void main() {
                         vUv = uv;
@@ -996,9 +1015,15 @@
                         // Instanz-Weltposition aus der Matrix
                         vec3 worldPos = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 
-                        // Wind: sanftes Wogen basierend auf Weltposition + Zeit
-                        float windStrength = sin(worldPos.x * 0.08 + uTime * 1.2)
-                                           * cos(worldPos.z * 0.06 + uTime * 0.9) * 0.5 + 0.5;
+                        // Per-Instanz Farbvariation (günstiger Hash aus Weltposition)
+                        vColorHash = fract(sin(worldPos.x * 12.9898 + worldPos.z * 78.233) * 43758.5453);
+
+                        // 2-Oktaven-Wind: große langsame Wellen + schnellere Böen
+                        float wind1 = sin(worldPos.x * 0.08 + uTime * 1.2)
+                                    * cos(worldPos.z * 0.06 + uTime * 0.9);
+                        float wind2 = sin(worldPos.x * 0.22 + uTime * 2.4) * 0.3;
+                        float windStrength = (wind1 + wind2) * 0.5 + 0.5;
+
                         float windDisp = vHeight * vHeight * windStrength * 0.3;
                         vec3 displaced = position;
                         displaced.x += windDisp;
@@ -1013,13 +1038,27 @@
                     uniform float uNightTransition;
                     varying vec2 vUv;
                     varying float vHeight;
+                    varying float vColorHash;
 
                     void main() {
                         vec4 texColor = texture2D(uGrassTex, vUv);
                         if (texColor.a < 0.3) discard;
 
-                        // Leichte Aufhellung an Spitzen + Nachtabdunklung
-                        vec3 col = texColor.rgb * (0.85 + vHeight * 0.3);
+                        vec3 col = texColor.rgb;
+
+                        // Per-Instanz Farbvariation: subtile Warm/Kalt-Verschiebung
+                        float hueOff = vColorHash - 0.5;
+                        col.r += hueOff * 0.06;
+                        col.g += hueOff * 0.04;
+
+                        // Ambient Occlusion am Boden (realistisches Erdungsgrounding)
+                        float ao = smoothstep(0.0, 0.3, vHeight);
+                        col *= 0.52 + 0.48 * ao;
+
+                        // Warme Aufhellung an den Spitzen (Sonnenlicht-Effekt)
+                        col += vec3(0.05, 0.04, 0.0) * smoothstep(0.55, 1.0, vHeight);
+
+                        // Nacht-Überblendung
                         col = mix(col, col * vec3(0.25, 0.3, 0.4), uNightTransition);
 
                         gl_FragColor = vec4(col, texColor.a);
@@ -1040,8 +1079,15 @@
                 for (let cx = 0; cx < GRASS_GRID; cx++) {
                     const chunkMinX = -halfWorld + cx * GRASS_CHUNK_SIZE;
                     const chunkMinZ = -halfWorld + cz * GRASS_CHUNK_SIZE;
-                    const chunkMaxX = chunkMinX + GRASS_CHUNK_SIZE;
-                    const chunkMaxZ = chunkMinZ + GRASS_CHUNK_SIZE;
+                    const chunkCenterX = chunkMinX + GRASS_CHUNK_SIZE * 0.5;
+                    const chunkCenterZ = chunkMinZ + GRASS_CHUNK_SIZE * 0.5;
+
+                    // Chunks außerhalb der bespielten Zonen sofort überspringen (spart Millionen Loop-Iterationen)
+                    const distCenter = Math.hypot(chunkCenterX, chunkCenterZ);
+                    const distLH = Math.hypot(chunkCenterX - 280, chunkCenterZ - 811);
+                    if (distCenter > 250 + GRASS_CHUNK_SIZE * 0.75 && distLH > 80 + GRASS_CHUNK_SIZE * 0.75) {
+                        continue;
+                    }
 
                     // Positionen für diesen Chunk sammeln
                     const chunkPositions = [];
@@ -1085,7 +1131,11 @@
                     chunkMesh.computeBoundingSphere();
 
                     scene.add(chunkMesh);
-                    grassChunks.push({ mesh: chunkMesh });
+                    grassChunks.push({
+                        mesh: chunkMesh,
+                        cx: chunkCenterX,
+                        cz: chunkCenterZ
+                    });
                 }
             }
         }
@@ -1131,6 +1181,7 @@
         function getTerrainHeight(x, z) {
             const distDome = Math.hypot(x, z);
             if (distDome <= 33.0) return 0.0;
+            const DOME_BLEND_END = 45.0;
 
             // Schonbereich für das Helipad bei (x=0, z=36m):
             // Ebenso wie das Kuppelgebäude ein flacher Schutzbereich (Radius 10m komplett eben bei 0.0, weicher Übergang bis 18m)
@@ -1167,6 +1218,11 @@
             let hTerrain = (h - TERRAIN_CENTER_HEIGHT_NORM) * TERRAIN_MAX_HEIGHT;
             if (distHeli < 18.0) {
                 const t = (distHeli - 10.0) / (18.0 - 10.0);
+                hTerrain *= t * t * (3.0 - 2.0 * t);
+            }
+            // Weicher Übergang am Rand des Kuppelgebäudes (33m bis 45m)
+            if (distDome < DOME_BLEND_END) {
+                const t = (distDome - 33.0) / (DOME_BLEND_END - 33.0);
                 hTerrain *= t * t * (3.0 - 2.0 * t);
             }
             return hTerrain;
@@ -2649,6 +2705,14 @@
                 }
             }
         };
+        window.__teleportToLighthouse = () => {
+            // Vor die Treppe des historischen Eingangsvorbaus
+            window.__teleport(276.5, -43.2, 801.5, 278.5, -43.0, 808.5);
+        };
+        window.__teleportToLighthouseTop = () => {
+            // Direkt auf die Aussichtsplattform (Galerie-Rundgang)
+            window.__teleport(280.0, -8.3, 814.2, 280.0, -8.3, 811.0);
+        };
         window.__cinemaControl = {
             setCinemaVideo,
             pushCinemaState,
@@ -2705,6 +2769,16 @@
                 alert("Fehler beim Abmelden.");
             }
         });
+
+        // Schnellreise zum Amrumer Leuchtturm
+        const btnLighthouse = document.getElementById("btn-lighthouse");
+        if (btnLighthouse) {
+            btnLighthouse.addEventListener("click", () => {
+                if (typeof window.__teleportToLighthouse === "function") {
+                    window.__teleportToLighthouse();
+                }
+            });
+        }
 
         // â”€â”€ EINSTELLUNGEN MODAL â”€â”€
         // ── KINO QUICK-MODAL (YOUTUBE URL EINGABE) ──
@@ -2981,6 +3055,7 @@
         const centerCoords = new THREE.Vector2(0, 0);
         let animationFrameId = null;
         let artSculpture = null;
+        let amrumLighthouse = null;
 
         const moveState = { forward: false, backward: false, left: false, right: false };
         const moveSpeed = 6.5;
@@ -3792,6 +3867,11 @@
                     // Weicher Übergang am Rand des Helipad-Schonbereichs (10m bis 18m)
                     if (rHeli < 18.0) {
                         const t = (rHeli - 10.0) / (18.0 - 10.0);
+                        vy *= t * t * (3.0 - 2.0 * t);
+                    }
+                    // Weicher Übergang am Rand des Kuppelgebäudes (33m bis 45m)
+                    if (rDome < 45.0) {
+                        const t = (rDome - 33.0) / (45.0 - 33.0);
                         vy *= t * t * (3.0 - 2.0 * t);
                     }
 
@@ -6565,9 +6645,9 @@
             ctx.strokeRect(520, 8, 496, 240);
 
             // 1. NAV-KREIS (LINKE HÄLFTE DES MITTLEREN BILDSCHIRMS)
-            const navCenterX = 644;
+            const navCenterX = 612;
             const navCenterY = 120;
-            const navRadius = 66;
+            const navRadius = 64;
 
             // Äußerer Kompass-Kreis
             ctx.strokeStyle = "#00ff66";
@@ -6655,10 +6735,119 @@
             ctx.font = "bold 12px monospace";
             ctx.fillText("NAV", navCenterX, 218);
 
-            // 2. PWR-KREIS (RECHTE HÄLFTE DES MITTLEREN BILDSCHIRMS)
-            const pwrCenterX = 892;
+            // 2. MITTLERE ZENTRALANZEIGE: KOORDINATEN & AI-PROMPT (DEUTLICH & HIGH-CONTRAST)
+            const boxX = 688;
+            const boxY = 16;
+            const boxW = 160;
+            const boxH = 224;
+
+            // Transparenter Glasfaser-Hintergrund
+            ctx.fillStyle = "rgba(0, 18, 30, 0.88)";
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+
+            // Rahmen mit Cyber-Cyan Leuchten
+            ctx.strokeStyle = "#00ffff";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+            // Ecken-Akzente
+            ctx.strokeStyle = "#00e5ff";
+            ctx.lineWidth = 3.0;
+            const cLen = 10;
+            // oben links
+            ctx.beginPath(); ctx.moveTo(boxX, boxY + cLen); ctx.lineTo(boxX, boxY); ctx.lineTo(boxX + cLen, boxY); ctx.stroke();
+            // oben rechts
+            ctx.beginPath(); ctx.moveTo(boxX + boxW - cLen, boxY); ctx.lineTo(boxX + boxW, boxY); ctx.lineTo(boxX + boxW, boxY + cLen); ctx.stroke();
+            // unten links
+            ctx.beginPath(); ctx.moveTo(boxX, boxY + boxH - cLen); ctx.lineTo(boxX, boxY + boxH); ctx.lineTo(boxX + cLen, boxY + boxH); ctx.stroke();
+            // unten rechts
+            ctx.beginPath(); ctx.moveTo(boxX + boxW - cLen, boxY + boxH); ctx.lineTo(boxX + boxW, boxY + boxH); ctx.lineTo(boxX + boxW, boxY + boxH - cLen); ctx.stroke();
+
+            const boxCenterX = boxX + boxW / 2;
+
+            // Titel
+            ctx.textAlign = "center";
+            ctx.textBaseline = "alphabetic";
+            ctx.fillStyle = "#00ffff";
+            ctx.font = "bold 12px monospace";
+            ctx.fillText("GPS KOORDINATEN", boxCenterX, boxY + 20);
+
+            // Trennlinie oben
+            ctx.strokeStyle = "rgba(0, 255, 255, 0.35)";
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.moveTo(boxX + 10, boxY + 26);
+            ctx.lineTo(boxX + boxW - 10, boxY + 26);
+            ctx.stroke();
+
+            // Live Koordinaten
+            const currX = heliPos.x.toFixed(1);
+            const currY = heliPos.y.toFixed(1);
+            const currZ = heliPos.z.toFixed(1);
+
+            // X
+            ctx.textAlign = "left";
+            ctx.font = "bold 15px monospace";
+            ctx.fillStyle = "#00ffff";
+            ctx.fillText("X:", boxX + 14, boxY + 54);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 17px monospace";
+            ctx.fillText(currX, boxX + boxW - 14, boxY + 54);
+
+            // Y (Höhe)
+            ctx.textAlign = "left";
+            ctx.font = "bold 15px monospace";
+            ctx.fillStyle = "#00ffff";
+            ctx.fillText("Y:", boxX + 14, boxY + 82);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 17px monospace";
+            ctx.fillText(currY, boxX + boxW - 14, boxY + 82);
+
+            // Z
+            ctx.textAlign = "left";
+            ctx.font = "bold 15px monospace";
+            ctx.fillStyle = "#00ffff";
+            ctx.fillText("Z:", boxX + 14, boxY + 110);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 17px monospace";
+            ctx.fillText(currZ, boxX + boxW - 14, boxY + 110);
+
+            // Trennlinie vor KI-Format
+            ctx.strokeStyle = "rgba(0, 255, 255, 0.35)";
+            ctx.beginPath();
+            ctx.moveTo(boxX + 10, boxY + 122);
+            ctx.lineTo(boxX + boxW - 10, boxY + 122);
+            ctx.stroke();
+
+            // KI Prompt Header
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#ffea00"; // Neon Gold / Amber
+            ctx.font = "bold 10px monospace";
+            ctx.fillText("KI / BUILD PROMPT", boxCenterX, boxY + 138);
+
+            // KI Formatted Coordinates String (z.B. "12.3, 0.5, 36.0")
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 13px monospace";
+            ctx.fillText(`${currX}, ${currY}, ${currZ}`, boxCenterX, boxY + 158);
+
+            // GPS Status
+            ctx.fillStyle = "#00ff66";
+            ctx.beginPath();
+            ctx.arc(boxCenterX - 34, boxY + 192, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#00ff66";
+            ctx.font = "bold 11px monospace";
+            ctx.textAlign = "left";
+            ctx.fillText("GPS ACTIVE", boxCenterX - 24, boxY + 196);
+
+            // 3. PWR-KREIS (RECHTE HÄLFTE DES MITTLEREN BILDSCHIRMS)
+            const pwrCenterX = 924;
             const pwrCenterY = 120;
-            const pwrRadius = 66;
+            const pwrRadius = 64;
 
             // Hintergrund-Bogen (270 Grad, von 135° bis 405°)
             ctx.strokeStyle = "rgba(0, 255, 102, 0.20)";
@@ -8082,6 +8271,13 @@
             }
             const elHdg = document.getElementById("heli-hdg");
             if (elHdg) elHdg.textContent = `${degHeading.toString().padStart(3, "0")}°`;
+            const elCoords = document.getElementById("heli-hud-coords");
+            if (elCoords) {
+                const xStr = heliPos.x.toFixed(1);
+                const yStr = heliPos.y.toFixed(1);
+                const zStr = heliPos.z.toFixed(1);
+                elCoords.textContent = `KOORDINATEN: X: ${xStr} | Y: ${yStr} | Z: ${zStr} (KI-Format: ${xStr}, ${yStr}, ${zStr})`;
+            }
 
             // 10. Netzwerk-Broadcast (gedrosselt auf ~60ms / 16 Hz)
             if (nowTime - lastHeliNetworkSend > 60) {
@@ -8966,7 +9162,7 @@
 
             renderer = new THREE.WebGLRenderer({ canvas: gameCanvas, antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
 
             // CSS3D Renderer für echten Video-Screen an der 3D-Wand
             cssScene = new THREE.Scene();
@@ -9115,6 +9311,17 @@
             buildGamingRaum();
             buildArtRaum();
             buildLagerRaum();
+
+            // 5. Amrumer Leuchtturm bei x: 280, y: -44.5, z: 811
+            try {
+                amrumLighthouse = createAmrumLighthouse();
+                scene.add(amrumLighthouse.group);
+                if (amrumLighthouse.wallMeshes && Array.isArray(amrumLighthouse.wallMeshes)) {
+                    amrumLighthouse.wallMeshes.forEach(w => wallMeshes.push(w));
+                }
+            } catch (err) {
+                console.error("Fehler beim Erstellen des Amrumer Leuchtturms:", err);
+            }
 
             // Lokalen 3D-Avatar erzeugen & Kamera initialisieren
             const myColor = currentUser ? getPlayerColor(currentUser.uid) : "#3b82f6";
@@ -9282,6 +9489,7 @@
             if (!camera || !renderer) return;
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
             renderer.setSize(window.innerWidth, window.innerHeight);
             if (cssRenderer) {
                 cssRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -9608,6 +9816,11 @@
                 artSculpture.rotation.y += delta * 0.65;
             }
 
+            // Amrumer Leuchtturm: Drehendes Leuchtfeuer & Lichtkegel rotieren
+            if (amrumLighthouse && amrumLighthouse.update) {
+                amrumLighthouse.update(delta);
+            }
+
             let isMoving = false;
 
             // Hubschrauber Welt-Animationen (Rotoren, Blitze, 3D Sound, Remote-Sync)
@@ -9615,7 +9828,8 @@
 
             // Freier Fall & Gravitation auf den Spieler (wirkt IMMER, wenn der Spieler nicht fliegt oder sitzt)
             if (!isFlyingHelicopter && !isSitting) {
-                const targetGroundY = getTerrainHeight(playerPos.x, playerPos.z);
+                const lhFloor = getLighthouseFloorY(playerPos.x, playerPos.y - EYE_HEIGHT, playerPos.z);
+                const targetGroundY = lhFloor !== null ? lhFloor : getTerrainHeight(playerPos.x, playerPos.z);
                 if (!isJetpackThrusting) {
                     if (!isOnGround || velocityY !== 0) {
                         velocityY += GRAVITY * delta;
@@ -9746,6 +9960,9 @@
                             }
                         }
                     }
+
+                    // Kollisionsabfrage: Amrumer Leuchtturm (Wände, Portal, Spindel & Galerie-Geländer)
+                    handleLighthouseCollision(playerPos);
                 }
 
                 // â”€â”€ KAMERA- & AVATAR-POSITIONIERUNG (1ST PERSON VS 3RD PERSON) â”€â”€
@@ -9804,6 +10021,24 @@
                         camera.position.copy(playerPos);
                     }
                     if (localJetpackCockpit) localJetpackCockpit.visible = isJetpackEquipped;
+                }
+
+                // ── SCHUTZ VOR WAND-GLITCHING IM LEUCHTTURM (3RD & 1ST PERSON) ──
+                const dxLh = camera.position.x - 280.0;
+                const dzLh = camera.position.z - 811.0;
+                const distLh = Math.hypot(dxLh, dzLh);
+                const hLh = camera.position.y - (-44.5);
+                if (hLh >= 0.0 && hLh <= 34.0 && distLh < 4.0) {
+                    const pDistLh = Math.hypot(playerPos.x - 280.0, playerPos.z - 811.0);
+                    if (pDistLh < 3.2) {
+                        const rOuterCam = 3.5 - (3.5 - 2.25) * (hLh / 34.0);
+                        const maxSafeCamR = rOuterCam - 0.35;
+                        if (distLh > maxSafeCamR && distLh > 0.001) {
+                            const scale = maxSafeCamR / distLh;
+                            camera.position.x = 280.0 + dxLh * scale;
+                            camera.position.z = 811.0 + dzLh * scale;
+                        }
+                    }
                 }
 
                 // â”€â”€ TEPPICH-SCHRITTGERÃ„USCHE UPDATE â”€â”€
