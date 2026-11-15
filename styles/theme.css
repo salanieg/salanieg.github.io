@@ -613,6 +613,10 @@ a:hover {
     pointer-events: none;
 }
 
+.scene-3d * {
+    pointer-events: none;
+}
+
 .spin-3d {
     position: relative;
     transform-style: preserve-3d;
