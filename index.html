@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
         requestAnimationFrame(raf);
     }
 
-    const navLinks = document.querySelectorAll('.menu-square');
+    const navLinks = document.querySelectorAll('.nav-square[data-target]');
     const sections = Array.from(document.querySelectorAll('.section-block'));
     let isProgrammaticScroll = false;
     let scrollUnlockTimer = null;
