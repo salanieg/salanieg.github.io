@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+    <meta name="theme-color" content="#fafaf8">
     <meta name="description" content="Meine Portfolio-Website. Etwas nicht zu können ist kein Grund es nicht zu tun.">
     <title>Dennis Münch</title>
 
@@ -14,136 +15,309 @@
 
     <link rel="stylesheet" href="styles/theme.css">
     <link rel="preload" href="fonts/DonGraffiti/DonGraffiti.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="fonts/Genos-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="fonts/Jost-Regular.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="fonts/syne.bold.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/CrimsonPro/CrimsonPro-Variable.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
 
 <div id="app">
 
     <header id="site-header">
-        <div class="header-logo-text">Dennis Münch</div>
+        <a class="header-logo-text" href="#home">Dennis Münch</a>
     </header>
-
-    <nav id="tilenav">
-        <a class="tile active" href="#home" data-target="home">Home</a>
-        <a class="tile" href="#about" data-target="about">Über mich</a>
-        <a class="tile" href="#projects" data-target="projects">Projekte</a>
-        <a class="tile" href="#cv" data-target="cv">VITA</a>
-        <a class="tile" href="#contact" data-target="contact">Kontakt</a>
-    </nav>
 
     <main id="stage">
 
         <!-- HOME -->
         <section class="section-block" id="home">
-            <h1 class="hero-quote">
-                <span class="hero-line quote-intro">Etwas nicht zu können,</span>
-                <span class="hero-line quote-main quote-line-1">ist kein Grund,</span>
-                <span class="hero-line quote-main quote-line-2">es nicht zu tun.</span>
-            </h1>
-            <img id="header-img" src="images/Portrait_Dennis_Muench.webp" alt="Portrait von Dennis Münch" width="260" height="260" fetchpriority="high" decoding="async">
-            <p>Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was. Aber so eine eigene Website, pah, ziemlich eingebildet, oder?</p>
+            <div class="hero-grid">
+                <img id="header-img" src="images/Portrait_Dennis_Muench_blau.jpg" alt="Portrait von Dennis Münch" width="260" height="260" fetchpriority="high" decoding="async">
+                <h1 class="hero-quote">
+                    <span class="hero-line quote-intro">Etwas nicht zu können,</span>
+                    <span class="hero-line quote-main quote-line-1">ist kein Grund,</span>
+                    <span class="hero-line quote-main quote-line-2">es nicht zu tun.</span>
+                </h1>
+            </div>
+
+            <nav class="menu-squares" aria-label="Menü-Kacheln">
+                <a class="menu-square nav-square" href="#home" data-target="home">
+                    <div class="scene-3d" aria-hidden="true">
+                        <div class="spin-3d model-photo">
+                            <div class="photo-face photo-front"><img src="images/home.webp" alt="Home" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-back"><img src="images/home.webp" alt="" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-right"></div>
+                            <div class="photo-face photo-left"></div>
+                            <div class="photo-face photo-top"></div>
+                            <div class="photo-face photo-bottom"></div>
+                        </div>
+                    </div>
+                    <span class="tile-label">Home</span>
+                </a>
+                <a class="menu-square nav-square" href="#about" data-target="about">
+                    <div class="scene-3d" aria-hidden="true">
+                        <div class="spin-3d model-photo">
+                            <div class="photo-face photo-front"><img src="images/uebermich.webp" alt="Über mich" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-back"><img src="images/uebermich.webp" alt="" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-right"></div>
+                            <div class="photo-face photo-left"></div>
+                            <div class="photo-face photo-top"></div>
+                            <div class="photo-face photo-bottom"></div>
+                        </div>
+                    </div>
+                    <span class="tile-label">Über mich</span>
+                </a>
+                <a class="menu-square nav-square" href="#projects" data-target="projects">
+                    <div class="scene-3d" aria-hidden="true">
+                        <div class="spin-3d model-photo">
+                            <div class="photo-face photo-front"><img src="images/projekte.webp" alt="Projekte" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-back"><img src="images/projekte.webp" alt="" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-right"></div>
+                            <div class="photo-face photo-left"></div>
+                            <div class="photo-face photo-top"></div>
+                            <div class="photo-face photo-bottom"></div>
+                        </div>
+                    </div>
+                    <span class="tile-label">Projekte</span>
+                </a>
+                <a class="menu-square nav-square" href="#cv" data-target="cv">
+                    <div class="scene-3d" aria-hidden="true">
+                        <div class="spin-3d model-photo">
+                            <div class="photo-face photo-front"><img src="images/vita.webp" alt="Vita" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-back"><img src="images/vita.webp" alt="" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-right"></div>
+                            <div class="photo-face photo-left"></div>
+                            <div class="photo-face photo-top"></div>
+                            <div class="photo-face photo-bottom"></div>
+                        </div>
+                    </div>
+                    <span class="tile-label">Vita</span>
+                </a>
+                <a class="menu-square nav-square" href="#contact" data-target="contact">
+                    <div class="scene-3d" aria-hidden="true">
+                        <div class="spin-3d model-photo">
+                            <div class="photo-face photo-front"><img src="images/kontakt.webp" alt="Kontakt" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-back"><img src="images/kontakt.webp" alt="" width="400" height="400" decoding="async"></div>
+                            <div class="photo-face photo-right"></div>
+                            <div class="photo-face photo-left"></div>
+                            <div class="photo-face photo-top"></div>
+                            <div class="photo-face photo-bottom"></div>
+                        </div>
+                    </div>
+                    <span class="tile-label">Kontakt</span>
+                </a>
+            </nav>
+
+            <p class="hero-note">Überlegen Sie mal: Ein mattes und unambitioniertes Profil in einem sozialen Netzwerk für Geschäftskontakte, da sagt keiner was. Aber so eine eigene Website, oha, ziemlich eingebildet, oder?</p>
         </section>
 
         <!-- ÜBER MICH -->
-        <section class="section-block" id="about">
-            <h2>Über mich</h2>
-            <p>Seit der Jahrtausendwende führte mich meine Laufbahn vom Kreißsaal München-Harlaching in den Bamberger Hörsaal und anschließend in den Sitzungssaal der Stadt Neustadt a.d.Aisch. So grundsätzlich hab ich irgendwas mit Geisteswissenschaft oder so studiert. Am besten gefallen hat mir meine Masterarbeit „Passives Einkommen oder gelebte Solidarität? Finanzbildung als Instrument zur Ermöglichung kooperativer Wirtschaftsformen“, die untersucht, wie Finanzbildung in Deutschland die Attraktivität kooperativen Wirtschaftens steigern kann. Kommunalpolitisch setzte ich mich sechs Jahre lang, inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities" target="_blank" rel="noopener noreferrer">Jane Jacobs</a>, für ein resilientes, lebenswertes und ästhetisches Neustadt ein. Mein langfristiges Ziel ist ein kostenloser ÖPNV nur mit Flugtaxis. Die nächste Stadt kommt bestimmt!</p>
+        <section class="section-block is-collapsible" id="about">
+            <h2 class="section-heading">
+                <button type="button" class="section-toggle" aria-expanded="false" aria-controls="about-content">
+                    <span>Über mich</span>
+                    <svg class="section-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </h2>
+            <div class="section-content" id="about-content">
+                <div class="section-content-inner">
+                    <p>Seit der Jahrtausendwende führte mich meine Laufbahn vom Kreißsaal München-Harlaching in den Bamberger Hörsaal und anschließend in den Sitzungssaal der Stadt Neustadt an der Aisch. Meinem Hobby Philosophie bin ich auch in meinem Masterstudium so gut wie möglich treu geblieben. Am besten gefallen hat mir meine <a href="https://ub-deposit.fernuni-hagen.de/receive/mir_mods_00002355" target="_blank" rel="noopener noreferrer">Masterarbeit</a> „Passives Einkommen oder gelebte Solidarität? Finanzbildung als Instrument zur Ermöglichung kooperativer Wirtschaftsformen“, die untersucht, wie Finanzbildung in Deutschland die Attraktivität kooperativen Wirtschaftens steigern kann. Kommunalpolitisch setzte ich mich sechs Jahre lang, inspiriert von <a href="https://en.m.wikipedia.org/wiki/The_Death_and_Life_of_Great_American_Cities" target="_blank" rel="noopener noreferrer">Jane Jacobs</a>, für ein resilientes, lebenswertes und ästhetisches Neustadt ein. Mein langfristiges Ziel ist ein kostenloser ÖPNV nur mit Flugtaxis. Die nächste Stadt kommt bestimmt!</p>
+                </div>
+            </div>
         </section>
 
         <!-- PROJEKTE -->
-        <section class="section-block" id="projects">
-            <h2>Meine Projekte</h2>
-            <p>Willkommen in meiner Projektsammlung. Neben wissenschaftlichem Self-Publishing auf ResearchGate und dem Podcast Hinterstube finden Sie hier Found-Footage-Fundstücke, meine Liste empfohlener Featured Sites und die 404-Seite.</p>
+        <section class="section-block is-collapsible" id="projects">
+            <h2 class="section-heading">
+                <button type="button" class="section-toggle" aria-expanded="false" aria-controls="projects-content">
+                    <span>Meine Projekte</span>
+                    <svg class="section-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </h2>
+            <div class="section-content" id="projects-content">
+                <div class="section-content-inner">
+                    <p>Willkommen in meiner Projektsammlung. Neben wissenschaftlichem Self-Publishing auf ResearchGate finden Sie hier den Podcast Hinterstube.</p>
 
-            <div class="button-section">
-                <!-- REIHE 1 -->
-                <a href="https://www.researchgate.net/profile/Dennis-Muench-3" target="_blank" rel="noopener noreferrer">
-                    <img src="images/cogwheel.webp" alt="Arbeiten auf ResearchGate" width="200" height="200" loading="lazy" decoding="async">
-                    <p>Self-Publishing</p>
-                </a>
-                <a href="hinterstube.html">
-                    <img src="images/nighttrain.webp" alt="Podcast Hinterstube" width="200" height="200" loading="lazy" decoding="async">
-                    <p>Podcast</p>
-                </a>
-
-                <!-- REIHE 2 -->
-                <a href="foundfootage.html">
-                    <img src="images/foundfootage.webp" alt="Found Footage" width="200" height="200" loading="lazy" decoding="async">
-                    <p>Found Footage</p>
-                </a>
-                <a href="featuredsites.html">
-                    <img src="images/blogpic.webp" alt="Featured Sites" width="200" height="200" loading="lazy" decoding="async">
-                    <p>Featured Sites</p>
-                </a>
-                <a href="404.html">
-                    <img src="images/backroom.webp" alt="404 Seite" width="200" height="200" loading="lazy" decoding="async">
-                    <p>404 Seite</p>
-                </a>
+                    <div class="button-section">
+                        <a class="menu-square project-square" href="https://www.researchgate.net/profile/Dennis-Muench-3" target="_blank" rel="noopener noreferrer" aria-label="Self-Publishing auf ResearchGate">
+                            <div class="scene-3d" aria-hidden="true">
+                                <div class="spin-3d model-booklet">
+                                    <div class="face face-front">
+                                        <span class="booklet-tag">ResearchGate</span>
+                                        <span class="booklet-lines"></span>
+                                    </div>
+                                    <div class="face face-back"></div>
+                                    <div class="face face-right"></div>
+                                    <div class="face face-left"></div>
+                                    <div class="face face-top"></div>
+                                    <div class="face face-bottom"></div>
+                                </div>
+                            </div>
+                            <span class="tile-label">Self-Publishing</span>
+                        </a>
+                        <a class="menu-square project-square" href="hinterstube.html" aria-label="Podcast Hinterstube">
+                            <div class="scene-3d" aria-hidden="true">
+                                <div class="spin-3d model-mic">
+                                    <div class="mic-head">
+                                        <div class="mic-facet f0"></div>
+                                        <div class="mic-facet f1"></div>
+                                        <div class="mic-facet f2"></div>
+                                        <div class="mic-facet f3"></div>
+                                        <div class="mic-facet f4"></div>
+                                        <div class="mic-facet f5"></div>
+                                        <div class="mic-facet f6"></div>
+                                        <div class="mic-facet f7"></div>
+                                        <div class="mic-cap-top"></div>
+                                    </div>
+                                    <div class="mic-collar">
+                                        <div class="mic-facet f0"></div>
+                                        <div class="mic-facet f1"></div>
+                                        <div class="mic-facet f2"></div>
+                                        <div class="mic-facet f3"></div>
+                                        <div class="mic-facet f4"></div>
+                                        <div class="mic-facet f5"></div>
+                                        <div class="mic-facet f6"></div>
+                                        <div class="mic-facet f7"></div>
+                                    </div>
+                                    <div class="mic-body">
+                                        <div class="mic-facet f0"></div>
+                                        <div class="mic-facet f1"></div>
+                                        <div class="mic-facet f2"></div>
+                                        <div class="mic-facet f3"></div>
+                                        <div class="mic-facet f4"></div>
+                                        <div class="mic-facet f5"></div>
+                                        <div class="mic-facet f6"></div>
+                                        <div class="mic-facet f7"></div>
+                                    </div>
+                                    <div class="mic-stem">
+                                        <div class="mic-facet f0"></div>
+                                        <div class="mic-facet f1"></div>
+                                        <div class="mic-facet f2"></div>
+                                        <div class="mic-facet f3"></div>
+                                        <div class="mic-facet f4"></div>
+                                        <div class="mic-facet f5"></div>
+                                        <div class="mic-facet f6"></div>
+                                        <div class="mic-facet f7"></div>
+                                    </div>
+                                    <div class="mic-base">
+                                        <div class="mic-facet f0"></div>
+                                        <div class="mic-facet f1"></div>
+                                        <div class="mic-facet f2"></div>
+                                        <div class="mic-facet f3"></div>
+                                        <div class="mic-facet f4"></div>
+                                        <div class="mic-facet f5"></div>
+                                        <div class="mic-facet f6"></div>
+                                        <div class="mic-facet f7"></div>
+                                        <div class="mic-base-top"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="tile-label">Podcast</span>
+                        </a>
+                        <a class="menu-square project-square" href="https://ub-deposit.fernuni-hagen.de/receive/mir_mods_00002355" target="_blank" rel="noopener noreferrer" aria-label="Masterarbeit">
+                            <div class="scene-3d" aria-hidden="true">
+                                <div class="spin-3d model-book">
+                                    <div class="face face-front">
+                                        <div class="book-frame">
+                                            <span class="book-title">Masterarbeit</span>
+                                        </div>
+                                    </div>
+                                    <div class="face face-back"></div>
+                                    <div class="face face-right"></div>
+                                    <div class="face face-left"></div>
+                                    <div class="face face-top"></div>
+                                    <div class="face face-bottom"></div>
+                                </div>
+                            </div>
+                            <span class="tile-label">Masterarbeit</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </section>
 
         <!-- CV -->
-        <section class="section-block" id="cv">
-            <h2>Lebenslauf</h2>
+        <section class="section-block is-collapsible" id="cv">
+            <h2 class="section-heading">
+                <button type="button" class="section-toggle" aria-expanded="false" aria-controls="cv-content">
+                    <span>Lebenslauf</span>
+                    <svg class="section-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </h2>
+            <div class="section-content" id="cv-content">
+                <div class="section-content-inner">
+                    <div class="cv-group">
+                        <div class="cv-group-label">Studium</div>
+                        <div class="cv-row">
+                            <span class="cv-date">2023 – 2026</span>
+                            <span class="cv-body">M.A. Bildungswissenschaft <em>FernUniversität Hagen · Erwachsenenbildung</em></span>
+                        </div>
+                        <div class="cv-row">
+                            <span class="cv-date">2019 – 2023</span>
+                            <span class="cv-body">B.A. Kommunikationswissenschaft <em>Universität Bamberg · Philosophie · Soziologie</em></span>
+                        </div>
+                    </div>
 
-            <div class="cv-group">
-                <div class="cv-group-label">Studium</div>
-                <div class="cv-row">
-                    <span class="cv-date">2023 – 2026</span>
-                    <span class="cv-body">M.A. Bildungswissenschaft <em>FernUniversität Hagen · Erwachsenenbildung</em></span>
-                </div>
-                <div class="cv-row">
-                    <span class="cv-date">2019 – 2023</span>
-                    <span class="cv-body">B.A. Kommunikationswissenschaft <em>Universität Bamberg · Philosophie · Soziologie</em></span>
-                </div>
-            </div>
+                    <div class="cv-group">
+                        <div class="cv-group-label">Weiterbildung</div>
+                        <div class="cv-row">
+                            <span class="cv-date">2021</span>
+                            <span class="cv-body">Projektmanagement <em>FernUniversität Hagen</em></span>
+                        </div>
+                    </div>
 
-            <div class="cv-group">
-                <div class="cv-group-label">Weiterbildung</div>
-                <div class="cv-row">
-                    <span class="cv-date">2021</span>
-                    <span class="cv-body">Projektmanagement <em>FernUniversität Hagen</em></span>
-                </div>
-            </div>
-
-            <div class="cv-group">
-                <div class="cv-group-label">Tätigkeiten</div>
-                <div class="cv-row">
-                    <span class="cv-date">05/2020 – 04/2026</span>
-                    <span class="cv-body">Ehrenamtliches Stadtratsmitglied <em>Stadt Neustadt an der Aisch</em></span>
-                </div>
-                <div class="cv-row">
-                    <span class="cv-date">03 – 04/2025</span>
-                    <span class="cv-body">Praktikum Jugendbetreuung <em>KJH gGmbH, Fürth</em></span>
-                </div>
-                <div class="cv-row">
-                    <span class="cv-date">05/2022 – 01/2024</span>
-                    <span class="cv-body">Zuhörtelefon <em>Nightlines in Europe, Bamberg</em></span>
-                </div>
-                <div class="cv-row">
-                    <span class="cv-date">11/2020 – 03/2021</span>
-                    <span class="cv-body">Radiomoderation <em>Uniradio FriedaFM, Bamberg</em></span>
-                </div>
-                <div class="cv-row">
-                    <span class="cv-date">08/2022</span>
-                    <span class="cv-body">Ferienbetreuung <em>SJD – Die Falken, Nürnberg</em></span>
-                </div>
-                <div class="cv-row">
-                    <span class="cv-date">07 – 08/2018</span>
-                    <span class="cv-body">Warehouse Helper <em>PUMA, Elsendorf</em></span>
+                    <div class="cv-group">
+                        <div class="cv-group-label">Tätigkeiten</div>
+                        <div class="cv-row">
+                            <span class="cv-date">05/2020 – 04/2026</span>
+                            <span class="cv-body">Ehrenamtliches Stadtratsmitglied <em>Stadt Neustadt an der Aisch</em></span>
+                        </div>
+                        <div class="cv-row">
+                            <span class="cv-date">03 – 04/2025</span>
+                            <span class="cv-body">Praktikum Jugendbetreuung <em>KJH gGmbH, Fürth</em></span>
+                        </div>
+                        <div class="cv-row">
+                            <span class="cv-date">05/2022 – 01/2024</span>
+                            <span class="cv-body">Zuhörtelefon <em>Nightlines in Europe, Bamberg</em></span>
+                        </div>
+                        <div class="cv-row">
+                            <span class="cv-date">11/2020 – 03/2021</span>
+                            <span class="cv-body">Radiomoderation <em>Uniradio FriedaFM, Bamberg</em></span>
+                        </div>
+                        <div class="cv-row">
+                            <span class="cv-date">08/2022</span>
+                            <span class="cv-body">Ferienbetreuung <em>SJD – Die Falken, Nürnberg</em></span>
+                        </div>
+                        <div class="cv-row">
+                            <span class="cv-date">07 – 08/2018</span>
+                            <span class="cv-body">Warehouse Helper <em>PUMA, Elsendorf</em></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- KONTAKT -->
-        <section class="section-block" id="contact">
-            <h2>Kontakt</h2>
-            <div class="btn-group">
-                <button class="contact-btn" onclick="location.href='mailto:den.muench@gmail.com'">E-Mail senden</button>
-                <button class="contact-btn" onclick="location.href='https://www.instagram.com/den.muench/'">Instagram</button>
+        <section class="section-block is-collapsible" id="contact">
+            <h2 class="section-heading">
+                <button type="button" class="section-toggle" aria-expanded="false" aria-controls="contact-content">
+                    <span>Kontakt</span>
+                    <svg class="section-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </h2>
+            <div class="section-content" id="contact-content">
+                <div class="section-content-inner">
+                    <div class="btn-group">
+                        <a class="contact-btn contact-btn-primary" href="mailto:den.muench@gmail.com">E-Mail senden</a>
+                        <a class="contact-btn" href="https://www.instagram.com/den.muench/" target="_blank" rel="noopener noreferrer">Instagram</a>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -157,8 +331,7 @@
 
 <script src="scripts/lenis.min.js" defer></script>
 <script>
-(function () {
-    // ── SMOOTH SCROLL (LENIS) ──
+document.addEventListener('DOMContentLoaded', function () {
     let lenis = null;
     if (typeof Lenis !== 'undefined') {
         lenis = new Lenis({
@@ -167,8 +340,8 @@
             orientation: 'vertical',
             gestureOrientation: 'vertical',
             smoothWheel: true,
-            wheelMultiplier: 1.6,
-            touchMultiplier: 2.0,
+            wheelMultiplier: 1.3,
+            touchMultiplier: 1.6,
             infinite: false
         });
 
@@ -179,61 +352,109 @@
         requestAnimationFrame(raf);
     }
 
-    const tiles = document.querySelectorAll('.tile');
-    const sections = document.querySelectorAll('.section-block');
+    const navLinks = document.querySelectorAll('.menu-square');
+    const sections = Array.from(document.querySelectorAll('.section-block'));
+    let isProgrammaticScroll = false;
+    let scrollUnlockTimer = null;
 
-    function setActive(id) {
-        tiles.forEach(t => t.classList.toggle('active', t.dataset.target === id));
+    function setSectionOpen(sectionEl, open) {
+        if (!sectionEl || !sectionEl.classList.contains('is-collapsible')) return;
+        sectionEl.classList.toggle('is-open', open);
+        const btn = sectionEl.querySelector('.section-toggle');
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
-    const observerOptions = {
-        root: null,
-        rootMargin: '-20% 0px -60% 0px',
-        threshold: 0
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                setActive(entry.target.id);
-            }
+    // Wikipedia-style section toggle
+    document.querySelectorAll('.section-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const section = btn.closest('.section-block');
+            if (!section) return;
+            const willOpen = !section.classList.contains('is-open');
+            setSectionOpen(section, willOpen);
         });
-    }, observerOptions);
+    });
 
-    sections.forEach(sec => observer.observe(sec));
+    function scrollToSection(el) {
+        isProgrammaticScroll = true;
+        clearTimeout(scrollUnlockTimer);
+        scrollUnlockTimer = setTimeout(() => {
+            isProgrammaticScroll = false;
+        }, 950);
 
-    tiles.forEach(tile => {
-        tile.addEventListener('click', (e) => {
+        if (lenis) {
+            lenis.scrollTo(el, { offset: -20, duration: 0.9 });
+        } else {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function navigateToTarget(targetId, triggerEl) {
+        const targetEl = document.getElementById(targetId);
+        if (!targetEl) return;
+
+        if (targetEl.classList.contains('is-collapsible')) {
+            setSectionOpen(targetEl, true);
+        }
+
+        // Wait one frame if a section just expanded so layout/scrollTarget is accurate
+        requestAnimationFrame(() => {
+            scrollToSection(targetEl);
+            if (triggerEl) triggerEl.blur();
+            history.pushState(null, '', '#' + targetId);
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
             e.preventDefault();
-            const targetId = tile.dataset.target;
-            const targetEl = document.getElementById(targetId);
-            if (targetEl) {
-                if (lenis) {
-                    lenis.scrollTo(targetEl, { offset: -25, duration: 1.15 });
-                } else {
-                    targetEl.scrollIntoView({ behavior: 'smooth' });
-                }
-                setActive(targetId);
-                history.pushState(null, '', '#' + targetId);
-            }
+            navigateToTarget(link.dataset.target, link);
         });
+    });
+
+    document.querySelectorAll('.menu-square').forEach((tile) => {
+        const model = tile.querySelector('.spin-3d');
+        if (!model) return;
+
+        const snapToFront = () => {
+            const anim = model.getAnimations().find((a) => a.animationName === 'spin3d');
+            const currentTime = anim && typeof anim.currentTime === 'number' ? anim.currentTime : 0;
+            const angle = ((currentTime / 14000) * 360) % 360;
+            const targetY = angle > 180 ? 360 : 0;
+
+            model.style.animation = 'none';
+            model.style.transition = 'none';
+            model.style.transform = `rotateX(-12deg) rotateY(${angle}deg)`;
+            void model.offsetWidth;
+
+            model.style.transition = 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)';
+            model.style.transform = `rotateX(0deg) rotateY(${targetY}deg) scale(1.12)`;
+        };
+
+        const resumeSpin = () => {
+            model.style.transition = '';
+            model.style.transform = '';
+            model.style.animation = '';
+        };
+
+        tile.addEventListener('mouseenter', snapToFront);
+        tile.addEventListener('focusin', snapToFront);
+        tile.addEventListener('mouseleave', resumeSpin);
+        tile.addEventListener('focusout', resumeSpin);
     });
 
     if (window.location.hash) {
         const initialTarget = window.location.hash.substring(1);
         const el = document.getElementById(initialTarget);
         if (el) {
+            if (el.classList.contains('is-collapsible')) {
+                setSectionOpen(el, true);
+            }
             setTimeout(() => {
-                if (lenis) {
-                    lenis.scrollTo(el, { offset: -25, duration: 0.8 });
-                } else {
-                    el.scrollIntoView({ behavior: 'smooth' });
-                }
-                setActive(initialTarget);
-            }, 100);
+                scrollToSection(el);
+            }, 80);
         }
     }
-})();
+});
 </script>
 </body>
 </html>

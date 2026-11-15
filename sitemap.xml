@@ -7,18 +7,8 @@
 
   <url>
     <loc>https://www.denmuen.ch/</loc>
-    <lastmod>2026-08-29T22:20:00+00:00</lastmod>
+    <lastmod>2026-11-15T14:20:00+00:00</lastmod>
     <priority>1.00</priority>
-  </url>
-  <url>
-    <loc>https://www.denmuen.ch/foundfootage.html</loc>
-    <lastmod>2026-08-29T22:20:00+00:00</lastmod>
-    <priority>0.80</priority>
-  </url>
-  <url>
-    <loc>https://www.denmuen.ch/featuredsites.html</loc>
-    <lastmod>2026-08-29T22:20:00+00:00</lastmod>
-    <priority>0.80</priority>
   </url>
 
 </urlset>
